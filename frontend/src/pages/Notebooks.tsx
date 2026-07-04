@@ -11,6 +11,8 @@ import { useNotebooks, useNotebookSources } from '../hooks/ai/useNotebook';
 import { useWorkflowStream } from '../hooks/ai/useWorkflowStream';
 import { ChatMessageList, ChatMessage } from '../components/chat/ChatMessageList';
 import { CitationViewerPanel } from '../components/chat/CitationViewerPanel';
+import { useKnowledgeGraph } from '../hooks/ai/useNotebook';
+import { KnowledgeGraphViewer } from '../components/graph/KnowledgeGraphViewer';
 
 const LEARNING_MODES = [
   { id: 'TEACHER', label: 'Teacher Mode', icon: GraduationCap, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
@@ -39,6 +41,7 @@ export default function Notebooks() {
   
   const { notebooks, isLoading: isLoadingNotebooks, createNotebook } = useNotebooks();
   const { startStream, isStreaming, content: streamContent, citations: streamCitations, warnings: streamWarnings } = useWorkflowStream();
+  const { graph, isLoading: isLoadingGraph } = useKnowledgeGraph(activeNotebook);
   
   // Auto-select first notebook if none selected
   React.useEffect(() => {
@@ -292,8 +295,14 @@ export default function Notebooks() {
          )}
          
          {activeTab === 'GRAPH' && (
-           <div className="flex-1 flex items-center justify-center text-slate-500">
-              Knowledge Graph Visualization (Coming in Phase 6)
+           <div className="flex-1 overflow-hidden relative">
+              {isLoadingGraph ? (
+                 <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                 </div>
+              ) : (
+                 <KnowledgeGraphViewer nodes={graph?.nodes || []} edges={graph?.edges || []} />
+              )}
            </div>
          )}
 
