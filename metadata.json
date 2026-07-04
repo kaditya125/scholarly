@@ -1,0 +1,6 @@
+{
+  "name": "Scholarly",
+  "description": "An advanced EdTech testing platform providing mock tests, gamified analytics, study planning, and AI-powered insights with a refined user interface.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

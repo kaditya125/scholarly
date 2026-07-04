@@ -1,0 +1,26 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const questions_routes_1 = __importDefault(require("./questions.routes"));
+const tests_routes_1 = __importDefault(require("./tests.routes"));
+const planner_routes_1 = __importDefault(require("./planner.routes"));
+const leaderboard_routes_1 = __importDefault(require("./leaderboard.routes"));
+const discussions_routes_1 = __importDefault(require("./discussions.routes"));
+const rooms_routes_1 = __importDefault(require("./rooms.routes"));
+const users_routes_1 = __importDefault(require("./users.routes"));
+const chat_routes_1 = __importDefault(require("./chat.routes"));
+const companion_routes_1 = __importDefault(require("./companion.routes"));
+const router = (0, express_1.Router)();
+router.use('/questions', questions_routes_1.default);
+router.use('/tests', tests_routes_1.default);
+router.use('/planner', planner_routes_1.default);
+router.use('/leaderboard', leaderboard_routes_1.default);
+router.use('/discussions', discussions_routes_1.default);
+router.use('/rooms', rooms_routes_1.default);
+router.use('/users', users_routes_1.default);
+router.use('/chat', chat_routes_1.default);
+router.use('/companion', companion_routes_1.default);
+exports.default = router;
