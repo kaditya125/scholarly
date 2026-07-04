@@ -11,8 +11,11 @@ import { useNotebooks, useNotebookSources } from '../hooks/ai/useNotebook';
 import { useWorkflowStream } from '../hooks/ai/useWorkflowStream';
 import { ChatMessageList, ChatMessage } from '../components/chat/ChatMessageList';
 import { CitationViewerPanel } from '../components/chat/CitationViewerPanel';
-import { useKnowledgeGraph } from '../hooks/ai/useNotebook';
+import { useKnowledgeGraph, useAssets } from '../hooks/ai/useNotebook';
 import { KnowledgeGraphViewer } from '../components/graph/KnowledgeGraphViewer';
+import { AssetList } from '../components/assets/AssetList';
+import { AssetViewer } from '../components/assets/AssetViewer';
+import { LearningAsset } from '../types';
 
 const LEARNING_MODES = [
   { id: 'TEACHER', label: 'Teacher Mode', icon: GraduationCap, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
@@ -36,12 +39,14 @@ export default function Notebooks() {
   const [prompt, setPrompt] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeCitation, setActiveCitation] = useState<any | null>(null);
+  const [activeAsset, setActiveAsset] = useState<LearningAsset | null>(null);
   
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   const { notebooks, isLoading: isLoadingNotebooks, createNotebook } = useNotebooks();
   const { startStream, isStreaming, content: streamContent, citations: streamCitations, warnings: streamWarnings } = useWorkflowStream();
   const { graph, isLoading: isLoadingGraph } = useKnowledgeGraph(activeNotebook);
+  const { assets, isLoading: isLoadingAssets } = useAssets(activeNotebook);
   
   // Auto-select first notebook if none selected
   React.useEffect(() => {
@@ -307,8 +312,16 @@ export default function Notebooks() {
          )}
 
          {activeTab === 'ASSETS' && (
-           <div className="flex-1 flex items-center justify-center text-slate-500">
-              Learning Assets (Coming in Phase 7)
+           <div className="flex-1 flex overflow-hidden relative">
+              {isLoadingAssets ? (
+                 <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                 </div>
+              ) : activeAsset ? (
+                 <AssetViewer asset={activeAsset} onBack={() => setActiveAsset(null)} />
+              ) : (
+                 <AssetList assets={assets} onSelect={setActiveAsset} />
+              )}
            </div>
          )}
       </div>
