@@ -112,6 +112,15 @@ export class NotebookService {
     await this.getNotebookById(notebookId, userId);
     return await notebookRepository.getLearningAssets(notebookId, type);
   }
+
+  // --- Knowledge Graph ---
+
+  async getKnowledgeGraph(notebookId: string, userId: string): Promise<{ nodes: import('../types').KGNode[], edges: import('../types').KGEdge[] }> {
+    await this.getNotebookById(notebookId, userId);
+    const nodes = await notebookRepository.getKGNodes(notebookId);
+    const edges = await notebookRepository.getKGEdges(notebookId);
+    return { nodes, edges };
+  }
 }
 
 export const notebookService = new NotebookService();

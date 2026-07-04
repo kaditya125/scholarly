@@ -25,4 +25,7 @@ router.delete('/:id/sources/:sourceId', sourceController.deleteSource);
 router.get('/:id/timeline', notebookController.getTimeline);
 router.get('/:id/assets', notebookController.getAssets);
 
+// Knowledge Graph
+router.get('/:id/graph', notebookController.getKnowledgeGraph);
+
 export default router;

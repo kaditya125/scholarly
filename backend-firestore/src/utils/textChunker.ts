@@ -1,30 +1,65 @@
+import { ParsedPage } from '../services/fileParser.service';
+
+export interface ChunkMetadata {
+  pageNumber: number;
+  paragraphIndex: number;
+  text: string;
+}
+
 export class TextChunker {
   /**
-   * Splits text into overlapping chunks of a given max length.
+   * Splits parsed pages into overlapping chunks while preserving page and paragraph metadata.
    */
-  static chunkText(text: string, maxChunkSize: number = 1000, overlap: number = 200): string[] {
-    const chunks: string[] = [];
-    let i = 0;
-    while (i < text.length) {
-      const end = Math.min(i + maxChunkSize, text.length);
-      // Try to find a sentence break or newline to split neatly
-      let splitPos = end;
-      if (end < text.length) {
-        const lastPeriod = text.lastIndexOf('.', end);
-        const lastNewline = text.lastIndexOf('\n', end);
-        if (lastNewline > i + maxChunkSize / 2) {
-          splitPos = lastNewline + 1;
-        } else if (lastPeriod > i + maxChunkSize / 2) {
-          splitPos = lastPeriod + 1;
+  static chunkPages(pages: ParsedPage[], maxChunkSize: number = 1000, overlap: number = 200): ChunkMetadata[] {
+    const chunks: ChunkMetadata[] = [];
+    
+    for (const page of pages) {
+      // Split page into rough paragraphs
+      const paragraphs = page.text.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+      
+      for (let pIdx = 0; pIdx < paragraphs.length; pIdx++) {
+        const pText = paragraphs[pIdx];
+        
+        // If a single paragraph is larger than maxChunkSize, we chunk it
+        if (pText.length > maxChunkSize) {
+          let i = 0;
+          while (i < pText.length) {
+            const end = Math.min(i + maxChunkSize, pText.length);
+            let splitPos = end;
+            
+            if (end < pText.length) {
+              const lastPeriod = pText.lastIndexOf('.', end);
+              if (lastPeriod > i + maxChunkSize / 2) {
+                splitPos = lastPeriod + 1;
+              }
+            }
+            
+            const chunkText = pText.slice(i, splitPos).trim();
+            if (chunkText) {
+              chunks.push({
+                pageNumber: page.pageNumber,
+                paragraphIndex: pIdx,
+                text: chunkText
+              });
+            }
+            
+            i = splitPos - overlap;
+            if (i < 0 || splitPos === pText.length) {
+              if (splitPos === pText.length) break;
+              i += overlap;
+            }
+          }
+        } else {
+          // Paragraph is small enough to be its own chunk
+          chunks.push({
+            pageNumber: page.pageNumber,
+            paragraphIndex: pIdx,
+            text: pText.trim()
+          });
         }
       }
-      chunks.push(text.slice(i, splitPos).trim());
-      i = splitPos - overlap;
-      if (i < 0 || splitPos === text.length) {
-        if (splitPos === text.length) break;
-        i += overlap; // Prevents infinite loop if chunk size is smaller than overlap
-      }
     }
-    return chunks.filter(c => c.length > 0);
+    
+    return chunks;
   }
 }

@@ -86,6 +86,37 @@ export class NotebookRepository {
       updatedAt: Date.now()
     });
   }
+
+  // --- Knowledge Graph ---
+
+  async addKGNodes(notebookId: string, nodes: import('../types').KGNode[]): Promise<void> {
+    const batch = db.batch();
+    const kgRef = this.collection.doc(notebookId).collection('kg_nodes');
+    for (const node of nodes) {
+      batch.set(kgRef.doc(node.id), node);
+    }
+    await batch.commit();
+    await this.incrementStat(notebookId, 'knowledgeGraphNodes', nodes.length);
+  }
+
+  async getKGNodes(notebookId: string): Promise<import('../types').KGNode[]> {
+    const snapshot = await this.collection.doc(notebookId).collection('kg_nodes').get();
+    return snapshot.docs.map(doc => doc.data() as import('../types').KGNode);
+  }
+
+  async addKGEdges(notebookId: string, edges: import('../types').KGEdge[]): Promise<void> {
+    const batch = db.batch();
+    const kgRef = this.collection.doc(notebookId).collection('kg_edges');
+    for (const edge of edges) {
+      batch.set(kgRef.doc(edge.id), edge);
+    }
+    await batch.commit();
+  }
+
+  async getKGEdges(notebookId: string): Promise<import('../types').KGEdge[]> {
+    const snapshot = await this.collection.doc(notebookId).collection('kg_edges').get();
+    return snapshot.docs.map(doc => doc.data() as import('../types').KGEdge);
+  }
 }
 
 export const notebookRepository = new NotebookRepository();

@@ -38,7 +38,8 @@ export class ChatController {
       if (attachments && Array.isArray(attachments) && attachments.length > 0) {
         let attachmentsText = '';
         for (const att of attachments) {
-          const extractedText = await FileParserService.extractText(att.data, att.mimeType, att.name);
+          const parsedPages = await FileParserService.extractText(att.data, att.mimeType, att.name);
+          const extractedText = parsedPages.map(p => p.text).join('\n');
           attachmentsText += `[File Attached: ${att.name}]\n${extractedText.trim()}\n\n`;
         }
         finalMessage = finalMessage ? `${attachmentsText.trim()}\n\n${finalMessage}` : attachmentsText.trim();

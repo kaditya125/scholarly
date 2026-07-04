@@ -108,3 +108,24 @@ export interface LearningAsset {
   createdAt: number;
   updatedAt: number;
 }
+
+export interface KGNode {
+  id: string;              // Unique concept identifier
+  notebookId: string;
+  label: string;           // Display name
+  type: 'CONCEPT' | 'PERSON' | 'PLACE' | 'FORMULA' | 'EVENT';
+  definition: string;
+  sourceDocIds: string[];
+  importance: number;      // 0.0 to 1.0
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  estimatedStudyTime: number; // minutes
+  masteryPercentage: number;
+}
+
+export interface KGEdge {
+  id: string;
+  sourceNodeId: string;
+  targetNodeId: string;
+  relationshipType: 'PREREQUISITE_OF' | 'RELATED_TO' | 'PART_OF' | 'OPPOSITE_OF';
+  confidence: number;
+}
