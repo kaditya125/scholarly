@@ -132,39 +132,47 @@ export class WorkflowEngine {
         const notebookResults = await retrievalService.retrieveContext(req.query, req.notebookId, undefined, 5);
         if (notebookResults.length > 0) {
           contextStr += "=== NOTEBOOK CONTEXT ===\n";
-          notebookResults.forEach(r => {
-            contextStr += `[Citation: ${r.source}]\n${r.text}\n\n`;
-            citationsList.push({
+          for (const r of notebookResults) {
+            contextStr += `[Citation: ${r.source} (Page ${r.metadata?.pageNumber || 1})]\n${r.text}\n\n`;
+            const citationData = {
               source: r.source,
               text: r.text,
               score: r.score,
               authorityScore: r.metadata?.authority || 0.8,
-              selectionReasoning: r.selectionReasoning || 'Highly relevant to your query.'
-            });
-          });
+              selectionReasoning: r.selectionReasoning || 'Highly relevant to your query.',
+              pageNumber: r.metadata?.pageNumber,
+              paragraphIndex: r.metadata?.paragraphIndex
+            };
+            citationsList.push(citationData);
+            yield { type: 'citation', citation: citationData };
+          }
         }
       }
 
       agentContext.retrievedContext = contextStr || 'No specific context found.';
-      
-      yield { type: 'progress', stage: WorkflowStage.RERANKING, message: 'Ranking relevant sources...' };
-      // TODO: Cohere Reranking Logic
-      
-      yield { type: 'progress', stage: WorkflowStage.VERIFICATION, message: 'Verifying context...' };
-      // TODO: Pre-generation verification
       
       yield { type: 'progress', stage: WorkflowStage.AGENT_EXECUTION, message: `${mode} Agent preparing explanation...` };
       
       // 6. Agent Execution: Teacher Drafts
       const teacher = new TeacherAgent();
       await teacher.execute(agentContext);
+      const generatedResponse = agentContext.sharedState['teacherDraft'] || '';
       
       yield { type: 'progress', stage: WorkflowStage.VERIFICATION, message: 'Verifying retrieved information...' };
       
       // 7. Verification: Cross-checks the draft against RAG
-      // For now, this is skipped if verification provider isn't fully implemented in DI
-      // const verifier = new VerificationAgent();
-      // await verifier.execute(agentContext);
+      if (req.notebookId && generatedResponse && citationsList.length > 0) {
+        const verification = await retrievalService.verifyClaimsAndCalculateConfidence(
+          generatedResponse,
+          citationsList.map(c => ({ text: c.text, source: c.source, score: c.score, metadata: c }))
+        );
+        
+        if (!verification.isValid && verification.unsupportedClaims.length > 0) {
+          const warningMsg = `Warning: This response contains unsupported claims: ${verification.unsupportedClaims.map(c => c.claim).join('; ')}`;
+          yield { type: 'warning', warning: warningMsg };
+          agentContext.sharedState['verificationWarnings'] = verification.unsupportedClaims.map(c => c.claim);
+        }
+      }
       
       yield { type: 'progress', stage: WorkflowStage.ASSET_GENERATION, message: 'Creating learning assets...' };
       // 8. One-click Asset Generation (Flashcards, Quizzes based on context)

@@ -69,6 +69,7 @@ export class SourceService {
           const pineconeMetadata: RecordMetadata = {
             notebookId: source.notebookId,
             sourceId: source.id,
+            sourceTitle: source.title,
             text: batchChunks[j].text,
             pageNumber: batchChunks[j].pageNumber,
             paragraphIndex: batchChunks[j].paragraphIndex

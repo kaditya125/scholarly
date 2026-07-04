@@ -104,6 +104,10 @@ export class ChatService {
           res.write(`data: ${JSON.stringify({ type: 'chunk', content: event.chunk })}\n\n`);
         } else if (event.type === 'error') {
           throw new Error(event.message);
+        } else if (event.type === 'citation') {
+          res.write(`data: ${JSON.stringify({ type: 'citation', citation: event.citation })}\n\n`);
+        } else if (event.type === 'warning') {
+          res.write(`data: ${JSON.stringify({ type: 'warning', message: event.warning })}\n\n`);
         } else if (event.type === 'done') {
           res.write(`data: ${JSON.stringify({ type: 'done', data: event.data })}\n\n`);
         }
