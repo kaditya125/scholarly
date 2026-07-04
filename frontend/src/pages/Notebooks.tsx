@@ -8,6 +8,9 @@ import { cn } from '../lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useNotebooks, useNotebookSources } from '../hooks/ai/useNotebook';
+import { useWorkflowStream } from '../hooks/ai/useWorkflowStream';
+import { ChatMessageList, ChatMessage } from '../components/chat/ChatMessageList';
+import { CitationViewerPanel } from '../components/chat/CitationViewerPanel';
 
 const LEARNING_MODES = [
   { id: 'TEACHER', label: 'Teacher Mode', icon: GraduationCap, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
@@ -29,9 +32,13 @@ export default function Notebooks() {
   const [activeMode, setActiveMode] = useState('TEACHER');
   const [activeTab, setActiveTab] = useState<'CHAT' | 'GRAPH' | 'ASSETS'>('CHAT');
   const [prompt, setPrompt] = useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [activeCitation, setActiveCitation] = useState<any | null>(null);
+  
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   const { notebooks, isLoading: isLoadingNotebooks, createNotebook } = useNotebooks();
+  const { startStream, isStreaming, content: streamContent, citations: streamCitations, warnings: streamWarnings } = useWorkflowStream();
   
   // Auto-select first notebook if none selected
   React.useEffect(() => {
@@ -66,6 +73,61 @@ export default function Notebooks() {
       await createNotebook({ title, color: 'bg-indigo-500' });
     }
   };
+
+  const handleSendMessage = async () => {
+    if (!prompt.trim() || !activeNotebook || isStreaming) return;
+    
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: prompt.trim(),
+      timestamp: Date.now()
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setPrompt('');
+    
+    try {
+      const response = await startStream({
+         notebookId: activeNotebook,
+         message: userMessage.content,
+         mode: activeMode,
+      });
+      
+      const assistantMessage: ChatMessage = {
+         id: (Date.now() + 1).toString(),
+         role: 'assistant',
+         content: response.content,
+         timestamp: Date.now(),
+         citations: response.data?.citations || [],
+         warnings: response.data?.warnings || [],
+      };
+      
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (err) {
+      console.error('Chat error:', err);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  // When streaming, we append a temporary message
+  const displayMessages = [...messages];
+  if (isStreaming && streamContent) {
+    displayMessages.push({
+      id: 'stream',
+      role: 'assistant',
+      content: streamContent,
+      timestamp: Date.now(),
+      citations: streamCitations,
+      warnings: streamWarnings
+    });
+  }
 
   return (
     <div className="flex w-full h-[calc(100vh-80px)] bg-slate-50 dark:bg-[#121212] overflow-hidden font-sans">
@@ -168,25 +230,35 @@ export default function Notebooks() {
            <>
              {/* Chat History Area */}
              <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 custom-scrollbar">
-                {/* Initial empty state */}
-                <div className="flex flex-col items-center justify-center h-full text-center max-w-lg mx-auto mt-20">
-                  <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center mb-6">
-                     <Brain className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Your Learning Workspace</h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
-                    Upload your study materials, and I'll act as your personal tutor. Every answer is grounded in your documents with precise citations.
-                  </p>
+                {displayMessages.length === 0 ? (
+                  /* Initial empty state */
+                  <div className="flex flex-col items-center justify-center h-full text-center max-w-lg mx-auto mt-20">
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center mb-6">
+                       <Brain className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Your Learning Workspace</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+                      Upload your study materials, and I'll act as your personal tutor. Every answer is grounded in your documents with precise citations.
+                    </p>
 
-                  <div className="flex flex-wrap justify-center gap-3 w-full">
-                    {ONE_CLICK_ACTIONS.map((action, i) => (
-                      <button key={i} className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full text-sm font-semibold text-slate-600 dark:text-gray-300 hover:border-indigo-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all shadow-sm">
-                        <action.icon className="w-4 h-4" />
-                        {action.label}
-                      </button>
-                    ))}
+                    <div className="flex flex-wrap justify-center gap-3 w-full">
+                      {ONE_CLICK_ACTIONS.map((action, i) => (
+                        <button key={i} className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full text-sm font-semibold text-slate-600 dark:text-gray-300 hover:border-indigo-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all shadow-sm">
+                          <action.icon className="w-4 h-4" />
+                          {action.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="max-w-4xl mx-auto">
+                    <ChatMessageList 
+                      messages={displayMessages} 
+                      isStreaming={isStreaming && !streamContent} 
+                      onCitationClick={setActiveCitation} 
+                    />
+                  </div>
+                )}
              </div>
 
              {/* Chat Input Bar */}
@@ -199,12 +271,17 @@ export default function Notebooks() {
                  <textarea 
                    value={prompt}
                    onChange={e => setPrompt(e.target.value)}
+                   onKeyDown={handleKeyDown}
                    placeholder={`Ask anything in ${activeMode.toLowerCase()} mode...`}
                    className="flex-1 max-h-48 min-h-[44px] bg-transparent border-none outline-none resize-none text-[15px] text-slate-800 dark:text-gray-200 py-2.5 placeholder:text-slate-400 custom-scrollbar"
                    rows={1}
                  />
 
-                 <button className="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center text-white transition-colors shrink-0 shadow-sm mb-0.5">
+                 <button 
+                   onClick={handleSendMessage}
+                   disabled={!prompt.trim() || !activeNotebook || isStreaming}
+                   className="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 dark:disabled:bg-slate-800 flex items-center justify-center text-white transition-colors shrink-0 shadow-sm mb-0.5"
+                 >
                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                      <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                    </svg>
@@ -229,6 +306,17 @@ export default function Notebooks() {
       
       {/* RIGHT SIDEBAR: RESOURCE PANEL */}
       <div className="w-[320px] bg-white dark:bg-[#1a1a1a] border-l border-slate-200 dark:border-white/5 flex flex-col h-full flex-shrink-0 relative z-20">
+        
+        {/* Render CitationViewerPanel absolute to right sidebar when active */}
+        <AnimatePresence>
+           {activeCitation && (
+              <CitationViewerPanel 
+                citation={activeCitation} 
+                onClose={() => setActiveCitation(null)} 
+              />
+           )}
+        </AnimatePresence>
+
         <div className="p-5 border-b border-slate-100 dark:border-white/5 flex justify-between items-center">
           <h3 className="font-bold text-slate-800 dark:text-gray-100 flex items-center gap-2">
             <Book className="w-4 h-4 text-indigo-500" />

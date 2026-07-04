@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { notebooksApi, Notebook, DocumentSource } from '../../lib/api/notebooks';
+import { notebooksApi } from '../../lib/api/notebooks';
+import { Notebook, DocumentSource } from '../../types';
 import { useAuth } from '../../lib/AuthContext';
 
 export function useNotebooks() {

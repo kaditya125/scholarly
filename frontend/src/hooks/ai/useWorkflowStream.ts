@@ -12,6 +12,8 @@ export interface StreamState {
   isStreaming: boolean;
   content: string;
   progressEvents: WorkflowProgress[];
+  citations: any[];
+  warnings: string[];
   error: string | null;
   done: boolean;
   data: any | null; // Final metadata (citations, confidence)
@@ -23,6 +25,8 @@ export function useWorkflowStream() {
     isStreaming: false,
     content: '',
     progressEvents: [],
+    citations: [],
+    warnings: [],
     error: null,
     done: false,
     data: null
@@ -37,6 +41,8 @@ export function useWorkflowStream() {
         isStreaming: true,
         content: '',
         progressEvents: [],
+        citations: [],
+        warnings: [],
         error: null,
         done: false,
         data: null
@@ -110,6 +116,16 @@ export function useWorkflowStream() {
                 setState(s => ({
                   ...s,
                   content: finalContent
+                }));
+              } else if (event.type === 'citation') {
+                setState(s => ({
+                  ...s,
+                  citations: [...s.citations, event.citation]
+                }));
+              } else if (event.type === 'warning') {
+                setState(s => ({
+                  ...s,
+                  warnings: [...s.warnings, event.message]
                 }));
               } else if (event.type === 'done') {
                 setState(s => ({
