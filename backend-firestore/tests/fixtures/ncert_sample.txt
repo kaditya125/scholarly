@@ -1,0 +1,15 @@
+# Structure of the Atom
+
+## Subatomic Particles
+Atoms are made up of three subatomic particles: protons, neutrons, and electrons.
+- Protons are positively charged.
+- Electrons are negatively charged.
+- Neutrons have no charge (they are neutral).
+
+The mass of a proton is taken as one unit and its charge as +1. The mass of an electron is considered to be negligible, and its charge is -1.
+
+## Thomson's Model of an Atom
+J.J. Thomson proposed that an atom was a solid sphere of positively charged material and the negatively charged electrons were embedded in it, like seeds in a watermelon.
+
+## Rutherford's Model
+Ernest Rutherford designed an experiment using alpha particles and a thin gold foil. He concluded that most of the space inside the atom is empty because most alpha particles passed straight through the foil. He also deduced that the positive charge of the atom is concentrated in a very small volume at the center, called the nucleus.
