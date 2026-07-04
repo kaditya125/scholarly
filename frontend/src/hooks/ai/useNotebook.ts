@@ -11,6 +11,9 @@ export function useNotebooks() {
     queryKey: ['notebooks', user?.uid],
     queryFn: () => notebooksApi.getNotebooks(),
     enabled: !!user?.uid,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
+    retry: 2,
   });
 
   const createNotebookMutation = useMutation({
@@ -51,7 +54,9 @@ export function useNotebookSources(notebookId: string | null) {
       if (!data) return false;
       const isProcessing = data.some(s => ['PENDING', 'CHUNKING', 'EMBEDDING', 'INDEXING'].includes(s.status));
       return isProcessing ? 5000 : false;
-    }
+    },
+    staleTime: 1000 * 30, // 30 seconds
+    retry: 2,
   });
 
   const uploadSourceMutation = useMutation({
@@ -76,6 +81,9 @@ export function useAssets(notebookId: string | null) {
     queryKey: ['notebookAssets', notebookId, user?.uid],
     queryFn: () => notebooksApi.getAssets(notebookId!),
     enabled: !!user?.uid && !!notebookId,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
+    retry: 2,
   });
 
   return {
@@ -91,6 +99,9 @@ export function useKnowledgeGraph(notebookId: string | null) {
     queryKey: ['notebookGraph', notebookId, user?.uid],
     queryFn: () => notebooksApi.getGraph(notebookId!),
     enabled: !!user?.uid && !!notebookId,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
+    retry: 2,
   });
 
   return {
