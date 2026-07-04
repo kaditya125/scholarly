@@ -176,9 +176,13 @@ Standalone Search Query:`;
 
       return {
         text: this.sanitizeContext(String(meta.text || '')),
-        source: String(meta.filename || 'Unknown Document'),
+        source: String(meta.sourceTitle || meta.filename || 'Unknown Document'),
         score: reranked.relevanceScore, // raw reranker score
-        metadata: meta,
+        metadata: {
+          ...meta,
+          pageNumber: meta.pageNumber,
+          paragraphIndex: meta.paragraphIndex
+        },
         weightedScore,
         selectionReasoning: reasoning.trim()
       };
