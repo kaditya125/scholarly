@@ -72,7 +72,7 @@ export interface DocumentSource {
 export interface LearningAsset {
   id: string;
   notebookId: string;
-  type: 'FLASHCARDS' | 'QUIZ' | 'MIND_MAP' | 'NOTES' | 'SUMMARY' | 'TIMELINE';
+  type: 'FLASHCARDS' | 'QUIZ' | 'MIND_MAP' | 'NOTES' | 'SUMMARY' | 'TIMELINE' | 'PODCAST';
   title: string;
   content: any; // We'll keep it as `any` on frontend for now, to be cast later
   createdAt: number;
