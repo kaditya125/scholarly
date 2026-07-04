@@ -27,6 +27,7 @@ const ONE_CLICK_ACTIONS = [
 export default function Notebooks() {
   const [activeNotebook, setActiveNotebook] = useState<string | null>(null);
   const [activeMode, setActiveMode] = useState('TEACHER');
+  const [activeTab, setActiveTab] = useState<'CHAT' | 'GRAPH' | 'ASSETS'>('CHAT');
   const [prompt, setPrompt] = useState('');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   
@@ -117,7 +118,28 @@ export default function Notebooks() {
                 <Brain className="w-5 h-5 text-indigo-600" />
                 <span className="font-bold text-slate-800 dark:text-gray-100">Scholarly AI Studio</span>
               </div>
-              <div className="h-4 w-[1px] bg-slate-300 dark:bg-slate-700" />
+              
+              <div className="h-4 w-[1px] bg-slate-300 dark:bg-slate-700 mx-2" />
+              
+              <div className="flex space-x-4">
+                {['CHAT', 'GRAPH', 'ASSETS'].map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab as any)}
+                    className={cn(
+                      "text-sm font-semibold transition-colors pb-1 border-b-2",
+                      activeTab === tab 
+                        ? "text-indigo-600 border-indigo-600" 
+                        : "text-slate-500 border-transparent hover:text-slate-800 dark:hover:text-gray-300"
+                    )}
+                  >
+                    {tab.charAt(0) + tab.slice(1).toLowerCase()}
+                  </button>
+                ))}
+              </div>
+
+              <div className="h-4 w-[1px] bg-slate-300 dark:bg-slate-700 mx-2" />
+
               <div className="flex space-x-1 bg-slate-100 dark:bg-white/5 p-1 rounded-lg">
                 {LEARNING_MODES.slice(0, 3).map(mode => (
                   <button 
@@ -141,52 +163,68 @@ export default function Notebooks() {
             </div>
          </div>
 
-         {/* Chat History Area */}
-         <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8">
-            {/* Initial empty state */}
-            <div className="flex flex-col items-center justify-center h-full text-center max-w-lg mx-auto mt-20">
-              <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center mb-6">
-                 <Brain className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-              </div>
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Your Learning Workspace</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
-                Upload your study materials, and I'll act as your personal tutor. Every answer is grounded in your documents with precise citations.
-              </p>
+         {/* Tab Content */}
+         {activeTab === 'CHAT' && (
+           <>
+             {/* Chat History Area */}
+             <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 custom-scrollbar">
+                {/* Initial empty state */}
+                <div className="flex flex-col items-center justify-center h-full text-center max-w-lg mx-auto mt-20">
+                  <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center mb-6">
+                     <Brain className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Your Learning Workspace</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+                    Upload your study materials, and I'll act as your personal tutor. Every answer is grounded in your documents with precise citations.
+                  </p>
 
-              <div className="flex flex-wrap justify-center gap-3 w-full">
-                {ONE_CLICK_ACTIONS.map((action, i) => (
-                  <button key={i} className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full text-sm font-semibold text-slate-600 dark:text-gray-300 hover:border-indigo-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all shadow-sm">
-                    <action.icon className="w-4 h-4" />
-                    {action.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-         </div>
+                  <div className="flex flex-wrap justify-center gap-3 w-full">
+                    {ONE_CLICK_ACTIONS.map((action, i) => (
+                      <button key={i} className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full text-sm font-semibold text-slate-600 dark:text-gray-300 hover:border-indigo-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all shadow-sm">
+                        <action.icon className="w-4 h-4" />
+                        {action.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+             </div>
 
-         {/* Chat Input Bar */}
-         <div className="p-6 pt-0">
-           <div className="max-w-4xl mx-auto relative bg-white dark:bg-[#1a1a1b] rounded-2xl border border-slate-200 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all p-3 pl-4 flex items-end gap-3">
-             <button className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors shrink-0 mb-0.5">
-               <Plus className="w-5 h-5" />
-             </button>
-             
-             <textarea 
-               value={prompt}
-               onChange={e => setPrompt(e.target.value)}
-               placeholder={`Ask anything in ${activeMode.toLowerCase()} mode...`}
-               className="flex-1 max-h-48 min-h-[44px] bg-transparent border-none outline-none resize-none text-[15px] text-slate-800 dark:text-gray-200 py-2.5 placeholder:text-slate-400 custom-scrollbar"
-               rows={1}
-             />
+             {/* Chat Input Bar */}
+             <div className="p-6 pt-0">
+               <div className="max-w-4xl mx-auto relative bg-white dark:bg-[#1a1a1b] rounded-2xl border border-slate-200 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all p-3 pl-4 flex items-end gap-3">
+                 <button className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors shrink-0 mb-0.5">
+                   <Plus className="w-5 h-5" />
+                 </button>
+                 
+                 <textarea 
+                   value={prompt}
+                   onChange={e => setPrompt(e.target.value)}
+                   placeholder={`Ask anything in ${activeMode.toLowerCase()} mode...`}
+                   className="flex-1 max-h-48 min-h-[44px] bg-transparent border-none outline-none resize-none text-[15px] text-slate-800 dark:text-gray-200 py-2.5 placeholder:text-slate-400 custom-scrollbar"
+                   rows={1}
+                 />
 
-             <button className="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center text-white transition-colors shrink-0 shadow-sm mb-0.5">
-               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                 <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-               </svg>
-             </button>
+                 <button className="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center text-white transition-colors shrink-0 shadow-sm mb-0.5">
+                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                     <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                   </svg>
+                 </button>
+               </div>
+             </div>
+           </>
+         )}
+         
+         {activeTab === 'GRAPH' && (
+           <div className="flex-1 flex items-center justify-center text-slate-500">
+              Knowledge Graph Visualization (Coming in Phase 6)
            </div>
-         </div>
+         )}
 
+         {activeTab === 'ASSETS' && (
+           <div className="flex-1 flex items-center justify-center text-slate-500">
+              Learning Assets (Coming in Phase 7)
+           </div>
+         )}
       </div>
       
       {/* RIGHT SIDEBAR: RESOURCE PANEL */}

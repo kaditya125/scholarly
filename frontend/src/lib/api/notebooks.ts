@@ -1,23 +1,5 @@
 import { api } from './client';
-
-export interface Notebook {
-  id: string;
-  userId: string;
-  title: string;
-  color: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface DocumentSource {
-  id: string;
-  notebookId: string;
-  title: string;
-  type: string;
-  pages?: number;
-  status: 'PENDING' | 'CHUNKING' | 'EMBEDDING' | 'INDEXING' | 'READY' | 'FAILED';
-  createdAt: string;
-}
+import { Notebook, DocumentSource, LearningAsset, KGNode, KGEdge } from '../../types';
 
 export const notebooksApi = {
   async getNotebooks(): Promise<Notebook[]> {
@@ -47,6 +29,16 @@ export const notebooksApi = {
         'Content-Type': 'multipart/form-data'
       }
     });
+    return response.data;
+  },
+
+  async getAssets(notebookId: string): Promise<LearningAsset[]> {
+    const response = await api.get(`/notebooks/${notebookId}/assets`);
+    return response.data;
+  },
+
+  async getGraph(notebookId: string): Promise<{ nodes: KGNode[], edges: KGEdge[] }> {
+    const response = await api.get(`/notebooks/${notebookId}/graph`);
     return response.data;
   }
 };

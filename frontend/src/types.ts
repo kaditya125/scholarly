@@ -30,3 +30,63 @@ export interface TestResult {
   timeSpentSeconds: number;
   answers: Record<string, number>; // questionId -> selectedOptionIndex
 }
+
+// --- Notebook Workspace Types ---
+
+export interface Notebook {
+  id: string;
+  userId: string;
+  title: string;
+  color: string;
+  createdAt: number;
+  updatedAt: number;
+  lastOpenedAt?: number;
+  lastChatAt?: number;
+  currentLearningMode?: string;
+  isPinned: boolean;
+  isFavorite: boolean;
+  isArchived: boolean;
+  stats: {
+    documentCount: number;
+    conversationCount: number;
+    knowledgeGraphNodes: number;
+    flashcardsCount: number;
+    quizCount: number;
+  };
+}
+
+export type ProcessingStatus = 'PENDING' | 'EXTRACTING' | 'CHUNKING' | 'EMBEDDING' | 'GRAPH_BUILDING' | 'INDEXING' | 'READY' | 'FAILED';
+
+export interface DocumentSource {
+  id: string;
+  notebookId: string;
+  title: string;
+  type: string;
+  sizeBytes: number;
+  status: ProcessingStatus;
+  chunksExtracted: number;
+  createdAt: number;
+}
+
+export interface LearningAsset {
+  id: string;
+  notebookId: string;
+  type: 'FLASHCARDS' | 'QUIZ' | 'MIND_MAP' | 'NOTES' | 'SUMMARY' | 'TIMELINE';
+  title: string;
+  content: any; // We'll keep it as `any` on frontend for now, to be cast later
+  createdAt: number;
+}
+
+export interface KGNode {
+  id: string;
+  label: string;
+  type: string;
+  definition: string;
+}
+
+export interface KGEdge {
+  id: string;
+  sourceNodeId: string;
+  targetNodeId: string;
+  relationshipType: string;
+}

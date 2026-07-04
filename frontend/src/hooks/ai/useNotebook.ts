@@ -67,3 +67,33 @@ export function useNotebookSources(notebookId: string | null) {
     isUploading: uploadSourceMutation.isPending,
   };
 }
+
+export function useAssets(notebookId: string | null) {
+  const { user } = useAuth();
+
+  const assetsQuery = useQuery({
+    queryKey: ['notebookAssets', notebookId, user?.uid],
+    queryFn: () => notebooksApi.getAssets(notebookId!),
+    enabled: !!user?.uid && !!notebookId,
+  });
+
+  return {
+    assets: assetsQuery.data || [],
+    isLoading: assetsQuery.isLoading,
+  };
+}
+
+export function useKnowledgeGraph(notebookId: string | null) {
+  const { user } = useAuth();
+
+  const graphQuery = useQuery({
+    queryKey: ['notebookGraph', notebookId, user?.uid],
+    queryFn: () => notebooksApi.getGraph(notebookId!),
+    enabled: !!user?.uid && !!notebookId,
+  });
+
+  return {
+    graph: graphQuery.data || { nodes: [], edges: [] },
+    isLoading: graphQuery.isLoading,
+  };
+}
