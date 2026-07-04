@@ -107,7 +107,8 @@ export class IngestionService {
     await this.checkQuotas(metadata.userId, bufferSize);
 
     // 1. Extract Text
-    const rawText = await FileParserService.extractText(base64Data, mimeType, metadata.filename);
+    const parsedPages = await FileParserService.extractText(base64Data, mimeType, metadata.filename);
+    const rawText = parsedPages.map(p => p.text).join('\n');
     if (!rawText || rawText.includes('[Error')) {
       throw new Error(`Failed to extract text from ${metadata.filename}`);
     }

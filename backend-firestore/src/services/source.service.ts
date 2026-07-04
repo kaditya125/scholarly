@@ -42,14 +42,17 @@ export class SourceService {
       // 1. Extraction
       await sourceRepository.updateSource(source.notebookId, source.id, { status: 'EXTRACTING' });
       const base64 = file.buffer.toString('base64');
-      const text = await FileParserService.extractText(base64, file.mimetype, file.originalname);
+      const pages = await FileParserService.extractText(base64, file.mimetype, file.originalname);
+      
+      // Combine first few pages for metadata extraction
+      const textForMetadata = pages.slice(0, 5).map(p => p.text).join('\n');
       
       // Extract Metadata (Chapters, headings, definitions, etc.)
-      const metadata = await this.extractRichMetadata(text);
+      const metadata = await this.extractRichMetadata(textForMetadata);
 
       // 2. Chunking
       await sourceRepository.updateSource(source.notebookId, source.id, { status: 'CHUNKING' });
-      const chunks = TextChunker.chunkText(text, 1000, 200);
+      const chunks = TextChunker.chunkPages(pages, 1000, 200);
 
       // 3. Embedding
       await sourceRepository.updateSource(source.notebookId, source.id, { status: 'EMBEDDING' });
@@ -60,13 +63,15 @@ export class SourceService {
       const batchSize = 50;
       for (let i = 0; i < chunks.length; i += batchSize) {
         const batchChunks = chunks.slice(i, i + batchSize);
-        const embeddings = await embeddingProvider.generateEmbeddings(batchChunks);
+        const embeddings = await embeddingProvider.generateEmbeddings(batchChunks.map(c => c.text));
         
         for (let j = 0; j < embeddings.length; j++) {
           const pineconeMetadata: RecordMetadata = {
             notebookId: source.notebookId,
             sourceId: source.id,
-            text: batchChunks[j]
+            text: batchChunks[j].text,
+            pageNumber: batchChunks[j].pageNumber,
+            paragraphIndex: batchChunks[j].paragraphIndex
           };
           vectors.push({
             id: `${source.id}_chunk_${i + j}`,
@@ -79,6 +84,39 @@ export class SourceService {
       // 4. Indexing (Pinecone)
       await sourceRepository.updateSource(source.notebookId, source.id, { status: 'INDEXING' });
       await pineconeService.upsertVectors(vectors);
+
+      // 4.5 Generate Knowledge Graph Nodes
+      await sourceRepository.updateSource(source.notebookId, source.id, { status: 'GRAPH_BUILDING' });
+      const nodes: import('../types').KGNode[] = [];
+      
+      const addNode = (label: string, type: import('../types').KGNode['type'], def: string) => {
+        if (!label) return;
+        nodes.push({
+          id: `${source.notebookId}_${type}_${label.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+          notebookId: source.notebookId,
+          label,
+          type,
+          definition: def,
+          sourceDocIds: [source.id],
+          importance: 0.5,
+          difficulty: 'Medium',
+          estimatedStudyTime: 10,
+          masteryPercentage: 0
+        });
+      };
+
+      metadata.definitions?.forEach(d => addNode(d.term, 'CONCEPT', d.definition));
+      metadata.people?.forEach(p => addNode(p, 'PERSON', 'Extracted person entity'));
+      metadata.places?.forEach(p => addNode(p, 'PLACE', 'Extracted place entity'));
+      metadata.formulae?.forEach(f => addNode(f, 'FORMULA', 'Extracted formula'));
+      metadata.keywords?.forEach(k => addNode(k, 'CONCEPT', 'Extracted keyword'));
+
+      if (nodes.length > 0) {
+        // Deduplicate nodes by id
+        const uniqueNodes = Array.from(new Map(nodes.map(n => [n.id, n])).values());
+        await import('../repositories/notebook.repository').then(m => m.notebookRepository.addKGNodes(source.notebookId, uniqueNodes));
+        await notebookService.addTimelineEvent(source.notebookId, 'GRAPH_BUILT', `Added ${uniqueNodes.length} nodes to Knowledge Graph`);
+      }
 
       // 5. Completion
       const duration = Date.now() - startTime;

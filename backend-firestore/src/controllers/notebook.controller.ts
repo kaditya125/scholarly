@@ -115,6 +115,20 @@ export class NotebookController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  async getKnowledgeGraph(req: Request, res: Response) {
+    try {
+      const userId = req.user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const { id } = req.params;
+      const graph = await notebookService.getKnowledgeGraph(id, userId);
+      res.json(graph);
+    } catch (error: any) {
+      if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' });
+      res.status(500).json({ error: error.message });
+    }
+  }
 }
 
 export const notebookController = new NotebookController();
