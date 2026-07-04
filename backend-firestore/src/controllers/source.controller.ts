@@ -20,10 +20,14 @@ export class SourceController {
 
   async deleteSource(req: Request, res: Response) {
     try {
+      const userId = req.user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
       const { id: notebookId, sourceId } = req.params;
-      await sourceService.deleteSource(notebookId, sourceId);
+      await sourceService.deleteSource(notebookId, sourceId, userId);
       res.json({ success: true });
     } catch (error: any) {
+      if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' });
       res.status(500).json({ error: error.message });
     }
   }

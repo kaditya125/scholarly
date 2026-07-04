@@ -11,6 +11,7 @@ import { RecordMetadata } from '@pinecone-database/pinecone';
 
 export class SourceService {
   async processUpload(notebookId: string, userId: string, file: Express.Multer.File): Promise<DocumentSource> {
+    await notebookService.getNotebookById(notebookId, userId);
     const source: DocumentSource = {
       id: uuidv4(),
       notebookId,
@@ -125,7 +126,7 @@ export class SourceService {
     ${textSample}`;
 
     try {
-      const response = await ai.generateResponse([{ role: 'user', content: prompt }], "You are a data extraction AI. Output strictly valid JSON without markdown formatting.");
+      const response = await ai.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }], "You are a data extraction AI. Output strictly valid JSON without markdown formatting.");
       // Clean markdown formatting if present
       let jsonStr = response.reply.replace(/```json/g, '').replace(/```/g, '').trim();
       const metadata = JSON.parse(jsonStr);
@@ -141,7 +142,8 @@ export class SourceService {
     }
   }
 
-  async deleteSource(notebookId: string, sourceId: string): Promise<void> {
+  async deleteSource(notebookId: string, sourceId: string, userId: string): Promise<void> {
+    await notebookService.getNotebookById(notebookId, userId);
     await sourceRepository.deleteSource(notebookId, sourceId);
     // Also delete from Pinecone
     // Note: pineconeService.deleteVectors doesn't easily support deleting by metadata filter in the free tier

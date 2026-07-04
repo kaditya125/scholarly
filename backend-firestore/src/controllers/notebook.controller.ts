@@ -16,11 +16,15 @@ export class NotebookController {
 
   async getNotebook(req: Request, res: Response) {
     try {
+      const userId = req.user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
       const { id } = req.params;
-      const notebook = await notebookService.getNotebookById(id);
+      const notebook = await notebookService.getNotebookById(id, userId);
       if (!notebook) return res.status(404).json({ error: 'Not found' });
       res.json(notebook);
     } catch (error: any) {
+      if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' });
       res.status(500).json({ error: error.message });
     }
   }
@@ -42,52 +46,72 @@ export class NotebookController {
 
   async updateNotebook(req: Request, res: Response) {
     try {
+      const userId = req.user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
       const { id } = req.params;
       const updates = req.body;
-      await notebookService.updateNotebook(id, updates);
+      await notebookService.updateNotebook(id, userId, updates);
       res.json({ success: true });
     } catch (error: any) {
+      if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' });
       res.status(500).json({ error: error.message });
     }
   }
 
   async deleteNotebook(req: Request, res: Response) {
     try {
+      const userId = req.user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
       const { id } = req.params;
-      await notebookService.deleteNotebook(id);
+      await notebookService.deleteNotebook(id, userId);
       res.json({ success: true });
     } catch (error: any) {
+      if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' });
       res.status(500).json({ error: error.message });
     }
   }
 
   async getSources(req: Request, res: Response) {
     try {
+      const userId = req.user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
       const { id } = req.params;
-      const sources = await notebookService.getSources(id);
+      const sources = await notebookService.getSources(id, userId);
       res.json(sources);
     } catch (error: any) {
+      if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' });
       res.status(500).json({ error: error.message });
     }
   }
 
   async getTimeline(req: Request, res: Response) {
     try {
+      const userId = req.user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
       const { id } = req.params;
-      const timeline = await notebookService.getTimeline(id);
+      const timeline = await notebookService.getTimeline(id, userId);
       res.json(timeline);
     } catch (error: any) {
+      if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' });
       res.status(500).json({ error: error.message });
     }
   }
 
   async getAssets(req: Request, res: Response) {
     try {
+      const userId = req.user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
       const { id } = req.params;
       const { type } = req.query;
-      const assets = await notebookService.getLearningAssets(id, type as string);
+      const assets = await notebookService.getLearningAssets(id, userId, type as string);
       res.json(assets);
     } catch (error: any) {
+      if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' });
       res.status(500).json({ error: error.message });
     }
   }
