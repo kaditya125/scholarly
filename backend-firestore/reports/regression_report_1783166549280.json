@@ -1,0 +1,49 @@
+{
+  "timestamp": "2026-07-04T12:02:29.278Z",
+  "total_questions": 3,
+  "average_retrieval_latency_ms": 466.2339666666664,
+  "average_citation_accuracy": 0,
+  "hallucination_rate": 1,
+  "results": [
+    {
+      "id": "q1_ncert",
+      "question": "What are the three subatomic particles found in an atom?",
+      "expected_concepts": [
+        "proton",
+        "neutron",
+        "electron"
+      ],
+      "retrieved_text": "...",
+      "citation_accuracy": 0,
+      "retrieval_latency_ms": 842.0401000000002,
+      "hallucination_detected": true
+    },
+    {
+      "id": "q2_upsc",
+      "question": "Analyze the implications of Rutherford's model on the understanding of atomic structure.",
+      "expected_concepts": [
+        "nucleus",
+        "empty space",
+        "alpha particles",
+        "gold foil"
+      ],
+      "retrieved_text": "...",
+      "citation_accuracy": 0,
+      "retrieval_latency_ms": 234.9398999999994,
+      "hallucination_detected": true
+    },
+    {
+      "id": "q3_neet",
+      "question": "Generate a quick revision note for Thomson's atomic model.",
+      "expected_concepts": [
+        "solid sphere",
+        "positive charge",
+        "watermelon model"
+      ],
+      "retrieved_text": "...",
+      "citation_accuracy": 0,
+      "retrieval_latency_ms": 321.72189999999955,
+      "hallucination_detected": true
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+[
+  {
+    "id": "q1_ncert",
+    "question": "What are the three subatomic particles found in an atom?",
+    "expected_concepts": ["proton", "neutron", "electron"],
+    "expected_citations": ["ncert_sample", "Structure of the Atom"],
+    "difficulty": "Easy",
+    "learning_mode": "Teacher",
+    "expected_answer_characteristics": {
+      "format": "prose",
+      "readability": "beginner",
+      "hallucination_allowed": false
+    }
+  },
+  {
+    "id": "q2_upsc",
+    "question": "Analyze the implications of Rutherford's model on the understanding of atomic structure.",
+    "expected_concepts": ["nucleus", "empty space", "alpha particles", "gold foil"],
+    "expected_citations": ["upsc_sample"],
+    "difficulty": "Hard",
+    "learning_mode": "Research",
+    "expected_answer_characteristics": {
+      "format": "analytical",
+      "readability": "advanced",
+      "hallucination_allowed": false
+    }
+  },
+  {
+    "id": "q3_neet",
+    "question": "Generate a quick revision note for Thomson's atomic model.",
+    "expected_concepts": ["solid sphere", "positive charge", "watermelon model"],
+    "expected_citations": ["ncert_sample"],
+    "difficulty": "Medium",
+    "learning_mode": "Revision",
+    "expected_answer_characteristics": {
+      "format": "bullet_points",
+      "readability": "intermediate",
+      "hallucination_allowed": false
+    }
+  }
+]

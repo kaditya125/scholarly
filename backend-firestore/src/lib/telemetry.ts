@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 
 export const Telemetry = {
   metrics: [] as any[],
+  costs: [] as any[],
 
   logLatency(operation: string, durationMs: number, metadata?: any) {
     const entry = {
@@ -19,6 +20,26 @@ export const Telemetry = {
     this.metrics.push({
       operation,
       error: error.message,
+      timestamp: new Date().toISOString(),
+      ...metadata
+    });
+  },
+
+  logCost(provider: string, tokens: number, type: 'input' | 'output', metadata?: any) {
+    // Rough estimate rates per 1k tokens
+    const rates: Record<string, any> = {
+      'gemini': { input: 0.000125, output: 0.000375 },
+      'groq': { input: 0.00005, output: 0.00008 }
+    };
+    const rate = rates[provider]?.[type] || 0;
+    const cost = (tokens / 1000) * rate;
+    
+    console.log(`[TELEMETRY_COST] ${provider} ${type} - ${tokens} tokens - $${cost.toFixed(6)}`);
+    this.costs.push({
+      provider,
+      tokens,
+      type,
+      cost,
       timestamp: new Date().toISOString(),
       ...metadata
     });
