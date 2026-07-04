@@ -11,6 +11,10 @@ export class NotebookService {
       color,
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      lastOpenedAt: Date.now(),
+      isPinned: false,
+      isFavorite: false,
+      isArchived: false,
       stats: {
         documentCount: 0,
         conversationCount: 0,
@@ -41,21 +45,26 @@ export class NotebookService {
     return await notebookRepository.getNotebooksByUser(userId);
   }
 
-  async getNotebookById(id: string): Promise<Notebook | null> {
-    return await notebookRepository.getNotebook(id);
+  async getNotebookById(id: string, userId: string): Promise<Notebook | null> {
+    const notebook = await notebookRepository.getNotebook(id);
+    if (notebook && notebook.userId !== userId) throw new Error('Forbidden');
+    return notebook;
   }
 
-  async updateNotebook(id: string, updates: Partial<Notebook>): Promise<void> {
+  async updateNotebook(id: string, userId: string, updates: Partial<Notebook>): Promise<void> {
+    await this.getNotebookById(id, userId); // Throws if forbidden
     await notebookRepository.updateNotebook(id, updates);
   }
 
-  async deleteNotebook(id: string): Promise<void> {
+  async deleteNotebook(id: string, userId: string): Promise<void> {
+    await this.getNotebookById(id, userId); // Throws if forbidden
     await notebookRepository.deleteNotebook(id);
   }
 
   // --- Sources ---
   
-  async getSources(notebookId: string): Promise<DocumentSource[]> {
+  async getSources(notebookId: string, userId: string): Promise<DocumentSource[]> {
+    await this.getNotebookById(notebookId, userId);
     return await notebookRepository.getSources(notebookId);
   }
 
@@ -72,13 +81,15 @@ export class NotebookService {
     await notebookRepository.addTimelineEvent(event);
   }
 
-  async getTimeline(notebookId: string): Promise<TimelineEvent[]> {
+  async getTimeline(notebookId: string, userId: string): Promise<TimelineEvent[]> {
+    await this.getNotebookById(notebookId, userId);
     return await notebookRepository.getTimeline(notebookId);
   }
 
   // --- Assets ---
   
-  async addLearningAsset(assetData: Omit<LearningAsset, 'id' | 'createdAt' | 'updatedAt'>): Promise<LearningAsset> {
+  async addLearningAsset(assetData: Omit<LearningAsset, 'id' | 'createdAt' | 'updatedAt'>, userId: string): Promise<LearningAsset> {
+    await this.getNotebookById(assetData.notebookId, userId);
     const asset: LearningAsset = {
       ...assetData,
       id: uuidv4(),
@@ -97,7 +108,8 @@ export class NotebookService {
     return asset;
   }
 
-  async getLearningAssets(notebookId: string, type?: string): Promise<LearningAsset[]> {
+  async getLearningAssets(notebookId: string, userId: string, type?: string): Promise<LearningAsset[]> {
+    await this.getNotebookById(notebookId, userId);
     return await notebookRepository.getLearningAssets(notebookId, type);
   }
 }

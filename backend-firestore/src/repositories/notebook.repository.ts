@@ -1,9 +1,9 @@
-import { adminDb } from '../config/firebase';
+import { db } from '../config/firebase';
 import { Notebook, DocumentSource, TimelineEvent, LearningAsset } from '../types';
 import { FieldValue } from 'firebase-admin/firestore';
 
 export class NotebookRepository {
-  private collection = adminDb.collection('notebooks');
+  private collection = db.collection('notebooks');
 
   async createNotebook(notebook: Notebook): Promise<void> {
     await this.collection.doc(notebook.id).set(notebook);

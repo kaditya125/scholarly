@@ -32,10 +32,28 @@ export interface WorkflowRequest {
 }
 
 export interface WorkflowEvent {
-  type: 'progress' | 'chunk' | 'error' | 'done';
+  type: 'progress' | 'chunk' | 'citation' | 'asset' | 'warning' | 'metrics' | 'error' | 'done';
   stage?: WorkflowStage;
   message?: string;
   chunk?: string;
+  citation?: {
+    source: string;
+    text: string;
+    score: number;
+    authorityScore: number;
+    selectionReasoning: string;
+  };
+  asset?: {
+    type: string;
+    id: string;
+    preview: string;
+  };
+  warning?: string;
+  metrics?: {
+    retrievalMs: number;
+    generationMs: number;
+    confidenceScore: number;
+  };
   data?: any;
 }
 

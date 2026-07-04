@@ -5,6 +5,13 @@ export interface Notebook {
   color: string;
   createdAt: number;
   updatedAt: number;
+  lastOpenedAt?: number;
+  lastChatAt?: number;
+  currentLearningMode?: string;
+  estimatedCompletionHours?: number;
+  isPinned: boolean;
+  isFavorite: boolean;
+  isArchived: boolean;
   stats: {
     documentCount: number;
     conversationCount: number;
@@ -81,13 +88,22 @@ export interface TimelineEvent {
 
 export type AssetType = 'FLASHCARDS' | 'QUIZ' | 'MIND_MAP' | 'NOTES' | 'SUMMARY' | 'TIMELINE' | 'PODCAST_SCRIPT';
 
+export type AssetContent = 
+  | { flashcards: { question: string; answer: string; hint?: string }[] }
+  | { quiz: { question: string; options: string[]; answerIndex: number; explanation: string }[] }
+  | { mindMap: { nodes: { id: string; label: string }[]; edges: { source: string; target: string; label?: string }[] } }
+  | { notes: { markdown: string; concepts: string[] } }
+  | { summary: { markdown: string; keyTakeaways: string[] } }
+  | { timeline: { events: { date: string; description: string; importance: string }[] } }
+  | { podcastScript: { speakers: string[]; script: { speaker: string; text: string }[] } };
+
 export interface LearningAsset {
   id: string;
   notebookId: string;
   userId: string;
   type: AssetType;
   title: string;
-  content: any; // Can be array of flashcards, markdown for notes, json for quiz
+  content: AssetContent;
   sourceDocIds: string[];
   createdAt: number;
   updatedAt: number;
