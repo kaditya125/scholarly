@@ -62,6 +62,7 @@ export interface DocumentSource {
   notebookId: string;
   title: string;
   type: string;
+  pages?: number;
   sizeBytes: number;
   status: ProcessingStatus;
   chunksExtracted: number;
