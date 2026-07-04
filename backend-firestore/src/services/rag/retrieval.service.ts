@@ -6,6 +6,7 @@ import { CohereRerankerProvider } from '../ai/providers/cohere-reranker.provider
 import { cacheService } from '../cache.service';
 import { ChatMessage } from '../../types';
 import { env } from '../../config/env';
+import { Telemetry } from '../../lib/telemetry';
 
 export interface RetrievalResult {
   text: string;
@@ -110,19 +111,27 @@ Standalone Search Query:`;
    * Retrieves context from Pinecone based on Semantic Search and Metadata Filters
    */
   async retrieveContext(query: string, notebookId: string, examContext?: ExamContext, topK: number = 5): Promise<RetrievalResult[]> {
+    const tStart = performance.now();
     const cacheKey = `retrieval:${notebookId}:${query}:${topK}`;
     const cached = await cacheService.get<RetrievalResult[]>(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      Telemetry.logLatency('retrieval_cache_hit', performance.now() - tStart, { query });
+      return cached;
+    }
 
+    const tEmbed = performance.now();
     const queryEmbedding = await this.embeddingProvider.generateEmbedding(query);
+    Telemetry.logLatency('query_embedding', performance.now() - tEmbed);
     
     // Semantic + Metadata filtering (Hybrid approach)
     // Simultaneous querying: we can pull from multiple sources by not strictly enforcing notebookId if it's a global query
     const filter = notebookId ? { notebookId } : {}; 
     const namespace = env.PINECONE_NAMESPACE;
     
+    const tPinecone = performance.now();
     // Fetch topK * 4 to ensure a wide net for the Reranker
     const matches = await pineconeService.queryVectors(queryEmbedding, topK * 4, filter, namespace);
+    Telemetry.logLatency('pinecone_search', performance.now() - tPinecone);
     
     // Filter out completely irrelevant vectors
     const validMatches = matches.filter((m: any) => (m.score || 0) >= 0.50);
@@ -191,11 +200,19 @@ Standalone Search Query:`;
     // Sort descending by calculated weighted score
     rankedResults.sort((a, b) => (b.weightedScore || 0) - (a.weightedScore || 0));
 
-    // Return the final Top K
-    const finalResults = rankedResults.slice(0, topK);
-    await cacheService.set(cacheKey, finalResults, 1800); // cache for 30 mins
-    
-    return finalResults;
+    // Apply reranking if we have enough results to justify it
+    let combinedResults = rankedResults;
+    if (combinedResults.length > topK) {
+       const tRerank = performance.now();
+       combinedResults = await this.rerankerProvider.rerank(query, combinedResults as any, topK) as any;
+       Telemetry.logLatency('cohere_rerank', performance.now() - tRerank);
+    }
+
+    // Cache the fully verified and reranked result set
+    await cacheService.set(cacheKey, combinedResults, 600); // 10 minutes
+
+    Telemetry.logLatency('retrieval_total', performance.now() - tStart, { resultsCount: combinedResults.length });
+    return combinedResults;
   }
 
   /**
