@@ -1,6 +1,6 @@
 import { db } from '../config/firebase';
 import { Notebook, DocumentSource, TimelineEvent, LearningAsset } from '../types';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Filter } from 'firebase-admin/firestore';
 
 export class NotebookRepository {
   private collection = db.collection('notebooks');
@@ -10,16 +10,48 @@ export class NotebookRepository {
   }
 
   async getNotebooksByUser(userId: string): Promise<Notebook[]> {
-    const snapshot = await this.collection.where('userId', '==', userId).orderBy('updatedAt', 'desc').get();
+    // Fetch notebooks where the user is an owner, editor, or viewer
+    const snapshot = await this.collection
+      .where(
+        Filter.or(
+          Filter.where('owner', '==', userId),
+          Filter.where('userId', '==', userId), // legacy compat
+          Filter.where('editors', 'array-contains', userId),
+          Filter.where('viewers', 'array-contains', userId)
+        )
+      )
+      .orderBy('updatedAt', 'desc')
+      .get();
+      
     return snapshot.docs.map(doc => doc.data() as Notebook);
   }
 
-  async getNotebook(id: string): Promise<Notebook | null> {
+  async getNotebook(userId: string, id: string): Promise<Notebook | null> {
     const doc = await this.collection.doc(id).get();
-    return doc.exists ? (doc.data() as Notebook) : null;
+    if (!doc.exists) return null;
+    const notebook = doc.data() as Notebook;
+    
+    if (
+      notebook.owner !== userId && 
+      notebook.userId !== userId &&
+      !notebook.editors?.includes(userId) && 
+      !notebook.viewers?.includes(userId)
+    ) {
+      return null; // or throw an Unauthorized error
+    }
+    
+    return notebook;
   }
 
-  async updateNotebook(id: string, updates: Partial<Notebook>): Promise<void> {
+  async updateNotebook(userId: string, id: string, updates: Partial<Notebook>): Promise<void> {
+    const notebook = await this.getNotebook(userId, id);
+    if (!notebook) throw new Error('Notebook not found or unauthorized');
+    
+    // Only owner or editor can update
+    if (notebook.owner !== userId && notebook.userId !== userId && !notebook.editors?.includes(userId)) {
+      throw new Error('Unauthorized to edit');
+    }
+
     await this.collection.doc(id).update({
       ...updates,
       updatedAt: Date.now()
@@ -85,6 +117,54 @@ export class NotebookRepository {
       [`stats.${statKey}`]: FieldValue.increment(amount),
       updatedAt: Date.now()
     });
+  }
+
+  // --- Admin: platform-wide aggregates ---
+
+  /** Global notebook counts for the admin dashboard (total + active in the last 7 days). */
+  async getGlobalStats(): Promise<{ totalNotebooks: number; activeThisWeek: number }> {
+    const weekAgo = Date.now() - 7 * 86400000;
+    const [totalAgg, activeAgg] = await Promise.all([
+      this.collection.count().get(),
+      this.collection.where('updatedAt', '>=', weekAgo).count().get(),
+    ]);
+    return {
+      totalNotebooks: totalAgg.data().count,
+      activeThisWeek: activeAgg.data().count,
+    };
+  }
+
+  /** Most recently updated notebooks across all users (admin moderation view). */
+  async listRecent(limit: number = 50): Promise<Notebook[]> {
+    const snapshot = await this.collection.orderBy('updatedAt', 'desc').limit(limit).get();
+    return snapshot.docs.map(doc => doc.data() as Notebook);
+  }
+
+  /** Admin: fetch any notebook regardless of ownership. */
+  async getByIdAdmin(id: string): Promise<Notebook | null> {
+    const doc = await this.collection.doc(id).get();
+    return doc.exists ? (doc.data() as Notebook) : null;
+  }
+
+  /** Admin: update any notebook regardless of ownership. */
+  async updateAdmin(id: string, updates: Partial<Notebook>): Promise<void> {
+    await this.collection.doc(id).update({ ...updates, updatedAt: Date.now() });
+  }
+
+  /** Admin: delete a notebook and cascade-delete its known subcollections. */
+  async deleteWithSubcollections(id: string): Promise<void> {
+    const subcollections = ['sources', 'timeline', 'assets', 'kg_nodes', 'kg_edges'];
+    for (const sub of subcollections) {
+      const snap = await this.collection.doc(id).collection(sub).get();
+      if (snap.empty) continue;
+      const docs = snap.docs;
+      for (let i = 0; i < docs.length; i += 400) {
+        const batch = db.batch();
+        docs.slice(i, i + 400).forEach((d) => batch.delete(d.ref));
+        await batch.commit();
+      }
+    }
+    await this.collection.doc(id).delete();
   }
 
   // --- Knowledge Graph ---

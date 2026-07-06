@@ -17,4 +17,11 @@ export class DiscussionsRepository {
     const snapshot = await query.get();
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Discussion));
   }
+
+  async create(discussion: Omit<Discussion, 'id'>): Promise<Discussion> {
+    const docRef = this.collection.doc();
+    const newDiscussion = { id: docRef.id, ...discussion };
+    await docRef.set(newDiscussion);
+    return newDiscussion;
+  }
 }

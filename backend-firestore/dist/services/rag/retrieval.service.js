@@ -4,10 +4,11 @@ exports.retrievalService = exports.RetrievalService = void 0;
 const pinecone_service_1 = require("./pinecone.service");
 const search_service_1 = require("./search.service");
 const google_embedding_provider_1 = require("../ai/providers/google-embedding.provider");
-const groq_provider_1 = require("../ai/groq.provider");
+const gemini_provider_1 = require("../ai/gemini.provider");
 const cohere_reranker_provider_1 = require("../ai/providers/cohere-reranker.provider");
 const cache_service_1 = require("../cache.service");
 const env_1 = require("../../config/env");
+const telemetry_1 = require("../../lib/telemetry");
 const AUTHORITY_WEIGHTS = {
     'NCERT': 1.5,
     'GOVERNMENT': 1.4,
@@ -19,11 +20,11 @@ const AUTHORITY_WEIGHTS = {
 };
 class RetrievalService {
     embeddingProvider;
-    groqProvider;
+    llmProvider;
     rerankerProvider;
     constructor() {
         this.embeddingProvider = new google_embedding_provider_1.GoogleEmbeddingProvider();
-        this.groqProvider = new groq_provider_1.GroqProvider();
+        this.llmProvider = new gemini_provider_1.GeminiProvider();
         this.rerankerProvider = new cohere_reranker_provider_1.CohereRerankerProvider();
     }
     /**
@@ -62,7 +63,7 @@ ${recentHistory}
 Follow-up Query: "${currentQuery}"
 Standalone Search Query:`;
         try {
-            const response = await this.groqProvider.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }]);
+            const response = await this.llmProvider.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }]);
             const rewritten = response.reply.trim();
             await cache_service_1.cacheService.set(cacheKey, rewritten, 3600); // cache for 1 hour
             return rewritten;
@@ -76,17 +77,24 @@ Standalone Search Query:`;
      * Retrieves context from Pinecone based on Semantic Search and Metadata Filters
      */
     async retrieveContext(query, notebookId, examContext, topK = 5) {
+        const tStart = performance.now();
         const cacheKey = `retrieval:${notebookId}:${query}:${topK}`;
         const cached = await cache_service_1.cacheService.get(cacheKey);
-        if (cached)
+        if (cached) {
+            telemetry_1.Telemetry.logLatency('retrieval_cache_hit', performance.now() - tStart, { query });
             return cached;
+        }
+        const tEmbed = performance.now();
         const queryEmbedding = await this.embeddingProvider.generateEmbedding(query);
+        telemetry_1.Telemetry.logLatency('query_embedding', performance.now() - tEmbed);
         // Semantic + Metadata filtering (Hybrid approach)
         // Simultaneous querying: we can pull from multiple sources by not strictly enforcing notebookId if it's a global query
         const filter = notebookId ? { notebookId } : {};
         const namespace = env_1.env.PINECONE_NAMESPACE;
+        const tPinecone = performance.now();
         // Fetch topK * 4 to ensure a wide net for the Reranker
         const matches = await pinecone_service_1.pineconeService.queryVectors(queryEmbedding, topK * 4, filter, namespace);
+        telemetry_1.Telemetry.logLatency('pinecone_search', performance.now() - tPinecone);
         // Filter out completely irrelevant vectors
         const validMatches = matches.filter((m) => (m.score || 0) >= 0.50);
         if (validMatches.length === 0)
@@ -137,19 +145,39 @@ Standalone Search Query:`;
                 reasoning += `Highly relevant to your ${examContext.exam} exam goals. `;
             return {
                 text: this.sanitizeContext(String(meta.text || '')),
-                source: String(meta.filename || 'Unknown Document'),
+                source: String(meta.sourceTitle || meta.filename || 'Unknown Document'),
                 score: reranked.relevanceScore, // raw reranker score
-                metadata: meta,
+                metadata: {
+                    ...meta,
+                    pageNumber: meta.pageNumber,
+                    paragraphIndex: meta.paragraphIndex
+                },
                 weightedScore,
                 selectionReasoning: reasoning.trim()
             };
         });
         // Sort descending by calculated weighted score
         rankedResults.sort((a, b) => (b.weightedScore || 0) - (a.weightedScore || 0));
-        // Return the final Top K
-        const finalResults = rankedResults.slice(0, topK);
-        await cache_service_1.cacheService.set(cacheKey, finalResults, 1800); // cache for 30 mins
-        return finalResults;
+        // Final rerank to select the top K. The reranker takes string[] and returns
+        // { index, relevanceScore }[], so we must map those indices BACK onto the enriched
+        // result objects. Assigning the reranker output directly (as was done previously)
+        // dropped text/source/metadata and returned ungrounded results whenever there were
+        // more than topK candidates.
+        let combinedResults = rankedResults;
+        if (combinedResults.length > topK) {
+            const tRerank = performance.now();
+            const finalRerank = await this.rerankerProvider.rerank(query, combinedResults.map(r => r.text), topK);
+            telemetry_1.Telemetry.logLatency('cohere_rerank', performance.now() - tRerank);
+            combinedResults = finalRerank.length > 0
+                ? finalRerank
+                    .map(rr => combinedResults[rr.index])
+                    .filter((r) => Boolean(r))
+                : combinedResults.slice(0, topK);
+        }
+        // Cache the fully verified and reranked result set
+        await cache_service_1.cacheService.set(cacheKey, combinedResults, 600); // 10 minutes
+        telemetry_1.Telemetry.logLatency('retrieval_total', performance.now() - tStart, { resultsCount: combinedResults.length });
+        return combinedResults;
     }
     /**
      * Optional Web Search using Tavily
@@ -197,7 +225,7 @@ Standalone Search Query:`;
       ]
     }`;
         try {
-            const response = await this.groqProvider.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }]);
+            const response = await this.llmProvider.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }]);
             const jsonStr = response.reply.replace(/```json/g, '').replace(/```/g, '').trim();
             const verification = JSON.parse(jsonStr);
             const claims = verification.claims || [];

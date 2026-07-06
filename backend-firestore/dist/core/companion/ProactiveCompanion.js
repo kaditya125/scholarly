@@ -3,26 +3,49 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.proactiveCompanion = exports.ProactiveCompanion = void 0;
 const container_1 = require("../di/container");
 const firebase_1 = require("../../config/firebase");
+const userProfile_service_1 = require("../../services/userProfile.service");
 class ProactiveCompanion {
+    profileService;
+    constructor() {
+        this.profileService = new userProfile_service_1.UserProfileService();
+    }
     /**
-     * Analyzes a user's learning metrics and decides if a proactive intervention is needed.
+     * Analyzes a user's learning metrics and profile to decide if a proactive intervention is needed.
      * This would typically be triggered by a nightly CRON job.
      */
     async evaluateUser(userId) {
         const memoryProvider = container_1.container.resolve(container_1.TOKENS.MemoryProvider);
         const metrics = await memoryProvider.getLearningAnalytics(userId);
-        // 1. Burnout Detection (High time spent, low retention/consistency)
+        const profile = await this.profileService.getProfile(userId);
+        const examName = profile?.targetExam || 'your exam';
+        // 1. Exam Countdown (if target year is set)
+        if (profile?.targetYear) {
+            const examYear = parseInt(profile.targetYear);
+            const now = new Date();
+            const daysRemaining = Math.max(0, Math.ceil((new Date(examYear, 0, 1).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+            if (daysRemaining > 0 && daysRemaining <= 60) {
+                return this.triggerAction(userId, 'EXAM_COUNTDOWN', `⏰ ${examName} is approximately ${daysRemaining} days away! Let's make every study session count. Would you like me to create an intensive revision plan for the remaining days?`);
+            }
+        }
+        // 2. Burnout Detection (High time spent, low retention/consistency)
         if (metrics.timeSpentLearningMinutes > 300 && metrics.retentionScore < 0.4) {
-            return this.triggerAction(userId, 'BURNOUT_WARNING', "You've been studying hard, but your retention seems to be dropping. Taking a short break is scientifically proven to help memory consolidation! Let's resume tomorrow.");
+            return this.triggerAction(userId, 'BURNOUT_WARNING', `You've been studying hard for ${examName}, but your retention seems to be dropping. Taking a short break is scientifically proven to help memory consolidation! The Pomodoro technique (25 min study + 5 min break) can help. Let's resume fresh tomorrow. 💪`);
         }
-        // 2. Revision Schedule (Based on Spaced Repetition logic)
-        // Simplified for MVP: if revision frequency is very low compared to time spent
+        // 3. Revision Schedule (Based on Spaced Repetition logic)
         if (metrics.timeSpentLearningMinutes > 120 && metrics.revisionFrequency < 1) {
-            return this.triggerAction(userId, 'REVISION_REMINDER', "You've learned a lot of new concepts recently, but haven't revised them. Would you like me to generate a quick 5-question recap quiz to strengthen your memory?");
+            return this.triggerAction(userId, 'REVISION_REMINDER', `You've learned a lot of new concepts for ${examName} recently, but haven't revised them. Spaced repetition is the #1 technique for long-term memory. Would you like me to generate a quick 5-question recap quiz to strengthen your retention? 🧠`);
         }
-        // 3. Practice Test Recommendation (High mastery on current topics)
+        // 4. Practice Test Recommendation (High mastery on current topics)
         if (metrics.masteryPercentage > 85) {
-            return this.triggerAction(userId, 'PRACTICE_TEST_RECOMMENDED', "You're mastering these topics! I think you're ready for a full-length practice test. Want me to set one up?");
+            return this.triggerAction(userId, 'PRACTICE_TEST_RECOMMENDED', `You're mastering your ${examName} preparation topics! 🏆 I think you're ready for a full-length practice test. Simulating exam conditions will help you manage time pressure and build confidence. Want me to set one up?`);
+        }
+        // 5. Weak Topic Alert (if weak topics haven't been revised recently)
+        if (metrics.questionAccuracy < 50 && metrics.questionAccuracy > 0) {
+            return this.triggerAction(userId, 'WEAK_TOPIC_ALERT', `Your recent quiz accuracy for ${examName} preparation is ${Math.round(metrics.questionAccuracy)}%. I've identified some weak areas that need attention. Would you like me to create a focused revision session on your challenging topics? 🎯`);
+        }
+        // 6. Study Streak Broken (consistency score dropped significantly)
+        if (metrics.studyConsistencyScore < 30 && metrics.timeSpentLearningMinutes > 0) {
+            return this.triggerAction(userId, 'STREAK_BROKEN', `It looks like your study routine for ${examName} has been inconsistent lately. Consistency beats intensity in competitive exam preparation. Even 30 minutes of focused study daily can make a huge difference. Let's get back on track! 📅`);
         }
         // No action needed
         return { userId, triggered: false };

@@ -28,7 +28,8 @@ class PineconeService {
         const batchSize = 100;
         for (let i = 0; i < vectors.length; i += batchSize) {
             const batch = vectors.slice(i, i + batchSize);
-            await target.upsert(batch);
+            // Pinecone JS SDK v8 expects an options object: upsert({ records }).
+            await target.upsert({ records: batch });
         }
     }
     /**
@@ -53,6 +54,44 @@ class PineconeService {
         const index = this.getIndex();
         const target = namespace ? index.namespace(namespace) : index;
         await target.deleteMany(ids);
+    }
+    /**
+     * Delete all vectors in a namespace
+     */
+    async deleteAllVectors(namespace) {
+        const index = this.getIndex();
+        const target = namespace ? index.namespace(namespace) : index;
+        await target.deleteAll();
+    }
+    /**
+     * Fetch vectors (and their metadata) by id. Used to reconstruct a document's text from its
+     * already-indexed chunks without re-downloading or re-embedding the source file.
+     */
+    async fetchVectors(ids, namespace) {
+        if (ids.length === 0)
+            return {};
+        const index = this.getIndex();
+        const target = namespace ? index.namespace(namespace) : index;
+        const res = await target.fetch({ ids });
+        return (res?.records || {});
+    }
+    /**
+     * Fetch real index statistics from Pinecone (namespaces, vector counts, dimension, fullness).
+     * Used by the admin Vector DB dashboard.
+     */
+    async getIndexStats() {
+        const index = this.getIndex();
+        const stats = await index.describeIndexStats();
+        return {
+            indexName: this.indexName,
+            dimension: stats.dimension ?? null,
+            totalVectorCount: stats.totalRecordCount ?? 0,
+            indexFullness: stats.indexFullness ?? 0,
+            namespaces: Object.entries(stats.namespaces ?? {}).map(([name, ns]) => ({
+                name: name || '(default)',
+                vectorCount: ns.recordCount ?? 0,
+            })),
+        };
     }
 }
 exports.PineconeService = PineconeService;

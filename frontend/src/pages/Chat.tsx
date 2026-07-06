@@ -31,6 +31,7 @@ import {
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import DiagramWidget from '../components/chat/DiagramWidget';
 import { api } from '../lib/api/client';
 import { useAuth } from '../lib/AuthContext';
 import { useWorkflowStream } from '../hooks/ai/useWorkflowStream';
@@ -45,6 +46,7 @@ import { OpenAI, Groq, Nvidia } from '@lobehub/icons';
 mermaid.initialize({
   startOnLoad: false,
   theme: 'dark',
+  suppressErrorRendering: true,
 });
 
 const Mermaid = ({ chart }: { chart: string }) => {
@@ -385,6 +387,11 @@ export default function Chat() {
 
       // Refresh the session list so the new chat shows up in the sidebar
       fetchSessions();
+      
+      // The backend generates a smart title asynchronously. Fetch again after 3 seconds to catch the updated title!
+      setTimeout(() => {
+        fetchSessions();
+      }, 3000);
     } catch (error) {
       console.error("Chat API error:", error);
       setMessages(prev => [...prev, { role: 'system', content: 'An error occurred while communicating with the AI. Please try again.' }]);
@@ -427,7 +434,12 @@ export default function Chat() {
   }
 
   const modelOptions = [
-    { id: 'gemini-2.5-flash', name: 'Gemini Flash', icon: <GeminiIcon className="w-4 h-4" /> },
+    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', icon: <GeminiIcon className="w-4 h-4" /> },
+    { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite', icon: <GeminiIcon className="w-4 h-4" /> },
+    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', icon: <GeminiIcon className="w-4 h-4" /> },
+    { id: 'gemini-3.0-flash', name: 'Gemini 3 Flash', icon: <GeminiIcon className="w-4 h-4" /> },
+    { id: 'gemini-3.1-pro', name: 'Gemini 3.1 Pro', icon: <GeminiIcon className="w-4 h-4" /> },
+    { id: 'gemini-3.1-flash-lite', name: 'Gemini 3.1 Flash Lite', icon: <GeminiIcon className="w-4 h-4" /> },
     { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B', icon: <Groq className="w-4 h-4 text-[#f55036]" /> },
     { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B', icon: <Groq className="w-4 h-4 text-[#f55036]" /> },
     { id: 'meta/llama-3.1-405b-instruct', name: 'Llama 3.1 405B', icon: <Nvidia.Color className="w-4 h-4" /> },
@@ -438,12 +450,12 @@ export default function Chat() {
   const activeModel = modelOptions.find(m => m.id === selectedModel) || modelOptions[0];
 
   return (
-    <div className="flex h-[calc(100vh-140px)] w-full max-w-6xl mx-auto relative gap-6">
+    <div className="flex h-[calc(100vh-140px)] w-full max-w-6xl mx-auto relative bg-white dark:bg-[#1a1a1b] rounded-3xl border border-slate-200 dark:border-white/10 shadow-lg overflow-hidden">
       
       {/* Sidebar - Chat History */}
       {isSidebarOpen && (
-        <div className="w-[280px] hidden lg:flex flex-col bg-white dark:bg-[#1a1a1b] rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm shrink-0 transition-all duration-300">
-          <div className="p-4 border-b border-slate-100 dark:border-white/5 flex gap-2">
+        <div className="w-[280px] hidden lg:flex flex-col bg-slate-50/50 dark:bg-black/20 border-r border-slate-200 dark:border-white/10 shrink-0 transition-all duration-300">
+          <div className="p-4 border-b border-slate-200/50 dark:border-white/5 flex gap-2">
             <button 
               onClick={handleNewChat}
               className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm"
@@ -452,7 +464,7 @@ export default function Chat() {
             </button>
             <button
               onClick={() => setIsSidebarOpen(false)}
-              className="p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 dark:text-slate-400 transition-colors border border-slate-200 dark:border-white/10"
+              className="p-2.5 rounded-xl text-slate-500 hover:bg-slate-200 dark:hover:bg-white/5 dark:text-slate-400 transition-colors border border-slate-200 dark:border-white/10"
               title="Close sidebar"
             >
               <PanelLeftClose className="w-5 h-5" />
@@ -472,19 +484,19 @@ export default function Chat() {
                   className={cn(
                     "w-full flex items-center justify-between gap-3 p-3 rounded-xl transition-all duration-200 group relative cursor-pointer",
                     currentSessionId === session.sessionId
-                      ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300"
-                      : "hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-gray-300"
+                      ? "bg-white dark:bg-white/10 text-indigo-700 dark:text-indigo-300 shadow-sm border border-slate-200/50 dark:border-transparent"
+                      : "hover:bg-slate-200/50 dark:hover:bg-white/5 text-slate-700 dark:text-gray-300"
                   )}
                 >
                   <div className="flex items-start gap-3 flex-1 overflow-hidden">
                     <MessageSquare className={cn("w-4 h-4 mt-0.5 shrink-0", currentSessionId === session.sessionId ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 group-hover:text-slate-500 dark:text-gray-500")} />
                     <div className="flex-1 overflow-hidden">
                       <div className="text-[13px] font-semibold truncate leading-tight mb-1">
-                        {session.topicType === 'chat' ? 'Study Assistant' : session.topicType}
+                        {session.title || (session.topicType === 'chat' ? 'Study Assistant' : session.topicType)}
                       </div>
                       <div className="text-[11px] text-slate-400 dark:text-gray-500 flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        {new Date(session.createdAt).toLocaleDateString()}
+                        {new Date(session.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                       </div>
                     </div>
                   </div>
@@ -503,7 +515,7 @@ export default function Chat() {
       )}
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col relative bg-white dark:bg-transparent rounded-2xl transition-all duration-300">
+      <div className="flex-1 flex flex-col relative bg-transparent transition-all duration-300">
         
         {!isSidebarOpen && (
           <button
@@ -610,6 +622,20 @@ export default function Chat() {
                                   const match = /language-(\w+)/.exec(className || '')
                                   if (match && match[1] === 'mermaid') {
                                     return <Mermaid chart={String(children).replace(/\n$/, '')} />
+                                  }
+                                  if (match && match[1] === 'json') {
+                                    try {
+                                      const jsonStr = String(children);
+                                      const parsed = JSON.parse(jsonStr);
+                                      if (parsed && parsed.mindMap) {
+                                        return <DiagramWidget type="mindMap" data={parsed.mindMap} />;
+                                      }
+                                      if (parsed && parsed.timeline) {
+                                        return <DiagramWidget type="timeline" data={parsed.timeline} />;
+                                      }
+                                    } catch (e) {
+                                      // Not a valid JSON or doesn't match diagram schema, fallback to regular code block
+                                    }
                                   }
                                   return <code {...rest} className={className}>{children}</code>
                                 }

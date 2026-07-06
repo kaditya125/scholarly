@@ -2,7 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const questions_controller_1 = require("../controllers/questions.controller");
+const auth_1 = require("../middlewares/auth");
 const router = (0, express_1.Router)();
 const controller = new questions_controller_1.QuestionsController();
+router.use(auth_1.requireAuth);
 router.get('/', controller.getQuestions);
 exports.default = router;

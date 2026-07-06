@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatService = void 0;
 const chat_repository_1 = require("../repositories/chat.repository");
 const WorkflowEngine_1 = require("../core/workflow/WorkflowEngine");
-const prompts_1 = require("../config/prompts");
+const logger_1 = require("../utils/logger");
 class ChatService {
     repository = new chat_repository_1.ChatRepository();
     // Removed getProvider because DI container handles it now.
@@ -52,7 +52,8 @@ class ChatService {
             conversationHistory: [...history, assistantMessage]
         };
     }
-    async processChatStream(userId, sessionId, message, model, topicType, res) {
+    async processChatStream(userId, sessionId, message, model, topicType, res, notebookId, traceId) {
+        logger_1.logger.info(`Starting stream workflow for user ${userId}`, { traceId, sessionId });
         // 1. Get or create session
         await this.repository.getOrCreateSession(sessionId, userId, topicType, model);
         // 2. Load conversation history
@@ -70,9 +71,11 @@ class ChatService {
         const req = {
             userId,
             sessionId,
+            notebookId,
             query: message,
             history: history,
-            mode: topicType
+            mode: topicType,
+            traceId
         };
         const stream = WorkflowEngine_1.workflowEngine.executeStream(req);
         let fullReply = '';
@@ -83,10 +86,16 @@ class ChatService {
                 }
                 else if (event.type === 'chunk') {
                     fullReply += event.chunk;
-                    res.write(`data: ${JSON.stringify({ chunk: event.chunk })}\n\n`);
+                    res.write(`data: ${JSON.stringify({ type: 'chunk', content: event.chunk })}\n\n`);
                 }
                 else if (event.type === 'error') {
                     throw new Error(event.message);
+                }
+                else if (event.type === 'citation') {
+                    res.write(`data: ${JSON.stringify({ type: 'citation', citation: event.citation })}\n\n`);
+                }
+                else if (event.type === 'warning') {
+                    res.write(`data: ${JSON.stringify({ type: 'warning', message: event.warning })}\n\n`);
                 }
                 else if (event.type === 'done') {
                     res.write(`data: ${JSON.stringify({ type: 'done', data: event.data })}\n\n`);
@@ -132,23 +141,18 @@ class ChatService {
     async getUserSessions(userId) {
         return this.repository.getSessionsByUser(userId);
     }
-    async getSessionHistory(sessionId) {
+    async getSessionHistory(sessionId, requesterId) {
+        // Ownership check: when a requester is provided, ensure they own the session.
+        if (requesterId) {
+            const session = await this.repository.getSession(sessionId);
+            if (session && session.userId && session.userId !== requesterId) {
+                throw new Error('Forbidden');
+            }
+        }
         return this.repository.getMessages(sessionId);
     }
     async deleteSession(sessionId, userId) {
         return this.repository.deleteSession(sessionId, userId);
-    }
-    getSystemPromptForTopic(topicType) {
-        // We now use the massive, comprehensive Exam Prep system prompt you provided!
-        // We can still append topic-specific nuances if needed, but the base prompt covers everything.
-        switch (topicType) {
-            case 'image':
-                return `${prompts_1.EXAM_PREP_SYSTEM_PROMPT}\n\nThe user explicitly wants an image right now. Focus heavily on generating the visual.`;
-            case 'study-guide':
-                return `${prompts_1.EXAM_PREP_SYSTEM_PROMPT}\n\nYour specific goal right now is to generate a highly structured, comprehensive study guide based on the user's queries. Ensure all the universal structures are followed.`;
-            default:
-                return prompts_1.EXAM_PREP_SYSTEM_PROMPT;
-        }
     }
 }
 exports.ChatService = ChatService;

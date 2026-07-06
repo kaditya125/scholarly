@@ -14,5 +14,11 @@ class DiscussionsRepository {
         const snapshot = await query.get();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
+    async create(discussion) {
+        const docRef = this.collection.doc();
+        const newDiscussion = { id: docRef.id, ...discussion };
+        await docRef.set(newDiscussion);
+        return newDiscussion;
+    }
 }
 exports.DiscussionsRepository = DiscussionsRepository;

@@ -16,19 +16,28 @@ const envSchema = zod_1.z.object({
     FIREBASE_CLIENT_EMAIL: zod_1.z.string().email().optional(),
     FIREBASE_PRIVATE_KEY: zod_1.z.string().optional(),
     GOOGLE_APPLICATION_CREDENTIALS: zod_1.z.string().optional(),
+    FIREBASE_STORAGE_BUCKET: zod_1.z.string().optional(),
     // AI Keys
     GEMINI_API_KEY: zod_1.z.string().min(1, "GEMINI_API_KEY is required for the genai provider"),
     GROQ_API_KEY: zod_1.z.string().optional(),
     NVIDIA_API_KEY: zod_1.z.string().optional(),
+    GROQ_MODEL: zod_1.z.string().optional(),
+    GEMINI_MODEL: zod_1.z.string().optional(),
     // RAG & Tools
-    PINECONE_API_KEY: zod_1.z.string().default('pcsk_4VuMim_UZHLBpMuwwoX17xXqnKBtptgc5o5ZN5omAXc1S6RcLyHs3mpBatxcBbzuVw5K56'),
+    // NOTE: API keys are intentionally NOT defaulted. They must be provided via the
+    // environment (.env / secret manager). Previously-committed default keys were removed
+    // and must be rotated. Services degrade gracefully when a key is absent.
+    PINECONE_API_KEY: zod_1.z.string().optional(),
     PINECONE_INDEX_NAME: zod_1.z.string().default('edtech-ai-rag'),
     PINECONE_NAMESPACE: zod_1.z.string().default('production'),
-    TAVILY_API_KEY: zod_1.z.string().default('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'),
+    TAVILY_API_KEY: zod_1.z.string().optional(),
     COHERE_API_KEY: zod_1.z.string().optional(),
     // Caching
     REDIS_URL: zod_1.z.string().optional(),
     REDIS_TOKEN: zod_1.z.string().optional(),
+    // Security / Ops
+    CRON_SECRET: zod_1.z.string().optional(),
+    CORS_ORIGINS: zod_1.z.string().optional(), // comma-separated allowlist of origins for production CORS
 }).refine((data) => {
     // Either GOOGLE_APPLICATION_CREDENTIALS must be provided, OR all three manual FIREBASE vars must be provided.
     // If none are provided, firebase-admin will attempt to use default credentials (e.g. on GCP/Firebase hosting).
@@ -46,3 +55,17 @@ if (!_env.success) {
     process.exit(1);
 }
 exports.env = _env.data;
+// Non-fatal warnings for secrets that were previously hardcoded and are now required
+// via the environment. The related feature is disabled / fails at call time when unset.
+const _warnIfMissing = (key, value) => {
+    if (!value) {
+        console.warn(`[env] ${key} is not set. The related feature will be disabled or will fail when invoked.`);
+    }
+};
+_warnIfMissing('PINECONE_API_KEY', exports.env.PINECONE_API_KEY);
+_warnIfMissing('TAVILY_API_KEY', exports.env.TAVILY_API_KEY);
+_warnIfMissing('GROQ_API_KEY', exports.env.GROQ_API_KEY);
+_warnIfMissing('COHERE_API_KEY', exports.env.COHERE_API_KEY);
+if (exports.env.NODE_ENV === 'production' && !exports.env.CORS_ORIGINS) {
+    console.warn('[env] CORS_ORIGINS is not set in production — cross-origin browser requests will be blocked. Provide a comma-separated allowlist.');
+}

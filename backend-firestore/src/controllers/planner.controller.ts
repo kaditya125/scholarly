@@ -4,24 +4,46 @@ import { PlannerService } from '../services/planner.service';
 export class PlannerController {
   private service = new PlannerService();
 
-  public getTasks = async (req: Request, res: Response, next: NextFunction) => {
+  public generateTimetable = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // In a real app, you would get userId from req.user (auth middleware)
-      const userId = req.query.userId as string || 'default-user';
-      const groupedTasks = await this.service.getTasksGroupedByStatus(userId);
-      
-      // Transform record into an array mapping as required by the frontend
-      const kanbanData = Object.entries(groupedTasks).map(([status, tasks]) => {
-         return {
-            status,
-            count: tasks.length.toString().padStart(2, '0'),
-            // UI specific styling might be best handled in frontend, 
-            // but we'll return raw data here
-            tasks
-         };
-      });
+      const { userId } = req.params;
+      const goalData = req.body;
+      const result = await this.service.createGoalAndGenerateTimetable(userId, goalData);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  };
 
-      res.json(kanbanData);
+  public getTimetable = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.params;
+      const timetable = await this.service.getTimetable(userId);
+      if (!timetable) {
+        return res.status(404).json({ error: 'Timetable not found' });
+      }
+      res.json(timetable);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public markTaskCompleted = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.params;
+      const { date, taskId } = req.body;
+      const timetable = await this.service.markTaskCompleted(userId, date, taskId);
+      res.json(timetable);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public adaptTimetable = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.params;
+      const timetable = await this.service.adaptRebalanceTimetable(userId);
+      res.json(timetable);
     } catch (error) {
       next(error);
     }

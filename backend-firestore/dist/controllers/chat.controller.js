@@ -7,12 +7,14 @@ class ChatController {
     service = new chat_service_1.ChatService();
     handleChat = async (req, res, next) => {
         try {
-            // In a real app, userId should be extracted from the auth middleware (`req.user.uid`)
-            // For now, we extract from body or query as requested by schema
-            const { userId, sessionId, message, model, topicType } = req.body;
-            // Basic validation (Will be replaced by Zod in Phase 5)
-            if (!userId || !sessionId || !message || !model || !topicType) {
-                return res.status(400).json({ error: "Missing required fields: userId, sessionId, message, model, topicType" });
+            // Identity is taken from the verified Firebase token, never from the request body.
+            const userId = req.user?.uid;
+            if (!userId)
+                return res.status(401).json({ error: 'Unauthorized' });
+            const { sessionId, message, model, topicType } = req.body;
+            // Basic validation
+            if (!sessionId || !message || !model || !topicType) {
+                return res.status(400).json({ error: "Missing required fields: sessionId, message, model, topicType" });
             }
             const response = await this.service.processChat(userId, sessionId, message, model, topicType);
             res.json(response);
@@ -24,15 +26,19 @@ class ChatController {
     };
     handleChatStream = async (req, res, next) => {
         try {
-            const { userId, sessionId, message, model, topicType, attachments } = req.body;
-            if (!userId || !sessionId || (!message && (!attachments || attachments.length === 0)) || !model || !topicType) {
-                return res.status(400).json({ error: "Missing required fields: userId, sessionId, message, model, topicType" });
+            const userId = req.user?.uid;
+            if (!userId)
+                return res.status(401).json({ error: 'Unauthorized' });
+            const { sessionId, message, model, topicType, attachments, notebookId } = req.body;
+            if (!sessionId || (!message && (!attachments || attachments.length === 0)) || !model || !topicType) {
+                return res.status(400).json({ error: "Missing required fields: sessionId, message, model, topicType" });
             }
             let finalMessage = message || '';
             if (attachments && Array.isArray(attachments) && attachments.length > 0) {
                 let attachmentsText = '';
                 for (const att of attachments) {
-                    const extractedText = await fileParser_service_1.FileParserService.extractText(att.data, att.mimeType, att.name);
+                    const parsedPages = await fileParser_service_1.FileParserService.extractText(att.data, att.mimeType, att.name);
+                    const extractedText = parsedPages.map(p => p.text).join('\n');
                     attachmentsText += `[File Attached: ${att.name}]\n${extractedText.trim()}\n\n`;
                 }
                 finalMessage = finalMessage ? `${attachmentsText.trim()}\n\n${finalMessage}` : attachmentsText.trim();
@@ -42,7 +48,8 @@ class ChatController {
             res.setHeader('Cache-Control', 'no-cache');
             res.setHeader('Connection', 'keep-alive');
             res.flushHeaders();
-            await this.service.processChatStream(userId, sessionId, finalMessage, model, topicType, res);
+            const traceId = req.headers['x-trace-id'];
+            await this.service.processChatStream(userId, sessionId, finalMessage, model, topicType, res, notebookId, traceId);
         }
         catch (error) {
             console.error("Chat Stream Error:", error);
@@ -58,10 +65,9 @@ class ChatController {
     };
     getUserSessions = async (req, res, next) => {
         try {
-            const { userId } = req.query;
-            if (!userId || typeof userId !== 'string') {
-                return res.status(400).json({ error: "Missing required query parameter: userId" });
-            }
+            const userId = req.user?.uid;
+            if (!userId)
+                return res.status(401).json({ error: 'Unauthorized' });
             const sessions = await this.service.getUserSessions(userId);
             res.json(sessions);
         }
@@ -72,24 +78,31 @@ class ChatController {
     };
     getSessionHistory = async (req, res, next) => {
         try {
+            const userId = req.user?.uid;
+            if (!userId)
+                return res.status(401).json({ error: 'Unauthorized' });
             const { sessionId } = req.params;
             if (!sessionId) {
                 return res.status(400).json({ error: "Missing required path parameter: sessionId" });
             }
-            const history = await this.service.getSessionHistory(sessionId);
+            const history = await this.service.getSessionHistory(sessionId, userId);
             res.json(history);
         }
         catch (error) {
+            if (error?.message === 'Forbidden')
+                return res.status(403).json({ error: 'Forbidden' });
             console.error("Get Session History Error:", error);
             next(error);
         }
     };
     deleteSession = async (req, res, next) => {
         try {
+            const userId = req.user?.uid;
+            if (!userId)
+                return res.status(401).json({ error: 'Unauthorized' });
             const { sessionId } = req.params;
-            const { userId } = req.query;
-            if (!sessionId || !userId || typeof userId !== 'string') {
-                return res.status(400).json({ error: "Missing required parameters: sessionId and userId" });
+            if (!sessionId) {
+                return res.status(400).json({ error: "Missing required parameter: sessionId" });
             }
             const success = await this.service.deleteSession(sessionId, userId);
             if (!success) {

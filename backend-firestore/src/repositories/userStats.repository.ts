@@ -9,4 +9,39 @@ export class UserStatsRepository {
     if (!doc.exists) return null;
     return { userId: doc.id, ...doc.data() } as UserStats;
   }
+
+  async upsertUserStats(userId: string, data: Partial<UserStats>): Promise<void> {
+    await this.collection.doc(userId).set(data, { merge: true });
+  }
+
+  async addXP(userId: string, amount: number): Promise<void> {
+    const doc = await this.findByUserId(userId);
+    if (!doc) return;
+    
+    let { gamification } = doc;
+    if (!gamification) {
+      gamification = {
+        xp: 0,
+        level: 1,
+        rank: 'Bronze',
+        studyStreakDays: 0,
+        longestStreak: 0,
+        badges: []
+      };
+    }
+    
+    gamification.xp += amount;
+    
+    // Level calculation (e.g. 100 XP per level)
+    gamification.level = Math.floor(gamification.xp / 100) + 1;
+    
+    // Rank calculation
+    if (gamification.level >= 50) gamification.rank = 'Diamond';
+    else if (gamification.level >= 25) gamification.rank = 'Platinum';
+    else if (gamification.level >= 10) gamification.rank = 'Gold';
+    else if (gamification.level >= 5) gamification.rank = 'Silver';
+    else gamification.rank = 'Bronze';
+
+    await this.upsertUserStats(userId, { gamification });
+  }
 }

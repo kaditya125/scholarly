@@ -13,21 +13,34 @@ const envSchema = z.object({
   FIREBASE_CLIENT_EMAIL: z.string().email().optional(),
   FIREBASE_PRIVATE_KEY: z.string().optional(),
   GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
+  FIREBASE_STORAGE_BUCKET: z.string().optional(),
   
   // AI Keys
   GEMINI_API_KEY: z.string().min(1, "GEMINI_API_KEY is required for the genai provider"),
   GROQ_API_KEY: z.string().optional(),
   NVIDIA_API_KEY: z.string().optional(),
+  GROQ_MODEL: z.string().optional(),
+  GEMINI_MODEL: z.string().optional(),
+  // Global AI kill switch: set AI_DISABLED=true to make every AI/embedding call fail fast
+  // (zero token spend) without removing API keys. Requires a restart to toggle.
+  AI_DISABLED: z.string().optional(),
   // RAG & Tools
-  PINECONE_API_KEY: z.string().default('pcsk_4VuMim_UZHLBpMuwwoX17xXqnKBtptgc5o5ZN5omAXc1S6RcLyHs3mpBatxcBbzuVw5K56'),
+  // NOTE: API keys are intentionally NOT defaulted. They must be provided via the
+  // environment (.env / secret manager). Previously-committed default keys were removed
+  // and must be rotated. Services degrade gracefully when a key is absent.
+  PINECONE_API_KEY: z.string().optional(),
   PINECONE_INDEX_NAME: z.string().default('edtech-ai-rag'),
   PINECONE_NAMESPACE: z.string().default('production'),
-  TAVILY_API_KEY: z.string().default('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'),
+  TAVILY_API_KEY: z.string().optional(),
   COHERE_API_KEY: z.string().optional(),
   
   // Caching
   REDIS_URL: z.string().optional(),
   REDIS_TOKEN: z.string().optional(),
+
+  // Security / Ops
+  CRON_SECRET: z.string().optional(),
+  CORS_ORIGINS: z.string().optional(), // comma-separated allowlist of origins for production CORS
 }).refine(
   (data) => {
     // Either GOOGLE_APPLICATION_CREDENTIALS must be provided, OR all three manual FIREBASE vars must be provided.
@@ -52,3 +65,33 @@ if (!_env.success) {
 }
 
 export const env = _env.data;
+
+// Non-fatal warnings for secrets that were previously hardcoded and are now required
+// via the environment. The related feature is disabled / fails at call time when unset.
+const _warnIfMissing = (key: string, value?: string) => {
+  if (!value) {
+    console.warn(`[env] ${key} is not set. The related feature will be disabled or will fail when invoked.`);
+  }
+};
+_warnIfMissing('PINECONE_API_KEY', env.PINECONE_API_KEY);
+_warnIfMissing('TAVILY_API_KEY', env.TAVILY_API_KEY);
+_warnIfMissing('GROQ_API_KEY', env.GROQ_API_KEY);
+_warnIfMissing('COHERE_API_KEY', env.COHERE_API_KEY);
+
+// ─── Global AI kill switch ───────────────────────────────────────────
+// When AI_DISABLED=true, every LLM/embedding call throws immediately (zero token spend)
+// while the API keys stay in place. Toggle it in .env and restart to apply.
+export const isAIDisabled = (): boolean => env.AI_DISABLED === 'true';
+
+export function assertAIEnabled(operation = 'AI call'): void {
+  if (isAIDisabled()) {
+    throw new Error(`AI_DISABLED: ${operation} blocked by the AI kill switch. Set AI_DISABLED=false (or unset it) and restart to re-enable.`);
+  }
+}
+
+if (isAIDisabled()) {
+  console.warn('[env] ⚠️  AI_DISABLED=true — AI kill switch is ON. All LLM/embedding calls will fail fast (no tokens spent).');
+}
+if (env.NODE_ENV === 'production' && !env.CORS_ORIGINS) {
+  console.warn('[env] CORS_ORIGINS is not set in production — cross-origin browser requests will be blocked. Provide a comma-separated allowlist.');
+}

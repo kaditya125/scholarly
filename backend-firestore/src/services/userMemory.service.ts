@@ -1,5 +1,5 @@
 import { db as adminDb } from '../config/firebase';
-import { GroqProvider } from './ai/groq.provider';
+import { GeminiProvider } from './ai/gemini.provider';
 
 export interface UserMemory {
   weakTopics: string[];
@@ -12,10 +12,10 @@ export interface UserMemory {
 }
 
 export class UserMemoryService {
-  private groqProvider: GroqProvider;
+  private llmProvider: GeminiProvider;
 
   constructor() {
-    this.groqProvider = new GroqProvider();
+    this.llmProvider = new GeminiProvider();
   }
 
   async getUserMemory(userId: string): Promise<UserMemory | null> {
@@ -45,7 +45,7 @@ export class UserMemoryService {
     Extract a single comma-separated list of topics the student seems to be STRUGGLING with. If none, output "NONE".`;
 
     try {
-      const insight = await this.groqProvider.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }] as any);
+      const insight = await this.llmProvider.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }] as any);
       const newWeakTopics = insight.reply.split(',').map((t: string) => t.trim().toLowerCase()).filter((t: string) => t !== 'none' && t !== '');
 
       if (newWeakTopics.length > 0) {
@@ -71,7 +71,7 @@ export class UserMemoryService {
       // Use LLM to generate a quick path if not in graph
       const prompt = `Generate a logical 3-step learning path following the topic "${currentTopic}". Return ONLY a comma-separated list of 3 topics.`;
       try {
-        const res = await this.groqProvider.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }] as any);
+        const res = await this.llmProvider.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }] as any);
         return res.reply.split(',').map((t: string) => t.trim());
       } catch (e) {
         return ['Review Fundamentals', 'Practice Questions', 'Advanced Applications'];

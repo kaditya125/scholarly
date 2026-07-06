@@ -1,7 +1,7 @@
 import { pineconeService } from './pinecone.service';
 import { searchService, SearchResult } from './search.service';
 import { GoogleEmbeddingProvider } from '../ai/providers/google-embedding.provider';
-import { GroqProvider } from '../ai/groq.provider';
+import { GeminiProvider } from '../ai/gemini.provider';
 import { CohereRerankerProvider } from '../ai/providers/cohere-reranker.provider';
 import { cacheService } from '../cache.service';
 import { ChatMessage } from '../../types';
@@ -49,12 +49,12 @@ const AUTHORITY_WEIGHTS: Record<string, number> = {
 
 export class RetrievalService {
   private embeddingProvider: GoogleEmbeddingProvider;
-  private groqProvider: GroqProvider;
+  private llmProvider: GeminiProvider;
   private rerankerProvider: CohereRerankerProvider;
 
   constructor() {
     this.embeddingProvider = new GoogleEmbeddingProvider();
-    this.groqProvider = new GroqProvider();
+    this.llmProvider = new GeminiProvider();
     this.rerankerProvider = new CohereRerankerProvider();
   }
 
@@ -97,7 +97,7 @@ Follow-up Query: "${currentQuery}"
 Standalone Search Query:`;
 
     try {
-      const response = await this.groqProvider.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }] as any);
+      const response = await this.llmProvider.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }] as any);
       const rewritten = response.reply.trim();
       await cacheService.set(cacheKey, rewritten, 3600); // cache for 1 hour
       return rewritten;
@@ -152,7 +152,7 @@ Standalone Search Query:`;
     const rerankedDocs = await this.rerankerProvider.rerank(query, documentsToRerank, topK * 2);
 
     // 2. Weighted Ranking Algorithm on Reranked Results
-    const rankedResults = rerankedDocs.map(reranked => {
+    const rankedResults: RetrievalResult[] = rerankedDocs.map(reranked => {
       const match = deduplicatedMatches[reranked.index];
       let weightedScore = reranked.relevanceScore;
       const meta = match.metadata || {};
@@ -200,12 +200,21 @@ Standalone Search Query:`;
     // Sort descending by calculated weighted score
     rankedResults.sort((a, b) => (b.weightedScore || 0) - (a.weightedScore || 0));
 
-    // Apply reranking if we have enough results to justify it
+    // Final rerank to select the top K. The reranker takes string[] and returns
+    // { index, relevanceScore }[], so we must map those indices BACK onto the enriched
+    // result objects. Assigning the reranker output directly (as was done previously)
+    // dropped text/source/metadata and returned ungrounded results whenever there were
+    // more than topK candidates.
     let combinedResults = rankedResults;
     if (combinedResults.length > topK) {
        const tRerank = performance.now();
-       combinedResults = await this.rerankerProvider.rerank(query, combinedResults as any, topK) as any;
+       const finalRerank = await this.rerankerProvider.rerank(query, combinedResults.map(r => r.text), topK);
        Telemetry.logLatency('cohere_rerank', performance.now() - tRerank);
+       combinedResults = finalRerank.length > 0
+         ? finalRerank
+             .map(rr => combinedResults[rr.index])
+             .filter((r): r is RetrievalResult => Boolean(r))
+         : combinedResults.slice(0, topK);
     }
 
     // Cache the fully verified and reranked result set
@@ -264,7 +273,7 @@ Standalone Search Query:`;
     }`;
 
     try {
-      const response = await this.groqProvider.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }] as any);
+      const response = await this.llmProvider.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }] as any);
       const jsonStr = response.reply.replace(/```json/g, '').replace(/```/g, '').trim();
       const verification = JSON.parse(jsonStr);
       

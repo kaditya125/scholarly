@@ -1,15 +1,22 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Clock, Info, CheckSquare, List, BookmarkPlus, Bookmark, ChevronRight, ChevronLeft, Target, Moon, Sun, Bot, X, Send, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "../lib/utils";
 import { useTheme } from "../lib/ThemeContext";
 import { useQuiz } from "../hooks/ai/useQuiz";
+import { useAuth } from "../lib/AuthContext";
 
 export default function TestEngine() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
   const isDarkMode = theme === 'dark';
+  
+  // Mode: "exam" or "study"
+  const mode = location.state?.mode || 'exam';
+  const isStudyMode = mode === 'study';
   const { questions: mockQuestions, isLoading, submitQuiz } = useQuiz();
   const [currentQIndex, setCurrentQIndex] = useState(() => {
     const saved = sessionStorage.getItem('testEngine_currentQIndex');
@@ -228,6 +235,11 @@ export default function TestEngine() {
         </div>
         
         <div className="flex items-center justify-between w-full md:w-auto gap-4 md:gap-6">
+          {isStudyMode && (
+            <span className="hidden md:inline-flex px-2 py-1 bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 text-xs font-bold rounded-full">
+              Study Mode
+            </span>
+          )}
           <button 
             onClick={toggleTheme}
             className={cn("p-2 rounded-full border transition-colors shadow-sm cursor-pointer", isDarkMode ? "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700" : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50")}
@@ -384,13 +396,18 @@ export default function TestEngine() {
 
           <div className={cn("absolute inset-0 md:border-l flex flex-col overflow-hidden transition-colors duration-300", isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200")}>
             <div className="flex items-center justify-between p-4 border-b md:hidden dark:border-slate-800">
+          <div className="flex items-center justify-between p-4 border-b md:hidden dark:border-slate-800">
                <span className="font-bold">Palette</span>
                <button onClick={() => setIsPaletteOpen(false)} aria-label="Close Palette"><X className="w-5 h-5" aria-hidden="true" /></button>
             </div>
             <div className="w-[320px] flex flex-col h-full shrink-0">
               <div className={cn("p-6 border-b flex items-center gap-4 transition-colors duration-300", isDarkMode ? "border-slate-800" : "border-slate-100")}>
-                <div className={cn("w-12 h-12 rounded-full flex items-center justify-center overflow-hidden border", isDarkMode ? "bg-slate-800 border-slate-700" : "bg-slate-100 border-slate-200")}>
-                   <img src="https://i.pravatar.cc/150?img=11" alt="User" />
+                <div className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
+                  {user?.photoURL ? (
+                    <img src={user.photoURL} alt="User" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-lg font-bold text-slate-500">{user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}</span>
+                  )}
                 </div>
                 <div>
                   <div className={cn("text-sm font-bold", isDarkMode ? "text-slate-200" : "text-slate-900")}>Rohan Kumar</div>
@@ -462,6 +479,7 @@ export default function TestEngine() {
           </div>
         </div>
       </div>
+      </div>
 
       {/* Submit Modal */}
       {showSubmitModal && (
@@ -528,8 +546,8 @@ export default function TestEngine() {
         </div>
       )}
 
-      {/* Floating Ask AI Button */}
-      {!isAiHelperOpen && (
+      {/* Floating Ask AI Button (Study Mode Only) */}
+      {!isAiHelperOpen && isStudyMode && (
         <button
           onClick={() => setIsAiHelperOpen(true)}
           className="fixed bottom-6 right-6 z-40 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-[0_4px_14px_rgba(79,70,229,0.4)] flex items-center justify-center cursor-pointer transition-transform hover:scale-110"
@@ -542,7 +560,7 @@ export default function TestEngine() {
       )}
 
       {/* Ask AI Contextual Modal */}
-      {isAiHelperOpen && (
+      {isAiHelperOpen && isStudyMode && (
         <div className={cn(
           "fixed bottom-6 right-6 w-80 md:w-[360px] border rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-[100] overflow-hidden flex flex-col transition-colors duration-300",
           isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"

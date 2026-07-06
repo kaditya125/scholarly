@@ -1,7 +1,7 @@
 import { ChatRepository } from '../repositories/chat.repository';
 import { WorkflowRequest, workflowEngine } from '../core/workflow/WorkflowEngine';
-import { EXAM_PREP_SYSTEM_PROMPT } from '../config/prompts';
 import { ChatMessage, TopicType } from '../types';
+import { logger } from '../utils/logger';
 
 export class ChatService {
   private repository = new ChatRepository();
@@ -31,7 +31,8 @@ export class ChatService {
       sessionId,
       query: message,
       history: history,
-      mode: topicType
+      mode: topicType,
+      model
     };
 
     // Because this is the non-streaming fallback, we manually consume the stream to get the full reply
@@ -54,6 +55,11 @@ export class ChatService {
     // 7. Store both user and assistant messages
     await this.repository.saveMessagesBatch(sessionId, [userMessage, assistantMessage]);
 
+    // Asynchronously generate a proper subject title if this is early in the conversation
+    if (history.length <= 4) {
+      this.generateAndSaveTitle(sessionId, [...history, userMessage, assistantMessage]).catch(e => console.error(e));
+    }
+
     // 8. Return data
     return {
       reply: fullReply,
@@ -63,7 +69,9 @@ export class ChatService {
     };
   }
 
-  async processChatStream(userId: string, sessionId: string, message: string, model: string, topicType: TopicType, res: any) {
+  async processChatStream(userId: string, sessionId: string, message: string, model: string, topicType: TopicType, res: any, notebookId?: string, traceId?: string) {
+    logger.info(`Starting stream workflow for user ${userId}`, { traceId, sessionId });
+
     // 1. Get or create session
     await this.repository.getOrCreateSession(sessionId, userId, topicType, model);
 
@@ -86,9 +94,12 @@ export class ChatService {
     const req: WorkflowRequest = {
       userId,
       sessionId,
+      notebookId,
       query: message,
       history: history,
-      mode: topicType
+      mode: topicType,
+      model,
+      traceId
     };
 
     const stream = workflowEngine.executeStream(req);
@@ -153,13 +164,44 @@ export class ChatService {
 
     // Only save the assistant message since user message was saved earlier
     await this.repository.saveMessage(sessionId, assistantMessage);
+
+    // Asynchronously generate a proper subject title if this is early in the conversation
+    if (history.length <= 4) {
+      this.generateAndSaveTitle(sessionId, [...history, userMessage, assistantMessage]).catch(e => console.error(e));
+    }
+  }
+
+  private async generateAndSaveTitle(sessionId: string, messages: ChatMessage[]) {
+    try {
+      const { GeminiProvider } = await import('./ai/gemini.provider');
+      const llm = new GeminiProvider();
+      
+      const prompt = `Based on the following conversation, generate a short 2-5 word title that summarizes the main topic of discussion. Do not include quotes, punctuation, or any prefixes like "Title:". Just the raw title text.\n\n` + 
+        messages.map(m => `${m.role}: ${m.content}`).join('\n');
+      
+      const response = await llm.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }] as any);
+      const title = response.reply.trim().replace(/^["']|["']$/g, '');
+      
+      if (title && title.length < 50) {
+        await this.repository.updateSessionTitle(sessionId, title);
+      }
+    } catch (e) {
+      console.error('Failed to generate dynamic title', e);
+    }
   }
 
   async getUserSessions(userId: string) {
     return this.repository.getSessionsByUser(userId);
   }
 
-  async getSessionHistory(sessionId: string) {
+  async getSessionHistory(sessionId: string, requesterId?: string) {
+    // Ownership check: when a requester is provided, ensure they own the session.
+    if (requesterId) {
+      const session = await this.repository.getSession(sessionId);
+      if (session && session.userId && session.userId !== requesterId) {
+        throw new Error('Forbidden');
+      }
+    }
     return this.repository.getMessages(sessionId);
   }
 
@@ -167,17 +209,4 @@ export class ChatService {
     return this.repository.deleteSession(sessionId, userId);
   }
 
-  private getSystemPromptForTopic(topicType: TopicType): string {
-    // We now use the massive, comprehensive Exam Prep system prompt you provided!
-    // We can still append topic-specific nuances if needed, but the base prompt covers everything.
-    
-    switch(topicType) {
-      case 'image':
-        return `${EXAM_PREP_SYSTEM_PROMPT}\n\nThe user explicitly wants an image right now. Focus heavily on generating the visual.`;
-      case 'study-guide':
-        return `${EXAM_PREP_SYSTEM_PROMPT}\n\nYour specific goal right now is to generate a highly structured, comprehensive study guide based on the user's queries. Ensure all the universal structures are followed.`;
-      default:
-        return EXAM_PREP_SYSTEM_PROMPT;
-    }
-  }
 }

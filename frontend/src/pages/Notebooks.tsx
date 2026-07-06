@@ -1,9 +1,43 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Book, Plus, UploadCloud, Brain, MessageSquare, 
-  History, Bookmark, X, Search, FileText, ChevronRight, Settings, Lightbulb, User, GraduationCap, Mic, Target, RefreshCcw, Layers, Map
+  ChevronDown, 
+  Sparkles, 
+  Paperclip, 
+  Mic, 
+  ArrowUp,
+  Bot,
+  Copy,
+  Check,
+  Volume2,
+  VolumeX,
+  RefreshCw,
+  MessageSquare,
+  Plus,
+  Loader2,
+  Clock,
+  PanelLeftClose,
+  PanelLeft,
+  Trash2,
+  Settings,
+  Wand2,
+  X,
+  Lightbulb,
+  BookOpen,
+  Globe,
+  Calculator,
+  FileText,
+  UserPlus,
+  MoreVertical,
+  Upload,
+  Brain,
+  Network,
+  ChevronRight,
+  FileDown,
+  Book, UploadCloud, History, Bookmark, Search, GraduationCap, Target, RefreshCcw, Layers, Map, Download
 } from 'lucide-react';
+import { ExportDialog } from '../components/export/ExportDialog';
+import { generateStudyGuidePDF } from '../services/exportService';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -12,10 +46,12 @@ import { useWorkflowStream } from '../hooks/ai/useWorkflowStream';
 import { ChatMessageList, ChatMessage } from '../components/chat/ChatMessageList';
 import { CitationViewerPanel } from '../components/chat/CitationViewerPanel';
 import { useKnowledgeGraph, useAssets } from '../hooks/ai/useNotebook';
-import { KnowledgeGraphViewer } from '../components/graph/KnowledgeGraphViewer';
-import { AssetList } from '../components/assets/AssetList';
+import { KnowledgeGraphViewer } from 'shared-ui';
+import { AssetsTab } from '../components/assets/AssetsTab';
 import { AssetViewer } from '../components/assets/AssetViewer';
-import { LearningAsset } from '../types';
+import { LearningAsset, DocumentSource } from '../types';
+import { storage } from '../lib/firebase';
+import { ref, getDownloadURL } from 'firebase/storage';
 
 const LEARNING_MODES = [
   { id: 'TEACHER', label: 'Teacher Mode', icon: GraduationCap, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
@@ -32,14 +68,22 @@ const ONE_CLICK_ACTIONS = [
   { label: 'Quiz Me', icon: Target },
 ];
 
+import { ShareModal } from '../components/notebook/ShareModal';
+
 export default function Notebooks() {
   const [activeNotebook, setActiveNotebook] = useState<string | null>(null);
   const [activeMode, setActiveMode] = useState('TEACHER');
   const [activeTab, setActiveTab] = useState<'CHAT' | 'GRAPH' | 'ASSETS'>('CHAT');
+  const [isShareModalOpen, setIsShareModalOpen] = React.useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = React.useState(false);
+  const [exportState, setExportState] = React.useState<'idle' | 'preparing' | 'rendering_layout' | 'rendering_diagrams' | 'generating_pdf' | 'completed' | 'error'>('idle');
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
+  const [activeAsset, setActiveAsset] = useState<LearningAsset | null>(null);
+  
   const [prompt, setPrompt] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeCitation, setActiveCitation] = useState<any | null>(null);
-  const [activeAsset, setActiveAsset] = useState<LearningAsset | null>(null);
   
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   
@@ -55,10 +99,34 @@ export default function Notebooks() {
     }
   }, [notebooks, activeNotebook]);
 
-  const { sources, isUploading, uploadSource } = useNotebookSources(activeNotebook);
+  const { sources, isUploading, uploadSource, uploadProgress } = useNotebookSources(activeNotebook);
+  const [isDragging, setIsDragging] = React.useState(false);
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && activeNotebook) {
+      try {
+        await uploadSource(file);
+      } catch (err) {
+        console.error("Failed to upload source", err);
+      }
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,6 +140,27 @@ export default function Notebooks() {
     }
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDownloadPdf = async (e: React.MouseEvent, doc: DocumentSource) => {
+    e.stopPropagation();
+    if (!doc.gcsPath) return;
+    
+    try {
+      const gsRef = ref(storage, doc.gcsPath);
+      const url = await getDownloadURL(gsRef);
+      // Create a temporary link to trigger download
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = doc.title;
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error("Failed to download PDF:", err);
+      alert("Could not download the file. It may no longer exist.");
     }
   };
 
@@ -124,6 +213,24 @@ export default function Notebooks() {
     }
   };
 
+  const handleExport = async (selection: any) => {
+    if (!activeNotebook) return;
+    const nb = notebooks.find(n => n.id === activeNotebook);
+    if (!nb) return;
+
+    try {
+      setExportState('preparing');
+      // @ts-ignore
+      await generateStudyGuidePDF(nb, assets || [], selection, nb.owner || 'Student', (state) => {
+        setExportState(state as any);
+      });
+      setExportState('completed');
+    } catch (err) {
+      console.error('Export error:', err);
+      setExportState('error');
+    }
+  };
+
   // When streaming, we append a temporary message
   const displayMessages = [...messages];
   if (isStreaming && streamContent) {
@@ -151,23 +258,44 @@ export default function Notebooks() {
            </button>
          </div>
 
-         <div className="flex-1 overflow-y-auto p-4 space-y-2">
-           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-2">Your Notebooks</h3>
-           {notebooks.map(nb => (
-             <button
-               key={nb.id}
-               onClick={() => setActiveNotebook(nb.id)}
-               className={cn(
-                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all",
-                 activeNotebook === nb.id 
-                   ? "bg-slate-100 dark:bg-white/10 shadow-sm border border-slate-200 dark:border-white/5" 
-                   : "hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent"
-               )}
-             >
-               <div className={cn("w-3 h-3 rounded-full", nb.color)} />
-               <span className="text-sm font-semibold text-slate-800 dark:text-gray-200 truncate">{nb.title}</span>
-             </button>
-           ))}
+         <div className="flex-1 overflow-y-auto p-4 space-y-4">
+           <div>
+             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-2">Your Notebooks</h3>
+             {notebooks.filter(nb => nb.owner === (nb as any).userId /* Replace with actual user ID check in real app */).map(nb => (
+               <button
+                 key={nb.id}
+                 onClick={() => setActiveNotebook(nb.id)}
+                 className={cn(
+                   "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all",
+                   activeNotebook === nb.id 
+                     ? "bg-slate-100 dark:bg-white/10 shadow-sm border border-slate-200 dark:border-white/5" 
+                     : "hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent"
+                 )}
+               >
+                 <div className={cn("w-3 h-3 rounded-full", nb.color)} />
+                 <span className="text-sm font-semibold text-slate-800 dark:text-gray-200 truncate">{nb.title}</span>
+               </button>
+             ))}
+           </div>
+           
+           <div>
+             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-2 mt-4">Shared with me</h3>
+             {notebooks.filter(nb => nb.owner !== (nb as any).userId).map(nb => (
+               <button
+                 key={nb.id}
+                 onClick={() => setActiveNotebook(nb.id)}
+                 className={cn(
+                   "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all opacity-80",
+                   activeNotebook === nb.id 
+                     ? "bg-slate-100 dark:bg-white/10 shadow-sm border border-slate-200 dark:border-white/5" 
+                     : "hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent"
+                 )}
+               >
+                 <div className={cn("w-3 h-3 rounded-full", nb.color)} />
+                 <span className="text-sm font-semibold text-slate-800 dark:text-gray-200 truncate">{nb.title}</span>
+               </button>
+             ))}
+           </div>
          </div>
 
          <div className="p-4 border-t border-slate-100 dark:border-white/5">
@@ -227,11 +355,36 @@ export default function Notebooks() {
                   </button>
                 ))}
                 <button className="px-3 py-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-gray-300">
-                  <span className="text-xl leading-none">...</span>
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
+            <div className="flex items-center gap-3">
+              {activeNotebook && (
+                <>
+                  <button 
+                    onClick={() => setIsExportModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-gray-200 font-bold rounded-lg transition-colors"
+                  >
+                    <FileDown className="w-4 h-4" />
+                    Export PDF
+                  </button>
+                  <button 
+                    onClick={() => setIsShareModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    Share
+                  </button>
+                </>
+              )}
+            </div>
          </div>
+         
+         {/* Share Modal */}
+         {isShareModalOpen && activeNotebook && (
+           <ShareModal notebookId={activeNotebook} onClose={() => setIsShareModalOpen(false)} />
+         )}
 
          {/* Tab Content */}
          {activeTab === 'CHAT' && (
@@ -320,7 +473,7 @@ export default function Notebooks() {
               ) : activeAsset ? (
                  <AssetViewer asset={activeAsset} onBack={() => setActiveAsset(null)} />
               ) : (
-                 <AssetList assets={assets} onSelect={setActiveAsset} />
+                 <AssetsTab assets={assets} onSelect={setActiveAsset} />
               )}
            </div>
          )}
@@ -354,26 +507,36 @@ export default function Notebooks() {
             style={{ display: 'none' }} 
             onChange={handleFileChange} 
           />
-          <button 
+          <div 
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
             onClick={handleUploadClick}
-            disabled={isUploading || !activeNotebook}
             className={cn(
-              "w-full border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-3 transition-colors group",
+              "w-full border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-3 transition-all group relative overflow-hidden",
               isUploading 
-                ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 opacity-70 cursor-not-allowed" 
-                : "border-slate-200 dark:border-white/10 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/5 cursor-pointer"
+                ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 opacity-90 cursor-not-allowed" 
+                : isDragging 
+                  ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/20 scale-[1.02]"
+                  : "border-slate-200 dark:border-white/10 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/5 cursor-pointer"
             )}
           >
-            <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+            {isUploading && (
+              <div 
+                className="absolute left-0 bottom-0 top-0 bg-indigo-100 dark:bg-indigo-900/30 transition-all duration-300 -z-10"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            )}
+            <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform z-10">
               {isUploading ? <RefreshCcw className="w-5 h-5 animate-spin" /> : <UploadCloud className="w-5 h-5" />}
             </div>
-            <div className="text-center">
+            <div className="text-center z-10">
               <p className="text-sm font-semibold text-slate-700 dark:text-gray-200">
-                {isUploading ? "Uploading..." : "Upload Source"}
+                {isUploading ? `Uploading... ${uploadProgress}%` : isDragging ? "Drop file here" : "Upload Source"}
               </p>
-              <p className="text-[11px] text-slate-500 mt-1">PDF, DOCX, TXT (Max 10MB)</p>
+              <p className="text-[11px] text-slate-500 mt-1">PDF, DOCX, TXT, Images (Max 50MB)</p>
             </div>
-          </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
@@ -395,14 +558,29 @@ export default function Notebooks() {
                     <span className="text-[11px] font-medium text-slate-500 bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full">
                       {doc.type}
                     </span>
-                    {doc.pages && (
+                    {doc.totalPages && (
                       <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                        <Book className="w-3 h-3" /> {doc.pages} pages
+                        <Book className="w-3 h-3" /> {doc.totalPages} pages
                       </span>
                     )}
-                    <span className="text-[11px] text-indigo-500 flex items-center gap-1 ml-auto">
+                    <span className={cn(
+                      "text-[11px] flex items-center gap-1 ml-auto font-medium px-2 py-0.5 rounded border",
+                      doc.status === 'READY' ? "text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-500/10 dark:border-emerald-500/20" :
+                      doc.status === 'FAILED' ? "text-red-600 border-red-200 bg-red-50 dark:bg-red-500/10 dark:border-red-500/20" :
+                      "text-indigo-600 border-indigo-200 bg-indigo-50 dark:bg-indigo-500/10 dark:border-indigo-500/20"
+                    )}>
+                      {doc.status !== 'READY' && doc.status !== 'FAILED' && <RefreshCcw className="w-3 h-3 animate-spin mr-1" />}
                       {doc.status}
                     </span>
+                    {doc.gcsPath && (
+                      <button 
+                        onClick={(e) => handleDownloadPdf(e, doc)}
+                        className="ml-2 p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors"
+                        title="Download PDF"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -420,6 +598,12 @@ export default function Notebooks() {
         </div>
       </div>
 
+      <ExportDialog 
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        onExport={handleExport}
+        exportState={exportState}
+      />
     </div>
   );
 }

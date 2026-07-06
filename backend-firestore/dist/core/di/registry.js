@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.bootstrapDI = bootstrapDI;
 const container_1 = require("./container");
 // Import concrete implementations
-const groq_provider_1 = require("../../services/ai/groq.provider");
+const gemini_provider_1 = require("../../services/ai/gemini.provider");
 const google_embedding_provider_1 = require("../../services/ai/providers/google-embedding.provider");
 const cohere_reranker_provider_1 = require("../../services/ai/providers/cohere-reranker.provider");
 const cache_service_1 = require("../../services/cache.service");
@@ -12,8 +12,8 @@ const FirestoreMemoryProvider_1 = require("../providers/memory/FirestoreMemoryPr
 const FirestoreAnalyticsProvider_1 = require("../providers/analytics/FirestoreAnalyticsProvider");
 // ... other providers can be added as they are implemented
 function bootstrapDI() {
-    // Register AI Provider (Defaulting to Groq for now)
-    container_1.container.register(container_1.TOKENS.AIProvider, new groq_provider_1.GroqProvider());
+    // Register AI Provider (Defaulting to Gemini for now)
+    container_1.container.register(container_1.TOKENS.AIProvider, new gemini_provider_1.GeminiProvider());
     // Register Embedding Provider
     container_1.container.register(container_1.TOKENS.EmbeddingProvider, new google_embedding_provider_1.GoogleEmbeddingProvider());
     // Register Reranker Provider

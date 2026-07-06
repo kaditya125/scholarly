@@ -1,3 +1,4 @@
+// Scholarly Backend Server
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -7,11 +8,18 @@ import rateLimit from 'express-rate-limit';
 import { env } from './config/env';
 import { errorHandler } from './middlewares/errorHandler';
 import { bootstrapDI } from './core/di/registry';
+import { checkReadiness } from './lib/health';
 
-// Initialize DI container before routing
+// Initialize DI container before routing.
 bootstrapDI();
 
-import routes from './routes';
+// Load routes AFTER bootstrapDI(). Routes must be required here (not via a top-level
+// `import`) because ES/TS import statements are hoisted above bootstrapDI(); some
+// controllers (e.g. FeatureFlagsController -> FeatureFlagService, ConfigService)
+// resolve DI dependencies at construction time, so the container must already be
+// bootstrapped when their modules are loaded. (module: CommonJS makes require() safe.)
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const routes = require('./routes').default;
 
 const app = express();
 
@@ -19,15 +27,26 @@ const app = express();
 // 1. Production Security & Middleware Setup
 // ==========================================
 
+import { traceIdMiddleware } from './middlewares/traceId.middleware';
+
 // Parse JSON bodies with a larger limit to support base64 file attachments
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Enable CORS for frontend connection
+// Add trace ID tracking to every incoming request
+app.use(traceIdMiddleware);
+
+// Enable CORS for frontend connection.
+// In production the allowlist is driven by the CORS_ORIGINS env var (comma-separated).
+// In development all origins are allowed for convenience.
+const allowedOrigins = env.NODE_ENV === 'development'
+  ? '*'
+  : (env.CORS_ORIGINS ? env.CORS_ORIGINS.split(',').map(o => o.trim()).filter(Boolean) : []);
+
 app.use(cors({
-  origin: env.NODE_ENV === 'development' ? '*' : ['https://your-production-domain.com'],
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-trace-id', 'x-cron-secret']
 }));
 
 // Set security HTTP headers
@@ -55,6 +74,25 @@ app.use('/api', limiter);
 // ==========================================
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Liveness: is the process up? (used by container/orchestrator restarts)
+app.get('/health/live', (req, res) => {
+  res.status(200).json({ status: 'alive', timestamp: new Date().toISOString() });
+});
+
+// Readiness: can we serve traffic? (checks critical dependencies)
+app.get('/health/ready', async (req, res) => {
+  try {
+    const { ready, checks } = await checkReadiness();
+    res.status(ready ? 200 : 503).json({
+      status: ready ? 'ready' : 'not_ready',
+      checks,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err: any) {
+    res.status(503).json({ status: 'not_ready', error: err?.message, timestamp: new Date().toISOString() });
+  }
 });
 
 // ==========================================
@@ -91,5 +129,21 @@ const shutdown = (signal: string) => {
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
+
+// ==========================================
+// 6. Process-level Safety Nets
+// ==========================================
+// Log unhandled promise rejections but keep serving (a stray rejection in one
+// request must not take down the process for all other users). Monitor these logs.
+process.on('unhandledRejection', (reason: any) => {
+  console.error('[unhandledRejection]', reason instanceof Error ? reason.stack : reason);
+});
+
+// An uncaught exception can leave the process in an undefined state — log it and
+// shut down gracefully so the orchestrator can restart a clean instance.
+process.on('uncaughtException', (err: Error) => {
+  console.error('[uncaughtException]', err.stack || err.message);
+  shutdown('uncaughtException');
+});
 
 export default app;

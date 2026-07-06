@@ -1,4 +1,6 @@
-const pdf = require('pdf-parse');
+// pdf-parse v2.x exposes a class-based API (PDFParse) rather than the old
+// callable `pdf(buffer)` function. Destructure the class from the CJS build.
+const { PDFParse } = require('pdf-parse');
 import mammoth from 'mammoth';
 import Tesseract from 'tesseract.js';
 
@@ -17,36 +19,28 @@ export class FileParserService {
       const ext = filename.split('.').pop()?.toLowerCase() || '';
 
       if (ext === 'pdf' || mimeType === 'application/pdf') {
-        const pages: ParsedPage[] = [];
-        
-        // Custom page render to capture page-by-page text
-        function renderPage(pageData: any) {
-            const renderOptions = {
-                normalizeWhitespace: false,
-                disableCombineTextItems: false
-            };
-            return pageData.getTextContent(renderOptions).then(function(textContent: any) {
-                let lastY, text = '';
-                for (let item of textContent.items) {
-                    if (lastY == item.transform[5] || !lastY){
-                        text += item.str;
-                    }  
-                    else {
-                        text += '\n' + item.str;
-                    }    
-                    lastY = item.transform[5];
-                }
-                return text + '\n---PAGE_BREAK---\n';
-            });
+        // pdf-parse v2 API: construct with binary data, then getText() returns
+        // { text, pages: [{ num, text }] }.
+        const parser = new PDFParse({ data: new Uint8Array(buffer) });
+        try {
+          const result: any = await parser.getText();
+          const pages: ParsedPage[] = (result.pages || [])
+            .map((p: any) => ({ pageNumber: p.num ?? 1, text: (p.text || '').trim() }))
+            .filter((p: ParsedPage) => p.text.length > 0);
+          
+          if (pages.length === 0 && (!result.text || result.text.trim().length === 0)) {
+            // OCR Fallback for scanned PDFs
+            const gemini = new (require('./ai/gemini.provider').GeminiProvider)();
+            const text = await gemini.extractTextFromPdf(base64Data, mimeType);
+            return [{ pageNumber: 1, text: text.trim() }];
+          }
+
+          return pages.length > 0 ? pages : [{ pageNumber: 1, text: (result.text || '').trim() }];
+        } finally {
+          if (typeof parser.destroy === 'function') {
+            try { await parser.destroy(); } catch { /* ignore cleanup errors */ }
+          }
         }
-        
-        const data = await pdf(buffer, { pagerender: renderPage });
-        const rawPages = data.text.split('---PAGE_BREAK---');
-        for (let i = 0; i < rawPages.length; i++) {
-          const text = rawPages[i].trim();
-          if (text) pages.push({ pageNumber: i + 1, text });
-        }
-        return pages.length > 0 ? pages : [{ pageNumber: 1, text: data.text }];
       } 
       else if (ext === 'docx' || mimeType.includes('wordprocessingml')) {
         const result = await mammoth.extractRawText({ buffer });

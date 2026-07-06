@@ -1,0 +1,39 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Function to check if the user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Function to check if the user is modifying their own file
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Function to validate image uploads
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*') 
+             && request.resource.size < 5 * 1024 * 1024; // Less than 5MB
+    }
+
+    // Public avatars directory
+    match /public/avatars/{userId}/{fileName} {
+      // Anyone can read public avatars
+      allow read: if true;
+      // Only the authenticated user can write their own avatar
+      allow write: if isOwner(userId) && (request.resource == null || isValidImage()); // allow delete (request.resource == null) or write with valid image
+    }
+    
+    // Specific rule for curriculum/uploads if needed based on previous phase (we didn't write storage rules previously)
+    // but the backend uploads via Admin SDK which bypasses rules.
+    // Client-side uploads only need rules.
+    
+    // Default deny for everything else
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

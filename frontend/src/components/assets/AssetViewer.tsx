@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import { LearningAsset } from '../../types';
-import { Layers, Target, Map as MapIcon, FileText, Clock, Mic, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Layers, Target, Map as MapIcon, FileText, Clock, Mic, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import PodcastPlayer from './PodcastPlayer';
+import PodcastTranscript from './PodcastTranscript';
+import MindMapViewer from './MindMapViewer';
+import TimelineViewer from './TimelineViewer';
+import { usePodcast } from '../../hooks/api/usePodcast';
 
 interface AssetViewerProps {
   asset: LearningAsset;
@@ -17,9 +22,14 @@ export function AssetViewer({ asset, onBack }: AssetViewerProps) {
         return <FlashcardViewer cards={asset.content?.cards || []} />;
       case 'QUIZ':
         return <QuizViewer questions={asset.content?.questions || []} />;
+      case 'PODCAST':
+        return <PodcastViewer asset={asset} />;
+      case 'MIND_MAP':
+        return <MindMapViewer assetData={asset} />;
+      case 'TIMELINE':
+        return <TimelineViewer assetData={asset} />;
       case 'NOTES':
       case 'SUMMARY':
-      case 'PODCAST':
         return (
           <div className="prose prose-sm md:prose-base dark:prose-invert max-w-4xl mx-auto p-6 bg-white dark:bg-[#1a1a1b] rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm mt-6">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -208,6 +218,41 @@ function QuizViewer({ questions }: { questions: any[] }) {
            </div>
          )}
        </div>
+    </div>
+  );
+}
+
+function PodcastViewer({ asset }: { asset: LearningAsset }) {
+  const { metadata, loading, generateAudio } = usePodcast(asset.notebookId, asset.id);
+  const [currentTime, setCurrentTime] = useState(0);
+
+  if (loading) {
+    return <div className="p-12 text-center text-slate-500">Loading podcast metadata...</div>;
+  }
+
+  // If no metadata yet, it means audio hasn't been generated
+  if (!metadata || metadata.status === 'PENDING') {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-[#1a1a1b] rounded-2xl border border-slate-200 dark:border-white/10 mt-6 shadow-sm">
+        <Mic className="w-16 h-16 text-teal-500 mb-6 opacity-80" />
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Podcast Audio Not Generated</h3>
+        <p className="text-slate-500 text-center max-w-md mb-8">
+          The script for this podcast has been generated, but the audio synthesis has not started. Click below to synthesize the audio with AI voices.
+        </p>
+        <button
+          onClick={generateAudio}
+          className="px-6 py-3 bg-teal-500 hover:bg-teal-600 text-white font-bold rounded-full shadow-lg hover:shadow-teal-500/25 transition-all"
+        >
+          Generate Podcast Audio
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-8 mt-6 max-w-5xl mx-auto">
+      <PodcastPlayer metadata={metadata} onTimeUpdate={setCurrentTime} />
+      <PodcastTranscript metadata={metadata} currentTime={currentTime} />
     </div>
   );
 }

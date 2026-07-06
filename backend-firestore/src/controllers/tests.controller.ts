@@ -1,19 +1,64 @@
 import { Request, Response, NextFunction } from 'express';
-import { TestsService } from '../services/tests.service';
+import { testSeriesService } from '../services/tests/testSeries.service';
+import { adaptiveTestService } from '../services/tests/adaptiveTest.service';
+import { resultAnalysisService } from '../services/tests/resultAnalysis.service';
 import { Subject, Difficulty } from '../types';
 
 export class TestsController {
-  private service = new TestsService();
-
-  public getTests = async (req: Request, res: Response, next: NextFunction) => {
+  public getFeaturedSeries = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const subject = req.query.subject as Subject | undefined;
-      const difficulty = req.query.difficulty as Difficulty | undefined;
-      const maxMins = req.query.maxMins ? parseInt(req.query.maxMins as string, 10) : undefined;
-      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+      const series = await testSeriesService.getFeaturedTestSeries();
+      res.json(series);
+    } catch (error) {
+      next(error);
+    }
+  };
 
-      const tests = await this.service.getTests(subject, difficulty, maxMins, limit);
-      res.json(tests);
+  public getCategories = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { category } = req.query;
+      const series = await testSeriesService.getTestSeriesByCategory(category as string || 'SSC');
+      res.json(series);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getIncompleteAttempts = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.params;
+      const attempts = await testSeriesService.getIncompleteAttempts(userId);
+      res.json(attempts);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public generateAdaptiveTest = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.params;
+      const { subject, topic, difficulty, questionCount, timeLimitMins } = req.body;
+      const test = await adaptiveTestService.generateAdaptiveTest(
+          userId, 
+          subject as Subject, 
+          topic, 
+          difficulty as Difficulty, 
+          questionCount, 
+          timeLimitMins
+      );
+      res.json(test);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public submitTestAttempt = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { attemptId } = req.params;
+      // In a real scenario, the attempt updates would be pushed first, then submit is called.
+      // Assuming attempt is already saved in DB with answers.
+      const result = await resultAnalysisService.processSubmission(attemptId);
+      res.json(result);
     } catch (error) {
       next(error);
     }

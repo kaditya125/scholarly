@@ -17,5 +17,17 @@ class UserStatsController {
             next(error);
         }
     };
+    awardXP = async (req, res, next) => {
+        try {
+            const { userId } = req.params;
+            const { actionType } = req.body; // e.g. 'LOGIN', 'STUDY_30'
+            await this.service.awardXP(userId, actionType);
+            const updatedStats = await this.service.getUserStats(userId);
+            res.json(updatedStats);
+        }
+        catch (error) {
+            next(error);
+        }
+    };
 }
 exports.UserStatsController = UserStatsController;

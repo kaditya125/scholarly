@@ -2,7 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const leaderboard_controller_1 = require("../controllers/leaderboard.controller");
+const auth_1 = require("../middlewares/auth");
 const router = (0, express_1.Router)();
 const controller = new leaderboard_controller_1.LeaderboardController();
+router.use(auth_1.requireAuth);
 router.get('/', controller.getLeaderboard);
 exports.default = router;
