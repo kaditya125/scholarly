@@ -36,6 +36,9 @@ export interface TestResult {
 export interface Notebook {
   id: string;
   userId: string;
+  owner?: string;
+  editors?: string[];
+  viewers?: string[];
   title: string;
   color: string;
   createdAt: number;
@@ -55,18 +58,43 @@ export interface Notebook {
   };
 }
 
-export type ProcessingStatus = 'PENDING' | 'EXTRACTING' | 'CHUNKING' | 'EMBEDDING' | 'GRAPH_BUILDING' | 'INDEXING' | 'READY' | 'FAILED';
+export type ProcessingStatus = 'PENDING' | 'UPLOADING' | 'PROCESSING' | 'OCR' | 'EXTRACTING' | 'CHUNKING' | 'EMBEDDING' | 'INDEXING' | 'GENERATING_GRAPH' | 'READY' | 'FAILED';
 
 export interface DocumentSource {
   id: string;
+  userId: string;
   notebookId: string;
-  title: string;
+  title: string;          // Maps to originalName
+  originalName?: string;
   type: string;
-  pages?: number;
+  mimeType?: string;
+  extension?: string;
   sizeBytes: number;
+  storagePath?: string;
+  gcsPath?: string;       // Legacy / current path
+  downloadUrl?: string;
+  
   status: ProcessingStatus;
+  parsingStatus?: string;
+  embeddingStatus?: string;
+  knowledgeGraphStatus?: string;
+  summaryStatus?: string;
+  flashcardStatus?: string;
+  quizStatus?: string;
+
+  totalPages?: number;
   chunksExtracted: number;
+  totalTokens?: number;
+  
+  checksum?: string;
+  version?: number;
+  error?: string;
+  
+  conceptsExtracted: number;
+  authorityScore: number;
+  processingDurationMs: number;
   createdAt: number;
+  uploadedAt?: number;
 }
 
 export interface LearningAsset {
@@ -74,6 +102,7 @@ export interface LearningAsset {
   notebookId: string;
   type: 'FLASHCARDS' | 'QUIZ' | 'MIND_MAP' | 'NOTES' | 'SUMMARY' | 'TIMELINE' | 'PODCAST';
   title: string;
+  description?: string;
   content: any; // We'll keep it as `any` on frontend for now, to be cast later
   createdAt: number;
 }
@@ -90,4 +119,34 @@ export interface KGEdge {
   sourceNodeId: string;
   targetNodeId: string;
   relationshipType: string;
+}
+
+export type PodcastStatus = 
+  | 'PENDING'
+  | 'GENERATING_SCRIPT'
+  | 'GENERATING_AUDIO'
+  | 'STITCHING_AUDIO'
+  | 'UPLOADING'
+  | 'READY'
+  | 'FAILED';
+
+export interface PodcastMetadata {
+  id: string; // Document ID (podcastId)
+  notebookId: string;
+  userId: string;
+  title: string;
+  description: string;
+  duration?: number;
+  language: string;
+  voiceProvider: string;
+  speakers: string[];
+  transcriptUrl?: string;
+  audioUrl?: string;
+  coverImageUrl?: string;
+  status: PodcastStatus;
+  createdAt: number;
+  updatedAt: number;
+  estimatedListeningTime?: number;
+  totalWords?: number;
+  totalCharacters?: number;
 }

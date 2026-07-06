@@ -1,417 +1,408 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { 
-  Play,
-  Clock,
-  HelpCircle,
-  Award,
-  Users,
-  Search,
-  Filter,
-  MoreHorizontal,
-  ChevronRight,
-  TrendingUp
+  Activity, Award, TrendingUp, Brain, Zap, Target,
+  BookOpen, ChevronRight, Loader2, Sparkles, AlertTriangle, Calendar, Bell, Coffee
 } from "lucide-react";
 import { motion } from "motion/react";
-import { cn } from "../lib/utils";
-import { api } from "../lib/api/client";
-import { Loader2 } from "lucide-react";
-import { useAnalytics } from "../hooks/ai/useAnalytics";
+import { useUserStats } from "../hooks/api/useUserStats";
 
-const tabs = [
-  "BPSC TRE (1 to 5)(6)",
-  "BPSC TRE (6 to 8)(9)",
-  "BPSC TRE (9 to 10)(10)",
-  "BPSC TRE (11 to 12)(15)"
-];
+import { DashboardSkeleton } from "../components/ui/SkeletonLoader";
+
+import { CostAnalyticsWidget } from '../components/dashboard/CostAnalyticsWidget';
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState("BPSC TRE (1 to 5)(6)");
-  const [showFilters, setShowFilters] = useState(false);
-  const [filterSubject, setFilterSubject] = useState("All");
-  const [filterDifficulty, setFilterDifficulty] = useState("All");
-  const [filterDuration, setFilterDuration] = useState("All");
+  const { stats, isLoading, isError } = useUserStats();
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
-  const { metrics, isLoadingMetrics, insights, isLoadingInsights } = useAnalytics();
-  const [tests, setTests] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  if (isLoading) {
+    return <DashboardSkeleton />;
+  }
 
-  useEffect(() => {
-    const fetchTests = async () => {
-      try {
-        const { data } = await api.get('/tests');
-        const formattedTests = data.map((t: any, i: number) => ({
-          ...t,
-          color: i % 2 === 0 ? "bg-teal-50 dark:bg-teal-900/20" : "bg-yellow-50 dark:bg-yellow-900/10",
-          border: i % 2 === 0 ? "border-teal-100 dark:border-teal-900/50" : "border-yellow-100 dark:border-yellow-900/30",
-          dot: i % 2 === 0 ? "bg-teal-400 dark:bg-teal-500" : "bg-yellow-400 dark:bg-yellow-600",
-        }));
-        setTests(formattedTests);
-      } catch (error) {
-        console.error("Error fetching tests:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTests();
-  }, []);
+  if (isError || !stats) {
+    return (
+      <div className="flex flex-col h-full items-center justify-center bg-slate-50 dark:bg-[#131314] text-slate-500">
+        <AlertTriangle className="w-12 h-12 mb-4 text-rose-500" />
+        <h2 className="text-xl font-medium text-slate-900 dark:text-white">Unable to load dashboard</h2>
+        <p>Please try refreshing the page.</p>
+      </div>
+    );
+  }
 
-  const filteredTests = tests.filter(test => {
-    if (filterSubject !== "All" && test.subject !== filterSubject) return false;
-    if (filterDifficulty !== "All" && test.difficulty !== filterDifficulty) return false;
-    if (filterDuration !== "All") {
-      if (filterDuration === "< 120 mins" && test.mins >= 120) return false;
-      if (filterDuration === "120+ mins" && test.mins < 120) return false;
-    }
-    return true;
-  });
-
-  const weakTopics = metrics?.weaknesses || ["general studies", "mathematics"];
-
-  const suggestedTests = tests.filter(test => {
-    const title = test.title.toLowerCase();
-    if (weakTopics.includes("general studies") && title.includes("gs")) return true;
-    return weakTopics.some(topic => title.includes(topic.toLowerCase()));
-  });
-
-  const testsToShowAsSuggested = suggestedTests.length > 0 ? suggestedTests.slice(0, 2) : tests.slice(0, 2);
+  const { gamification, aiRecommendations } = stats;
 
   return (
-    <div className="w-full flex h-[calc(100vh-100px)] p-6 pt-0 gap-6">
-      
-      {/* Main List */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-8">
+    <div className="w-full h-full overflow-y-auto custom-scrollbar p-6 bg-slate-50 dark:bg-[#131314] text-slate-900 dark:text-white transition-colors duration-300">
+      <div className="max-w-[1400px] mx-auto space-y-8">
         
-        {/* Header/Hero */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 p-6 md:p-8 rounded-[24px] bg-gradient-to-br from-[#1a1f33] via-[#161a2b] to-[#121420] mt-1 relative overflow-hidden"
-        >
-           <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] pointer-events-none -translate-y-1/2 translate-x-1/4" />
-           <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none translate-y-1/2 -translate-x-1/4" />
-           
-           <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
-              <div>
-                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/90 text-[11px] font-bold uppercase tracking-wider mb-3 backdrop-blur-md">
-                   <TrendingUp className="w-3 h-3 text-blue-400" /> Keep the streak going
-                 </div>
-                 <h1 className="text-2xl md:text-3xl font-extrabold text-white mb-2 tracking-tight">Test Series & PYPs</h1>
-                 <p className="text-slate-400 dark:text-slate-400 font-medium max-w-lg text-[13px] leading-relaxed">
-                   Practice with official previous year papers and high-quality mock tests designed to help you ace the exams.
-                 </p>
-              </div>
-              <div className="flex gap-4 shrink-0">
-                 <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-[18px] p-4 flex items-center gap-4 slide-in-from-right-8 animate-in duration-700">
-                    <div className="bg-gradient-to-br from-blue-500 to-indigo-500 p-2.5 rounded-xl shadow-lg shadow-blue-500/20">
-                       <Award className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                       <div className="text-2xl font-extrabold text-white tracking-tight">45+</div>
-                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Total Tests</div>
-                    </div>
-                 </div>
-              </div>
-           </div>
-        </motion.div>
-
-        {/* Suggested Tests Section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-blue-500" /> Suggested for You
-            </h2>
-            <span className="text-slate-500 dark:text-slate-400 font-medium">BPSC TRE / PRT (1-5)</span>
+        {/* Top Section: Daily AI Coach (Morning Briefing) */}
+        <div className="bg-gradient-to-r from-teal-500 to-emerald-500 dark:from-teal-600 dark:to-emerald-700 rounded-[32px] p-8 text-white shadow-lg relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-8 opacity-10">
+            <Sparkles className="w-48 h-48" />
           </div>
-          
-          {loading ? (
-            <div className="flex items-center justify-center w-full h-[200px]">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {testsToShowAsSuggested.map((test, idx) => (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  key={`suggested-${idx}`}
-                  className="bg-gradient-to-br from-blue-50 to-indigo-50/30 dark:from-[#1a1f33]/60 dark:to-[#1a1f33] rounded-[20px] p-5 border border-blue-100/50 dark:border-[#2a3048] shadow-sm hover:shadow-[0_4px_20px_rgb(0,0,0,0.03)] transition-all duration-300 hover:-translate-y-0.5 relative overflow-hidden group flex flex-col"
-                >
-                    <div className="flex items-start justify-between mb-4 mt-0.5">
-                       <div className="flex gap-2">
-                          <span className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-blue-100 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-400">Suggested</span>
-                          <span className="px-2.5 py-1 rounded-md text-[10px] font-bold border border-slate-200 dark:border-[#2a3048] bg-white/60 dark:bg-white/5 text-slate-600 dark:text-slate-300">{test.difficulty}</span>
-                       </div>
-                       <button className="p-1 hover:bg-white/50 dark:hover:bg-white/5 rounded-md text-slate-400 dark:text-slate-500 transition-colors">
-                          <MoreHorizontal className="w-4 h-4" />
-                       </button>
-                    </div>
-                    <h3 className="font-bold text-slate-900 dark:text-white text-[15px] leading-snug mb-2.5 pr-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex-1">{test.title}</h3>
-                    
-                    <div className="flex items-center gap-1.5 mb-4 opacity-80">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                      <span className="text-[12px] font-semibold text-slate-500 dark:text-slate-400">{test.users} Users</span>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-5 bg-white/60 dark:bg-[#161925]/50 px-3 py-2 rounded-xl border border-blue-100 dark:border-[#2a3048]">
-                      <div className="flex items-center gap-1"><HelpCircle className="w-3.5 h-3.5 text-slate-400" /> {test.questions} Qs</div>
-                      <div className="w-1 h-1 rounded-full bg-slate-200 dark:bg-[#2a3048]"></div>
-                      <div className="flex items-center gap-1"><Award className="w-3.5 h-3.5 text-slate-400" /> {test.marks} Marks</div>
-                    </div>
-
-                    <Link to="/test" className="w-full flex items-center justify-between px-5 py-2.5 bg-blue-600 dark:bg-blue-600 text-white rounded-xl text-[13px] font-bold shadow-sm hover:bg-blue-700 dark:hover:bg-blue-700 transition-all cursor-pointer group/btn mt-auto">
-                      <span className="flex items-center gap-1.5"><Play className="w-3.5 h-3.5 fill-current" /> Take Test</span>
-                      <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                    </Link>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col mb-6 gap-4 sticky top-0 bg-[#fafbfc]/90 dark:bg-[#131314]/90 backdrop-blur-md z-20 py-2 transition-colors duration-300">
-           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-             <div className="flex gap-2 flex-wrap items-center">
-               {tabs.map(tab => (
-                 <button 
-                   key={tab} 
-                   onClick={() => setActiveTab(tab)}
-                   className={cn(
-                     "px-4 py-2 text-[13px] font-bold rounded-full transition-all whitespace-nowrap border cursor-pointer",
-                     activeTab === tab 
-                       ? "bg-slate-900 border-slate-900 text-white shadow-md shadow-slate-900/10 dark:bg-white dark:text-black" 
-                       : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 dark:bg-[#1a1f33] dark:border-[#2a3048] dark:text-[#b4badd] dark:hover:text-white dark:hover:bg-[#202538]"
-                   )}
-                 >
-                   {tab}
-                 </button>
-               ))}
-             </div>
-             <div className="hidden md:flex gap-2">
-               <button className="w-9 h-9 bg-white dark:bg-[#1a1f33] rounded-full flex items-center justify-center border border-slate-200 dark:border-[#2a3048] cursor-pointer text-slate-500 dark:text-[#798199] hover:bg-slate-50 hover:text-slate-900 dark:hover:text-white dark:hover:bg-[#202538] shadow-sm transition-all relative group">
-                 <Search className="w-4 h-4" />
-               </button>
-               <button 
-                 onClick={() => setShowFilters(!showFilters)}
-                 className={cn(
-                   "w-9 h-9 rounded-full flex items-center justify-center border cursor-pointer shadow-sm transition-all",
-                   showFilters 
-                     ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-500/10 dark:border-blue-500/30 dark:text-blue-400" 
-                     : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:bg-[#1a1f33] dark:border-[#2a3048] dark:text-[#798199] dark:hover:text-white dark:hover:bg-[#202538]"
-                 )}
-               >
-                 <Filter className="w-4 h-4" />
-               </button>
-             </div>
-           </div>
-
-           {/* Filter Panel */}
-           {showFilters && (
-             <motion.div 
-               initial={{ opacity: 0, height: 0 }}
-               animate={{ opacity: 1, height: 'auto' }}
-               className="bg-white dark:bg-[#1a1f33]/80 rounded-[20px] p-5 border border-slate-200 dark:border-[#2a3048] shadow-sm flex flex-col md:flex-row gap-6 transition-colors duration-300"
-             >
-               <div className="flex-1">
-                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Subject Type</label>
-                 <div className="flex gap-2 flex-wrap">
-                   {["All", "PYP", "Full Mock", "Subject Test"].map(opt => (
-                     <button
-                       key={opt}
-                       onClick={() => setFilterSubject(opt)}
-                       className={cn(
-                         "px-3 py-1.5 text-[12px] font-bold rounded-lg transition-colors border cursor-pointer",
-                         filterSubject === opt ? "bg-slate-900 border-slate-900 text-white dark:bg-white dark:border-white dark:text-black" : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 dark:bg-transparent dark:border-[#2a3048] dark:text-slate-400 dark:hover:text-white"
-                       )}
-                     >
-                       {opt}
-                     </button>
-                   ))}
-                 </div>
-               </div>
-               
-               <div className="flex-1">
-                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Difficulty</label>
-                 <div className="flex gap-2 flex-wrap">
-                   {["All", "Easy", "Medium", "Hard"].map(opt => (
-                     <button
-                       key={opt}
-                       onClick={() => setFilterDifficulty(opt)}
-                       className={cn(
-                         "px-3 py-1.5 text-[12px] font-bold rounded-lg transition-colors border cursor-pointer",
-                         filterDifficulty === opt ? "bg-slate-900 border-slate-900 text-white dark:bg-white dark:border-white dark:text-black" : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 dark:bg-transparent dark:border-[#2a3048] dark:text-slate-400 dark:hover:text-white"
-                       )}
-                     >
-                       {opt}
-                     </button>
-                   ))}
-                 </div>
-               </div>
-
-               <div className="flex-1">
-                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Duration</label>
-                 <div className="flex gap-2 flex-wrap">
-                   {["All", "< 120 mins", "120+ mins"].map(opt => (
-                     <button
-                       key={opt}
-                       onClick={() => setFilterDuration(opt)}
-                       className={cn(
-                         "px-3 py-1.5 text-[12px] font-bold rounded-lg transition-colors border cursor-pointer",
-                         filterDuration === opt ? "bg-slate-900 border-slate-900 text-white dark:bg-white dark:border-white dark:text-black" : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 dark:bg-transparent dark:border-[#2a3048] dark:text-slate-400 dark:hover:text-white"
-                       )}
-                     >
-                       {opt}
-                     </button>
-                   ))}
-                 </div>
-               </div>
-             </motion.div>
-           )}
-        </div>
-
-        {/* Test Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredTests.map((test, idx) => (
-            <motion.div 
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
-              key={idx} 
-              className={cn("bg-white dark:bg-[#1a1f33]/60 rounded-[20px] p-5 border border-slate-200/80 dark:border-[#2a3048] shadow-sm transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-0.5 hover:dark:bg-[#1a1f33] relative overflow-hidden group flex flex-col")}
-            >
-              <div className="flex items-start justify-between mb-4 mt-0.5">
-                <div className="flex gap-2">
-                  <span className={cn("px-2.5 py-1 rounded-md text-[10px] font-bold", test.color, test.border, "border text-slate-700 dark:text-slate-300 backdrop-blur-sm")}>
-                     {test.subject}
-                  </span>
-                  <span className="px-2.5 py-1 rounded-md text-[10px] font-bold border border-slate-200 dark:border-[#2a3048] bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-400">
-                     {test.difficulty}
-                  </span>
-                </div>
-                <button className="p-1 hover:bg-slate-50 dark:hover:bg-white/5 rounded-md text-slate-400 dark:text-slate-500 transition-colors">
-                  <MoreHorizontal className="w-4 h-4" />
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-sm font-medium mb-4">
+                <Brain className="w-4 h-4" /> Daily AI Coach Briefing
+              </div>
+              <h1 className="text-3xl md:text-4xl font-bold mb-3">Good Morning, Scholar!</h1>
+              <p className="text-teal-50 text-lg opacity-90 leading-relaxed">
+                You have 15 days left until UPSC CSE. Yesterday, you missed 2 tasks. Let's make up for it today. Your learning velocity is excellent.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button className="px-6 py-3 bg-white text-teal-700 dark:bg-slate-900 dark:text-teal-400 rounded-full font-bold hover:bg-teal-50 dark:hover:bg-slate-800 transition-colors shadow-sm">
+                  Start Today's Plan
                 </button>
-              </div>
-
-              <h3 className="font-bold text-slate-900 dark:text-white text-[15px] leading-snug mb-2.5 pr-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex-1">{test.title}</h3>
-              
-              <div className="flex items-center gap-1.5 mb-4 opacity-80">
-                <span className={cn("w-1.5 h-1.5 rounded-full shadow-sm", test.dot)}></span>
-                <span className="text-[12px] font-semibold text-slate-500 dark:text-slate-400">{test.users} Users</span>
-              </div>
-              
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-5 bg-slate-50 dark:bg-[#161925]/50 px-3 py-2 rounded-xl border border-slate-100/80 dark:border-[#2a3048]">
-                <div className="flex items-center gap-1"><HelpCircle className="w-3.5 h-3.5 text-slate-400" /> {test.questions} Qs</div>
-                <div className="w-1 h-1 rounded-full bg-slate-200 dark:bg-[#2a3048]"></div>
-                <div className="flex items-center gap-1"><Award className="w-3.5 h-3.5 text-slate-400" /> {test.marks} Marks</div>
-                <div className="w-1 h-1 rounded-full bg-slate-200 dark:bg-[#2a3048]"></div>
-                <div className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-slate-400" /> {test.mins} Mins</div>
-              </div>
-
-              <Link to="/test" className="w-full flex items-center justify-between px-5 py-2.5 bg-white dark:bg-[#202538] text-slate-900 dark:text-white rounded-xl text-[13px] font-bold shadow-sm border border-slate-200 dark:border-[#2a3048] hover:border-blue-500 dark:hover:border-blue-500/50 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-700 dark:hover:text-blue-400 transition-all cursor-pointer group/btn mt-auto">
-                <span className="flex items-center gap-1.5"><Play className="w-3.5 h-3.5 fill-current text-blue-600 dark:text-blue-400" /> Start Mock Test</span>
-                <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover/btn:text-blue-600 dark:group-hover/btn:text-blue-400 transition-colors group-hover/btn:translate-x-1" />
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      {/* Right Sidebar Widgets */}
-      <div className="w-[300px] shrink-0 h-full hidden xl:flex flex-col space-y-4 pt-1">
-        
-        {/* Proactive Companion Widget */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-gradient-to-br from-indigo-500 to-blue-600 rounded-[20px] p-6 border border-indigo-400 shadow-xl shadow-indigo-500/20 relative overflow-hidden flex flex-col"
-        >
-           <div className="absolute top-0 right-0 w-24 h-24 bg-white/30 blur-[30px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
-           <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-400/20 blur-[40px] rounded-full pointer-events-none translate-y-1/2 -translate-x-1/2"></div>
-           
-           <div className="flex items-center gap-2 mb-4 relative z-10">
-               <span className="font-extrabold text-white border border-white/30 bg-white/10 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-widest backdrop-blur-sm shadow-sm">AI COACH</span>
-               <span className="text-[11px] font-bold text-indigo-50 uppercase tracking-wide">Companion Insight</span>
-           </div>
-           
-           {isLoadingInsights ? (
-             <div className="flex-1 flex items-center justify-center py-6">
-                <Loader2 className="w-6 h-6 animate-spin text-white" />
-             </div>
-           ) : insights && insights.length > 0 ? (
-             <>
-               <h3 className="text-xl font-extrabold text-white mb-2 leading-tight relative z-10 tracking-tight capitalize">
-                 {insights[0].type} Focus
-               </h3>
-               <p className="text-[12px] text-indigo-100 font-medium mb-6 relative z-10 leading-relaxed">
-                 {insights[0].message}
-               </p>
-               
-               <Link to={insights[0].actionUrl} className="w-full flex items-center justify-center gap-2 py-2.5 bg-white text-indigo-600 rounded-xl text-[13px] font-bold shadow-lg shadow-black/10 transition-all hover:bg-indigo-50 hover:-translate-y-0.5 relative z-10 cursor-pointer mt-auto">
-                 {insights[0].actionText} <ChevronRight className="w-3.5 h-3.5" />
-               </Link>
-             </>
-           ) : (
-             <>
-               <h3 className="text-xl font-extrabold text-white mb-2 leading-tight relative z-10 tracking-tight">You're On Track!</h3>
-               <p className="text-[12px] text-indigo-100 font-medium mb-6 relative z-10 leading-relaxed">No new AI insights. Keep studying and making progress.</p>
-             </>
-           )}
-        </motion.div>
-
-        {/* Analytics Mini-widget */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white dark:bg-[#1a1f33] rounded-[20px] p-6 border border-slate-200/80 dark:border-[#2a3048] shadow-sm relative group hover:shadow-[0_4px_20px_rgb(0,0,0,0.03)] transition-all flex flex-col"
-        >
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="font-extrabold text-slate-900 dark:text-white text-[15px]">Overall Metrics</h3>
-              <div className="w-7 h-7 rounded-lg bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 flex items-center justify-center">
-                <TrendingUp className="w-3.5 h-3.5 text-slate-400 dark:text-slate-400" />
+                <button className="px-6 py-3 bg-teal-600/50 hover:bg-teal-600/70 text-white rounded-full font-medium transition-colors backdrop-blur-sm">
+                  View missed tasks
+                </button>
               </div>
             </div>
             
-            {isLoadingMetrics ? (
-              <div className="flex items-center justify-center py-6">
-                 <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+            {/* Exam Countdown block */}
+            <div className="bg-black/20 backdrop-blur-md rounded-3xl p-6 border border-white/20 min-w-[260px] shadow-inner">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 text-teal-100 text-sm font-medium uppercase tracking-wider">
+                  <Calendar className="w-4 h-4" />
+                  UPSC CSE 2026
+                </div>
               </div>
-            ) : metrics ? (
+              <div className="flex items-baseline gap-2 mb-2">
+                <span className="text-5xl font-black tracking-tight">15</span>
+                <span className="text-xl font-medium opacity-80">Days</span>
+              </div>
+              <div className="text-teal-100 text-sm mb-4">
+                Pace: <strong className="text-white">4 chapters/day</strong> needed
+              </div>
+              <div className="h-2.5 bg-black/30 rounded-full overflow-hidden">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: '85%' }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                  className="h-full bg-white rounded-full" 
+                />
+              </div>
+              <div className="flex justify-between text-xs mt-2 text-teal-100">
+                <span>Start</span>
+                <span>85% completed</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Cost Analytics & Core Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-1">
+            <CostAnalyticsWidget isAdminMode={false} />
+          </div>
+          
+          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <MetricCard 
+              icon={<Target className="w-6 h-6 text-blue-500" />}
+              title="Overall Mastery"
+              value={`${stats.averageAccuracy}%`}
+              trend="+2.5% this week"
+              trendUp={true}
+            />
+            <MetricCard 
+            icon={<Zap className="w-6 h-6 text-amber-500" />}
+            title="Study Streak"
+            value={`${gamification.studyStreakDays} Days`}
+            trend={`Best: ${gamification.longestStreak} Days`}
+            trendUp={gamification.studyStreakDays >= gamification.longestStreak}
+          />
+          <MetricCard 
+            icon={<Brain className="w-6 h-6 text-purple-500" />}
+            title="Retention Score"
+            value={`${stats.retentionScore}/100`}
+            trend="Based on spaced repetition"
+            trendUp={stats.retentionScore > 75}
+          />
+          <MetricCard 
+            icon={<Activity className="w-6 h-6 text-teal-500" />}
+            title="Learning Velocity"
+            value={`${stats.learningVelocity}`}
+            trend="Concepts / week"
+            trendUp={true}
+          />
+          </div>
+        </div>
+
+        {/* Phase 5 New Widgets */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          {/* Daily Learning Health */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[32px] p-8 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <h3 className="text-lg font-bold mb-6 w-full text-left flex items-center gap-2">
+              <Activity className="w-5 h-5 text-indigo-500" /> Daily Learning Health
+            </h3>
+            <div className="relative w-40 h-40 flex items-center justify-center">
+              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="40" className="stroke-slate-100 dark:stroke-slate-800" strokeWidth="10" fill="none" />
+                <motion.circle 
+                  cx="50" cy="50" r="40" 
+                  className="stroke-indigo-500" 
+                  strokeWidth="10" 
+                  fill="none" 
+                  strokeLinecap="round"
+                  initial={{ strokeDasharray: "251.2", strokeDashoffset: "251.2" }}
+                  animate={{ strokeDashoffset: 251.2 - (251.2 * 0.85) }}
+                  transition={{ duration: 1.5, ease: "easeOut" }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-3xl font-black text-indigo-600 dark:text-indigo-400">85%</span>
+                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Health</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Exam Readiness Predictor */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[32px] p-8 shadow-sm relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <h3 className="text-lg font-bold mb-6 w-full text-left flex items-center gap-2">
+              <Target className="w-5 h-5 text-emerald-500" /> Exam Readiness Predictor
+            </h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+                <span className="text-slate-500 dark:text-slate-400 font-medium">Estimated Score</span>
+                <span className="text-xl font-bold text-slate-900 dark:text-white">112<span className="text-sm font-medium text-slate-400">/200</span></span>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+                <span className="text-slate-500 dark:text-slate-400 font-medium">Projected Percentile</span>
+                <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">92nd</span>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+                <span className="text-slate-500 dark:text-slate-400 font-medium">Confidence Level</span>
+                <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-full text-sm font-bold">High</span>
+              </div>
+            </div>
+          </div>
+
+          {/* AI Weekly Review */}
+          <div 
+            onClick={() => setIsReviewModalOpen(true)}
+            className="bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-[32px] p-8 text-white shadow-lg relative overflow-hidden group cursor-pointer"
+          >
+            <div className="absolute top-0 right-0 p-6 opacity-20 transform group-hover:scale-110 transition-transform duration-500">
+              <Sparkles className="w-32 h-32" />
+            </div>
+            <div className="relative z-10 h-full flex flex-col justify-between">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-sm font-medium mb-4">
+                  <Calendar className="w-4 h-4" /> Weekly Insight
+                </div>
+                <h3 className="text-2xl font-bold mb-2">AI Weekly Review</h3>
+                <p className="text-violet-100 opacity-90 text-sm leading-relaxed">
+                  Your personalized breakdown of this week's progress, strengths, and areas to focus on next.
+                </p>
+              </div>
+              <div className="mt-6">
+                <button className="w-full py-3 bg-white text-violet-700 rounded-xl font-bold hover:bg-violet-50 transition-colors shadow-sm flex items-center justify-center gap-2">
+                  Open Review <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Two-Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Main Column: AI Recommendations */}
+          <div className="lg:col-span-2 space-y-8">
+            <section>
+              <div className="flex items-center gap-2 mb-6">
+                <Sparkles className="w-6 h-6 text-teal-500" />
+                <h2 className="text-2xl font-bold">AI Coach Recommendations</h2>
+              </div>
+              
               <div className="space-y-4">
-                 <div>
-                    <div className="flex justify-between items-end mb-1.5">
-                       <span className="text-[12px] font-bold text-slate-500 dark:text-slate-400">Total Study Hours</span>
-                       <span className="text-[15px] font-extrabold text-slate-900 dark:text-white">{metrics.totalStudyHours}</span>
-                    </div>
-                    <div className="h-2 w-full bg-slate-100 dark:bg-[#202538] rounded-full overflow-hidden">
-                       <div className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full" style={{ width: `${Math.min(100, (metrics.totalStudyHours / 100) * 100)}%` }} ></div>
-                    </div>
-                 </div>
-                 
-                 <div>
-                    <div className="flex justify-between items-end mb-1.5">
-                       <span className="text-[12px] font-bold text-slate-500 dark:text-slate-400">Topics Mastered</span>
-                       <span className="text-[15px] font-extrabold text-slate-900 dark:text-white">{metrics.topicsMastered}</span>
-                    </div>
-                    <div className="h-2 w-full bg-slate-100 dark:bg-[#202538] rounded-full overflow-hidden">
-                       <div className="h-full bg-gradient-to-r from-emerald-400 to-cyan-500 rounded-full" style={{ width: `${Math.min(100, (metrics.topicsMastered / 50) * 100)}%` }}></div>
-                    </div>
-                 </div>
-
-                 <div>
-                    <div className="flex justify-between items-end mb-1.5">
-                       <span className="text-[12px] font-bold text-slate-500 dark:text-slate-400">Average Score</span>
-                       <span className="text-[15px] font-extrabold text-slate-900 dark:text-white">{metrics.averageScore}%</span>
-                    </div>
-                 </div>
+                {aiRecommendations.length > 0 ? (
+                  aiRecommendations.map((rec, i) => (
+                    <motion.div 
+                      key={i}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.1 }}
+                      className="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[24px] shadow-sm hover:border-teal-500/30 transition-colors flex items-start gap-4"
+                    >
+                      <div className={`p-3 rounded-xl ${
+                        rec.type === 'review' ? 'bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400' :
+                        rec.type === 'quiz' ? 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400' :
+                        'bg-teal-100 text-teal-600 dark:bg-teal-500/20 dark:text-teal-400'
+                      }`}>
+                        {rec.type === 'review' ? <AlertTriangle className="w-6 h-6" /> : 
+                         rec.type === 'quiz' ? <HelpCircle className="w-6 h-6" /> : 
+                         <Award className="w-6 h-6" />}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold mb-1">{rec.title}</h3>
+                        <p className="text-slate-700 dark:text-slate-300 mb-3">{rec.message}</p>
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50 flex gap-2">
+                          <Brain className="w-4 h-4 text-purple-500 shrink-0 mt-0.5" />
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            <span className="font-semibold text-purple-600 dark:text-purple-400">AI Reasoning: </span> 
+                            {(rec as any).reasoning || "Recommended because your Geometry accuracy dropped, affecting your overall mastery trend."}
+                          </p>
+                        </div>
+                      </div>
+                      <button className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-full font-medium transition-colors text-sm">
+                        Action
+                      </button>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-[24px] border border-slate-200 dark:border-slate-800">
+                    <p className="text-slate-500">No active recommendations. Keep studying!</p>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="text-sm text-slate-500">No data available</div>
-            )}
-        </motion.div>
+            </section>
+          </div>
 
+          {/* Sidebar Column: Weak & Strong Topics */}
+          <div className="space-y-8">
+            <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[32px] p-8 relative overflow-hidden shadow-sm">
+              <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-500"></div>
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <Bell className="w-5 h-5 text-amber-500" />
+                Coach Notifications
+              </h3>
+              <div className="space-y-4">
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  className="p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 rounded-2xl cursor-pointer"
+                >
+                  <h4 className="font-bold text-amber-800 dark:text-amber-300 text-sm mb-1">Geometry mastery dropped</h4>
+                  <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mb-2">Your recent test scores indicate a 12% drop.</p>
+                  <div className="p-2 bg-amber-100/50 dark:bg-amber-900/30 rounded-lg flex gap-1.5 items-start">
+                    <Brain className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-800 dark:text-amber-300">
+                      <span className="font-semibold">Reasoning:</span> Recommended because your Geometry accuracy dropped, affecting your projected percentile.
+                    </p>
+                  </div>
+                </motion.div>
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  className="p-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded-2xl cursor-pointer"
+                >
+                  <h4 className="font-bold text-rose-800 dark:text-rose-300 text-sm mb-1">Overdue Revision</h4>
+                  <p className="text-xs text-rose-700/70 dark:text-rose-400/70">You have 3 topics from History that are past their spaced repetition date.</p>
+                </motion.div>
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  className="p-4 bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 rounded-2xl cursor-pointer"
+                >
+                  <h4 className="font-bold text-blue-800 dark:text-blue-300 text-sm mb-1">Peak Focus Time</h4>
+                  <p className="text-xs text-blue-700/70 dark:text-blue-400/70">Based on your history, you study best at 9 AM. Schedule hard tasks then.</p>
+                </motion.div>
+              </div>
+            </section>
+
+            <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[32px] p-8 shadow-sm">
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <Target className="w-5 h-5 text-emerald-500" />
+                Strong Topics
+              </h3>
+              <div className="space-y-3">
+                {stats.strongTopics.length > 0 ? (
+                  stats.strongTopics.map((topic, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-[#131314] rounded-xl border border-slate-100 dark:border-slate-800/50">
+                      <span className="font-medium text-sm">{topic}</span>
+                      <Award className="w-4 h-4 text-emerald-500" />
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-500">Keep testing to discover strengths.</p>
+                )}
+              </div>
+            </section>
+
+            <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[32px] p-8">
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-rose-500" />
+                Weak Topics
+              </h3>
+              <div className="space-y-3">
+                {stats.weakTopics.length > 0 ? (
+                  stats.weakTopics.map((topic, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-[#131314] rounded-xl border border-slate-100 dark:border-slate-800/50">
+                      <span className="font-medium text-sm">{topic}</span>
+                      <TrendingUp className="w-4 h-4 text-rose-500 rotate-180" />
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-500">No weak topics identified yet.</p>
+                )}
+              </div>
+            </section>
+          </div>
+
+        </div>
+      </div>
+
+      {/* AI Weekly Review Modal */}
+      {isReviewModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsReviewModalOpen(false)}>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-slate-900 rounded-[32px] p-8 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800 relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 p-6 opacity-10">
+              <Sparkles className="w-32 h-32 text-violet-500" />
+            </div>
+            <div className="relative z-10 text-center">
+              <div className="w-16 h-16 bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Brain className="w-8 h-8" />
+              </div>
+              <h2 className="text-2xl font-bold mb-4">Your Weekly Review</h2>
+              <p className="text-slate-500 dark:text-slate-400 mb-8">
+                Your Weekly Review will appear here. The AI is currently generating your personalized insights based on your learning patterns.
+              </p>
+              <button 
+                onClick={() => setIsReviewModalOpen(false)}
+                className="w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Helper Components
+
+import { LucideIcon, HelpCircle } from "lucide-react";
+
+function MetricCard({ icon, title, value, trend, trendUp }: { icon: any, title: string, value: string | number, trend: string, trendUp: boolean }) {
+  return (
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+      <div className="flex justify-between items-start mb-4 relative z-10">
+        <div className="p-3 bg-slate-50 dark:bg-[#131314] rounded-2xl">
+          {icon}
+        </div>
+        {trendUp ? (
+          <span className="flex items-center text-xs font-medium text-emerald-600 bg-emerald-100 dark:bg-emerald-500/20 dark:text-emerald-400 px-2 py-1 rounded-full">
+            <TrendingUp className="w-3 h-3 mr-1" /> {trend}
+          </span>
+        ) : (
+          <span className="flex items-center text-xs font-medium text-slate-600 bg-slate-100 dark:bg-slate-800 dark:text-slate-400 px-2 py-1 rounded-full">
+            {trend}
+          </span>
+        )}
+      </div>
+      <div className="relative z-10">
+        <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">{title}</h3>
+        <p className="text-3xl font-bold">{value}</p>
       </div>
     </div>
   );

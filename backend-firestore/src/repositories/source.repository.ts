@@ -24,6 +24,11 @@ export class SourceRepository {
     await this.getCollection(notebookId).doc(sourceId).update(updates);
   }
 
+  async getSourcesByNotebook(notebookId: string): Promise<DocumentSource[]> {
+    const snapshot = await this.getCollection(notebookId).get();
+    return snapshot.docs.map(doc => doc.data() as DocumentSource);
+  }
+
   async deleteSource(notebookId: string, sourceId: string): Promise<void> {
     await this.getCollection(notebookId).doc(sourceId).delete();
     await db.collection('notebooks').doc(notebookId).update({

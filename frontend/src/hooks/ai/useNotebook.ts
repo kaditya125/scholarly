@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notebooksApi } from '../../lib/api/notebooks';
 import { Notebook, DocumentSource } from '../../types';
@@ -52,18 +53,26 @@ export function useNotebookSources(notebookId: string | null) {
     refetchInterval: (query) => {
       const data = query.state.data;
       if (!data) return false;
-      const isProcessing = data.some(s => ['PENDING', 'CHUNKING', 'EMBEDDING', 'INDEXING'].includes(s.status));
+      const isProcessing = data.some(s => ['PENDING', 'UPLOADING', 'PROCESSING', 'OCR', 'EXTRACTING', 'CHUNKING', 'EMBEDDING', 'GENERATING_GRAPH', 'INDEXING'].includes(s.status));
       return isProcessing ? 5000 : false;
     },
     staleTime: 1000 * 30, // 30 seconds
     retry: 2,
   });
 
+  const [uploadProgress, setUploadProgress] = useState(0);
+
   const uploadSourceMutation = useMutation({
-    mutationFn: (file: File) => notebooksApi.uploadSource(notebookId!, file),
+    mutationFn: (file: File) => notebooksApi.uploadSource(notebookId!, file, (progressEvent) => {
+      if (progressEvent.total) {
+        setUploadProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total));
+      }
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notebookSources', notebookId, user?.uid] });
+      setUploadProgress(0);
     },
+    onError: () => setUploadProgress(0),
   });
 
   return {
@@ -71,6 +80,7 @@ export function useNotebookSources(notebookId: string | null) {
     isLoading: sourcesQuery.isLoading,
     uploadSource: uploadSourceMutation.mutateAsync,
     isUploading: uploadSourceMutation.isPending,
+    uploadProgress,
   };
 }
 

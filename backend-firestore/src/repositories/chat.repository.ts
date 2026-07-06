@@ -28,10 +28,23 @@ export class ChatRepository {
   }
 
   /**
+   * Fetch a session by ID without creating it. Returns null if it does not exist.
+   */
+  async getSession(sessionId: string): Promise<ChatSession | null> {
+    const doc = await this.collection.doc(sessionId).get();
+    if (!doc.exists) return null;
+    return { sessionId: doc.id, ...doc.data() } as ChatSession;
+  }
+
+  /**
    * Load history of messages from the subcollection, sorted by timestamp.
    */
-  async getMessages(sessionId: string): Promise<ChatMessage[]> {
-    const snapshot = await this.collection.doc(sessionId).collection('messages').orderBy('timestamp', 'asc').get();
+  async getMessages(sessionId: string, limit: number = 2000): Promise<ChatMessage[]> {
+    // Bounded read: return at most `limit` most-recent messages in ascending order.
+    // limitToLast uses the single-field timestamp index (auto-created by Firestore),
+    // so no composite index is required. Prevents unbounded reads on huge sessions.
+    const snapshot = await this.collection.doc(sessionId).collection('messages')
+      .orderBy('timestamp', 'asc').limitToLast(limit).get();
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatMessage));
   }
 
@@ -104,5 +117,13 @@ export class ChatRepository {
     // Delete the session document itself
     await docRef.delete();
     return true;
+  }
+
+  /**
+   * Update the title of a session
+   */
+  async updateSessionTitle(sessionId: string, title: string): Promise<void> {
+    const docRef = this.collection.doc(sessionId);
+    await docRef.update({ title });
   }
 }

@@ -54,7 +54,43 @@ export class NotebookController {
       await notebookService.updateNotebook(id, userId, updates);
       res.json({ success: true });
     } catch (error: any) {
-      if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' });
+      if (error.message === 'Forbidden' || error.message.includes('Unauthorized')) return res.status(403).json({ error: 'Forbidden' });
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async shareNotebook(req: Request, res: Response) {
+    try {
+      const userId = req.user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const { id } = req.params;
+      const { targetEmailOrId, role } = req.body;
+      
+      const { NotebookSharingService } = await import('../services/notebookSharing.service');
+      const sharingService = new NotebookSharingService();
+      
+      const notebook = await sharingService.shareWithUser(id, userId, targetEmailOrId, role);
+      res.json(notebook);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async generateShareLink(req: Request, res: Response) {
+    try {
+      const userId = req.user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const { id } = req.params;
+      const { role, expiresInHours } = req.body;
+      
+      const { NotebookSharingService } = await import('../services/notebookSharing.service');
+      const sharingService = new NotebookSharingService();
+      
+      const link = await sharingService.generateSecureShareLink(id, userId, role, expiresInHours);
+      res.json({ link });
+    } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   }

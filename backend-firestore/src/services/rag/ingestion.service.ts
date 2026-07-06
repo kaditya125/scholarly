@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { env } from '../../config/env';
 import { db as adminDb } from '../../config/firebase';
 import { FileParserService } from '../fileParser.service';
 import { pineconeService, VectorDocument } from './pinecone.service';
@@ -160,7 +161,7 @@ export class IngestionService {
     }
 
     // 6. Save to Pinecone
-    await pineconeService.upsertVectors(vectorDocs);
+    await pineconeService.upsertVectors(vectorDocs, env.PINECONE_NAMESPACE);
 
     // 7. Store Document Metadata to Firestore (Knowledge Base)
     await adminDb.collection('notebooks').doc(metadata.notebookId).collection('documents').doc(documentId).set({

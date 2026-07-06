@@ -21,13 +21,14 @@ export const notebooksApi = {
     return response.data;
   },
 
-  async uploadSource(notebookId: string, file: File): Promise<DocumentSource> {
+  async uploadSource(notebookId: string, file: File, onUploadProgress?: (progressEvent: any) => void): Promise<DocumentSource> {
     const formData = new FormData();
     formData.append('file', file);
     const response = await api.post(`/notebooks/${notebookId}/sources`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
-      }
+      },
+      onUploadProgress
     });
     return response.data;
   },

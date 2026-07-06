@@ -1,7 +1,7 @@
 import { container, TOKENS } from './container';
 
 // Import concrete implementations
-import { GroqProvider } from '../../services/ai/groq.provider';
+import { GeminiProvider } from '../../services/ai/gemini.provider';
 import { GoogleEmbeddingProvider } from '../../services/ai/providers/google-embedding.provider';
 import { CohereRerankerProvider } from '../../services/ai/providers/cohere-reranker.provider';
 import { cacheService } from '../../services/cache.service';
@@ -11,8 +11,8 @@ import { FirestoreAnalyticsProvider } from '../providers/analytics/FirestoreAnal
 // ... other providers can be added as they are implemented
 
 export function bootstrapDI() {
-  // Register AI Provider (Defaulting to Groq for now)
-  container.register(TOKENS.AIProvider, new GroqProvider());
+  // Register AI Provider (Defaulting to Gemini for now)
+  container.register(TOKENS.AIProvider, new GeminiProvider());
   
   // Register Embedding Provider
   container.register(TOKENS.EmbeddingProvider, new GoogleEmbeddingProvider());

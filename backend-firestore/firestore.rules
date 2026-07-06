@@ -1,0 +1,102 @@
+rules_version = '2';
+
+// ============================================================================
+// Scholarly AI — Firestore Security Rules (least privilege)
+//
+// IMPORTANT: The backend uses the Firebase Admin SDK, which BYPASSES these rules.
+// These rules exist to protect against ANY direct client (Web SDK) access:
+// the safe default is "deny", with narrow owner-scoped allowances for the
+// collections whose ownership fields are known from the data model.
+// ============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+    function isSelf(uid) { return isSignedIn() && request.auth.uid == uid; }
+    function hasAdminRole() {
+      return isSignedIn() && request.auth.token.role in
+        ['super_admin', 'admin', 'moderator', 'content_manager', 'support', 'analytics_viewer'];
+    }
+
+    // ---- Users: a user may read/write only their own profile document ----
+    match /users/{userId} {
+      allow read, write: if isSelf(userId);
+    }
+
+    // ---- Gamification stats: owner (or admin) read; writes only via backend ----
+    match /user_stats/{userId} {
+      allow read: if isSelf(userId) || hasAdminRole();
+      allow write: if false;
+    }
+
+    // ---- Notebooks + subcollections: owner / editor / viewer scoped ----
+    match /notebooks/{notebookId} {
+      function nb() { return resource.data; }
+      function isNbOwner() {
+        return isSignedIn() && (nb().owner == request.auth.uid || nb().userId == request.auth.uid);
+      }
+      function canRead() {
+        return isSignedIn() && (
+          isNbOwner() ||
+          request.auth.uid in nb().get('editors', []) ||
+          request.auth.uid in nb().get('viewers', [])
+        );
+      }
+      function canWrite() {
+        return isSignedIn() && (isNbOwner() || request.auth.uid in nb().get('editors', []));
+      }
+
+      allow read: if canRead();
+      allow create: if isSignedIn() && request.resource.data.owner == request.auth.uid;
+      allow update: if canWrite();
+      allow delete: if isNbOwner();
+
+      // Subcollections (sources, timeline, assets, kg_nodes, kg_edges, documents):
+      // read follows notebook membership; writes go through the backend Admin SDK.
+      match /{sub=**} {
+        function parent() {
+          return get(/databases/$(database)/documents/notebooks/$(notebookId)).data;
+        }
+        allow read: if isSignedIn() && (
+          parent().owner == request.auth.uid ||
+          parent().userId == request.auth.uid ||
+          request.auth.uid in parent().get('editors', []) ||
+          request.auth.uid in parent().get('viewers', [])
+        );
+        allow write: if false;
+      }
+    }
+
+    // ---- Chat sessions: owner-only; messages inherit ownership ----
+    match /chat_sessions/{sessionId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+
+      match /messages/{messageId} {
+        allow read: if isSignedIn() &&
+          get(/databases/$(database)/documents/chat_sessions/$(sessionId)).data.userId == request.auth.uid;
+        allow write: if false;
+      }
+    }
+
+    // ---- Reference / community read-only data: signed-in read, backend write ----
+    match /questions/{doc}        { allow read: if isSignedIn(); allow write: if false; }
+    match /rooms/{doc}            { allow read: if isSignedIn(); allow write: if false; }
+    match /discussions/{doc}      { allow read: if isSignedIn(); allow write: if false; }
+    match /published_assets/{doc} { allow read: if isSignedIn(); allow write: if false; }
+    match /leaderboard/{doc}      { allow read: if isSignedIn(); allow write: if false; }
+    match /study_groups/{doc}     { allow read: if isSignedIn(); allow write: if false; }
+
+    // ---- Admin / config / telemetry: no direct client access (backend only) ----
+    match /feature_flags/{doc}      { allow read, write: if false; }
+    match /prompt_experiments/{doc} { allow read, write: if false; }
+    match /system_config/{doc}      { allow read, write: if false; }
+    match /feedback/{doc}           { allow read, write: if false; }
+
+    // ---- Default deny for anything not explicitly matched above ----
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -2,13 +2,13 @@ import { useQuery } from '@tanstack/react-query';
 import { graphApi, GraphData } from '../../lib/api/graph';
 import { useAuth } from '../../lib/AuthContext';
 
-export function useGraph() {
+export function useGraph(notebookId?: string) {
   const { user } = useAuth();
 
   const graphQuery = useQuery<GraphData>({
-    queryKey: ['knowledge_graph', user?.uid],
-    queryFn: () => graphApi.getGraph(),
-    enabled: !!user?.uid,
+    queryKey: ['knowledge_graph', notebookId, user?.uid],
+    queryFn: () => graphApi.getGraph(notebookId as string),
+    enabled: !!user?.uid && !!notebookId,
   });
 
   return {

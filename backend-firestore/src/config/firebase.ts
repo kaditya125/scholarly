@@ -23,6 +23,10 @@ class FirebaseAdminSingleton {
             privateKey: privateKey,
           });
           adminConfig.projectId = env.FIREBASE_PROJECT_ID;
+        }
+        
+        if (env.FIREBASE_STORAGE_BUCKET) {
+          adminConfig.storageBucket = env.FIREBASE_STORAGE_BUCKET;
         }  
         
         try {

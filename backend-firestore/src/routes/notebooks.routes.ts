@@ -5,7 +5,7 @@ import multer from 'multer';
 import { sourceController } from '../controllers/source.controller';
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } }); // 25MB limit
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB limit
 
 router.use(requireAuth);
 
@@ -15,6 +15,8 @@ router.post('/', notebookController.createNotebook);
 router.get('/:id', notebookController.getNotebook);
 router.put('/:id', notebookController.updateNotebook);
 router.delete('/:id', notebookController.deleteNotebook);
+router.post('/:id/share', notebookController.shareNotebook);
+router.post('/:id/share-link', notebookController.generateShareLink);
 
 // Sources
 router.get('/:id/sources', notebookController.getSources);
@@ -25,7 +27,6 @@ router.delete('/:id/sources/:sourceId', sourceController.deleteSource);
 router.get('/:id/timeline', notebookController.getTimeline);
 router.get('/:id/assets', notebookController.getAssets);
 
-// Knowledge Graph
-router.get('/:id/graph', notebookController.getKnowledgeGraph);
+// Knowledge Graph handled by graph.routes.ts
 
 export default router;

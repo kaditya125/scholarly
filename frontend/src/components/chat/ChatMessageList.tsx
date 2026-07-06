@@ -11,6 +11,7 @@ import { Brain, User } from 'lucide-react';
 mermaid.initialize({
   startOnLoad: false,
   theme: 'dark',
+  suppressErrorRendering: true,
 });
 
 const Mermaid = ({ chart }: { chart: string }) => {

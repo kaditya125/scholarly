@@ -42,7 +42,10 @@ import {
   Menu,
   X,
   Library,
-  LogOut
+  LogOut,
+  Users,
+  Compass,
+  ShieldAlert
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { ShareModal } from "./ShareModal";
@@ -57,6 +60,8 @@ const MAIN_MENU = [
   { label: "Discussions", path: "/discussions", icon: MessagesSquare },
   { label: "Tests", path: "/tests", icon: FileText },
   { label: "Study Plan", path: "/planner", icon: Calendar },
+  { label: "Study Groups", path: "/groups", icon: Users },
+  { label: "Explore", path: "/explore", icon: Compass },
   { label: "My Flashcards", path: "/flashcards", icon: Library },
   { label: "Leaderboard", path: "/leaderboard", icon: ClipboardList },
   { label: "Analytics", path: "/analytics", icon: BarChart2 },
@@ -388,14 +393,14 @@ export function AppLayout() {
               className={cn("flex justify-between items-center transition-colors duration-200 cursor-pointer pt-2 border-t border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-[#1a1a1a]", isCollapsed ? "justify-center w-10 h-10 rounded-full mt-2 mx-auto" : "px-3 py-2 rounded-lg")}
             >
                {isCollapsed ? (
-                 <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-sm shrink-0 uppercase">
-                   {user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                 <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-sm shrink-0 uppercase overflow-hidden">
+                   {user?.photoURL ? <img src={user.photoURL} alt="User" className="w-full h-full object-cover" /> : (user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U')}
                  </div>
                ) : (
                  <>
                    <div className="flex items-center gap-3 overflow-hidden">
-                     <div className="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-sm shrink-0 uppercase">
-                       {user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                     <div className="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-sm shrink-0 uppercase overflow-hidden">
+                       {user?.photoURL ? <img src={user.photoURL} alt="User" className="w-full h-full object-cover" /> : (user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U')}
                      </div>
                      <div className="text-[14px] font-medium text-slate-700 dark:text-gray-200 truncate pr-2">
                        {user?.displayName || user?.email || 'User'}
@@ -505,15 +510,15 @@ export function AppLayout() {
                 <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-teal-500 dark:bg-indigo-500 rounded-full" />
               </button>
               
-              <div className="flex items-center gap-3 cursor-pointer pl-1 md:pl-2">
-                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm md:text-base font-bold shadow-sm border-2 border-white dark:border-[#131314] uppercase">
+              <Link to="/profile" className="flex items-center gap-3 cursor-pointer pl-1 md:pl-2 group">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm md:text-base font-bold shadow-sm border-2 border-white dark:border-[#131314] uppercase group-hover:ring-2 ring-indigo-500 transition-all">
                   {user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}
                 </div>
                 <div className="hidden sm:block">
-                  <div className="text-sm font-semibold text-slate-900 dark:text-gray-200 truncate max-w-[120px]">{user?.displayName || 'User'}</div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-gray-200 truncate max-w-[120px] group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{user?.displayName || 'User'}</div>
                   <div className="text-[11px] text-teal-600 dark:text-indigo-400 font-bold uppercase tracking-wider">Student</div>
                 </div>
-              </div>
+              </Link>
             </div>
           )}
         </header>

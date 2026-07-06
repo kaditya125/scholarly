@@ -2,11 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userMemoryService = exports.UserMemoryService = void 0;
 const firebase_1 = require("../config/firebase");
-const groq_provider_1 = require("./ai/groq.provider");
+const gemini_provider_1 = require("./ai/gemini.provider");
 class UserMemoryService {
-    groqProvider;
+    llmProvider;
     constructor() {
-        this.groqProvider = new groq_provider_1.GroqProvider();
+        this.llmProvider = new gemini_provider_1.GeminiProvider();
     }
     async getUserMemory(userId) {
         const doc = await firebase_1.db.collection('users').doc(userId).collection('memory').doc('global').get();
@@ -32,7 +32,7 @@ class UserMemoryService {
     
     Extract a single comma-separated list of topics the student seems to be STRUGGLING with. If none, output "NONE".`;
         try {
-            const insight = await this.groqProvider.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }]);
+            const insight = await this.llmProvider.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }]);
             const newWeakTopics = insight.reply.split(',').map((t) => t.trim().toLowerCase()).filter((t) => t !== 'none' && t !== '');
             if (newWeakTopics.length > 0) {
                 const updatedWeakTopics = Array.from(new Set([...currentMemory.weakTopics, ...newWeakTopics]));
@@ -56,7 +56,7 @@ class UserMemoryService {
             // Use LLM to generate a quick path if not in graph
             const prompt = `Generate a logical 3-step learning path following the topic "${currentTopic}". Return ONLY a comma-separated list of 3 topics.`;
             try {
-                const res = await this.groqProvider.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }]);
+                const res = await this.llmProvider.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }]);
                 return res.reply.split(',').map((t) => t.trim());
             }
             catch (e) {

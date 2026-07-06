@@ -57,6 +57,9 @@ class FirebaseAdminSingleton {
                     });
                     adminConfig.projectId = env_1.env.FIREBASE_PROJECT_ID;
                 }
+                if (env_1.env.FIREBASE_STORAGE_BUCKET) {
+                    adminConfig.storageBucket = env_1.env.FIREBASE_STORAGE_BUCKET;
+                }
                 try {
                     FirebaseAdminSingleton.instance = admin.initializeApp(adminConfig);
                     console.log(`✅ Firebase Admin initialized successfully [Project: ${FirebaseAdminSingleton.instance.options.projectId || 'Default/ADC'}]`);

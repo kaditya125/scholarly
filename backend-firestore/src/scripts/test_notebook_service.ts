@@ -6,20 +6,32 @@ import { Notebook } from '../types';
 // Mock the repository
 const mockNotebooks: Record<string, Notebook> = {};
 
+// Mock implementations matching new signatures
 notebookRepository.createNotebook = async (notebook: Notebook) => {
   mockNotebooks[notebook.id] = notebook;
 };
-notebookRepository.getNotebook = async (id: string) => {
-  return mockNotebooks[id] || null;
+
+notebookRepository.getNotebook = async (userId: string, id: string) => {
+  const nb = mockNotebooks[id];
+  if (nb && (nb.owner === userId || nb.editors?.includes(userId) || nb.viewers?.includes(userId))) {
+    return nb;
+  }
+  return null;
 };
-notebookRepository.updateNotebook = async (id: string, updates: Partial<Notebook>) => {
-  if (mockNotebooks[id]) {
-    mockNotebooks[id] = { ...mockNotebooks[id], ...updates, updatedAt: Date.now() };
+
+notebookRepository.updateNotebook = async (userId: string, id: string, updates: Partial<Notebook>) => {
+  const nb = mockNotebooks[id];
+  if (nb && (nb.owner === userId || nb.editors?.includes(userId))) {
+    mockNotebooks[id] = { ...nb, ...updates, updatedAt: Date.now() };
+  } else {
+    throw new Error('Unauthorized to edit');
   }
 };
+
 notebookRepository.deleteNotebook = async (id: string) => {
   delete mockNotebooks[id];
 };
+
 notebookRepository.addTimelineEvent = async () => {};
 
 async function runTests() {
@@ -45,7 +57,7 @@ async function runTests() {
     await notebookService.getNotebookById(notebook.id, otherUserId);
     assert.fail('Should have thrown Forbidden error');
   } catch (error: any) {
-    assert.strictEqual(error.message, 'Forbidden');
+    assert.strictEqual(error.message, 'Forbidden or Not Found');
   }
   console.log('✅ getNotebookById (Unauthorized) passes');
 
@@ -60,7 +72,7 @@ async function runTests() {
     await notebookService.updateNotebook(notebook.id, otherUserId, { isPinned: false });
     assert.fail('Should have thrown Forbidden error');
   } catch (error: any) {
-    assert.strictEqual(error.message, 'Forbidden');
+    assert.strictEqual(error.message, 'Unauthorized to edit');
   }
   console.log('✅ updateNotebook (Unauthorized) passes');
 

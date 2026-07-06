@@ -22,6 +22,9 @@ export interface DiscussionMessage {
   participants?: string[];
   replies?: number;
   views?: number;
+  aiSummary?: string;
+  similarThreadIds?: string[];
+  createdAt?: number;
 }
 
 export const discussionsApi = {

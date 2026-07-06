@@ -2,7 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const planner_controller_1 = require("../controllers/planner.controller");
+const auth_1 = require("../middlewares/auth");
 const router = (0, express_1.Router)();
 const controller = new planner_controller_1.PlannerController();
-router.get('/', controller.getTasks);
+router.use(auth_1.requireAuth);
+router.get('/:userId/timetable', (0, auth_1.enforceSelf)('userId'), controller.getTimetable);
+router.post('/:userId/timetable', (0, auth_1.enforceSelf)('userId'), controller.generateTimetable);
+router.post('/:userId/timetable/complete', (0, auth_1.enforceSelf)('userId'), controller.markTaskCompleted);
+router.post('/:userId/timetable/adapt', (0, auth_1.enforceSelf)('userId'), controller.adaptTimetable);
 exports.default = router;

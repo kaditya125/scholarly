@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ingestionService = exports.IngestionService = void 0;
 const uuid_1 = require("uuid");
+const env_1 = require("../../config/env");
 const firebase_1 = require("../../config/firebase");
 const fileParser_service_1 = require("../fileParser.service");
 const pinecone_service_1 = require("./pinecone.service");
@@ -71,7 +72,8 @@ class IngestionService {
         const bufferSize = Buffer.from(base64Data, 'base64').length;
         await this.checkQuotas(metadata.userId, bufferSize);
         // 1. Extract Text
-        const rawText = await fileParser_service_1.FileParserService.extractText(base64Data, mimeType, metadata.filename);
+        const parsedPages = await fileParser_service_1.FileParserService.extractText(base64Data, mimeType, metadata.filename);
+        const rawText = parsedPages.map(p => p.text).join('\n');
         if (!rawText || rawText.includes('[Error')) {
             throw new Error(`Failed to extract text from ${metadata.filename}`);
         }
@@ -117,7 +119,7 @@ class IngestionService {
             });
         }
         // 6. Save to Pinecone
-        await pinecone_service_1.pineconeService.upsertVectors(vectorDocs);
+        await pinecone_service_1.pineconeService.upsertVectors(vectorDocs, env_1.env.PINECONE_NAMESPACE);
         // 7. Store Document Metadata to Firestore (Knowledge Base)
         await firebase_1.db.collection('notebooks').doc(metadata.notebookId).collection('documents').doc(documentId).set({
             filename: metadata.filename,

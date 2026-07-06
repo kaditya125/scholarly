@@ -28,6 +28,7 @@ export class NotebookService {
       learningGoals: [],
       weakTopics: [],
       strongTopics: [],
+      auditLogs: [],
       owner: userId,
       editors: [],
       viewers: []
@@ -46,18 +47,21 @@ export class NotebookService {
   }
 
   async getNotebookById(id: string, userId: string): Promise<Notebook | null> {
-    const notebook = await notebookRepository.getNotebook(id);
-    if (notebook && notebook.userId !== userId) throw new Error('Forbidden');
+    const notebook = await notebookRepository.getNotebook(userId, id);
+    if (!notebook) throw new Error('Forbidden or Not Found');
     return notebook;
   }
 
   async updateNotebook(id: string, userId: string, updates: Partial<Notebook>): Promise<void> {
-    await this.getNotebookById(id, userId); // Throws if forbidden
-    await notebookRepository.updateNotebook(id, updates);
+    await notebookRepository.updateNotebook(userId, id, updates);
   }
 
   async deleteNotebook(id: string, userId: string): Promise<void> {
-    await this.getNotebookById(id, userId); // Throws if forbidden
+    const notebook = await this.getNotebookById(id, userId); 
+    // Only owner can delete
+    if (notebook?.owner !== userId && notebook?.userId !== userId) {
+      throw new Error('Only the owner can delete the notebook');
+    }
     await notebookRepository.deleteNotebook(id);
   }
 

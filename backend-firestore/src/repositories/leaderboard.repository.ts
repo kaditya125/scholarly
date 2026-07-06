@@ -2,18 +2,27 @@ import { db } from '../config/firebase';
 import { LeaderboardEntry } from '../types';
 
 export class LeaderboardRepository {
-  private collection = db.collection('leaderboard');
+  private userStatsCollection = db.collection('user_stats');
 
   async getTopUsers(limit: number = 100): Promise<LeaderboardEntry[]> {
-    // Requires index on 'points' DESC
-    // Note: If 'points' is a string, it sorts alphabetically. Assume it's stored properly padded or as a number for production,
-    // or sort happens correctly if padded. For this schema, we map from string safely or assume string points are formatted well.
-    const snapshot = await this.collection.orderBy('points', 'desc').limit(limit).get();
-    return snapshot.docs.map(doc => {
+    // Requires composite index: gamification.xp DESC
+    const snapshot = await this.userStatsCollection.orderBy('gamification.xp', 'desc').limit(limit).get();
+    
+    return snapshot.docs.map((doc, index) => {
       const data = doc.data();
+      const gamification = data.gamification || { xp: 0, level: 1, rank: 'Bronze' };
+      
       return { 
         userId: doc.id, 
-        ...data 
+        name: `User ${doc.id.substring(0, 5)}`, // Placeholder name mapping
+        handle: `@user${doc.id.substring(0, 5)}`,
+        avatar: "https://i.pravatar.cc/150?u=" + doc.id,
+        followers: "12",
+        points: gamification.xp.toString(),
+        reward: gamification.xp * 0.1, // Example conversion
+        rank: index + 1,
+        rankTrend: "same",
+        scoreTrend: "up"
       } as LeaderboardEntry;
     });
   }

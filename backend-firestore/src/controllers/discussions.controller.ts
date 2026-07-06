@@ -15,4 +15,22 @@ export class DiscussionsController {
       next(error);
     }
   };
+
+  public createDiscussion = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Identity comes from the verified Firebase token, not a client-supplied header.
+      const participantId = req.user?.uid;
+      if (!participantId) return res.status(401).json({ error: 'Unauthorized' });
+      const discussion = await this.service.createDiscussion({
+        ...req.body,
+        participantId
+      });
+      res.status(201).json(discussion);
+    } catch (error: any) {
+      if (error.message === "Content violates community guidelines.") {
+        return res.status(400).json({ error: error.message });
+      }
+      next(error);
+    }
+  };
 }

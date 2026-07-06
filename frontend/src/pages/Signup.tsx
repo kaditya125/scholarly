@@ -12,7 +12,7 @@ export default function Signup() {
     try {
       setError(null);
       await signInWithPopup(auth, googleProvider);
-      navigate("/dashboard");
+      navigate("/welcome");
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Failed to sign up with Google.");
@@ -23,7 +23,7 @@ export default function Signup() {
     try {
       setError(null);
       await signInWithPopup(auth, githubProvider);
-      navigate("/dashboard");
+      navigate("/welcome");
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Failed to sign up with GitHub.");

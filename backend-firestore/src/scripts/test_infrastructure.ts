@@ -41,7 +41,7 @@ async function validateInfrastructure() {
   // 3. Pinecone
   console.log('\nChecking Pinecone connection...');
   try {
-    const pc = new Pinecone({ apiKey: env.PINECONE_API_KEY });
+    const pc = new Pinecone({ apiKey: env.PINECONE_API_KEY || '' });
     const indexes = await pc.listIndexes();
     console.log(`✅ Pinecone connection successful. Indexes:`, indexes.indexes?.map(i => i.name) || []);
   } catch (error: any) {
