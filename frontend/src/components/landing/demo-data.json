@@ -1,0 +1,26 @@
+{
+  "scenario": {
+    "promptText": "Explain the concept of quantum entanglement and how it relates to quantum computing.",
+    "contextChip": "Physics Notebook",
+    "timelineStages": [
+      { "id": "intent", "label": "Intent Detection", "callout": "Understands what you're trying to learn", "calloutPos": "top-right" },
+      { "id": "bloom", "label": "Bloom Classification", "callout": "Chooses the right teaching approach", "calloutPos": "bottom-right" },
+      { "id": "graphrag", "label": "GraphRAG Retrieval", "callout": "Searches connected concepts instead of keywords", "calloutPos": "top-left" }
+    ],
+    "executionPlan": [
+      { "step": 1, "task": "Define quantum entanglement intuitively." },
+      { "step": 2, "task": "Explain qubits and superposition." },
+      { "step": 3, "task": "Connect entanglement to quantum gates." }
+    ],
+    "planCallout": "Builds the best learning strategy before answering",
+    "response": "Quantum entanglement is a physical phenomenon where pairs or groups of particles interact in ways such that the quantum state of each particle cannot be described independently of the state of the others, even when the particles are separated by a large distance. \n\nIn quantum computing, entangled qubits allow the system to process complex relationships simultaneously, offering exponential speedups over classical bits.",
+    "responseCallout": "Explains with citations and adapts to your mastery",
+    "citations": ["[1] Introduction to Quantum Mechanics", "[2] Qubit Architecture"],
+    "learningActions": [
+      { "icon": "Brain", "label": "Mind Map" },
+      { "icon": "Target", "label": "Quiz" },
+      { "icon": "Layers", "label": "Flashcards" },
+      { "icon": "Headphones", "label": "Podcast" }
+    ]
+  }
+}
