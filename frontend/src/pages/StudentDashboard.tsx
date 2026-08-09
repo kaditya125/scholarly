@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   UploadCloud,
@@ -40,6 +40,9 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { OpenAI, Groq, Nvidia } from '@lobehub/icons';
 import { cn } from "../lib/utils";
+import { useAuth } from "../lib/AuthContext";
+import { OnboardingChecklist } from "../components/dashboard/OnboardingChecklist";
+import { DecorativeArcs } from "../components/DecorativeArcs";
 
 const GeminiIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className}>
@@ -115,6 +118,13 @@ const getHeatmapColor = (count: number, success: number) => {
   }
 };
 
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good Morning';
+  if (h < 17) return 'Good Afternoon';
+  return 'Good Evening';
+}
+
 export default function StudentDashboard() {
   const [isModelSelectorOpen, setIsModelSelectorOpen] = React.useState(false);
   const [isPremiumOpen, setIsPremiumOpen] = React.useState(false);
@@ -122,6 +132,11 @@ export default function StudentDashboard() {
   const [selectedModel, setSelectedModel] = React.useState(MODELS[0]); // Default to Gemini
   const [prompt, setPrompt] = React.useState("");
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const firstName = useMemo(() => {
+    return (user?.displayName || '').trim().split(' ')[0] || 'Scholar';
+  }, [user?.displayName]);
 
   const handleGlobalChatSubmit = () => {
     if (prompt.trim()) {
@@ -136,51 +151,30 @@ export default function StudentDashboard() {
   };
   
   return (
-    <div className="w-full h-full max-w-5xl mx-auto space-y-10">
-      
-      {/* Welcome Banner */}
-      <motion.div 
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-gray-100 font-serif tracking-tight mb-8">
-          Morning, Aditya
-        </h1>
+    <div className="relative w-full min-h-screen">
+      {/* Global Background Arcs */}
+      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+        <DecorativeArcs className="opacity-40 dark:opacity-20" />
+      </div>
 
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-           <div onClick={() => navigate('/chat')} className="bg-white dark:bg-[#1f1f1f] border border-slate-200 dark:border-white/5 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col items-start gap-4">
-             <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-700 dark:text-gray-300">
-               <UploadCloud className="w-5 h-5" />
-             </div>
-             <div>
-                <h3 className="font-semibold text-slate-900 dark:text-gray-200 text-[15px]">Upload Content</h3>
-                <p className="text-sm text-slate-500 dark:text-gray-500 mt-1">PDF, video, slides, web</p>
-             </div>
-           </div>
+      <div className="w-full h-full max-w-5xl mx-auto space-y-10 pt-4 px-4 md:px-0">
 
-           <div onClick={() => navigate('/chat?type=podcast')} className="bg-white dark:bg-[#1f1f1f] border border-slate-200 dark:border-white/5 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col items-start gap-4">
-             <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
-               <Film className="w-5 h-5" />
-             </div>
-             <div>
-                <h3 className="font-semibold text-slate-900 dark:text-gray-200 text-[15px]">AI Video Lectures</h3>
-                <p className="text-sm text-slate-500 dark:text-gray-500 mt-1">Turn notes into a lecture</p>
-             </div>
-           </div>
+        {/* Welcome Banner */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="pt-6"
+        >
+          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight mb-4">
+            {getGreeting()}, {firstName}
+          </h1>
 
-           <div onClick={() => navigate('/flashcards')} className="bg-white dark:bg-[#1f1f1f] border border-slate-200 dark:border-white/5 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col items-start gap-4">
-             <div className="w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-500/20 flex items-center justify-center text-yellow-600 dark:text-yellow-500">
-               <Layers className="w-5 h-5" />
-             </div>
-             <div>
-                <h3 className="font-semibold text-slate-900 dark:text-gray-200 text-[15px]">AI Flashcards</h3>
-                <p className="text-sm text-slate-500 dark:text-gray-500 mt-1">Study-ready cards</p>
-             </div>
-           </div>
-        </div>
+          {/* Onboarding Checklist — shown to new/incomplete users, hides once all 5 steps done */}
+          <div className="mb-10">
+            <OnboardingChecklist />
+          </div>
 
-        {/* Global Action Bar */}
+
         <div className="w-full bg-[#f4f4f5] dark:bg-[#212121] border border-slate-200 dark:border-white/5 rounded-full pl-4 pr-1.5 py-1.5 flex items-center gap-3 shadow-sm focus-within:ring-1 focus-within:ring-indigo-500 transition-all mb-10 relative">
            <Paperclip className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
            <input 
@@ -279,6 +273,39 @@ export default function StudentDashboard() {
              <button onClick={handleGlobalChatSubmit} className="w-8 h-8 rounded-full bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors ml-1 cursor-pointer">
                <ArrowUp className="w-4 h-4" />
              </button>
+           </div>
+        </div>
+
+          {/* Feature Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+           <div onClick={() => navigate('/chat')} className="bg-white dark:bg-[#1f1f1f] border border-slate-200 dark:border-white/5 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col items-start gap-4">
+             <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-700 dark:text-gray-300">
+               <UploadCloud className="w-5 h-5" />
+             </div>
+             <div>
+                <h3 className="font-semibold text-slate-900 dark:text-gray-200 text-[15px]">Upload Content</h3>
+                <p className="text-sm text-slate-500 dark:text-gray-500 mt-1">PDF, video, slides, web</p>
+             </div>
+           </div>
+
+           <div onClick={() => navigate('/chat?type=podcast')} className="bg-white dark:bg-[#1f1f1f] border border-slate-200 dark:border-white/5 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col items-start gap-4">
+             <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+               <Film className="w-5 h-5" />
+             </div>
+             <div>
+                <h3 className="font-semibold text-slate-900 dark:text-gray-200 text-[15px]">AI Video Lectures</h3>
+                <p className="text-sm text-slate-500 dark:text-gray-500 mt-1">Turn notes into a lecture</p>
+             </div>
+           </div>
+
+           <div onClick={() => navigate('/flashcards')} className="bg-white dark:bg-[#1f1f1f] border border-slate-200 dark:border-white/5 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col items-start gap-4">
+             <div className="w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-500/20 flex items-center justify-center text-yellow-600 dark:text-yellow-500">
+               <Layers className="w-5 h-5" />
+             </div>
+             <div>
+                <h3 className="font-semibold text-slate-900 dark:text-gray-200 text-[15px]">AI Flashcards</h3>
+                <p className="text-sm text-slate-500 dark:text-gray-500 mt-1">Study-ready cards</p>
+             </div>
            </div>
         </div>
       </motion.div>
@@ -554,6 +581,7 @@ export default function StudentDashboard() {
         </div>
       </motion.div>
 
+      </div>
     </div>
   );
 }

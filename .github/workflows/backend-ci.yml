@@ -1,0 +1,41 @@
+name: Backend CI
+
+# Merge gate: typecheck + build + unit tests must pass. Runs on PRs and pushes that
+# touch the backend. No live credentials are needed — tests mock all external services.
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'backend-firestore/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'backend-firestore/**'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend-firestore
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend-firestore/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Unit tests
+        run: npm test

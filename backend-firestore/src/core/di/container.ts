@@ -45,4 +45,11 @@ export const TOKENS = {
   GraphProvider: Symbol.for('IGraphProvider'),
   MemoryProvider: Symbol.for('IMemoryProvider'),
   AnalyticsProvider: Symbol.for('IAnalyticsProvider'),
+  ReasoningProvider: Symbol.for('IReasoningProvider'),
+  // Notification stack — resolved by NotificationEngine / DeliveryOrchestrator.
+  // Referenced across scripts (certify_all, send_all_simultaneously, ...) so the
+  // token names here must stay stable.
+  SmsProvider: Symbol.for('ISmsProvider'),
+  WhatsAppProvider: Symbol.for('IWhatsAppProvider'),
+  NotificationIntelligenceService: Symbol.for('NotificationIntelligenceService'),
 };

@@ -55,6 +55,14 @@ export interface StudentProfile {
   onboardedAt?: string;
   /** Whether the onboarding is complete */
   isComplete?: boolean;
+  
+  // New Digital Twin fields
+  board?: string;
+  classLevel?: string;
+  stream?: string;
+  target?: string;
+  learningStyles?: string[];
+  goal?: string;
 }
 
 // ─── Planner Summary (Lightweight) ───────────────────────────────────────────

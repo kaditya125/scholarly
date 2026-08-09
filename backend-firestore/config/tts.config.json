@@ -1,0 +1,133 @@
+{
+  "provider": "google-cloud",
+  "fallbackProvider": "google-cloud",
+  "voices": {
+    "en": {
+      "Host": {
+        "languageCode": "en-US",
+        "name": "en-US-Chirp3-HD-Aoede",
+        "description": "Chirp 3 HD female voice — engaging, natural podcast host"
+      },
+      "AI Tutor": {
+        "languageCode": "en-US",
+        "name": "en-US-Chirp3-HD-Charon",
+        "description": "Chirp 3 HD male voice — warm, patient AI tutor"
+      },
+      "Student": {
+        "languageCode": "en-US",
+        "name": "en-US-Chirp3-HD-Puck",
+        "description": "Chirp 3 HD male voice — curious, energetic, youthful"
+      },
+      "Teacher": {
+        "languageCode": "en-US",
+        "name": "en-US-Chirp3-HD-Charon",
+        "description": "Chirp 3 HD male voice — professional, warm, confident teacher"
+      },
+      "Subject Expert": {
+        "languageCode": "en-US",
+        "name": "en-US-Chirp3-HD-Kore",
+        "description": "Chirp 3 HD female voice — clear, authoritative subject expert"
+      },
+      "Exam Coach": {
+        "languageCode": "en-US",
+        "name": "en-US-Chirp3-HD-Zephyr",
+        "description": "Chirp 3 HD female voice — motivational, energetic exam coach"
+      }
+    },
+    "hi": {
+      "Host": {
+        "languageCode": "hi-IN",
+        "name": "hi-IN-Chirp3-HD-Aoede",
+        "description": "Chirp 3 HD Hindi female voice — natural podcast host"
+      },
+      "AI Tutor": {
+        "languageCode": "hi-IN",
+        "name": "hi-IN-Chirp3-HD-Fenrir",
+        "description": "Chirp 3 HD Hindi male voice — warm AI tutor"
+      },
+      "Student": {
+        "languageCode": "hi-IN",
+        "name": "hi-IN-Chirp3-HD-Despina",
+        "description": "Chirp 3 HD Hindi female voice — conversational student"
+      },
+      "Teacher": {
+        "languageCode": "hi-IN",
+        "name": "hi-IN-Chirp3-HD-Charon",
+        "description": "Chirp 3 HD Hindi male voice — clear, confident teacher"
+      },
+      "Subject Expert": {
+        "languageCode": "hi-IN",
+        "name": "hi-IN-Chirp3-HD-Gacrux",
+        "description": "Chirp 3 HD Hindi female voice — knowledgeable subject expert"
+      },
+      "Exam Coach": {
+        "languageCode": "hi-IN",
+        "name": "hi-IN-Chirp3-HD-Iapetus",
+        "description": "Chirp 3 HD Hindi male voice — motivational exam coach"
+      }
+    },
+    "hinglish": {
+      "Host": {
+        "languageCode": "hi-IN",
+        "name": "hi-IN-Chirp3-HD-Aoede",
+        "description": "Hindi Chirp 3 HD handles Hinglish (Hindi+English mixed script) naturally"
+      },
+      "AI Tutor": {
+        "languageCode": "hi-IN",
+        "name": "hi-IN-Chirp3-HD-Fenrir",
+        "description": "Hindi Chirp 3 HD male voice for Hinglish"
+      },
+      "Student": {
+        "languageCode": "hi-IN",
+        "name": "hi-IN-Chirp3-HD-Despina",
+        "description": "Hindi Chirp 3 HD female voice for Hinglish student"
+      },
+      "Teacher": {
+        "languageCode": "hi-IN",
+        "name": "hi-IN-Chirp3-HD-Charon",
+        "description": "Hindi Chirp 3 HD male voice for Hinglish teacher"
+      },
+      "Subject Expert": {
+        "languageCode": "hi-IN",
+        "name": "hi-IN-Chirp3-HD-Gacrux",
+        "description": "Hindi Chirp 3 HD female voice for Hinglish expert"
+      },
+      "Exam Coach": {
+        "languageCode": "hi-IN",
+        "name": "hi-IN-Chirp3-HD-Iapetus",
+        "description": "Hindi Chirp 3 HD male voice for Hinglish coach"
+      }
+    }
+  },
+  "defaultVoice": {
+    "en": {
+      "languageCode": "en-US",
+      "name": "en-US-Chirp3-HD-Aoede"
+    },
+    "hi": {
+      "languageCode": "hi-IN",
+      "name": "hi-IN-Chirp3-HD-Aoede"
+    },
+    "hinglish": {
+      "languageCode": "hi-IN",
+      "name": "hi-IN-Chirp3-HD-Aoede"
+    }
+  },
+  "audioConfig": {
+    "format": "MP3",
+    "bitrate": 128000,
+    "sampleRate": 24000,
+    "enableSSML": false
+  },
+  "generationConfig": {
+    "batchSize": 10,
+    "retryAttempts": 3,
+    "timeoutMs": 30000,
+    "enableCaching": false
+  },
+  "costLimits": {
+    "perPodcastMax": 1.0,
+    "monthlyBudget": 500.0,
+    "warnThreshold": 0.8
+  }
+}

@@ -45,51 +45,97 @@ import {
   LogOut,
   Users,
   Compass,
-  ShieldAlert
+  ShieldAlert,
+  Settings,
+  Workflow,
+  HelpCircle,
+  FolderOpen,
+  Palette
 } from "lucide-react";
+
 import { cn } from "../lib/utils";
 import { ShareModal } from "./ShareModal";
 import { FeedbackModal } from "./FeedbackModal";
 import HighlightAction from "./HighlightAction";
 import { useAuth } from "../lib/AuthContext";
+import { AppearanceModal } from "./AppearanceModal";
+import { NotificationsMenu } from "./NotificationsMenu";
+import { CommandPalette } from "./CommandPalette";
 
-const MAIN_MENU = [
-  { label: "Home", path: "/dashboard", icon: Home },
+/**
+ * Sidebar navigation. Items are laid out in visual sections separated by a
+ * hair-thin divider so related destinations cluster together — Study surfaces
+ * (Home, AI Chat), Creation surfaces (Documents, Notebooks, Content
+ * Pipeline, Podcasts), Social surface (Community), Practice surfaces (Tests,
+ * Study Plan, Study Groups, My Doubts), and Utility (Explore, Settings).
+ *
+ * "AI Workspace" removed on request — the same tools are surfaced inside the
+ * Podcast Studio.
+ * "Chats & DMs" / "Discussions" removed — both live inside /community as tabs.
+ */
+const MAIN_MENU: { label: string; path: string; icon: any; group?: 'top' }[] = [
+  // Study
+  { label: "Home", path: "/dashboard", icon: Home, group: 'top' },
   { label: "AI Chat", path: "/chat", icon: BotMessageSquare },
+
+  // Create
+  { label: "Documents", path: "/documents", icon: FolderOpen, group: 'top' },
   { label: "Notebooks", path: "/notebooks", icon: BookOpen },
-  { label: "Discussions", path: "/discussions", icon: MessagesSquare },
-  { label: "Tests", path: "/tests", icon: FileText },
+  { label: "Content Pipeline", path: "/pipeline", icon: Workflow },
+  { label: "Podcasts", path: "/podcasts", icon: Headphones },
+
+  // Social
+  { label: "Community", path: "/community", icon: Users, group: 'top' },
+
+  // Practice
+  { label: "Tests", path: "/tests", icon: FileText, group: 'top' },
   { label: "Study Plan", path: "/planner", icon: Calendar },
   { label: "Study Groups", path: "/groups", icon: Users },
-  { label: "Explore", path: "/explore", icon: Compass },
-  { label: "My Flashcards", path: "/flashcards", icon: Library },
-  { label: "Leaderboard", path: "/leaderboard", icon: ClipboardList },
-  { label: "Analytics", path: "/analytics", icon: BarChart2 },
+  { label: "My Doubts", path: "/doubts", icon: HelpCircle },
+
+  // Utility
+  { label: "Explore", path: "/explore", icon: Compass, group: 'top' },
+  { label: "Settings", path: "/settings", icon: Settings },
 ];
 
+/**
+ * Single sidebar row. Selection is a soft-tinted pill with a subtle 1px
+ * inset ring — quieter than the previous solid gray fill, which is what the
+ * Taskk-style reference uses. The active icon picks up the same color as the
+ * label so the whole row reads as one unit rather than a glyph + text pair.
+ */
 const NavItem: React.FC<{ item: any, currentPath: string, collapsed?: boolean }> = ({ item, currentPath, collapsed }) => {
   const isActive = currentPath === item.path || (currentPath.startsWith(item.path) && item.path !== "/");
   const Icon = item.icon;
-  
+
   return (
-    <Link 
+    <Link
       to={item.path}
       className={cn(
-        "flex items-center transition-all duration-200 font-medium text-[14px] group",
-        collapsed 
-          ? "justify-center w-10 h-10 mx-auto rounded-lg mb-0.5" 
-          : "gap-3 px-3 py-2.5 rounded-lg mx-3 mb-0.5",
-        isActive 
-          ? "bg-slate-100 dark:bg-[#1a1a1a] text-slate-900 dark:text-gray-100 font-semibold"
-          : "text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200 hover:bg-slate-50 dark:hover:bg-[#1a1a1a]"
+        "flex items-center transition-colors duration-150 group tracking-[-0.005em] antialiased",
+        collapsed
+          ? "justify-center w-10 h-10 mx-auto rounded-xl"
+          : "gap-3 h-9 px-3 rounded-xl mx-2.5 text-[14px]",
+        isActive
+          ? "bg-slate-100/80 text-slate-900 font-semibold shadow-[inset_0_0_0_1px_rgba(15,23,42,0.04)] dark:bg-white/[0.06] dark:text-white dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]"
+          : "text-slate-600 font-medium hover:bg-slate-100/60 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-white/[0.04] dark:hover:text-gray-100"
       )}
       title={collapsed ? item.label : undefined}
     >
-      <Icon className={cn("shrink-0", collapsed ? "w-5 h-5" : "w-[18px] h-[18px]", isActive ? "text-slate-900 dark:text-gray-100" : "text-slate-500 dark:text-gray-400 group-hover:text-slate-700 dark:group-hover:text-gray-300")} />
-      {!collapsed && <span className="truncate flex-1">{item.label}</span>}
+      <Icon
+        className={cn(
+          "shrink-0",
+          collapsed ? "w-[18px] h-[18px]" : "w-[18px] h-[18px]",
+          isActive
+            ? "text-slate-900 dark:text-white"
+            : "text-slate-500 group-hover:text-slate-800 dark:text-gray-500 dark:group-hover:text-gray-200"
+        )}
+        strokeWidth={isActive ? 2.1 : 1.75}
+      />
+      {!collapsed && <span className="truncate flex-1 leading-none">{item.label}</span>}
     </Link>
   );
-}
+};
 
 export function AppLayout() {
   const location = useLocation();
@@ -103,6 +149,8 @@ export function AppLayout() {
   const [isNewMenuOpen, setIsNewMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isAppearanceOpen, setIsAppearanceOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const newMenuRef = useRef<HTMLDivElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
@@ -137,6 +185,15 @@ export function AppLayout() {
           navigate('/tests');
         }
       }
+      // Command palette: Cmd/Ctrl + K
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(true);
+      }
+      // Close on Escape
+      if (e.key === 'Escape') {
+        setIsCommandPaletteOpen(false);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
 
@@ -153,8 +210,17 @@ export function AppLayout() {
       case '/leaderboard': return 'Leaderboard';
       case '/planner': return 'Tasks Report';
       case '/discussions': return 'General Chats';
+      case '/community': return 'Community';
       case '/report': return 'Detailed Report';
       case '/flashcards': return 'My Flashcards';
+      case '/workspace': return 'AI Workspace';
+      case '/documents': return 'Documents';
+      case '/notebooks': return 'Notebooks';
+      case '/pipeline': return 'Content Pipeline';
+      case '/doubts': return 'My Doubts';
+      case '/settings': return 'Settings';
+      case '/groups': return 'Study Groups';
+      case '/explore': return 'Explore';
       default: return 'Application';
     }
   };
@@ -182,54 +248,84 @@ export function AppLayout() {
         isMobileMenuOpen ? "translate-x-0 w-[260px]" : "-translate-x-full md:translate-x-0",
         !isMobileMenuOpen && isCollapsed ? "md:w-[68px]" : "md:w-[260px]"
       )}>
-        <div className={cn("h-[60px] flex items-center shrink-0 mb-2 transition-colors duration-300", isCollapsed ? "justify-center px-0 flex-col py-2" : "px-4 justify-between")}>
-          {!isCollapsed && (
-            <Link to="/" className="flex items-center gap-2 overflow-hidden px-1">
-                <svg className="shrink-0" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#facc15"/>
-                  <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white uppercase transition-all duration-300">Scholarly</span>
+        {/* Brand + collapse control. The brand mark uses a slightly softer
+            tracking + lowercase-caps blend so it reads like a wordmark rather
+            than a shouty ALL-CAPS label. */}
+        <div className={cn(
+          "h-[60px] flex items-center shrink-0 transition-colors duration-300",
+          isCollapsed ? "justify-center px-0 flex-col py-2" : "px-4 justify-between"
+        )}>
+          {!isCollapsed ? (
+            <Link to="/" className="flex items-center gap-2.5 overflow-hidden">
+              <svg className="shrink-0" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#facc15"/>
+                <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span className="font-semibold text-[15.5px] tracking-tight text-slate-900 dark:text-white">
+                Scholarly
+              </span>
             </Link>
-          )}
-          {isCollapsed && (
+          ) : (
             <Link to="/" className="flex items-center justify-center w-full mb-3 shrink-0">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#facc15"/>
-                  <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#facc15"/>
+                <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </Link>
           )}
-          
-          <button 
-            onClick={() => setIsCollapsed(!isCollapsed)} 
-            className={cn("p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-[#1a1a1a] text-slate-500 dark:text-gray-400 focus:outline-none transition-colors border border-transparent dark:hover:border-white/10 hidden md:flex items-center justify-center", isCollapsed ? "mt-1 w-9 h-9" : "")} 
+
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className={cn(
+              "rounded-lg text-slate-500 dark:text-gray-500 hover:text-slate-800 dark:hover:text-gray-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.05] focus:outline-none transition-colors hidden md:flex items-center justify-center",
+              isCollapsed ? "mt-1 w-8 h-8" : "w-7 h-7"
+            )}
             title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-expanded={!isCollapsed}
           >
-             {isCollapsed ? <PanelLeft className="w-[18px] h-[18px]" /> : <PanelLeftClose className="w-[18px] h-[18px]" />}
+            {isCollapsed ? <PanelLeft className="w-[16px] h-[16px]" strokeWidth={1.75} /> : <PanelLeftClose className="w-[16px] h-[16px]" strokeWidth={1.75} />}
           </button>
         </div>
         
-        <div className="flex-1 pb-6 w-full max-w-full pt-4">
-           <nav className="space-y-1 relative" role="navigation" aria-label="Main navigation">
-              {MAIN_MENU.map(item => (
-                 <NavItem key={item.path} item={item} currentPath={location.pathname} collapsed={isCollapsed} />
+        <div className="flex-1 pb-6 w-full max-w-full pt-3">
+           <nav className="relative" role="navigation" aria-label="Main navigation">
+              {MAIN_MENU.map((item, idx) => (
+                 <div key={item.path}>
+                   {/* Hairline section divider only in expanded mode. `group:'top'`
+                       marks the first item of a new visual cluster; we insert
+                       a slim margin above it so related items breathe together
+                       without adding actual horizontal rules that would clutter
+                       the rail. */}
+                   {!isCollapsed && idx > 0 && item.group === 'top' && (
+                     <div className="my-1.5 mx-4 h-px bg-slate-100 dark:bg-white/[0.04]" aria-hidden="true" />
+                   )}
+                   {isCollapsed && idx > 0 && item.group === 'top' && (
+                     <div className="my-1.5 mx-auto w-6 h-px bg-slate-100 dark:bg-white/[0.04]" aria-hidden="true" />
+                   )}
+                   <div className="mb-0.5">
+                     <NavItem item={item} currentPath={location.pathname} collapsed={isCollapsed} />
+                   </div>
+                 </div>
               ))}
               
-              <div className={cn("px-3 mt-3 relative", isCollapsed && "flex justify-center")} ref={newMenuRef}>
-                 <button 
+              <div className={cn("px-2.5 mt-4 relative", isCollapsed && "flex justify-center")} ref={newMenuRef}>
+                 <button
                    onClick={() => setIsNewMenuOpen(!isNewMenuOpen)}
                    className={cn(
-                     "bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors shadow-sm",
-                     isCollapsed ? "w-10 h-10 rounded-[10px]" : "w-full gap-2 py-1.5 rounded-[10px] text-[13px] font-semibold"
+                     // Softer indigo, subtle gradient, thin ring — the "New"
+                     // affordance should feel considered rather than shouty.
+                     "flex items-center justify-center transition-all duration-150 shadow-[0_1px_2px_rgba(15,23,42,0.08),0_4px_10px_-4px_rgba(79,70,229,0.35)] hover:shadow-[0_1px_2px_rgba(15,23,42,0.1),0_6px_14px_-4px_rgba(79,70,229,0.45)] active:translate-y-px",
+                     "bg-gradient-to-b from-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-700 text-white",
+                     isCollapsed
+                       ? "w-10 h-10 rounded-[10px]"
+                       : "w-full gap-2 h-9 rounded-xl text-[13.5px] font-semibold tracking-tight"
                    )}
                    aria-label="Create new item"
                    aria-haspopup="dialog"
                    aria-expanded={isNewMenuOpen}
                  >
-                   <Plus className={cn("shrink-0", isCollapsed ? "w-5 h-5" : "w-4 h-4")} /> 
+                   <Plus className={cn("shrink-0", isCollapsed ? "w-[18px] h-[18px]" : "w-4 h-4")} strokeWidth={2.25} />
                    {!isCollapsed && "New"}
                  </button>
 
@@ -282,96 +378,140 @@ export function AppLayout() {
               </div>
            </nav>
 
-           {/* Recent section */}
+           {/* Recent — collapsible list of recently-touched surfaces. Section
+               header uses an all-caps 11 px eyebrow (tracking-widest) instead of
+               a bold slate label; the earlier variant looked like a nav item.
+               Child rows share the NavItem language: h-8, rounded-lg, subtle
+               hover. Indent guide is a single 1 px column, softer than the
+               previous border-l that visually competed with the item pills. */}
            {!isCollapsed && (
-             <div className="mt-4 px-3 flex flex-col pt-2 border-t border-slate-200 dark:border-white/5">
-               <button 
+             <div className="mt-5 px-2.5">
+               <button
                  onClick={() => setIsRecentOpen(!isRecentOpen)}
-                 className="flex items-center px-3 py-1.5 text-[13px] font-semibold text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-[#1a1a1a] rounded-md transition-colors group mb-1 w-fit"
+                 className="w-full flex items-center justify-between px-3 h-7 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-gray-500 hover:text-slate-700 dark:hover:text-gray-300 transition-colors"
                  aria-label="Toggle recent items menu"
                  aria-expanded={isRecentOpen}
                >
-                 <Clock className="w-3.5 h-3.5 mr-2 text-slate-500 dark:text-gray-500" />
-                 Recent
-                 <ChevronDown className={cn("w-3.5 h-3.5 ml-1.5 text-slate-400 dark:text-gray-500 transition-transform", !isRecentOpen && "-rotate-90")} />
+                 <span className="flex items-center gap-1.5">
+                   <Clock className="w-3 h-3" strokeWidth={2} />
+                   Recent
+                 </span>
+                 <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", !isRecentOpen && "-rotate-90")} strokeWidth={2} />
                </button>
-               
+
                {isRecentOpen && (
-                 <div className="flex flex-col space-y-0.5 mt-0.5 ml-3 border-l border-slate-200 dark:border-white/10 pl-2">
-                    <Link to="/chat" className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-[#1a1a1a] text-slate-600 dark:text-gray-400 text-[13px] hover:text-slate-900 dark:hover:text-gray-200 transition-colors group">
-                      <MessageSquare className="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-gray-500 group-hover:text-slate-600 dark:group-hover:text-gray-400" />
-                      <span className="truncate">Greeting</span>
-                    </Link>
-                    <Link to="/tests" className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-[#1a1a1a] text-slate-600 dark:text-gray-400 text-[13px] hover:text-slate-900 dark:hover:text-gray-200 transition-colors group">
-                      <FileText className="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-gray-500 group-hover:text-slate-600 dark:group-hover:text-gray-400" />
-                      <span className="truncate">Mock Test 1 Attempt</span>
-                    </Link>
-                    <Link to="/planner" className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-[#1a1a1a] text-slate-600 dark:text-gray-400 text-[13px] hover:text-slate-900 dark:hover:text-gray-200 transition-colors group">
-                      <Calendar className="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-gray-500 group-hover:text-slate-600 dark:group-hover:text-gray-400" />
-                      <span className="truncate">Updated Study Plan</span>
-                    </Link>
+                 <div className="mt-1 pl-3 ml-3 border-l border-slate-100 dark:border-white/[0.05] space-y-0.5">
+                   {[
+                     { to: "/chat", icon: MessageSquare, label: "Greeting" },
+                     { to: "/tests", icon: FileText, label: "Mock Test 1 Attempt" },
+                     { to: "/planner", icon: Calendar, label: "Updated Study Plan" },
+                   ].map((r) => (
+                     <Link
+                       key={r.label}
+                       to={r.to}
+                       className="flex items-center gap-2 px-2 h-8 rounded-lg text-[13px] text-slate-600 dark:text-gray-400 hover:bg-slate-100/60 hover:text-slate-900 dark:hover:bg-white/[0.04] dark:hover:text-gray-100 transition-colors group"
+                     >
+                       <r.icon className="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-gray-500 group-hover:text-slate-700 dark:group-hover:text-gray-300" strokeWidth={1.75} />
+                       <span className="truncate">{r.label}</span>
+                     </Link>
+                   ))}
                  </div>
                )}
              </div>
            )}
 
-           {/* Folders section */}
+           {/* Folders — quiet section header; pin + plus become visible only on
+               hover of the header row so they don't compete with the nav rail
+               when idle. */}
            {!isCollapsed && (
-             <div className="mt-4 px-3 flex flex-col mb-2">
-               <div className="flex items-center justify-between px-3 py-1.5 group">
-                 <span className="text-[13px] font-semibold text-slate-700 dark:text-gray-300">Folders</span>
-                 <div className="flex items-center gap-1 opacity-100 transition-opacity">
-                   <button aria-label="Pin folder" className="p-1 text-slate-500 dark:text-gray-500 hover:text-slate-700 dark:hover:text-gray-300">
-                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m14 14-8 8" /><path d="m16 16 4-4" /><path d="m21 11-1.4-1.4a2 2 0 0 0-2.8 0l-3.3 3.3a2 2 0 0 0 0 2.8l1.4 1.4" /><path d="m5 5 1.4 1.4a2 2 0 0 0 2.8 0l3.3-3.3a2 2 0 0 0 0-2.8L11 3" /><path d="M12 9V2" /><path d="M15 12H22" /></svg>
+             <div className="mt-4 px-2.5 group/folders">
+               <div className="flex items-center justify-between px-3 h-7">
+                 <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-gray-500">
+                   Folders
+                 </span>
+                 <div className="flex items-center gap-0.5 opacity-0 group-hover/folders:opacity-100 transition-opacity">
+                   <button
+                     aria-label="Pin folder"
+                     className="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 dark:text-gray-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-gray-200 dark:hover:bg-white/[0.05] transition-colors"
+                   >
+                     <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                       <path d="m14 14-8 8" /><path d="m16 16 4-4" /><path d="m21 11-1.4-1.4a2 2 0 0 0-2.8 0l-3.3 3.3a2 2 0 0 0 0 2.8l1.4 1.4" /><path d="m5 5 1.4 1.4a2 2 0 0 0 2.8 0l3.3-3.3a2 2 0 0 0 0-2.8L11 3" /><path d="M12 9V2" /><path d="M15 12H22" />
+                     </svg>
                    </button>
-                   <button aria-label="Create new folder" className="p-1 hover:text-slate-700 text-slate-500 dark:text-gray-500 dark:hover:text-gray-300">
-                     <Plus className="w-3.5 h-3.5" />
+                   <button
+                     aria-label="Create new folder"
+                     className="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 dark:text-gray-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-gray-200 dark:hover:bg-white/[0.05] transition-colors"
+                   >
+                     <Plus className="w-3 h-3" strokeWidth={2.25} />
                    </button>
                  </div>
                </div>
              </div>
            )}
 
-           {/* Recently Deleted section */}
+           {/* Recently Deleted — same eyebrow-header treatment as Recent. */}
            {!isCollapsed && (
-             <div className="mt-1 px-3 flex flex-col pb-4 border-b border-slate-200 dark:border-white/5">
-               <button 
+             <div className="mt-3 px-2.5">
+               <button
                  onClick={() => setIsRecentlyDeletedOpen(!isRecentlyDeletedOpen)}
                  aria-label="Toggle recently deleted items menu"
                  aria-expanded={isRecentlyDeletedOpen}
-                 className="flex items-center px-3 py-1.5 text-[13px] font-semibold text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-[#1a1a1a] rounded-md transition-colors group mb-1 w-fit"
+                 className="w-full flex items-center justify-between px-3 h-7 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-gray-500 hover:text-slate-700 dark:hover:text-gray-300 transition-colors"
                >
-                 <Trash2 className="w-3.5 h-3.5 mr-2 text-slate-500 dark:text-gray-500" />
-                 Recently Deleted
-                 <ChevronDown className={cn("w-3.5 h-3.5 ml-1.5 text-slate-400 dark:text-gray-500 transition-transform", !isRecentlyDeletedOpen && "-rotate-90")} />
+                 <span className="flex items-center gap-1.5">
+                   <Trash2 className="w-3 h-3" strokeWidth={2} />
+                   Recently Deleted
+                 </span>
+                 <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", !isRecentlyDeletedOpen && "-rotate-90")} strokeWidth={2} />
                </button>
-               
+
                {isRecentlyDeletedOpen && (
-                 <div className="flex flex-col space-y-0.5 mt-0.5 ml-3 border-l border-slate-200 dark:border-white/10 pl-2">
-                    <Link to="#" className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-[#1a1a1a] text-slate-600 dark:text-gray-400 text-[13px] hover:text-slate-900 dark:hover:text-gray-200 transition-colors group">
-                      <MessageSquare className="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-gray-500 group-hover:text-slate-600 dark:group-hover:text-gray-400" />
-                      <span className="truncate">Biology Doubt</span>
-                    </Link>
-                    <Link to="#" className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-[#1a1a1a] text-slate-600 dark:text-gray-400 text-[13px] hover:text-slate-900 dark:hover:text-gray-200 transition-colors group">
-                      <FileText className="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-gray-500 group-hover:text-slate-600 dark:group-hover:text-gray-400" />
-                      <span className="truncate">Untitled Document</span>
-                    </Link>
+                 <div className="mt-1 pl-3 ml-3 border-l border-slate-100 dark:border-white/[0.05] space-y-0.5">
+                   {[
+                     { icon: MessageSquare, label: "Biology Doubt" },
+                     { icon: FileText, label: "Untitled Document" },
+                   ].map((r) => (
+                     <Link
+                       key={r.label}
+                       to="#"
+                       className="flex items-center gap-2 px-2 h-8 rounded-lg text-[13px] text-slate-600 dark:text-gray-400 hover:bg-slate-100/60 hover:text-slate-900 dark:hover:bg-white/[0.04] dark:hover:text-gray-100 transition-colors group"
+                     >
+                       <r.icon className="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-gray-500 group-hover:text-slate-700 dark:group-hover:text-gray-300" strokeWidth={1.75} />
+                       <span className="truncate">{r.label}</span>
+                     </Link>
+                   ))}
                  </div>
                )}
              </div>
            )}
 
-           {/* Upgrade Plan */}
+           {/* Upgrade card. Feels like a real marketing surface now — a soft
+               indigo-to-slate radial wash, refined typography, and a ghost
+               button that reveals a filled fill on hover. Ships more polish
+               than a solid tint + shouty blue CTA. */}
            {!isCollapsed && (
-             <div className="px-3 mt-12 mb-2">
-               <div className="bg-slate-100 dark:bg-[#1a1a1a] rounded-xl p-4 border border-slate-200 dark:border-[#333]">
-                 <h4 className="font-bold text-slate-900 dark:text-gray-100 text-sm mb-1">Upgrade your plan</h4>
-                 <p className="text-[13px] text-slate-600 dark:text-gray-400 leading-relaxed mb-3">
-                   Upgrade your plan for higher limits across chat, uploads, and study tools.
-                 </p>
-                 <button className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold transition-colors">
-                   Upgrade your plan <ArrowRight className="w-4 h-4 ml-1" />
-                 </button>
+             <div className="px-2.5 mt-8 mb-2">
+               <div className="relative overflow-hidden rounded-2xl border border-slate-200/70 dark:border-white/[0.06] bg-gradient-to-br from-indigo-50 via-white to-white dark:from-indigo-500/[0.08] dark:via-transparent dark:to-transparent p-4">
+                 <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-indigo-500/10 dark:bg-indigo-400/10 blur-2xl pointer-events-none" aria-hidden="true" />
+                 <div className="relative">
+                   <div className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-indigo-600 dark:text-indigo-300 mb-2">
+                     <Sparkles className="w-3 h-3" strokeWidth={2} />
+                     Pro
+                   </div>
+                   <h4 className="font-semibold text-[14px] text-slate-900 dark:text-white tracking-tight">
+                     Unlock higher limits
+                   </h4>
+                   <p className="text-[12.5px] text-slate-500 dark:text-gray-400 leading-relaxed mt-1 mb-3">
+                     Higher chat, uploads, and study-tool limits.
+                   </p>
+                   <button
+                     onClick={() => navigate('/checkout')}
+                     className="w-full h-8 flex items-center justify-center gap-1.5 rounded-lg text-[13px] font-semibold text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 transition-colors"
+                   >
+                     Upgrade
+                     <ArrowRight className="w-3.5 h-3.5" strokeWidth={2.25} />
+                   </button>
+                 </div>
                </div>
              </div>
            )}
@@ -439,7 +579,11 @@ export function AppLayout() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
         
-        {/* Top Header */}
+        {/* Top Header — hidden on immersive routes that render their own chrome.
+            /podcasts has its studio sidebar + inline header; /community has its
+            own tab bar + three-panel workspace. Both duplicate the outer chrome
+            so we drop the AppLayout header on those routes only. */}
+        {!location.pathname.startsWith('/podcasts') && !location.pathname.startsWith('/community') && (
         <header className="h-20 bg-slate-50 dark:bg-[#131314] flex items-center justify-between px-4 md:px-8 z-10 shrink-0 w-full md:pt-4 transition-colors duration-300">
           
           <div className="flex items-center gap-2 md:gap-3">
@@ -480,15 +624,16 @@ export function AppLayout() {
             </div>
           ) : (
             <div className="flex items-center gap-2 md:gap-6 shrink-0 pl-2 md:pl-6">
-              <div className="hidden lg:flex w-[320px] items-center bg-white dark:bg-[#1f1f1f] rounded-full px-4 py-2.5 border border-slate-200 dark:border-white/10 focus-within:border-teal-500 dark:focus-within:border-indigo-500 focus-within:shadow-sm transition-all focus-within:bg-white dark:focus-within:bg-[#1f1f1f] shadow-[0_2px_10px_rgb(0,0,0,0.02)]">
+              <div
+                className="hidden lg:flex w-[320px] items-center bg-white dark:bg-[#1f1f1f] rounded-full px-4 py-2.5 border border-slate-200 dark:border-white/10 focus-within:border-teal-500 dark:focus-within:border-indigo-500 focus-within:shadow-sm transition-all focus-within:bg-white dark:focus-within:bg-[#1f1f1f] shadow-[0_2px_10px_rgb(0,0,0,0.02)] cursor-pointer"
+                onClick={() => setIsCommandPaletteOpen(true)}
+              >
                 <Search className="w-4 h-4 text-slate-400 shrink-0 mr-2" />
-                <input 
-                  type="text" 
-                  placeholder="Search..." 
-                  className="flex-1 bg-transparent border-none outline-none text-sm text-slate-800 dark:text-gray-200 placeholder:text-slate-400 dark:placeholder:text-gray-500"
-                />
+                <span className="flex-1 text-sm text-slate-400 dark:text-gray-500 select-none">
+                  Search or ask AI...
+                </span>
                 <div className="flex items-center justify-center px-1.5 py-0.5 bg-slate-100 dark:bg-white/10 rounded text-[10px] text-slate-400 dark:text-gray-400 font-medium ml-2">
-                  ⌘ F
+                  ⌘ K
                 </div>
               </div>
 
@@ -502,13 +647,22 @@ export function AppLayout() {
                 </button>
               )}
 
+              <button
+                onClick={() => setIsAppearanceOpen(true)}
+                aria-label="Appearance"
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[#1f1f1f] border border-slate-200 dark:border-white/10 text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200 text-xs font-medium transition-colors shadow-[0_2px_10px_rgb(0,0,0,0.02)] hover:border-slate-300 dark:hover:border-white/20"
+              >
+                <Palette className="w-3.5 h-3.5" />
+                Appearance
+              </button>
+
               <button onClick={toggleTheme} aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'} className="relative w-9 h-9 md:w-10 md:h-10 rounded-full bg-white dark:bg-[#1f1f1f] flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-gray-400 dark:hover:text-gray-200 transition-colors shadow-[0_2px_10px_rgb(0,0,0,0.02)] border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20" title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}>
                 {theme === 'dark' ? <Sun className="w-[18px] h-[18px]" aria-hidden="true" /> : <Moon className="w-[18px] h-[18px]" aria-hidden="true" />}
               </button>
-              <button aria-label="Notifications" className="hidden sm:flex relative w-10 h-10 rounded-full bg-white dark:bg-[#1f1f1f] items-center justify-center text-slate-400 hover:text-slate-600 dark:text-gray-400 dark:hover:text-gray-200 transition-colors shadow-[0_2px_10px_rgb(0,0,0,0.02)] border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20">
-                <Bell className="w-[18px] h-[18px]" aria-hidden="true" />
-                <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-teal-500 dark:bg-indigo-500 rounded-full" />
-              </button>
+
+              {/* Notifications */}
+              <NotificationsMenu />
+              
               
               <Link to="/profile" className="flex items-center gap-3 cursor-pointer pl-1 md:pl-2 group">
                 <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm md:text-base font-bold shadow-sm border-2 border-white dark:border-[#131314] uppercase group-hover:ring-2 ring-indigo-500 transition-all">
@@ -522,8 +676,9 @@ export function AppLayout() {
             </div>
           )}
         </header>
+        )}
 
-        {/* Scrollable Page Content */}
+        {/* Scrollable Page Content — immersive routes get no padding so they can use full h-full */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto w-full bg-slate-50 dark:bg-[#131314] relative transition-colors duration-300">
            <AnimatePresence mode="popLayout">
              <motion.div
@@ -532,7 +687,12 @@ export function AppLayout() {
                animate={{ opacity: 1, y: 0 }}
                exit={{ opacity: 0, y: -10 }}
                transition={{ duration: 0.25 }}
-               className="min-h-full p-4 md:p-8 pt-4 md:pt-6 w-full"
+               className={cn(
+                 "min-h-full w-full",
+                 location.pathname.startsWith('/podcasts') || location.pathname.startsWith('/community')
+                   ? "h-full"
+                   : "p-4 md:p-8 pt-4 md:pt-6"
+               )}
              >
                <Outlet />
              </motion.div>
@@ -542,6 +702,8 @@ export function AppLayout() {
 
       <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} />
       <FeedbackModal isOpen={isFeedbackModalOpen} onClose={() => setIsFeedbackModalOpen(false)} />
+      <AppearanceModal isOpen={isAppearanceOpen} onClose={() => setIsAppearanceOpen(false)} />
+      <CommandPalette open={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
       <HighlightAction />
     </motion.div>
   );

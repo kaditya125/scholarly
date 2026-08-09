@@ -130,7 +130,40 @@ export default function PodcastEpisode({ notebookId, podcastId, title: titleProp
   const [answer, setAnswer] = useState('');
   const [isAsking, setIsAsking] = useState(false);
 
-  const audioUrl = metadata?.audioUrl;
+  // The Firestore podcast doc stores an `audioPath` (a GCS object path) — never
+  // a public URL. The client must ask the backend to mint a signed URL via
+  // GET /api/podcasts/:id/audio. When the doc has `audioUrl` (legacy public
+  // episodes) use it directly; otherwise mint one from the backend.
+  //
+  // The dependency array is deliberately narrow (podcastId + status + the two
+  // relevant path fields) rather than the whole `metadata` object — Firestore
+  // onSnapshot re-emits a new object reference on every incidental doc update
+  // (cover ready, chapters populated, etc.), and depending on the whole
+  // object was resetting signedAudioUrl to null on every emission, which is
+  // why the player kept flickering back to the empty "Audio hasn't been
+  // generated" state even when /audio was returning 200.
+  const [signedAudioUrl, setSignedAudioUrl] = useState<string | null>(null);
+  const metaStatus = metadata?.status;
+  const metaAudioPath = (metadata as any)?.audioPath as string | undefined;
+  const metaLegacyAudioUrl = (metadata as any)?.audioUrl as string | undefined;
+  useEffect(() => {
+    if (!podcastId) { setSignedAudioUrl(null); return; }
+    if (metaLegacyAudioUrl) { setSignedAudioUrl(metaLegacyAudioUrl); return; }
+    if (metaStatus === 'FAILED') { setSignedAudioUrl(null); return; }
+    // Always attempt to fetch a signed URL — the /audio endpoint is the source
+    // of truth. If audio exists it returns 200 + { url }; if not it 404s and
+    // we correctly land in the empty state. We don't clear the previous URL
+    // while re-fetching so the player doesn't visibly flash back to the empty
+    // view on incidental snapshot updates.
+    let cancelled = false;
+    podcastsApi
+      .getAudioUrl(podcastId)
+      .then((url) => { if (!cancelled) setSignedAudioUrl(url || null); })
+      .catch(() => { if (!cancelled) setSignedAudioUrl(null); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [podcastId, metaStatus, metaAudioPath, metaLegacyAudioUrl]);
+  const audioUrl = signedAudioUrl;
   const title = metadata?.title || titleProp || 'Podcast episode';
   const bars = useMemo(() => makeBars(podcastId || title), [podcastId, title]);
 
@@ -160,16 +193,38 @@ export default function PodcastEpisode({ notebookId, podcastId, title: titleProp
     };
   }, [audioUrl]);
 
-  // Load transcript segments (for the synced center line).
+  // Load transcript segments (for the synced center line). Like audio, the
+  // backend keeps the transcript at a GCS path and mints a signed URL on
+  // demand. The dep array is narrow so Firestore snapshot noise doesn't cause
+  // the transcript to be re-fetched (and briefly nulled) on every emission.
+  const metaTranscriptPath = (metadata as any)?.transcriptPath as string | undefined;
+  const metaLegacyTranscriptUrl = (metadata as any)?.transcriptUrl as string | undefined;
   useEffect(() => {
-    if (!metadata?.transcriptUrl) { setSegments([]); return; }
+    if (!podcastId) { setSegments([]); return; }
     let cancelled = false;
-    fetch(metadata.transcriptUrl)
-      .then((r) => r.json())
-      .then((data) => { if (!cancelled && Array.isArray(data)) setSegments(data); })
-      .catch(() => { /* transcript is optional for playback */ });
+    if (metaLegacyTranscriptUrl && !metaTranscriptPath) {
+      fetch(metaLegacyTranscriptUrl)
+        .then((r) => r.json())
+        .then((data) => {
+          if (cancelled) return;
+          const list = Array.isArray(data) ? data : Array.isArray((data as any)?.segments) ? (data as any).segments : [];
+          setSegments(list);
+        })
+        .catch(() => { /* transcript is optional for playback */ });
+    } else {
+      podcastsApi
+        .getTranscript(podcastId)
+        .then((data) => {
+          if (cancelled) return;
+          // `podcastsApi.getTranscript` already unwraps the various response
+          // shapes ({segments}, {transcript}, or raw array) to a plain array.
+          if (Array.isArray(data)) setSegments(data as any);
+        })
+        .catch(() => { /* transcript is optional for playback */ });
+    }
     return () => { cancelled = true; };
-  }, [metadata?.transcriptUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [podcastId, metaTranscriptPath, metaLegacyTranscriptUrl]);
 
   const activeIdx = useMemo(() => activeSegmentIndex(segments, currentTime), [segments, currentTime]);
   const activeSegment = activeIdx >= 0 ? segments[activeIdx] : undefined;
@@ -366,8 +421,11 @@ export default function PodcastEpisode({ notebookId, podcastId, title: titleProp
               </ControlButton>
             </div>
 
-            {/* Optional full transcript */}
-            {metadata?.transcriptUrl && (
+            {/* Optional full transcript. Gated on either the legacy public
+                transcriptUrl OR the modern transcriptPath (GCS-backed) so
+                episodes generated by the current pipeline actually expose the
+                "Show full transcript" affordance instead of hiding it. */}
+            {(metaTranscriptPath || metaLegacyTranscriptUrl || segments.length > 0) && (
               <div className="w-full">
                 <button
                   onClick={() => setShowTranscript((v) => !v)}

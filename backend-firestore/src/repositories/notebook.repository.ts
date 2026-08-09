@@ -63,6 +63,23 @@ export class NotebookRepository {
     // In production, we'd also delete subcollections (sources, assets, timeline) here or via Cloud Functions
   }
 
+  /**
+   * All curriculum notebooks — the shared NCERT catalog that seeds `/api/documents/books`.
+   *
+   * Curriculum notebooks are the ones ingested by `scripts/ingest_curriculum.ts`, which
+   * stamps them with a synthetic user id (`ncert-curriculum`) and an id prefixed with
+   * `ncert-`. BookLibraryService filters the returned list defensively via
+   * `isCurriculumNotebook()` before exposing anything, so this query is deliberately the
+   * broad server-side filter and the final "is really curriculum" check stays there —
+   * one hard boundary, one place to audit.
+   */
+  async getCurriculumNotebooks(): Promise<Notebook[]> {
+    const snapshot = await this.collection
+      .where('userId', '==', 'ncert-curriculum')
+      .get();
+    return snapshot.docs.map((doc) => doc.data() as Notebook);
+  }
+
   // --- Document Sources ---
   
   async addSource(source: DocumentSource): Promise<void> {

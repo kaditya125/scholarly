@@ -1401,7 +1401,11 @@ function TurnRenderer({
   // stream
   const steps = isLiveStream ? liveSteps : turn.reasoningSteps;
   const reasoning = isLiveStream ? liveReasoning : turn.reasoningText;
-  const answer = isLiveStream ? liveAnswer : turn.answer;
+  const rawAnswer = isLiveStream ? liveAnswer : turn.answer;
+  // While streaming, apply the same steady-rate reveal we use for prose so a
+  // burst of chunks from the SDK doesn't paint the plan in visible jumps. Once
+  // the turn is finalized (not live), render the full text immediately.
+  const answer = useSmoothStreamReveal(rawAnswer, isLiveStream);
 
   return (
     <motion.div
@@ -2145,6 +2149,75 @@ function useProseTypewriter(text: string, animate: boolean): string {
   return text.slice(0, shown);
 }
 
+
+/**
+ * Reveal a streaming answer character-by-character at a steady rate.
+ *
+ * Chunks from the SSE stream can arrive in bursts (network buffering, SDK
+ * batching), which paints the plan in visible jumps. This hook decouples
+ * "what has arrived" from "what is shown": arrivals are appended to a target,
+ * and a rAF loop advances the shown prefix at ~STREAM_CHARS_PER_SECOND. If the
+ * target keeps growing, the reveal keeps catching up until it matches. If the
+ * arrival is faster than the reveal rate, the reveal rate is auto-boosted so
+ * we never drift more than a couple of seconds behind — otherwise a 300-char
+ * burst would take 3+ seconds to catch up, which reads as broken.
+ *
+ * When `live` flips to false (turn finalized), we snap to the full text so
+ * historical turns render instantly.
+ */
+const STREAM_CHARS_PER_SECOND = 80;
+const STREAM_CATCHUP_MAX_LAG = 240; // chars behind before we accelerate
+function useSmoothStreamReveal(fullText: string, live: boolean): string {
+  const [shown, setShown] = useState<number>(live ? 0 : fullText.length);
+  const targetRef = useRef(fullText);
+  targetRef.current = fullText;
+
+  useEffect(() => {
+    if (!live) {
+      setShown(fullText.length);
+      return;
+    }
+
+    let raf = 0;
+    let lastTs = 0;
+    let owed = 0;
+    let revealed = shown;
+
+    const tick = (ts: number) => {
+      if (!lastTs) lastTs = ts;
+      const dt = ts - lastTs;
+      lastTs = ts;
+
+      const full = targetRef.current.length;
+      const lag = full - revealed;
+
+      // Base reveal rate; accelerate when we're falling far behind so the UI
+      // never lingers more than a beat behind the actual answer.
+      const rate =
+        lag > STREAM_CATCHUP_MAX_LAG
+          ? STREAM_CHARS_PER_SECOND * (1 + lag / STREAM_CATCHUP_MAX_LAG)
+          : STREAM_CHARS_PER_SECOND;
+
+      owed += (dt / 1000) * rate;
+      if (owed >= 1 && revealed < full) {
+        const step = Math.floor(owed);
+        owed -= step;
+        revealed = Math.min(full, revealed + step);
+        setShown(revealed);
+      }
+
+      raf = window.requestAnimationFrame(tick);
+    };
+
+    raf = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(raf);
+    // We deliberately do NOT depend on fullText — new chars just extend the
+    // target that the loop is already chasing, keeping the reveal continuous.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live]);
+
+  return fullText.slice(0, shown);
+}
 
 function buildPlanningPrompt(p: Collected): string {
   const parts = [

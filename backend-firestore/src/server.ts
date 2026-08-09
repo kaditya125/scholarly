@@ -110,6 +110,40 @@ app.use(errorHandler);
 // ==========================================
 const server = app.listen(env.PORT, () => {
   console.log(`🚀 Server running in ${env.NODE_ENV} mode on port ${env.PORT}`);
+
+  // Start the BullMQ background worker so enqueued jobs (podcast.generate,
+  // podcast.postassets, intelligence.*, notifications, etc.) actually get
+  // processed. Without this call, /api/podcasts/generate accepts the request,
+  // enqueues to Redis, and returns 202 — but nothing ever drains the queue,
+  // so podcasts sit at status PENDING forever.
+  //
+  // Wrapped so a startup error in the worker never crashes the HTTP server —
+  // the API stays up and the failure is visible in the logs.
+  const disableWorkers = String(process.env.DISABLE_WORKERS || '').toLowerCase() === 'true';
+  if (disableWorkers) {
+    console.log('⏸️  Background worker skipped (DISABLE_WORKERS=true).');
+  } else {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { startBackgroundWorker } = require('./core/workflow/jobs/BackgroundWorker');
+      startBackgroundWorker();
+    } catch (err: any) {
+      console.error('[server] Failed to start background worker:', err?.message || err);
+    }
+    // The media worker drains the `media-jobs` queue. Podcast generation
+    // enqueues `podcast.stitch` here AFTER synthesizing all voices, and
+    // stitching is where audio mixing / mastering happens. Without this
+    // worker, every podcast job completes SYNTHESIZING and then sits at
+    // status="STITCHING" forever ("Mixing the audio" in the UI) because
+    // nothing is consuming the stitch queue.
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { startMediaWorker } = require('./core/workflow/jobs/MediaWorker');
+      startMediaWorker();
+    } catch (err: any) {
+      console.error('[server] Failed to start media worker:', err?.message || err);
+    }
+  }
 });
 
 // Graceful shutdown handling

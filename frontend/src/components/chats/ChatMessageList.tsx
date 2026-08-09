@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { cn } from "../../lib/utils";
+import { useTheme } from "../../lib/ThemeContext";
 import { PeerAvatar } from "../social/PeerAvatar";
 import { MessageAttachments } from "../social/MessageAttachments";
 import { MessageReactions } from "../social/MessageReactions";
@@ -62,6 +63,7 @@ export function ChatMessageList({
   lastSeenMessageId,
 }: ChatMessageListProps) {
   const endRef = useRef<HTMLDivElement>(null);
+  const { chatColor } = useTheme();
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
@@ -153,6 +155,7 @@ export function ChatMessageList({
                           ? "bg-indigo-600 text-white rounded-br-md"
                           : "bg-white dark:bg-[#1e1e1f] text-slate-800 dark:text-gray-100 border border-slate-100 dark:border-white/5 rounded-bl-md"
                       )}
+                      style={mine && chatColor !== 'none' ? { backgroundColor: chatColor } : undefined}
                     >
                       {msg.replyTo && (
                         <div
