@@ -109,7 +109,17 @@ export class ChatService {
     try {
       for await (const event of stream) {
         if (event.type === 'progress') {
-          res.write(`data: ${JSON.stringify({ type: 'progress', message: event.message })}\n\n`);
+          // Forward the `stage` too — the frontend's ReasoningTimeline
+          // matches each step to a backend stage id to decide whether that
+          // row lights up or is grayed out as "not needed for this reply".
+          // Dropping `stage` here (as we used to) meant every stage arrived
+          // as undefined, so every timeline row rendered as skipped even
+          // though the backend was actually emitting them.
+          res.write(`data: ${JSON.stringify({
+            type: 'progress',
+            stage: event.stage,
+            message: event.message
+          })}\n\n`);
         } else if (event.type === 'chunk') {
           fullReply += event.chunk;
           res.write(`data: ${JSON.stringify({ type: 'chunk', content: event.chunk })}\n\n`);
@@ -209,4 +219,7 @@ export class ChatService {
     return this.repository.deleteSession(sessionId, userId);
   }
 
+  async getDeletedSessions(userId: string): Promise<any[]> { return []; }
+  async restoreSession(sessionId: string, userId: string): Promise<void> {}
+  async permanentlyDeleteSession(sessionId: string, userId: string): Promise<void> {}
 }

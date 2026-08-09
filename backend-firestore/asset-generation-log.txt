@@ -1,0 +1,146 @@
+[env] Γ£à Vertex AI mode enabled ΓÇö Google AI calls route through Vertex AI (Service Account/Express).
+Γ£à Firebase Admin initialized successfully [Project: schaolarly]
+
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+  MVP AUDIO ASSET LIBRARY
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+  mode      : EXECUTE (will incur cost)
+  kind      : all
+  entries   : 30
+  budget    : $10.00
+
+(node:40092) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2026-08-07 19:52:02 [[32minfo[39m]: [AssetLibrary] No catalogue configured; audio layers will be skipped {"service":"scholarly-api","path":"config/audioAssetCatalogue"}
+  providers : ambience-library, builtin-catalogue, cc0-music, cc0-sound, licensed-music, licensed-sfx, vertex-lyria, vertex-sound-gen
+
+  PLAN
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  LABEL                     FINGERPRINT                       STATUS
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Calm educational          music|educational|calm|educationa needs resolution
+  Curious / wonder          music|science|curious|cinematic_d needs resolution
+  Suspense                  music|mystery|suspense|cinematic_ needs resolution
+  Mystery                   music|mystery|mystery|cinematic_d needs resolution
+  Emotional / sad           music|sad|sad|cinematic_documenta needs resolution
+  Inspirational             music|inspirational|hope|cinemati needs resolution
+  Epic                      music|epic|heroic|cinematic_docum needs resolution
+  Adventure                 music|adventure|excited|cinematic needs resolution
+  Science / futuristic      music|science|wonder|cinematic_do needs resolution
+  Historical documentary    music|historical|neutral|cinemati needs resolution
+  Classroom                 ambience|classroom|-|-|-|-|loop|b needs resolution
+  Forest                    ambience|forest|-|-|-|-|loop|base needs resolution
+  Rain                      ambience|rain|-|-|-|-|loop|base   needs resolution
+  Storm                     ambience|storm|-|-|-|-|loop|base  needs resolution
+  City                      ambience|city|-|-|-|-|loop|base   needs resolution
+  Marketplace               ambience|marketplace|-|-|-|-|loop needs resolution
+  Ocean                     ambience|ocean|-|-|-|-|loop|base  needs resolution
+  Space                     ambience|space|-|-|-|-|loop|base  needs resolution
+  Laboratory                ambience|laboratory|-|-|-|-|loop| needs resolution
+  Library                   ambience|library|-|-|-|-|loop|bas needs resolution
+  Door                      sfx|door|-|-|-|-|oneshot|-        needs resolution
+  Footsteps                 sfx|footsteps|-|-|-|-|oneshot|-   needs resolution
+  Thunder                   sfx|weather|-|-|-|-|oneshot|-     needs resolution
+  Bell                      sfx|bell|-|-|-|-|oneshot|-        needs resolution
+  Clock                     sfx|time|-|-|-|-|oneshot|-        needs resolution
+  Paper                     sfx|paper|-|-|-|-|oneshot|-       needs resolution
+  Typing                    sfx|typing|-|-|-|-|oneshot|-      needs resolution
+  Crowd                     sfx|crowd|-|-|-|-|oneshot|-       needs resolution
+  Water                     sfx|water|-|-|-|-|oneshot|-       needs resolution
+  Wind                      sfx|wind|-|-|-|-|oneshot|-        needs resolution
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  cached: 0   to resolve: 30
+
+  RESOLVING
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+2026-08-07 19:53:21 [[32minfo[39m]: [GeneratedMusicProvider] Generated music asset {"service":"scholarly-api","assetId":"gen_music_1070424e11b0cec6","category":"educational","emotion":"calm","intensity":0.25,"durationMs":65536,"bytes":6291544,"costUsd":0.06}
+2026-08-07 19:53:22 [[32minfo[39m]: [AssetRegistry] Registered asset {"service":"scholarly-api","assetId":"gen_music_1070424e11b0cec6","provider":"vertex-lyria","kind":"music","licence":"generated"}
+2026-08-07 19:54:09 [[32minfo[39m]: [GeneratedMusicProvider] Generated music asset {"service":"scholarly-api","assetId":"gen_music_afe4be675230022f","category":"science","emotion":"curious","intensity":0.4,"durationMs":65536,"bytes":6291544,"costUsd":0.06}
+2026-08-07 19:54:09 [[32minfo[39m]: [AssetRegistry] Registered asset {"service":"scholarly-api","assetId":"gen_music_afe4be675230022f","provider":"vertex-lyria","kind":"music","licence":"generated"}
+2026-08-07 19:54:47 [[32minfo[39m]: [GeneratedMusicProvider] Generated music asset {"service":"scholarly-api","assetId":"gen_music_eb45efcc46bfabac","category":"mystery","emotion":"suspense","intensity":0.7,"durationMs":65536,"bytes":6291544,"costUsd":0.06}
+2026-08-07 19:54:47 [[32minfo[39m]: [AssetRegistry] Registered asset {"service":"scholarly-api","assetId":"gen_music_eb45efcc46bfabac","provider":"vertex-lyria","kind":"music","licence":"generated"}
+2026-08-07 19:55:32 [[32minfo[39m]: [GeneratedMusicProvider] Generated music asset {"service":"scholarly-api","assetId":"gen_music_8156a0976a9ed9c5","category":"mystery","emotion":"mystery","intensity":0.5,"durationMs":65536,"bytes":6291544,"costUsd":0.06}
+2026-08-07 19:55:33 [[32minfo[39m]: [AssetRegistry] Registered asset {"service":"scholarly-api","assetId":"gen_music_8156a0976a9ed9c5","provider":"vertex-lyria","kind":"music","licence":"generated"}
+2026-08-07 19:56:20 [[32minfo[39m]: [GeneratedMusicProvider] Generated music asset {"service":"scholarly-api","assetId":"gen_music_04a1f6176b9fa334","category":"sad","emotion":"sad","intensity":0.35,"durationMs":65536,"bytes":6291544,"costUsd":0.06}
+2026-08-07 19:56:20 [[32minfo[39m]: [AssetRegistry] Registered asset {"service":"scholarly-api","assetId":"gen_music_04a1f6176b9fa334","provider":"vertex-lyria","kind":"music","licence":"generated"}
+2026-08-07 19:57:04 [[32minfo[39m]: [GeneratedMusicProvider] Generated music asset {"service":"scholarly-api","assetId":"gen_music_7bd6a4bf691da61b","category":"inspirational","emotion":"hope","intensity":0.55,"durationMs":65536,"bytes":6291544,"costUsd":0.06}
+2026-08-07 19:57:05 [[32minfo[39m]: [AssetRegistry] Registered asset {"service":"scholarly-api","assetId":"gen_music_7bd6a4bf691da61b","provider":"vertex-lyria","kind":"music","licence":"generated"}
+2026-08-07 19:57:52 [[32minfo[39m]: [GeneratedMusicProvider] Generated music asset {"service":"scholarly-api","assetId":"gen_music_5599f72a644030ad","category":"epic","emotion":"heroic","intensity":0.85,"durationMs":65536,"bytes":6291544,"costUsd":0.06}
+2026-08-07 19:57:53 [[32minfo[39m]: [AssetRegistry] Registered asset {"service":"scholarly-api","assetId":"gen_music_5599f72a644030ad","provider":"vertex-lyria","kind":"music","licence":"generated"}
+2026-08-07 19:58:39 [[32minfo[39m]: [GeneratedMusicProvider] Generated music asset {"service":"scholarly-api","assetId":"gen_music_fb025b4837a07a8f","category":"adventure","emotion":"excited","intensity":0.7,"durationMs":65536,"bytes":6291544,"costUsd":0.06}
+2026-08-07 19:58:39 [[32minfo[39m]: [AssetRegistry] Registered asset {"service":"scholarly-api","assetId":"gen_music_fb025b4837a07a8f","provider":"vertex-lyria","kind":"music","licence":"generated"}
+2026-08-07 19:59:26 [[32minfo[39m]: [GeneratedMusicProvider] Generated music asset {"service":"scholarly-api","assetId":"gen_music_01200dad3d890836","category":"science","emotion":"wonder","intensity":0.5,"durationMs":65536,"bytes":6291544,"costUsd":0.06}
+2026-08-07 19:59:26 [[32minfo[39m]: [AssetRegistry] Registered asset {"service":"scholarly-api","assetId":"gen_music_01200dad3d890836","provider":"vertex-lyria","kind":"music","licence":"generated"}
+2026-08-07 20:00:14 [[32minfo[39m]: [GeneratedMusicProvider] Generated music asset {"service":"scholarly-api","assetId":"gen_music_205a31d61618be54","category":"historical","emotion":"neutral","intensity":0.4,"durationMs":65536,"bytes":6291544,"costUsd":0.06}
+2026-08-07 20:00:15 [[32minfo[39m]: [AssetRegistry] Registered asset {"service":"scholarly-api","assetId":"gen_music_205a31d61618be54","provider":"vertex-lyria","kind":"music","licence":"generated"}
+2026-08-07 20:00:15 [[32minfo[39m]: [AssetResolver] Pass complete {"service":"scholarly-api","requested":30,"unique":30,"resolved":10,"unresolved":20,"cacheHits":0,"generated":10,"costUsd":0.6,"ms":464939}
+  Calm educational          OK  vertex-lyria  conf=0.90  65.5s  $0.060
+      registry-cache:miss ΓåÆ vertex-lyria:hit
+  Curious / wonder          OK  vertex-lyria  conf=0.90  65.5s  $0.060
+      registry-cache:miss ΓåÆ vertex-lyria:hit
+  Suspense                  OK  vertex-lyria  conf=0.90  65.5s  $0.060
+      registry-cache:miss ΓåÆ vertex-lyria:hit
+  Mystery                   OK  vertex-lyria  conf=0.90  65.5s  $0.060
+      registry-cache:miss ΓåÆ vertex-lyria:hit
+  Emotional / sad           OK  vertex-lyria  conf=0.90  65.5s  $0.060
+      registry-cache:miss ΓåÆ vertex-lyria:hit
+  Inspirational             OK  vertex-lyria  conf=0.90  65.5s  $0.060
+      registry-cache:miss ΓåÆ vertex-lyria:hit
+  Epic                      OK  vertex-lyria  conf=0.90  65.5s  $0.060
+      registry-cache:miss ΓåÆ vertex-lyria:hit
+  Adventure                 OK  vertex-lyria  conf=0.90  65.5s  $0.060
+      registry-cache:miss ΓåÆ vertex-lyria:hit
+  Science / futuristic      OK  vertex-lyria  conf=0.90  65.5s  $0.060
+      registry-cache:miss ΓåÆ vertex-lyria:hit
+  Historical documentary    OK  vertex-lyria  conf=0.90  65.5s  $0.060
+      registry-cache:miss ΓåÆ vertex-lyria:hit
+  Classroom                 FAILED
+      registry-cache:miss
+  Forest                    FAILED
+      registry-cache:miss
+  Rain                      FAILED
+      registry-cache:miss
+  Storm                     FAILED
+      registry-cache:miss
+  City                      FAILED
+      registry-cache:miss
+  Marketplace               FAILED
+      registry-cache:miss
+  Ocean                     FAILED
+      registry-cache:miss
+  Space                     FAILED
+      registry-cache:miss
+  Laboratory                FAILED
+      registry-cache:miss
+  Library                   FAILED
+      registry-cache:miss
+  Door                      FAILED
+      registry-cache:miss
+  Footsteps                 FAILED
+      registry-cache:miss
+  Thunder                   FAILED
+      registry-cache:miss
+  Bell                      FAILED
+      registry-cache:miss
+  Clock                     FAILED
+      registry-cache:miss
+  Paper                     FAILED
+      registry-cache:miss
+  Typing                    FAILED
+      registry-cache:miss
+  Crowd                     FAILED
+      registry-cache:miss
+  Water                     FAILED
+      registry-cache:miss
+  Wind                      FAILED
+      registry-cache:miss
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  SUMMARY
+    resolved    : 10/30
+    unresolved  : 20
+    cache hits  : 0
+    newly made  : 10
+    cost        : $0.6000
+    elapsed     : 464.9s
+

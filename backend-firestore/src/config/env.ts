@@ -41,6 +41,40 @@ const envSchema = z.object({
   // Security / Ops
   CRON_SECRET: z.string().optional(),
   CORS_ORIGINS: z.string().optional(), // comma-separated allowlist of origins for production CORS
+  
+  // Payments
+  RAZORPAY_KEY_ID: z.string().optional(),
+  RAZORPAY_KEY_SECRET: z.string().optional(),
+  RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
+  
+  // Video and Veo Models
+  GROK_VERTEX_PROJECT: z.string().optional(),
+  VEO_LOCATION: z.string().optional(),
+  VEO_MODEL: z.string().optional(),
+  VEO_OUTPUT_BUCKET: z.string().optional(),
+  GROK_SA_KEY_FILE: z.string().optional(),
+  GROK_MODEL: z.string().optional(),
+  VIDEO_LESSON_SCENES: z.string().optional(),
+  VIDEO_LESSON_DAILY_LIMIT: z.string().optional(),
+  VEO_ENABLED: z.string().optional(),
+
+  // Vertex AI routing — when true, Gemini/embedding calls go through Vertex.
+  GOOGLE_GENAI_USE_VERTEXAI: z.string().optional(),
+  GOOGLE_VERTEX_PROJECT: z.string().optional(),
+  GOOGLE_VERTEX_LOCATION: z.string().optional(),
+
+  // Twilio SMS — falls back to Mock provider when any of the three is empty.
+  TWILIO_ACCOUNT_SID: z.string().optional(),
+  TWILIO_AUTH_TOKEN: z.string().optional(),
+  TWILIO_FROM_NUMBER: z.string().optional(),
+
+  // Meta WhatsApp Cloud API — falls back to Mock provider when empty.
+  WHATSAPP_ACCESS_TOKEN: z.string().optional(),
+  WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
+
+  // Chat fast-path toggle read by GenerationOrchestrator; keep declared so it
+  // can be set from .env without a schema failure.
+  CHAT_FAST_ANSWER: z.string().optional(),
 }).refine(
   (data) => {
     // Either GOOGLE_APPLICATION_CREDENTIALS must be provided, OR all three manual FIREBASE vars must be provided.
@@ -94,4 +128,13 @@ if (isAIDisabled()) {
 }
 if (env.NODE_ENV === 'production' && !env.CORS_ORIGINS) {
   console.warn('[env] CORS_ORIGINS is not set in production — cross-origin browser requests will be blocked. Provide a comma-separated allowlist.');
+}
+
+// ─── Vertex AI routing signal ────────────────────────────────────────
+// The @google/genai SDK reads GOOGLE_GENAI_USE_VERTEXAI itself; this line is
+// just to make the routing visible in the boot log. When "true", Gemini and
+// embedding calls hit Vertex AI (Agent Platform / Express) using the service
+// account credentials rather than a bare API key.
+if (env.GOOGLE_GENAI_USE_VERTEXAI === 'true') {
+  console.log('[env] ✅ Vertex AI mode enabled — Google AI calls route through Vertex AI (Service Account/Express).');
 }

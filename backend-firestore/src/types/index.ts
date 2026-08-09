@@ -84,6 +84,7 @@ export interface StudyGroup {
   id: string;
   name: string;
   description: string;
+  subject?: string;
   ownerId: string;
   memberIds: string[]; // For efficient querying
   members: { userId: string; role: 'admin' | 'member'; joinedAt: number }[];
@@ -218,19 +219,29 @@ export interface ChatSession {
 
 export type PodcastStatus = 
   | 'PENDING'
+  | 'PLANNING'
   | 'GENERATING_SCRIPT'
+  | 'GENERATING_ASSETS'
   | 'GENERATING_AUDIO'
   | 'STITCHING_AUDIO'
   | 'UPLOADING'
   | 'READY'
+  | 'CANCELLED'
   | 'FAILED';
 
 export interface PodcastMetadata {
   id: string; // Document ID (podcastId)
+  type?: string;
+  jobId?: string;
   notebookId: string;
   userId: string;
   title: string;
   description: string;
+  sourceKind?: string;
+  progressPct?: number;
+  audioPath?: string;
+  coverImagePath?: string;
+  transcriptPath?: string;
   duration?: number;
   language: string;
   voiceProvider: string;
@@ -247,3 +258,26 @@ export interface PodcastMetadata {
 }
 export * from "./notebook";
 export * from "./observability";
+
+export const isReadyStatus = (status: string) => status === 'READY' || status === 'READY_DEGRADED';
+export type KGRelationshipType = string;
+
+export interface CircleChatTurn {
+  role: string;
+  content: string;
+}
+
+export interface CircleConcept {
+  id: string;
+  name: string;
+}
+
+export interface CircleKnowledgeItem {
+  id: string;
+  content: string;
+}
+
+export interface CircleKnowledgeSource {
+  id: string;
+  type: string;
+}

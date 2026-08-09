@@ -168,9 +168,14 @@ function DiscussionCard({
   const [reply, setReply] = useState("");
   const { responses, respond, isResponding, setBest, setStatus } = useDiscussion(expanded ? d.id : undefined);
 
-  const isAuthor = !!currentUid && (d.authorId === currentUid || d.author.uid === currentUid);
+  // Defensive reads: even after the API-layer normalizer, hand-written seed
+  // rows or legacy backend payloads can carry a missing/partial author. Blank
+  // fallbacks let the card render instead of crashing.
+  const author = d.author || { uid: 'unknown', displayName: 'Unknown', photoURL: undefined };
+  const tagList = Array.isArray(d.tags) ? d.tags : [];
+  const isAuthor = !!currentUid && (d.authorId === currentUid || author.uid === currentUid);
   const status = d.status || "active";
-  const statusMeta = STATUS_META[status];
+  const statusMeta = STATUS_META[status] || STATUS_META.active;
 
   const submitReply = async () => {
     const text = reply.trim();
@@ -188,15 +193,15 @@ function DiscussionCard({
       {/* Header */}
       <div className="flex items-start gap-3">
         <PeerAvatar
-          name={d.author.displayName}
-          photoURL={d.author.photoURL}
-          seed={d.author.uid || d.id}
+          name={author.displayName}
+          photoURL={author.photoURL}
+          seed={author.uid || d.id}
           className="w-9 h-9 text-[12px] mt-0.5"
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="text-[13.5px] font-semibold text-slate-900 dark:text-white truncate">
-              {d.author.displayName}
+              {author.displayName}
             </span>
             <span className="text-[11.5px] text-slate-400">· {shortAgo(d.createdAt)}</span>
             <span className={cn("ml-auto shrink-0 text-[10.5px] font-semibold px-2 py-0.5 rounded-full", statusMeta.cls)}>
@@ -216,9 +221,9 @@ function DiscussionCard({
             </p>
           )}
 
-          {d.tags.length > 0 && (
+          {tagList.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-2">
-              {d.tags.map((t) => (
+              {tagList.map((t) => (
                 <span
                   key={t}
                   className="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-gray-400"

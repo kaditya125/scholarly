@@ -18,10 +18,28 @@ import feedbackRoutes from './feedback.routes';
 import enterpriseAdminRoutes from '../admin/routes/admin.routes';
 import analyticsRoutes from './analytics.routes';
 
+// Modern Routes
+import baselineAssessmentRoutes from './baselineAssessment.routes';
+import connectionsRoutes from './connections.routes';
+import cronRoutes from './cron.routes';
+import dmRoutes from './dm.routes';
+import documentsRoutes from './documents.routes';
+import doubtsRoutes from './doubts.routes';
+import mediaRoutes from './media.routes';
+import notificationsRoutes from './notifications.routes';
+import paymentsRoutes from './payments.routes';
+import planningRoutes from './planning.routes';
+import podcastsRoutes from './podcasts.routes';
+import quizRoutes from './quiz.routes';
+import scanRoutes from './scan.routes';
+import trashRoutes from './trash.routes';
+import uploadsRoutes from './uploads.routes';
+import videoLessonRoutes from './video-lesson.routes';
+import webhooksRoutes from './webhooks.routes';
+
 const router = Router();
 
 router.use('/analytics', analyticsRoutes);
-
 router.use('/briefing', briefingRoutes);
 router.use('/questions', questionsRoutes);
 router.use('/tests', testsRoutes);
@@ -39,5 +57,24 @@ router.use('/notebooks', assetsRoutes);
 router.use('/study-groups', studyGroupsRoutes);
 router.use('/explore', publishedAssetsRoutes);
 router.use('/admin', enterpriseAdminRoutes);
+
+// Mount Modern Routes
+router.use('/baseline-assessment', baselineAssessmentRoutes);
+router.use('/connections', connectionsRoutes);
+router.use('/cron', cronRoutes);
+router.use('/dm', dmRoutes);
+router.use('/documents', documentsRoutes);
+router.use('/doubts', doubtsRoutes);
+router.use('/media', mediaRoutes);
+router.use('/notifications', notificationsRoutes);
+router.use('/payments', paymentsRoutes);
+router.use('/planning', planningRoutes);
+router.use('/podcasts', podcastsRoutes);
+router.use('/quiz', quizRoutes);
+router.use('/scan', scanRoutes);
+router.use('/trash', trashRoutes);
+router.use('/uploads', uploadsRoutes);
+router.use('/video-lesson', videoLessonRoutes);
+router.use('/webhooks', webhooksRoutes);
 
 export default router;

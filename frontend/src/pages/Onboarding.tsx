@@ -98,6 +98,7 @@ export default function Onboarding() {
   };
 
   const skipAll = () => {
+    sessionStorage.setItem('onboarding_skipped', 'true');
     persist();
     navigate('/dashboard', { replace: true });
   };

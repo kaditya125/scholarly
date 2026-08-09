@@ -18,10 +18,31 @@ export class GeminiProvider implements AIProvider {
 
   constructor(modelName: string = env.GEMINI_MODEL || 'gemini-2.5-flash') {
     this.modelName = modelName;
-    if (!env.GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not defined in environment.');
+
+    // Vertex AI routing — when GOOGLE_GENAI_USE_VERTEXAI is "true" the SDK
+    // must be constructed in Vertex mode with the service-account project +
+    // location. In that mode the SDK picks up GOOGLE_APPLICATION_CREDENTIALS
+    // automatically. Passing an apiKey alongside vertexai:true makes the SDK
+    // send the API key as a bearer token to the Vertex endpoint, which
+    // Vertex rejects with 401 ACCESS_TOKEN_TYPE_UNSUPPORTED — the exact
+    // symptom we hit after the July revert.
+    if (env.GOOGLE_GENAI_USE_VERTEXAI === 'true') {
+      if (!env.GOOGLE_VERTEX_PROJECT || !env.GOOGLE_VERTEX_LOCATION) {
+        throw new Error(
+          'Vertex AI mode is enabled but GOOGLE_VERTEX_PROJECT or GOOGLE_VERTEX_LOCATION is missing.'
+        );
+      }
+      this.ai = new GoogleGenAI({
+        vertexai: true,
+        project: env.GOOGLE_VERTEX_PROJECT,
+        location: env.GOOGLE_VERTEX_LOCATION,
+      });
+    } else {
+      if (!env.GEMINI_API_KEY) {
+        throw new Error('GEMINI_API_KEY is not defined in environment.');
+      }
+      this.ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
     }
-    this.ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
   }
 
   async generateResponse(history: ChatMessage[], systemPrompt?: string, opts?: { traceId?: string, model?: string, userId?: string, notebookId?: string, operation?: string }): Promise<AIProviderResponse> {
@@ -129,7 +150,16 @@ export class GeminiProvider implements AIProvider {
       parts: [{ text: msg.content }]
     }));
 
-    const config: any = { temperature: 0.7 };
+    const config: any = {
+      temperature: 0.7,
+      // Gemini 2.5 flash/pro run an internal "thinking" phase whose tokens
+      // are accounted separately from output. In some cases (short prompts,
+      // certain safety heuristics) the model spent its thinking budget and
+      // returned only 2–4 output tokens, which surfaced as an empty plan.
+      // Setting thinkingBudget: 0 disables that phase for streaming calls
+      // where we want the text tokens directly. It also cuts TTFT noticeably.
+      thinkingConfig: { thinkingBudget: 0 },
+    };
     if (systemPrompt && systemPrompt.trim().length > 0) {
       config.systemInstruction = systemPrompt;
     }
@@ -146,4 +176,8 @@ export class GeminiProvider implements AIProvider {
       }
     }
   }
+
+  async extractQuestionFromImage(...args: any[]): Promise<any> { throw new Error('Not implemented'); }
+  async generateVisionStream(...args: any[]): Promise<any> { throw new Error('Not implemented'); }
+  async describeFigures(...args: any[]): Promise<any> { throw new Error('Not implemented'); }
 }

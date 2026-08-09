@@ -1,0 +1,19 @@
+# Toxiproxy sits BETWEEN the staging backend and its dependencies so faults (latency, downtime,
+# packet loss) can be injected WITHOUT any code change in src/. Point the backend's dependency
+# endpoints at the proxy listen-ports below (staging env only), then use ./toggle.sh to inject/clear.
+#
+#   docker compose -f tests/chaos/docker-compose.toxiproxy.yml up -d
+#
+# Toxiproxy control API: http://localhost:8474  (used by toggle.sh)
+version: "3.8"
+services:
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.9.0
+    ports:
+      - "8474:8474"   # control API
+      - "6001:6001"   # -> Pinecone
+      - "6002:6002"   # -> Firestore
+      - "6003:6003"   # -> Gemini / Vertex
+      - "6004:6004"   # -> Cohere
+      - "6005:6005"   # -> Redis / Upstash
+    # Proxies are created at runtime by toggle.sh (setup), so upstreams are configurable per env.

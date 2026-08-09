@@ -34,7 +34,17 @@ export function useWorkflowStream() {
   
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const startStream = useCallback(async (payload: any): Promise<{ content: string, data: any }> => {
+  const startStream = useCallback(async (
+    payload: any
+  ): Promise<{
+    content: string;
+    data: any;
+    progress: WorkflowProgress[];
+    reasoning: string;
+    reasoningMs: number;
+    citations: any[];
+    warnings: string[];
+  }> => {
     return new Promise(async (resolve, reject) => {
       // Reset state
       setState({
@@ -47,6 +57,17 @@ export function useWorkflowStream() {
         done: false,
         data: null
       });
+
+      // Track progress + reasoning locally so we can resolve with them even
+      // though setState is async. The StudioContent chat surface needs these
+      // as concrete arrays/strings at resolve time to avoid crashes on
+      // `result.progress.length`.
+      const localProgress: WorkflowProgress[] = [];
+      const localCitations: any[] = [];
+      const localWarnings: string[] = [];
+      let localReasoning = '';
+      let localReasoningMs = 0;
+      const streamStartedAt = Date.now();
 
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -107,9 +128,11 @@ export function useWorkflowStream() {
               const event = JSON.parse(dataStr);
               
               if (event.type === 'progress') {
+                const p: WorkflowProgress = { stage: event.stage, message: event.message };
+                localProgress.push(p);
                 setState(s => ({
                   ...s,
-                  progressEvents: [...s.progressEvents, { stage: event.stage, message: event.message }]
+                  progressEvents: [...s.progressEvents, p]
                 }));
               } else if (event.type === 'chunk') {
                 finalContent += event.content;
@@ -117,24 +140,43 @@ export function useWorkflowStream() {
                   ...s,
                   content: finalContent
                 }));
+              } else if (event.type === 'reasoning') {
+                // Optional server event carrying accumulated reasoning text.
+                if (typeof event.content === 'string') localReasoning += event.content;
+                else if (typeof event.text === 'string') localReasoning += event.text;
               } else if (event.type === 'citation') {
+                localCitations.push(event.citation);
                 setState(s => ({
                   ...s,
                   citations: [...s.citations, event.citation]
                 }));
               } else if (event.type === 'warning') {
+                localWarnings.push(event.message);
                 setState(s => ({
                   ...s,
                   warnings: [...s.warnings, event.message]
                 }));
               } else if (event.type === 'done') {
+                localReasoningMs = Date.now() - streamStartedAt;
+                if (event.data && typeof event.data === 'object') {
+                  if (typeof event.data.reasoning === 'string') localReasoning = event.data.reasoning;
+                  if (typeof event.data.reasoningMs === 'number') localReasoningMs = event.data.reasoningMs;
+                }
                 setState(s => ({
                   ...s,
                   isStreaming: false,
                   done: true,
                   data: event.data
                 }));
-                resolve({ content: finalContent, data: event.data });
+                resolve({
+                  content: finalContent,
+                  data: event.data,
+                  progress: localProgress,
+                  reasoning: localReasoning,
+                  reasoningMs: localReasoningMs,
+                  citations: localCitations,
+                  warnings: localWarnings,
+                });
                 return; // Exit loop
               } else if (event.type === 'error') {
                  setState(s => ({
@@ -152,13 +194,29 @@ export function useWorkflowStream() {
         }
       }
       
-      resolve({ content: finalContent, data: null });
+      resolve({
+        content: finalContent,
+        data: null,
+        progress: localProgress,
+        reasoning: localReasoning,
+        reasoningMs: Date.now() - streamStartedAt,
+        citations: localCitations,
+        warnings: localWarnings,
+      });
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         setState(s => ({ ...s, error: err.message || 'Stream failed', isStreaming: false }));
         reject(err);
       } else {
-        resolve({ content: finalContent, data: null });
+        resolve({
+          content: finalContent,
+          data: null,
+          progress: localProgress,
+          reasoning: localReasoning,
+          reasoningMs: Date.now() - streamStartedAt,
+          citations: localCitations,
+          warnings: localWarnings,
+        });
       }
     }
     });

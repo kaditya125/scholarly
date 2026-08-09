@@ -28,7 +28,7 @@ export default function BaselineAssessmentEngine() {
 
   useEffect(() => {
     if (isAssessmentFinished) {
-      navigate('/baseline-assessment/report');
+      navigate('/welcome');
     }
   }, [isAssessmentFinished, navigate]);
 

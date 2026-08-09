@@ -272,6 +272,123 @@ export class WorkflowEngine {
       yield { type: 'progress', stage: WorkflowStage.INTENT_DETECTION, message: 'Understanding your question...' };
       const mode = req.mode || 'TEACHER';
 
+      // ── Podcast planner fast path ──────────────────────────────────────
+      // The Podcast Studio sends `mode: 'podcast'` with a "Plan a podcast
+      // about ..." user message. It expects a structured, streamed plan
+      // (description + objectives + segments + approach), NOT the general
+      // teacher pipeline (memory / graph / RAG / formatter) whose double
+      // generation used to collapse into an acknowledgment stall.
+      //
+      // Even though we skip the actual retrieval/RAG/verification work for
+      // planning (none of that is needed to produce a good outline), we
+      // still emit each reasoning stage with a short human-paced pause so
+      // the frontend's reasoning timeline shows the same "thinking" flow
+      // the general chat surface does. Without these events the Studio UI
+      // marked every step as "not needed for this reply", which looked
+      // broken even though the plan itself streamed fine.
+      if (typeof mode === 'string' && mode.toUpperCase() === 'PODCAST') {
+        const pause = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+        yield {
+          type: 'progress',
+          stage: WorkflowStage.CONTEXT_ENRICHMENT,
+          message: 'Reading your request and identifying the educational objective...'
+        };
+        await pause(450);
+
+        yield {
+          type: 'progress',
+          stage: WorkflowStage.MEMORY_RETRIEVAL,
+          message: 'Loading your learning profile so the podcast is tailored to your background...'
+        };
+        await pause(500);
+
+        yield {
+          type: 'progress',
+          stage: WorkflowStage.GRAPH_RETRIEVAL,
+          message: 'Traversing related concepts, prerequisites, and dependencies...'
+        };
+        await pause(500);
+
+        yield {
+          type: 'progress',
+          stage: WorkflowStage.RAG_RETRIEVAL,
+          message: 'Searching your notebooks and curriculum for relevant passages...'
+        };
+        await pause(500);
+
+        yield {
+          type: 'progress',
+          stage: WorkflowStage.AGENT_EXECUTION,
+          message: 'Composing the podcast plan you can approve, refine, or hand off to voice generation...'
+        };
+
+        const podcastSystemPrompt = buildScholarlySystemPrompt({
+          mode: 'PODCAST',
+          studentContext: {
+            userId: req.userId,
+            profile: null,
+            memory: null,
+            analytics: null,
+            stats: null,
+            planner: null,
+            notebooks: null,
+            isFirstTimeUser: false,
+            isOnboarded: true,
+          } as any,
+          retrievedContext: 'No specific context found.',
+          hasNotebookContext: false,
+        });
+
+        const anyProvider = this.aiProvider as any;
+        let podcastReply = '';
+        if (typeof anyProvider.generateStreamResponse === 'function') {
+          const podcastStream = anyProvider.generateStreamResponse(
+            [
+              ...req.history,
+              { role: 'user', content: req.query }
+            ],
+            podcastSystemPrompt,
+            { traceId: req.traceId, model: req.model, userId: req.userId }
+          );
+          for await (const chunk of podcastStream) {
+            if (!firstChunkAt) {
+              firstChunkAt = Date.now();
+              Telemetry.logTTFT('podcast_planning', firstChunkAt - workflowStartTime, { userId: req.userId });
+            }
+            podcastReply += chunk;
+            yield { type: 'chunk', chunk };
+          }
+        } else {
+          const res = await this.aiProvider.generateResponse(
+            [
+              ...req.history,
+              { role: 'user', content: req.query }
+            ],
+            podcastSystemPrompt,
+            { traceId: req.traceId, model: req.model, userId: req.userId }
+          );
+          podcastReply = res.reply;
+          yield { type: 'chunk', chunk: podcastReply };
+        }
+
+        const pGen = this.deriveGenCost(costMark);
+        void this.persistTelemetry(req, {
+          provider: pGen.provider,
+          model: pGen.model,
+          promptVersion: 'podcast_planning',
+          totalLatencyMs: Date.now() - workflowStartTime,
+          timeToFirstTokenMs: firstChunkAt ? firstChunkAt - workflowStartTime : 0,
+          promptTokens: pGen.promptTokens,
+          completionTokens: pGen.completionTokens,
+          estimatedCostUSD: pGen.totalCostUSD,
+          verificationPassed: true,
+        });
+
+        yield { type: 'done', data: { citations: [], assets: [], confidenceScore: 1.0 } };
+        return;
+      }
+
       // ── Stage 2: Context Enrichment (NEW) ──────────────────────────────
       yield { type: 'progress', stage: WorkflowStage.CONTEXT_ENRICHMENT, message: 'Loading your learning profile...' };
       

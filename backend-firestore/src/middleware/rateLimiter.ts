@@ -47,3 +47,12 @@ export const strictLimiter = rateLimit({
   store: getStore(),
   message: { error: 'Too many generations requested. Please wait a minute.' },
 });
+
+// ---------------------------------------------------------------------------
+// Paid generation endpoints
+// ---------------------------------------------------------------------------
+// Podcast generation and similar expensive endpoints reuse the strict limiter
+// (10 req/min). Exposed under its own name so route files can express intent
+// clearly and so we can tune it independently later without touching every
+// call site.
+export const podcastGenerateLimiter = strictLimiter;

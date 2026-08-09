@@ -125,7 +125,7 @@ export default function StudioSidebar({
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide">
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
         {/* Tools */}
         <div className="px-2 py-2">
           <NavItem icon={Home} label="Home" />

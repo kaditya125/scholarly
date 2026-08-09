@@ -1,6 +1,7 @@
 import React, { useRef } from "react";
 import { Send, Paperclip, X, Reply, Pencil, Loader2 } from "lucide-react";
 import { cn } from "../../lib/utils";
+import { useTheme } from "../../lib/ThemeContext";
 import { AttachmentBar } from "../social/AttachmentBar";
 import { TypingIndicator } from "../social/TypingIndicator";
 import type { useAttachments } from "../../hooks/useAttachments";
@@ -43,6 +44,7 @@ export function ChatComposer({
   typingUsers = [],
 }: ChatComposerProps) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const { chatColor } = useTheme();
 
   const canSend = editing
     ? value.trim().length > 0
@@ -126,6 +128,7 @@ export function ChatComposer({
           onClick={submit}
           disabled={!canSend || disabled || isSending}
           className="shrink-0 w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          style={chatColor !== 'none' ? { backgroundColor: chatColor } : undefined}
           aria-label="Send message"
           type="button"
         >

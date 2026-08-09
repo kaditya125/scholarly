@@ -1,0 +1,53 @@
+diff --git a/frontend/src/App.tsx b/frontend/src/App.tsx
+index 3997e2b9..355d526a 100644
+--- a/frontend/src/App.tsx
++++ b/frontend/src/App.tsx
+@@ -29,6 +29,22 @@ import StudyGroups from "./pages/StudyGroups";
+ import Explore from "./pages/Explore";
+ import WelcomeBriefing from "./pages/WelcomeBriefing";
+ import Profile from "./pages/Profile";
++import ContentPipeline from "./pages/ContentPipeline";
++import PodcastStudioV2 from "./pages/PodcastStudioV2";
++import AIWorkspace from "./pages/AIWorkspace";
++import Community from "./pages/Community";
++import Chats from "./pages/Chats";
++import People from "./pages/People";
++import Documents from "./pages/Documents";
++import VideoLesson from "./pages/VideoLesson";
++import Settings from "./pages/Settings";
++import BaselineAssessmentEngine from "./pages/BaselineAssessmentEngine";
++import AssessmentReportDashboard from "./pages/AssessmentReportDashboard";
++import Onboarding from "./pages/Onboarding";
++import MyDoubts from "./pages/MyDoubts";
++import Trash from "./pages/Trash";
++import Checkout from "./pages/Checkout";
++import PaymentSuccess from "./pages/PaymentSuccess";
+ 
+ function AppRoutes() {
+   const location = useLocation();
+@@ -61,6 +77,25 @@ function AppRoutes() {
+           <Route path="/explore" element={<Explore />} />
+           <Route path="/profile" element={<Profile />} />
+           <Route path="/leaderboard" element={<Leaderboard />} />
++          
++          {/* Modern Routes */}
++          <Route path="/pipeline" element={<ContentPipeline />} />
++          <Route path="/podcasts" element={<PodcastStudioV2 />} />
++          <Route path="/podcasts/studio" element={<PodcastStudioV2 />} />
++          <Route path="/workspace" element={<AIWorkspace />} />
++          <Route path="/community" element={<Community />} />
++          <Route path="/chats" element={<Chats />} />
++          <Route path="/people" element={<People />} />
++          <Route path="/documents" element={<Documents />} />
++          <Route path="/video-lesson" element={<VideoLesson />} />
++          <Route path="/settings" element={<Settings />} />
++          <Route path="/assessment" element={<BaselineAssessmentEngine />} />
++          <Route path="/assessment/report" element={<AssessmentReportDashboard />} />
++          <Route path="/onboarding" element={<Onboarding />} />
++          <Route path="/doubts" element={<MyDoubts />} />
++          <Route path="/trash" element={<Trash />} />
++          <Route path="/checkout" element={<Checkout />} />
++          <Route path="/payment-success" element={<PaymentSuccess />} />
+         </Route>
+         
+         {/* Admin panel has been decoupled to a separate application */}

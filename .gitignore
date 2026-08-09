@@ -1,0 +1,16 @@
+node_modules/
+.env
+.env.*
+*.log
+dist/
+build/
+coverage/
+backend-firestore/temp/
+backend-firestore/temp/**/*.mp3
+backend-firestore/trial_results*.json
+backend-firestore/test_transcript*.json
+backend-firestore/vt.txt
+backend-firestore/vtc.txt
+backend-firestore/tc.txt
+backend-firestore/test_elevenlabs_key.js
+backend-firestore/test-asset-gen.js

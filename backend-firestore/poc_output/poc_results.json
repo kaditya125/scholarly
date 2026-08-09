@@ -1,0 +1,12 @@
+{
+  "success": false,
+  "totalScenes": 0,
+  "totalDurationSec": 0,
+  "totalCost": 1,
+  "totalGenerationTimeMs": 631814,
+  "outputVideoPath": "",
+  "scenes": [],
+  "errors": [
+    "ffmpeg exited with code 4294967294: Error opening input file poc_output\\concat_list.txt.\nError opening input files: No such file or directory\n"
+  ]
+}

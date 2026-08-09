@@ -1,0 +1,12 @@
+{
+  "success": false,
+  "totalScenes": 0,
+  "totalDurationSec": 0,
+  "totalCost": 0,
+  "totalGenerationTimeMs": 347881,
+  "outputVideoPath": "",
+  "scenes": [],
+  "errors": [
+    "No scenes were generated successfully"
+  ]
+}

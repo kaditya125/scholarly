@@ -36,7 +36,20 @@ export interface Notebook {
   }[];
 }
 
-export type ProcessingStatus = 'PENDING' | 'UPLOADING' | 'PROCESSING' | 'OCR' | 'EXTRACTING' | 'CHUNKING' | 'EMBEDDING' | 'INDEXING' | 'GENERATING_GRAPH' | 'READY' | 'FAILED';
+export type ProcessingStatus = 
+  | 'PENDING'
+  | 'UPLOADING'
+  | 'PROCESSING'
+  | 'OCR'
+  | 'EXTRACTING'
+  | 'CHUNKING'
+  | 'EMBEDDING'
+  | 'INDEXING'
+  | 'GENERATING_GRAPH'
+  | 'READY'
+  | 'READY_DEGRADED'
+  | 'FAILED_RETRYABLE'
+  | 'FAILED_NONRETRYABLE';
 
 export interface ExtractionMetadata {
   chapters: string[];
