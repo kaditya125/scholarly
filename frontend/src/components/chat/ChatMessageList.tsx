@@ -5,33 +5,7 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import mermaid from 'mermaid';
 import { Brain, User } from 'lucide-react';
-
-mermaid.initialize({
-  startOnLoad: false,
-  theme: 'dark',
-  suppressErrorRendering: true,
-});
-
-const Mermaid = ({ chart }: { chart: string }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    if (ref.current) {
-      mermaid.render(`mermaid-${Math.random().toString(36).substring(7)}`, chart)
-        .then(({ svg }) => {
-          if (ref.current) ref.current.innerHTML = svg;
-        })
-        .catch(err => {
-          console.error('Mermaid render error', err);
-          if (ref.current) ref.current.innerHTML = `<pre class="text-red-500 text-xs">${err.message}</pre>`;
-        });
-    }
-  }, [chart]);
-  
-  return <div ref={ref} className="mermaid-diagram my-4 overflow-x-auto flex justify-center bg-white dark:bg-white/5 p-4 rounded-xl border border-slate-200 dark:border-white/10" />;
-};
 
 export interface ChatMessage {
   id: string;
@@ -79,10 +53,6 @@ export function ChatMessageList({ messages, isStreaming, onCitationClick }: Chat
                 components={{
                   code({node, inline, className, children, ...props}: any) {
                     const match = /language-(\w+)/.exec(className || '');
-                    const isMermaid = match && match[1] === 'mermaid';
-                    if (!inline && isMermaid) {
-                      return <Mermaid chart={String(children).replace(/\n$/, '')} />;
-                    }
                     return !inline ? (
                       <pre className="bg-[#1e1e1e] p-4 rounded-xl overflow-x-auto my-4 text-sm font-mono border border-white/10 shadow-lg">
                         <code className={className} {...props}>

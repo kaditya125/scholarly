@@ -57,7 +57,9 @@ export interface WorkflowRequest {
 }
 
 export interface WorkflowEvent {
-  type: 'progress' | 'chunk' | 'citation' | 'asset' | 'warning' | 'metrics' | 'error' | 'done';
+  type: 'progress' | 'chunk' | 'citation' | 'asset' | 'warning' | 'metrics' | 'error' | 'done' | 'reasoning';
+  /** Reasoning prose for the 'reasoning' event — see the TeacherAgent stage below. */
+  text?: string;
   stage?: WorkflowStage;
   message?: string;
   chunk?: string;
@@ -590,7 +592,37 @@ export class WorkflowEngine {
 
       const generationStartTime = Date.now();
       const teacher = new TeacherAgent();
-      await teacher.execute(agentContext);
+
+      // Stream the teacher's draft out as `reasoning` events so the client can render
+      // it token-by-token. This pipeline already generates twice (TeacherAgent drafts,
+      // ResponseFormatter polishes), so the draft IS the model's pre-presentation
+      // thinking — surfacing it costs no extra LLM call. Purely additive: clients that
+      // don't handle 'reasoning' ignore it.
+      //
+      // FIRST_TOKEN_TIMEOUT_MS guards against the failure this replaced: an AI call that
+      // never returns left the SSE stream open forever with no error and no output, so
+      // the UI sat on "preparing explanation…" indefinitely. Now a stalled provider
+      // surfaces as a real error the client can display.
+      const FIRST_TOKEN_TIMEOUT_MS = 45_000;
+      let sawFirstToken = false;
+      const firstTokenWatchdog = new Promise<never>((_, reject) => {
+        const t = setTimeout(() => {
+          if (!sawFirstToken) {
+            reject(new Error('The AI provider did not respond in time. Please try again.'));
+          }
+        }, FIRST_TOKEN_TIMEOUT_MS);
+        // Unref so a completed request never holds the process open.
+        (t as any).unref?.();
+      });
+
+      const teacherStream = teacher.executeStream(agentContext);
+      while (true) {
+        const next = await Promise.race([teacherStream.next(), firstTokenWatchdog]);
+        if (next.done) break;
+        sawFirstToken = true;
+        if (next.value) yield { type: 'reasoning', text: next.value };
+      }
+
       const generatedResponse = agentContext.sharedState['teacherDraft'] || '';
       
       // ── Stage 7: Verification ──────────────────────────────────────────

@@ -4,20 +4,13 @@ import {
   ChevronDown, 
   Sparkles, 
   Paperclip, 
-  Mic, 
-  ArrowUp,
+  Mic,
   Bot,
-  Copy,
   Check,
-  Volume2,
-  VolumeX,
   RefreshCw,
-  MessageSquare,
   Plus,
   Loader2,
   Clock,
-  PanelLeftClose,
-  PanelLeft,
   Trash2,
   Settings,
   Wand2,
@@ -26,47 +19,39 @@ import {
   BookOpen,
   Globe,
   Calculator,
-  FileText
+  FileText,
+  ArrowRight,
+  Image as ImageIcon,
+  User,
+  Mail,
+  MessageSquareText,
+  SlidersHorizontal,
+  Notebook,
+  CornerUpLeft,
+  ChevronRight,
+  ImagePlus,
+  AudioLines,
+  Telescope,
+  Lock,
+  Share2,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import DiagramWidget from '../components/chat/DiagramWidget';
+import AssistantReply, { Rating } from '../components/chat/AssistantReply';
+import { ShareModal } from '../components/ShareModal';
 import { api } from '../lib/api/client';
 import { useAuth } from '../lib/AuthContext';
+import { useTheme } from '../lib/ThemeContext';
 import { useWorkflowStream } from '../hooks/ai/useWorkflowStream';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import mermaid from 'mermaid';
 import { OpenAI, Groq, Nvidia } from '@lobehub/icons';
 
-mermaid.initialize({
-  startOnLoad: false,
-  theme: 'dark',
-  suppressErrorRendering: true,
-});
-
-const Mermaid = ({ chart }: { chart: string }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    if (ref.current) {
-      mermaid.render(`mermaid-${Math.random().toString(36).substring(7)}`, chart)
-        .then(({ svg }) => {
-          if (ref.current) ref.current.innerHTML = svg;
-        })
-        .catch(err => {
-          console.error('Mermaid render error', err);
-          if (ref.current) ref.current.innerHTML = `<p class="text-red-500 text-sm">Failed to render diagram</p>`;
-        });
-    }
-  }, [chart]);
-  
-  return <div ref={ref} className="flex justify-center my-6 overflow-x-auto w-full" />;
-};
+// Markdown and diagram rendering now live in components/chat/MarkdownMessage,
+// which AssistantReply uses. The local copies that used to sit here were removed with
+// that refactor — MarkdownMessage's version handles math/mhchem more gracefully.
 
 const TYPE_CONFIG: Record<string, { title: string, subtitle: string, firstMsg: string }> = {
   'chat': { title: 'What are you studying?', subtitle: 'Paste data and ask for analysis, or just start chatting.', firstMsg: 'I can help you study from your notes, PDFs, videos, recordings, flashcards, and pages; explain concepts; quiz you; make study guides, summaries, flashcards, worksheets, slides, or diagrams; and help analyze images of assignments or screenshots.\n\nIf you want, send me a file or just tell me the topic and I\'ll jump in.' },
@@ -75,10 +60,62 @@ const TYPE_CONFIG: Record<string, { title: string, subtitle: string, firstMsg: s
   'slides': { title: 'Generate AI Slides', subtitle: 'Instantly create presentation slides from your notes.', firstMsg: 'I will generate structured presentation slides with bullet points and speaker notes. Just give me the topic or paste your notes!' },
   'worksheet': { title: 'Create a Worksheet', subtitle: 'Generate custom worksheets, fill-in-the-blanks, and exercises.', firstMsg: 'Let\'s create a custom worksheet. What grade level and subject is this for, and what specific topics should I include? I can generate multiple choice, fill in the blanks, or short answer questions.' },
   'infographic': { title: 'Design an Infographic', subtitle: 'Describe a concept and I\'ll structure it as an infographic layout.', firstMsg: 'I can help you structure information into an infographic framework. What concept or process would you like to visualize?' },
-  'mindmap': { title: 'Generate Mind Map', subtitle: 'Break down complex topics into an organized mind map structure.', firstMsg: 'I will generate a structured mind map outline (e.g. in Markdown or Mermaid format) to help you visualize any topic. What should be the central node of our mind map?' },
+  'mindmap': { title: 'Generate Mind Map', subtitle: 'Break down complex topics into an organized mind map structure.', firstMsg: 'I will generate a structured mind map outline (as a nested Markdown outline) to help you visualize any topic. What should be the central node of our mind map?' },
   'image': { title: 'Generate AI Image', subtitle: 'Describe the educational illustration or diagram you need.', firstMsg: 'Describe the educational diagram, illustration, or visual aid you need, and I\'ll provide a detailed prompt or generate the layout for you.' },
   'page': { title: 'Draft a Page', subtitle: 'Write an essay, report, or document collaboratively.', firstMsg: 'I can help you draft a page, essay, or structured report. Let me know the topic, word count, and any specific outlines you want to follow.' },
   'meeting-notes': { title: 'Process Meeting Notes', subtitle: 'Paste your raw notes or transcript for a clean summary.', firstMsg: 'Paste your raw meeting notes, lecture transcript, or bullet points, and I will organize them into a clean summary with key takeaways and action items.' },
+};
+
+/** Hard cap on a single composer message. The counter below the textarea reflects this. */
+const MAX_CHARS = 4000;
+
+/**
+ * Retrieval scope for the next message.
+ *  - 'auto'     → behaviour-preserving. Sends the page's own topicType, so the backend's
+ *                 existing heuristic (WorkflowEngine: mode==='RESEARCH' || /news|latest|.../)
+ *                 decides whether to hit the web. This is the default on purpose.
+ *  - 'web'      → sends topicType 'RESEARCH', which turns on Tavily web retrieval AND
+ *                 switches the system prompt to DEEP RESEARCH mode (config/prompts.ts).
+ *  - 'notebook' → sends notebookId, so RetrievalService scopes RAG to that one notebook.
+ *
+ * To make "All Web" the default (matching the reference mock literally), change
+ * DEFAULT_SCOPE to { kind: 'web' } — but note that makes every message a research-mode
+ * message with a web search attached.
+ */
+type Scope =
+  | { kind: 'auto' }
+  | { kind: 'web' }
+  | { kind: 'notebook'; id: string; title: string };
+
+const DEFAULT_SCOPE: Scope = { kind: 'auto' };
+
+const scopeLabel = (s: Scope) =>
+  s.kind === 'web' ? 'All Web' : s.kind === 'notebook' ? s.title : 'Auto';
+
+/**
+ * Pool the four suggestion cards are drawn from. "Refresh Prompts" reshuffles and
+ * takes the next four, so the empty state stays varied without a network call.
+ */
+const PROMPT_POOL: { icon: any; text: string; prompt: string }[] = [
+  { icon: User, text: 'Write a to-do list for a personal project or task', prompt: 'Write a to-do list for a personal study project I can finish this week.' },
+  { icon: Mail, text: 'Generate an email or reply to a job offer', prompt: 'Generate a polite email replying to a job offer, asking for two more days to decide.' },
+  { icon: MessageSquareText, text: 'Summarise this article or text for me in one paragraph', prompt: 'Summarise the text I paste next into one clear paragraph.' },
+  { icon: SlidersHorizontal, text: 'How does AI work in a technical capacity', prompt: 'Explain how AI works in a technical capacity, starting from the fundamentals.' },
+  { icon: BookOpen, text: 'Create a 7-day study plan for a topic I choose', prompt: 'Create a 7-day study plan for mastering organic chemistry basics.' },
+  { icon: Lightbulb, text: 'Quiz me with 5 multiple choice questions', prompt: 'Give me a 5-question multiple choice quiz on World War II, with an answer key.' },
+  { icon: Calculator, text: 'Solve a problem step by step with full working', prompt: 'Help me solve a complex calculus integration problem step-by-step.' },
+  { icon: Globe, text: 'Explain a difficult concept in simple language', prompt: 'Explain the theory of relativity like I am 10 years old.' },
+  { icon: FileText, text: 'Turn my rough notes into clean revision notes', prompt: 'Turn the rough notes I paste next into clean, high-yield revision notes.' },
+  { icon: Sparkles, text: 'Compare two ideas and show the key differences', prompt: 'Compare mitosis and meiosis and show the key differences in a table.' },
+  { icon: Wand2, text: 'Build a mnemonic to help me memorise something', prompt: 'Build a memorable mnemonic to help me memorise the first 20 elements of the periodic table.' },
+  { icon: Clock, text: 'Plan my revision for an exam that is close', prompt: 'Plan my revision for an exam that is two weeks away, three hours a day.' },
+];
+
+/** Four distinct prompts at random, excluding the ones currently on screen where possible. */
+const pickPrompts = (exclude: string[] = []) => {
+  const fresh = PROMPT_POOL.filter((p) => !exclude.includes(p.text));
+  const source = fresh.length >= 4 ? fresh : PROMPT_POOL;
+  return [...source].sort(() => Math.random() - 0.5).slice(0, 4);
 };
 
 const GeminiIcon = ({ className }: { className?: string }) => (
@@ -108,7 +145,6 @@ export default function Chat() {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
   const stream = useWorkflowStream();
   
@@ -123,6 +159,73 @@ export default function Chat() {
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const recognitionRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ─── Empty-state prompt cards ──────────────────────────────────────────────
+  const [visiblePrompts, setVisiblePrompts] = useState(() => pickPrompts());
+  const refreshPrompts = () =>
+    setVisiblePrompts((cur) => pickPrompts(cur.map((p) => p.text)));
+
+  // ─── Retrieval scope (the "All Web" pill) ──────────────────────────────────
+  const [scope, setScope] = useState<Scope>(DEFAULT_SCOPE);
+  const [isScopeOpen, setIsScopeOpen] = useState(false);
+  const [notebooks, setNotebooks] = useState<{ id: string; title: string }[]>([]);
+
+  // First name for the greeting — same derivation the onboarding wizard uses.
+  const firstName = (user?.displayName || '').trim().split(' ')[0] || 'there';
+
+  // ─── Reply feedback (👍/👎) ────────────────────────────────────────────────
+  // Keyed by the persisted Firestore message id. Optimistic: we paint the choice
+  // immediately and roll it back only if the POST fails.
+  const [ratings, setRatings] = useState<Record<string, Rating>>({});
+  const handleRate = async (messageId: string, rating: Rating) => {
+    if (!currentSessionId) return;
+    const previous = ratings[messageId];
+    setRatings((r) => ({ ...r, [messageId]: rating }));
+    try {
+      await api.post(`/chat/${messageId}/feedback`, {
+        sessionId: currentSessionId,
+        rating,
+        modelUsed: selectedModel,
+        learningMode: typeParam,
+      });
+    } catch (e) {
+      console.error('Failed to submit feedback', e);
+      setRatings((r) => {
+        const next = { ...r };
+        if (previous) next[messageId] = previous; else delete next[messageId];
+        return next;
+      });
+    }
+  };
+
+  // Theme toggle + Share live in this page's own header now that AppLayout drops
+  // its top bar on /chat — otherwise both would be unreachable here.
+  const { theme, toggleTheme } = useTheme();
+  const [isShareOpen, setIsShareOpen] = useState(false);
+
+  /**
+   * A finished reply waiting for its smooth reveal to catch up before it joins
+   * `messages`. Keeping the live block mounted through the tail of the animation is what
+   * stops the answer snapping to full text at the end. The safety timer guarantees the
+   * message is never lost if the reveal stalls for any reason.
+   */
+  const [pendingFinal, setPendingFinal] = useState<any>(null);
+  const commitPending = React.useCallback(() => {
+    setPendingFinal((p: any) => {
+      if (p) setMessages((prev) => [...prev, p]);
+      return null;
+    });
+  }, []);
+  useEffect(() => {
+    if (!pendingFinal) return;
+    const t = setTimeout(commitPending, 20000);
+    return () => clearTimeout(t);
+  }, [pendingFinal, commitPending]);
+
+  // ─── Quoted reply ──────────────────────────────────────────────────────────
+  // Selecting text inside a reply and clicking "Reply" parks the quote here; it is
+  // prepended to the next message so the model knows what is being referred to.
+  const [quotedText, setQuotedText] = useState<string | null>(null);
 
   useEffect(() => {
     localStorage.setItem('selectedModel', selectedModel);
@@ -225,6 +328,26 @@ export default function Chat() {
     fetchSessions();
   }, [user]);
 
+  // Notebooks power the scope picker. Failure is non-fatal — the picker simply
+  // falls back to Auto / All Web without a notebook list.
+  useEffect(() => {
+    if (!user?.uid) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.get('/notebooks');
+        if (cancelled) return;
+        const list = Array.isArray(res.data) ? res.data : [];
+        setNotebooks(
+          list.map((n: any) => ({ id: n.id, title: n.title || n.name || 'Untitled notebook' }))
+        );
+      } catch {
+        if (!cancelled) setNotebooks([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.uid]);
+
   // If type changes from URL (from New menu), reset chat
   useEffect(() => {
     handleNewChat();
@@ -266,6 +389,23 @@ export default function Chat() {
         sendAIRequest(initialPrompt, []);
       }, 100);
     }
+  }, [user?.uid, searchParams, setSearchParams]);
+
+  // Deep-link into a past conversation: /chat?session=<id>. The global sidebar's
+  // "Recent" list links here. Declared AFTER the [typeParam] reset effect so the
+  // loaded history isn't cleared by the mount-time handleNewChat().
+  const openedSessionRef = useRef<string | null>(null);
+  useEffect(() => {
+    const sessionParam = searchParams.get('session');
+    if (!sessionParam || !user?.uid) return;
+    if (openedSessionRef.current === sessionParam) return;
+    openedSessionRef.current = sessionParam;
+
+    handleSelectSession(sessionParam);
+
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('session');
+    setSearchParams(newParams, { replace: true });
   }, [user?.uid, searchParams, setSearchParams]);
 
   useEffect(() => {
@@ -322,11 +462,24 @@ export default function Chat() {
   const handleSend = async () => {
     if ((!input.trim() && attachments.length === 0) || !user?.uid) return;
     
-    let userMessage = input.trim();
+    // A quoted selection is folded into the outgoing message as a markdown blockquote,
+    // so the model sees exactly which passage the follow-up refers to.
+    let userMessage = quotedText
+      ? `> ${quotedText.replace(/\n+/g, ' ')}\n\n${input.trim()}`
+      : input.trim();
     const currentAttachments = [...attachments]; // Capture before clearing
+    setQuotedText(null);
 
     // Push just the text portion to the UI messages immediately so the user sees it
-    setMessages(prev => [...prev, { role: 'user', content: userMessage || '[Sent Attachments]' }]);
+    // Attachment metadata rides along on the local message so the sent bubble can show
+    // file cards. NOTE: this is client-side only for the current session — the backend
+    // flattens attachments into the message text (chat.controller.ts) and does not persist
+    // them structurally, so the cards do not survive a reload.
+    setMessages(prev => [...prev, {
+      role: 'user',
+      content: userMessage || '',
+      attachments: currentAttachments.map(a => ({ name: a.name, mimeType: a.mimeType })),
+    }]);
     setInput('');
     setAttachments([]);
     
@@ -363,27 +516,60 @@ export default function Chat() {
       const selectedModel = localStorage.getItem('selectedModel') || 'gemini';
 
       // 1. Await the workflow stream
-      const { content, data } = await stream.startStream({
+      // Scope drives two existing backend hooks, both already plumbed end-to-end
+      // (chat.controller → chat.service → WorkflowEngine):
+      //   'web'      → topicType 'RESEARCH' turns on Tavily retrieval + research prompt
+      //   'notebook' → notebookId scopes RetrievalService to that notebook's vectors
+      // 'auto' sends exactly what this page sent before, so default behaviour is unchanged.
+      const { content, data, progress, reasoning } = await stream.startStream({
         userId: user.uid,
         sessionId,
         message: userMessage,
         model: selectedModel,
-        topicType: typeParam,
+        topicType: scope.kind === 'web' ? 'RESEARCH' : typeParam,
+        ...(scope.kind === 'notebook' ? { notebookId: scope.id } : {}),
         attachments: sentAttachments
       });
 
-      // 4. Finalize message
-      setMessages(prev => {
-        const newMessages = [...prev];
-        newMessages.push({ 
-          role: 'ai', 
-          content, 
-          isTyping: false,
-          citations: data?.citations,
-          confidence: data?.confidence
-        });
-        return newMessages;
+      // 4. Park the finished reply instead of committing it immediately.
+      //
+      // Committing here used to unmount the live block and mount a fresh component
+      // showing the full text at once — which is what made the answer appear to "burst"
+      // at the end, and destroyed the completion animation before it could play. The
+      // live block now stays mounted until its smooth reveal has caught up (see
+      // onRevealDone below), and only then does the message join the list.
+      //
+      // `steps` and `reasoning` are kept client-side because the backend persists
+      // neither, and without them the finished turn loses its reasoning timeline.
+      setPendingFinal({
+        role: 'ai',
+        content,
+        isTyping: false,
+        citations: data?.citations,
+        confidence: data?.confidence,
+        steps: progress || [],
+        reasoning: reasoning || ''
       });
+
+      // Attach the persisted message id so 👍/👎 can POST /chat/:messageId/feedback.
+      // saveMessage assigns the id server-side *after* the stream closes and the SSE
+      // payload never carries it, so we read it back from history. Failure is
+      // non-fatal — the rating buttons simply stay disabled for this turn.
+      try {
+        const hist = await api.get(`/chat/sessions/${sessionId}`);
+        const rows = Array.isArray(hist.data) ? hist.data : [];
+        const lastAiId = [...rows].reverse().find((m: any) => m.role === 'ai')?.id;
+        if (lastAiId) {
+          setPendingFinal((p: any) => (p ? { ...p, id: lastAiId } : p));
+          setMessages(prev => {
+            const next = [...prev];
+            for (let k = next.length - 1; k >= 0; k--) {
+              if (next[k].role === 'ai') { next[k] = { ...next[k], id: lastAiId }; break; }
+            }
+            return next;
+          });
+        }
+      } catch { /* rating stays unavailable for this turn */ }
 
       // Refresh the session list so the new chat shows up in the sidebar
       fetchSessions();
@@ -449,230 +635,214 @@ export default function Chat() {
   ];
   const activeModel = modelOptions.find(m => m.id === selectedModel) || modelOptions[0];
 
+  // ─── Model picker ──────────────────────────────────────────────────────────
+  // The primary list shows the Gemini family (the provider actually wired as
+  // TOKENS.AIProvider); everything else lives behind "More models". A search
+  // query flattens both lists so nothing is hidden when you're looking for it.
+  const [modelQuery, setModelQuery] = useState('');
+  const [showMoreModels, setShowMoreModels] = useState(false);
+  const primaryModels = modelOptions.filter((m) => m.id.startsWith('gemini'));
+  const secondaryModels = modelOptions.filter((m) => !m.id.startsWith('gemini'));
+  const visibleModels = modelQuery.trim()
+    ? modelOptions.filter((m) => m.name.toLowerCase().includes(modelQuery.trim().toLowerCase()))
+    : primaryModels;
+
   return (
-    <div className="flex h-[calc(100vh-140px)] w-full max-w-6xl mx-auto relative bg-white dark:bg-[#1a1a1b] rounded-3xl border border-slate-200 dark:border-white/10 shadow-lg overflow-hidden">
-      
-      {/* Sidebar - Chat History */}
-      {isSidebarOpen && (
-        <div className="w-[280px] hidden lg:flex flex-col bg-slate-50/50 dark:bg-black/20 border-r border-slate-200 dark:border-white/10 shrink-0 transition-all duration-300">
-          <div className="p-4 border-b border-slate-200/50 dark:border-white/5 flex gap-2">
-            <button 
-              onClick={handleNewChat}
-              className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm"
-            >
-              <Plus className="w-4 h-4" /> New Chat
-            </button>
-            <button
-              onClick={() => setIsSidebarOpen(false)}
-              className="p-2.5 rounded-xl text-slate-500 hover:bg-slate-200 dark:hover:bg-white/5 dark:text-slate-400 transition-colors border border-slate-200 dark:border-white/10"
-              title="Close sidebar"
-            >
-              <PanelLeftClose className="w-5 h-5" />
-            </button>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar p-3 space-y-1">
-            {sessions.length === 0 ? (
-              <div className="text-center p-4 text-slate-500 dark:text-gray-500 text-sm">
-                No recent chats
-              </div>
-            ) : (
-              sessions.map((session, i) => (
-                <div 
-                  key={session.sessionId}
-                  onClick={() => handleSelectSession(session.sessionId)}
-                  className={cn(
-                    "w-full flex items-center justify-between gap-3 p-3 rounded-xl transition-all duration-200 group relative cursor-pointer",
-                    currentSessionId === session.sessionId
-                      ? "bg-white dark:bg-white/10 text-indigo-700 dark:text-indigo-300 shadow-sm border border-slate-200/50 dark:border-transparent"
-                      : "hover:bg-slate-200/50 dark:hover:bg-white/5 text-slate-700 dark:text-gray-300"
-                  )}
-                >
-                  <div className="flex items-start gap-3 flex-1 overflow-hidden">
-                    <MessageSquare className={cn("w-4 h-4 mt-0.5 shrink-0", currentSessionId === session.sessionId ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 group-hover:text-slate-500 dark:text-gray-500")} />
-                    <div className="flex-1 overflow-hidden">
-                      <div className="text-[13px] font-semibold truncate leading-tight mb-1">
-                        {session.title || (session.topicType === 'chat' ? 'Study Assistant' : session.topicType)}
-                      </div>
-                      <div className="text-[11px] text-slate-400 dark:text-gray-500 flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {new Date(session.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
-                      </div>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={(e) => handleDeleteSession(e, session.sessionId)}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-red-100 dark:hover:bg-red-500/20 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-all shrink-0"
-                    title="Delete chat"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
+    // Full-bleed conversation surface: no card wrapper, no page-local history rail.
+    // Chat history lives in the AppLayout sidebar's "Recent" section, and AppLayout
+    // drops its own top header on /chat so this owns the full viewport.
+    <div className="flex h-full w-full relative overflow-hidden">
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col relative bg-transparent transition-all duration-300">
-        
-        {!isSidebarOpen && (
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="absolute top-4 left-4 z-10 p-2 rounded-xl bg-white dark:bg-[#1a1a1b] text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 dark:text-slate-400 transition-colors border border-slate-200 dark:border-white/10 shadow-sm hidden lg:flex"
-            title="Open sidebar"
-          >
-            <PanelLeft className="w-5 h-5" />
-          </button>
-        )}
+
+        {/* Header — only actions that are actually backed by an API: the session title
+            (generated server-side after the first exchange), New Chat, and Delete.
+            No Share/Private here: there is no chat-session sharing endpoint. */}
+        <div className="flex items-center gap-2 px-6 h-14 shrink-0">
+          <span className="text-[14px] font-semibold text-slate-800 dark:text-gray-100 truncate">
+            {sessions.find((s) => s.sessionId === currentSessionId)?.title || 'New AI chat'}
+          </span>
+
+          {/* Every chat session is owner-scoped server-side (chat.service.getSessionHistory
+              rejects a requesterId that doesn't own the session), so "Private" is an
+              accurate description of the current state rather than decoration. */}
+          <span className="inline-flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.08] text-slate-500 dark:text-gray-400 text-[11px] font-medium">
+            <Lock className="w-3 h-3" strokeWidth={2} />
+            Private
+          </span>
+
+          <div className="ml-auto flex items-center gap-1">
+            <button
+              onClick={() => setIsShareOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12.5px] font-medium text-slate-600 hover:text-slate-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
+              title="Share"
+            >
+              <Share2 className="w-4 h-4" strokeWidth={1.75} />
+              <span className="hidden sm:inline">Share</span>
+            </button>
+
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.08] dark:text-slate-400 transition-colors"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label="Toggle colour theme"
+            >
+              {theme === 'dark'
+                ? <Sun className="w-4 h-4" strokeWidth={1.75} />
+                : <Moon className="w-4 h-4" strokeWidth={1.75} />}
+            </button>
+
+            <button
+              onClick={handleNewChat}
+              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-200/60 dark:hover:bg-white/5 dark:text-slate-400 transition-colors"
+              title="New chat"
+            >
+              <Plus className="w-4 h-4" strokeWidth={2} />
+            </button>
+            {currentSessionId && (
+              <button
+                onClick={(e) => handleDeleteSession(e, currentSessionId)}
+                className="p-1.5 rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:text-slate-400 dark:hover:text-red-400 transition-colors"
+                title="Delete this chat"
+              >
+                <Trash2 className="w-4 h-4" strokeWidth={1.75} />
+              </button>
+            )}
+          </div>
+        </div>
 
         {loadingHistory ? (
           <div className="flex-1 flex items-center justify-center">
             <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center pb-32 px-4 relative w-full h-full overflow-y-auto custom-scrollbar">
-            {/* Background dynamic orbs */}
-            <div className="absolute top-1/3 left-1/4 w-[300px] h-[300px] bg-blue-500/10 rounded-full blur-[100px] pointer-events-none -translate-x-1/2 -translate-y-1/2 animate-pulse [animation-duration:4s]" />
-            <div className="absolute bottom-1/3 right-1/4 w-[300px] h-[300px] bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none translate-x-1/2 translate-y-1/2 animate-pulse [animation-duration:5s]" />
-
-            <motion.div 
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              className="flex flex-col items-center text-center z-10 w-full max-w-3xl mt-8"
+          <div className="flex-1 min-h-0 flex flex-col items-center justify-center pb-40 px-6 relative w-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: 'easeOut' }}
+              className="flex flex-col items-start text-left z-10 w-full max-w-3xl"
             >
-              <div className="bg-white/5 border border-white/10 p-2.5 rounded-2xl mb-4 shadow-sm shadow-blue-500/5 backdrop-blur-sm">
-                <Sparkles className="w-6 h-6 text-indigo-500 animate-pulse [animation-duration:3s]" />
-              </div>
-              
-              <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-gray-100 font-serif tracking-tight mb-2 leading-tight">{config.title}</h1>
-              <p className="text-slate-600 dark:text-gray-400 text-[14px] max-w-lg leading-relaxed mb-6">{config.subtitle}</p>
+              {/* Greeting — the student's first name is the only personalised token here. */}
+              <h1 className="text-[34px] md:text-[38px] font-bold tracking-[-0.02em] leading-[1.12] text-slate-900 dark:text-gray-50">
+                Hi there,{' '}
+                <span className="bg-gradient-to-r from-purple-500 to-fuchsia-500 bg-clip-text text-transparent">
+                  {firstName}
+                </span>
+                <br />
+                What would{' '}
+                <span className="bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
+                  you like to know?
+                </span>
+              </h1>
 
-              {/* Suggested Prompt Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
-                {[
-                  { icon: BookOpen, title: "Create a Study Plan", prompt: "Create a 7-day study plan for mastering organic chemistry basics." },
-                  { icon: Globe, title: "Explain a Concept", prompt: "Explain the theory of relativity like I am 10 years old." },
-                  { icon: Calculator, title: "Solve a Problem", prompt: "Help me solve a complex calculus integration problem step-by-step." },
-                  { icon: Lightbulb, title: "Quiz Me", prompt: "Give me a 5-question multiple choice quiz on World War II." }
-                ].map((item, idx) => (
+              <p className="mt-3 text-slate-500 dark:text-gray-400 text-[14.5px] leading-[1.55] max-w-[340px]">
+                Use one of the most common prompts below or use your own to begin
+              </p>
+
+              {/* Suggestion cards — one row of four, copy on top, icon anchored bottom-left. */}
+              <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3 w-full">
+                {visiblePrompts.map((item, idx) => (
                   <motion.button
-                    key={idx}
-                    initial={{ opacity: 0, y: 10 }}
+                    key={`${item.text}-${idx}`}
+                    initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.1 + 0.2, duration: 0.4 }}
+                    transition={{ delay: idx * 0.06 + 0.1, duration: 0.35 }}
                     onClick={() => {
                       setInput(item.prompt);
-                      setTimeout(() => {
-                        handleSend();
-                      }, 50);
+                      setTimeout(() => handleSend(), 50);
                     }}
-                    className="flex flex-col text-left p-4 rounded-2xl bg-white dark:bg-[#1a1a1b]/60 border border-slate-200 dark:border-white/5 hover:border-indigo-500/30 hover:bg-indigo-50/50 dark:hover:bg-indigo-500/10 transition-all duration-300 group shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
+                    className="flex flex-col justify-between text-left h-[100px] p-3.5 rounded-xl bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:border-indigo-300 dark:hover:border-indigo-500/40 hover:shadow-[0_2px_10px_rgba(15,23,42,0.06)] dark:hover:bg-white/[0.07] transition-all duration-200 group cursor-pointer"
                   >
-                    <div className="flex items-center gap-2.5 mb-1.5">
-                      <div className="p-1.5 rounded-lg bg-indigo-100/50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
-                        <item.icon className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="font-bold text-slate-900 dark:text-gray-200 text-[13px]">{item.title}</span>
-                    </div>
-                    <p className="text-slate-500 dark:text-gray-400 text-[12px] leading-relaxed group-hover:text-slate-600 dark:group-hover:text-gray-300 transition-colors line-clamp-2">
-                      {item.prompt}
-                    </p>
+                    <span className="text-[13px] leading-[1.4] text-slate-700 dark:text-gray-300 line-clamp-3">
+                      {item.text}
+                    </span>
+                    <item.icon
+                      className="w-4 h-4 text-slate-400 dark:text-gray-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors shrink-0"
+                      strokeWidth={1.75}
+                    />
                   </motion.button>
                 ))}
               </div>
+
+              <button
+                onClick={refreshPrompts}
+                className="mt-4 inline-flex items-center gap-1.5 text-[13px] text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-200 transition-colors group"
+              >
+                <RefreshCw className="w-3.5 h-3.5 group-hover:rotate-180 transition-transform duration-500" strokeWidth={1.75} />
+                Refresh Prompts
+              </button>
             </motion.div>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto pb-32 px-4 md:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex justify-center">
+          <div className="flex-1 min-h-0 overflow-y-auto pb-32 px-4 md:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex justify-center">
             <div className="flex flex-col gap-6 py-6 border-none w-full max-w-3xl">
               {messages.map((msg, i) => (
                 <div key={i} className={cn("flex w-full", msg.role === 'user' ? "justify-end" : "justify-start")}>
                   {msg.role === 'user' ? (
-                    <div className="bg-[#1e1e1e] dark:bg-[#1a1a1b] text-slate-100 dark:text-gray-200 px-5 py-2.5 rounded-3xl rounded-tr-sm text-[15px] max-w-[80%] whitespace-pre-wrap tracking-wide shadow-sm">
-                      {msg.content}
+                    <div className="flex flex-col items-end gap-2 max-w-[80%]">
+                      {/* File cards for anything attached to this turn. */}
+                      {Array.isArray(msg.attachments) && msg.attachments.length > 0 && (
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {msg.attachments.map((att: any, ai: number) => (
+                            <div
+                              key={ai}
+                              className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl bg-white dark:bg-white/[0.06] border border-slate-200 dark:border-white/10 shadow-sm"
+                            >
+                              <span className={cn(
+                                'w-7 h-7 rounded-lg flex items-center justify-center shrink-0',
+                                att.mimeType?.startsWith('image/')
+                                  ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400'
+                                  : att.mimeType === 'application/pdf'
+                                    ? 'bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400'
+                                    : 'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400'
+                              )}>
+                                {att.mimeType?.startsWith('image/')
+                                  ? <ImageIcon className="w-3.5 h-3.5" strokeWidth={1.75} />
+                                  : <FileText className="w-3.5 h-3.5" strokeWidth={1.75} />}
+                              </span>
+                              <span className="flex flex-col min-w-0 text-left">
+                                <span className="text-[12.5px] font-medium text-slate-800 dark:text-gray-100 truncate max-w-[150px] leading-tight">
+                                  {att.name}
+                                </span>
+                                <span className="text-[11px] text-slate-400 dark:text-gray-500 leading-tight">
+                                  {att.mimeType?.startsWith('image/') ? 'Image' : att.mimeType === 'application/pdf' ? 'PDF' : 'Document'}
+                                </span>
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {msg.content && (
+                        <div className="bg-[#1e1e1e] dark:bg-[#1a1a1b] text-slate-100 dark:text-gray-200 px-5 py-2.5 rounded-3xl rounded-tr-sm text-[15px] whitespace-pre-wrap tracking-wide shadow-sm">
+                          {msg.content}
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <div className="flex gap-4 max-w-[85%]">
+                    <div className="flex gap-4 w-full min-w-0">
                       <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center shrink-0 mt-1">
                         <Bot className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                       </div>
-                      <div className="flex flex-col text-slate-800 dark:text-gray-100">
-                        {/* 
-                          Added support for "isTyping" state.
-                          If it's typing and there's no content yet, show a pulsing thinking indicator.
-                          Otherwise, show the content.
-                        */}
-                        {msg.isTyping && !msg.content ? (
-                          <div className="flex items-center gap-1.5 mt-1 mb-3">
-                            <span className="w-1.5 h-1.5 bg-slate-500 dark:bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                            <span className="w-1.5 h-1.5 bg-slate-500 dark:bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                            <span className="w-1.5 h-1.5 bg-slate-500 dark:bg-gray-400 rounded-full animate-bounce"></span>
-                          </div>
-                        ) : (
-                          <div className="text-[15px] leading-relaxed mb-3 tracking-wide prose prose-slate dark:prose-invert max-w-none prose-p:my-2 prose-ul:my-2 prose-li:my-0 prose-pre:bg-[#1e1e1e] prose-pre:p-0 prose-img:rounded-2xl prose-img:shadow-md prose-img:max-w-[350px] prose-img:object-cover prose-img:mt-4 prose-img:mb-4">
-                            <ReactMarkdown 
-                              remarkPlugins={[remarkGfm, remarkMath]} 
-                              rehypePlugins={[rehypeKatex]}
-                              components={{
-                                code(props) {
-                                  const {children, className, node, ...rest} = props
-                                  const match = /language-(\w+)/.exec(className || '')
-                                  if (match && match[1] === 'mermaid') {
-                                    return <Mermaid chart={String(children).replace(/\n$/, '')} />
-                                  }
-                                  if (match && match[1] === 'json') {
-                                    try {
-                                      const jsonStr = String(children);
-                                      const parsed = JSON.parse(jsonStr);
-                                      if (parsed && parsed.mindMap) {
-                                        return <DiagramWidget type="mindMap" data={parsed.mindMap} />;
-                                      }
-                                      if (parsed && parsed.timeline) {
-                                        return <DiagramWidget type="timeline" data={parsed.timeline} />;
-                                      }
-                                    } catch (e) {
-                                      // Not a valid JSON or doesn't match diagram schema, fallback to regular code block
-                                    }
-                                  }
-                                  return <code {...rest} className={className}>{children}</code>
-                                }
-                              }}
-                            >
-                              {msg.content.replace(/\\\[/g, '$$$$').replace(/\\\]/g, '$$$$').replace(/\\\(/g, '$').replace(/\\\)/g, '$').replace(/(?<!\\)\[ /g, '$$$$ ').replace(/ \](?!\\)/g, ' $$$$')}
-                            </ReactMarkdown>
-                            {msg.isTyping && <span className="inline-block w-2 h-4 ml-1 bg-indigo-500 animate-pulse align-middle"></span>}
-                          </div>
-                        )}
-                        <div className="flex items-center gap-4 text-slate-400 dark:text-gray-500">
-                          <button 
-                            onClick={() => handleCopy(msg.content, i)}
-                            className="hover:text-slate-600 dark:hover:text-gray-300 transition-colors"
-                            title="Copy message"
-                          >
-                            {copiedIndex === i ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                          </button>
-                          <button 
-                            onClick={() => handleSpeak(msg.content, i)}
-                            className={cn(
-                              "hover:text-slate-600 dark:hover:text-gray-300 transition-colors",
-                              speakingIndex === i && "text-indigo-500"
-                            )}
-                            title={speakingIndex === i ? "Stop speaking" : "Read aloud"}
-                          >
-                            {speakingIndex === i ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                          </button>
-                          <button 
-                            onClick={() => handleRegenerate(i)}
-                            disabled={msg.isTyping}
-                            className="hover:text-slate-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50"
-                            title="Regenerate response"
-                          >
-                            <RefreshCw className={cn("w-4 h-4", msg.isTyping && "animate-spin")} />
-                          </button>
-                        </div>
+                      <div className="flex flex-col text-slate-800 dark:text-gray-100 w-full min-w-0">
+                        {/* Reasoning timeline, sources, answer body and action bar all
+                            live in AssistantReply — see components/chat/AssistantReply.tsx. */}
+                        <AssistantReply
+                          content={msg.content}
+                          streaming={!!msg.isTyping}
+                          steps={msg.steps || []}
+                          reasoning={msg.reasoning}
+                          citations={msg.citations || []}
+                          onCopy={() => handleCopy(msg.content, i)}
+                          copied={copiedIndex === i}
+                          onSpeak={() => handleSpeak(msg.content, i)}
+                          speaking={speakingIndex === i}
+                          onRegenerate={() => handleRegenerate(i)}
+                          onRate={msg.id ? (r) => handleRate(msg.id, r) : undefined}
+                          rating={msg.id ? ratings[msg.id] ?? null : null}
+                          onQuote={setQuotedText}
+                        />
                       </div>
                     </div>
                   )}
@@ -680,42 +850,30 @@ export default function Chat() {
               ))}
               
               {/* LIVE STREAMING BLOCK */}
-              {stream.isStreaming && (
+              {(stream.isStreaming || pendingFinal) && (
                 <div className="flex w-full justify-start">
-                  <div className="flex gap-4 max-w-[85%]">
-                    <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center shrink-0 mt-1">
-                      <Bot className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <div className="flex gap-4 w-full min-w-0">
+                    {/* Thinking-mode avatar: a slow breathing ring while the pipeline runs,
+                        so the identity glyph itself signals work rather than sitting inert. */}
+                    <div className="relative w-8 h-8 shrink-0 mt-1">
+                      <span className="absolute inset-0 rounded-full bg-indigo-500/25 animate-ping [animation-duration:2s]" aria-hidden />
+                      <span className="relative w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-500/20 ring-1 ring-indigo-400/40 flex items-center justify-center">
+                        <Bot className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                      </span>
                     </div>
-                    <div className="flex flex-col text-slate-800 dark:text-gray-100 w-full">
-                      {stream.progressEvents.length > 0 && !stream.content && (
-                        <div className="mb-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-slate-600 dark:text-gray-300">
-                          {stream.progressEvents.map((evt, idx) => (
-                            <div key={idx} className="flex items-center gap-2 mb-1 last:mb-0">
-                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                              <span className="font-semibold uppercase text-[10px] tracking-wider text-slate-400">{evt.stage}</span>
-                              <span>{evt.message}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      
-                      {!stream.content && stream.progressEvents.length === 0 ? (
-                        <div className="flex items-center gap-1.5 mt-1 mb-3">
-                          <span className="w-1.5 h-1.5 bg-slate-500 dark:bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                          <span className="w-1.5 h-1.5 bg-slate-500 dark:bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                          <span className="w-1.5 h-1.5 bg-slate-500 dark:bg-gray-400 rounded-full animate-bounce"></span>
-                        </div>
-                      ) : (
-                        <div className="text-[15px] leading-relaxed mb-3 tracking-wide prose prose-slate dark:prose-invert max-w-none prose-p:my-2 prose-ul:my-2 prose-li:my-0 prose-pre:bg-[#1e1e1e] prose-pre:p-0 prose-img:rounded-2xl prose-img:shadow-md prose-img:max-w-[350px] prose-img:object-cover prose-img:mt-4 prose-img:mb-4">
-                          <ReactMarkdown 
-                            remarkPlugins={[remarkGfm, remarkMath]} 
-                            rehypePlugins={[rehypeKatex]}
-                          >
-                            {stream.content.replace(/\\\[/g, '$$$$').replace(/\\\]/g, '$$$$').replace(/\\\(/g, '$').replace(/\\\)/g, '$').replace(/(?<!\\)\[ /g, '$$$$ ').replace(/ \](?!\\)/g, ' $$$$')}
-                          </ReactMarkdown>
-                          <span className="inline-block w-2 h-4 ml-1 bg-indigo-500 animate-pulse align-middle"></span>
-                        </div>
-                      )}
+                    <div className="flex flex-col text-slate-800 dark:text-gray-100 w-full min-w-0">
+                      {/* Same template as a finished reply, in its streaming state:
+                          the timeline animates, the status line tracks the current
+                          stage, and citations appear as the backend emits them. */}
+                      <AssistantReply
+                        content={pendingFinal ? pendingFinal.content : stream.content}
+                        streaming={stream.isStreaming}
+                        steps={pendingFinal ? pendingFinal.steps : stream.progressEvents}
+                        statusMessage={stream.isStreaming ? stream.progressEvents[stream.progressEvents.length - 1]?.message : undefined}
+                        reasoning={pendingFinal ? pendingFinal.reasoning : stream.reasoning}
+                        citations={pendingFinal ? pendingFinal.citations || [] : stream.citations}
+                        onRevealDone={commitPending}
+                      />
                     </div>
                   </div>
                 </div>
@@ -727,16 +885,134 @@ export default function Chat() {
         )}
 
         {/* Input Box - absolute positioned at bottom */}
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center px-4 md:px-8">
-          <div className="w-full max-w-3xl bg-[#f4f4f5] dark:bg-[#1e1e20] border border-transparent dark:border-white/5 rounded-2xl flex flex-col shadow-sm focus-within:shadow-md focus-within:ring-1 focus-within:ring-slate-300 dark:focus-within:ring-white/10 transition-all">
+        <div className="absolute bottom-3 left-0 right-0 flex flex-col items-center px-4 md:px-8">
+          <div className="w-full max-w-3xl bg-white dark:bg-[#1e1e20] border border-slate-200 dark:border-white/10 rounded-2xl flex flex-col shadow-[0_1px_3px_rgba(15,23,42,0.06)] focus-within:shadow-[0_4px_16px_rgba(15,23,42,0.08)] dark:focus-within:ring-1 dark:focus-within:ring-white/10 transition-all">
+
+              {/* Scope pill — top-right, mirrors the reference mock. Controls which
+                  corpus the next message is grounded in. See the Scope type above. */}
+              <div className="flex items-start justify-end px-3 pt-3 -mb-1">
+                <div className="relative">
+                  <button
+                    onClick={() => setIsScopeOpen(!isScopeOpen)}
+                    className="flex items-center gap-1.5 max-w-[190px] text-[12px] font-medium px-2.5 py-1.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/[0.16] transition-colors"
+                    title="Choose what this chat is grounded in"
+                  >
+                    {scope.kind === 'notebook'
+                      ? <Notebook className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
+                      : <Globe className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />}
+                    <span className="truncate">{scopeLabel(scope)}</span>
+                    <ChevronDown className="w-3 h-3 shrink-0" strokeWidth={2.5} />
+                  </button>
+
+                  {isScopeOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsScopeOpen(false)} />
+                      <div className="absolute right-0 top-full mt-2 w-60 max-h-[280px] overflow-y-auto custom-scrollbar bg-white dark:bg-[#1a1a1b] rounded-xl shadow-lg border border-slate-200 dark:border-white/10 overflow-hidden z-50 py-1">
+                        {([
+                          { key: 'auto', icon: Sparkles, label: 'Auto', hint: 'Let Scholarly decide' },
+                          { key: 'web', icon: Globe, label: 'All Web', hint: 'Search the web (research mode)' },
+                        ] as const).map((opt) => (
+                          <button
+                            key={opt.key}
+                            onClick={() => { setScope({ kind: opt.key } as Scope); setIsScopeOpen(false); }}
+                            className={cn(
+                              'w-full flex items-start gap-2.5 px-3 py-2 text-left transition-colors',
+                              scope.kind === opt.key
+                                ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300'
+                                : 'text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-white/5'
+                            )}
+                          >
+                            <opt.icon className="w-3.5 h-3.5 mt-0.5 shrink-0" strokeWidth={1.75} />
+                            <span className="flex-1 min-w-0">
+                              <span className="block text-[13px] font-medium">{opt.label}</span>
+                              <span className="block text-[11px] text-slate-400 dark:text-gray-500 truncate">{opt.hint}</span>
+                            </span>
+                            {scope.kind === opt.key && <Check className="w-3.5 h-3.5 mt-0.5 shrink-0" strokeWidth={2.5} />}
+                          </button>
+                        ))}
+
+                        {notebooks.length > 0 && (
+                          <>
+                            <div className="px-3 pt-2 pb-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-400 dark:text-gray-500">
+                              My Notebooks
+                            </div>
+                            {notebooks.map((nb) => (
+                              <button
+                                key={nb.id}
+                                onClick={() => { setScope({ kind: 'notebook', id: nb.id, title: nb.title }); setIsScopeOpen(false); }}
+                                className={cn(
+                                  'w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors',
+                                  scope.kind === 'notebook' && scope.id === nb.id
+                                    ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300'
+                                    : 'text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-white/5'
+                                )}
+                              >
+                                <Notebook className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
+                                <span className="flex-1 text-[13px] truncate">{nb.title}</span>
+                                {scope.kind === 'notebook' && scope.id === nb.id && (
+                                  <Check className="w-3.5 h-3.5 shrink-0" strokeWidth={2.5} />
+                                )}
+                              </button>
+                            ))}
+                          </>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
               
+              {/* Quoted reply — set by selecting text in an answer and clicking "Reply".
+                  Prepended to the next message so the model knows what's being referred to. */}
+              {quotedText && (
+                <div className="flex items-start gap-2 mx-3 mt-3 px-2.5 py-2 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 border-l-2 border-indigo-500">
+                  <CornerUpLeft className="w-3.5 h-3.5 mt-0.5 shrink-0 text-indigo-500" strokeWidth={1.75} />
+                  <span className="flex-1 min-w-0 text-[12.5px] leading-snug text-slate-600 dark:text-gray-300 line-clamp-2">
+                    {quotedText}
+                  </span>
+                  <button
+                    onClick={() => setQuotedText(null)}
+                    className="shrink-0 text-slate-400 hover:text-slate-700 dark:hover:text-gray-200 transition-colors"
+                    title="Remove quote"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
               {(attachments.length > 0 || isUploadingFile) && (
                 <div className="flex flex-wrap gap-2 p-3 pb-0">
                   {attachments.map((att, i) => (
-                    <div key={i} className="flex items-center gap-2 bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-gray-200 px-3 py-1.5 rounded-lg text-[13px] font-medium border border-slate-300 dark:border-white/10 shadow-sm animate-in fade-in zoom-in duration-200">
-                      <FileText className="w-3.5 h-3.5 text-indigo-500" />
-                      <span className="max-w-[150px] truncate">{att.name}</span>
-                      <button onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))} className="hover:text-red-500 ml-1 transition-colors">
+                    <div
+                      key={i}
+                      className="group relative flex items-center gap-2.5 pl-2.5 pr-8 py-2 rounded-xl bg-white dark:bg-white/[0.06] border border-slate-200 dark:border-white/10 shadow-sm animate-in fade-in zoom-in duration-200"
+                    >
+                      <span className={cn(
+                        'w-7 h-7 rounded-lg flex items-center justify-center shrink-0',
+                        att.mimeType?.startsWith('image/')
+                          ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400'
+                          : att.mimeType === 'application/pdf'
+                            ? 'bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400'
+                            : 'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400'
+                      )}>
+                        {att.mimeType?.startsWith('image/')
+                          ? <ImageIcon className="w-3.5 h-3.5" strokeWidth={1.75} />
+                          : <FileText className="w-3.5 h-3.5" strokeWidth={1.75} />}
+                      </span>
+                      <span className="flex flex-col min-w-0">
+                        <span className="text-[12.5px] font-medium text-slate-800 dark:text-gray-100 truncate max-w-[150px] leading-tight">
+                          {att.name}
+                        </span>
+                        <span className="text-[11px] text-slate-400 dark:text-gray-500 leading-tight">
+                          {new Date().toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      </span>
+                      <button
+                        onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500 transition-colors"
+                        title="Remove attachment"
+                      >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -760,8 +1036,9 @@ export default function Chat() {
                       handleSend();
                     }
                   }}
-                  placeholder="Ask anything..." 
-                  className="w-full bg-transparent text-slate-800 dark:text-gray-200 placeholder:text-slate-500 dark:placeholder:text-gray-500 p-4 min-h-[60px] max-h-[200px] outline-none resize-none text-[15px]"
+                  placeholder="Ask whatever you want...."
+                  maxLength={MAX_CHARS}
+                  className="w-full bg-transparent text-slate-800 dark:text-gray-200 placeholder:text-slate-400 dark:placeholder:text-gray-500 px-4 pt-1 pb-2 min-h-[46px] max-h-[200px] outline-none resize-none text-[15px]"
                   rows={1}
                   disabled={loadingHistory}
                 />
@@ -778,12 +1055,13 @@ export default function Chat() {
                     />
                     
                     <div className="relative">
-                      <button 
+                      <button
                         onClick={() => setIsAttachmentDropdownOpen(!isAttachmentDropdownOpen)}
-                        className="text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200 p-2 rounded-lg hover:bg-slate-200/50 dark:hover:bg-white/5 transition-colors"
-                        title="Attach file"
+                        className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-100 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
+                        title="Add attachment — PDF, document, image or text"
+                        aria-label="Add attachment"
                       >
-                        <Paperclip className="w-4 h-4" strokeWidth={2} />
+                        <Paperclip className="w-[18px] h-[18px]" strokeWidth={1.6} />
                       </button>
 
                       {isAttachmentDropdownOpen && (
@@ -819,71 +1097,207 @@ export default function Chat() {
                       )}
                     </div>
 
-                    <button 
+                    {/* Icon-only from here on: the labels crowded the bar. Every control
+                        keeps a title + aria-label so the meaning stays discoverable. */}
+                    <button
+                      onClick={() => {
+                        setAttachmentAccept('.jpg,.jpeg,.png');
+                        setIsAttachmentDropdownOpen(false);
+                        setTimeout(() => fileInputRef.current?.click(), 0);
+                      }}
+                      className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-100 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
+                      title="Use image — attach a photo or screenshot (OCR)"
+                      aria-label="Use image"
+                    >
+                      <ImagePlus className="w-[18px] h-[18px]" strokeWidth={1.6} />
+                    </button>
+
+                    <button
                       onClick={handleTalk}
                       className={cn(
-                        "flex items-center gap-2 text-[13px] font-medium px-3 py-1.5 rounded-lg transition-colors",
-                        isListening 
-                          ? "bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 animate-pulse" 
-                          : "text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-slate-200/50 dark:hover:bg-white/5"
+                        'w-8 h-8 flex items-center justify-center rounded-lg transition-colors',
+                        isListening
+                          ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 animate-pulse'
+                          : 'text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-slate-100 dark:hover:bg-white/[0.08]'
                       )}
+                      title={isListening ? 'Listening — click to stop' : 'Talk — dictate your question'}
+                      aria-label={isListening ? 'Stop dictation' : 'Start dictation'}
                     >
-                      <Mic className="w-4 h-4" strokeWidth={2} /> {isListening ? "Listening..." : "Talk"}
+                      {isListening
+                        ? <AudioLines className="w-[18px] h-[18px]" strokeWidth={1.6} />
+                        : <Mic className="w-[18px] h-[18px]" strokeWidth={1.6} />}
                     </button>
+
+                    <Link
+                      to="/research"
+                      className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-100 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
+                      title="Deep Research — open the long-form research workspace"
+                      aria-label="Deep Research"
+                    >
+                      <Telescope className="w-[18px] h-[18px]" strokeWidth={1.6} />
+                    </Link>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <Link 
-                      to="/research"
-                      className="hidden sm:flex items-center gap-1.5 text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200 text-[13px] font-medium px-3 py-1.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-white/5 transition-colors"
-                    >
-                      Deep Research
-                    </Link>
                     <div className="relative">
-                      <button 
+                      <button
                         onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
-                        className="flex items-center gap-1.5 text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200 text-[13px] font-medium px-3 py-1.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-white/5 transition-colors"
+                        className="flex items-center gap-1.5 max-w-[190px] text-slate-600 hover:text-slate-900 dark:text-gray-300 dark:hover:text-gray-100 text-[12.5px] font-medium px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
+                        title="Choose model"
                       >
-                        {activeModel.icon} 
-                        {activeModel.name} 
-                        <ChevronDown className="w-3 h-3" strokeWidth={2.5}/>
+                        {activeModel.icon}
+                        <span className="truncate">{activeModel.name}</span>
+                        <ChevronDown className="w-3 h-3 shrink-0" strokeWidth={2.5}/>
                       </button>
 
                       {isModelDropdownOpen && (
                         <>
-                          <div className="fixed inset-0 z-40" onClick={() => setIsModelDropdownOpen(false)}></div>
-                          <div className="absolute right-0 bottom-full mb-2 w-48 bg-white dark:bg-[#1a1a1b] rounded-xl shadow-lg border border-slate-200 dark:border-white/10 overflow-hidden z-50">
-                            {modelOptions.map((model) => (
-                              <button 
-                                key={model.id}
-                                onClick={() => { setSelectedModel(model.id); setIsModelDropdownOpen(false); }}
-                                className={cn(
-                                  "w-full flex items-center gap-2 px-3 py-2.5 text-[13px] font-medium transition-colors text-left",
-                                  selectedModel === model.id 
-                                    ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300" 
-                                    : "text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-white/5"
-                                )}
-                              >
-                                {model.icon} {model.name}
-                              </button>
-                            ))}
+                          <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => { setIsModelDropdownOpen(false); setModelQuery(''); setShowMoreModels(false); }}
+                          />
+
+                          {/* Model picker, laid out like the reference: search field, a
+                              primary list, and a "More models ›" flyout for the rest.
+                              Populated only with models this deployment actually has
+                              (see modelOptions) — no placeholder entries. */}
+                          <div className="absolute right-0 bottom-full mb-2 w-[264px] bg-white dark:bg-[#242426] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 z-50 py-1.5">
+                            <div className="px-3 pt-1 pb-2">
+                              <input
+                                autoFocus
+                                value={modelQuery}
+                                onChange={(e) => setModelQuery(e.target.value)}
+                                placeholder="Search models..."
+                                className="w-full bg-transparent text-[13.5px] text-slate-800 dark:text-gray-100 placeholder:text-slate-400 dark:placeholder:text-gray-500 outline-none"
+                              />
+                              <div className="mt-2 h-px bg-slate-200 dark:bg-white/10" />
+                            </div>
+
+                            <div className="px-3 pb-1 text-[11.5px] font-medium text-slate-400 dark:text-gray-500">
+                              Models
+                            </div>
+
+                            <div className="max-h-[260px] overflow-y-auto custom-scrollbar px-1.5 pb-1">
+                              {/* "More models" only makes sense when nothing is being searched —
+                                  a query searches the full list already. */}
+                              {!modelQuery.trim() && (
+                                <div
+                                  className="relative"
+                                  onMouseEnter={() => setShowMoreModels(true)}
+                                  onMouseLeave={() => setShowMoreModels(false)}
+                                >
+                                  <button
+                                    onClick={() => setShowMoreModels((v) => !v)}
+                                    className={cn(
+                                      'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] text-left transition-colors',
+                                      showMoreModels
+                                        ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-gray-100'
+                                        : 'text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                                    )}
+                                  >
+                                    <span className="flex-1">More models</span>
+                                    <ChevronRight className="w-3.5 h-3.5 shrink-0" strokeWidth={2} />
+                                  </button>
+
+                                  {showMoreModels && secondaryModels.length > 0 && (
+                                    <div className="absolute left-full top-0 ml-2 w-[236px] bg-white dark:bg-[#2c2c2e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 py-1.5 px-1.5 z-50">
+                                      {secondaryModels.map((model) => (
+                                        <button
+                                          key={model.id}
+                                          onClick={() => {
+                                            setSelectedModel(model.id);
+                                            setIsModelDropdownOpen(false);
+                                            setModelQuery('');
+                                            setShowMoreModels(false);
+                                          }}
+                                          className={cn(
+                                            'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] text-left transition-colors',
+                                            selectedModel === model.id
+                                              ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-gray-100'
+                                              : 'text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                                          )}
+                                        >
+                                          <span className="shrink-0 flex items-center">{model.icon}</span>
+                                          <span className="flex-1 truncate">{model.name}</span>
+                                          {selectedModel === model.id && (
+                                            <Check className="w-3.5 h-3.5 shrink-0 text-indigo-500" strokeWidth={2.5} />
+                                          )}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {visibleModels.map((model) => (
+                                <button
+                                  key={model.id}
+                                  onClick={() => {
+                                    setSelectedModel(model.id);
+                                    setIsModelDropdownOpen(false);
+                                    setModelQuery('');
+                                    setShowMoreModels(false);
+                                  }}
+                                  className={cn(
+                                    'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] text-left transition-colors',
+                                    selectedModel === model.id
+                                      ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-gray-100'
+                                      : 'text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                                  )}
+                                >
+                                  <span className="shrink-0 flex items-center">{model.icon}</span>
+                                  <span className="flex-1 truncate">{model.name}</span>
+                                  {selectedModel === model.id && (
+                                    <Check className="w-3.5 h-3.5 shrink-0 text-indigo-500" strokeWidth={2.5} />
+                                  )}
+                                </button>
+                              ))}
+
+                              {visibleModels.length === 0 && (
+                                <div className="px-2.5 py-3 text-[13px] text-slate-400 dark:text-gray-500">
+                                  No models match “{modelQuery}”.
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </>
                       )}
                     </div>
-                    <button 
-                      onClick={handleSend}
-                      disabled={!input.trim() || loadingHistory}
-                      className="w-8 h-8 rounded-full bg-[#1e1e1e] dark:bg-white/10 hover:bg-[#333] dark:hover:bg-white/20 disabled:opacity-50 flex items-center justify-center text-white dark:text-gray-300 transition-colors cursor-pointer"
+                    {/* Character budget. Turns amber past 90% so the hard stop at
+                        MAX_CHARS (enforced by the textarea's maxLength) isn't a surprise. */}
+                    <span
+                      className={cn(
+                        'text-[11.5px] tabular-nums transition-colors',
+                        input.length >= MAX_CHARS
+                          ? 'text-red-500'
+                          : input.length > MAX_CHARS * 0.9
+                            ? 'text-amber-500'
+                            : 'text-slate-400 dark:text-gray-500'
+                      )}
                     >
-                      <ArrowUp className="w-4 h-4" strokeWidth={2.5}/>
+                      {input.length}/{MAX_CHARS}
+                    </span>
+
+                    <button
+                      onClick={handleSend}
+                      disabled={(!input.trim() && attachments.length === 0) || loadingHistory}
+                      className="w-8 h-8 rounded-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 dark:disabled:bg-white/10 disabled:cursor-not-allowed flex items-center justify-center text-white transition-colors cursor-pointer shrink-0"
+                      title="Send"
+                    >
+                      <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
                     </button>
                 </div>
               </div>
 
           </div>
+
+          <p className="mt-2 text-[11px] text-slate-400 dark:text-gray-500 text-center">
+            Scholarly AI can make mistakes. Please double-check important answers.
+          </p>
         </div>
       </div>
+
+      <ShareModal isOpen={isShareOpen} onClose={() => setIsShareOpen(false)} />
     </div>
   );
 }
