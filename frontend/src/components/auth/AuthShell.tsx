@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Sparkles, Target, LineChart } from 'lucide-react';
+import { Sparkles, Target, LineChart, Check } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
 /**
  * Shared split-screen shell for /signin and /signup.
@@ -123,6 +124,82 @@ export function AuthShell({
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Selectable role card — the "Are you a … ?" pattern from the reference: icon, title and
+ * supporting line on the left, selection indicator on the right, whole card clickable.
+ *
+ * Rendered as a real radio input so keyboard and screen-reader users get native semantics
+ * (arrow-key traversal, group announcement) rather than a div pretending to be a control.
+ */
+export function RoleCard({
+  icon: Icon,
+  title,
+  description,
+  selected,
+  onSelect,
+  name,
+  value,
+}: {
+  icon: React.ElementType;
+  title: string;
+  description: string;
+  selected: boolean;
+  onSelect: () => void;
+  name: string;
+  value: string;
+}) {
+  return (
+    <label
+      className={cn(
+        'flex items-center gap-3.5 w-full p-3.5 rounded-xl border cursor-pointer transition-all',
+        selected
+          ? 'border-[#c8e558] bg-[#c8e558]/[0.07] ring-1 ring-[#c8e558]/40'
+          : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
+      )}
+    >
+      <input
+        type="radio"
+        name={name}
+        value={value}
+        checked={selected}
+        onChange={onSelect}
+        className="sr-only"
+      />
+
+      <span
+        className={cn(
+          'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors',
+          selected
+            ? 'bg-[#c8e558] text-slate-900'
+            : 'bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-gray-400'
+        )}
+      >
+        <Icon className="w-[18px] h-[18px]" strokeWidth={1.9} />
+      </span>
+
+      <span className="flex-1 min-w-0">
+        <span className="block text-[14px] font-semibold text-slate-900 dark:text-white">{title}</span>
+        <span className="block text-[12.5px] text-slate-500 dark:text-gray-400 mt-0.5 leading-snug">
+          {description}
+        </span>
+      </span>
+
+      {/* Selection indicator: hollow ring → filled tick, mirroring the reference. */}
+      <span
+        className={cn(
+          'w-5 h-5 rounded-full shrink-0 flex items-center justify-center border-2 transition-all',
+          selected
+            ? 'bg-[#c8e558] border-[#c8e558]'
+            : 'border-slate-300 dark:border-white/20'
+        )}
+        aria-hidden
+      >
+        {selected && <Check className="w-3 h-3 text-slate-900" strokeWidth={3} />}
+      </span>
+    </label>
   );
 }
 

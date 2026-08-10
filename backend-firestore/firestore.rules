@@ -19,9 +19,29 @@ service cloud.firestore {
         ['super_admin', 'admin', 'moderator', 'content_manager', 'support', 'analytics_viewer'];
     }
 
-    // ---- Users: a user may read/write only their own profile document ----
+    // ---- Users: canonical profile (Phase 1) ----
+    //
+    // users/{userId} is now a real document created by the backend during role bootstrap.
+    // It carries authorization-adjacent fields, so client writes are restricted BY FIELD
+    // rather than blocked outright — lib/api/avatar.ts legitimately updates avatar fields
+    // from the browser and must keep working.
+    //
+    // Protected fields (role, organizationId, uid, email, createdAt) are writable only via
+    // the Admin SDK, which bypasses these rules. `role` here is a denormalised mirror; the
+    // authorization authority is the `productRole` custom claim, which a client can never
+    // set at all.
     match /users/{userId} {
-      allow read, write: if isSelf(userId);
+      allow read: if isSelf(userId);
+
+      // Creation is backend-only, so the canonical record always originates from a
+      // verified token rather than from client-supplied data.
+      allow create: if false;
+
+      allow update: if isSelf(userId)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+             .hasAny(['role', 'organizationId', 'uid', 'email', 'createdAt']);
+
+      allow delete: if false;
     }
 
     // ---- Gamification stats: owner (or admin) read; writes only via backend ----
