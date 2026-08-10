@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "../lib/ThemeContext";
-import { Breadcrumb } from "./Breadcrumb";
 import { 
   Home,
   FileText,
@@ -16,7 +15,6 @@ import {
   Bell,
   Plus,
   Trash2,
-  Clock,
   ChevronDown,
   ArrowRight,
   Package,
@@ -26,7 +24,6 @@ import {
   Sun,
   Moon,
   Share,
-  SquareArrowOutUpRight,
   Bug,
   Sparkles,
   Bot,
@@ -58,6 +55,7 @@ import { ShareModal } from "./ShareModal";
 import { FeedbackModal } from "./FeedbackModal";
 import HighlightAction from "./HighlightAction";
 import { useAuth } from "../lib/AuthContext";
+import { api } from "../lib/api/client";
 import { AppearanceModal } from "./AppearanceModal";
 import { NotificationsMenu } from "./NotificationsMenu";
 import { CommandPalette } from "./CommandPalette";
@@ -112,25 +110,24 @@ const NavItem: React.FC<{ item: any, currentPath: string, collapsed?: boolean }>
     <Link
       to={item.path}
       className={cn(
-        "flex items-center transition-colors duration-150 group tracking-[-0.005em] antialiased",
+        "flex items-center transition-colors duration-150 group antialiased",
         collapsed
-          ? "justify-center w-10 h-10 mx-auto rounded-xl"
-          : "gap-3 h-9 px-3 rounded-xl mx-2.5 text-[14px]",
+          ? "justify-center w-8 h-8 mx-auto rounded-lg"
+          : "gap-2.5 h-[30px] px-2.5 rounded-lg mx-2.5 text-[12.5px] tracking-[-0.006em]",
         isActive
-          ? "bg-slate-100/80 text-slate-900 font-semibold shadow-[inset_0_0_0_1px_rgba(15,23,42,0.04)] dark:bg-white/[0.06] dark:text-white dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]"
-          : "text-slate-600 font-medium hover:bg-slate-100/60 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-white/[0.04] dark:hover:text-gray-100"
+          ? "bg-slate-100 text-slate-900 font-medium dark:bg-white/[0.07] dark:text-white"
+          : "text-slate-500 font-normal hover:bg-slate-100/70 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-white/[0.04] dark:hover:text-gray-100"
       )}
       title={collapsed ? item.label : undefined}
     >
       <Icon
         className={cn(
-          "shrink-0",
-          collapsed ? "w-[18px] h-[18px]" : "w-[18px] h-[18px]",
+          "shrink-0 w-4 h-4",
           isActive
             ? "text-slate-900 dark:text-white"
-            : "text-slate-500 group-hover:text-slate-800 dark:text-gray-500 dark:group-hover:text-gray-200"
+            : "text-slate-400 group-hover:text-slate-700 dark:text-gray-500 dark:group-hover:text-gray-200"
         )}
-        strokeWidth={isActive ? 2.1 : 1.75}
+        strokeWidth={isActive ? 2 : 1.6}
       />
       {!collapsed && <span className="truncate flex-1 leading-none">{item.label}</span>}
     </Link>
@@ -141,9 +138,20 @@ export function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  /**
+   * Sidebar collapse is persisted because App.tsx renders <Routes key={location.pathname}>,
+   * which remounts this whole layout on every navigation — plain useState would snap the
+   * rail back open each time you clicked a link. localStorage also makes the choice
+   * survive a reload, which is what users expect from a collapsible rail anyway.
+   */
+  const [isCollapsed, setIsCollapsed] = useState(
+    () => localStorage.getItem('sidebarCollapsed') === 'true'
+  );
+  useEffect(() => {
+    localStorage.setItem('sidebarCollapsed', String(isCollapsed));
+  }, [isCollapsed]);
   const [isRecentOpen, setIsRecentOpen] = useState(true);
-  const [isRecentlyDeletedOpen, setIsRecentlyDeletedOpen] = useState(false);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [isNewMenuOpen, setIsNewMenuOpen] = useState(false);
@@ -154,6 +162,27 @@ export function AppLayout() {
   const newMenuRef = useRef<HTMLDivElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
+
+  /**
+   * Recent chats for the sidebar's "Recent" section. Reads the same endpoint the
+   * chat page uses (GET /api/chat/sessions). Refetched when the route changes so a
+   * conversation started on /chat shows up here without a reload. Failure is
+   * non-fatal — the section just renders its empty state.
+   */
+  const [recentSessions, setRecentSessions] = useState<any[]>([]);
+  useEffect(() => {
+    if (!user?.uid) { setRecentSessions([]); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.get(`/chat/sessions?userId=${user.uid}`);
+        if (!cancelled) setRecentSessions(Array.isArray(res.data) ? res.data : []);
+      } catch {
+        if (!cancelled) setRecentSessions([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.uid, location.pathname]);
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -246,7 +275,7 @@ export function AppLayout() {
         "bg-white dark:bg-[#111111] border-r border-slate-200 dark:border-white/5 flex flex-col h-full shrink-0 overflow-y-auto custom-scrollbar transition-all duration-300", 
         "fixed md:relative z-50",
         isMobileMenuOpen ? "translate-x-0 w-[260px]" : "-translate-x-full md:translate-x-0",
-        !isMobileMenuOpen && isCollapsed ? "md:w-[68px]" : "md:w-[260px]"
+        !isMobileMenuOpen && isCollapsed ? "md:w-[52px]" : "md:w-[260px]"
       )}>
         {/* Brand + collapse control. The brand mark uses a slightly softer
             tracking + lowercase-caps blend so it reads like a wordmark rather
@@ -288,7 +317,7 @@ export function AppLayout() {
           </button>
         </div>
         
-        <div className="flex-1 pb-6 w-full max-w-full pt-3">
+        <div className={cn("flex-1 w-full max-w-full", isCollapsed ? "pt-1 pb-3" : "pt-3 pb-6")}>
            <nav className="relative" role="navigation" aria-label="Main navigation">
               {MAIN_MENU.map((item, idx) => (
                  <div key={item.path}>
@@ -300,8 +329,10 @@ export function AppLayout() {
                    {!isCollapsed && idx > 0 && item.group === 'top' && (
                      <div className="my-1.5 mx-4 h-px bg-slate-100 dark:bg-white/[0.04]" aria-hidden="true" />
                    )}
+                   {/* Collapsed rail gets spacing, not rules. Four hairlines across a
+                       56px column read as scattered fragments rather than one list. */}
                    {isCollapsed && idx > 0 && item.group === 'top' && (
-                     <div className="my-1.5 mx-auto w-6 h-px bg-slate-100 dark:bg-white/[0.04]" aria-hidden="true" />
+                     <div className="h-[3px]" aria-hidden="true" />
                    )}
                    <div className="mb-0.5">
                      <NavItem item={item} currentPath={location.pathname} collapsed={isCollapsed} />
@@ -325,7 +356,7 @@ export function AppLayout() {
                    aria-haspopup="dialog"
                    aria-expanded={isNewMenuOpen}
                  >
-                   <Plus className={cn("shrink-0", isCollapsed ? "w-[18px] h-[18px]" : "w-4 h-4")} strokeWidth={2.25} />
+                   <Plus className={cn("shrink-0 w-4 h-4")} strokeWidth={2.25} />
                    {!isCollapsed && "New"}
                  </button>
 
@@ -388,98 +419,75 @@ export function AppLayout() {
              <div className="mt-5 px-2.5">
                <button
                  onClick={() => setIsRecentOpen(!isRecentOpen)}
-                 className="w-full flex items-center justify-between px-3 h-7 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-gray-500 hover:text-slate-700 dark:hover:text-gray-300 transition-colors"
+                 className="w-full flex items-center justify-between px-2.5 h-7 text-[11px] font-medium text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300 transition-colors"
                  aria-label="Toggle recent items menu"
                  aria-expanded={isRecentOpen}
                >
-                 <span className="flex items-center gap-1.5">
-                   <Clock className="w-3 h-3" strokeWidth={2} />
-                   Recent
-                 </span>
+                 <span>Recent</span>
                  <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", !isRecentOpen && "-rotate-90")} strokeWidth={2} />
                </button>
 
                {isRecentOpen && (
-                 <div className="mt-1 pl-3 ml-3 border-l border-slate-100 dark:border-white/[0.05] space-y-0.5">
-                   {[
-                     { to: "/chat", icon: MessageSquare, label: "Greeting" },
-                     { to: "/tests", icon: FileText, label: "Mock Test 1 Attempt" },
-                     { to: "/planner", icon: Calendar, label: "Updated Study Plan" },
-                   ].map((r) => (
-                     <Link
-                       key={r.label}
-                       to={r.to}
-                       className="flex items-center gap-2 px-2 h-8 rounded-lg text-[13px] text-slate-600 dark:text-gray-400 hover:bg-slate-100/60 hover:text-slate-900 dark:hover:bg-white/[0.04] dark:hover:text-gray-100 transition-colors group"
-                     >
-                       <r.icon className="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-gray-500 group-hover:text-slate-700 dark:group-hover:text-gray-300" strokeWidth={1.75} />
-                       <span className="truncate">{r.label}</span>
-                     </Link>
-                   ))}
+                 <div className="mt-1 pl-3 ml-3 border-l border-slate-100 dark:border-white/[0.05] space-y-0.5 max-h-[220px] overflow-y-auto custom-scrollbar">
+                   {recentSessions.length === 0 ? (
+                     <div className="px-2 py-2 text-[12px] text-slate-400 dark:text-gray-500">
+                       No recent chats
+                     </div>
+                   ) : (
+                     recentSessions.map((s) => (
+                       <Link
+                         key={s.sessionId}
+                         to={`/chat?session=${s.sessionId}`}
+                         title={s.title || 'Study Assistant'}
+                         className="flex items-center gap-2 px-2 h-8 rounded-lg text-[13px] text-slate-600 dark:text-gray-400 hover:bg-slate-100/60 hover:text-slate-900 dark:hover:bg-white/[0.04] dark:hover:text-gray-100 transition-colors group"
+                       >
+                         <MessageSquare className="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-gray-500 group-hover:text-slate-700 dark:group-hover:text-gray-300" strokeWidth={1.75} />
+                         <span className="truncate">
+                           {s.title || (s.topicType === 'chat' ? 'Study Assistant' : s.topicType) || 'Untitled chat'}
+                         </span>
+                       </Link>
+                     ))
+                   )}
                  </div>
                )}
              </div>
            )}
 
-           {/* Folders — quiet section header; pin + plus become visible only on
-               hover of the header row so they don't compete with the nav rail
-               when idle. */}
-           {!isCollapsed && (
-             <div className="mt-4 px-2.5 group/folders">
-               <div className="flex items-center justify-between px-3 h-7">
-                 <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-gray-500">
-                   Folders
-                 </span>
-                 <div className="flex items-center gap-0.5 opacity-0 group-hover/folders:opacity-100 transition-opacity">
-                   <button
-                     aria-label="Pin folder"
-                     className="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 dark:text-gray-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-gray-200 dark:hover:bg-white/[0.05] transition-colors"
-                   >
-                     <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                       <path d="m14 14-8 8" /><path d="m16 16 4-4" /><path d="m21 11-1.4-1.4a2 2 0 0 0-2.8 0l-3.3 3.3a2 2 0 0 0 0 2.8l1.4 1.4" /><path d="m5 5 1.4 1.4a2 2 0 0 0 2.8 0l3.3-3.3a2 2 0 0 0 0-2.8L11 3" /><path d="M12 9V2" /><path d="M15 12H22" />
-                     </svg>
-                   </button>
-                   <button
-                     aria-label="Create new folder"
-                     className="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 dark:text-gray-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-gray-200 dark:hover:bg-white/[0.05] transition-colors"
-                   >
-                     <Plus className="w-3 h-3" strokeWidth={2.25} />
-                   </button>
-                 </div>
-               </div>
-             </div>
-           )}
-
-           {/* Recently Deleted — same eyebrow-header treatment as Recent. */}
+           {/* More — everything secondary folds into one disclosure, closed by default,
+               so the idle rail is just navigation + Recent. Folders and Recently Deleted
+               both still render placeholder content, which is another reason not to give
+               them permanent real estate. */}
            {!isCollapsed && (
              <div className="mt-3 px-2.5">
                <button
-                 onClick={() => setIsRecentlyDeletedOpen(!isRecentlyDeletedOpen)}
-                 aria-label="Toggle recently deleted items menu"
-                 aria-expanded={isRecentlyDeletedOpen}
-                 className="w-full flex items-center justify-between px-3 h-7 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-gray-500 hover:text-slate-700 dark:hover:text-gray-300 transition-colors"
+                 onClick={() => setIsMoreOpen(!isMoreOpen)}
+                 aria-label="Toggle more sidebar sections"
+                 aria-expanded={isMoreOpen}
+                 className="w-full flex items-center justify-between px-2.5 h-7 text-[11px] font-medium text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300 transition-colors"
                >
-                 <span className="flex items-center gap-1.5">
-                   <Trash2 className="w-3 h-3" strokeWidth={2} />
-                   Recently Deleted
-                 </span>
-                 <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", !isRecentlyDeletedOpen && "-rotate-90")} strokeWidth={2} />
+                 <span>More</span>
+                 <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", !isMoreOpen && "-rotate-90")} strokeWidth={2} />
                </button>
 
-               {isRecentlyDeletedOpen && (
-                 <div className="mt-1 pl-3 ml-3 border-l border-slate-100 dark:border-white/[0.05] space-y-0.5">
-                   {[
-                     { icon: MessageSquare, label: "Biology Doubt" },
-                     { icon: FileText, label: "Untitled Document" },
-                   ].map((r) => (
-                     <Link
-                       key={r.label}
-                       to="#"
-                       className="flex items-center gap-2 px-2 h-8 rounded-lg text-[13px] text-slate-600 dark:text-gray-400 hover:bg-slate-100/60 hover:text-slate-900 dark:hover:bg-white/[0.04] dark:hover:text-gray-100 transition-colors group"
+               {isMoreOpen && (
+                 <div className="mt-1 space-y-0.5">
+                   <div className="flex items-center justify-between px-2.5 h-7 group/folders">
+                     <span className="text-[11px] font-medium text-slate-400 dark:text-gray-500">Folders</span>
+                     <button
+                       aria-label="Create new folder"
+                       className="w-5 h-5 flex items-center justify-center rounded-md text-slate-400 dark:text-gray-500 opacity-0 group-hover/folders:opacity-100 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-gray-200 dark:hover:bg-white/[0.05] transition-all"
                      >
-                       <r.icon className="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-gray-500 group-hover:text-slate-700 dark:group-hover:text-gray-300" strokeWidth={1.75} />
-                       <span className="truncate">{r.label}</span>
-                     </Link>
-                   ))}
+                       <Plus className="w-3 h-3" strokeWidth={2.25} />
+                     </button>
+                   </div>
+
+                   <Link
+                     to="/trash"
+                     className="flex items-center gap-2.5 px-2.5 h-[30px] rounded-lg text-[12.5px] text-slate-500 dark:text-gray-400 hover:bg-slate-100/70 hover:text-slate-900 dark:hover:bg-white/[0.04] dark:hover:text-gray-100 transition-colors group"
+                   >
+                     <Trash2 className="w-4 h-4 shrink-0 text-slate-400 dark:text-gray-500 group-hover:text-slate-700 dark:group-hover:text-gray-200" strokeWidth={1.6} />
+                     <span className="truncate">Recently Deleted</span>
+                   </Link>
                  </div>
                )}
              </div>
@@ -517,20 +525,20 @@ export function AppLayout() {
            )}
         </div>
 
-        <div className={cn("pb-3 pt-2 shrink-0 border-t border-slate-200 dark:border-white/5 transition-colors", isCollapsed ? "px-2 flex flex-col items-center" : "px-3")}>
-          <Link to="#" className={cn("flex items-center transition-colors duration-200 font-medium text-[14px] text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200 hover:bg-slate-100 dark:hover:bg-[#1a1a1a] cursor-pointer", isCollapsed ? "justify-center w-10 h-10 rounded-lg mb-1" : "gap-3 px-3 py-2 rounded-lg mb-0.5")} title={isCollapsed ? "Changelog" : undefined}>
-            <Package className={cn("shrink-0", isCollapsed ? "w-5 h-5" : "w-[18px] h-[18px]")} />
+        <div className={cn("pb-3 pt-2 shrink-0 border-t border-slate-200 dark:border-white/5 transition-colors", isCollapsed ? "px-1 pt-1.5 pb-2 flex flex-col items-center" : "px-3")}>
+          <Link to="#" className={cn("flex items-center transition-colors duration-200 font-medium text-[14px] text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200 hover:bg-slate-100 dark:hover:bg-[#1a1a1a] cursor-pointer", isCollapsed ? "justify-center w-8 h-8 mx-auto rounded-lg" : "gap-3 px-3 py-2 rounded-lg mb-0.5")} title={isCollapsed ? "Changelog" : undefined}>
+            <Package className={cn("shrink-0", isCollapsed ? "w-4 h-4" : "w-[18px] h-[18px]")} strokeWidth={1.6} />
             {!isCollapsed && <span className="truncate flex-1">Changelog</span>}
           </Link>
-          <button onClick={() => setIsFeedbackModalOpen(true)} className={cn("flex items-center transition-colors duration-200 font-medium text-[14px] text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200 hover:bg-slate-100 dark:hover:bg-[#1a1a1a] cursor-pointer", isCollapsed ? "justify-center w-10 h-10 rounded-lg mb-1" : "gap-3 px-3 py-2 rounded-lg mb-2")} title={isCollapsed ? "Share Feedback" : undefined}>
-            <MessageSquareShare className={cn("shrink-0", isCollapsed ? "w-5 h-5" : "w-[18px] h-[18px]")} />
+          <button onClick={() => setIsFeedbackModalOpen(true)} className={cn("flex items-center transition-colors duration-200 font-medium text-[14px] text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200 hover:bg-slate-100 dark:hover:bg-[#1a1a1a] cursor-pointer", isCollapsed ? "justify-center w-8 h-8 mx-auto rounded-lg" : "gap-3 px-3 py-2 rounded-lg mb-2")} title={isCollapsed ? "Share Feedback" : undefined}>
+            <MessageSquareShare className={cn("shrink-0", isCollapsed ? "w-4 h-4" : "w-[18px] h-[18px]")} strokeWidth={1.6} />
             {!isCollapsed && <span className="truncate flex-1">Share Feedback</span>}
           </button>
           
           <div className="relative" ref={profileMenuRef}>
             <div 
               onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-              className={cn("flex justify-between items-center transition-colors duration-200 cursor-pointer pt-2 border-t border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-[#1a1a1a]", isCollapsed ? "justify-center w-10 h-10 rounded-full mt-2 mx-auto" : "px-3 py-2 rounded-lg")}
+              className={cn("flex justify-between items-center transition-colors duration-200 cursor-pointer pt-2 border-t border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-[#1a1a1a]", isCollapsed ? "justify-center w-8 h-8 rounded-full mt-1 mx-auto" : "px-3 py-2 rounded-lg")}
             >
                {isCollapsed ? (
                  <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-sm shrink-0 uppercase overflow-hidden">
@@ -581,10 +589,13 @@ export function AppLayout() {
         
         {/* Top Header — hidden on immersive routes that render their own chrome.
             /podcasts has its studio sidebar + inline header; /community has its
-            own tab bar + three-panel workspace. Both duplicate the outer chrome
+            own tab bar + three-panel workspace; /chat is a full-bleed conversation
+            surface with its own inline header. All three duplicate the outer chrome
             so we drop the AppLayout header on those routes only. */}
-        {!location.pathname.startsWith('/podcasts') && !location.pathname.startsWith('/community') && (
-        <header className="h-20 bg-slate-50 dark:bg-[#131314] flex items-center justify-between px-4 md:px-8 z-10 shrink-0 w-full md:pt-4 transition-colors duration-300">
+        {!location.pathname.startsWith('/podcasts') &&
+         !location.pathname.startsWith('/community') &&
+         !location.pathname.startsWith('/chat') && (
+        <header className="h-16 bg-slate-50 dark:bg-[#131314] flex items-center justify-between px-4 md:px-8 z-10 shrink-0 w-full transition-colors duration-300">
           
           <div className="flex items-center gap-2 md:gap-3">
             <button
@@ -596,12 +607,11 @@ export function AppLayout() {
              >
                <Menu className="w-5 h-5" />
              </button>
-            <div className="flex flex-col">
-              <Breadcrumb />
-              {location.pathname !== '/research' && (
-                <h1 className="text-lg md:text-xl font-bold text-slate-900 dark:text-gray-100">{getPageTitle()}</h1>
-              )}
-            </div>
+            {/* One line, not two: the breadcrumb already ends with the page name, so
+                the large duplicate title below it was saying the same thing twice. */}
+            <h1 className="text-[15px] font-semibold text-slate-900 dark:text-gray-100 tracking-[-0.015em]">
+              {getPageTitle()}
+            </h1>
           </div>
 
           {/* Right Actions */}
@@ -623,54 +633,58 @@ export function AppLayout() {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2 md:gap-6 shrink-0 pl-2 md:pl-6">
+            // Minimal action rail: one bordered element (search), everything else is a
+            // flat 34px ghost icon button. The previous mix of bordered pills, drop
+            // shadows and labelled buttons made the header the loudest thing on screen.
+            <div className="flex items-center gap-1.5 shrink-0 pl-2 md:pl-6">
               <div
-                className="hidden lg:flex w-[320px] items-center bg-white dark:bg-[#1f1f1f] rounded-full px-4 py-2.5 border border-slate-200 dark:border-white/10 focus-within:border-teal-500 dark:focus-within:border-indigo-500 focus-within:shadow-sm transition-all focus-within:bg-white dark:focus-within:bg-[#1f1f1f] shadow-[0_2px_10px_rgb(0,0,0,0.02)] cursor-pointer"
+                className="hidden lg:flex w-[260px] items-center bg-white dark:bg-white/[0.04] rounded-lg px-3 h-[34px] border border-slate-200 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/[0.14] transition-colors cursor-pointer mr-1"
                 onClick={() => setIsCommandPaletteOpen(true)}
               >
-                <Search className="w-4 h-4 text-slate-400 shrink-0 mr-2" />
-                <span className="flex-1 text-sm text-slate-400 dark:text-gray-500 select-none">
-                  Search or ask AI...
+                <Search className="w-3.5 h-3.5 text-slate-400 shrink-0 mr-2" strokeWidth={1.75} />
+                <span className="flex-1 text-[12.5px] text-slate-400 dark:text-gray-500 select-none">
+                  Search or ask AI
                 </span>
-                <div className="flex items-center justify-center px-1.5 py-0.5 bg-slate-100 dark:bg-white/10 rounded text-[10px] text-slate-400 dark:text-gray-400 font-medium ml-2">
-                  ⌘ K
-                </div>
+                <span className="text-[10.5px] text-slate-400 dark:text-gray-500 font-medium ml-2 tabular-nums">
+                  ⌘K
+                </span>
               </div>
-
-              {location.pathname === '/chat' && (
-                <button 
-                  onClick={() => setIsShareModalOpen(true)}
-                  className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#1a1a1a] text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200 text-sm font-medium transition-colors border border-transparent hover:border-slate-200 dark:hover:border-white/10"
-                >
-                  <SquareArrowOutUpRight className="w-[18px] h-[18px]" strokeWidth={1.75} />
-                  Share
-                </button>
-              )}
 
               <button
                 onClick={() => setIsAppearanceOpen(true)}
                 aria-label="Appearance"
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-[#1f1f1f] border border-slate-200 dark:border-white/10 text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200 text-xs font-medium transition-colors shadow-[0_2px_10px_rgb(0,0,0,0.02)] hover:border-slate-300 dark:hover:border-white/20"
+                title="Appearance"
+                className="hidden md:flex w-[34px] h-[34px] items-center justify-center rounded-lg text-slate-400 dark:text-gray-500 hover:text-slate-700 dark:hover:text-gray-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
               >
-                <Palette className="w-3.5 h-3.5" />
-                Appearance
+                <Palette className="w-4 h-4" strokeWidth={1.75} />
               </button>
 
-              <button onClick={toggleTheme} aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'} className="relative w-9 h-9 md:w-10 md:h-10 rounded-full bg-white dark:bg-[#1f1f1f] flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-gray-400 dark:hover:text-gray-200 transition-colors shadow-[0_2px_10px_rgb(0,0,0,0.02)] border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20" title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}>
-                {theme === 'dark' ? <Sun className="w-[18px] h-[18px]" aria-hidden="true" /> : <Moon className="w-[18px] h-[18px]" aria-hidden="true" />}
+              <button
+                onClick={toggleTheme}
+                aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                className="w-[34px] h-[34px] rounded-lg flex items-center justify-center text-slate-400 dark:text-gray-500 hover:text-slate-700 dark:hover:text-gray-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4" strokeWidth={1.75} aria-hidden="true" /> : <Moon className="w-4 h-4" strokeWidth={1.75} aria-hidden="true" />}
               </button>
 
               {/* Notifications */}
               <NotificationsMenu />
               
               
-              <Link to="/profile" className="flex items-center gap-3 cursor-pointer pl-1 md:pl-2 group">
-                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm md:text-base font-bold shadow-sm border-2 border-white dark:border-[#131314] uppercase group-hover:ring-2 ring-indigo-500 transition-all">
-                  {user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}
-                </div>
-                <div className="hidden sm:block">
-                  <div className="text-sm font-semibold text-slate-900 dark:text-gray-200 truncate max-w-[120px] group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{user?.displayName || 'User'}</div>
-                  <div className="text-[11px] text-teal-600 dark:text-indigo-400 font-bold uppercase tracking-wider">Student</div>
+              {/* Avatar only — the name and role read as noise beside the breadcrumb,
+                  which already says where you are. Identity stays available via the
+                  title tooltip and the /profile destination. */}
+              <Link
+                to="/profile"
+                className="pl-1 md:pl-2 group"
+                title={user?.displayName || user?.email || 'Profile'}
+                aria-label="Open your profile"
+              >
+                <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[13px] font-semibold uppercase overflow-hidden ring-1 ring-black/5 dark:ring-white/10 group-hover:ring-2 group-hover:ring-indigo-500 transition-all">
+                  {user?.photoURL
+                    ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" />
+                    : (user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U')}
                 </div>
               </Link>
             </div>
@@ -679,7 +693,12 @@ export function AppLayout() {
         )}
 
         {/* Scrollable Page Content — immersive routes get no padding so they can use full h-full */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto w-full bg-slate-50 dark:bg-[#131314] relative transition-colors duration-300">
+        {/* Immersive routes own their scrolling: the page itself must not scroll, or the
+            fixed composer/panels drift. Everything else keeps the normal page scroll. */}
+        <main className={cn(
+          "flex-1 overflow-x-hidden w-full bg-slate-50 dark:bg-[#131314] relative transition-colors duration-300",
+          location.pathname.startsWith('/chat') ? "overflow-y-hidden" : "overflow-y-auto"
+        )}>
            <AnimatePresence mode="popLayout">
              <motion.div
                key={location.pathname}
@@ -689,7 +708,9 @@ export function AppLayout() {
                transition={{ duration: 0.25 }}
                className={cn(
                  "min-h-full w-full",
-                 location.pathname.startsWith('/podcasts') || location.pathname.startsWith('/community')
+                 location.pathname.startsWith('/podcasts') ||
+                 location.pathname.startsWith('/community') ||
+                 location.pathname.startsWith('/chat')
                    ? "h-full"
                    : "p-4 md:p-8 pt-4 md:pt-6"
                )}
