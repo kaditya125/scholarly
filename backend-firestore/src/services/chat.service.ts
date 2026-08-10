@@ -125,6 +125,10 @@ export class ChatService {
           res.write(`data: ${JSON.stringify({ type: 'chunk', content: event.chunk })}\n\n`);
         } else if (event.type === 'error') {
           throw new Error(event.message);
+        } else if (event.type === 'reasoning') {
+          // Forwarded verbatim; the client types it out in the reasoning timeline.
+          // Deliberately NOT appended to fullReply — this is thinking, not the answer.
+          res.write(`data: ${JSON.stringify({ type: 'reasoning', content: event.text })}\n\n`);
         } else if (event.type === 'citation') {
           res.write(`data: ${JSON.stringify({ type: 'citation', citation: event.citation })}\n\n`);
         } else if (event.type === 'warning') {

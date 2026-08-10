@@ -128,8 +128,10 @@ Every explanation you provide MUST satisfy these quality standards:
 - **Current Affairs**: Background context → What happened → Significance → Syllabus links → Exam perspective.
 - **Reasoning/Aptitude**: Pattern identification → Step-by-step solution → Shortcut tricks → Practice variations.
 
-## Visual Learning (Mermaid.js)
-For flowcharts, timelines, hierarchical trees, or concept maps, use \`\`\`mermaid code blocks. Generate high-quality diagrams.
+## Visual Learning
+Explain structure and process in prose, tables and nested lists. Do NOT emit mermaid
+diagrams — the client no longer renders them, so a mermaid block would reach the student
+as raw diagram source.
 
 ## Image Generation
 When explaining visual topics (geography, biology, historical events), generate an educational illustration:
@@ -170,6 +172,27 @@ To create your personalized study experience, I'd love to know — **which compe
 
 // ─── 5. Greeting Template Builder ────────────────────────────────────────────
 
+/**
+ * LANGUAGE RULE — mirror the student, don't obey the stored preference.
+ *
+ * The onboarding wizard writes `preferredLanguage` ('English' | 'Hindi' | 'Bilingual')
+ * to the profile, and that value used to be injected as "Preferred Language: Hindi",
+ * which the model reasonably read as a standing instruction — so an English question
+ * got a Hindi answer. Language is now decided by the message in front of the model,
+ * with the stored preference demoted to a tiebreaker for genuinely ambiguous input.
+ */
+export const SCHOLARLY_LANGUAGE_RULE = `## Language Rule (Overrides Any Stated Language Preference)
+Reply in the SAME language the student wrote their latest message in.
+- Message written in English (including romanised Hindi like "photosynthesis kya hai") → reply in **English**.
+- Message written in Hindi/Devanagari script → reply in **Hindi**.
+- Message mixes both → mirror the dominant language of the message.
+- Too short or ambiguous to tell (e.g. "hi", "ok", "thanks", an emoji) → reply in **English**.
+- The student explicitly asks for a language ("explain in Hindi") → honour that for as long as they keep asking in it.
+
+The profile's stated language comfort is a fallback for ambiguous cases ONLY. It must never
+override the language of the actual message. Keep technical terms, formulae, and standard
+exam terminology in English even when replying in Hindi.`;
+
 function buildGreetingPrompt(ctx: StudentContext): string {
   const profile = ctx.profile;
   const examName = profile?.targetExam || 'your competitive exam';
@@ -188,8 +211,9 @@ The student said "Hi", "Hello", or a similar greeting. Generate a warm, personal
     prompt += `\n- **Level**: ${profile.preparationLevel}`;
   }
   if (profile?.preferredLanguage) {
-    prompt += `\n- **Language**: ${profile.preferredLanguage}`;
+    prompt += `\n- **Language comfort (fallback only)**: ${profile.preferredLanguage}`;
   }
+  prompt += `\n\n${SCHOLARLY_LANGUAGE_RULE}`;
 
   if (ctx.memory) {
     if (ctx.memory.weakTopics.length > 0) {
@@ -417,7 +441,7 @@ You are in Teacher Mode — your primary teaching mode.
 - Warn about common mistakes and misconceptions
 - Reference previous year question patterns
 - End with a concise revision summary (3-5 key takeaways) ONLY for educational topics, skip for conversational queries.
-- Generate Mermaid.js diagrams for visual learners when appropriate`;
+- For visual learners use tables, nested lists and worked examples — not mermaid diagrams`;
   }
 }
 
@@ -455,7 +479,9 @@ function buildStudentContextBlock(ctx: StudentContext | undefined): string {
     block += `- **Target Exam**: ${ctx.profile.targetExam}\n`;
     if (ctx.profile.targetYear) block += `- **Target Year**: ${ctx.profile.targetYear}\n`;
     if (ctx.profile.preparationLevel) block += `- **Preparation Level**: ${ctx.profile.preparationLevel}\n`;
-    if (ctx.profile.preferredLanguage) block += `- **Preferred Language**: ${ctx.profile.preferredLanguage}\n`;
+    // Stated at onboarding — a fallback preference, NOT a standing instruction to
+    // answer in this language. The LANGUAGE RULE below is what actually decides.
+    if (ctx.profile.preferredLanguage) block += `- **Language comfort (fallback only)**: ${ctx.profile.preferredLanguage}\n`;
     if (ctx.profile.subjects && ctx.profile.subjects.length > 0) {
       block += `- **Subjects**: ${ctx.profile.subjects.join(', ')}\n`;
     }
@@ -579,6 +605,10 @@ export function buildScholarlySystemPrompt(options: {
 
   // Add teaching standards
   prompt += '\n\n' + SCHOLARLY_TEACHING_STANDARDS;
+
+  // Language rule. Placed AFTER the student-context block so it takes precedence over
+  // the stored language preference rendered there.
+  prompt += '\n\n' + SCHOLARLY_LANGUAGE_RULE;
 
   // Add fallback/source instructions
   prompt += '\n\n' + buildFallbackInstructions(hasNotebookContext);

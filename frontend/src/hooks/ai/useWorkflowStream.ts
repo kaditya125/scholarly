@@ -11,6 +11,8 @@ export interface WorkflowProgress {
 export interface StreamState {
   isStreaming: boolean;
   content: string;
+  /** Reasoning prose streamed by the backend's `reasoning` events (TeacherAgent draft). */
+  reasoning: string;
   progressEvents: WorkflowProgress[];
   citations: any[];
   warnings: string[];
@@ -24,6 +26,7 @@ export function useWorkflowStream() {
   const [state, setState] = useState<StreamState>({
     isStreaming: false,
     content: '',
+    reasoning: '',
     progressEvents: [],
     citations: [],
     warnings: [],
@@ -50,6 +53,7 @@ export function useWorkflowStream() {
       setState({
         isStreaming: true,
         content: '',
+        reasoning: '',
         progressEvents: [],
         citations: [],
         warnings: [],
@@ -141,9 +145,12 @@ export function useWorkflowStream() {
                   content: finalContent
                 }));
               } else if (event.type === 'reasoning') {
-                // Optional server event carrying accumulated reasoning text.
+                // Server event carrying reasoning text (WorkflowEngine emits the
+                // TeacherAgent draft here). Mirrored into state so the reasoning
+                // timeline can type it out live, not just at resolve time.
                 if (typeof event.content === 'string') localReasoning += event.content;
                 else if (typeof event.text === 'string') localReasoning += event.text;
+                setState((s) => ({ ...s, reasoning: localReasoning }));
               } else if (event.type === 'citation') {
                 localCitations.push(event.citation);
                 setState(s => ({

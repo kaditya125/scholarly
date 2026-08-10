@@ -1,3 +1,5 @@
+/* One family for everything. The reference UI sets both chrome and generated prose in the
+   same grotesque, with weight and size carrying the hierarchy rather than a second face. */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
@@ -18,10 +20,51 @@
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* Generated prose uses the same family as the UI — see the import note above. */
+  --font-answer: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
   @apply bg-[#f4f7fc] dark:bg-[#131314] text-slate-900 dark:text-gray-200 font-sans antialiased text-sm transition-colors duration-300;
+
+  /* Inter's optical alternates — the single-storey 'a', open '4'/'6'/'9' and
+     disambiguated 'I'/'l'. These are what make Inter read like a product face
+     rather than a default sans, and they cost nothing (same font file). */
+  font-feature-settings: 'cv02' 1, 'cv03' 1, 'cv04' 1, 'cv11' 1, 'ss01' 1;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.011em;
+}
+
+/* Headings get optical-size tightening — larger type needs proportionally less
+   tracking to look balanced. */
+h1, h2, h3 {
+  letter-spacing: -0.022em;
+}
+
+/* Numerals align in columns wherever they're tabulated (counters, timers, stats). */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/**
+ * .font-answer — reading typography for generated prose.
+ *
+ * This class was already applied in 8 places (chat answers, Studio transcript,
+ * command palette, production progress) but had never actually been defined, so it
+ * was a silent no-op everywhere. Defining it here fixes all of them at once.
+ *
+ * Deliberately sets only face-level properties — family, tracking, OpenType features,
+ * rendering. Size and line-height stay with each call site, which already declares
+ * them explicitly, so defining this can't resize any existing surface.
+ */
+.font-answer {
+  font-family: var(--font-answer);
+  font-weight: 400;
+  letter-spacing: -0.006em;
+  font-feature-settings: 'cv02' 1, 'cv03' 1, 'cv04' 1, 'cv11' 1, 'ss01' 1, 'liga' 1, 'kern' 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
