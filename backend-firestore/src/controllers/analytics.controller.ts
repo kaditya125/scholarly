@@ -1,10 +1,20 @@
 import { Request, Response } from 'express';
 import { db } from '../config/firebase';
 import { currencyService } from '../services/currency.service';
+import { isAdmin } from '../middlewares/auth';
 
 export const getCostAnalytics = async (req: Request, res: Response) => {
   try {
-    const userId = req.query.userId as string; // Optional for admin total
+    /**
+     * SECURITY (Phase 0): `userId` used to come straight off the query string, and
+     * omitting it returned system-wide totals to any caller. Scope is now decided by the
+     * verified token:
+     *   - administrator  → may query any user, or omit userId for system-wide totals
+     *   - everyone else  → forced to their own uid, whatever the query string says
+     */
+    const requestedUserId = req.query.userId as string | undefined;
+    const callerIsAdmin = isAdmin(req);
+    const userId = callerIsAdmin ? requestedUserId : req.user!.uid;
     let llmCostUsd = 0;
     let embeddingCostUsd = 0;
     let totalCostUsd = 0;

@@ -2,6 +2,11 @@ node_modules/
 .env
 .env.*
 *.log
+
+# Account-reset / recovery manifests. These enumerate real Firebase UIDs and the
+# email addresses of real people; this repository is public. Keep them local only.
+docs/recovery/
+
 dist/
 build/
 coverage/
