@@ -54,12 +54,25 @@ export default function ReasoningTimeline({
   durationMs,
   stepDefs,
   reasoningStepIndex,
+  paceMs = 0,
+  showProgress = false,
 }: {
   steps: RStep[];
   reasoningText?: string;
   streaming?: boolean;
   hasAnswer?: boolean;
   durationMs?: number;
+  /**
+   * Minimum dwell time per step, in ms. The backend emits all six stage labels within
+   * ~200ms (they're markers between awaits, not the work itself), so an unpaced timeline
+   * blows through every step instantly and then sits silent for the seconds the LLM
+   * actually takes. With paceMs set, the visible step advances at most once per interval,
+   * spreading the display across the real wait. It never runs AHEAD of the backend —
+   * pacing can only delay a step, never invent one. 0 (default) keeps the old behaviour.
+   */
+  paceMs?: number;
+  /** Render a thin determinate progress bar in the header while streaming. */
+  showProgress?: boolean;
   /** Override the default pipeline steps (backward compatible). */
   stepDefs?: StepDefX[];
   /** Which step index holds the free-form reasoning prose. Defaults to
@@ -102,8 +115,32 @@ export default function ReasoningTimeline({
     return seen;
   }, [steps, reasoningText]);
 
+  // Paced reveal — see the `paceMs` prop docs. `paced` walks toward `reached`, never past it.
+  const [paced, setPaced] = useState(0);
+  useEffect(() => {
+    if (!paceMs || !streaming) { setPaced(reached); return; }
+    if (paced >= reached) return;
+    const id = setTimeout(() => setPaced((p) => Math.min(reached, p + 1)), paceMs);
+    return () => clearTimeout(id);
+  }, [paced, reached, paceMs, streaming]);
+
+  /**
+   * Pacing must never hide progress that has genuinely happened.
+   *
+   * Once reasoning prose starts arriving the model is demonstrably at the
+   * "Reasoning & planning" step, so the display floors there regardless of how far the
+   * paced walk has crawled. Without this floor the timeline sat on step 1 while the
+   * backend was already at step 6 — and because the reasoning renders under the ACTIVE
+   * step, it was being drawn under "Understanding the question" and then collapsed away
+   * the moment the answer arrived. Pacing smooths a burst; it must not lag reality.
+   */
+  const hasReasonText = !!(reasoningText && reasoningText.trim());
+  const effectiveReached = paceMs && streaming
+    ? Math.max(Math.min(paced, reached), hasReasonText ? REASON_INDEX : 0)
+    : reached;
+
   const allDone = hasAnswer || !streaming;
-  const activeIndex = allDone ? -1 : reached;
+  const activeIndex = allDone ? -1 : effectiveReached;
   // Once finished, the visible step count is however many DISTINCT steps the backend actually
   // reported (not always the full STEP_DEFS.length) — e.g. a greeting fast path only reports
   // "Understanding the question" + "Composing the answer" (AGENT_EXECUTION), so the header
@@ -137,16 +174,35 @@ export default function ReasoningTimeline({
     const id = setInterval(() => {
       setShown((p) => {
         const f = textRef.current.length;
-        return p >= f ? p : Math.min(f, p + Math.max(1, Math.ceil((f - p) / 12)));
+        // ~125–350 chars/sec. The old rule was exponential catch-up ((f-p)/12 every 30ms),
+        // which drained a multi-thousand-character draft in about a second — far too fast
+        // to read, so the reasoning appeared to flash rather than write. This is a steady
+        // reading cadence with a modest ceiling for long drafts.
+        return p >= f ? p : Math.min(f, p + Math.max(5, Math.min(14, Math.ceil((f - p) / 80))));
       });
-    }, 30);
+    }, 40);
     return () => clearInterval(id);
   }, [streaming]);
 
   const seconds = (elapsed / 1000).toFixed(elapsed < 10000 ? 1 : 0);
 
+  // Completion flourish — a short check-in animation on the streaming→done edge, so
+  // finishing reads as an event rather than the header quietly swapping text. Fires
+  // once per reply and clears itself; never shown for already-finished history.
+  const [justFinished, setJustFinished] = useState(false);
+  const wasRunning = useRef(false);
+  useEffect(() => {
+    if (activeIndex >= 0) { wasRunning.current = true; return; }
+    if (wasRunning.current) {
+      wasRunning.current = false;
+      setJustFinished(true);
+      const t = setTimeout(() => setJustFinished(false), 1600);
+      return () => clearTimeout(t);
+    }
+  }, [activeIndex]);
+
   return (
-    <div className="mb-3 w-full font-answer">
+    <div className="mb-3 w-full">
       {/* Header */}
       <button
         onClick={() => setOpen((o) => !o)}
@@ -155,6 +211,24 @@ export default function ReasoningTimeline({
         {activeIndex >= 0 ? (
           /* Round rotating spinner while reasoning is in progress. */
           <span className="w-4 h-4 rounded-full border-2 border-indigo-500/25 border-t-indigo-500 animate-spin shrink-0" aria-hidden />
+        ) : justFinished ? (
+          /* Completion flourish: the dot blooms into a check with a ring pulse. */
+          <span className="relative w-4 h-4 shrink-0 flex items-center justify-center">
+            <motion.span
+              className="absolute inset-0 rounded-full bg-emerald-500/30"
+              initial={{ scale: 0.5, opacity: 0.9 }}
+              animate={{ scale: 1.9, opacity: 0 }}
+              transition={{ duration: 0.85, ease: 'easeOut' }}
+            />
+            <motion.span
+              className="relative w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-bold"
+              initial={{ scale: 0 }}
+              animate={{ scale: [0, 1.25, 1] }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+            >
+              ✓
+            </motion.span>
+          </span>
         ) : (
           <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-gray-600 shrink-0" />
         )}
@@ -170,7 +244,18 @@ export default function ReasoningTimeline({
             <span className="text-slate-400">{'\u00b7'} {reachedTotal} step{reachedTotal === 1 ? '' : 's'} {'\u00b7'} {seconds}s</span>
           </>
         )}
-        <span className="ml-auto text-slate-400 text-[11px] shrink-0">{open ? '\u25be' : '\u25b8'}</span>
+        {/* Determinate progress across the pipeline while it runs. */}
+        {showProgress && activeIndex >= 0 && (
+          <span className="ml-2 hidden sm:block w-20 h-[3px] rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden shrink-0" aria-hidden>
+            <motion.span
+              className="block h-full rounded-full bg-indigo-500"
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.round(((activeIndex + 1) / total) * 100)}%` }}
+              transition={{ duration: 0.45, ease: 'easeOut' }}
+            />
+          </span>
+        )}
+        <span className={cn("text-slate-400 text-[11px] shrink-0", !(showProgress && activeIndex >= 0) && "ml-auto")}>{open ? '\u25be' : '\u25b8'}</span>
       </button>
 
       <AnimatePresence initial={false}>
@@ -240,7 +325,7 @@ export default function ReasoningTimeline({
                             state === 'active' ? 'text-slate-500 dark:text-gray-400' : 'text-slate-400/80 dark:text-gray-500/80'
                           )}
                         >
-                          <span>{step.detail}</span>
+                          <TypedText text={step.detail} active={state === 'active' && !!streaming} />
                           {state === 'active' && resultMsgs.length === 0 && (
                             <span className="inline-flex ml-1.5 align-middle"><LiveDots /></span>
                           )}
@@ -281,6 +366,23 @@ export default function ReasoningTimeline({
 }
 
 /** Small bouncing dots to keep the active step visibly alive (CSS only, no icons). */
+/**
+ * Types a fixed string out character by character. Used for the ACTIVE step's
+ * description so the wait reads as the system narrating what it is doing, rather
+ * than a block of text appearing at once. Inactive steps render instantly — only
+ * the step currently running gets the writing treatment.
+ */
+const TypedText: React.FC<{ text: string; active: boolean }> = ({ text, active }) => {
+  const [n, setN] = useState(active ? 0 : text.length);
+  useEffect(() => {
+    if (!active) { setN(text.length); return; }
+    setN(0);
+    const id = setInterval(() => setN((p) => Math.min(text.length, p + 1)), 14);
+    return () => clearInterval(id);
+  }, [text, active]);
+  return <span>{active ? text.slice(0, n) : text}</span>;
+};
+
 function LiveDots() {
   return (
     <span className="inline-flex gap-0.5">
