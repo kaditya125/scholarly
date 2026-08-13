@@ -19,6 +19,21 @@ import Analytics from "./pages/Analytics";
 import Report from "./pages/Report";
 import Signup from "./pages/Signup";
 import Signin from "./pages/Signin";
+import SelectRole from "./pages/SelectRole";
+import TeacherOnboarding from "./pages/TeacherOnboarding";
+// Teacher workspace (Phase 3C) — replaces the former TeacherLanding placeholder at /teach.
+import TeacherLayout from "./components/teacher/TeacherLayout";
+import TeacherDashboard from "./pages/teacher/TeacherDashboard";
+import TeacherClasses from "./pages/teacher/TeacherClasses";
+import TeacherClassEditor from "./pages/teacher/TeacherClassEditor";
+import TeacherClassStudents from "./pages/teacher/TeacherClassStudents";
+import TeacherClassResources from "./pages/teacher/TeacherClassResources";
+import TeacherClassAssignments from "./pages/teacher/TeacherClassAssignments";
+import TeacherStudents from "./pages/teacher/TeacherStudents";
+import QuizAttemptPage from "./pages/QuizAttempt";
+import JoinClass from "./pages/JoinClass";
+import MyClasses from "./pages/MyClasses";
+import RoleLanding from "./components/RoleLanding";
 import Leaderboard from "./pages/Leaderboard";
 import Pricing from "./pages/Pricing";
 import Chat from "./pages/Chat";
@@ -46,6 +61,15 @@ import MyDoubts from "./pages/MyDoubts";
 import Trash from "./pages/Trash";
 import Checkout from "./pages/Checkout";
 import PaymentSuccess from "./pages/PaymentSuccess";
+// Public marketing + policy pages. These are intentionally outside ProtectedRoute:
+// a visitor (and Razorpay's merchant review) must be able to read them signed out.
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import ForTeachers from "./pages/ForTeachers";
+import Terms from "./pages/legal/Terms";
+import Privacy from "./pages/legal/Privacy";
+import Refunds from "./pages/legal/Refunds";
+import Security from "./pages/legal/Security";
 import { useAuth } from "./lib/AuthContext";
 import { useProfile } from "./hooks/api/useProfile";
 
@@ -68,7 +92,7 @@ import { useProfile } from "./hooks/api/useProfile";
  *   - Checking sessionStorage if the user explicitly clicked "Skip for now".
  */
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, role, claimsLoading } = useAuth();
   const { profile, isLoading: profileLoading } = useProfile();
   const location = useLocation();
 
@@ -86,12 +110,43 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
+  // Authenticated but no product role → resolve it before anything else.
+  //
+  // Gated on claimsLoading: custom claims arrive with the ID token a beat after `user`
+  // resolves, so acting on `role` too early would bounce EVERY user to /select-role on
+  // first paint. /select-role itself is excluded or it would redirect to itself.
+  //
+  // Deliberately placed before the bypass-route check so a legacy account landing on
+  // /onboarding still establishes a role first — a missing role means "not yet
+  // established", never "assume student".
+  if (location.pathname !== '/select-role') {
+    if (claimsLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#131314]">
+          <span className="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-white/10 border-t-indigo-500 animate-spin" />
+        </div>
+      );
+    }
+    if (!role) {
+      return <Navigate to="/select-role" replace />;
+    }
+  }
+
   // Routes that are part of the onboarding/assessment flow — always allow through
   // even when the profile is incomplete, to avoid redirect loops.
-  const bypassRoutes = ['/onboarding', '/baseline-assessment', '/welcome', '/assessment', '/assessment/report'];
+  const bypassRoutes = ['/onboarding', '/baseline-assessment', '/welcome', '/assessment', '/assessment/report', '/select-role', '/teacher/onboarding'];
   const isBypassRoute = bypassRoutes.some((r) => location.pathname.startsWith(r));
 
-  if (!isBypassRoute) {
+  // Student-profile completeness is a STUDENT-ONLY gate.
+  //
+  // useProfile() fetches the *student* learning profile, so a teacher account never has one and
+  // `isComplete` stays falsy for them permanently. Without the role check, every teacher would be
+  // redirected into the student onboarding wizard on every non-bypass route — the bug this phase
+  // fixes. Teachers reach their own destination via /teacher/onboarding.
+  //
+  // The profileLoading wait is scoped the same way on purpose: that query polls (refetchInterval)
+  // and would never settle for a teacher, producing intermittent spinners on every route.
+  if (!isBypassRoute && role === 'student') {
     // Wait for the profile to load before deciding whether to redirect
     if (profileLoading) {
       return (
@@ -120,11 +175,48 @@ function AppRoutes() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/signin" element={<Signin />} />
         <Route path="/pricing" element={<Pricing />} />
+        <Route path="/about" element={<About />} />
+        {/* Public marketing page. Outside ProtectedRoute on purpose: a signed-out visitor,
+            a signed-in student and a signed-in teacher must all see the same page, and none
+            of them should be diverted into student onboarding by visiting it. */}
+        <Route path="/for-teachers" element={<ForTeachers />} />
+        {/* Invitation landing. Public on purpose: a shared link is opened by people who are
+            signed out or mid-onboarding, and ProtectedRoute would divert the latter into the
+            student wizard and lose the invitation. The page owns its own gate. */}
+        <Route path="/join/:code" element={<JoinClass />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/refunds" element={<Refunds />} />
+        <Route path="/security" element={<Security />} />
+
+        {/* Role recovery — authenticated, product role not yet established. */}
+        <Route path="/select-role" element={<ProtectedRoute><SelectRole /></ProtectedRoute>} />
 
         {/* Full-screen isolated routes — accessible to authenticated users,
             these are part of the first-time student flow */}
         <Route path="/test" element={<TestEngine />} />
+        {/* Real quiz-attempt taking UI (Phase 3G) — full-screen and isolated like /test,
+            but wired to the actual quiz-attempts backend rather than TestEngine's mock data. */}
+        <Route path="/quiz/attempts/:attemptId" element={<ProtectedRoute><QuizAttemptPage /></ProtectedRoute>} />
         <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+        {/* Teacher onboarding wizard — one route, internal step state (see the file header). */}
+        <Route path="/teacher/onboarding" element={<ProtectedRoute><TeacherOnboarding /></ProtectedRoute>} />
+        {/* Teacher workspace. TeacherLayout re-checks auth, product role and profile
+            completeness itself, so it also behaves correctly if ever mounted elsewhere;
+            ProtectedRoute is kept for consistency with every other authenticated route. */}
+        <Route path="/teach" element={<ProtectedRoute><TeacherLayout /></ProtectedRoute>}>
+          <Route index element={<TeacherDashboard />} />
+          <Route path="classes" element={<TeacherClasses />} />
+          {/* React Router ranks static segments above dynamic ones, so "new" is matched
+              before ":id" regardless of declaration order. */}
+          <Route path="classes/new" element={<TeacherClassEditor />} />
+          <Route path="classes/:id" element={<TeacherClassEditor />} />
+          <Route path="classes/:id/students" element={<TeacherClassStudents />} />
+          <Route path="classes/:id/resources" element={<TeacherClassResources />} />
+          <Route path="classes/:id/assignments" element={<TeacherClassAssignments />} />
+          <Route path="students" element={<TeacherStudents />} />
+        </Route>
         <Route path="/baseline-assessment" element={<ProtectedRoute><BaselineAssessmentEngine /></ProtectedRoute>} />
         <Route path="/baseline-assessment/report" element={<ProtectedRoute><AssessmentReportDashboard /></ProtectedRoute>} />
         <Route path="/welcome" element={<ProtectedRoute><WelcomeBriefing /></ProtectedRoute>} />
@@ -134,7 +226,15 @@ function AppRoutes() {
           <Route path="/chat" element={<Chat />} />
           <Route path="/research" element={<Research />} />
           <Route path="/flashcards" element={<Flashcards />} />
-          <Route path="/dashboard" element={<StudentDashboard />} />
+          <Route
+            path="/dashboard"
+            element={
+              <RoleLanding
+                student={<StudentDashboard />}
+                teacher={<Navigate to="/teach" replace />}
+              />
+            }
+          />
           <Route path="/tests" element={<TestCenter />} />
           <Route path="/analytics" element={<Dashboard />} />
           <Route path="/report" element={<Report />} />
@@ -160,6 +260,8 @@ function AppRoutes() {
           <Route path="/assessment" element={<BaselineAssessmentEngine />} />
           <Route path="/assessment/report" element={<AssessmentReportDashboard />} />
           <Route path="/doubts" element={<MyDoubts />} />
+          {/* Student side of the enrolment loop (Phase 3E). */}
+          <Route path="/my-classes" element={<MyClasses />} />
           <Route path="/trash" element={<Trash />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />

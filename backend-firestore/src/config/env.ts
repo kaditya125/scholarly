@@ -41,6 +41,19 @@ const envSchema = z.object({
   // Security / Ops
   CRON_SECRET: z.string().optional(),
   CORS_ORIGINS: z.string().optional(), // comma-separated allowlist of origins for production CORS
+
+  // Teacher verification.
+  //
+  // When 'true', a newly created teacher profile is assigned 'approved' immediately instead of
+  // 'pending', so a development environment is not blocked behind a review queue that has no
+  // reviewer. It is opt-in by ABSENCE-IS-FALSE: unset, empty, or any value other than the exact
+  // string 'true' leaves auto-approval OFF, which makes the production default safe by default
+  // rather than by remembering to set it.
+  //
+  // An auto-approval still writes a verification audit event attributed to the system, so it is
+  // always distinguishable from a genuine review. The UI must key "verified" off the status
+  // itself (isVerifiedStatus), never off this flag.
+  TEACHER_AUTO_APPROVE: z.string().optional(),
   
   // Payments
   RAZORPAY_KEY_ID: z.string().optional(),

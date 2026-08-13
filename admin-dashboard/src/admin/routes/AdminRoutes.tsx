@@ -17,6 +17,7 @@ const LearningAssets = lazy(() => import("../pages/LearningAssets").then((m) => 
 const Notebooks = lazy(() => import("../pages/Notebooks").then((m) => ({ default: m.Notebooks })));
 const FeatureFlags = lazy(() => import("../pages/FeatureFlags").then((m) => ({ default: m.FeatureFlags })));
 const Users = lazy(() => import("../pages/Users").then((m) => ({ default: m.Users })));
+const TeacherVerification = lazy(() => import("../pages/TeacherVerification").then((m) => ({ default: m.TeacherVerification })));
 const Security = lazy(() => import("../pages/Security").then((m) => ({ default: m.Security })));
 const Logs = lazy(() => import("../pages/Logs").then((m) => ({ default: m.Logs })));
 const Notifications = lazy(() => import("../pages/Notifications").then((m) => ({ default: m.Notifications })));
@@ -44,6 +45,7 @@ export function AdminRoutes() {
         <Route path="evaluation" element={<ContinuousEval />} />
 
         <Route path="users" element={<Users />} />
+        <Route path="teacher-verification" element={<TeacherVerification />} />
         <Route path="security" element={<Security />} />
         <Route path="logs" element={<Logs />} />
         <Route path="notifications" element={<Notifications />} />
