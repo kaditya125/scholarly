@@ -16,6 +16,7 @@ import { NotificationsController } from '../controllers/notifications.controller
 import { BackupsController } from '../controllers/backups.controller';
 import { SettingsController } from '../controllers/settings.controller';
 import { FeatureFlagsController } from '../controllers/feature-flags.controller';
+import { teacherVerificationController as teacherVerificationCtrl } from '../controllers/teacher-verification.controller';
 
 const router = Router();
 const aiMonitoringCtrl = new AIMonitoringController();
@@ -100,6 +101,19 @@ router.get('/backups', backupsCtrl.getBackups);
 
 // Settings
 router.get('/settings', settingsCtrl.getSettings);
+
+// Teacher verification (Phase 3A).
+//
+// Inherits `router.use(requireAdmin)` above, so both routes require super_admin | admin |
+// moderator. teacherStatus is writable through this surface ONLY — the teacher-facing
+// /api/teacher/* endpoints never accept it, and the Firestore rules close client writes to
+// both teacherProfiles and teacherVerificationEvents entirely.
+// Literal path — declared before the :uid routes below purely for readability; Express does
+// not confuse a 2-segment path (/teacher/queue) with the 3-segment :uid routes regardless of
+// order, so this only matters if a future 2-segment /teacher/:uid route is ever added.
+router.get('/teacher/queue', teacherVerificationCtrl.listQueue);
+router.get('/teacher/:uid/verification', teacherVerificationCtrl.getVerification);
+router.post('/teacher/:uid/status', teacherVerificationCtrl.setStatus);
 
 // Admin Controllers will be imported and mounted here in later phases
 

@@ -127,11 +127,34 @@ bootstrap is called for them.
 existing account is a bulk mutation of live auth state, and it should be an explicit,
 reviewed decision — not a side effect of this phase.
 
-## 8. Phase 2 requirements
+## 8. Completed in Phase 1 — Role-Aware Authentication & Routing
 
-1. Role-aware `AuthContext` consumers (`role`, `claimsLoading`, `refreshClaims` all exist).
-2. Role-aware `ProtectedRoute` — currently gates on auth + profile completeness; needs a
-   third state for "authenticated, no product role" → route to role selection.
-3. Signup role selection → `POST /users/bootstrap` → `getIdToken(true)` → `refreshClaims()`.
-4. Returning-user routing by role.
-5. Recovery path for "authenticated but role missing".
+1. **Role-aware `AuthContext` consumers.** `role`, `claimsLoading` and `refreshClaims` are
+   exposed and consumed by `ProtectedRoute` and `RoleLanding`.
+
+2. **Missing-role protection.** An authenticated account with `productRole === null` is routed
+   to `/select-role`. The check runs only once `claimsLoading` is false, because custom claims
+   arrive with the ID token a beat after the user resolves.
+
+3. **Signup role assignment.** The role is selected during signup and sent to
+   `POST /api/users/bootstrap`, which assigns it server-side — the backend remains the sole
+   authority. A single forced claims refresh (`refreshClaims()` → `readClaims(currentUser, true)`
+   → `getIdTokenResult(true)`) then makes the new claim visible to the client, and the user is
+   sent to a role-aware destination.
+
+4. **Returning-user role routing.** Authenticated user → Firebase ID token → `productRole` →
+   `RoleLanding`: student → the student experience, teacher → the teacher path. No role selector
+   appears at sign-in; the role belongs to the account, not the sign-in attempt.
+
+5. **Missing-role recovery.** `/select-role` offers role selection, calls bootstrap, refreshes
+   claims, and continues into the appropriate flow. A missing role is never assumed to be
+   student.
+
+> The role foundation and role-aware authentication/routing described in this document are
+> COMPLETE. The term "Phase 2" used in older versions of this document referred to frontend role
+> wiring and is no longer the active Phase 2.
+>
+> Current Phase 2 refers to the Teacher Experience / Student–Teacher Platform architecture,
+> including teacher onboarding, teacher profile/status, capabilities, teacher–student
+> relationships, consent, teacher-specific endpoints, teacher dashboard, and related platform
+> functionality. See `TEACHER_STUDENT_FINAL_ARCHITECTURE.md`.

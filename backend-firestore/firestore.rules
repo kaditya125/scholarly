@@ -50,6 +50,129 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ---- Teacher profiles: owner (or admin) read; ALL writes via backend ----
+    //
+    // Collection id matches the code exactly: teacherProfiles (camelCase), as written by
+    // services/teacherProfile.service.ts. A mismatch here would silently fall through to the
+    // deny-all rule at the bottom of this file.
+    //
+    // Writes are closed entirely rather than field-restricted. Every write goes through
+    // POST /api/teacher/profile using the Admin SDK, so there is no legitimate client write to
+    // permit — and closing it means teacherStatus, uid and the identity fields cannot be
+    // tampered with from a browser under any circumstance.
+    //
+    // Reads are self-or-admin only for now. Public teacher discovery (product decision D-1,
+    // hybrid) will serve a PROJECTED public subset through a backend endpoint rather than by
+    // opening this document, so that private fields can never leak by rule drift.
+    match /teacherProfiles/{userId} {
+      allow read: if isSelf(userId) || hasAdminRole();
+      allow write: if false;
+    }
+
+    // ---- Teacher verification audit trail: NO client access at all ----
+    //
+    // Append-only from the Admin SDK. Reads are closed as well as writes: entries carry
+    // reviewer identity and internal review notes, which no client — including the teacher
+    // the entry is about — should read directly. Admins read it through
+    // GET /api/admin/teacher/:uid/verification, which is guarded by requireAdmin.
+    match /teacherVerificationEvents/{eventId} {
+      allow read, write: if false;
+    }
+
+    // ---- Classes: owner reads any state; a published class is readable by signed-in users ----
+    //
+    // Writes are closed entirely — creation, edits and every lifecycle transition go through
+    // /api/classes/* using the Admin SDK, so ownerUid, status, pricing and counts cannot be
+    // tampered with from a browser.
+    //
+    // The read rule mirrors classService.getForViewer: the owner sees drafts and archived
+    // classes, everyone else sees only `published` / `active`. It is duplicated here rather than
+    // left to the API because these rules are the backstop if a client ever reads directly.
+    // Note enrolment does not exist yet (3E); when it does, enrolled members gain read access to
+    // their class here and in that one service function.
+    match /classes/{classId} {
+      allow read: if isSignedIn() && (
+        resource.data.ownerUid == request.auth.uid ||
+        resource.data.status in ['published', 'active']
+      );
+      allow write: if false;
+    }
+
+    // ---- Enrolment edges: the two parties only, and read-only ----
+    //
+    // The consent gate. Writes are closed absolutely: every state change goes through
+    // /api/enrollments/* using the Admin SDK, which is what makes "only an accepted edge grants
+    // access" enforceable. A client that could write here could enrol itself.
+    //
+    // Reads are limited to the two parties named on the edge. Note this rule alone does NOT
+    // decide what a teacher may see ABOUT a student — it governs the edge document only, whose
+    // fields are the two uids and a state.
+    match /classEnrollments/{edgeId} {
+      allow read: if isSignedIn() && (
+        resource.data.studentUid == request.auth.uid ||
+        resource.data.teacherUid == request.auth.uid
+      );
+      allow write: if false;
+    }
+
+    // ---- Invitation codes: no direct client access ----
+    //
+    // Closed to reads as well as writes. A code is resolved through GET /api/invitations/:code,
+    // which returns a deliberately narrow class PREVIEW. Opening the document would expose
+    // `uses`, `createdBy` and `maxUses` to anyone holding a shareable link.
+    match /classInvitations/{code} {
+      allow read, write: if false;
+    }
+
+    // ---- Class resources: owner or an ACTIVE member of the class, read-only ----
+    //
+    // Writes are closed — attach/detach go through /api/classes/:id/resources with the Admin
+    // SDK, which is also what keeps notebook sharing in lockstep with enrolment (see
+    // classResource.service.ts). This rule is the read-side mirror of
+    // classResourceService.listForClass: same two conditions, owner or ACTIVE, in that order.
+    //
+    // The `get()` reaches into classEnrollments using the same composite id
+    // (`{classId}_{uid}`) the backend uses everywhere else, so there is exactly one definition
+    // of "how you look up an enrolment edge" across rules and code.
+    match /classResources/{resourceId} {
+      allow read: if isSignedIn() && (
+        resource.data.ownerUid == request.auth.uid ||
+        get(/databases/$(database)/documents/classEnrollments/$(resource.data.classId + '_' + request.auth.uid)).data.state == 'ACTIVE'
+      );
+      allow write: if false;
+    }
+
+    // ---- Class assignments: owner or an ACTIVE member of the class, once published ----
+    //
+    // Writes are closed — create/publish/close go through /api/classes/:id/assignments with the
+    // Admin SDK. The read rule mirrors classAssignmentService.listForClass: the owner sees every
+    // state (including drafts they are still curating); anyone else needs BOTH an ACTIVE
+    // enrolment edge AND a status that has left draft. A member must never see a draft — that is
+    // the teacher's unpublished question set, answer key included.
+    match /classAssignments/{assignmentId} {
+      allow read: if isSignedIn() && (
+        resource.data.ownerUid == request.auth.uid ||
+        (
+          resource.data.status in ['published', 'closed'] &&
+          get(/databases/$(database)/documents/classEnrollments/$(resource.data.classId + '_' + request.auth.uid)).data.state == 'ACTIVE'
+        )
+      );
+      allow write: if false;
+    }
+
+    // ---- Assignment attempt pointers: the student's own, or their teacher's ----
+    //
+    // Closed to writes — every pointer is created by classAssignmentService.startAttempt via the
+    // Admin SDK. `teacherUid` is denormalised on the pointer specifically so this rule can be a
+    // flat comparison rather than a second `get()`.
+    match /classAssignmentAttempts/{pointerId} {
+      allow read: if isSignedIn() && (
+        resource.data.studentUid == request.auth.uid ||
+        resource.data.teacherUid == request.auth.uid
+      );
+      allow write: if false;
+    }
+
     // ---- Notebooks + subcollections: owner / editor / viewer scoped ----
     match /notebooks/{notebookId} {
       function nb() { return resource.data; }
@@ -106,7 +229,38 @@ service cloud.firestore {
     match /discussions/{doc}      { allow read: if isSignedIn(); allow write: if false; }
     match /published_assets/{doc} { allow read: if isSignedIn(); allow write: if false; }
     match /leaderboard/{doc}      { allow read: if isSignedIn(); allow write: if false; }
-    match /study_groups/{doc}     { allow read: if isSignedIn(); allow write: if false; }
+
+    // ---- Study groups: MEMBER-scoped read; writes via backend ----
+    //
+    // Phase 3B fix. This block previously read `match /study_groups/{doc}` (snake_case) while
+    // every repository writes `db.collection('studyGroups')` (camelCase) — see
+    // studyGroup.repository.ts, groupChannel.repository.ts, studyCircle.repository.ts. The rule
+    // therefore matched nothing and the collection fell through to the catch-all deny.
+    //
+    // The visible symptom was not an outage: hooks/api/useGroupChannels.ts subscribes to the
+    // `channels` subcollection with an onSnapshot error handler that logs "realtime unavailable
+    // (using polling)" and leans on a 20s refetchInterval. Group channels have been silently
+    // running on polling rather than realtime.
+    //
+    // Access is scoped to members via `memberIds` rather than restored to the original
+    // `isSignedIn()`. That original intent would have let ANY signed-in account read ANY group
+    // document — including its full member list — which is not something to switch on by fixing
+    // a typo. Members-only is both tighter than what was written and sufficient for the feature.
+    match /studyGroups/{groupId} {
+      function group() { return resource.data; }
+      allow read: if isSignedIn() && request.auth.uid in group().get('memberIds', []);
+      allow write: if false;
+
+      // Subcollections (channels, messages, circle state) follow the parent's membership.
+      // Same `get()`-the-parent pattern the notebooks rules above already use.
+      match /{sub=**} {
+        function parent() {
+          return get(/databases/$(database)/documents/studyGroups/$(groupId)).data;
+        }
+        allow read: if isSignedIn() && request.auth.uid in parent().get('memberIds', []);
+        allow write: if false;
+      }
+    }
 
     // ---- Admin / config / telemetry: no direct client access (backend only) ----
     match /feature_flags/{doc}      { allow read, write: if false; }

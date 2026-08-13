@@ -1,0 +1,112 @@
+/**
+ * Public-site configuration — the single source of truth for everything the marketing
+ * pages, the footer and the legal pages need to say about the company.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────────────
+ *  ⚠  BEFORE GOING LIVE, REPLACE EVERY VALUE MARKED `TODO` BELOW.
+ *
+ *  These are placeholders. They are grouped here (rather than scattered through the
+ *  footer and six legal pages) so that filling them in is a single edit. Nothing else
+ *  in the app hard-codes a company detail.
+ *
+ *  Razorpay's merchant-activation review specifically checks that the live site has a
+ *  reachable Contact page with a real email + phone + registered address, plus Terms,
+ *  Privacy and Refund pages. Placeholder values will fail that review.
+ * ─────────────────────────────────────────────────────────────────────────────────────
+ */
+
+export const SITE = {
+  /** Product name, used in copy and legal text. */
+  name: 'Scholarly',
+
+  /** Public marketing domain, no protocol. TODO: confirm. */
+  domain: 'scholarly.ai',
+  url: 'https://scholarly.ai',
+
+  /**
+   * The registered legal entity that contracts with users and receives payments.
+   * This MUST match the name registered with Razorpay or settlements will be held.
+   * TODO: replace with the registered company name.
+   */
+  legalEntity: 'Scholarly Technologies Private Limited',
+
+  /** TODO: replace with the CIN / GSTIN you want shown publicly (or set to ''). */
+  cin: '',
+  gstin: '',
+
+  /** Where disputes are heard. Used in the Terms' governing-law clause. TODO: confirm. */
+  jurisdiction: 'Bengaluru, Karnataka, India',
+
+  /** TODO: replace with real, monitored inboxes. */
+  email: {
+    support: 'support@scholarly.ai',
+    privacy: 'privacy@scholarly.ai',
+    legal: 'legal@scholarly.ai',
+    sales: 'sales@scholarly.ai',
+    security: 'security@scholarly.ai',
+  },
+
+  /** TODO: a reachable number. Razorpay requires one on the Contact page. */
+  phone: '+91 80 4718 2200',
+
+  /** Support coverage shown on the Contact page. TODO: confirm your real hours. */
+  supportHours: 'Monday–Saturday, 10:00–19:00 IST',
+
+  /** TODO: replace with the registered office address. */
+  address: {
+    line1: 'Level 4, Prestige Tech Platina',
+    line2: 'Marathahalli–Sarjapur Outer Ring Road',
+    city: 'Bengaluru',
+    state: 'Karnataka',
+    postalCode: '560103',
+    country: 'India',
+  },
+
+  /**
+   * Social profiles.
+   *
+   * TODO: replace every URL with your real handle, and DELETE any row you don't have.
+   * The footer renders exactly what's in this array — removing an entry removes the
+   * icon, so there is never a dead link pointing at a profile that doesn't exist.
+   */
+  social: [
+    { name: 'X (Twitter)', href: 'https://x.com/scholarlyai', icon: 'x' },
+    { name: 'LinkedIn', href: 'https://www.linkedin.com/company/scholarlyai', icon: 'linkedin' },
+    { name: 'Instagram', href: 'https://www.instagram.com/scholarlyai', icon: 'instagram' },
+    { name: 'YouTube', href: 'https://www.youtube.com/@scholarlyai', icon: 'youtube' },
+    { name: 'GitHub', href: 'https://github.com/scholarlyai', icon: 'github' },
+  ] as const,
+
+  /** Shown as "Last updated" on every legal page. Bump when you revise them. */
+  legalLastUpdated: '12 August 2026',
+} as const;
+
+export type SocialIcon = (typeof SITE.social)[number]['icon'];
+
+/** Formats the registered address as a single line (footer) or block (contact page). */
+export const formatAddress = (join = ', ') =>
+  [
+    SITE.address.line1,
+    SITE.address.line2,
+    `${SITE.address.city} ${SITE.address.postalCode}`,
+    `${SITE.address.state}, ${SITE.address.country}`,
+  ]
+    .filter(Boolean)
+    .join(join);
+
+/**
+ * Subscription plans shown on the marketing pages.
+ *
+ * The Pro price is mirrored from the server, which is the only authority on what a
+ * user is actually charged — see backend-firestore/src/services/payments.service.ts
+ * (`PLANS.pro.monthlyINR = 499`, `YEARLY_DISCOUNT = 0.85`). Keep these in sync; the
+ * server recomputes the amount on every order, so a mismatch here would only ever
+ * mislead the visitor, never overcharge them.
+ *
+ * `institution` has no server-side plan definition on purpose — it is a sales
+ * conversation, not a self-serve checkout, so its CTA opens email rather than /checkout.
+ */
+export const PRO_MONTHLY_INR = 499;
+export const YEARLY_DISCOUNT = 0.85; // 15% off
+export const PRO_YEARLY_PER_MONTH_INR = Math.round(PRO_MONTHLY_INR * YEARLY_DISCOUNT); // 424
+export const PRO_YEARLY_TOTAL_INR = PRO_YEARLY_PER_MONTH_INR * 12; // 5088

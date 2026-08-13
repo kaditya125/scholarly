@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Github, GraduationCap, Presentation, ArrowLeft } from 'lucide-react';
 import {
   auth,
@@ -31,12 +31,60 @@ import {
  * POST /api/users/bootstrap, which derives identity from the verified token and refuses to
  * change a role that already exists. Selecting "teacher" here grants nothing on its own.
  */
+/**
+ * Maps a bootstrap failure to language a student or teacher can act on.
+ *
+ * 409 is the important one: the account already holds a different product role, and the server
+ * correctly refused to change it. Firebase allows exactly one account per email, so this is not
+ * recoverable by retrying or by signing up again — it needs support. Note it is only reachable
+ * through the OAuth paths; email/password signup fails earlier with auth/email-already-exists.
+ *
+ * Raw backend/Firebase text is never surfaced.
+ */
+function bootstrapErrorMessage(err: any, chosen: ProductRole): string {
+  const status = err?.response?.status;
+
+  if (status === 409) {
+    const existing = err?.response?.data?.currentRole === 'teacher' ? 'Teacher' : 'Student';
+    const wanted = chosen === 'teacher' ? 'Teacher' : 'Student';
+    return `This email is already registered as a ${existing} account, and you are now signed in to it. The same email cannot also be registered as a ${wanted} account. Contact support if you need your account type changed.`;
+  }
+  if (status === 401 || status === 403) {
+    return 'We could not verify your account permissions. Please sign in again.';
+  }
+  if (typeof status === 'number' && status >= 500) {
+    return 'Something went wrong on our side while setting up your account. Please try again in a moment.';
+  }
+  if (!err?.response) {
+    return 'We could not reach Scholarly. Check your internet connection and try again.';
+  }
+  return 'We could not finish setting up your account. Please try again.';
+}
+
 export default function Signup() {
   const navigate = useNavigate();
   const { refreshClaims } = useAuth();
 
-  const [step, setStep] = useState<'role' | 'details'>('role');
-  const [role, setRole] = useState<ProductRole | null>(null);
+  /**
+   * A marketing page may hand us the role the visitor has already chosen — /for-teachers'
+   * "Create a teacher account" arrives with `state: { role: 'teacher' }`.
+   *
+   * This is a UI shortcut and nothing more. It only seeds the same component state the role
+   * cards would have set, so it inherits exactly the existing security properties: bootstrap
+   * derives identity from the verified ID token and refuses to change a role that already
+   * exists, which means a hand-crafted history state grants precisely nothing. The visitor can
+   * still see and change the choice — step 2 opens with a "Signing up as … — change" control.
+   *
+   * Validated against the union rather than cast, so an unexpected value falls back to the
+   * normal role-selection step instead of entering step 2 with a bad role.
+   */
+  const location = useLocation();
+  const suggestedRole = (location.state as { role?: unknown } | null)?.role;
+  const initialRole: ProductRole | null =
+    suggestedRole === 'teacher' || suggestedRole === 'student' ? suggestedRole : null;
+
+  const [step, setStep] = useState<'role' | 'details'>(initialRole ? 'details' : 'role');
+  const [role, setRole] = useState<ProductRole | null>(initialRole);
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -58,10 +106,16 @@ export default function Signup() {
       // Custom claims only appear in a NEWLY MINTED token, so the refresh is mandatory —
       // without it the app keeps seeing the account as having no product role.
       await refreshClaims();
-    } catch (err) {
-      console.error('Role bootstrap failed; continuing without a product role.', err);
+    } catch (err: any) {
+      // Previously this swallowed every failure and navigated on regardless. That was secure —
+      // the server never changed the role — but it told the user their choice had been applied
+      // when it had not. Now the flow STOPS: no navigation, no retry, no second bootstrap.
+      setError(bootstrapErrorMessage(err, chosen));
+      setBusy(null);
+      return;
     }
-    navigate('/onboarding', { replace: true });
+    // Role-aware destination. A teacher must never enter the student onboarding wizard.
+    navigate(chosen === 'teacher' ? '/teacher/onboarding' : '/onboarding', { replace: true });
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -90,6 +144,10 @@ export default function Signup() {
     setError(null);
     setBusy(which);
     try {
+      // IMPORTANT: the selected role survives OAuth only because this uses signInWithPopup(),
+      // which keeps the SPA mounted. Switching to signInWithRedirect() unmounts this component,
+      // `role` in React state is lost, and every teacher signup would silently become role-less.
+      // Do not change this without first persisting the role outside component state.
       await signInWithPopup(auth, which === 'google' ? googleProvider : githubProvider);
       await assignRoleAndContinue(role);
     } catch (err: any) {

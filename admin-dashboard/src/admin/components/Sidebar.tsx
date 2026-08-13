@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { cn } from "../../lib/utils";
 import {
   Activity, BarChart2, BookOpen, BrainCircuit, Database,
-  Flag, FolderOpen, HeartPulse, History, LayoutDashboard, Library,
+  Flag, FolderOpen, GraduationCap, HeartPulse, History, LayoutDashboard, Library,
   MessageSquare, Network, Settings, ShieldAlert, Users, Bell,
   Save, Search
 } from "lucide-react";
@@ -44,6 +44,7 @@ const ADMIN_MENU: MenuGroup[] = [
     group: "Operations",
     items: [
       { label: "User Management", path: "/admin/users", icon: Users },
+      { label: "Teacher Verification", path: "/admin/teacher-verification", icon: GraduationCap },
       { label: "Security", path: "/admin/security", icon: ShieldAlert },
       { label: "Logs", path: "/admin/logs", icon: History },
       { label: "Notifications", path: "/admin/notifications", icon: Bell },

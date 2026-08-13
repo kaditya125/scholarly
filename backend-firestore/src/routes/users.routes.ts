@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { UserStatsController } from '../controllers/userStats.controller';
 import { UserProfileController } from '../controllers/userProfile.controller';
 import { userIdentityController } from '../controllers/userIdentity.controller';
+import { capabilitiesController } from '../controllers/capabilities.controller';
 import { requireAuth, enforceSelf } from '../middlewares/auth';
 
 const router = Router();
@@ -17,6 +18,13 @@ router.use(requireAuth);
  */
 router.post('/bootstrap', userIdentityController.bootstrap);
 router.get('/me', userIdentityController.me);
+
+/**
+ * Derived capabilities for the caller (Phase 3B). Self-scoped like the two routes above.
+ * Display contract only — see controllers/capabilities.controller.ts. Protected routes
+ * re-derive server-side and never trust a client-supplied capability.
+ */
+router.get('/capabilities', capabilitiesController.get);
 
 router.get('/:userId/stats', enforceSelf('userId'), controller.getUserStats);
 router.post('/:userId/xp', enforceSelf('userId'), controller.awardXP);
