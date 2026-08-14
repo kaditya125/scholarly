@@ -9,7 +9,9 @@ import { ResponseFormatter } from '../agents/ResponseFormatter';
 import { KnowledgeGraphAgent } from '../agents/KnowledgeGraphAgent';
 import { RetrievalService } from '../../services/rag/retrieval.service';
 import { StudentContextService } from '../../services/studentContext.service';
+import { TeacherContextService } from '../../services/teacherContext.service';
 import { UserProfileService } from '../../services/userProfile.service';
+import { ProductRole } from '../../types/roles';
 import { 
   buildScholarlySystemPrompt, 
   isGreetingMessage, 
@@ -54,6 +56,8 @@ export interface WorkflowRequest {
   mode?: string;
   model?: string;
   traceId?: string;
+  /** Which product surface the caller belongs to — decides the AI's persona (see prompts.ts). */
+  productRole?: ProductRole;
 }
 
 export interface WorkflowEvent {
@@ -87,6 +91,7 @@ export interface WorkflowEvent {
 import { IMemoryProvider } from '../interfaces/IMemoryProvider';
 import { IAnalyticsProvider } from '../interfaces/IAnalyticsProvider';
 import { StudentContext } from '../../types/studentContext.types';
+import { TeacherContext } from '../../types/teacherContext.types';
 
 export class WorkflowEngine {
   private get aiProvider(): IAIProvider {
@@ -327,6 +332,7 @@ export class WorkflowEngine {
 
         const podcastSystemPrompt = buildScholarlySystemPrompt({
           mode: 'PODCAST',
+          viewerRole: req.productRole,
           studentContext: {
             userId: req.userId,
             profile: null,
@@ -392,15 +398,20 @@ export class WorkflowEngine {
       }
 
       // ── Stage 2: Context Enrichment (NEW) ──────────────────────────────
-      yield { type: 'progress', stage: WorkflowStage.CONTEXT_ENRICHMENT, message: 'Loading your learning profile...' };
-      
-      const contextService = new StudentContextService();
+      const isTeacherRole = req.productRole === 'teacher';
+      yield {
+        type: 'progress',
+        stage: WorkflowStage.CONTEXT_ENRICHMENT,
+        message: isTeacherRole ? 'Loading your teaching profile...' : 'Loading your learning profile...',
+      };
+
       let studentContext: StudentContext;
-      
-      try {
-        studentContext = await contextService.aggregateContext(req.userId);
-      } catch (e) {
-        console.warn('Failed to aggregate student context, proceeding with defaults:', e);
+      let teacherContext: TeacherContext | undefined;
+
+      if (isTeacherRole) {
+        // Teachers don't go through student onboarding, so isOnboarded is pinned true here —
+        // that's what suppresses the student greeting/onboarding-extraction branches below,
+        // which don't apply to a teacher account.
         studentContext = {
           userId: req.userId,
           profile: null,
@@ -409,16 +420,41 @@ export class WorkflowEngine {
           stats: null,
           planner: null,
           notebooks: null,
-          isFirstTimeUser: true,
-          isOnboarded: false,
+          isFirstTimeUser: false,
+          isOnboarded: true,
         };
+        try {
+          teacherContext = await new TeacherContextService().aggregateContext(req.userId);
+        } catch (e) {
+          console.warn('Failed to aggregate teacher context, proceeding without it:', e);
+        }
+      } else {
+        const contextService = new StudentContextService();
+        try {
+          studentContext = await contextService.aggregateContext(req.userId);
+        } catch (e) {
+          console.warn('Failed to aggregate student context, proceeding with defaults:', e);
+          studentContext = {
+            userId: req.userId,
+            profile: null,
+            memory: null,
+            analytics: null,
+            stats: null,
+            planner: null,
+            notebooks: null,
+            isFirstTimeUser: true,
+            isOnboarded: false,
+          };
+        }
       }
 
-      // ── Greeting / Onboarding Detection ────────────────────────────────
+      // ── Greeting / Onboarding Detection (students only — teachers have no onboarding
+      //    wizard or greeting template here, so they flow straight into the main pipeline
+      //    and TeacherAgent's teacher-persona system prompt handles the greeting itself) ──
       const isGreeting = isGreetingMessage(req.query);
       const isShortHistory = req.history.filter(m => m.role !== 'system').length <= 2;
 
-      if (isGreeting && isShortHistory) {
+      if (isGreeting && isShortHistory && !isTeacherRole) {
         yield { type: 'progress', stage: WorkflowStage.AGENT_EXECUTION, message: 'Preparing your personalized welcome...' };
         
         // Generate greeting or onboarding response
@@ -478,9 +514,9 @@ export class WorkflowEngine {
         return;
       }
 
-      // ── Check for onboarding data in non-greeting messages ─────────────
+      // ── Check for onboarding data in non-greeting messages (students only) ─
       // If the user isn't onboarded and sends a message with exam info, extract it
-      if (!studentContext.isOnboarded) {
+      if (!isTeacherRole && !studentContext.isOnboarded) {
         const profileService = new UserProfileService();
         // Fire and forget — don't block the main flow
         // We'll check the response too after generation
@@ -505,6 +541,7 @@ export class WorkflowEngine {
         retrievedContext: 'Placeholder RAG Text', // Will be populated by RAG phase
         sharedState: {},
         studentContext, // Inject student context for all agents
+        teacherContext, // Populated only when req.productRole === 'teacher'
       };
 
       // Knowledge Graph Retrieval

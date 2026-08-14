@@ -1,11 +1,13 @@
 import { WorkflowRequest } from '../workflow/WorkflowEngine';
 import { StudentContext } from '../../types/studentContext.types';
+import { TeacherContext } from '../../types/teacherContext.types';
 
 export interface AgentContext {
   request: WorkflowRequest;
   retrievedContext: string;
   sharedState: Record<string, any>; // For passing data (drafts, verification reports) between agents
   studentContext?: StudentContext; // Full student profile, memory, analytics for personalization
+  teacherContext?: TeacherContext; // Teacher profile, when request.productRole === 'teacher'
 }
 
 export interface IAgent {

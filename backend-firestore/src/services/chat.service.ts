@@ -1,6 +1,7 @@
 import { ChatRepository } from '../repositories/chat.repository';
 import { WorkflowRequest, workflowEngine } from '../core/workflow/WorkflowEngine';
 import { ChatMessage, TopicType } from '../types';
+import { ProductRole } from '../types/roles';
 import { logger } from '../utils/logger';
 
 export class ChatService {
@@ -8,7 +9,7 @@ export class ChatService {
 
   // Removed getProvider because DI container handles it now.
 
-  async processChat(userId: string, sessionId: string, message: string, model: string, topicType: TopicType) {
+  async processChat(userId: string, sessionId: string, message: string, model: string, topicType: TopicType, productRole?: ProductRole) {
     // 1. Get or create session
     await this.repository.getOrCreateSession(sessionId, userId, topicType, model);
 
@@ -32,7 +33,8 @@ export class ChatService {
       query: message,
       history: history,
       mode: topicType,
-      model
+      model,
+      productRole
     };
 
     // Because this is the non-streaming fallback, we manually consume the stream to get the full reply
@@ -69,7 +71,7 @@ export class ChatService {
     };
   }
 
-  async processChatStream(userId: string, sessionId: string, message: string, model: string, topicType: TopicType, res: any, notebookId?: string, traceId?: string) {
+  async processChatStream(userId: string, sessionId: string, message: string, model: string, topicType: TopicType, res: any, notebookId?: string, traceId?: string, productRole?: ProductRole) {
     logger.info(`Starting stream workflow for user ${userId}`, { traceId, sessionId });
 
     // 1. Get or create session
@@ -99,7 +101,8 @@ export class ChatService {
       history: history,
       mode: topicType,
       model,
-      traceId
+      traceId,
+      productRole
     };
 
     const stream = workflowEngine.executeStream(req);

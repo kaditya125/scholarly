@@ -106,4 +106,10 @@ export const classesApi = {
     const { data } = await api.post(`/classes/${id}/status`, { status });
     return data;
   },
+
+  /** POST /classes/:id/order (Phase 3I) — opens a Razorpay order for a paid class. */
+  async order(id: string): Promise<{ orderId: string; amount: number; currency: string; keyId: string; classTitle: string; amountRupees: number }> {
+    const { data } = await api.post(`/classes/${id}/order`);
+    return data;
+  },
 };

@@ -173,6 +173,80 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ---- Class posts: announcements + discussion (Phase 3H) — owner or an ACTIVE member ----
+    //
+    // Same read shape as classResources: the teacher who owns the class, or anyone currently
+    // ACTIVE in it. Writes are closed — creation (including WHO may create which `kind`) goes
+    // through POST /api/classes/:id/posts with the Admin SDK; see classPost.service.ts.
+    match /classPosts/{postId} {
+      allow read: if isSignedIn() && (
+        resource.data.ownerUid == request.auth.uid ||
+        get(/databases/$(database)/documents/classEnrollments/$(resource.data.classId + '_' + request.auth.uid)).data.state == 'ACTIVE'
+      );
+      allow write: if false;
+    }
+
+    // ---- Class sessions (Phase 3M): owner or an ACTIVE member of the class ----
+    //
+    // Same structural note as classAssignments above: this rule grants read access to the
+    // WHOLE document, which includes `roomCodes` for BOTH roles — an ACTIVE member could in
+    // principle read the teacher's join code via a direct Firestore query, bypassing
+    // classSessionService.getJoinInfo's per-caller stripping. Accepted for the same reason the
+    // classAssignments answer-key gap was: the app's own UI never reads this collection
+    // directly (only through the REST API, which strips), and Firestore has no field-level
+    // security rules to close this more tightly without restructuring into per-uid documents —
+    // not worth doing for a 3M testing pass. Writes are closed regardless — every session and
+    // room code is created by classSessionService via the Admin SDK.
+    match /classSessions/{sessionId} {
+      allow read: if isSignedIn() && (
+        resource.data.ownerUid == request.auth.uid ||
+        get(/databases/$(database)/documents/classEnrollments/$(resource.data.classId + '_' + request.auth.uid)).data.state == 'ACTIVE'
+      );
+      allow write: if false;
+    }
+
+    // ---- Teacher earnings ledger (Phase 3I): the earning teacher only, ever ----
+    //
+    // Append-only by construction — writes go through earnings.service.ts via the Admin SDK,
+    // triggered only by a verified Razorpay payment. No update/delete path exists anywhere in
+    // the app, so `allow write: if false` is not just a rule but the honest description of the
+    // whole feature: an entry, once written, is never edited — see types/earnings.ts.
+    match /teacherEarnings/{entryId} {
+      allow read: if isSignedIn() && resource.data.teacherUid == request.auth.uid;
+      allow write: if false;
+    }
+
+    // ---- Payout records (Phase 3J-lite): the earning teacher only, ever ----
+    //
+    // Created exclusively by earningsService.recordPayout via the Admin SDK, from an admin-only
+    // route. A teacher can read their own payout history but never write here — recording a
+    // payout is inherently an admin act, not a self-serve one.
+    match /teacherPayouts/{payoutId} {
+      allow read: if isSignedIn() && resource.data.teacherUid == request.auth.uid;
+      allow write: if false;
+    }
+
+    // ---- Referrals + entitlements (Phase 3L) — either party, or the grant's own recipient ----
+    //
+    // Written exclusively by referralService.recordReferral via the Admin SDK, triggered from
+    // POST /api/users/bootstrap when userIdentityService reports a genuinely new account. See
+    // types/referral.ts. `rewardRules` is closed to both read and write — the client never
+    // reads the raw config; GET /api/users/referrals returns the effective values instead.
+    match /referrals/{referralId} {
+      allow read: if isSignedIn() && (
+        resource.data.referrerUid == request.auth.uid ||
+        resource.data.referredUid == request.auth.uid
+      );
+      allow write: if false;
+    }
+    match /entitlementGrants/{grantId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+    match /rewardRules/{ruleId} {
+      allow read, write: if false;
+    }
+
     // ---- Notebooks + subcollections: owner / editor / viewer scoped ----
     match /notebooks/{notebookId} {
       function nb() { return resource.data; }

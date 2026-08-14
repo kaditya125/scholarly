@@ -59,6 +59,27 @@ const envSchema = z.object({
   RAZORPAY_KEY_ID: z.string().optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
+
+  // RazorpayX / Route (Phase 3K — automated teacher payouts). A SEPARATE product from the
+  // RAZORPAY_* keys above, with its own onboarding and a business-entity prerequisite. Reading
+  // these unset is expected and correct right now — see services/payout/PayoutProvider.ts.
+  RAZORPAYX_KEY_ID: z.string().optional(),
+  RAZORPAYX_KEY_SECRET: z.string().optional(),
+  RAZORPAYX_ACCOUNT_NUMBER: z.string().optional(),
+
+  // 100ms (Phase 3M — live classes, TESTING vendor). App Access Key + App Secret from the
+  // project's Developer dashboard; the server SDK mints its own management tokens from these,
+  // never a manually-copied one. HMS_TEMPLATE_ID and the role names must match what's actually
+  // configured in the 100ms dashboard's Templates section — see HundredMsProvider.ts.
+  HMS_ACCESS_KEY: z.string().optional(),
+  HMS_SECRET: z.string().optional(),
+  HMS_TEMPLATE_ID: z.string().optional(),
+  HMS_TEACHER_ROLE: z.string().default('teacher'),
+  HMS_STUDENT_ROLE: z.string().default('student'),
+  // The template's subdomain (100ms dashboard → Templates → Room Links) — join URLs are
+  // https://<subdomain>.app.100ms.live/meeting/<room-code>. Required for a room-code join link
+  // to resolve to anything; see HundredMsProvider.ts#buildJoinUrl.
+  HMS_SUBDOMAIN: z.string().optional(),
   
   // Video and Veo Models
   GROK_VERTEX_PROJECT: z.string().optional(),

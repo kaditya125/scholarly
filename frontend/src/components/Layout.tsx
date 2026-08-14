@@ -48,7 +48,8 @@ import {
   HelpCircle,
   FolderOpen,
   GraduationCap,
-  Palette
+  Palette,
+  Gift
 } from "lucide-react";
 
 import { cn } from "../lib/utils";
@@ -97,6 +98,8 @@ const MAIN_MENU: { label: string; path: string; icon: any; group?: 'top' }[] = [
 
   // Utility
   { label: "Explore", path: "/explore", icon: Compass, group: 'top' },
+  // Referrals (Phase 3L) — a link that gets both sides Pro days on signup. Not enrolment.
+  { label: "Invite friends", path: "/refer", icon: Gift },
   { label: "Settings", path: "/settings", icon: Settings },
 ];
 

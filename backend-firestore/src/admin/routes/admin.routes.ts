@@ -17,6 +17,7 @@ import { BackupsController } from '../controllers/backups.controller';
 import { SettingsController } from '../controllers/settings.controller';
 import { FeatureFlagsController } from '../controllers/feature-flags.controller';
 import { teacherVerificationController as teacherVerificationCtrl } from '../controllers/teacher-verification.controller';
+import { payoutController } from '../controllers/payout.controller';
 
 const router = Router();
 const aiMonitoringCtrl = new AIMonitoringController();
@@ -114,6 +115,11 @@ router.get('/settings', settingsCtrl.getSettings);
 router.get('/teacher/queue', teacherVerificationCtrl.listQueue);
 router.get('/teacher/:uid/verification', teacherVerificationCtrl.getVerification);
 router.post('/teacher/:uid/status', teacherVerificationCtrl.setStatus);
+
+// Manual payouts (Phase 3J-lite). See payout.controller.ts — this records a payout the admin
+// already made outside the platform; it never moves money itself.
+router.get('/payouts/queue', payoutController.listQueue);
+router.post('/payouts', payoutController.record);
 
 // Admin Controllers will be imported and mounted here in later phases
 

@@ -6,7 +6,7 @@ import {
   Activity, BarChart2, BookOpen, BrainCircuit, Database,
   Flag, FolderOpen, GraduationCap, HeartPulse, History, LayoutDashboard, Library,
   MessageSquare, Network, Settings, ShieldAlert, Users, Bell,
-  Save, Search
+  Save, Search, Wallet
 } from "lucide-react";
 
 type MenuItem = { label: string; path: string; icon: React.ComponentType<{ className?: string }> };
@@ -45,6 +45,7 @@ const ADMIN_MENU: MenuGroup[] = [
     items: [
       { label: "User Management", path: "/admin/users", icon: Users },
       { label: "Teacher Verification", path: "/admin/teacher-verification", icon: GraduationCap },
+      { label: "Payouts", path: "/admin/payouts", icon: Wallet },
       { label: "Security", path: "/admin/security", icon: ShieldAlert },
       { label: "Logs", path: "/admin/logs", icon: History },
       { label: "Notifications", path: "/admin/notifications", icon: Bell },

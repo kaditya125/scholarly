@@ -2,13 +2,15 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   GraduationCap, Loader2, Clock, LogOut, AlertTriangle, IndianRupee, CalendarDays,
-  NotebookPen, ChevronDown, ExternalLink, ClipboardCheck,
+  NotebookPen, ChevronDown, ExternalLink, ClipboardCheck, MessageCircle, Radio,
 } from 'lucide-react';
 import { useMyEnrollments, useEnrollmentMutations } from '../hooks/api/useEnrollments';
 import { useClassResources } from '../hooks/api/useClassResources';
 import { useClassAssignments, useClassAssignmentMutations } from '../hooks/api/useClassAssignments';
+import { useClassSessions } from '../hooks/api/useClassSessions';
 import type { MyEnrollment } from '../lib/api/enrollments';
 import { cn } from '../lib/utils';
+import ClassFeed from '../components/ClassFeed';
 
 /**
  * /my-classes — the student's side of the enrolment loop.
@@ -127,9 +129,31 @@ function ActiveClassTests({ classId }: { classId: string }) {
   );
 }
 
+/**
+ * A quiet "is this class live right now" check, always on (not behind an accordion like the
+ * others) — a live indicator that only shows up when clicked defeats its own purpose. Renders
+ * nothing when there's no live session, so a student in several quiet classes sees no clutter.
+ */
+function LiveJoinButton({ classId }: { classId: string }) {
+  const { data: sessions } = useClassSessions(classId, true);
+  const live = sessions?.find((s) => s.status === 'live');
+  if (!live) return null;
+
+  return (
+    <Link
+      to={`/classes/${classId}/sessions/${live.id}/join`}
+      className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[12.5px] font-semibold animate-pulse"
+    >
+      <Radio className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden />
+      Live — Join
+    </Link>
+  );
+}
+
 function ActiveClassRow({ e, onLeave, leaving }: { e: MyEnrollment; onLeave: () => void; leaving: boolean }) {
   const [openResources, setOpenResources] = useState(false);
   const [openTests, setOpenTests] = useState(false);
+  const [openDiscussion, setOpenDiscussion] = useState(false);
   const { data: resources, isLoading, isError } = useClassResources(e.classId, openResources);
 
   return (
@@ -138,6 +162,7 @@ function ActiveClassRow({ e, onLeave, leaving }: { e: MyEnrollment; onLeave: () 
         e={e}
         action={
           <div className="flex items-center gap-1.5 shrink-0">
+            <LiveJoinButton classId={e.classId} />
             <button
               onClick={() => setOpenTests((v) => !v)}
               aria-expanded={openTests}
@@ -155,6 +180,15 @@ function ActiveClassRow({ e, onLeave, leaving }: { e: MyEnrollment; onLeave: () 
               <NotebookPen className="w-3.5 h-3.5" strokeWidth={2} aria-hidden />
               Resources
               <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', openResources && 'rotate-180')} strokeWidth={2} aria-hidden />
+            </button>
+            <button
+              onClick={() => setOpenDiscussion((v) => !v)}
+              aria-expanded={openDiscussion}
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-slate-200 dark:border-white/12 text-[12.5px] font-medium hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors"
+            >
+              <MessageCircle className="w-3.5 h-3.5" strokeWidth={2} aria-hidden />
+              Discussion
+              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', openDiscussion && 'rotate-180')} strokeWidth={2} aria-hidden />
             </button>
             <button
               onClick={onLeave}
@@ -204,6 +238,11 @@ function ActiveClassRow({ e, onLeave, leaving }: { e: MyEnrollment; onLeave: () 
               ))}
             </ul>
           )}
+        </div>
+      )}
+      {openDiscussion && (
+        <div className="px-5 pb-4 -mt-1">
+          <ClassFeed classId={e.classId} viewerRole="student" />
         </div>
       )}
     </div>

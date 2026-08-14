@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { teacherProfileController } from '../controllers/teacherProfile.controller';
+import { earningsController } from '../controllers/earnings.controller';
 import { requireAuth, requireProductRole } from '../middlewares/auth';
 import { requireCapability } from '../middlewares/capability';
 
@@ -23,6 +24,11 @@ router.use(requireProductRole('teacher'));
 
 // Reading is open to any teacher (and to an admin inspecting the surface).
 router.get('/profile', teacherProfileController.get);
+
+/** Reading your own earnings ledger (Phase 3I) needs ownership, not a capability — same reasoning as GET /:id/enrollments in classes.routes.ts. */
+router.get('/earnings', earningsController.get);
+/** Reading your own payout history (Phase 3J-lite) — same reasoning. */
+router.get('/payouts', earningsController.listPayouts);
 
 /**
  * Writing additionally requires the `editTeacherProfile` capability, which a suspended teacher

@@ -2,6 +2,14 @@ import crypto from 'crypto';
 import Razorpay from 'razorpay';
 import { db } from '../config/firebase';
 import { env } from '../config/env';
+import { classRepository } from '../repositories/class.repository';
+import { enrollmentService } from './enrollment.service';
+import { earningsService } from './earnings.service';
+
+type CodedError = Error & { code: string };
+const fail = (code: string, message: string): never => {
+  throw Object.assign(new Error(message), { code }) as CodedError;
+};
 
 /**
  * PaymentsService — Razorpay integration.
@@ -72,6 +80,7 @@ export class PaymentsService {
 
     await db.collection('payments').doc(order.id).set({
       orderId: order.id,
+      orderType: 'subscription',
       userId,
       planId: plan.id,
       planName: plan.name,
@@ -92,6 +101,117 @@ export class PaymentsService {
       billing: yearly ? 'yearly' : 'monthly',
       amountRupees: rupees,
     };
+  }
+
+  /**
+   * Creates a Razorpay order for one student buying into one paid class. Amount is computed
+   * SERVER-SIDE from the class's own `pricing` record — never accepted from the client, same
+   * discipline as `createOrder` above. Capacity is checked here so checkout never opens for a
+   * full class; it is deliberately NOT re-checked when the payment later clears (see
+   * `enrollmentService.activateFromPurchase` for why refusing a seat after money has already
+   * moved would be the worse failure).
+   */
+  async createClassOrder(studentUid: string, classId: string) {
+    const record = await classRepository.getById(classId);
+    if (!record) return fail('NOT_FOUND', 'Class not found');
+    if (record.ownerUid === studentUid) return fail('SELF_ENROL', 'You cannot buy your own class.');
+    if (record.pricing.type !== 'paid' || record.pricing.amountINR <= 0) {
+      return fail('NOT_PURCHASABLE', 'This class is not for sale.');
+    }
+    if (!['published', 'active'].includes(record.status)) {
+      return fail('CLASS_NOT_OPEN', 'This class is not open to join.');
+    }
+    const seats = record.capacity;
+    const enrolled = record.counts?.enrolled ?? 0;
+    if (seats != null && enrolled >= seats) return fail('CLASS_FULL', 'This class is full.');
+
+    const rupees = record.pricing.amountINR;
+    const paise = rupees * 100;
+    const receipt = `cls_${classId.slice(0, 8)}_${Date.now()}`.slice(0, 40);
+
+    const order = await this.client().orders.create({
+      amount: paise,
+      currency: 'INR',
+      receipt,
+      notes: { userId: studentUid, classId, teacherUid: record.ownerUid, orderType: 'class_purchase' },
+    });
+
+    await db.collection('payments').doc(order.id).set({
+      orderId: order.id,
+      orderType: 'class_purchase',
+      userId: studentUid,
+      classId,
+      teacherUid: record.ownerUid,
+      className: record.title,
+      amountPaise: paise,
+      amountRupees: rupees,
+      currency: 'INR',
+      status: 'created',
+      createdAt: Date.now(),
+    });
+
+    return {
+      orderId: order.id,
+      amount: paise,
+      currency: 'INR',
+      keyId: this.publicKeyId,
+      classTitle: record.title,
+      amountRupees: rupees,
+    };
+  }
+
+  /**
+   * Applies a verified payment, whichever order type it turns out to be. Both `verifyPayment`
+   * (client callback) and `handleWebhookEvent` (server-to-server) call this rather than deciding
+   * the type themselves, so there is exactly one place that reads `orderType` and dispatches.
+   *
+   * `markPaidAndUpgrade` is untouched by this addition — for a subscription order it is called
+   * exactly as it always was, unconditionally applying the Pro upgrade it's named for.
+   */
+  async applyOrderPayment(orderId: string, paymentId: string, source: 'client' | 'webhook', method?: string): Promise<{ applied: boolean; orderType: 'subscription' | 'class_purchase' | null; userId?: string; classId?: string }> {
+    const snap = await db.collection('payments').doc(orderId).get();
+    if (!snap.exists) {
+      console.warn(`[payments] Order ${orderId} not found in Firestore (source=${source}); ignoring.`);
+      return { applied: false, orderType: null };
+    }
+    const orderType = (snap.data() as any).orderType === 'class_purchase' ? 'class_purchase' : 'subscription';
+
+    if (orderType === 'class_purchase') {
+      const result = await this.markClassOrderPaid(orderId, paymentId, source, method);
+      return { applied: result.applied, orderType, userId: result.userId, classId: result.classId };
+    }
+    const result = await this.markPaidAndUpgrade(orderId, paymentId, source, method);
+    return { applied: result.upgraded, orderType, userId: result.userId };
+  }
+
+  /**
+   * Marks a class-purchase order paid, activates the student's enrolment, and accrues the
+   * teacher's earnings ledger. Idempotent on the order's own `status` field exactly like
+   * `markPaidAndUpgrade`; `enrollmentService.activateFromPurchase` and
+   * `earningsService.accrueForClassSale` are each independently idempotent too, so a retried
+   * webhook after a partial failure (e.g. order marked paid, ledger write crashed) safely
+   * finishes the remaining step instead of double-applying the parts that already succeeded.
+   */
+  private async markClassOrderPaid(orderId: string, paymentId: string, source: 'client' | 'webhook', method?: string): Promise<{ applied: boolean; userId?: string; classId?: string }> {
+    const ref = db.collection('payments').doc(orderId);
+    const snap = await ref.get();
+    if (!snap.exists) return { applied: false };
+    const data = snap.data() as any;
+
+    if (data.status !== 'paid') {
+      await ref.set({ status: 'paid', paymentId, paidAt: Date.now(), paidVia: source, ...(method ? { method } : {}) }, { merge: true });
+    }
+
+    await enrollmentService.activateFromPurchase(data.classId, data.userId, orderId);
+    await earningsService.accrueForClassSale({
+      teacherUid: data.teacherUid,
+      classId: data.classId,
+      orderId,
+      grossPaise: data.amountPaise,
+    });
+
+    console.log(`[payments] ✅ Activated class purchase ${data.userId} → ${data.classId} (order ${orderId}, via ${source}).`);
+    return { applied: true, userId: data.userId, classId: data.classId };
   }
 
   /** Verifies the client-side checkout callback signature: HMAC_SHA256(order_id|payment_id, secret). */
@@ -172,19 +292,26 @@ export class PaymentsService {
       const snap = await db.collection('payments').where('userId', '==', userId).get();
       const rows = snap.docs.map((d) => d.data() as any);
       rows.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-      return rows.map((r) => ({
-        orderId: r.orderId,
-        planId: r.planId,
-        planName: r.planName || 'Scholarly Pro',
-        billing: r.billing || 'monthly',
-        amountRupees: r.amountRupees ?? null,
-        currency: r.currency || 'INR',
-        status: r.status || 'created',
-        method: r.method || null,
-        paymentId: r.paymentId || null,
-        createdAt: r.createdAt || null,
-        paidAt: r.paidAt || null,
-      }));
+      // `orderType` distinguishes a class purchase (Phase 3I) from a subscription order — without
+      // it, a class-purchase row would fall through to `planName || 'Scholarly Pro'` below and
+      // render as a fake subscription line item in Settings' billing history and invoice.
+      return rows.map((r) =>
+        r.orderType === 'class_purchase'
+          ? {
+              orderId: r.orderId, orderType: 'class_purchase', planId: null,
+              planName: r.className || 'Class purchase', billing: null,
+              amountRupees: r.amountRupees ?? null, currency: r.currency || 'INR',
+              status: r.status || 'created', method: r.method || null,
+              paymentId: r.paymentId || null, createdAt: r.createdAt || null, paidAt: r.paidAt || null,
+            }
+          : {
+              orderId: r.orderId, orderType: 'subscription', planId: r.planId,
+              planName: r.planName || 'Scholarly Pro', billing: r.billing || 'monthly',
+              amountRupees: r.amountRupees ?? null, currency: r.currency || 'INR',
+              status: r.status || 'created', method: r.method || null,
+              paymentId: r.paymentId || null, createdAt: r.createdAt || null, paidAt: r.paidAt || null,
+            },
+      );
     } catch (e) {
       console.error('[payments] getHistory failed:', (e as Error).message);
       return [];
@@ -213,7 +340,7 @@ export class PaymentsService {
       const orderId = payment?.order_id || orderEntity?.id;
       const paymentId = payment?.id || 'webhook';
       if (orderId) {
-        await this.markPaidAndUpgrade(orderId, paymentId, 'webhook', payment?.method);
+        await this.applyOrderPayment(orderId, paymentId, 'webhook', payment?.method);
         return { handled: true };
       }
     }

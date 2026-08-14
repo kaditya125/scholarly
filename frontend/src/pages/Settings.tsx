@@ -37,7 +37,15 @@ const EXAMS = [
 ];
 
 export default function Settings() {
-  const { user, logout, refreshUser } = useAuth();
+  const { user, logout, refreshUser, role } = useAuth();
+  const isTeacher = role === 'teacher';
+  // Same page, mounted under both /settings (student) and /teach/settings (teacher — see
+  // App.tsx) — internal links below must resolve inside whichever shell rendered them.
+  const homePath = isTeacher ? '/teach' : '/dashboard';
+  const chatPath = isTeacher ? '/teach/chat' : '/chat';
+  const notebooksPath = isTeacher ? '/teach/notebooks' : '/notebooks';
+  const testsPath = isTeacher ? '/teach/tests' : '/tests';
+  const visibleTabs = isTeacher ? TABS.filter((t) => t.id !== 'learning') : TABS;
   const { themePreference, setThemePreference } = useTheme();
   const navigate = useNavigate();
 
@@ -159,9 +167,9 @@ export default function Settings() {
     if (!w) { showToast('err', 'Allow pop-ups to print the invoice.'); return; }
     const amount = p.amountRupees != null ? `\u20b9${Number(p.amountRupees).toLocaleString('en-IN')}` : '\u2014';
     const dateStr = fmtDate(p.paidAt || p.createdAt);
-    const billing = p.billing === 'yearly' ? 'Yearly' : 'Monthly';
+    const billing = p.orderType === 'class_purchase' ? 'One-time' : (p.billing === 'yearly' ? 'Yearly' : 'Monthly');
     const invNo = String(p.paymentId || p.orderId || 'INV').replace(/[^a-zA-Z0-9_]/g, '');
-    const name = user?.displayName || 'Scholarly Student';
+    const name = user?.displayName || (isTeacher ? 'Scholarly Teacher' : 'Scholarly Student');
     const email = user?.email || '';
     const esc = (s: string) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] as string));
     w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${esc(invNo)}</title>
@@ -200,7 +208,7 @@ export default function Settings() {
       </div>
       <table>
         <thead><tr><th>Description</th><th class="right">Billing</th><th class="right">Amount</th></tr></thead>
-        <tbody><tr><td>${esc(p.planName || 'Scholarly Pro')} subscription</td><td class="right">${billing}</td><td class="right">${amount}</td></tr></tbody>
+        <tbody><tr><td>${esc(p.planName || 'Scholarly Pro')}${p.orderType === 'class_purchase' ? '' : ' subscription'}</td><td class="right">${billing}</td><td class="right">${amount}</td></tr></tbody>
       </table>
       <div class="totals">
         <div class="row"><span>Subtotal</span><span>${amount}</span></div>
@@ -281,7 +289,7 @@ export default function Settings() {
 
       {/* Tabs */}
       <div className="flex items-center gap-1 mt-6 border-b border-slate-200 dark:border-white/10 overflow-x-auto">
-        {TABS.map((t) => (
+        {visibleTabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
@@ -295,7 +303,7 @@ export default function Settings() {
       </div>
 
       <div className="mt-8">
-        {tab === 'learning' && <LearningProfileSettings />}
+        {tab === 'learning' && !isTeacher && <LearningProfileSettings />}
 
         {tab === 'profile' && (
           <div className="space-y-6">
@@ -315,16 +323,16 @@ export default function Settings() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white truncate">{user?.displayName || 'Student'}</h2>
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white truncate">{user?.displayName || (isTeacher ? 'Teacher' : 'Student')}</h2>
                     <span className="w-2 h-2 rounded-full bg-emerald-500" title="Online" />
                   </div>
                   <p className="text-[14px] text-slate-500 dark:text-gray-400 mt-0.5">
-                    {bio ? bio.split('\n')[0].slice(0, 90) : `TRE aspirant${location ? ` based in ${location}` : ''}`}
+                    {bio ? bio.split('\n')[0].slice(0, 90) : isTeacher ? `Educator${location ? ` based in ${location}` : ''}` : `TRE aspirant${location ? ` based in ${location}` : ''}`}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  <Link to="/dashboard" className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                  <Link to={homePath} className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                     View dashboard
                   </Link>
                   <button onClick={() => setEditAbout((v) => !v)} className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold rounded-lg bg-neutral-900 dark:bg-white dark:text-neutral-900 text-white hover:opacity-90 transition-opacity">
@@ -339,13 +347,15 @@ export default function Settings() {
             <div className="grid md:grid-cols-3 gap-6">
               {/* Left: Experience + About me */}
               <div className="md:col-span-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1a1a1b] p-6 space-y-6">
-                <div>
-                  <h3 className="text-[15px] font-bold text-slate-900 dark:text-white mb-2">Preparing for</h3>
-                  <div className="flex items-center gap-2 text-[14px] text-slate-600 dark:text-gray-300">
-                    <GraduationCap className="w-4 h-4 text-indigo-500 shrink-0" />
-                    {examLabelOf(exam) || 'Set your target exam in the General tab'}
+                {!isTeacher && (
+                  <div>
+                    <h3 className="text-[15px] font-bold text-slate-900 dark:text-white mb-2">Preparing for</h3>
+                    <div className="flex items-center gap-2 text-[14px] text-slate-600 dark:text-gray-300">
+                      <GraduationCap className="w-4 h-4 text-indigo-500 shrink-0" />
+                      {examLabelOf(exam) || 'Set your target exam in the General tab'}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div>
                   <h3 className="text-[15px] font-bold text-slate-900 dark:text-white mb-2">About me</h3>
@@ -420,8 +430,8 @@ export default function Settings() {
                       {savingAbout && <Loader2 className="w-4 h-4 animate-spin" />} Save profile
                     </button>
                   ) : (
-                    <Link to="/chat" className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-[13px] font-semibold rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                      Ask the AI Tutor
+                    <Link to={chatPath} className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-[13px] font-semibold rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                      {isTeacher ? 'Ask the AI Assistant' : 'Ask the AI Tutor'}
                     </Link>
                   )}
                 </div>
@@ -447,12 +457,17 @@ export default function Settings() {
             <div>
               <h3 className="text-[15px] font-bold text-slate-900 dark:text-white mb-3">Quick access</h3>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
+                {(isTeacher ? [
+                  { icon: Bot, label: 'AI Assistant', to: chatPath, grad: 'from-indigo-500 to-violet-600' },
+                  { icon: BookOpen, label: 'Notebooks', to: notebooksPath, grad: 'from-blue-500 to-cyan-500' },
+                  { icon: FileText, label: 'Tests', to: testsPath, grad: 'from-emerald-500 to-teal-600' },
+                  { icon: Layers, label: 'Classes', to: '/teach/classes', grad: 'from-fuchsia-500 to-purple-600' },
+                ] : [
                   { icon: Bot, label: 'AI Tutor', to: '/chat', grad: 'from-indigo-500 to-violet-600' },
                   { icon: BookOpen, label: 'Notebooks', to: '/notebooks', grad: 'from-blue-500 to-cyan-500' },
                   { icon: FileText, label: 'Mock Tests', to: '/tests', grad: 'from-emerald-500 to-teal-600' },
                   { icon: Layers, label: 'Flashcards', to: '/flashcards', grad: 'from-fuchsia-500 to-purple-600' },
-                ].map((q) => (
+                ]).map((q) => (
                   <Link key={q.label} to={q.to} className="group relative rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 aspect-[4/3] p-4 flex flex-col justify-between hover:-translate-y-0.5 transition-transform">
                     <div className={cn('absolute inset-0 bg-gradient-to-br opacity-90', q.grad)} />
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.25),transparent_60%)]" />
@@ -499,12 +514,14 @@ export default function Settings() {
                 <Field label="Email">
                   <input value={user?.email || ''} disabled className={cn(inputCls, 'opacity-60 cursor-not-allowed')} />
                 </Field>
-                <Field label="Target exam">
-                  <select value={exam} onChange={(e) => setExam(e.target.value)} className={inputCls}>
-                    <option value="">Select your exam…</option>
-                    {EXAMS.map((x) => <option key={x.value} value={x.value}>{x.label}</option>)}
-                  </select>
-                </Field>
+                {!isTeacher && (
+                  <Field label="Target exam">
+                    <select value={exam} onChange={(e) => setExam(e.target.value)} className={inputCls}>
+                      <option value="">Select your exam…</option>
+                      {EXAMS.map((x) => <option key={x.value} value={x.value}>{x.label}</option>)}
+                    </select>
+                  </Field>
+                )}
               </div>
               <div className="mt-5">
                 <button onClick={saveProfile} disabled={savingProfile}
@@ -627,7 +644,9 @@ export default function Settings() {
                 {historyRows.length > 0 ? (
                   historyRows.map((p) => (
                     <div key={p.orderId || p.paymentId} className="grid grid-cols-6 px-5 py-4 text-[13px] text-slate-700 dark:text-gray-200 items-center border-t border-slate-100 dark:border-white/5">
-                      <span className="col-span-2 font-medium truncate pr-2">{p.planName || 'Scholarly Pro'} · {p.billing === 'yearly' ? 'Yearly' : 'Monthly'}</span>
+                      <span className="col-span-2 font-medium truncate pr-2">
+                        {p.planName || 'Scholarly Pro'} · {p.orderType === 'class_purchase' ? 'One-time' : (p.billing === 'yearly' ? 'Yearly' : 'Monthly')}
+                      </span>
                       <span className="text-slate-500 dark:text-gray-400">{fmtDate(p.paidAt || p.createdAt)}</span>
                       <span className="text-slate-700 dark:text-gray-200">{p.amountRupees != null ? `₹${Number(p.amountRupees).toLocaleString('en-IN')}` : '—'}</span>
                       <span>

@@ -4,6 +4,7 @@ import {
   GoogleAuthProvider,
   GithubAuthProvider,
   signInWithPopup,
+  getAdditionalUserInfo,
   signOut,
   onAuthStateChanged,
   // Email/password auth was never wired up: Signin's submit button was a
@@ -36,6 +37,7 @@ export const githubProvider = new GithubAuthProvider();
 
 export {
   signInWithPopup,
+  getAdditionalUserInfo,
   signOut,
   onAuthStateChanged,
   signInWithEmailAndPassword,

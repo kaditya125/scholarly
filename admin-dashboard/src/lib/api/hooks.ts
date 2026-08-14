@@ -79,6 +79,21 @@ export const useSetTeacherStatus = () => {
   });
 };
 
+// ─── Manual payouts (Phase 3J-lite) ─────────────────────────────────
+// Records that an admin paid a teacher OUTSIDE the platform (UPI/bank transfer/cash) — see
+// backend-firestore/src/types/earnings.ts for why. Nothing here moves money.
+export const usePayoutQueue = () =>
+  useQuery({ queryKey: ['payout-queue'], queryFn: () => get('/admin/payouts/queue') });
+
+export const useRecordPayout = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { teacherUid: string; method: string; reference?: string; note?: string }) =>
+      apiClient.post('/admin/payouts', input).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['payout-queue'] }),
+  });
+};
+
 export const useFeatureFlags = () =>
   useQuery({ queryKey: ['feature-flags'], queryFn: () => get('/admin/feature-flags') });
 
