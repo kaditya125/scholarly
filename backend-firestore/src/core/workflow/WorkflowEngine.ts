@@ -1,7 +1,6 @@
 import { container, TOKENS } from '../di/container';
 import { IAIProvider } from '../interfaces/IAIProvider';
 import { ICacheProvider } from '../interfaces/ICacheProvider';
-import { ChatMessage } from '../../types';
 import { AgentContext } from '../agents/IAgent';
 import { TeacherAgent } from '../agents/TeacherAgent';
 import { VerificationAgent } from '../agents/VerificationAgent';
@@ -9,12 +8,21 @@ import { ResponseFormatter } from '../agents/ResponseFormatter';
 import { KnowledgeGraphAgent } from '../agents/KnowledgeGraphAgent';
 import { RetrievalService } from '../../services/rag/retrieval.service';
 import { StudentContextService } from '../../services/studentContext.service';
+import { TeacherContextService } from '../../services/teacherContext.service';
 import { UserProfileService } from '../../services/userProfile.service';
-import { 
-  buildScholarlySystemPrompt, 
-  isGreetingMessage, 
-  getGreetingOrOnboardingPrompt 
+import {
+  buildScholarlySystemPrompt,
+  isGreetingMessage,
+  getGreetingOrOnboardingPrompt,
+  isConversationalReasoningMode,
 } from '../../config/prompts';
+import { WorkflowStage, WorkflowEvent, WorkflowRequest } from './types';
+// Re-exported for backward compatibility — existing importers (chat.service.ts,
+// IAgent.ts, scripts) previously got these from this file's own local definitions,
+// which had drifted from the canonical versions in ./types (missing 'suggestions'
+// event support). Now single-sourced.
+export { WorkflowStage };
+export type { WorkflowEvent, WorkflowRequest };
 import { getTeacherPrompt } from '../../prompts/teacher.prompt';
 import { getVerificationPrompt } from '../../prompts/verification.prompt';
 import { getIntentPrompt } from '../../prompts/intent.prompt';
@@ -31,62 +39,10 @@ const getTelemetryService = (): TelemetryService => {
   return _telemetryService;
 };
 
-export enum WorkflowStage {
-  INTENT_DETECTION = 'INTENT_DETECTION',
-  CONTEXT_ENRICHMENT = 'CONTEXT_ENRICHMENT',
-  MEMORY_RETRIEVAL = 'MEMORY_RETRIEVAL',
-  GRAPH_RETRIEVAL = 'GRAPH_RETRIEVAL',
-  RAG_RETRIEVAL = 'RAG_RETRIEVAL',
-  RERANKING = 'RERANKING',
-  AGENT_EXECUTION = 'AGENT_EXECUTION',
-  VERIFICATION = 'VERIFICATION',
-  ASSET_GENERATION = 'ASSET_GENERATION',
-  ANALYTICS = 'ANALYTICS',
-  MEMORY_UPDATE = 'MEMORY_UPDATE',
-}
-
-export interface WorkflowRequest {
-  userId: string;
-  notebookId?: string;
-  sessionId?: string;
-  query: string;
-  history: ChatMessage[];
-  mode?: string;
-  model?: string;
-  traceId?: string;
-}
-
-export interface WorkflowEvent {
-  type: 'progress' | 'chunk' | 'citation' | 'asset' | 'warning' | 'metrics' | 'error' | 'done' | 'reasoning';
-  /** Reasoning prose for the 'reasoning' event — see the TeacherAgent stage below. */
-  text?: string;
-  stage?: WorkflowStage;
-  message?: string;
-  chunk?: string;
-  citation?: {
-    source: string;
-    text: string;
-    score: number;
-    authorityScore: number;
-    selectionReasoning: string;
-  };
-  asset?: {
-    type: string;
-    id: string;
-    preview: string;
-  };
-  warning?: string;
-  metrics?: {
-    retrievalMs: number;
-    generationMs: number;
-    confidenceScore: number;
-  };
-  data?: any;
-}
-
 import { IMemoryProvider } from '../interfaces/IMemoryProvider';
 import { IAnalyticsProvider } from '../interfaces/IAnalyticsProvider';
 import { StudentContext } from '../../types/studentContext.types';
+import { TeacherContext } from '../../types/teacherContext.types';
 
 export class WorkflowEngine {
   private get aiProvider(): IAIProvider {
@@ -259,6 +215,35 @@ export class WorkflowEngine {
   }
 
   /**
+   * Generates 2-3 short, first-person follow-up questions the student might
+   * naturally ask next, given the exchange that just happened. Cheap, non-streaming,
+   * independent of the main answer — any failure here (bad JSON, provider error)
+   * silently yields no suggestions rather than affecting the visible reply. Mirrors
+   * the ad-hoc-provider pattern already used by ChatService.generateAndSaveTitle().
+   */
+  private async generateFollowUpSuggestions(query: string, answer: string, mode: string): Promise<string[]> {
+    try {
+      const { GeminiProvider } = await import('../../services/ai/gemini.provider');
+      const llm = new GeminiProvider('gemini-2.5-flash-lite');
+
+      const truncatedAnswer = answer.length > 2000 ? answer.slice(0, 2000) + '…' : answer;
+      const prompt = `A student in "${mode}" mode just asked Scholarly AI:\n"${query}"\n\nAnd received this answer:\n"${truncatedAnswer}"\n\nSuggest 3 short follow-up questions this student might naturally want to ask next, phrased in first person exactly as the student would type them (max ~12 words each). Return ONLY a JSON array of 3 strings — no markdown, no commentary, no numbering.`;
+
+      const response = await llm.generateResponse([
+        { role: 'user', content: prompt, timestamp: Date.now() } as any,
+      ]);
+
+      const raw = response.reply.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter((s: any) => typeof s === 'string' && s.trim().length > 0).slice(0, 3);
+    } catch (e) {
+      console.warn('Follow-up suggestion generation failed (non-fatal):', (e as Error).message);
+      return [];
+    }
+  }
+
+  /**
    * Executes the AI workflow as a streaming generator.
    * Yields WorkflowEvents that can be pushed to the client via SSE.
    */
@@ -327,6 +312,7 @@ export class WorkflowEngine {
 
         const podcastSystemPrompt = buildScholarlySystemPrompt({
           mode: 'PODCAST',
+          viewerRole: req.productRole,
           studentContext: {
             userId: req.userId,
             profile: null,
@@ -392,15 +378,20 @@ export class WorkflowEngine {
       }
 
       // ── Stage 2: Context Enrichment (NEW) ──────────────────────────────
-      yield { type: 'progress', stage: WorkflowStage.CONTEXT_ENRICHMENT, message: 'Loading your learning profile...' };
-      
-      const contextService = new StudentContextService();
+      const isTeacherRole = req.productRole === 'teacher';
+      yield {
+        type: 'progress',
+        stage: WorkflowStage.CONTEXT_ENRICHMENT,
+        message: isTeacherRole ? 'Loading your teaching profile...' : 'Loading your learning profile...',
+      };
+
       let studentContext: StudentContext;
-      
-      try {
-        studentContext = await contextService.aggregateContext(req.userId);
-      } catch (e) {
-        console.warn('Failed to aggregate student context, proceeding with defaults:', e);
+      let teacherContext: TeacherContext | undefined;
+
+      if (isTeacherRole) {
+        // Teachers don't go through student onboarding, so isOnboarded is pinned true here —
+        // that's what suppresses the student greeting/onboarding-extraction branches below,
+        // which don't apply to a teacher account.
         studentContext = {
           userId: req.userId,
           profile: null,
@@ -409,16 +400,41 @@ export class WorkflowEngine {
           stats: null,
           planner: null,
           notebooks: null,
-          isFirstTimeUser: true,
-          isOnboarded: false,
+          isFirstTimeUser: false,
+          isOnboarded: true,
         };
+        try {
+          teacherContext = await new TeacherContextService().aggregateContext(req.userId);
+        } catch (e) {
+          console.warn('Failed to aggregate teacher context, proceeding without it:', e);
+        }
+      } else {
+        const contextService = new StudentContextService();
+        try {
+          studentContext = await contextService.aggregateContext(req.userId);
+        } catch (e) {
+          console.warn('Failed to aggregate student context, proceeding with defaults:', e);
+          studentContext = {
+            userId: req.userId,
+            profile: null,
+            memory: null,
+            analytics: null,
+            stats: null,
+            planner: null,
+            notebooks: null,
+            isFirstTimeUser: true,
+            isOnboarded: false,
+          };
+        }
       }
 
-      // ── Greeting / Onboarding Detection ────────────────────────────────
+      // ── Greeting / Onboarding Detection (students only — teachers have no onboarding
+      //    wizard or greeting template here, so they flow straight into the main pipeline
+      //    and TeacherAgent's teacher-persona system prompt handles the greeting itself) ──
       const isGreeting = isGreetingMessage(req.query);
       const isShortHistory = req.history.filter(m => m.role !== 'system').length <= 2;
 
-      if (isGreeting && isShortHistory) {
+      if (isGreeting && isShortHistory && !isTeacherRole) {
         yield { type: 'progress', stage: WorkflowStage.AGENT_EXECUTION, message: 'Preparing your personalized welcome...' };
         
         // Generate greeting or onboarding response
@@ -478,9 +494,9 @@ export class WorkflowEngine {
         return;
       }
 
-      // ── Check for onboarding data in non-greeting messages ─────────────
+      // ── Check for onboarding data in non-greeting messages (students only) ─
       // If the user isn't onboarded and sends a message with exam info, extract it
-      if (!studentContext.isOnboarded) {
+      if (!isTeacherRole && !studentContext.isOnboarded) {
         const profileService = new UserProfileService();
         // Fire and forget — don't block the main flow
         // We'll check the response too after generation
@@ -505,6 +521,7 @@ export class WorkflowEngine {
         retrievedContext: 'Placeholder RAG Text', // Will be populated by RAG phase
         sharedState: {},
         studentContext, // Inject student context for all agents
+        teacherContext, // Populated only when req.productRole === 'teacher'
       };
 
       // Knowledge Graph Retrieval
@@ -623,7 +640,7 @@ export class WorkflowEngine {
         if (next.value) yield { type: 'reasoning', text: next.value };
       }
 
-      const generatedResponse = agentContext.sharedState['teacherDraft'] || '';
+      const generatedResponse = agentContext.sharedState['teacherReasoning'] || '';
       
       // ── Stage 7: Verification ──────────────────────────────────────────
       yield { type: 'progress', stage: WorkflowStage.VERIFICATION, message: 'Verifying retrieved information...' };
@@ -671,7 +688,15 @@ export class WorkflowEngine {
         }
       }
       const generationLatencyMs = Date.now() - generationStartTime;
-      
+
+      // Kick off follow-up suggestions concurrently with the analytics/telemetry/
+      // memory-update work below — no data dependency on those, so overlapping
+      // avoids adding latency on the critical path. Only for conversational modes;
+      // other modes' output shapes don't fit generic "what's next" chips.
+      const suggestionsPromise = isConversationalReasoningMode(mode) && fullReply
+        ? this.generateFollowUpSuggestions(req.query, fullReply, mode)
+        : Promise.resolve<string[]>([]);
+
       // ── Stage 10: Analytics ────────────────────────────────────────────
       yield { type: 'progress', stage: WorkflowStage.ANALYTICS, message: 'Logging retrieval analytics...' };
       const analyticsProvider = container.resolve<IAnalyticsProvider>(TOKENS.AnalyticsProvider);
@@ -735,7 +760,12 @@ export class WorkflowEngine {
         const profileService = new UserProfileService();
         profileService.extractProfileFromConversation(req.userId, req.query, fullReply).catch(console.error);
       }
-      
+
+      const followUpSuggestions = await suggestionsPromise;
+      if (followUpSuggestions.length > 0) {
+        yield { type: 'suggestions', suggestions: followUpSuggestions };
+      }
+
       yield { type: 'done', data: { citations: citationsList, assets: [], confidenceScore: measuredConfidence } };
 
     } catch (error: any) {

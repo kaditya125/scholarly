@@ -16,6 +16,8 @@ export interface StreamState {
   progressEvents: WorkflowProgress[];
   citations: any[];
   warnings: string[];
+  /** Short follow-up questions the student might ask next, from the `suggestions` event. */
+  suggestions: string[];
   error: string | null;
   done: boolean;
   data: any | null; // Final metadata (citations, confidence)
@@ -30,6 +32,7 @@ export function useWorkflowStream() {
     progressEvents: [],
     citations: [],
     warnings: [],
+    suggestions: [],
     error: null,
     done: false,
     data: null
@@ -47,6 +50,7 @@ export function useWorkflowStream() {
     reasoningMs: number;
     citations: any[];
     warnings: string[];
+    suggestions: string[];
   }> => {
     return new Promise(async (resolve, reject) => {
       // Reset state
@@ -57,6 +61,7 @@ export function useWorkflowStream() {
         progressEvents: [],
         citations: [],
         warnings: [],
+        suggestions: [],
         error: null,
         done: false,
         data: null
@@ -69,6 +74,7 @@ export function useWorkflowStream() {
       const localProgress: WorkflowProgress[] = [];
       const localCitations: any[] = [];
       const localWarnings: string[] = [];
+      let localSuggestions: string[] = [];
       let localReasoning = '';
       let localReasoningMs = 0;
       const streamStartedAt = Date.now();
@@ -163,6 +169,9 @@ export function useWorkflowStream() {
                   ...s,
                   warnings: [...s.warnings, event.message]
                 }));
+              } else if (event.type === 'suggestions') {
+                localSuggestions = Array.isArray(event.suggestions) ? event.suggestions : [];
+                setState(s => ({ ...s, suggestions: localSuggestions }));
               } else if (event.type === 'done') {
                 localReasoningMs = Date.now() - streamStartedAt;
                 if (event.data && typeof event.data === 'object') {
@@ -183,6 +192,7 @@ export function useWorkflowStream() {
                   reasoningMs: localReasoningMs,
                   citations: localCitations,
                   warnings: localWarnings,
+                  suggestions: localSuggestions,
                 });
                 return; // Exit loop
               } else if (event.type === 'error') {
@@ -209,6 +219,7 @@ export function useWorkflowStream() {
         reasoningMs: Date.now() - streamStartedAt,
         citations: localCitations,
         warnings: localWarnings,
+        suggestions: localSuggestions,
       });
     } catch (err: any) {
       if (err.name !== 'AbortError') {
@@ -223,6 +234,7 @@ export function useWorkflowStream() {
           reasoningMs: Date.now() - streamStartedAt,
           citations: localCitations,
           warnings: localWarnings,
+          suggestions: localSuggestions,
         });
       }
     }

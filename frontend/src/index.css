@@ -81,3 +81,12 @@ h1, h2, h3 {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.2);
 }
+
+/* Long display equations (e.g. multi-term derivations) can render wider than the chat
+   column. KaTeX doesn't wrap math, so without this a long $$...$$ block pushes the whole
+   message bubble wider than the viewport instead of scrolling within itself. */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2px;
+}

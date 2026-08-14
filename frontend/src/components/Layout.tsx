@@ -47,7 +47,9 @@ import {
   Workflow,
   HelpCircle,
   FolderOpen,
-  Palette
+  GraduationCap,
+  Palette,
+  Gift
 } from "lucide-react";
 
 import { cn } from "../lib/utils";
@@ -89,10 +91,15 @@ const MAIN_MENU: { label: string; path: string; icon: any; group?: 'top' }[] = [
   { label: "Tests", path: "/tests", icon: FileText, group: 'top' },
   { label: "Study Plan", path: "/planner", icon: Calendar },
   { label: "Study Groups", path: "/groups", icon: Users },
+  // Classes a teacher has enrolled this student in (Phase 3E). Distinct from Study Groups:
+  // a group is peer-formed, a class is taught and requires an accepted enrolment edge.
+  { label: "My Classes", path: "/my-classes", icon: GraduationCap },
   { label: "My Doubts", path: "/doubts", icon: HelpCircle },
 
   // Utility
   { label: "Explore", path: "/explore", icon: Compass, group: 'top' },
+  // Referrals (Phase 3L) — a link that gets both sides Pro days on signup. Not enrolment.
+  { label: "Invite friends", path: "/refer", icon: Gift },
   { label: "Settings", path: "/settings", icon: Settings },
 ];
 

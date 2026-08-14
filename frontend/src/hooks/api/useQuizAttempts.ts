@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { quizApi, QuizAttempt, QuizAttemptSummary, ProgressReport } from '../../lib/api/quiz';
 import { useAuth } from '../../lib/AuthContext';
 
@@ -50,4 +50,19 @@ export function useQuizAttempt(attemptId?: string) {
     isLoading: query.isLoading,
     isError: query.isError,
   };
+}
+
+/** Scores an attempt server-side and caches the (now completed, unmasked) result in place. */
+export function useSubmitQuizAttempt(attemptId: string | undefined) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { answers: Record<string, number>; timeSpentSeconds: number }) =>
+      quizApi.submitAttempt(attemptId as string, payload),
+    onSuccess: (data) => {
+      qc.setQueryData(['quizAttempt', user?.uid, attemptId], data);
+      qc.invalidateQueries({ queryKey: ['quizAttempts', user?.uid] });
+      qc.invalidateQueries({ queryKey: ['quizProgress', user?.uid] });
+    },
+  });
 }

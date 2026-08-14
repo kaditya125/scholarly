@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { 
+import { useSearchParams } from 'react-router-dom';
+import {
   ChevronDown, 
   Sparkles, 
   Paperclip, 
@@ -71,6 +72,13 @@ const ONE_CLICK_ACTIONS = [
 import { ShareModal } from '../components/notebook/ShareModal';
 
 export default function Notebooks() {
+  // Lets an external link open a specific notebook (e.g. "Open" on a class resource in the
+  // teacher workspace, or a student's class view) without this page needing a dedicated
+  // /notebooks/:id route of its own — selection here has always lived in component state, and
+  // a query param is the smallest change that makes it linkable from outside this page.
+  const [searchParams] = useSearchParams();
+  const requestedNotebookId = searchParams.get('open');
+
   const [activeNotebook, setActiveNotebook] = useState<string | null>(null);
   const [activeMode, setActiveMode] = useState('TEACHER');
   const [activeTab, setActiveTab] = useState<'CHAT' | 'GRAPH' | 'ASSETS'>('CHAT');
@@ -92,12 +100,14 @@ export default function Notebooks() {
   const { graph, isLoading: isLoadingGraph } = useKnowledgeGraph(activeNotebook);
   const { assets, isLoading: isLoadingAssets } = useAssets(activeNotebook);
   
-  // Auto-select first notebook if none selected
+  // Auto-select: the requested notebook if the URL asked for one and it's actually in this
+  // account's list (never trust the id blindly — e.g. a stale link to a since-detached
+  // resource), otherwise fall back to the first notebook as before.
   React.useEffect(() => {
-    if (!activeNotebook && notebooks?.length > 0) {
-      setActiveNotebook(notebooks[0].id);
-    }
-  }, [notebooks, activeNotebook]);
+    if (activeNotebook || !notebooks?.length) return;
+    const requested = requestedNotebookId && notebooks.find((n) => n.id === requestedNotebookId);
+    setActiveNotebook(requested ? requested.id : notebooks[0].id);
+  }, [notebooks, activeNotebook, requestedNotebookId]);
 
   const { sources, isUploading, uploadSource, uploadProgress } = useNotebookSources(activeNotebook);
   const [isDragging, setIsDragging] = React.useState(false);

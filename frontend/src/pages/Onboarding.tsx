@@ -1,16 +1,37 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import {
-  GraduationCap, ArrowRight, ArrowLeft, Check, Sparkles, Target as TargetIcon,
-  BookOpen, Clock, Languages, Palette, Layers, Compass, Loader2,
+  ArrowRight, ArrowLeft, Check, Sparkles, Target as TargetIcon,
+  BookOpen, Clock, Languages, Palette, Layers, Compass,
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import { useProfile } from '../hooks/api/useProfile';
+import { BrandMark } from '../components/auth/AuthShell';
 import {
   LearningProfile, GOAL_GROUPS, BOARDS, STREAMS, SUBJECTS, LEVELS, TARGET_SUGGESTIONS,
   STUDY_TIMES, LEARNING_STYLES, LANGUAGES, autoStream, showStreamStep, suggestedSubjects,
 } from '../lib/onboardingOptions';
+
+/**
+ * Student onboarding wizard.
+ *
+ * DESIGN LANGUAGE — inherited wholesale from the landing page and AuthShell, which are the
+ * two surfaces a student sees immediately before this one. Previously this wizard ran on an
+ * indigo/violet palette with pill buttons and its own graduation-cap logo, so signing up went
+ * lime → lime → purple and read as a different product mid-flow.
+ *
+ *   · lime #c8e558 is the ONLY accent; slate carries everything else
+ *   · labels on lime are slate-900 — white text on this lime is ~1.7:1 and unreadable
+ *   · rounded-xl controls, h-11 primary actions, hairline borders
+ *   · Inter with the same negative tracking the landing headings use
+ *   · one easing curve, one gesture (rise + fade); nothing scales or spins
+ *
+ * The brand mark is imported rather than redrawn — see BrandMark's note in AuthShell.
+ */
+
+const ACCENT = '#c8e558';
+const EASE = [0.16, 1, 0.3, 1] as const;
 
 type StepKey =
   | 'welcome' | 'goal' | 'board' | 'stream' | 'subjects'
@@ -37,6 +58,7 @@ export default function Onboarding() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { profile: saved, updateProfile } = useProfile();
+  const reduced = useReducedMotion();
 
   const [profile, setProfile] = useState<LearningProfile>({});
   const [index, setIndex] = useState(0);
@@ -128,41 +150,49 @@ export default function Onboarding() {
 
   if (phase === 'generating') return <GenerationScreen genStep={genStep} firstName={firstName} />;
 
-  return (
-    <div className="min-h-screen w-full bg-[#faf9f7] dark:bg-[#0b0b0c] text-slate-900 dark:text-white flex flex-col">
-      {/* Top bar: brand + progress */}
-      <div className="w-full max-w-2xl mx-auto px-6 pt-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="inline-flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
-              <GraduationCap className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-semibold text-[15px] tracking-tight">Scholarly</span>
-          </div>
-          <div className="text-[12.5px] font-medium text-slate-400 dark:text-gray-500">
-            Step {index + 1} of {total} · {pct}%
-          </div>
-        </div>
-        <div className="h-1.5 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
-          <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500"
-            initial={false}
-            animate={{ width: `${pct}%` }}
-            transition={{ type: 'spring', stiffness: 120, damping: 20 }}
-          />
-        </div>
-      </div>
+  const slide = reduced ? 0 : 32;
 
-      {/* Step body */}
-      <div className="flex-1 w-full max-w-2xl mx-auto px-6 py-8 flex flex-col">
+  return (
+    <div className="min-h-screen w-full bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased flex flex-col">
+      {/* ── Header: brand + progress ─────────────────────────────────────────── */}
+      <header className="w-full border-b border-slate-100 dark:border-white/[0.07]">
+        <div className="w-full max-w-[640px] mx-auto px-6 pt-6 pb-5">
+          <div className="flex items-center justify-between mb-4">
+            <BrandMark size={24} />
+            <span className="text-[12px] font-medium tabular-nums text-slate-500 dark:text-gray-400">
+              Step {index + 1} of {total}
+            </span>
+          </div>
+
+          <div
+            className="h-1 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden"
+            role="progressbar"
+            aria-valuenow={pct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Onboarding progress"
+          >
+            <motion.div
+              className="h-full rounded-full"
+              style={{ backgroundColor: ACCENT }}
+              initial={false}
+              animate={{ width: `${pct}%` }}
+              transition={{ duration: reduced ? 0 : 0.5, ease: EASE }}
+            />
+          </div>
+        </div>
+      </header>
+
+      {/* ── Step body ────────────────────────────────────────────────────────── */}
+      <div className="flex-1 w-full max-w-[640px] mx-auto px-6 py-10 sm:py-14 flex flex-col">
         <AnimatePresence mode="wait" custom={dir}>
           <motion.div
             key={step.key}
             custom={dir}
-            initial={{ opacity: 0, x: dir * 40 }}
+            initial={{ opacity: 0, x: dir * slide }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: dir * -40 }}
-            transition={{ duration: 0.28, ease: 'easeOut' }}
+            exit={{ opacity: 0, x: dir * -slide }}
+            transition={{ duration: reduced ? 0 : 0.32, ease: EASE }}
             className="flex-1 flex flex-col"
           >
             <StepContent
@@ -176,30 +206,28 @@ export default function Onboarding() {
           </motion.div>
         </AnimatePresence>
 
-        {/* Footer nav */}
-        <div className="flex items-center justify-between pt-6 mt-auto">
+        {/* ── Footer nav ─────────────────────────────────────────────────────── */}
+        <div className="flex items-center justify-between gap-4 pt-10 mt-auto">
           <button
             onClick={goBack}
             disabled={index === 0}
-            className="inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-200 disabled:opacity-0 transition-colors"
+            className="group inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-0 disabled:pointer-events-none transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" /> Back
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" strokeWidth={2.25} />
+            Back
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <button
               onClick={skipAll}
-              className="text-[13px] font-medium text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300 transition-colors"
+              className="text-[13px] font-medium text-slate-400 dark:text-gray-500 hover:text-slate-700 dark:hover:text-gray-300 transition-colors"
             >
               Skip for now
             </button>
             {step.key !== 'welcome' && (
-              <button
-                onClick={() => goNext()}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-[13.5px] font-semibold transition-colors shadow-sm"
-              >
-                {index >= total - 1 ? 'Finish' : 'Continue'} <ArrowRight className="w-4 h-4" />
-              </button>
+              <PrimaryButton onClick={() => goNext()}>
+                {index >= total - 1 ? 'Finish' : 'Continue'}
+              </PrimaryButton>
             )}
           </div>
         </div>
@@ -224,36 +252,38 @@ function StepContent({ step, profile, firstName, patch, choose, goNext }: StepCo
     case 'welcome':
       return (
         <div className="flex-1 flex flex-col items-center justify-center text-center">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 140, damping: 12 }}
-            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center mb-6 shadow-lg"
+          <span
+            className="w-14 h-14 rounded-2xl flex items-center justify-center mb-7"
+            style={{ backgroundColor: ACCENT }}
           >
-            <Sparkles className="w-8 h-8 text-white" />
-          </motion.div>
-          <h1 className="text-[30px] md:text-[34px] font-bold tracking-tight leading-tight">
-            Welcome, {firstName} <span className="inline-block">👋</span>
+            <Sparkles className="w-7 h-7 text-slate-900" strokeWidth={1.9} />
+          </span>
+
+          <h1 className="text-[32px] sm:text-[38px] leading-[1.1] font-semibold tracking-[-0.03em]">
+            Welcome, <Underline>{firstName}</Underline>
           </h1>
-          <p className="mt-3 text-[15.5px] text-slate-500 dark:text-gray-400 max-w-md leading-relaxed">
-            Let's build your personal AI study companion — one that understands exactly what you're
-            working toward. This takes less than 2 minutes.
+          <p className="mt-5 text-[15.5px] sm:text-[16.5px] leading-relaxed text-slate-500 dark:text-gray-400 max-w-[26rem]">
+            Let&rsquo;s build your personal AI study companion — one that understands exactly what
+            you&rsquo;re working toward. This takes less than two minutes.
           </p>
-          <button
-            onClick={() => goNext()}
-            className="mt-8 inline-flex items-center gap-2 px-7 py-3 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-[15px] font-semibold transition-colors shadow-md"
-          >
-            Let's begin <ArrowRight className="w-4 h-4" />
-          </button>
+
+          <div className="mt-9">
+            <PrimaryButton onClick={() => goNext()} size="lg">
+              Let&rsquo;s begin
+            </PrimaryButton>
+          </div>
         </div>
       );
 
     case 'goal':
       return (
-        <Prompt icon={Compass} title="What are you preparing for?" subtitle="This shapes everything — pick your primary goal.">
-          <div className="space-y-5">
+        <Prompt icon={Compass} eyebrow="Your goal" title="What are you preparing for?" subtitle="This shapes everything — pick your primary goal.">
+          <div className="space-y-6">
             {GOAL_GROUPS.map((group) => (
               <div key={group.label}>
-                <div className="text-[11.5px] font-bold uppercase tracking-wide text-slate-400 dark:text-gray-500 mb-2">{group.label}</div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.13em] text-slate-400 dark:text-gray-500 mb-2.5">
+                  {group.label}
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {group.options.map((g) => (
                     <Chip
@@ -275,21 +305,21 @@ function StepContent({ step, profile, firstName, patch, choose, goNext }: StepCo
 
     case 'board':
       return (
-        <Prompt icon={BookOpen} title="Which syllabus do you follow?" subtitle="We'll ground answers in your board's curriculum.">
+        <Prompt icon={BookOpen} eyebrow="Your syllabus" title="Which syllabus do you follow?" subtitle="We'll ground answers in your board's curriculum.">
           <ChoiceGrid options={BOARDS} value={profile.board} onSelect={(v) => choose({ board: v })} />
         </Prompt>
       );
 
     case 'stream':
       return (
-        <Prompt icon={Layers} title="Which stream?" subtitle="Pick the stream you're studying.">
+        <Prompt icon={Layers} eyebrow="Your stream" title="Which stream?" subtitle="Pick the stream you're studying.">
           <ChoiceGrid options={STREAMS} value={profile.stream} onSelect={(v) => choose({ stream: v, subjects: suggestedSubjects(profile.goal, v) })} />
         </Prompt>
       );
 
     case 'subjects':
       return (
-        <Prompt icon={BookOpen} title="Which subjects?" subtitle="Choose all that apply — you can change these later.">
+        <Prompt icon={BookOpen} eyebrow="Your subjects" title="Which subjects?" subtitle="Choose all that apply — you can change these later.">
           <MultiGrid
             options={SUBJECTS}
             values={profile.subjects || []}
@@ -300,7 +330,7 @@ function StepContent({ step, profile, firstName, patch, choose, goNext }: StepCo
 
     case 'level':
       return (
-        <Prompt icon={TargetIcon} title="Where are you right now?" subtitle="So the tutor pitches explanations at the right level.">
+        <Prompt icon={TargetIcon} eyebrow="Your level" title="Where are you right now?" subtitle="So the tutor pitches explanations at the right level.">
           <div className="grid gap-2.5">
             {LEVELS.map((l) => (
               <BigOption
@@ -317,7 +347,7 @@ function StepContent({ step, profile, firstName, patch, choose, goNext }: StepCo
 
     case 'target':
       return (
-        <Prompt icon={TargetIcon} title="What's your target?" subtitle="Your aspiration keeps every session pointed at the goal.">
+        <Prompt icon={TargetIcon} eyebrow="Your target" title="What's your target?" subtitle="Your aspiration keeps every session pointed at the goal.">
           <div className="flex flex-wrap gap-2 mb-4">
             {TARGET_SUGGESTIONS.map((t) => (
               <Chip key={t} label={t} selected={profile.target === t} onClick={() => patch({ target: t })} />
@@ -327,23 +357,22 @@ function StepContent({ step, profile, firstName, patch, choose, goNext }: StepCo
             value={profile.target || ''}
             onChange={(e) => patch({ target: e.target.value })}
             placeholder="…or type your own target"
-            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1a1a1b] text-[14px] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+            className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-[14px] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-600 outline-none transition-colors focus:border-[#c8e558] focus:ring-4 focus:ring-[#c8e558]/20"
           />
         </Prompt>
       );
 
     case 'studyTime':
       return (
-        <Prompt icon={Clock} title="How much time can you study daily?" subtitle="We'll size your roadmap to fit your day.">
+        <Prompt icon={Clock} eyebrow="Your time" title="How much time can you study daily?" subtitle="We'll size your roadmap to fit your day.">
           <div className="flex flex-wrap gap-2.5">
             {STUDY_TIMES.map((s) => (
-              <button
+              <PillOption
                 key={s.value}
+                label={s.label}
+                selected={profile.dailyStudyHours === s.value}
                 onClick={() => choose({ dailyStudyHours: s.value })}
-                className={pillCls(profile.dailyStudyHours === s.value)}
-              >
-                {s.label}
-              </button>
+              />
             ))}
           </div>
         </Prompt>
@@ -351,7 +380,7 @@ function StepContent({ step, profile, firstName, patch, choose, goNext }: StepCo
 
     case 'style':
       return (
-        <Prompt icon={Palette} title="How do you learn best?" subtitle="Pick a few — the tutor will lean on these formats.">
+        <Prompt icon={Palette} eyebrow="How you learn" title="How do you learn best?" subtitle="Pick a few — the tutor will lean on these formats.">
           <MultiGrid
             options={LEARNING_STYLES}
             values={profile.learningStyles || []}
@@ -362,7 +391,7 @@ function StepContent({ step, profile, firstName, patch, choose, goNext }: StepCo
 
     case 'language':
       return (
-        <Prompt icon={Languages} title="Preferred language?" subtitle="Your tutor will teach in the language you're most comfortable with.">
+        <Prompt icon={Languages} eyebrow="Your language" title="Preferred language?" subtitle="Your tutor will teach in the language you're most comfortable with.">
           <ChoiceGrid options={LANGUAGES} value={profile.preferredLanguage} onSelect={(v) => choose({ preferredLanguage: v })} />
         </Prompt>
       );
@@ -375,31 +404,44 @@ function StepContent({ step, profile, firstName, patch, choose, goNext }: StepCo
 // ─── Generation screen ─────────────────────────────────────────────────────────
 
 function GenerationScreen({ genStep, firstName }: { genStep: number; firstName: string }) {
+  const reduced = useReducedMotion();
+
   return (
-    <div className="min-h-screen w-full bg-[#faf9f7] dark:bg-[#0b0b0c] flex flex-col items-center justify-center px-6 text-center">
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ repeat: Infinity, duration: 2.4, ease: 'linear' }}
-        className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center mb-7 shadow-xl"
+    <div className="min-h-screen w-full bg-white dark:bg-[#0b0b0c] flex flex-col items-center justify-center px-6 text-center">
+      <span
+        className="w-14 h-14 rounded-2xl flex items-center justify-center mb-8"
+        style={{ backgroundColor: ACCENT }}
       >
-        <Sparkles className="w-8 h-8 text-white" />
-      </motion.div>
-      <h2 className="text-[22px] md:text-[26px] font-bold tracking-tight text-slate-900 dark:text-white mb-2">
+        <Sparkles className="w-7 h-7 text-slate-900" strokeWidth={1.9} />
+      </span>
+
+      <h2 className="text-[24px] sm:text-[28px] font-semibold tracking-[-0.03em] leading-[1.15] text-slate-900 dark:text-white">
         Setting up your AI mentor, {firstName}
       </h2>
-      <AnimatePresence mode="wait">
-        <motion.p
-          key={genStep}
-          initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.3 }}
-          className="text-[15px] text-slate-500 dark:text-gray-400 h-6"
-        >
-          {GEN_MESSAGES[genStep]}
-        </motion.p>
-      </AnimatePresence>
-      <div className="mt-6 flex items-center gap-2 text-slate-400 dark:text-gray-500">
-        <Loader2 className="w-4 h-4 animate-spin" />
-        <span className="text-[12.5px]">This only takes a moment</span>
+
+      <div className="mt-3 h-6">
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={genStep}
+            initial={reduced ? false : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduced ? undefined : { opacity: 0, y: -6 }}
+            transition={{ duration: 0.3, ease: EASE }}
+            className="text-[15px] text-slate-500 dark:text-gray-400"
+          >
+            {GEN_MESSAGES[genStep]}
+          </motion.p>
+        </AnimatePresence>
+      </div>
+
+      {/* Indeterminate sweep rather than a spinner — matches the progress bar it replaces. */}
+      <div className="mt-8 w-[200px] h-1 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+        <motion.div
+          className="h-full w-1/3 rounded-full"
+          style={{ backgroundColor: ACCENT }}
+          animate={reduced ? { x: 0 } : { x: ['-100%', '300%'] }}
+          transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+        />
       </div>
     </div>
   );
@@ -407,28 +449,124 @@ function GenerationScreen({ genStep, firstName }: { genStep: number; firstName: 
 
 // ─── Small building blocks ──────────────────────────────────────────────────────
 
-function Prompt({ icon: Icon, title, subtitle, children }: { icon: any; title: string; subtitle: string; children: React.ReactNode }) {
+/** The hand-drawn arc from the landing hero and the auth footer — the brand's one flourish. */
+function Underline({ children }: { children: ReactNode }) {
+  const reduced = useReducedMotion();
+  return (
+    <span className="relative inline-block whitespace-nowrap">
+      {children}
+      <svg
+        className="absolute -bottom-1 left-0 w-full overflow-visible pointer-events-none"
+        height="11"
+        viewBox="0 0 100 11"
+        preserveAspectRatio="none"
+        fill="none"
+        aria-hidden
+      >
+        <motion.path
+          d="M1.5 5C18 8.8 44 9.6 98.5 2.6"
+          stroke={ACCENT}
+          strokeWidth="3"
+          strokeLinecap="round"
+          initial={reduced ? false : { pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: reduced ? 0 : 0.7, ease: EASE, delay: reduced ? 0 : 0.35 }}
+        />
+      </svg>
+    </span>
+  );
+}
+
+/**
+ * Primary action. Lime with a slate-900 label — white on this lime is ~1.7:1, so the dark
+ * label is a contrast requirement rather than a style choice.
+ */
+function PrimaryButton({
+  children,
+  onClick,
+  size = 'md',
+}: {
+  children: ReactNode;
+  onClick: () => void;
+  size?: 'md' | 'lg';
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={[
+        'group inline-flex items-center justify-center gap-2 rounded-xl bg-[#c8e558] hover:bg-[#bcd94c] active:bg-[#b0cd40] text-slate-900 font-semibold transition-colors',
+        size === 'lg' ? 'h-12 px-6 text-[14.5px]' : 'h-11 px-5 text-[14px]',
+      ].join(' ')}
+    >
+      {children}
+      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" strokeWidth={2.25} />
+    </button>
+  );
+}
+
+function Prompt({
+  icon: Icon,
+  eyebrow,
+  title,
+  subtitle,
+  children,
+}: {
+  icon: React.ElementType;
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  children: ReactNode;
+}) {
   return (
     <div>
-      <div className="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center mb-4">
-        <Icon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-      </div>
-      <h2 className="text-[24px] md:text-[27px] font-bold tracking-tight leading-tight">{title}</h2>
-      <p className="mt-2 mb-6 text-[14.5px] text-slate-500 dark:text-gray-400">{subtitle}</p>
+      {/* Inverted slate tile — the same icon treatment the landing capability cards use. */}
+      <span className="inline-flex w-10 h-10 rounded-xl bg-slate-900 dark:bg-white items-center justify-center">
+        <Icon className="w-[18px] h-[18px] text-white dark:text-slate-900" strokeWidth={1.9} />
+      </span>
+
+      <p className="mt-5 text-[12px] font-semibold uppercase tracking-[0.13em] text-slate-500 dark:text-gray-400">
+        {eyebrow}
+      </p>
+      <h2 className="mt-2.5 text-[26px] sm:text-[30px] leading-[1.12] font-semibold tracking-[-0.03em]">
+        {title}
+      </h2>
+      <p className="mt-3 mb-8 text-[15px] leading-relaxed text-slate-500 dark:text-gray-400">
+        {subtitle}
+      </p>
+
       {children}
     </div>
   );
 }
 
+/** Shared selected/unselected treatment, so every control type stays in step. */
+const selectedCls = 'border-[#c8e558] bg-[#c8e558]/[0.09] ring-1 ring-[#c8e558]/40 text-slate-900 dark:text-white';
+const restCls =
+  'border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-slate-700 dark:text-gray-200 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/[0.07]';
+
 function Chip({ label, selected, onClick }: { label: string; selected?: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
+      aria-pressed={selected}
       className={[
-        'px-3.5 py-2 rounded-full text-[13.5px] font-medium border transition-all',
-        selected
-          ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
-          : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-200 hover:border-indigo-300 dark:hover:border-indigo-500/40',
+        'px-3.5 py-2 rounded-lg text-[13px] font-medium border transition-colors',
+        selected ? selectedCls : restCls,
+      ].join(' ')}
+    >
+      {label}
+    </button>
+  );
+}
+
+function PillOption({ label, selected, onClick }: { label: string; selected?: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={selected}
+      className={[
+        'h-11 px-5 rounded-xl text-[14px] font-semibold border transition-colors',
+        selected ? selectedCls : restCls,
       ].join(' ')}
     >
       {label}
@@ -443,11 +581,10 @@ function ChoiceGrid({ options, value, onSelect }: { options: string[]; value?: s
         <button
           key={o}
           onClick={() => onSelect(o)}
+          aria-pressed={value === o}
           className={[
-            'px-4 py-3 rounded-xl text-[14px] font-semibold border text-left transition-all',
-            value === o
-              ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
-              : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-200 hover:border-indigo-300 dark:hover:border-indigo-500/40',
+            'px-4 py-3 rounded-xl text-[14px] font-semibold border text-left transition-colors',
+            value === o ? selectedCls : restCls,
           ].join(' ')}
         >
           {o}
@@ -466,18 +603,20 @@ function MultiGrid({ options, values, onToggle }: { options: string[]; values: s
           <button
             key={o}
             onClick={() => onToggle(o)}
+            aria-pressed={on}
             className={[
-              'flex items-center gap-2 px-3.5 py-3 rounded-xl text-[13.5px] font-medium border text-left transition-all',
-              on
-                ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-400 dark:border-indigo-500/50 text-indigo-700 dark:text-indigo-300'
-                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-200 hover:border-indigo-300 dark:hover:border-indigo-500/40',
+              'flex items-center gap-2.5 px-3.5 py-3 rounded-xl text-[13.5px] font-medium border text-left transition-colors',
+              on ? selectedCls : restCls,
             ].join(' ')}
           >
-            <span className={[
-              'w-4 h-4 rounded-[5px] border flex items-center justify-center shrink-0 transition-colors',
-              on ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300 dark:border-white/25',
-            ].join(' ')}>
-              {on && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+            <span
+              className={[
+                'w-4 h-4 rounded-[5px] border flex items-center justify-center shrink-0 transition-colors',
+                on ? 'bg-[#c8e558] border-[#c8e558]' : 'border-slate-300 dark:border-white/25',
+              ].join(' ')}
+              aria-hidden
+            >
+              {on && <Check className="w-3 h-3 text-slate-900" strokeWidth={3} />}
             </span>
             {o}
           </button>
@@ -491,25 +630,17 @@ function BigOption({ title, hint, selected, onClick }: { title: string; hint: st
   return (
     <button
       onClick={onClick}
+      aria-pressed={selected}
       className={[
-        'w-full text-left px-4 py-3.5 rounded-xl border transition-all',
-        selected
-          ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-400 dark:border-indigo-500/50'
-          : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-indigo-300 dark:hover:border-indigo-500/40',
+        'w-full text-left px-4 py-3.5 rounded-xl border transition-colors',
+        selected ? selectedCls : restCls,
       ].join(' ')}
     >
-      <div className={['text-[15px] font-semibold', selected ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-800 dark:text-gray-100'].join(' ')}>{title}</div>
+      <div className="text-[15px] font-semibold text-slate-900 dark:text-white">{title}</div>
       <div className="text-[12.5px] text-slate-500 dark:text-gray-400 mt-0.5">{hint}</div>
     </button>
   );
 }
-
-const pillCls = (on: boolean) => [
-  'px-5 py-3 rounded-xl text-[14px] font-semibold border transition-all',
-  on
-    ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
-    : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-200 hover:border-indigo-300 dark:hover:border-indigo-500/40',
-].join(' ');
 
 function toggle(arr: string[] | undefined, v: string): string[] {
   const set = new Set(arr || []);

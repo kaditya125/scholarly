@@ -6,6 +6,7 @@ import {
   googleProvider,
   githubProvider,
   signInWithPopup,
+  getAdditionalUserInfo,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   authErrorMessage,
@@ -62,8 +63,16 @@ export default function Signin() {
     setNotice(null);
     setBusy(which);
     try {
-      await signInWithPopup(auth, which === 'google' ? googleProvider : githubProvider);
-      navigate(from, { replace: true });
+      const result = await signInWithPopup(auth, which === 'google' ? googleProvider : githubProvider);
+      // This page is written for RETURNING users, but the provider popup creates the
+      // Firebase account on the spot if none exists — there is no way to ask "student or
+      // teacher?" before that happens the way /signup does. getAdditionalUserInfo() is the
+      // one place Firebase actually tells us the account is brand new, so we use it to send
+      // a first-time visitor straight to role selection instead of bouncing them through
+      // `from` (usually /dashboard) only for ProtectedRoute to redirect them a beat later —
+      // same destination, one less flash of the wrong page.
+      const isNewAccount = getAdditionalUserInfo(result)?.isNewUser ?? false;
+      navigate(isNewAccount ? '/select-role' : from, { replace: true });
     } catch (err: any) {
       setError(authErrorMessage(err));
     } finally {

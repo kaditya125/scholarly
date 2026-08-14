@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Search, Compass, BookOpen, Clock, Target, Play, BarChart2, Star, Zap, Activity } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useTheme } from '../lib/ThemeContext';
+import { useAuth } from '../lib/AuthContext';
 import { HeroSection } from '../components/tests/HeroSection';
 import { ExamSelector } from '../components/tests/ExamSelector';
 import { FeaturedTestSeries } from '../components/tests/FeaturedTestSeries';
@@ -14,7 +15,11 @@ import { AIRecommendedTests } from '../components/tests/AIRecommendedTests';
 export default function TestCenter() {
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
-  const [selectedExam, setSelectedExam] = useState<string>('SSC CGL');
+  const { role } = useAuth();
+  const isTeacher = role === 'teacher';
+  // Teachers aren't prepping for an exam themselves, so the selector starts unset
+  // instead of defaulting to a student exam like 'SSC CGL'.
+  const [selectedExam, setSelectedExam] = useState<string>(isTeacher ? '' : 'SSC CGL');
 
   return (
     <div className={cn(
@@ -34,9 +39,9 @@ export default function TestCenter() {
             <div className="pl-4">
               <Search className={cn("w-5 h-5", isDarkMode ? "text-slate-400" : "text-slate-400")} />
             </div>
-            <input 
-              type="text" 
-              placeholder="Search tests, subjects, PYQs, current affairs..."
+            <input
+              type="text"
+              placeholder={isTeacher ? "Search topics, subjects, question banks..." : "Search tests, subjects, PYQs, current affairs..."}
               className={cn(
                 "w-full bg-transparent border-none outline-none text-[15px] font-medium h-12",
                 isDarkMode ? "text-white placeholder:text-slate-500" : "text-slate-900 placeholder:text-slate-400"

@@ -37,7 +37,10 @@ export function FeaturedTestSeries({ selectedExam }: FeaturedTestSeriesProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold flex items-center gap-2">
-          Featured Test Series <span className="text-sm font-medium px-2 py-1 bg-indigo-500/10 text-indigo-500 rounded-full">{selectedExam}</span>
+          Featured Test Series
+          {selectedExam && (
+            <span className="text-sm font-medium px-2 py-1 bg-indigo-500/10 text-indigo-500 rounded-full">{selectedExam}</span>
+          )}
         </h2>
         <button className="text-indigo-500 font-bold text-sm hover:underline">View All</button>
       </div>
