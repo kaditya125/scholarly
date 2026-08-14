@@ -114,9 +114,11 @@ app.get('/api/public/stats', async (_req, res) => {
     const recentStudentAvatars: string[] = [];
     const recentTeacherAvatars: string[] = [];
 
+    const getFallbackAvatar = (name: string, isTeacher = false) => 
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${isTeacher ? 'c8e558' : 'random'}&color=000&rounded=true&bold=true`;
+
     // Sort users by creation time descending if possible, or just iterate. 
     // auth.listUsers returns them in page order, but we can sort if we want true "recent".
-    // For now we just collect the first 3 we find that have photoURL.
     for (const u of list.users) {
       if (u.disabled) continue;
       const claims = u.customClaims || {};
@@ -127,15 +129,18 @@ app.get('/api/public/stats', async (_req, res) => {
         continue; // skip platform admin/staff/test accounts
       }
 
+      const name = u.displayName || email.split('@')[0] || (role === 'teacher' ? 'T' : 'S');
+      const avatarUrl = u.photoURL || getFallbackAvatar(name, role === 'teacher');
+
       if (claims.productRole === 'teacher' || role === 'teacher') {
         teacherCount++;
-        if (u.photoURL && recentTeacherAvatars.length < 3) {
-          recentTeacherAvatars.push(u.photoURL);
+        if (recentTeacherAvatars.length < 3) {
+          recentTeacherAvatars.push(avatarUrl);
         }
       } else if (claims.productRole === 'student' || role === 'student') {
         studentCount++;
-        if (u.photoURL && recentStudentAvatars.length < 3) {
-          recentStudentAvatars.push(u.photoURL);
+        if (recentStudentAvatars.length < 3) {
+          recentStudentAvatars.push(avatarUrl);
         }
       }
     }
