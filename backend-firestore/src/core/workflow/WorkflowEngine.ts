@@ -1,7 +1,6 @@
 import { container, TOKENS } from '../di/container';
 import { IAIProvider } from '../interfaces/IAIProvider';
 import { ICacheProvider } from '../interfaces/ICacheProvider';
-import { ChatMessage } from '../../types';
 import { AgentContext } from '../agents/IAgent';
 import { TeacherAgent } from '../agents/TeacherAgent';
 import { VerificationAgent } from '../agents/VerificationAgent';
@@ -11,12 +10,19 @@ import { RetrievalService } from '../../services/rag/retrieval.service';
 import { StudentContextService } from '../../services/studentContext.service';
 import { TeacherContextService } from '../../services/teacherContext.service';
 import { UserProfileService } from '../../services/userProfile.service';
-import { ProductRole } from '../../types/roles';
-import { 
-  buildScholarlySystemPrompt, 
-  isGreetingMessage, 
-  getGreetingOrOnboardingPrompt 
+import {
+  buildScholarlySystemPrompt,
+  isGreetingMessage,
+  getGreetingOrOnboardingPrompt,
+  isConversationalReasoningMode,
 } from '../../config/prompts';
+import { WorkflowStage, WorkflowEvent, WorkflowRequest } from './types';
+// Re-exported for backward compatibility — existing importers (chat.service.ts,
+// IAgent.ts, scripts) previously got these from this file's own local definitions,
+// which had drifted from the canonical versions in ./types (missing 'suggestions'
+// event support). Now single-sourced.
+export { WorkflowStage };
+export type { WorkflowEvent, WorkflowRequest };
 import { getTeacherPrompt } from '../../prompts/teacher.prompt';
 import { getVerificationPrompt } from '../../prompts/verification.prompt';
 import { getIntentPrompt } from '../../prompts/intent.prompt';
@@ -32,61 +38,6 @@ const getTelemetryService = (): TelemetryService => {
   if (!_telemetryService) _telemetryService = new TelemetryService();
   return _telemetryService;
 };
-
-export enum WorkflowStage {
-  INTENT_DETECTION = 'INTENT_DETECTION',
-  CONTEXT_ENRICHMENT = 'CONTEXT_ENRICHMENT',
-  MEMORY_RETRIEVAL = 'MEMORY_RETRIEVAL',
-  GRAPH_RETRIEVAL = 'GRAPH_RETRIEVAL',
-  RAG_RETRIEVAL = 'RAG_RETRIEVAL',
-  RERANKING = 'RERANKING',
-  AGENT_EXECUTION = 'AGENT_EXECUTION',
-  VERIFICATION = 'VERIFICATION',
-  ASSET_GENERATION = 'ASSET_GENERATION',
-  ANALYTICS = 'ANALYTICS',
-  MEMORY_UPDATE = 'MEMORY_UPDATE',
-}
-
-export interface WorkflowRequest {
-  userId: string;
-  notebookId?: string;
-  sessionId?: string;
-  query: string;
-  history: ChatMessage[];
-  mode?: string;
-  model?: string;
-  traceId?: string;
-  /** Which product surface the caller belongs to — decides the AI's persona (see prompts.ts). */
-  productRole?: ProductRole;
-}
-
-export interface WorkflowEvent {
-  type: 'progress' | 'chunk' | 'citation' | 'asset' | 'warning' | 'metrics' | 'error' | 'done' | 'reasoning';
-  /** Reasoning prose for the 'reasoning' event — see the TeacherAgent stage below. */
-  text?: string;
-  stage?: WorkflowStage;
-  message?: string;
-  chunk?: string;
-  citation?: {
-    source: string;
-    text: string;
-    score: number;
-    authorityScore: number;
-    selectionReasoning: string;
-  };
-  asset?: {
-    type: string;
-    id: string;
-    preview: string;
-  };
-  warning?: string;
-  metrics?: {
-    retrievalMs: number;
-    generationMs: number;
-    confidenceScore: number;
-  };
-  data?: any;
-}
 
 import { IMemoryProvider } from '../interfaces/IMemoryProvider';
 import { IAnalyticsProvider } from '../interfaces/IAnalyticsProvider';
@@ -260,6 +211,35 @@ export class WorkflowEngine {
       }
     } catch (e) {
       console.warn('Telemetry persistence failed (non-fatal):', (e as Error).message);
+    }
+  }
+
+  /**
+   * Generates 2-3 short, first-person follow-up questions the student might
+   * naturally ask next, given the exchange that just happened. Cheap, non-streaming,
+   * independent of the main answer — any failure here (bad JSON, provider error)
+   * silently yields no suggestions rather than affecting the visible reply. Mirrors
+   * the ad-hoc-provider pattern already used by ChatService.generateAndSaveTitle().
+   */
+  private async generateFollowUpSuggestions(query: string, answer: string, mode: string): Promise<string[]> {
+    try {
+      const { GeminiProvider } = await import('../../services/ai/gemini.provider');
+      const llm = new GeminiProvider('gemini-2.5-flash-lite');
+
+      const truncatedAnswer = answer.length > 2000 ? answer.slice(0, 2000) + '…' : answer;
+      const prompt = `A student in "${mode}" mode just asked Scholarly AI:\n"${query}"\n\nAnd received this answer:\n"${truncatedAnswer}"\n\nSuggest 3 short follow-up questions this student might naturally want to ask next, phrased in first person exactly as the student would type them (max ~12 words each). Return ONLY a JSON array of 3 strings — no markdown, no commentary, no numbering.`;
+
+      const response = await llm.generateResponse([
+        { role: 'user', content: prompt, timestamp: Date.now() } as any,
+      ]);
+
+      const raw = response.reply.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter((s: any) => typeof s === 'string' && s.trim().length > 0).slice(0, 3);
+    } catch (e) {
+      console.warn('Follow-up suggestion generation failed (non-fatal):', (e as Error).message);
+      return [];
     }
   }
 
@@ -660,7 +640,7 @@ export class WorkflowEngine {
         if (next.value) yield { type: 'reasoning', text: next.value };
       }
 
-      const generatedResponse = agentContext.sharedState['teacherDraft'] || '';
+      const generatedResponse = agentContext.sharedState['teacherReasoning'] || '';
       
       // ── Stage 7: Verification ──────────────────────────────────────────
       yield { type: 'progress', stage: WorkflowStage.VERIFICATION, message: 'Verifying retrieved information...' };
@@ -708,7 +688,15 @@ export class WorkflowEngine {
         }
       }
       const generationLatencyMs = Date.now() - generationStartTime;
-      
+
+      // Kick off follow-up suggestions concurrently with the analytics/telemetry/
+      // memory-update work below — no data dependency on those, so overlapping
+      // avoids adding latency on the critical path. Only for conversational modes;
+      // other modes' output shapes don't fit generic "what's next" chips.
+      const suggestionsPromise = isConversationalReasoningMode(mode) && fullReply
+        ? this.generateFollowUpSuggestions(req.query, fullReply, mode)
+        : Promise.resolve<string[]>([]);
+
       // ── Stage 10: Analytics ────────────────────────────────────────────
       yield { type: 'progress', stage: WorkflowStage.ANALYTICS, message: 'Logging retrieval analytics...' };
       const analyticsProvider = container.resolve<IAnalyticsProvider>(TOKENS.AnalyticsProvider);
@@ -772,7 +760,12 @@ export class WorkflowEngine {
         const profileService = new UserProfileService();
         profileService.extractProfileFromConversation(req.userId, req.query, fullReply).catch(console.error);
       }
-      
+
+      const followUpSuggestions = await suggestionsPromise;
+      if (followUpSuggestions.length > 0) {
+        yield { type: 'suggestions', suggestions: followUpSuggestions };
+      }
+
       yield { type: 'done', data: { citations: citationsList, assets: [], confidenceScore: measuredConfidence } };
 
     } catch (error: any) {
