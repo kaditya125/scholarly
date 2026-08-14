@@ -16,7 +16,7 @@ export function HeroSection({ examTarget }: HeroSectionProps) {
   // In a real app, this would be fetched from the backend user context
   const activeTest = {
     id: 'mock-18',
-    title: `${examTarget} Mock Test #18`,
+    title: examTarget ? `${examTarget} Mock Test #18` : 'Mock Test #18',
     progress: 53,
     remainingMins: 25,
   };

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { enrollmentService } from '../services/enrollment.service';
+import { paymentsService } from '../services/payments.service';
 import { ENROLLMENT_TRANSITIONS, isEnrollmentState } from '../types/enrollment';
 import { logger } from '../utils/logger';
 
@@ -22,6 +23,7 @@ function sendError(res: Response, err: any, context: Record<string, unknown>) {
     case 'INVITATION_UNUSABLE':
     case 'ALREADY_ENROLLED':
     case 'SELF_ENROL':
+    case 'NOT_PURCHASABLE':
       return res.status(409).json({ error: err.message });
     case 'CLASS_FULL':
       return res.status(409).json({ error: err.message, reason: 'full' });
@@ -148,6 +150,27 @@ export class EnrollmentController {
       return res.status(200).json({ enrollments });
     } catch (err: any) {
       return sendError(res, err, { uid, op: 'listRoster', classId: req.params.id });
+    }
+  };
+
+  /**
+   * POST /api/classes/:id/order — the student's own act, third path into a class alongside
+   * invitation-accept and request-to-join. Unlike those two, this never activates anything
+   * itself: it only opens a Razorpay order. The edge only reaches ACTIVE once the signed
+   * webhook (or client verify callback) confirms the payment actually cleared — see
+   * `enrollmentService.activateFromPurchase`, called from `paymentsService.markClassOrderPaid`.
+   */
+  createOrder = async (req: Request, res: Response) => {
+    const uid = req.user?.uid;
+    if (!uid) return res.status(401).json({ error: 'Unauthorized' });
+    if (!paymentsService.isEnabled()) {
+      return res.status(503).json({ error: 'Payments are not configured on this server.' });
+    }
+    try {
+      const order = await paymentsService.createClassOrder(uid, req.params.id);
+      return res.status(201).json(order);
+    } catch (err: any) {
+      return sendError(res, err, { uid, op: 'createOrder', classId: req.params.id });
     }
   };
 

@@ -3,6 +3,7 @@ import {
   userIdentityService,
   RoleConflictError,
 } from '../services/userIdentity.service';
+import { referralService } from '../services/referral.service';
 import { PRODUCT_ROLES, isProductRole, isAdminRole } from '../types/roles';
 import { logger } from '../utils/logger';
 
@@ -16,7 +17,7 @@ import { logger } from '../utils/logger';
  */
 export class UserIdentityController {
   /**
-   * POST /api/users/bootstrap   body: { role: 'student' | 'teacher' }
+   * POST /api/users/bootstrap   body: { role: 'student' | 'teacher', referredBy?: string }
    *
    *   201 — role assigned (client MUST then call getIdToken(true))
    *   200 — already had this role; idempotent no-op
@@ -24,12 +25,20 @@ export class UserIdentityController {
    *   401 — no or invalid token (requireAuth)
    *   403 — an administrative role was requested through the public endpoint
    *   409 — account already holds a DIFFERENT product role (no self-escalation)
+   *
+   * `referredBy` (Phase 3L) is the referring account's uid, captured client-side from a
+   * `?ref=` signup link. Referral crediting only fires when `profileCreated` comes back true —
+   * a SERVER-COMPUTED fact (see userIdentity.service.ts), never a client assertion — so this
+   * cannot be replayed to re-credit a referral, and a pre-existing account gaining a role for
+   * the first time (profileCreated: false, an edge case for legacy accounts) is correctly never
+   * treated as a fresh referral either.
    */
   bootstrap = async (req: Request, res: Response) => {
     const uid = req.user?.uid;
     if (!uid) return res.status(401).json({ error: 'Unauthorized' });
 
     const requested = (req.body || {}).role;
+    const referredBy = typeof (req.body || {}).referredBy === 'string' ? (req.body.referredBy as string).trim() : null;
 
     // Administrative roles are never grantable here. Called out separately from the
     // generic invalid-role case so an attempt is unambiguous in the logs.
@@ -51,6 +60,15 @@ export class UserIdentityController {
 
     try {
       const result = await userIdentityService.bootstrapProductRole(uid, requested);
+
+      if (result.profileCreated && referredBy) {
+        // Best-effort: a referral is a growth nicety, never something that should fail account
+        // creation. Errors are logged, not surfaced — the account bootstrap already succeeded.
+        await referralService.recordReferral(referredBy, uid).catch((err) => {
+          logger.warn('[UserIdentity] Referral crediting failed', { uid, referredBy, error: err?.message });
+        });
+      }
+
       return res.status(result.assigned ? 201 : 200).json(result);
     } catch (err: any) {
       if (err instanceof RoleConflictError) {

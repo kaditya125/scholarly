@@ -1,15 +1,16 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   ArrowRight, Camera, NotebookPen, Headphones,
-  SlidersHorizontal, Gauge, Languages, Presentation,
+  SlidersHorizontal, Gauge, Languages, Presentation, Check, Users,
 } from 'lucide-react';
 import ProductPreview from '../components/landing/ProductPreview';
 import SiteHeader from '../components/landing/SiteHeader';
 import SiteFooter from '../components/landing/SiteFooter';
 import PricingSection from '../components/landing/PricingSection';
 import ProcessChain from '../components/landing/ProcessChain';
+import AvatarStack from '../components/landing/AvatarStack';
 
 /**
  * The public landing page.
@@ -290,6 +291,41 @@ function PrimaryCta({ to, children }: { to: string; children: ReactNode }) {
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
+  const [studentCount, setStudentCount] = useState<number>(1);
+  const [recentAvatars, setRecentAvatars] = useState<string[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchStats = async () => {
+      const endpoints = [
+        `${(import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')}/public/stats`,
+        'http://localhost:8080/api/public/stats',
+        'http://127.0.0.1:8080/api/public/stats',
+        '/api/public/stats',
+      ].filter(Boolean);
+
+      for (const endpoint of endpoints) {
+        try {
+          const res = await fetch(endpoint);
+          if (res.ok) {
+            const data = await res.json();
+            if (typeof data.students === 'number' && isMounted) {
+              setStudentCount(data.students);
+              if (data.recentStudentAvatars && Array.isArray(data.recentStudentAvatars)) {
+                setRecentAvatars(data.recentStudentAvatars);
+              }
+              break;
+            }
+          }
+        } catch {
+          // try next fallback endpoint
+        }
+      }
+    };
+    fetchStats();
+    return () => { isMounted = false; };
+  }, []);
+
   return (
     <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased">
       <SiteHeader />
@@ -301,6 +337,26 @@ export default function LandingPage() {
             {/* Sequenced on mount: the hero is already in view on arrival, so a scroll trigger
                 would fire everything at once. */}
             <Stagger onLoad gap={0.09}>
+              <Item>
+                <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-50/90 dark:bg-white/[0.04] backdrop-blur-sm mb-4 text-[13px] font-medium text-slate-700 dark:text-gray-300 shadow-sm">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#6ca855] opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#6ca855]"></span>
+                  </span>
+                  <AvatarStack avatars={recentAvatars} />
+                  <span>
+                    <strong className="font-semibold text-slate-900 dark:text-white">
+                      {studentCount.toLocaleString()} {studentCount === 1 ? 'student' : 'students'}
+                    </strong>{' '}
+                    registered &amp; learning
+                  </span>
+                  <span className="text-slate-300 dark:text-gray-600">·</span>
+                  <Link to="/signup" className="text-slate-900 dark:text-white hover:text-[#6ca855] dark:hover:text-[#c8e558] font-semibold inline-flex items-center gap-0.5 transition-colors">
+                    Join now &rarr;
+                  </Link>
+                </div>
+              </Item>
+
               <Item>
                 <h1 className="text-[38px] sm:text-[50px] lg:text-[58px] leading-[1.05] font-semibold tracking-[-0.035em]">
                   Ask anything from
@@ -331,7 +387,11 @@ export default function LandingPage() {
 
               <Item y={12}>
                 <p className="mt-5 text-[13px] text-slate-500 dark:text-gray-400">
-                  Free to create an account · Set up takes about two minutes
+                  Free to create an account · Set up takes about two minutes ·{' '}
+                  <span className="font-semibold text-slate-700 dark:text-gray-200">
+                    {studentCount.toLocaleString()} {studentCount === 1 ? 'student' : 'students'}
+                  </span>{' '}
+                  already learning
                 </p>
               </Item>
             </Stagger>
@@ -545,22 +605,48 @@ export default function LandingPage() {
         {/* ══ Final CTA ══════════════════════════════════════════════════════ */}
         <section className="max-w-[1160px] mx-auto px-5 sm:px-8 py-24 sm:py-32">
           <Reveal>
-            <div className="max-w-[34rem]">
-              <h2 className="text-[32px] sm:text-[42px] leading-[1.1] font-semibold tracking-[-0.03em]">
-                Start with the thing<br />you&rsquo;re stuck on.
+            <div className="flex flex-col items-center text-center">
+              <h2 className="text-[32px] sm:text-[42px] lg:text-[48px] leading-[1.1] font-semibold tracking-[-0.03em] max-w-[36rem]">
+                Start with the thing you&rsquo;re stuck on, today
               </h2>
-              <p className="mt-5 text-[16.5px] leading-relaxed text-slate-500 dark:text-gray-400">
-                Tell Scholarly what you&rsquo;re preparing for, then ask it one real question and see
-                what comes back.
+              <p className="mt-5 text-[16.5px] sm:text-[17.5px] leading-relaxed text-slate-500 dark:text-gray-400 max-w-[32rem]">
+                Tell Scholarly what you&rsquo;re preparing for, then ask it one real question and see what comes back.
               </p>
-              <div className="mt-8 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
-                <PrimaryCta to="/signup">Create your account</PrimaryCta>
-                <Link
-                  to="/signin"
-                  className="text-[14.5px] font-medium text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                >
-                  Already have one? Sign in
-                </Link>
+
+              {/* Checkmark perks */}
+              <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
+                {['Start for free', 'No credit card required', 'Cancel anytime'].map((perk) => (
+                  <span key={perk} className="inline-flex items-center gap-1.5 text-[13.5px] text-slate-500 dark:text-gray-400">
+                    <Check className="w-4 h-4 text-[#6ca855]" strokeWidth={2.5} />
+                    {perk}
+                  </span>
+                ))}
+              </div>
+
+              {/* CTA button */}
+              <div className="mt-8">
+                <PrimaryCta to="/signup">Start learning &mdash; it&rsquo;s free</PrimaryCta>
+              </div>
+
+              {/* Divider */}
+              <div className="mt-14 w-full border-t border-slate-200 dark:border-white/[0.08]" />
+
+              {/* Stats row */}
+              <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-12 w-full max-w-[38rem]">
+                {[
+                  { value: `${studentCount.toLocaleString()}`, label: 'Students registered' },
+                  { value: '17+', label: 'Exams covered' },
+                  { value: '6-step', label: 'Reasoning every answer' },
+                ].map((stat) => (
+                  <div key={stat.label} className="text-center">
+                    <p className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">
+                      {stat.value}
+                    </p>
+                    <p className="mt-1 text-[13px] text-slate-500 dark:text-gray-400">
+                      {stat.label}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           </Reveal>

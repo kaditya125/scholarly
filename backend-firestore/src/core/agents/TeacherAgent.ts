@@ -30,7 +30,9 @@ export class TeacherAgent implements IAgent {
     // Build the complete Scholarly AI system prompt with all layers
     const systemPrompt = buildScholarlySystemPrompt({
       mode,
+      viewerRole: context.request.productRole,
       studentContext: context.studentContext,
+      teacherContext: context.teacherContext,
       retrievedContext: context.retrievedContext,
       hasNotebookContext,
     });
@@ -63,7 +65,9 @@ export class TeacherAgent implements IAgent {
 
     const systemPrompt = buildScholarlySystemPrompt({
       mode,
+      viewerRole: context.request.productRole,
       studentContext: context.studentContext,
+      teacherContext: context.teacherContext,
       retrievedContext: context.retrievedContext,
       hasNotebookContext,
     });

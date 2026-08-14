@@ -1,11 +1,25 @@
 import { useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import {
-  Loader2, Check, AlertTriangle, ArrowRight, CalendarDays, BookOpen, Globe, IndianRupee,
+  Loader2, Check, AlertTriangle, ArrowRight, CalendarDays, BookOpen, Globe, IndianRupee, Lock,
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import { useInvitationPreview, useEnrollmentMutations } from '../hooks/api/useEnrollments';
 import { useSeo } from '../lib/useSeo';
+import { classesApi } from '../lib/api/classes';
+import { api } from '../lib/api/client';
+
+/** Loads the Razorpay Checkout SDK once; resolves false if it fails to load. Mirrors Checkout.tsx's own helper — duplicated rather than shared so neither call site risks the other's checkout flow. */
+function loadRazorpayScript(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if ((window as any).Razorpay) return resolve(true);
+    const s = document.createElement('script');
+    s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    s.onload = () => resolve(true);
+    s.onerror = () => resolve(false);
+    document.body.appendChild(s);
+  });
+}
 
 /**
  * /join/:code — where an invitation link lands.
@@ -59,6 +73,7 @@ export default function JoinClass() {
 
   const [joined, setJoined] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
+  const [buying, setBuying] = useState(false);
 
   useSeo({
     title: 'Join a class on Scholarly',
@@ -72,6 +87,56 @@ export default function JoinClass() {
       setJoined(true);
     } catch (e: any) {
       setJoinError(e?.response?.data?.error ?? 'We could not add you to this class.');
+    }
+  };
+
+  /**
+   * Buying a paid class. Unlike `handleJoin`, this never calls `acceptInvitation` — a paid
+   * class is refused there by design (enrollment.service.ts). The edge only reaches ACTIVE once
+   * the server verifies the payment (`/payments/verify`), matching Checkout.tsx's own flow.
+   */
+  const handleBuy = async (classId: string) => {
+    setJoinError(null);
+    setBuying(true);
+    try {
+      const loaded = await loadRazorpayScript();
+      if (!loaded) throw new Error("Couldn't load the payment SDK — check your connection and try again.");
+
+      const order = await classesApi.order(classId);
+
+      const rzp = new (window as any).Razorpay({
+        key: order.keyId,
+        order_id: order.orderId,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'Scholarly',
+        description: order.classTitle,
+        prefill: { name: user?.displayName || '', email: user?.email || '' },
+        theme: { color: '#c8e558', backdrop_color: '#0b0b0c' },
+        handler: async (resp: any) => {
+          try {
+            await api.post('/payments/verify', {
+              razorpay_order_id: resp.razorpay_order_id,
+              razorpay_payment_id: resp.razorpay_payment_id,
+              razorpay_signature: resp.razorpay_signature,
+            });
+            setJoined(true);
+          } catch {
+            setJoinError('Payment received — we’re confirming it now. You’ll have access shortly; refresh in a moment.');
+          } finally {
+            setBuying(false);
+          }
+        },
+        modal: { ondismiss: () => setBuying(false) },
+      });
+      rzp.on('payment.failed', (r: any) => {
+        setJoinError(r?.error?.description || 'Payment failed. Please try again.');
+        setBuying(false);
+      });
+      rzp.open();
+    } catch (e: any) {
+      setJoinError(e?.response?.data?.error ?? e?.message ?? 'Something went wrong starting the payment.');
+      setBuying(false);
     }
   };
 
@@ -207,20 +272,21 @@ export default function JoinClass() {
       )}
 
       {isPaid ? (
-        <div className="mt-5 rounded-2xl border border-amber-500/30 bg-amber-50 dark:bg-amber-500/[0.07] p-5">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-amber-700 dark:text-amber-400" strokeWidth={2} aria-hidden />
-            <div>
-              <p className="text-[14px] font-semibold text-amber-800 dark:text-amber-300">
-                This class can&rsquo;t be joined yet
-              </p>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-amber-800 dark:text-amber-300">
-                It&rsquo;s a paid class, and buying classes isn&rsquo;t available on Scholarly yet.
-                Your teacher will be able to let you in once it is.
-              </p>
-            </div>
-          </div>
-        </div>
+        <>
+          <button
+            onClick={() => handleBuy(preview.classId)}
+            disabled={buying}
+            className="mt-6 w-full sm:w-auto inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl bg-[#c8e558] hover:bg-[#bcd94c] text-slate-900 text-[14.5px] font-semibold transition-colors disabled:opacity-60"
+          >
+            {buying ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden /> : null}
+            Pay ₹{c.pricing.amountINR.toLocaleString('en-IN')} and join
+          </button>
+          <p className="mt-3 flex items-start gap-1.5 text-[12.5px] leading-relaxed text-slate-500 dark:text-gray-400">
+            <Lock className="w-3.5 h-3.5 mt-0.5 shrink-0" strokeWidth={2} aria-hidden />
+            Paid securely by Razorpay. Your teacher can see you on this class&rsquo;s roster once
+            payment clears — nothing else about you.
+          </p>
+        </>
       ) : !preview.usable ? (
         <div className="mt-5 rounded-2xl border border-amber-500/30 bg-amber-50 dark:bg-amber-500/[0.07] p-5 text-[13.5px] text-amber-800 dark:text-amber-300">
           {preview.reason ?? 'This invitation can no longer be used.'}

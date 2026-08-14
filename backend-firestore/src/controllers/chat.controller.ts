@@ -1,6 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { ChatService } from '../services/chat.service';
 import { FileParserService } from '../services/fileParser.service';
+import { PRODUCT_ROLE_CLAIM, ProductRole, isProductRole } from '../types/roles';
+
+/** Same claim capability.ts's middleware reads — decoded from the verified Firebase token. */
+function productRoleOf(req: Request): ProductRole | undefined {
+  const raw = (req.user as unknown as Record<string, any> | undefined)?.[PRODUCT_ROLE_CLAIM];
+  return isProductRole(raw) ? raw : undefined;
+}
 
 export class ChatController {
   private service = new ChatService();
@@ -18,7 +25,7 @@ export class ChatController {
         return res.status(400).json({ error: "Missing required fields: sessionId, message, model, topicType" });
       }
 
-      const response = await this.service.processChat(userId, sessionId, message, model, topicType);
+      const response = await this.service.processChat(userId, sessionId, message, model, topicType, productRoleOf(req));
 
       res.json(response);
     } catch (error) {
@@ -58,7 +65,7 @@ export class ChatController {
 
       const traceId = req.headers['x-trace-id'] as string;
 
-      await this.service.processChatStream(userId, sessionId, finalMessage, model, topicType, res, notebookId, traceId);
+      await this.service.processChatStream(userId, sessionId, finalMessage, model, topicType, res, notebookId, traceId, productRoleOf(req));
 
     } catch (error) {
       console.error("Chat Stream Error:", error);

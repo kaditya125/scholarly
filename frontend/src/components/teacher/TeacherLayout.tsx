@@ -52,13 +52,15 @@ const NAV: NavGroup[] = [
     items: [{ label: 'Dashboard', icon: LayoutDashboard, to: '/teach' }],
   },
   {
-    // Shared platform surfaces that genuinely work for a teacher account today.
+    // Shared platform surfaces — same tool and same component as the student app, mounted
+    // under /teach so they render inside THIS sidebar instead of the student one. See the
+    // matching routes in App.tsx.
     title: 'Prepare',
     items: [
-      { label: 'AI Assistant', icon: BotMessageSquare, to: '/chat' },
-      { label: 'Notebooks', icon: NotebookPen, to: '/notebooks' },
-      { label: 'Tests', icon: FileText, to: '/tests' },
-      { label: 'Podcasts', icon: Headphones, to: '/podcasts' },
+      { label: 'AI Assistant', icon: BotMessageSquare, to: '/teach/chat' },
+      { label: 'Notebooks', icon: NotebookPen, to: '/teach/notebooks' },
+      { label: 'Tests', icon: FileText, to: '/teach/tests' },
+      { label: 'Podcasts', icon: Headphones, to: '/teach/podcasts' },
     ],
   },
   {
@@ -72,13 +74,13 @@ const NAV: NavGroup[] = [
   },
   {
     title: 'Business',
-    items: [{ label: 'Earnings', icon: Wallet, note: 'Being built' }],
+    items: [{ label: 'Earnings', icon: Wallet, to: '/teach/earnings' }],
   },
   {
     title: 'Account',
     items: [
       { label: 'Teaching profile', icon: UserRound, to: '/teacher/onboarding' },
-      { label: 'Settings', icon: Settings, to: '/settings' },
+      { label: 'Settings', icon: Settings, to: '/teach/settings' },
     ],
   },
 ];

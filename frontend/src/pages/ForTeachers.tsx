@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import {
@@ -14,6 +14,7 @@ import {
   PROBLEMS, CAPABILITIES, COPILOT_STEPS, EXAMPLE_PROMPTS, PROFILE_FIELDS, JOURNEY,
   DAY, COMPARISON, FAQS, STATUS_BOARD, STATUS_LABEL, type FeatureStatus,
 } from '../components/landing/teacherPageData';
+import AvatarStack from '../components/landing/AvatarStack';
 
 /**
  * /for-teachers — the public teacher marketing page.
@@ -98,39 +99,34 @@ function StatusPill({ status, className }: { status: FeatureStatus; className?: 
   );
 }
 
-/** Primary CTA. Carries the intended role to the existing signup wizard. */
-function TeacherCta({ children = 'Create a teacher account' }: { children?: ReactNode }) {
+/* ── Hero previews & CTAs ─────────────────────────────────────────────────────────────── */
+
+function TeacherCta({ className }: { className?: string }) {
   return (
     <Link
       to="/signup"
       state={{ role: 'teacher' }}
-      className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl bg-[#c8e558] hover:bg-[#bcd94c] active:bg-[#b0cd40] text-slate-900 text-[14.5px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#8aa62f] dark:focus-visible:ring-offset-[#0b0b0c]"
+      className={cn(
+        'inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl bg-[#c8e558] hover:bg-[#bcd94c] active:bg-[#b0cd40] text-slate-900 text-[14.5px] font-semibold transition-colors',
+        className,
+      )}
     >
-      {children}
-      <ArrowRight className="w-4 h-4" strokeWidth={2.25} aria-hidden />
+      Create a teacher account
+      <ArrowRight className="w-4 h-4" strokeWidth={2.25} />
     </Link>
   );
 }
 
-/**
- * Secondary CTA.
- *
- * In-page targets render as a plain <a href="#…">, never as a <Link>. React Router resolves
- * `to="#how"` against the current path — producing /for-teachers#how — and then treats it as a
- * navigation without performing any hash scrolling, so the button would appear to do nothing.
- * A native anchor lets the browser do what it has always done correctly.
- */
 function GhostCta({ to, children }: { to: string; children: ReactNode }) {
-  const cls =
-    'inline-flex items-center justify-center h-12 px-6 rounded-xl border border-slate-200 dark:border-white/12 text-[14.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400';
-
-  if (to.startsWith('#')) {
-    return <a href={to} className={cls}>{children}</a>;
-  }
-  return <Link to={to} className={cls}>{children}</Link>;
+  return (
+    <a
+      href={to}
+      className="inline-flex items-center justify-center h-12 px-6 rounded-xl border border-slate-200 dark:border-white/12 text-[14.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+    >
+      {children}
+    </a>
+  );
 }
-
-/* ── Hero visual — a drafting exchange, using capability that exists today ─────────────── */
 
 function DraftPreview() {
   return (
@@ -222,6 +218,41 @@ function Faq({ q, a }: { q: string; a: string }) {
 /* ── Page ─────────────────────────────────────────────────────────────────────────────── */
 
 export default function ForTeachers() {
+  const [teacherCount, setTeacherCount] = useState<number>(1);
+  const [recentAvatars, setRecentAvatars] = useState<string[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchStats = async () => {
+      const endpoints = [
+        `${(import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')}/public/stats`,
+        'http://localhost:8080/api/public/stats',
+        'http://127.0.0.1:8080/api/public/stats',
+        '/api/public/stats',
+      ].filter(Boolean);
+
+      for (const endpoint of endpoints) {
+        try {
+          const res = await fetch(endpoint);
+          if (res.ok) {
+            const data = await res.json();
+            if (typeof data.teachers === 'number' && isMounted) {
+              setTeacherCount(data.teachers);
+              if (data.recentTeacherAvatars && Array.isArray(data.recentTeacherAvatars)) {
+                setRecentAvatars(data.recentTeacherAvatars);
+              }
+              break;
+            }
+          }
+        } catch {
+          // fallback
+        }
+      }
+    };
+    fetchStats();
+    return () => { isMounted = false; };
+  }, []);
+
   useSeo({
     title: 'Scholarly for Teachers — AI-assisted preparation, with you in control',
     description:
@@ -238,7 +269,27 @@ export default function ForTeachers() {
         <section className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-14 sm:pt-20 lg:pt-24 pb-16 sm:pb-24">
           <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.02fr)] gap-12 lg:gap-16 xl:gap-20 items-center">
             <Reveal>
-              <Eyebrow>For teachers</Eyebrow>
+              <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-50/90 dark:bg-white/[0.04] backdrop-blur-sm mb-4 text-[13px] font-medium text-slate-700 dark:text-gray-300 shadow-sm">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#6ca855] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#6ca855]"></span>
+                </span>
+                <AvatarStack avatars={recentAvatars} />
+                <span>
+                  <strong className="font-semibold text-slate-900 dark:text-white">
+                    {teacherCount.toLocaleString()} {teacherCount === 1 ? 'teacher' : 'teachers'}
+                  </strong>{' '}
+                  registered &amp; building
+                </span>
+                <span className="text-slate-300 dark:text-gray-600">·</span>
+                <Link to="/signup" state={{ role: 'teacher' }} className="text-slate-900 dark:text-white hover:text-[#6ca855] dark:hover:text-[#c8e558] font-semibold inline-flex items-center gap-0.5 transition-colors">
+                  Join now &rarr;
+                </Link>
+              </div>
+
+              <div>
+                <Eyebrow>For teachers</Eyebrow>
+              </div>
               <h1 className="mt-4 text-[36px] sm:text-[48px] lg:text-[56px] leading-[1.05] font-semibold tracking-[-0.035em]">
                 Less time preparing.
                 <br />

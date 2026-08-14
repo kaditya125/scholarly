@@ -28,10 +28,12 @@ export class ResponseFormatter implements IAgent {
       warningText = `\n\n⚠️ **Verification Note**: The following claims could not be verified against your uploaded study material: \n- ${warnings.join('\n- ')}`;
     }
 
-    // Build smart recommendations based on student context
+    // Build smart recommendations based on student context (teacher viewers have none yet)
     const recommendations = buildRecommendationsBlock(context.studentContext);
+    const isTeacherViewer = context.request.productRole === 'teacher';
+    const audience = isTeacherViewer ? 'teacher' : 'student';
 
-    const systemPrompt = `You are Scholarly AI's final presentation layer. Your job is to take the Draft Response and present it beautifully to the student.
+    const systemPrompt = `You are Scholarly AI's final presentation layer. Your job is to take the Draft Response and present it beautifully to the ${audience}.
 
 ## Preservation Rules (highest priority — these override every style instruction below)
 You are FORMATTING, not rewriting. The draft has already been researched and grounded.
@@ -68,14 +70,14 @@ ${recommendations ? `## Provided Recommendations\n(Append these under an "## App
     if (typeof anyProvider.generateStreamResponse === 'function') {
       const stream = anyProvider.generateStreamResponse([
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: 'Format and present this response to the student.' }
+        { role: 'user', content: `Format and present this response to the ${audience}.` }
       ], undefined, { traceId: context.request.traceId, model: context.request.model });
       for await (const chunk of stream) {
         yield chunk;
       }
     } else {
       const res = await aiProvider.generateResponse([
-        { role: 'user', content: 'Format and present this response to the student.' }
+        { role: 'user', content: `Format and present this response to the ${audience}.` }
       ], systemPrompt);
       yield res.reply;
     }

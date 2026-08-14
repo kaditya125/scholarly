@@ -16,6 +16,35 @@ import { cn } from '../../lib/utils';
  * and headers use) rather than the reference's face, so auth feels continuous with the
  * product rather than like a separate marketing page.
  */
+/**
+ * The app's actual mark — the same layered-stack SVG and amber the sidebar uses.
+ *
+ * Exported because every full-page flow outside the app shell (auth, onboarding) needs it,
+ * and each one re-drawing its own is precisely how brands drift: the student onboarding
+ * wizard had already invented a separate indigo graduation-cap lockup this way.
+ */
+export function BrandMark({ size = 26, className }: { size?: number; className?: string }) {
+  return (
+    <Link to="/" className={cn('inline-flex items-center gap-2.5 w-fit group', className)}>
+      <svg
+        className="shrink-0 group-hover:scale-105 transition-transform"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden
+      >
+        <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#facc15" />
+        <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <span className="text-[17px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">
+        Scholarly
+      </span>
+    </Link>
+  );
+}
+
 export function AuthShell({
   title,
   subtitle,
@@ -31,17 +60,7 @@ export function AuthShell({
     <div className="min-h-screen w-full flex bg-white dark:bg-[#0e0e0f]">
       {/* ── Form column ─────────────────────────────────────────────────────── */}
       <div className="w-full lg:w-[52%] flex flex-col px-6 sm:px-12 lg:px-16 xl:px-24 py-8">
-        {/* The app's actual mark — same layered-stack SVG and amber the sidebar uses.
-            An auth page inventing its own logo is how brands drift. */}
-        <Link to="/" className="inline-flex items-center gap-2.5 w-fit group">
-          <svg className="shrink-0 group-hover:scale-105 transition-transform" width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#facc15" />
-            <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span className="text-[17px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">
-            Scholarly
-          </span>
-        </Link>
+        <BrandMark />
 
         <div className="flex-1 flex items-center">
           <motion.div
@@ -217,7 +236,9 @@ export function Field({
       </span>
       <input
         {...props}
-        className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-[14px] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-600 outline-none transition-colors focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 disabled:opacity-60"
+        // Focus ring is the brand lime, not indigo. This was the last indigo left in the
+        // auth surface and it read as a different product the moment a field was focused.
+        className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-[14px] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-600 outline-none transition-colors focus:border-[#c8e558] focus:ring-4 focus:ring-[#c8e558]/20 disabled:opacity-60"
       />
     </label>
   );

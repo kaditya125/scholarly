@@ -111,10 +111,27 @@ const PROMPT_POOL: { icon: any; text: string; prompt: string }[] = [
   { icon: Clock, text: 'Plan my revision for an exam that is close', prompt: 'Plan my revision for an exam that is two weeks away, three hours a day.' },
 ];
 
-/** Four distinct prompts at random, excluding the ones currently on screen where possible. */
-const pickPrompts = (exclude: string[] = []) => {
-  const fresh = PROMPT_POOL.filter((p) => !exclude.includes(p.text));
-  const source = fresh.length >= 4 ? fresh : PROMPT_POOL;
+/**
+ * Same pool shape, teacher-framed: preparing to teach rather than preparing to be tested.
+ * Reuses the exact icon set above so this doesn't pull in new imports for a second pool.
+ */
+const TEACHER_PROMPT_POOL: { icon: any; text: string; prompt: string }[] = [
+  { icon: BookOpen, text: 'Draft a clear explanation for a concept I need to teach', prompt: 'Draft a clear, classroom-ready explanation of a concept I need to teach next — I\'ll tell you the topic.' },
+  { icon: Lightbulb, text: 'Suggest common misconceptions students have about a topic', prompt: 'What are the most common misconceptions students have about a topic I\'m about to teach?' },
+  { icon: SlidersHorizontal, text: 'Suggest a simple way to explain a tricky concept', prompt: 'Suggest a simple analogy or way to explain a concept that students usually find confusing.' },
+  { icon: Wand2, text: 'Build a mnemonic I can teach my students', prompt: 'Build a memorable mnemonic I can teach my students for a topic I\'ll describe.' },
+  { icon: FileText, text: 'Turn my rough notes into a clean lesson outline', prompt: 'Turn the rough notes I paste next into a clean, structured lesson outline.' },
+  { icon: Sparkles, text: 'Compare two ways to teach the same topic', prompt: 'Compare two different approaches to teaching the same topic, with the trade-offs of each.' },
+  { icon: Mail, text: 'Draft a message to a parent or guardian', prompt: 'Draft a polite, clear message to a parent about their child\'s progress.' },
+  { icon: MessageSquareText, text: 'Summarise this article into a lesson brief', prompt: 'Summarise the text I paste next into a short brief I can use to prepare a lesson.' },
+  { icon: Calculator, text: 'Work through a problem the way I\'d explain it on the board', prompt: 'Work through a problem step by step, the way I\'d explain it on the board to a class.' },
+  { icon: Clock, text: 'Help me structure a class session in the time I have', prompt: 'Help me structure a class session — I\'ll tell you the topic and how much time I have.' },
+];
+
+/** Four distinct prompts at random from the given pool, excluding what's currently on screen where possible. */
+const pickPrompts = (pool: typeof PROMPT_POOL, exclude: string[] = []) => {
+  const fresh = pool.filter((p) => !exclude.includes(p.text));
+  const source = fresh.length >= 4 ? fresh : pool;
   return [...source].sort(() => Math.random() - 0.5).slice(0, 4);
 };
 
@@ -137,7 +154,9 @@ export default function Chat() {
   const typeParam = searchParams.get('type') || 'chat';
   const config = TYPE_CONFIG[typeParam] || TYPE_CONFIG['chat'];
   
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const isTeacher = role === 'teacher';
+  const promptPool = isTeacher ? TEACHER_PROMPT_POOL : PROMPT_POOL;
   
   const [sessions, setSessions] = useState<any[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -161,9 +180,9 @@ export default function Chat() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ─── Empty-state prompt cards ──────────────────────────────────────────────
-  const [visiblePrompts, setVisiblePrompts] = useState(() => pickPrompts());
+  const [visiblePrompts, setVisiblePrompts] = useState(() => pickPrompts(promptPool));
   const refreshPrompts = () =>
-    setVisiblePrompts((cur) => pickPrompts(cur.map((p) => p.text)));
+    setVisiblePrompts((cur) => pickPrompts(promptPool, cur.map((p) => p.text)));
 
   // ─── Retrieval scope (the "All Web" pill) ──────────────────────────────────
   const [scope, setScope] = useState<Scope>(DEFAULT_SCOPE);
@@ -724,21 +743,37 @@ export default function Chat() {
               transition={{ duration: 0.45, ease: 'easeOut' }}
               className="flex flex-col items-start text-left z-10 w-full max-w-3xl"
             >
-              {/* Greeting — the student's first name is the only personalised token here. */}
+              {/* Greeting — the first name is the only personalised token; wording branches on
+                  account role (isTeacher) so a teacher isn't greeted as if they're the one
+                  being taught. The AI's actual response persona is a separate, backend-side
+                  change — see prompts.ts's viewerRole branch. */}
               <h1 className="text-[34px] md:text-[38px] font-bold tracking-[-0.02em] leading-[1.12] text-slate-900 dark:text-gray-50">
                 Hi there,{' '}
                 <span className="bg-gradient-to-r from-purple-500 to-fuchsia-500 bg-clip-text text-transparent">
                   {firstName}
                 </span>
                 <br />
-                What would{' '}
-                <span className="bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
-                  you like to know?
-                </span>
+                {isTeacher ? (
+                  <>
+                    What are you{' '}
+                    <span className="bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
+                      preparing today?
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    What would{' '}
+                    <span className="bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
+                      you like to know?
+                    </span>
+                  </>
+                )}
               </h1>
 
               <p className="mt-3 text-slate-500 dark:text-gray-400 text-[14.5px] leading-[1.55] max-w-[340px]">
-                Use one of the most common prompts below or use your own to begin
+                {isTeacher
+                  ? 'Use one of the prompts below, or ask your own — I can help you prepare and teach.'
+                  : 'Use one of the most common prompts below or use your own to begin'}
               </p>
 
               {/* Suggestion cards — one row of four, copy on top, icon anchored bottom-left. */}

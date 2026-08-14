@@ -101,6 +101,8 @@ export interface EnrollmentRecord {
 
   state: EnrollmentState;
   source: EnrollmentSource;
+  /** Set when `source === 'purchase'` — links back to `payments/{orderId}`. Null otherwise. */
+  orderId?: string | null;
 
   /** Set the first time the edge reaches ACTIVE. Never cleared, so history survives a leave. */
   activatedAt: FirebaseFirestore.FieldValue | FirebaseFirestore.Timestamp | null;

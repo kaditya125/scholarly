@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import {
-  ArrowLeft, Plus, Trash2, Loader2, Check, AlertTriangle, Lock, Send, Archive, Users, NotebookPen, ClipboardCheck,
+  ArrowLeft, Plus, Trash2, Loader2, Check, AlertTriangle, Lock, Send, Archive, Users, NotebookPen, ClipboardCheck, MessageCircle, Video,
 } from 'lucide-react';
 import { useClass, useClassMutations } from '../../hooks/api/useClasses';
 import { BOARDS, SUBJECTS, LANGUAGES, GOALS } from '../../lib/onboardingOptions';
@@ -248,6 +248,20 @@ export default function TeacherClassEditor() {
             >
               <ClipboardCheck className="w-3.5 h-3.5" strokeWidth={2} aria-hidden />
               Tests
+            </Link>
+            <Link
+              to={`/teach/classes/${id}/discussion`}
+              className="inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-slate-900 dark:text-white underline underline-offset-2"
+            >
+              <MessageCircle className="w-3.5 h-3.5" strokeWidth={2} aria-hidden />
+              Discussion
+            </Link>
+            <Link
+              to={`/teach/classes/${id}/live`}
+              className="inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-slate-900 dark:text-white underline underline-offset-2"
+            >
+              <Video className="w-3.5 h-3.5" strokeWidth={2} aria-hidden />
+              Live
             </Link>
           </div>
         )}

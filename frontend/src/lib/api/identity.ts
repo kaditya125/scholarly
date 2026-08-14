@@ -22,8 +22,9 @@ export interface BootstrapResult {
  * custom claims only appear in a newly minted token.
  */
 export const identityApi = {
-  async bootstrap(role: ProductRole): Promise<BootstrapResult> {
-    const res = await api.post('/users/bootstrap', { role });
+  /** `referredBy` (Phase 3L) is the referring account's uid, captured from a `?ref=` signup link. */
+  async bootstrap(role: ProductRole, referredBy?: string | null): Promise<BootstrapResult> {
+    const res = await api.post('/users/bootstrap', { role, ...(referredBy ? { referredBy } : {}) });
     return res.data;
   },
 

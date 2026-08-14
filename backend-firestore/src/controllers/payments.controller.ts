@@ -66,12 +66,15 @@ export class PaymentsController {
         return res.status(400).json({ success: false, error: 'Invalid payment signature' });
       }
 
-      const result = await paymentsService.markPaidAndUpgrade(razorpay_order_id, razorpay_payment_id, 'client');
+      const result = await paymentsService.applyOrderPayment(razorpay_order_id, razorpay_payment_id, 'client');
       // Guard against a signed callback for someone else's order.
       if (result.userId && result.userId !== userId) {
         return res.status(403).json({ success: false, error: 'Order does not belong to this user' });
       }
-      res.json({ success: true, plan: 'pro' });
+      if (result.orderType === 'class_purchase') {
+        return res.json({ success: true, orderType: 'class_purchase', classId: result.classId });
+      }
+      res.json({ success: true, orderType: 'subscription', plan: 'pro' });
     } catch (error: any) {
       console.error('[payments] verifyPayment failed:', error?.message || error);
       next(error);

@@ -29,10 +29,15 @@ import TeacherClassEditor from "./pages/teacher/TeacherClassEditor";
 import TeacherClassStudents from "./pages/teacher/TeacherClassStudents";
 import TeacherClassResources from "./pages/teacher/TeacherClassResources";
 import TeacherClassAssignments from "./pages/teacher/TeacherClassAssignments";
+import TeacherClassDiscussion from "./pages/teacher/TeacherClassDiscussion";
+import TeacherEarnings from "./pages/teacher/TeacherEarnings";
+import TeacherClassLive from "./pages/teacher/TeacherClassLive";
 import TeacherStudents from "./pages/teacher/TeacherStudents";
 import QuizAttemptPage from "./pages/QuizAttempt";
+import ClassSessionJoin from "./pages/ClassSessionJoin";
 import JoinClass from "./pages/JoinClass";
 import MyClasses from "./pages/MyClasses";
+import Refer from "./pages/Refer";
 import RoleLanding from "./components/RoleLanding";
 import Leaderboard from "./pages/Leaderboard";
 import Pricing from "./pages/Pricing";
@@ -199,6 +204,8 @@ function AppRoutes() {
         {/* Real quiz-attempt taking UI (Phase 3G) — full-screen and isolated like /test,
             but wired to the actual quiz-attempts backend rather than TestEngine's mock data. */}
         <Route path="/quiz/attempts/:attemptId" element={<ProtectedRoute><QuizAttemptPage /></ProtectedRoute>} />
+        {/* Live class session (Phase 3M) — full-screen and isolated, same reasoning as above. */}
+        <Route path="/classes/:classId/sessions/:sessionId/join" element={<ProtectedRoute><ClassSessionJoin /></ProtectedRoute>} />
         <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
         {/* Teacher onboarding wizard — one route, internal step state (see the file header). */}
         <Route path="/teacher/onboarding" element={<ProtectedRoute><TeacherOnboarding /></ProtectedRoute>} />
@@ -215,7 +222,24 @@ function AppRoutes() {
           <Route path="classes/:id/students" element={<TeacherClassStudents />} />
           <Route path="classes/:id/resources" element={<TeacherClassResources />} />
           <Route path="classes/:id/assignments" element={<TeacherClassAssignments />} />
+          <Route path="classes/:id/discussion" element={<TeacherClassDiscussion />} />
           <Route path="students" element={<TeacherStudents />} />
+          <Route path="earnings" element={<TeacherEarnings />} />
+          <Route path="classes/:id/live" element={<TeacherClassLive />} />
+          {/*
+            Shared surfaces, reused unmodified — same component as the student route below,
+            mounted a second time so it renders inside TeacherLayout instead of AppLayout. See
+            TeacherLayout.tsx's own docblock: threading a role branch through AppLayout's
+            700-line MAIN_MENU would make the most complex component in the app more complex,
+            so the fix is a second route, not a role conditional inside either shell. The bare
+            /chat, /notebooks, /tests, /podcasts, /settings routes below are unchanged for
+            students.
+          */}
+          <Route path="chat" element={<Chat />} />
+          <Route path="notebooks" element={<Notebooks />} />
+          <Route path="tests" element={<TestCenter />} />
+          <Route path="podcasts" element={<Podcasts />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
         <Route path="/baseline-assessment" element={<ProtectedRoute><BaselineAssessmentEngine /></ProtectedRoute>} />
         <Route path="/baseline-assessment/report" element={<ProtectedRoute><AssessmentReportDashboard /></ProtectedRoute>} />
@@ -262,6 +286,7 @@ function AppRoutes() {
           <Route path="/doubts" element={<MyDoubts />} />
           {/* Student side of the enrolment loop (Phase 3E). */}
           <Route path="/my-classes" element={<MyClasses />} />
+          <Route path="/refer" element={<Refer />} />
           <Route path="/trash" element={<Trash />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />

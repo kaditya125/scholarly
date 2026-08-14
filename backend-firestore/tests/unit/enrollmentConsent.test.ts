@@ -359,3 +359,48 @@ describe('resource access follows the edge', () => {
     expect(classResourceService.syncAccessForEnrollment).toHaveBeenCalledWith(CLASS, STUDENT, true);
   });
 });
+
+/* ── Phase 3I: activating from a verified purchase ───────────────────────────────────── */
+
+describe('activateFromPurchase', () => {
+  it('activates a fresh edge with source "purchase" and the orderId attached', async () => {
+    seedClass({ pricing: { type: 'paid', amountINR: 999, currency: 'INR' } });
+    const edge = await enrollmentService.activateFromPurchase(CLASS, STUDENT, 'order_1');
+    expect(edge.state).toBe('ACTIVE');
+    expect(edge.source).toBe('purchase');
+    expect((edge as any).orderId).toBe('order_1');
+  });
+
+  it('increments the class seat counter exactly once', async () => {
+    seedClass({ pricing: { type: 'paid', amountINR: 999, currency: 'INR' }, counts: { enrolled: 3 } });
+    await enrollmentService.activateFromPurchase(CLASS, STUDENT, 'order_1');
+    expect(store.classes[CLASS].counts.enrolled).toBe(4);
+  });
+
+  it('is idempotent for the SAME order — a retried webhook does not double-count the seat', async () => {
+    seedClass({ pricing: { type: 'paid', amountINR: 999, currency: 'INR' }, counts: { enrolled: 0 } });
+    await enrollmentService.activateFromPurchase(CLASS, STUDENT, 'order_1');
+    await enrollmentService.activateFromPurchase(CLASS, STUDENT, 'order_1');
+    expect(store.classes[CLASS].counts.enrolled).toBe(1);
+  });
+
+  it('unlike acceptInvitation, never refuses a paid class — that is the whole point', async () => {
+    seedClass({ pricing: { type: 'paid', amountINR: 999, currency: 'INR' } });
+    await expect(enrollmentService.activateFromPurchase(CLASS, STUDENT, 'order_1')).resolves.toMatchObject({ state: 'ACTIVE' });
+  });
+
+  it('syncs resource access exactly like every other path to ACTIVE', async () => {
+    seedClass({ pricing: { type: 'paid', amountINR: 999, currency: 'INR' } });
+    await enrollmentService.activateFromPurchase(CLASS, STUDENT, 'order_1');
+    expect(classResourceService.syncAccessForEnrollment).toHaveBeenCalledWith(CLASS, STUDENT, true);
+  });
+
+  it('re-activates a student who previously left, via a NEW order', async () => {
+    seedClass({ pricing: { type: 'paid', amountINR: 999, currency: 'INR' }, counts: { enrolled: 0 } });
+    seedEdge('LEFT', { source: 'invitation' });
+    const edge = await enrollmentService.activateFromPurchase(CLASS, STUDENT, 'order_2');
+    expect(edge.state).toBe('ACTIVE');
+    expect((edge as any).orderId).toBe('order_2');
+    expect(store.classes[CLASS].counts.enrolled).toBe(1);
+  });
+});

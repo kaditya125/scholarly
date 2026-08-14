@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Github, GraduationCap, Presentation, ArrowLeft } from 'lucide-react';
 import {
   auth,
@@ -79,6 +79,9 @@ export default function Signup() {
    * normal role-selection step instead of entering step 2 with a bad role.
    */
   const location = useLocation();
+  /** A referral link (Phase 3L) arrives as `?ref=<referrerUid>`. Forwarded to bootstrap once, on account creation — see identity.ts. */
+  const [searchParams] = useSearchParams();
+  const referredBy = searchParams.get('ref');
   const suggestedRole = (location.state as { role?: unknown } | null)?.role;
   const initialRole: ProductRole | null =
     suggestedRole === 'teacher' || suggestedRole === 'student' ? suggestedRole : null;
@@ -102,7 +105,7 @@ export default function Signup() {
    */
   const assignRoleAndContinue = async (chosen: ProductRole) => {
     try {
-      await identityApi.bootstrap(chosen);
+      await identityApi.bootstrap(chosen, referredBy);
       // Custom claims only appear in a NEWLY MINTED token, so the refresh is mandatory —
       // without it the app keeps seeing the account as having no product role.
       await refreshClaims();

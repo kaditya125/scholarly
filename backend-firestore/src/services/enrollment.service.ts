@@ -220,6 +220,7 @@ export class EnrollmentService {
     source: EnrollmentSource,
     existing: EnrollmentRecord | null,
     now: FirebaseFirestore.FieldValue,
+    orderId: string | null = null,
   ): Record<string, any> {
     return {
       id: enrollmentId(classId, studentUid),
@@ -228,12 +229,62 @@ export class EnrollmentService {
       teacherUid,
       state: 'ACTIVE' as EnrollmentState,
       source,
+      orderId,
       // Stamped once — surviving a later leave keeps the history honest.
       activatedAt: existing?.activatedAt ?? now,
       blockedBy: null,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     };
+  }
+
+  /**
+   * Activates an edge from a verified payment — the branch `acceptInvitation`'s own comment
+   * predicted: "create the order, and let the verified webhook activate the edge". Called ONLY
+   * from `paymentsService.markClassOrderPaid`, itself reachable only from a signature-verified
+   * Razorpay callback or webhook — never from a live request, so there is no `actorUid` to check
+   * permission for. The payment having cleared IS the authorization.
+   *
+   * Deliberately does not enforce capacity the way `acceptInvitation`/`transition` do: by the
+   * time this runs, Razorpay has already captured the student's money. Refusing the seat here
+   * would mean holding payment for nothing — the worse outcome. `createClassOrder` checks
+   * capacity before checkout opens; this only logs if the class filled up in the interim.
+   */
+  async activateFromPurchase(classId: string, studentUid: string, orderId: string): Promise<EnrollmentRecord> {
+    const classRef = db.collection(CLASSES).doc(classId);
+    const edgeRef = this.enrollmentRef(classId, studentUid);
+
+    const record = await db.runTransaction(async (tx) => {
+      const classSnap = await tx.get(classRef);
+      if (!classSnap.exists) fail('NOT_FOUND', 'Class not found');
+      const c = classSnap.data() as ClassRecord;
+
+      const edgeSnap = await tx.get(edgeRef);
+      const existing = edgeSnap.exists ? (edgeSnap.data() as EnrollmentRecord) : null;
+
+      // Idempotent: the webhook and the client-side verify callback can both race to apply the
+      // same order. If this exact purchase already activated the edge, return it unchanged.
+      if (existing?.state === 'ACTIVE' && existing.orderId === orderId) return existing;
+
+      const now = admin.firestore.FieldValue.serverTimestamp();
+      const record = this.buildActive(classId, studentUid, c.ownerUid, 'purchase', existing, now, orderId);
+
+      const enrolled = c.counts?.enrolled ?? 0;
+      const wasActive = existing?.state === 'ACTIVE';
+      tx.set(edgeRef, record, { merge: true });
+      if (!wasActive) tx.update(classRef, { 'counts.enrolled': enrolled + 1, updatedAt: now });
+
+      const seats = c.capacity;
+      if (seats != null && enrolled >= seats && !wasActive) {
+        logger.warn('[Enrollment] Purchase activated over capacity', { classId, studentUid, orderId, capacity: seats, enrolled });
+      }
+
+      logger.info('[Enrollment] Activated from purchase', { classId, studentUid, orderId });
+      return record as EnrollmentRecord;
+    });
+
+    await classResourceService.syncAccessForEnrollment(classId, studentUid, true);
+    return record;
   }
 
   /* ── Requests (student-initiated) ────────────────────────────────────────────────── */
