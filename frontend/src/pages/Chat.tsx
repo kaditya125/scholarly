@@ -35,7 +35,11 @@ import {
   Lock,
   Share2,
   Sun,
-  Moon
+  Moon,
+  Square,
+  Pencil,
+  ArrowDown,
+  AlertTriangle
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -111,10 +115,27 @@ const PROMPT_POOL: { icon: any; text: string; prompt: string }[] = [
   { icon: Clock, text: 'Plan my revision for an exam that is close', prompt: 'Plan my revision for an exam that is two weeks away, three hours a day.' },
 ];
 
-/** Four distinct prompts at random, excluding the ones currently on screen where possible. */
-const pickPrompts = (exclude: string[] = []) => {
-  const fresh = PROMPT_POOL.filter((p) => !exclude.includes(p.text));
-  const source = fresh.length >= 4 ? fresh : PROMPT_POOL;
+/**
+ * Same pool shape, teacher-framed: preparing to teach rather than preparing to be tested.
+ * Reuses the exact icon set above so this doesn't pull in new imports for a second pool.
+ */
+const TEACHER_PROMPT_POOL: { icon: any; text: string; prompt: string }[] = [
+  { icon: BookOpen, text: 'Draft a clear explanation for a concept I need to teach', prompt: 'Draft a clear, classroom-ready explanation of a concept I need to teach next — I\'ll tell you the topic.' },
+  { icon: Lightbulb, text: 'Suggest common misconceptions students have about a topic', prompt: 'What are the most common misconceptions students have about a topic I\'m about to teach?' },
+  { icon: SlidersHorizontal, text: 'Suggest a simple way to explain a tricky concept', prompt: 'Suggest a simple analogy or way to explain a concept that students usually find confusing.' },
+  { icon: Wand2, text: 'Build a mnemonic I can teach my students', prompt: 'Build a memorable mnemonic I can teach my students for a topic I\'ll describe.' },
+  { icon: FileText, text: 'Turn my rough notes into a clean lesson outline', prompt: 'Turn the rough notes I paste next into a clean, structured lesson outline.' },
+  { icon: Sparkles, text: 'Compare two ways to teach the same topic', prompt: 'Compare two different approaches to teaching the same topic, with the trade-offs of each.' },
+  { icon: Mail, text: 'Draft a message to a parent or guardian', prompt: 'Draft a polite, clear message to a parent about their child\'s progress.' },
+  { icon: MessageSquareText, text: 'Summarise this article into a lesson brief', prompt: 'Summarise the text I paste next into a short brief I can use to prepare a lesson.' },
+  { icon: Calculator, text: 'Work through a problem the way I\'d explain it on the board', prompt: 'Work through a problem step by step, the way I\'d explain it on the board to a class.' },
+  { icon: Clock, text: 'Help me structure a class session in the time I have', prompt: 'Help me structure a class session — I\'ll tell you the topic and how much time I have.' },
+];
+
+/** Four distinct prompts at random from the given pool, excluding what's currently on screen where possible. */
+const pickPrompts = (pool: typeof PROMPT_POOL, exclude: string[] = []) => {
+  const fresh = pool.filter((p) => !exclude.includes(p.text));
+  const source = fresh.length >= 4 ? fresh : pool;
   return [...source].sort(() => Math.random() - 0.5).slice(0, 4);
 };
 
@@ -137,7 +158,9 @@ export default function Chat() {
   const typeParam = searchParams.get('type') || 'chat';
   const config = TYPE_CONFIG[typeParam] || TYPE_CONFIG['chat'];
   
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const isTeacher = role === 'teacher';
+  const promptPool = isTeacher ? TEACHER_PROMPT_POOL : PROMPT_POOL;
   
   const [sessions, setSessions] = useState<any[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -161,9 +184,9 @@ export default function Chat() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ─── Empty-state prompt cards ──────────────────────────────────────────────
-  const [visiblePrompts, setVisiblePrompts] = useState(() => pickPrompts());
+  const [visiblePrompts, setVisiblePrompts] = useState(() => pickPrompts(promptPool));
   const refreshPrompts = () =>
-    setVisiblePrompts((cur) => pickPrompts(cur.map((p) => p.text)));
+    setVisiblePrompts((cur) => pickPrompts(promptPool, cur.map((p) => p.text)));
 
   // ─── Retrieval scope (the "All Web" pill) ──────────────────────────────────
   const [scope, setScope] = useState<Scope>(DEFAULT_SCOPE);
@@ -227,15 +250,49 @@ export default function Chat() {
   // prepended to the next message so the model knows what is being referred to.
   const [quotedText, setQuotedText] = useState<string | null>(null);
 
+  // ─── Edit a sent message ────────────────────────────────────────────────────
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingText, setEditingText] = useState('');
+
+  // ─── Drag-and-drop attachments ──────────────────────────────────────────────
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const dragCounterRef = useRef(0);
+
   useEffect(() => {
     localStorage.setItem('selectedModel', selectedModel);
   }, [selectedModel]);
 
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  // Whether the view is close enough to the bottom that it's safe to auto-scroll
+  // without yanking the reader away from something they scrolled up to reread.
+  const [isNearBottom, setIsNearBottom] = useState(true);
 
+  const handleMessagesScroll = () => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    setIsNearBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 120);
+  };
+
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    endOfMessagesRef.current?.scrollIntoView({ behavior });
+    setIsNearBottom(true);
+  };
+
+  // A new message (the student's own send, or a finished reply joining the list)
+  // always scrolls into view — this is the pre-existing behaviour.
   useEffect(() => {
-    endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
+    scrollToBottom();
   }, [messages]);
+
+  // While a reply is actively streaming, keep following it — but only if the
+  // reader hasn't scrolled up to look at something earlier; respect that instead
+  // of yanking them back down on every token.
+  useEffect(() => {
+    if (!isNearBottom) return;
+    if (!stream.isStreaming && !pendingFinal) return;
+    endOfMessagesRef.current?.scrollIntoView({ behavior: 'auto' });
+  }, [stream.content, stream.reasoning, isNearBottom]);
 
   const handleTalk = () => {
     if (isListening) {
@@ -279,10 +336,7 @@ export default function Chat() {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
+  const processFile = async (file: File) => {
     setIsUploadingFile(true);
 
     try {
@@ -309,8 +363,43 @@ export default function Chat() {
     } finally {
       setIsUploadingFile(false);
     }
+  };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
     e.target.value = ''; // Reset input
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!e.dataTransfer.types.includes('Files')) return;
+    dragCounterRef.current += 1;
+    setIsDraggingFile(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounterRef.current -= 1;
+    if (dragCounterRef.current <= 0) {
+      dragCounterRef.current = 0;
+      setIsDraggingFile(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounterRef.current = 0;
+    setIsDraggingFile(false);
+    const files = Array.from(e.dataTransfer.files || []);
+    for (const file of files) {
+      await processFile(file);
+    }
   };
 
   // Fetch all sessions on load
@@ -486,17 +575,29 @@ export default function Chat() {
     await sendAIRequest(userMessage, currentAttachments);
   };
 
+  // Reuses the same input->send path as the empty-state prompt cards, so a
+  // follow-up chip click behaves exactly like the student typing it themselves.
+  const handleSuggestionClick = (text: string) => {
+    setInput(text);
+    setTimeout(() => handleSend(), 50);
+  };
+
   const handleRegenerate = async (index: number) => {
     let lastUserMessage = '';
+    let userMsgIndex = -1;
     for (let j = index - 1; j >= 0; j--) {
       if (messages[j].role === 'user') {
         lastUserMessage = messages[j].content;
+        userMsgIndex = j;
         break;
       }
     }
-    if (!lastUserMessage || !user?.uid) return;
+    if (!lastUserMessage || !user?.uid || userMsgIndex === -1) return;
 
-    setMessages(prev => [...prev, { role: 'user', content: lastUserMessage }]);
+    // Replace in place: drop the stale user bubble + the reply being regenerated
+    // (and anything after, since it would have depended on that reply), then
+    // re-add exactly one fresh user bubble instead of appending a duplicate.
+    setMessages(prev => [...prev.slice(0, userMsgIndex), { role: 'user', content: lastUserMessage }]);
     await sendAIRequest(lastUserMessage, []);
   };
 
@@ -521,7 +622,7 @@ export default function Chat() {
       //   'web'      → topicType 'RESEARCH' turns on Tavily retrieval + research prompt
       //   'notebook' → notebookId scopes RetrievalService to that notebook's vectors
       // 'auto' sends exactly what this page sent before, so default behaviour is unchanged.
-      const { content, data, progress, reasoning } = await stream.startStream({
+      const { content, data, progress, reasoning, suggestions } = await stream.startStream({
         userId: user.uid,
         sessionId,
         message: userMessage,
@@ -548,7 +649,8 @@ export default function Chat() {
         citations: data?.citations,
         confidence: data?.confidence,
         steps: progress || [],
-        reasoning: reasoning || ''
+        reasoning: reasoning || '',
+        suggestions: suggestions || []
       });
 
       // Attach the persisted message id so 👍/👎 can POST /chat/:messageId/feedback.
@@ -580,14 +682,27 @@ export default function Chat() {
       }, 3000);
     } catch (error) {
       console.error("Chat API error:", error);
-      setMessages(prev => [...prev, { role: 'system', content: 'An error occurred while communicating with the AI. Please try again.' }]);
+      const message = error instanceof Error && error.message
+        ? error.message
+        : 'An error occurred while communicating with the AI.';
+      setMessages(prev => [...prev, {
+        role: 'error',
+        content: message,
+        retryQuery: userMessage,
+        retryAttachments: sentAttachments,
+      }]);
     }
+  };
+
+  const handleRetry = (msg: any) => {
+    sendAIRequest(msg.retryQuery, msg.retryAttachments || []);
   };
 
   const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation();
     if (!user?.uid) return;
-    
+    if (!window.confirm('Delete this chat? This cannot be undone.')) return;
+
     // Optimistically remove from UI
     setSessions(prev => prev.filter(s => s.sessionId !== sessionId));
     
@@ -654,7 +769,19 @@ export default function Chat() {
     <div className="flex h-full w-full relative overflow-hidden">
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col relative bg-transparent transition-all duration-300">
+      <div
+        className="flex-1 flex flex-col relative bg-transparent transition-all duration-300"
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        {isDraggingFile && (
+          <div className="absolute inset-2 z-50 rounded-2xl border-2 border-dashed border-indigo-400 bg-indigo-50/90 dark:bg-indigo-500/10 backdrop-blur-sm flex flex-col items-center justify-center gap-2 pointer-events-none">
+            <Paperclip className="w-7 h-7 text-indigo-500" strokeWidth={1.75} />
+            <span className="text-[14.5px] font-medium text-indigo-700 dark:text-indigo-300">Drop to attach</span>
+          </div>
+        )}
 
         {/* Header — only actions that are actually backed by an API: the session title
             (generated server-side after the first exchange), New Chat, and Delete.
@@ -724,21 +851,37 @@ export default function Chat() {
               transition={{ duration: 0.45, ease: 'easeOut' }}
               className="flex flex-col items-start text-left z-10 w-full max-w-3xl"
             >
-              {/* Greeting — the student's first name is the only personalised token here. */}
+              {/* Greeting — the first name is the only personalised token; wording branches on
+                  account role (isTeacher) so a teacher isn't greeted as if they're the one
+                  being taught. The AI's actual response persona is a separate, backend-side
+                  change — see prompts.ts's viewerRole branch. */}
               <h1 className="text-[34px] md:text-[38px] font-bold tracking-[-0.02em] leading-[1.12] text-slate-900 dark:text-gray-50">
                 Hi there,{' '}
                 <span className="bg-gradient-to-r from-purple-500 to-fuchsia-500 bg-clip-text text-transparent">
                   {firstName}
                 </span>
                 <br />
-                What would{' '}
-                <span className="bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
-                  you like to know?
-                </span>
+                {isTeacher ? (
+                  <>
+                    What are you{' '}
+                    <span className="bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
+                      preparing today?
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    What would{' '}
+                    <span className="bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
+                      you like to know?
+                    </span>
+                  </>
+                )}
               </h1>
 
               <p className="mt-3 text-slate-500 dark:text-gray-400 text-[14.5px] leading-[1.55] max-w-[340px]">
-                Use one of the most common prompts below or use your own to begin
+                {isTeacher
+                  ? 'Use one of the prompts below, or ask your own — I can help you prepare and teach.'
+                  : 'Use one of the most common prompts below or use your own to begin'}
               </p>
 
               {/* Suggestion cards — one row of four, copy on top, icon anchored bottom-left. */}
@@ -776,12 +919,58 @@ export default function Chat() {
             </motion.div>
           </div>
         ) : (
-          <div className="flex-1 min-h-0 overflow-y-auto pb-32 px-4 md:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex justify-center">
+          <div
+            ref={messagesContainerRef}
+            onScroll={handleMessagesScroll}
+            className="flex-1 min-h-0 overflow-y-auto pb-32 px-4 md:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex justify-center"
+          >
             <div className="flex flex-col gap-6 py-6 border-none w-full max-w-3xl">
               {messages.map((msg, i) => (
                 <div key={i} className={cn("flex w-full", msg.role === 'user' ? "justify-end" : "justify-start")}>
                   {msg.role === 'user' ? (
-                    <div className="flex flex-col items-end gap-2 max-w-[80%]">
+                    editingIndex === i ? (
+                      <div className="flex flex-col items-end gap-1.5 w-full max-w-[80%]">
+                        <textarea
+                          value={editingText}
+                          onChange={(e) => setEditingText(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              if (editingText.trim()) {
+                                setMessages(prev => [...prev.slice(0, i), { role: 'user', content: editingText.trim() }]);
+                                setEditingIndex(null);
+                                sendAIRequest(editingText.trim(), []);
+                              }
+                            } else if (e.key === 'Escape') {
+                              setEditingIndex(null);
+                            }
+                          }}
+                          autoFocus
+                          rows={2}
+                          className="w-full bg-[#1e1e1e] dark:bg-[#1a1a1b] text-slate-100 dark:text-gray-200 px-4 py-2.5 rounded-2xl text-[15px] outline-none ring-2 ring-indigo-500 resize-none"
+                        />
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setEditingIndex(null)}
+                            className="px-3 py-1 rounded-lg text-[12.5px] font-medium text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/5 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (!editingText.trim()) return;
+                              setMessages(prev => [...prev.slice(0, i), { role: 'user', content: editingText.trim() }]);
+                              setEditingIndex(null);
+                              sendAIRequest(editingText.trim(), []);
+                            }}
+                            className="px-3 py-1 rounded-lg text-[12.5px] font-medium bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+                          >
+                            Save &amp; submit
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                    <div className="group/msg flex flex-col items-end gap-2 max-w-[80%]">
                       {/* File cards for anything attached to this turn. */}
                       {Array.isArray(msg.attachments) && msg.attachments.length > 0 && (
                         <div className="flex flex-wrap justify-end gap-2">
@@ -815,10 +1004,36 @@ export default function Chat() {
                         </div>
                       )}
                       {msg.content && (
-                        <div className="bg-[#1e1e1e] dark:bg-[#1a1a1b] text-slate-100 dark:text-gray-200 px-5 py-2.5 rounded-3xl rounded-tr-sm text-[15px] whitespace-pre-wrap tracking-wide shadow-sm">
-                          {msg.content}
+                        <div className="relative flex items-center gap-1.5">
+                          <button
+                            onClick={() => { setEditingIndex(i); setEditingText(msg.content); }}
+                            className="opacity-0 group-hover/msg:opacity-100 shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-gray-500 dark:hover:text-gray-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+                            title="Edit message"
+                          >
+                            <Pencil className="w-3.5 h-3.5" strokeWidth={1.75} />
+                          </button>
+                          <div className="bg-[#1e1e1e] dark:bg-[#1a1a1b] text-slate-100 dark:text-gray-200 px-5 py-2.5 rounded-3xl rounded-tr-sm text-[15px] whitespace-pre-wrap tracking-wide shadow-sm">
+                            {msg.content}
+                          </div>
                         </div>
                       )}
+                    </div>
+                    )
+                  ) : msg.role === 'error' ? (
+                    <div className="flex items-start gap-2.5 max-w-[80%] px-4 py-3 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-300">
+                      <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" strokeWidth={1.75} />
+                      <div className="flex flex-col gap-1.5 min-w-0">
+                        <span className="text-[13.5px] leading-snug">{msg.content}</span>
+                        {msg.retryQuery && (
+                          <button
+                            onClick={() => handleRetry(msg)}
+                            className="self-start inline-flex items-center gap-1.5 text-[12.5px] font-medium text-red-700 dark:text-red-300 hover:underline"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5" strokeWidth={1.75} />
+                            Retry
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <div className="flex gap-4 w-full min-w-0">
@@ -834,6 +1049,8 @@ export default function Chat() {
                           steps={msg.steps || []}
                           reasoning={msg.reasoning}
                           citations={msg.citations || []}
+                          suggestions={msg.suggestions || []}
+                          onSuggestionClick={handleSuggestionClick}
                           onCopy={() => handleCopy(msg.content, i)}
                           copied={copiedIndex === i}
                           onSpeak={() => handleSpeak(msg.content, i)}
@@ -872,6 +1089,8 @@ export default function Chat() {
                         statusMessage={stream.isStreaming ? stream.progressEvents[stream.progressEvents.length - 1]?.message : undefined}
                         reasoning={pendingFinal ? pendingFinal.reasoning : stream.reasoning}
                         citations={pendingFinal ? pendingFinal.citations || [] : stream.citations}
+                        suggestions={pendingFinal ? pendingFinal.suggestions || [] : stream.suggestions}
+                        onSuggestionClick={handleSuggestionClick}
                         onRevealDone={commitPending}
                       />
                     </div>
@@ -882,6 +1101,18 @@ export default function Chat() {
               <div ref={endOfMessagesRef} className="h-40 shrink-0 w-full" />
             </div>
           </div>
+        )}
+
+        {/* Jump to bottom — appears once the reader has scrolled away from the
+            latest message, so following the live reply back down is one click. */}
+        {!isNearBottom && messages.length > 0 && (
+          <button
+            onClick={() => scrollToBottom()}
+            className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 w-9 h-9 rounded-full bg-white dark:bg-[#1e1e20] border border-slate-200 dark:border-white/10 shadow-md flex items-center justify-center text-slate-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-colors"
+            title="Jump to latest message"
+          >
+            <ArrowDown className="w-4 h-4" strokeWidth={2} />
+          </button>
         )}
 
         {/* Input Box - absolute positioned at bottom */}
@@ -1278,14 +1509,24 @@ export default function Chat() {
                       {input.length}/{MAX_CHARS}
                     </span>
 
-                    <button
-                      onClick={handleSend}
-                      disabled={(!input.trim() && attachments.length === 0) || loadingHistory}
-                      className="w-8 h-8 rounded-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 dark:disabled:bg-white/10 disabled:cursor-not-allowed flex items-center justify-center text-white transition-colors cursor-pointer shrink-0"
-                      title="Send"
-                    >
-                      <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
-                    </button>
+                    {stream.isStreaming ? (
+                      <button
+                        onClick={() => stream.cancelStream()}
+                        className="w-8 h-8 rounded-full bg-slate-700 hover:bg-slate-800 dark:bg-white/20 dark:hover:bg-white/30 flex items-center justify-center text-white transition-colors cursor-pointer shrink-0"
+                        title="Stop generating"
+                      >
+                        <Square className="w-3.5 h-3.5" fill="currentColor" strokeWidth={0} />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleSend}
+                        disabled={(!input.trim() && attachments.length === 0) || loadingHistory}
+                        className="w-8 h-8 rounded-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 dark:disabled:bg-white/10 disabled:cursor-not-allowed flex items-center justify-center text-white transition-colors cursor-pointer shrink-0"
+                        title="Send"
+                      >
+                        <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
+                      </button>
+                    )}
                 </div>
               </div>
 

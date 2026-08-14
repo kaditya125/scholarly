@@ -1,31 +1,176 @@
-import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
-import { motion } from "motion/react";
+import { useEffect, useState, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
+import { ChevronDown } from 'lucide-react';
+import SiteHeader from '../components/landing/SiteHeader';
+import SiteFooter from '../components/landing/SiteFooter';
+import PricingSection from '../components/landing/PricingSection';
+import { cn } from '../lib/utils';
+import { SITE, PRO_MONTHLY_INR, PRO_YEARLY_TOTAL_INR } from '../lib/siteConfig';
+
+/**
+ * /pricing — previously a "coming soon" placeholder, which was a dead end for every
+ * link that pointed at it. Now the real plans (shared with the landing page) plus the
+ * questions people actually ask before paying.
+ */
+
+const FAQS: { q: string; a: ReactNode }[] = [
+  {
+    q: 'Is the free plan actually usable, or is it a trial?',
+    a: (
+      <>
+        It&rsquo;s a real plan, not a countdown. The AI tutor, scan-and-solve, your notebooks,
+        practice quizzes and the adaptive baseline assessment are all available on Free, within
+        fair-use limits that exist to keep the service up for everyone. There is no expiry and no
+        card required.
+      </>
+    ),
+  },
+  {
+    q: 'What exactly changes when I go Pro?',
+    a: (
+      <>
+        The fair-use ceiling lifts, the Podcast Studio and generated video lessons open up,
+        full-length adaptive mock tests with deep analytics are included, your jobs get priority
+        when the queue is busy, and support comes from a person rather than a help article.
+      </>
+    ),
+  },
+  {
+    q: 'How does yearly billing work?',
+    a: (
+      <>
+        Yearly is charged once, up front, at ₹{PRO_YEARLY_TOTAL_INR.toLocaleString('en-IN')} — a 15%
+        saving against paying ₹{PRO_MONTHLY_INR} twelve times. It covers twelve months from the day
+        you pay. The same 7-day refund window applies as on monthly.
+      </>
+    ),
+  },
+  {
+    q: 'Can I cancel whenever I want?',
+    a: (
+      <>
+        Yes, from Settings → Billing, without emailing anyone. Cancelling stops the next renewal and
+        you keep Pro until the end of the period you already paid for. Your notebooks, history and
+        progress stay with you on the free plan. The full detail is in our{' '}
+        <Link to="/refunds" className="underline underline-offset-2">refunds &amp; cancellation policy</Link>.
+      </>
+    ),
+  },
+  {
+    q: 'What if I subscribe and don’t get on with it?',
+    a: (
+      <>
+        Ask us within 7 days of your first Pro payment and we&rsquo;ll refund it in full, no
+        explanation needed. Duplicate charges and charges taken after a cancellation are always
+        refunded, whenever you spot them.
+      </>
+    ),
+  },
+  {
+    q: 'Which payment methods work?',
+    a: (
+      <>
+        Cards, UPI and netbanking, through Razorpay. You enter your details in Razorpay&rsquo;s own
+        secure window — card numbers and UPI PINs never touch our servers, and the amount charged is
+        computed server-side so it can&rsquo;t be tampered with from the browser.
+      </>
+    ),
+  },
+  {
+    q: 'Do you have a student or group discount?',
+    a: (
+      <>
+        Annual billing is the standing discount for individuals. For a class, a batch or a whole
+        institution, write to{' '}
+        <a href={`mailto:${SITE.email.sales}`} className="underline underline-offset-2">
+          {SITE.email.sales}
+        </a>{' '}
+        — institutional pricing is per seat and depends on cohort size.
+      </>
+    ),
+  },
+  {
+    q: 'Will the price go up later?',
+    a: (
+      <>
+        If we change prices, it never affects a period you have already paid for, and we tell you
+        before it applies to a renewal so you can decide.
+      </>
+    ),
+  },
+];
+
+function Faq({ q, a }: { q: string; a: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-slate-100 dark:border-white/[0.07]">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="w-full flex items-start justify-between gap-6 py-5 text-left group"
+      >
+        <span className="text-[15.5px] font-medium tracking-[-0.01em] text-slate-900 dark:text-white">
+          {q}
+        </span>
+        <ChevronDown
+          className={cn(
+            'w-4 h-4 mt-1 shrink-0 text-slate-400 dark:text-gray-500 transition-transform duration-200',
+            open && 'rotate-180',
+          )}
+          strokeWidth={2}
+        />
+      </button>
+      {open && (
+        <p className="pb-5 pr-10 text-[14.5px] leading-[1.75] text-slate-600 dark:text-gray-300">
+          {a}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export default function Pricing() {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white p-6 relative overflow-hidden">
-        {/* Background glows */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-500/20 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-yellow-400/10 rounded-full blur-[100px] pointer-events-none" />
+  useEffect(() => { window.scrollTo(0, 0); }, []);
 
-        <Link to="/" className="absolute top-8 left-8 flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-            Back to Home
-        </Link>
-        
-        <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center z-10"
-        >
-            <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6">
-                Pricing page <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-yellow-400">coming soon</span>
-            </h1>
-            <p className="text-slate-400 text-lg max-w-xl mx-auto">
-                We are currently crafting the best valuable plans for our users. Stay tuned for updates!
-            </p>
-        </motion.div>
+  return (
+    <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased">
+      <SiteHeader />
+
+      <main>
+        <PricingSection id="plans" headingAs="h1" />
+
+        <section className="border-t border-slate-100 dark:border-white/[0.07]">
+          <div className="max-w-[1160px] mx-auto px-5 sm:px-8 py-20 sm:py-24">
+            <div className="grid lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] gap-10 lg:gap-16">
+              <div>
+                <h2 className="text-[26px] sm:text-[32px] leading-[1.14] font-semibold tracking-[-0.03em]">
+                  Before you pay.
+                </h2>
+                <p className="mt-4 text-[15px] leading-relaxed text-slate-500 dark:text-gray-400">
+                  Still unsure? Write to{' '}
+                  <a
+                    href={`mailto:${SITE.email.support}`}
+                    className="font-medium text-slate-900 dark:text-white underline underline-offset-2"
+                  >
+                    {SITE.email.support}
+                  </a>{' '}
+                  and ask. We&rsquo;d rather answer the question than take a subscription you
+                  regret.
+                </p>
+              </div>
+
+              <div>
+                {FAQS.map((f) => (
+                  <Faq key={f.q} q={f.q} a={f.a} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <SiteFooter />
     </div>
   );
 }

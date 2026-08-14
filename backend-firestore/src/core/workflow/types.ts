@@ -1,4 +1,5 @@
 import { ChatMessage } from '../../types';
+import { ProductRole } from '../../types/roles';
 
 /**
  * Shared workflow types + the pipeline stage enum.
@@ -40,17 +41,23 @@ export interface WorkflowRequest {
    * so intra-chapter focus still relies on the soft directive prepended to `query`.
    */
   scopeSourceIds?: string[];
+  /** Which product surface the caller belongs to — decides the AI's persona (see prompts.ts). */
+  productRole?: ProductRole;
 }
 
 export interface WorkflowEvent {
-  type: 'progress' | 'reasoning' | 'chunk' | 'citation' | 'asset' | 'warning' | 'metrics' | 'error' | 'done';
+  type: 'progress' | 'reasoning' | 'chunk' | 'citation' | 'asset' | 'warning' | 'metrics' | 'error' | 'done' | 'suggestions';
   stage?: WorkflowStage;
   message?: string;
   /** When true on a 'progress' event, the message carries the REAL result/telemetry of a
    *  completed stage (counts, matched concepts, sources) rather than a generic "in progress"
    *  label. The client shows these as the "how it's doing it internally" detail lines. */
   detail?: boolean;
+  /** Reasoning prose for the 'reasoning' event — see TeacherAgent/WorkflowEngine. */
+  text?: string;
   chunk?: string;
+  /** Short follow-up questions the student might naturally ask next, for the 'suggestions' event. */
+  suggestions?: string[];
   citation?: {
     source: string;
     text: string;

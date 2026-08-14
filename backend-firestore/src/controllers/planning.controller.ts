@@ -32,12 +32,16 @@ const mentor = new EducationalMentor();
  */
 export async function startPlanning(req: Request, res: Response) {
   try {
-    const { userId, projectType, initialPrompt, notebookId } = req.body as StartPlanningRequest;
+    const { projectType, initialPrompt, notebookId } = req.body as StartPlanningRequest;
+    // SECURITY (Phase 0): identity comes from the verified Firebase token, never from
+    // the request payload. The ownership comparisons below are only meaningful once
+    // one side of them is server-derived.
+    const userId = req.user!.uid;
 
     // Validate input
-    if (!userId || !projectType || !initialPrompt) {
+    if (!projectType || !initialPrompt) {
       return res.status(400).json({
-        error: 'Missing required fields: userId, projectType, initialPrompt',
+        error: 'Missing required fields: projectType, initialPrompt',
       });
     }
 
@@ -106,17 +110,20 @@ export async function respondToPlanning(req: Request, res: Response) {
   try {
     const {
       sessionId,
-      userId,
       messageType,
       content,
       clarificationResponse,
       planApproval,
     } = req.body as RespondToPlanningRequest;
+    // SECURITY (Phase 0): identity comes from the verified Firebase token, never from
+    // the request payload. The ownership comparisons below are only meaningful once
+    // one side of them is server-derived.
+    const userId = req.user!.uid;
 
     // Validate input
-    if (!sessionId || !userId || !messageType) {
+    if (!sessionId || !messageType) {
       return res.status(400).json({
-        error: 'Missing required fields: sessionId, userId, messageType',
+        error: 'Missing required fields: sessionId, messageType',
       });
     }
 
@@ -283,11 +290,11 @@ export async function respondToPlanning(req: Request, res: Response) {
 export async function getPlanningSession(req: Request, res: Response) {
   try {
     const { sessionId } = req.params;
-    const { userId } = req.query;
+    // SECURITY (Phase 0): identity comes from the verified Firebase token, never from
+    // the request payload. The ownership comparisons below are only meaningful once
+    // one side of them is server-derived.
+    const userId = req.user!.uid;
 
-    if (!userId) {
-      return res.status(400).json({ error: 'userId query parameter required' });
-    }
 
     // Retrieve session
     const sessionRef = db.collection('planning_sessions').doc(sessionId);
@@ -385,11 +392,11 @@ export async function getUserPlanningSessions(req: Request, res: Response) {
 export async function cancelPlanningSession(req: Request, res: Response) {
   try {
     const { sessionId } = req.params;
-    const { userId } = req.body;
+    // SECURITY (Phase 0): identity comes from the verified Firebase token, never from
+    // the request payload. The ownership comparisons below are only meaningful once
+    // one side of them is server-derived.
+    const userId = req.user!.uid;
 
-    if (!userId) {
-      return res.status(400).json({ error: 'userId required in request body' });
-    }
 
     // Retrieve session
     const sessionRef = db.collection('planning_sessions').doc(sessionId);

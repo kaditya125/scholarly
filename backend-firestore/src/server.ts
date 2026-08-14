@@ -96,7 +96,79 @@ app.get('/health/ready', async (req, res) => {
 });
 
 // ==========================================
-// 3. API Routes
+// 3. Public Stats (no auth required)
+// ==========================================
+import { db, auth } from './config/firebase';
+
+let cachedStudentCount: number | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL_MS = 30 * 1000; // 30 seconds
+
+app.get('/api/public/stats', async (_req, res) => {
+  try {
+    const list = await auth.listUsers(1000);
+    const staffRoles = ['super_admin', 'admin', 'moderator', 'content_manager', 'support', 'analytics_viewer'];
+
+    let studentCount = 0;
+    let teacherCount = 0;
+    const recentStudentAvatars: string[] = [];
+    const recentTeacherAvatars: string[] = [];
+
+    const getFallbackAvatar = (name: string, isTeacher = false) => 
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${isTeacher ? 'c8e558' : 'random'}&color=000&rounded=true&bold=true`;
+
+    // Sort users by creation time descending if possible, or just iterate. 
+    // auth.listUsers returns them in page order, but we can sort if we want true "recent".
+    for (const u of list.users) {
+      if (u.disabled) continue;
+      const claims = u.customClaims || {};
+      const role = (claims.role as string) || (claims.productRole as string) || '';
+      const email = (u.email || '').toLowerCase();
+      
+      if (staffRoles.includes(role) || email.includes('admin@') || email.includes('test') || email.includes('rk8233321')) {
+        continue; // skip platform admin/staff/test accounts
+      }
+
+      const name = u.displayName || email.split('@')[0] || (role === 'teacher' ? 'T' : 'S');
+      const avatarUrl = u.photoURL || getFallbackAvatar(name, role === 'teacher');
+
+      if (claims.productRole === 'teacher' || role === 'teacher') {
+        teacherCount++;
+        if (recentTeacherAvatars.length < 3) {
+          recentTeacherAvatars.push(avatarUrl);
+        }
+      } else if (claims.productRole === 'student' || role === 'student') {
+        studentCount++;
+        if (recentStudentAvatars.length < 3) {
+          recentStudentAvatars.push(avatarUrl);
+        }
+      }
+    }
+
+    studentCount = studentCount || 1;
+    teacherCount = teacherCount || 1;
+
+    res.json({ 
+      students: studentCount,
+      teachers: teacherCount,
+      totalUsers: studentCount + teacherCount,
+      recentStudentAvatars,
+      recentTeacherAvatars
+    });
+  } catch (err) {
+    console.error('Failed to fetch public stats:', err);
+    res.json({ 
+      students: 1, 
+      teachers: 1, 
+      totalUsers: 2, 
+      recentStudentAvatars: [], 
+      recentTeacherAvatars: [] 
+    });
+  }
+});
+
+// ==========================================
+// 4. API Routes
 // ==========================================
 app.use('/api', routes);
 
@@ -177,6 +249,12 @@ process.on('unhandledRejection', (reason: any) => {
 // shut down gracefully so the orchestrator can restart a clean instance.
 process.on('uncaughtException', (err: Error) => {
   console.error('[uncaughtException]', err.stack || err.message);
+  // Ignore transient network disconnects from remote Redis/TLS connections
+  const msg = (err.message || '').toLowerCase();
+  if (msg.includes('econnreset') || msg.includes('epipe') || msg.includes('etimedout')) {
+    console.warn('⚠️ Transient network disconnect encountered; keeping HTTP server active.');
+    return;
+  }
   shutdown('uncaughtException');
 });
 

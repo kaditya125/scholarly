@@ -32,6 +32,32 @@ export class UserProfileService {
   }
 
   /**
+   * Update the student's onboarding profile.
+   */
+  async updateProfile(userId: string, patch: Partial<StudentProfile>, markComplete = false): Promise<StudentProfile | null> {
+    try {
+      const existing = (await this.getProfile(userId)) || ({} as Partial<StudentProfile>);
+      const merged: Partial<StudentProfile> = {
+        ...existing,
+        ...patch,
+        updatedAt: new Date().toISOString(),
+      };
+      if (markComplete) {
+        merged.isComplete = true;
+        merged.onboardedAt = merged.onboardedAt || new Date().toISOString();
+      }
+      await db.collection('users').doc(userId).collection('profile').doc('onboarding').set(
+        merged,
+        { merge: true }
+      );
+      return merged as StudentProfile;
+    } catch (e) {
+      console.error('Failed to update user profile:', e);
+      throw e;
+    }
+  }
+
+  /**
    * Save or update the student's onboarding profile.
    */
   async saveProfile(userId: string, profile: Partial<StudentProfile>): Promise<void> {

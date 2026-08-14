@@ -41,11 +41,45 @@ const envSchema = z.object({
   // Security / Ops
   CRON_SECRET: z.string().optional(),
   CORS_ORIGINS: z.string().optional(), // comma-separated allowlist of origins for production CORS
+
+  // Teacher verification.
+  //
+  // When 'true', a newly created teacher profile is assigned 'approved' immediately instead of
+  // 'pending', so a development environment is not blocked behind a review queue that has no
+  // reviewer. It is opt-in by ABSENCE-IS-FALSE: unset, empty, or any value other than the exact
+  // string 'true' leaves auto-approval OFF, which makes the production default safe by default
+  // rather than by remembering to set it.
+  //
+  // An auto-approval still writes a verification audit event attributed to the system, so it is
+  // always distinguishable from a genuine review. The UI must key "verified" off the status
+  // itself (isVerifiedStatus), never off this flag.
+  TEACHER_AUTO_APPROVE: z.string().optional(),
   
   // Payments
   RAZORPAY_KEY_ID: z.string().optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
+
+  // RazorpayX / Route (Phase 3K — automated teacher payouts). A SEPARATE product from the
+  // RAZORPAY_* keys above, with its own onboarding and a business-entity prerequisite. Reading
+  // these unset is expected and correct right now — see services/payout/PayoutProvider.ts.
+  RAZORPAYX_KEY_ID: z.string().optional(),
+  RAZORPAYX_KEY_SECRET: z.string().optional(),
+  RAZORPAYX_ACCOUNT_NUMBER: z.string().optional(),
+
+  // 100ms (Phase 3M — live classes, TESTING vendor). App Access Key + App Secret from the
+  // project's Developer dashboard; the server SDK mints its own management tokens from these,
+  // never a manually-copied one. HMS_TEMPLATE_ID and the role names must match what's actually
+  // configured in the 100ms dashboard's Templates section — see HundredMsProvider.ts.
+  HMS_ACCESS_KEY: z.string().optional(),
+  HMS_SECRET: z.string().optional(),
+  HMS_TEMPLATE_ID: z.string().optional(),
+  HMS_TEACHER_ROLE: z.string().default('teacher'),
+  HMS_STUDENT_ROLE: z.string().default('student'),
+  // The template's subdomain (100ms dashboard → Templates → Room Links) — join URLs are
+  // https://<subdomain>.app.100ms.live/meeting/<room-code>. Required for a room-code join link
+  // to resolve to anything; see HundredMsProvider.ts#buildJoinUrl.
+  HMS_SUBDOMAIN: z.string().optional(),
   
   // Video and Veo Models
   GROK_VERTEX_PROJECT: z.string().optional(),

@@ -88,7 +88,10 @@ export default function Checkout() {
               razorpay_payment_id: resp.razorpay_payment_id,
               razorpay_signature: resp.razorpay_signature,
             });
-            navigate("/checkout/success");
+            // Must match the route registered in App.tsx — /checkout/success is not a
+            // route, so navigating there dropped the user on a blank screen immediately
+            // after a successful payment.
+            navigate("/payment-success");
           } catch {
             setError("Payment received — we're confirming it now. Your Pro access will activate shortly.");
             setProcessing(false);

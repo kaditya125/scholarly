@@ -55,6 +55,45 @@ export const useBackups = () =>
 export const useSettings = () =>
   useQuery({ queryKey: ['settings'], queryFn: () => get('/admin/settings') });
 
+// ─── Teacher verification (D-3) ─────────────────────────────────────
+// The review queue built on top of the state machine and audit trail shipped in Phase 3A.
+export const useTeacherQueue = () =>
+  useQuery({ queryKey: ['teacher-queue'], queryFn: () => get('/admin/teacher/queue'), refetchInterval: 30_000 });
+
+export const useTeacherVerification = (uid: string | null) =>
+  useQuery({
+    queryKey: ['teacher-verification', uid],
+    queryFn: () => get(`/admin/teacher/${uid}/verification`),
+    enabled: !!uid,
+  });
+
+export const useSetTeacherStatus = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ uid, status, reason }: { uid: string; status: string; reason?: string }) =>
+      apiClient.post(`/admin/teacher/${uid}/status`, { status, reason }).then((r) => r.data),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['teacher-queue'] });
+      qc.invalidateQueries({ queryKey: ['teacher-verification', vars.uid] });
+    },
+  });
+};
+
+// ─── Manual payouts (Phase 3J-lite) ─────────────────────────────────
+// Records that an admin paid a teacher OUTSIDE the platform (UPI/bank transfer/cash) — see
+// backend-firestore/src/types/earnings.ts for why. Nothing here moves money.
+export const usePayoutQueue = () =>
+  useQuery({ queryKey: ['payout-queue'], queryFn: () => get('/admin/payouts/queue') });
+
+export const useRecordPayout = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { teacherUid: string; method: string; reference?: string; note?: string }) =>
+      apiClient.post('/admin/payouts', input).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['payout-queue'] }),
+  });
+};
+
 export const useFeatureFlags = () =>
   useQuery({ queryKey: ['feature-flags'], queryFn: () => get('/admin/feature-flags') });
 
