@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "../lib/ThemeContext";
@@ -49,7 +50,9 @@ import {
   FolderOpen,
   GraduationCap,
   Palette,
-  Gift
+  Gift,
+  LifeBuoy,
+  Award,
 } from "lucide-react";
 
 import { cn } from "../lib/utils";
@@ -61,53 +64,89 @@ import { api } from "../lib/api/client";
 import { AppearanceModal } from "./AppearanceModal";
 import { NotificationsMenu } from "./NotificationsMenu";
 import { CommandPalette } from "./CommandPalette";
+import { TopProfileDropdown } from "./navigation/TopProfileDropdown";
 
 /**
- * Sidebar navigation. Items are laid out in visual sections separated by a
- * hair-thin divider so related destinations cluster together — Study surfaces
- * (Home, AI Chat), Creation surfaces (Documents, Notebooks, Content
- * Pipeline, Podcasts), Social surface (Community), Practice surfaces (Tests,
- * Study Plan, Study Groups, My Doubts), and Utility (Explore, Settings).
- *
- * "AI Workspace" removed on request — the same tools are surfaced inside the
- * Podcast Studio.
- * "Chats & DMs" / "Discussions" removed — both live inside /community as tabs.
+ * CREATE NEW formats — Study tools & Content formats.
  */
-const MAIN_MENU: { label: string; path: string; icon: any; group?: 'top' }[] = [
-  // Study
-  { label: "Home", path: "/dashboard", icon: Home, group: 'top' },
-  { label: "AI Chat", path: "/chat", icon: BotMessageSquare },
-
-  // Create
-  { label: "Documents", path: "/documents", icon: FolderOpen, group: 'top' },
-  { label: "Notebooks", path: "/notebooks", icon: BookOpen },
-  { label: "Content Pipeline", path: "/pipeline", icon: Workflow },
-  { label: "Podcasts", path: "/podcasts", icon: Headphones },
-
-  // Social
-  { label: "Community", path: "/community", icon: Users, group: 'top' },
-
-  // Practice
-  { label: "Tests", path: "/tests", icon: FileText, group: 'top' },
-  { label: "Study Plan", path: "/planner", icon: Calendar },
-  { label: "Study Groups", path: "/groups", icon: Users },
-  // Classes a teacher has enrolled this student in (Phase 3E). Distinct from Study Groups:
-  // a group is peer-formed, a class is taught and requires an accepted enrolment edge.
-  { label: "My Classes", path: "/my-classes", icon: GraduationCap },
-  { label: "My Doubts", path: "/doubts", icon: HelpCircle },
-
-  // Utility
-  { label: "Explore", path: "/explore", icon: Compass, group: 'top' },
-  // Referrals (Phase 3L) — a link that gets both sides Pro days on signup. Not enrolment.
-  { label: "Invite friends", path: "/refer", icon: Gift },
-  { label: "Settings", path: "/settings", icon: Settings },
+const CREATE_NEW_NAV = [
+  {
+    group: "Study & Prep",
+    items: [
+      { label: "AI Chat",       icon: BotMessageSquare, path: "/chat",     type: "chat" },
+      { label: "Deep Research", icon: BrainCircuit,     path: "/research", type: "research" },
+      { label: "Study Guide",   icon: BookOpen,         path: "/chat",     type: "study-guide" },
+      { label: "Practice Exam", icon: CheckSquare,      path: "/tests",    type: "exam" },
+    ],
+  },
+  {
+    group: "Content & Media",
+    items: [
+      { label: "AI Podcast",     icon: Headphones, path: "/podcasts", type: "podcast" },
+      { label: "AI Slides",      icon: Layers,     path: "/chat",     type: "slides" },
+      { label: "Worksheet",      icon: FileText,   path: "/chat",     type: "worksheet" },
+      { label: "Mind Map",       icon: Map,        path: "/chat",     type: "mindmap" },
+      { label: "AI Infographic", icon: BarChart2,  path: "/chat",     type: "infographic" },
+      { label: "AI Image",       icon: ImageIcon,  path: "/chat",     type: "image" },
+      { label: "Meeting Notes",  icon: Headphones, path: "/chat",     type: "meeting-notes" },
+      { label: "Blank Page",     icon: FileText,   path: "/chat",     type: "page" },
+    ],
+  },
 ];
 
 /**
- * Single sidebar row. Selection is a soft-tinted pill with a subtle 1px
- * inset ring — quieter than the previous solid gray fill, which is what the
- * Taskk-style reference uses. The active icon picks up the same color as the
- * label so the whole row reads as one unit rather than a glyph + text pair.
+ * PRIMARY navigation — only the 5 highest-value destinations appear here.
+ * Everything else lives in the More flyout to keep the rail uncluttered.
+ */
+const PRIMARY_NAV = [
+  { label: "Home",       path: "/dashboard",  icon: Home },
+  { label: "AI Chat",    path: "/chat",        icon: BotMessageSquare },
+  { label: "Documents",  path: "/documents",   icon: FolderOpen },
+  { label: "Tests",      path: "/tests",       icon: FileText },
+  { label: "Exam Center",path: "/exam-center", icon: Award },
+];
+
+/**
+ * SECONDARY navigation — shown in the More flyout panel.
+ * Grouped into logical sections for scannability.
+ */
+const MORE_NAV = [
+  {
+    group: "Study",
+    items: [
+      { label: "Notebooks",       path: "/notebooks",  icon: BookOpen },
+      { label: "Study Plan",      path: "/planner",    icon: Calendar },
+      { label: "My Doubts",       path: "/doubts",     icon: HelpCircle },
+      { label: "Explore",         path: "/explore",    icon: Compass },
+    ],
+  },
+  {
+    group: "Create",
+    items: [
+      { label: "Content Pipeline",path: "/pipeline",   icon: Workflow },
+      { label: "Podcasts",        path: "/podcasts",   icon: Headphones },
+    ],
+  },
+  {
+    group: "Community",
+    items: [
+      { label: "Community",       path: "/community",  icon: Users },
+      { label: "Study Groups",    path: "/groups",     icon: Users },
+      { label: "My Classes",      path: "/my-classes", icon: GraduationCap },
+    ],
+  },
+  {
+    group: "Account",
+    items: [
+      { label: "Settings",        path: "/settings",   icon: Settings },
+      { label: "Help & Support",  path: "/support",    icon: LifeBuoy },
+      { label: "Invite Friends",  path: "/refer",      icon: Gift },
+    ],
+  },
+];
+
+/**
+ * Single sidebar row — primary nav style.
  */
 const NavItem: React.FC<{ item: any, currentPath: string, collapsed?: boolean }> = ({ item, currentPath, collapsed }) => {
   const isActive = currentPath === item.path || (currentPath.startsWith(item.path) && item.path !== "/");
@@ -141,7 +180,7 @@ const NavItem: React.FC<{ item: any, currentPath: string, collapsed?: boolean }>
   );
 };
 
-export function AppLayout() {
+export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
@@ -166,15 +205,21 @@ export function AppLayout() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isAppearanceOpen, setIsAppearanceOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  // More flyout — portal-based so sidebar overflow never clips it
+  const [isMoreFlyoutOpen, setIsMoreFlyoutOpen] = useState(false);
+  const moreFlyoutRef = useRef<HTMLDivElement>(null);
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
+  const [moreFlyoutStyle, setMoreFlyoutStyle] = useState<React.CSSProperties>({});
+
   const newMenuRef = useRef<HTMLDivElement>(null);
+  const newMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const newMenuExpandedRef = useRef<HTMLDivElement>(null);
+  const [newMenuStyle, setNewMenuStyle] = useState<React.CSSProperties>({});
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
 
   /**
-   * Recent chats for the sidebar's "Recent" section. Reads the same endpoint the
-   * chat page uses (GET /api/chat/sessions). Refetched when the route changes so a
-   * conversation started on /chat shows up here without a reload. Failure is
-   * non-fatal — the section just renders its empty state.
+   * Recent chats for the sidebar's "Recent" section.
    */
   const [recentSessions, setRecentSessions] = useState<any[]>([]);
   useEffect(() => {
@@ -193,42 +238,52 @@ export function AppLayout() {
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
+    setIsMoreFlyoutOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (newMenuRef.current && !newMenuRef.current.contains(event.target as Node)) {
-        setIsNewMenuOpen(false);
-      }
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
         setIsProfileMenuOpen(false);
+      }
+      const target = event.target as Node;
+      // Close More flyout when clicking outside both the button and the portal flyout panel
+      if (
+        !moreButtonRef.current?.contains(target) &&
+        !moreFlyoutRef.current?.contains(target)
+      ) {
+        setIsMoreFlyoutOpen(false);
+      }
+      // Close New menu when clicking outside
+      if (isCollapsed) {
+        if (
+          !newMenuButtonRef.current?.contains(target) &&
+          !newMenuRef.current?.contains(target)
+        ) {
+          setIsNewMenuOpen(false);
+        }
+      } else {
+        if (
+          newMenuExpandedRef.current &&
+          !newMenuExpandedRef.current.contains(target)
+        ) {
+          setIsNewMenuOpen(false);
+        }
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Global navigation shortcuts: Cmd/Ctrl + Shift + Key
       if ((e.metaKey || e.ctrlKey) && e.shiftKey) {
-        if (e.key.toLowerCase() === 'd') {
-          e.preventDefault();
-          navigate('/dashboard');
-        } else if (e.key.toLowerCase() === 'c') {
-          e.preventDefault();
-          navigate('/chat');
-          window.dispatchEvent(new CustomEvent('new-chat')); // optional, but a good touch
-        } else if (e.key.toLowerCase() === 't') {
-          e.preventDefault();
-          navigate('/tests');
-        }
+        if (e.key.toLowerCase() === 'd') { e.preventDefault(); navigate('/dashboard'); }
+        else if (e.key.toLowerCase() === 'c') { e.preventDefault(); navigate('/chat'); window.dispatchEvent(new CustomEvent('new-chat')); }
+        else if (e.key.toLowerCase() === 't') { e.preventDefault(); navigate('/tests'); }
       }
-      // Command palette: Cmd/Ctrl + K
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setIsCommandPaletteOpen(true);
-      }
-      // Close on Escape
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setIsCommandPaletteOpen(true); }
       if (e.key === 'Escape') {
         setIsCommandPaletteOpen(false);
+        setIsMoreFlyoutOpen(false);
+        setIsNewMenuOpen(false);
       }
     };
     document.addEventListener("keydown", handleKeyDown);
@@ -261,6 +316,11 @@ export function AppLayout() {
     }
   };
 
+  // Check if any "more" item is currently active
+  const isAnyMoreItemActive = MORE_NAV.flatMap(g => g.items).some(
+    item => location.pathname === item.path || (location.pathname.startsWith(item.path) && item.path !== "/")
+  );
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -279,14 +339,12 @@ export function AppLayout() {
       )}
       {/* Sidebar */}
       <aside className={cn(
-        "bg-white dark:bg-[#111111] border-r border-slate-200 dark:border-white/5 flex flex-col h-full shrink-0 overflow-y-auto custom-scrollbar transition-all duration-300", 
+        "bg-white dark:bg-[#161619] border-r border-slate-200 dark:border-white/[0.08] flex flex-col h-full shrink-0 overflow-y-auto custom-scrollbar transition-all duration-300", 
         "fixed md:relative z-50",
         isMobileMenuOpen ? "translate-x-0 w-[260px]" : "-translate-x-full md:translate-x-0",
         !isMobileMenuOpen && isCollapsed ? "md:w-[52px]" : "md:w-[260px]"
       )}>
-        {/* Brand + collapse control. The brand mark uses a slightly softer
-            tracking + lowercase-caps blend so it reads like a wordmark rather
-            than a shouty ALL-CAPS label. */}
+        {/* Brand + collapse control */}
         <div className={cn(
           "h-[60px] flex items-center shrink-0 transition-colors duration-300",
           isCollapsed ? "justify-center px-0 flex-col py-2" : "px-4 justify-between"
@@ -326,102 +384,328 @@ export function AppLayout() {
         
         <div className={cn("flex-1 w-full max-w-full", isCollapsed ? "pt-1 pb-3" : "pt-3 pb-6")}>
            <nav className="relative" role="navigation" aria-label="Main navigation">
-              {MAIN_MENU.map((item, idx) => (
-                 <div key={item.path}>
-                   {/* Hairline section divider only in expanded mode. `group:'top'`
-                       marks the first item of a new visual cluster; we insert
-                       a slim margin above it so related items breathe together
-                       without adding actual horizontal rules that would clutter
-                       the rail. */}
-                   {!isCollapsed && idx > 0 && item.group === 'top' && (
-                     <div className="my-1.5 mx-4 h-px bg-slate-100 dark:bg-white/[0.04]" aria-hidden="true" />
-                   )}
-                   {/* Collapsed rail gets spacing, not rules. Four hairlines across a
-                       56px column read as scattered fragments rather than one list. */}
-                   {isCollapsed && idx > 0 && item.group === 'top' && (
-                     <div className="h-[3px]" aria-hidden="true" />
-                   )}
-                   <div className="mb-0.5">
-                     <NavItem item={item} currentPath={location.pathname} collapsed={isCollapsed} />
-                   </div>
-                 </div>
-              ))}
-              
-              <div className={cn("px-2.5 mt-4 relative", isCollapsed && "flex justify-center")} ref={newMenuRef}>
-                 <button
-                   onClick={() => setIsNewMenuOpen(!isNewMenuOpen)}
-                   className={cn(
-                     // Softer indigo, subtle gradient, thin ring — the "New"
-                     // affordance should feel considered rather than shouty.
-                     "flex items-center justify-center transition-all duration-150 shadow-[0_1px_2px_rgba(15,23,42,0.08),0_4px_10px_-4px_rgba(79,70,229,0.35)] hover:shadow-[0_1px_2px_rgba(15,23,42,0.1),0_6px_14px_-4px_rgba(79,70,229,0.45)] active:translate-y-px",
-                     "bg-gradient-to-b from-indigo-500 to-indigo-600 hover:from-indigo-500 hover:to-indigo-700 text-white",
-                     isCollapsed
-                       ? "w-10 h-10 rounded-[10px]"
-                       : "w-full gap-2 h-9 rounded-xl text-[13.5px] font-semibold tracking-tight"
-                   )}
-                   aria-label="Create new item"
-                   aria-haspopup="dialog"
-                   aria-expanded={isNewMenuOpen}
-                 >
-                   <Plus className={cn("shrink-0 w-4 h-4")} strokeWidth={2.25} />
-                   {!isCollapsed && "New"}
-                 </button>
+               {/* ── New button ──────────────────────────────────────────────
+                    EXPANDED  → inline accordion directly inside sidebar.
+                    COLLAPSED → attached flyout anchored to the right of rail.
+                 ─────────────────────────────────────────────────────────── */}
+               {!isCollapsed && (
+                 <div ref={newMenuExpandedRef} className="px-2.5 mb-3">
+                   <button
+                     onClick={() => setIsNewMenuOpen(v => !v)}
+                     className={cn(
+                       "flex items-center justify-center transition-all duration-150 shadow-xs hover:shadow-sm active:translate-y-px w-full gap-2 h-9 rounded-xl text-[13px] font-semibold tracking-tight",
+                       "bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900"
+                     )}
+                     aria-label="Create new item"
+                     aria-expanded={isNewMenuOpen}
+                   >
+                     <Plus className={cn("shrink-0 w-4 h-4 text-[#c8e558] dark:text-slate-900 transition-transform duration-200", isNewMenuOpen && "rotate-45")} strokeWidth={2.25} />
+                     <span>New</span>
+                   </button>
 
-                 {isNewMenuOpen && (
-                   <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setIsNewMenuOpen(false)}>
-                     <div 
-                       className="bg-white dark:bg-[#131314] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col p-6 w-[800px] max-w-full relative"
-                       onClick={(e) => e.stopPropagation()}
-                     >
-                       <div className="flex items-center gap-2 mb-6">
-                         <Sparkles className="w-5 h-5 text-slate-800 dark:text-slate-200" />
-                         <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Content</h3>
-                       </div>
-                       
-                       <div className="flex flex-wrap gap-3">
-                         {[
-                           { label: 'AI Chat', icon: MessageSquare, iconColor: 'text-purple-500', path: '/chat', type: 'chat' },
-                           { label: 'Study Guide', icon: BookOpen, iconColor: 'text-red-500', path: '/chat', type: 'study-guide' },
-                           { label: 'AI Podcast', icon: Headphones, iconColor: 'text-emerald-500', path: '/chat', type: 'podcast' },
-                           { label: 'Deep Research', icon: Lightbulb, iconColor: 'text-yellow-500', path: '/research', type: 'research' },
-                           { label: 'AI Slides', icon: Layers, iconColor: 'text-blue-500', path: '/chat', type: 'slides' },
-                           { label: 'Worksheet', icon: FileText, iconColor: 'text-green-500', path: '/chat', type: 'worksheet' },
-                           { label: 'AI Infographic', icon: ImageIcon, iconColor: 'text-cyan-500', path: '/chat', type: 'infographic' },
-                           { label: 'Mind Map', icon: Map, iconColor: 'text-purple-500', path: '/chat', type: 'mindmap' },
-                           { label: 'AI Image', icon: ImageIcon, iconColor: 'text-orange-500', path: '/chat', type: 'image' },
-                           { label: 'Page', icon: FileText, iconColor: 'text-indigo-500', path: '/chat', type: 'page' },
-                           { label: 'Practice Exam', icon: CheckSquare, iconColor: 'text-purple-500', path: '/tests', type: 'exam' },
-                           { label: 'AI Meeting Notes', icon: Headphones, iconColor: 'text-rose-500', path: '/chat', type: 'meeting-notes' },
-                         ].map((ctg, i) => (
-                           <button 
-                             key={i}
-                             onClick={() => {
-                               navigate(`${ctg.path}?type=${ctg.type}`);
-                               window.dispatchEvent(new CustomEvent('new-chat', { detail: ctg.type }));
-                               setIsNewMenuOpen(false);
-                             }}
-                             className="flex items-center gap-2.5 px-4 py-2 bg-slate-50 hover:bg-slate-100 dark:bg-[#1a1a1b] dark:hover:bg-[#252526] text-sm text-slate-700 dark:text-slate-200 font-medium transition-colors border border-slate-200 dark:border-white/5 rounded-full"
-                           >
-                             <ctg.icon className={cn("w-[18px] h-[18px]", ctg.iconColor)} /> {ctg.label}
-                           </button>
+                   {/* Inline accordion for expanded mode — physically intact inside sidebar */}
+                   <AnimatePresence initial={false}>
+                     {isNewMenuOpen && (
+                       <motion.div
+                         initial={{ height: 0, opacity: 0 }}
+                         animate={{ height: "auto", opacity: 1 }}
+                         exit={{ height: 0, opacity: 0 }}
+                         transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                         className="overflow-hidden mt-1.5 bg-slate-100/70 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/[0.06] rounded-xl p-1.5"
+                       >
+                         {CREATE_NEW_NAV.map((group, gi) => (
+                           <div key={group.group} className={cn(gi > 0 && "mt-1.5 pt-1.5 border-t border-slate-200/60 dark:border-white/[0.05]")}>
+                             <div className="px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-widest text-slate-400 dark:text-gray-500">
+                               {group.group}
+                             </div>
+                             <div className="space-y-0.5 mt-0.5">
+                               {group.items.map((item) => {
+                                 const Icon = item.icon;
+                                 const searchParams = new URLSearchParams(location.search);
+                                 const currentType = searchParams.get('type') || (location.pathname === '/chat' ? 'chat' : '');
+                                 const isActive = item.type
+                                   ? location.pathname === item.path && currentType === item.type
+                                   : location.pathname === item.path;
+
+                                 return (
+                                   <button
+                                     key={item.label}
+                                     onClick={() => {
+                                       navigate(`${item.path}${item.type ? `?type=${item.type}` : ''}`);
+                                       window.dispatchEvent(new CustomEvent('new-chat', { detail: item.type }));
+                                     }}
+                                     className={cn(
+                                       "w-full flex items-center gap-2.5 px-2.5 h-[30px] rounded-lg text-[12.5px] transition-colors duration-150 text-left group antialiased",
+                                       isActive
+                                         ? "bg-white dark:bg-white/[0.1] text-slate-900 dark:text-white font-medium shadow-2xs"
+                                         : "font-normal text-slate-600 dark:text-gray-300 hover:bg-white/80 dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white"
+                                     )}
+                                   >
+                                     <Icon
+                                       className={cn(
+                                         "w-3.5 h-3.5 shrink-0 transition-colors duration-150",
+                                         isActive
+                                           ? "text-slate-900 dark:text-[#c8e558]"
+                                           : "text-slate-400 dark:text-gray-400 group-hover:text-slate-900 dark:group-hover:text-[#c8e558]"
+                                       )}
+                                       strokeWidth={isActive ? 2 : 1.6}
+                                     />
+                                     <span className="truncate leading-none flex-1">{item.label}</span>
+                                     {isActive && (
+                                       <span className="w-1.5 h-1.5 rounded-full bg-[#8ba32b] dark:bg-[#c8e558] shrink-0" />
+                                     )}
+                                   </button>
+                                 );
+                               })}
+                             </div>
+                           </div>
                          ))}
-                       </div>
-                       
-                       <button onClick={() => setIsNewMenuOpen(false)} aria-label="Close menu" className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                       </button>
-                     </div>
-                   </div>
-                 )}
+                       </motion.div>
+                     )}
+                   </AnimatePresence>
+                 </div>
+               )}
+
+               {isCollapsed && (
+                 <div className="flex justify-center px-2.5 mb-3">
+                   <button
+                     ref={newMenuButtonRef}
+                     onClick={() => {
+                       if (!isNewMenuOpen && newMenuButtonRef.current) {
+                         const rect = newMenuButtonRef.current.getBoundingClientRect();
+                         const estimatedH = 460;
+                         const clampedTop = Math.max(8, Math.min(rect.top, window.innerHeight - estimatedH - 8));
+                         setNewMenuStyle({
+                           position: 'fixed',
+                           top: clampedTop,
+                           left: rect.right + 8,
+                           width: 220,
+                           zIndex: 9999,
+                         });
+                         setIsNewMenuOpen(true);
+                       } else {
+                         setIsNewMenuOpen(false);
+                       }
+                     }}
+                     className={cn(
+                       "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-150 shadow-xs hover:shadow-sm active:translate-y-px",
+                       "bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900"
+                     )}
+                     title="New"
+                     aria-label="Create new item"
+                     aria-expanded={isNewMenuOpen}
+                   >
+                     <Plus className={cn("shrink-0 w-4 h-4 text-[#c8e558] dark:text-slate-900 transition-transform duration-200", isNewMenuOpen && "rotate-45")} strokeWidth={2.25} />
+                   </button>
+                 </div>
+               )}
+
+              {/* Primary nav items */}
+              <div className="space-y-0.5">
+                {PRIMARY_NAV.map((item) => (
+                  <div key={item.path} className="mb-0.5">
+                    <NavItem item={item} currentPath={location.pathname} collapsed={isCollapsed} />
+                  </div>
+                ))}
               </div>
+
+              {/* ── More ──────────────────────────────────────────────────────
+                   EXPANDED  → inline animated accordion within the sidebar.
+                   COLLAPSED → portal flyout anchored to the right of the rail.
+                ─────────────────────────────────────────────────────────── */}
+
+              {/* EXPANDED: accordion */}
+              {!isCollapsed && (
+                <div className="mt-0.5 mb-0.5">
+                  <button
+                    onClick={() => setIsMoreFlyoutOpen(v => !v)}
+                    className={cn(
+                      "flex items-center gap-2.5 h-[30px] px-2.5 rounded-lg mx-2.5 text-[12.5px] tracking-[-0.006em] transition-colors duration-150 group antialiased",
+                      isMoreFlyoutOpen || isAnyMoreItemActive
+                        ? "bg-slate-100 text-slate-900 font-medium dark:bg-white/[0.07] dark:text-white"
+                        : "text-slate-500 font-normal hover:bg-slate-100/70 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-white/[0.04] dark:hover:text-gray-100"
+                    )}
+                    style={{ width: 'calc(100% - 20px)' }}
+                    aria-label="More navigation options"
+                    aria-expanded={isMoreFlyoutOpen}
+                  >
+                    <Menu
+                      className={cn(
+                        "shrink-0 w-4 h-4",
+                        isMoreFlyoutOpen || isAnyMoreItemActive
+                          ? "text-slate-900 dark:text-white"
+                          : "text-slate-400 group-hover:text-slate-700 dark:text-gray-500 dark:group-hover:text-gray-200"
+                      )}
+                      strokeWidth={isMoreFlyoutOpen || isAnyMoreItemActive ? 2 : 1.6}
+                    />
+                    <span className="truncate flex-1 text-left leading-none">More</span>
+                    <ChevronDown
+                      className={cn(
+                        "w-3 h-3 shrink-0 transition-transform duration-200 text-slate-400 dark:text-gray-500",
+                        isMoreFlyoutOpen && "rotate-180"
+                      )}
+                      strokeWidth={2}
+                    />
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {isMoreFlyoutOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                        className="overflow-hidden"
+                      >
+                        <div className="pt-0.5 pb-1">
+                          {MORE_NAV.map((group, gi) => (
+                            <div key={group.group} className={cn(gi > 0 && "mt-1")}>
+                              <div className="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-gray-500">
+                                {group.group}
+                              </div>
+                              {group.items.map((item) => {
+                                const isActive = location.pathname === item.path || (location.pathname.startsWith(item.path) && item.path !== "/");
+                                const Icon = item.icon;
+                                return (
+                                  <Link
+                                    key={item.path}
+                                    to={item.path}
+                                    onClick={() => setIsMoreFlyoutOpen(false)}
+                                    className={cn(
+                                      "flex items-center gap-2.5 h-[28px] px-2.5 rounded-lg mx-2.5 text-[12px] transition-colors duration-100",
+                                      isActive
+                                        ? "bg-slate-100 dark:bg-white/[0.07] text-slate-900 dark:text-white font-medium"
+                                        : "text-slate-500 dark:text-gray-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-gray-100"
+                                    )}
+                                  >
+                                    <Icon
+                                      className={cn(
+                                        "shrink-0 w-4 h-4",
+                                        isActive ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-gray-500"
+                                      )}
+                                      strokeWidth={isActive ? 2 : 1.6}
+                                    />
+                                    <span className="truncate leading-none">{item.label}</span>
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+
+              {/* COLLAPSED: icon button */}
+              {isCollapsed && (
+                <div className="flex justify-center mt-0.5 mb-0.5">
+                  <button
+                    ref={moreButtonRef}
+                    onClick={() => {
+                      if (!isMoreFlyoutOpen && moreButtonRef.current) {
+                        const rect = moreButtonRef.current.getBoundingClientRect();
+                        // Estimated flyout height (~480px for 4 groups + 12 items).
+                        // Clamp top so the panel never overflows below the viewport.
+                        const estimatedH = 480;
+                        const clampedTop = Math.max(8, Math.min(rect.top, window.innerHeight - estimatedH - 8));
+                        setMoreFlyoutStyle({
+                          position: 'fixed',
+                          top: clampedTop,
+                          left: rect.right + 8,
+                          width: 228,
+                          zIndex: 9999,
+                        });
+                        setIsMoreFlyoutOpen(true);
+                      } else {
+                        setIsMoreFlyoutOpen(false);
+                      }
+                    }}
+                    className={cn(
+                      "flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-150 group antialiased",
+                      isMoreFlyoutOpen || isAnyMoreItemActive
+                        ? "bg-slate-100 dark:bg-white/[0.07]"
+                        : "hover:bg-slate-100/70 dark:hover:bg-white/[0.04]"
+                    )}
+                    title="More"
+                    aria-label="More navigation options"
+                    aria-expanded={isMoreFlyoutOpen}
+                  >
+                    <Menu
+                      className={cn(
+                        "w-4 h-4",
+                        isMoreFlyoutOpen || isAnyMoreItemActive
+                          ? "text-slate-900 dark:text-white"
+                          : "text-slate-400 group-hover:text-slate-700 dark:text-gray-500 dark:group-hover:text-gray-200"
+                      )}
+                      strokeWidth={isMoreFlyoutOpen || isAnyMoreItemActive ? 2 : 1.6}
+                    />
+                  </button>
+                </div>
+              )}
+
+              {/* Portal flyout — only shown when collapsed */}
+              {createPortal(
+                <AnimatePresence>
+                  {isMoreFlyoutOpen && isCollapsed && (
+                    <motion.div
+                      ref={moreFlyoutRef}
+                      key="more-flyout"
+                      initial={{ opacity: 0, x: -6, scale: 0.97 }}
+                      animate={{ opacity: 1, x: 0, scale: 1 }}
+                      exit={{ opacity: 0, x: -4, scale: 0.97 }}
+                      transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                      className="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-white/[0.09] rounded-xl shadow-2xl overflow-y-auto"
+                      style={{
+                        ...moreFlyoutStyle,
+                        maxHeight: 'calc(100vh - 32px)',
+                        transformOrigin: 'top left',
+                      }}
+                    >
+                      <div className="p-2">
+                        {MORE_NAV.map((group, gi) => (
+                          <div key={group.group} className={cn(gi > 0 && "mt-1 pt-1 border-t border-slate-100 dark:border-white/[0.05]")}>
+                            <div className="px-2 py-1 text-[10.5px] font-semibold uppercase tracking-widest text-slate-400 dark:text-gray-500">
+                              {group.group}
+                            </div>
+                            {group.items.map((item) => {
+                              const isActive = location.pathname === item.path || (location.pathname.startsWith(item.path) && item.path !== "/");
+                              const Icon = item.icon;
+                              return (
+                                <Link
+                                  key={item.path}
+                                  to={item.path}
+                                  onClick={() => setIsMoreFlyoutOpen(false)}
+                                  className={cn(
+                                    "flex items-center gap-2.5 px-2.5 h-8 rounded-lg text-[12.5px] transition-colors duration-100",
+                                    isActive
+                                      ? "bg-slate-100 dark:bg-white/[0.07] text-slate-900 dark:text-white font-medium"
+                                      : "text-slate-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-gray-100"
+                                  )}
+                                >
+                                  <Icon
+                                    className={cn(
+                                      "shrink-0 w-3.5 h-3.5",
+                                      isActive ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-gray-500"
+                                    )}
+                                    strokeWidth={isActive ? 2 : 1.6}
+                                  />
+                                  <span className="truncate leading-none">{item.label}</span>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>,
+                document.body
+              )}
            </nav>
 
-           {/* Recent — collapsible list of recently-touched surfaces. Section
-               header uses an all-caps 11 px eyebrow (tracking-widest) instead of
-               a bold slate label; the earlier variant looked like a nav item.
-               Child rows share the NavItem language: h-8, rounded-lg, subtle
-               hover. Indent guide is a single 1 px column, softer than the
-               previous border-l that visually competed with the item pills. */}
+           {/* Recent — collapsible list of recent chat sessions */}
            {!isCollapsed && (
              <div className="mt-5 px-2.5">
                <button
@@ -435,9 +719,9 @@ export function AppLayout() {
                </button>
 
                {isRecentOpen && (
-                 <div className="mt-1 pl-3 ml-3 border-l border-slate-100 dark:border-white/[0.05] space-y-0.5 max-h-[220px] overflow-y-auto custom-scrollbar">
+                 <div className="mt-1 pl-2.5 ml-2.5 border-l border-slate-200/60 dark:border-white/[0.06] space-y-0.5 max-h-[160px] overflow-y-auto custom-scrollbar">
                    {recentSessions.length === 0 ? (
-                     <div className="px-2 py-2 text-[12px] text-slate-400 dark:text-gray-500">
+                     <div className="px-2 py-1.5 text-[11px] text-slate-400 dark:text-gray-500">
                        No recent chats
                      </div>
                    ) : (
@@ -446,10 +730,10 @@ export function AppLayout() {
                          key={s.sessionId}
                          to={`/chat?session=${s.sessionId}`}
                          title={s.title || 'Study Assistant'}
-                         className="flex items-center gap-2 px-2 h-8 rounded-lg text-[13px] text-slate-600 dark:text-gray-400 hover:bg-slate-100/60 hover:text-slate-900 dark:hover:bg-white/[0.04] dark:hover:text-gray-100 transition-colors group"
+                         className="flex items-center gap-1.5 px-2 h-[25px] rounded-md text-[11.5px] text-slate-500 dark:text-gray-400 hover:bg-slate-100/70 hover:text-slate-900 dark:hover:bg-white/[0.04] dark:hover:text-gray-100 transition-colors group"
                        >
-                         <MessageSquare className="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-gray-500 group-hover:text-slate-700 dark:group-hover:text-gray-300" strokeWidth={1.75} />
-                         <span className="truncate">
+                         <MessageSquare className="w-3 h-3 shrink-0 text-slate-400 dark:text-gray-500 group-hover:text-slate-700 dark:group-hover:text-gray-300" strokeWidth={1.5} />
+                         <span className="truncate leading-none">
                            {s.title || (s.topicType === 'chat' ? 'Study Assistant' : s.topicType) || 'Untitled chat'}
                          </span>
                        </Link>
@@ -460,50 +744,7 @@ export function AppLayout() {
              </div>
            )}
 
-           {/* More — everything secondary folds into one disclosure, closed by default,
-               so the idle rail is just navigation + Recent. Folders and Recently Deleted
-               both still render placeholder content, which is another reason not to give
-               them permanent real estate. */}
-           {!isCollapsed && (
-             <div className="mt-3 px-2.5">
-               <button
-                 onClick={() => setIsMoreOpen(!isMoreOpen)}
-                 aria-label="Toggle more sidebar sections"
-                 aria-expanded={isMoreOpen}
-                 className="w-full flex items-center justify-between px-2.5 h-7 text-[11px] font-medium text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300 transition-colors"
-               >
-                 <span>More</span>
-                 <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", !isMoreOpen && "-rotate-90")} strokeWidth={2} />
-               </button>
-
-               {isMoreOpen && (
-                 <div className="mt-1 space-y-0.5">
-                   <div className="flex items-center justify-between px-2.5 h-7 group/folders">
-                     <span className="text-[11px] font-medium text-slate-400 dark:text-gray-500">Folders</span>
-                     <button
-                       aria-label="Create new folder"
-                       className="w-5 h-5 flex items-center justify-center rounded-md text-slate-400 dark:text-gray-500 opacity-0 group-hover/folders:opacity-100 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-gray-200 dark:hover:bg-white/[0.05] transition-all"
-                     >
-                       <Plus className="w-3 h-3" strokeWidth={2.25} />
-                     </button>
-                   </div>
-
-                   <Link
-                     to="/trash"
-                     className="flex items-center gap-2.5 px-2.5 h-[30px] rounded-lg text-[12.5px] text-slate-500 dark:text-gray-400 hover:bg-slate-100/70 hover:text-slate-900 dark:hover:bg-white/[0.04] dark:hover:text-gray-100 transition-colors group"
-                   >
-                     <Trash2 className="w-4 h-4 shrink-0 text-slate-400 dark:text-gray-500 group-hover:text-slate-700 dark:group-hover:text-gray-200" strokeWidth={1.6} />
-                     <span className="truncate">Recently Deleted</span>
-                   </Link>
-                 </div>
-               )}
-             </div>
-           )}
-
-           {/* Upgrade card. Feels like a real marketing surface now — a soft
-               indigo-to-slate radial wash, refined typography, and a ghost
-               button that reveals a filled fill on hover. Ships more polish
-               than a solid tint + shouty blue CTA. */}
+           {/* Upgrade card */}
            {!isCollapsed && (
              <div className="px-2.5 mt-8 mb-2">
                <div className="relative overflow-hidden rounded-2xl border border-slate-200/70 dark:border-white/[0.06] bg-gradient-to-br from-indigo-50 via-white to-white dark:from-indigo-500/[0.08] dark:via-transparent dark:to-transparent p-4">
@@ -679,21 +920,10 @@ export function AppLayout() {
               <NotificationsMenu />
               
               
-              {/* Avatar only — the name and role read as noise beside the breadcrumb,
-                  which already says where you are. Identity stays available via the
-                  title tooltip and the /profile destination. */}
-              <Link
-                to="/profile"
-                className="pl-1 md:pl-2 group"
-                title={user?.displayName || user?.email || 'Profile'}
-                aria-label="Open your profile"
-              >
-                <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[13px] font-semibold uppercase overflow-hidden ring-1 ring-black/5 dark:ring-white/10 group-hover:ring-2 group-hover:ring-indigo-500 transition-all">
-                  {user?.photoURL
-                    ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" />
-                    : (user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U')}
-                </div>
-              </Link>
+              {/* Interactive Profile Dropdown Popover */}
+              <div className="pl-1 md:pl-2">
+                <TopProfileDropdown />
+              </div>
             </div>
           )}
         </header>
@@ -722,7 +952,7 @@ export function AppLayout() {
                    : "p-4 md:p-8 pt-4 md:pt-6"
                )}
              >
-               <Outlet />
+               {children || <Outlet />}
              </motion.div>
            </AnimatePresence>
         </main>
@@ -733,6 +963,58 @@ export function AppLayout() {
       <AppearanceModal isOpen={isAppearanceOpen} onClose={() => setIsAppearanceOpen(false)} />
       <CommandPalette open={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
       <HighlightAction />
+
+      {/* Create New Flyout — only used in collapsed mode to anchor directly right of the rail */}
+      {createPortal(
+        <AnimatePresence>
+          {isNewMenuOpen && isCollapsed && (
+            <motion.div
+              ref={newMenuRef}
+              key="new-menu-collapsed-flyout"
+              initial={{ opacity: 0, x: -6, scale: 0.97 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: -4, scale: 0.97 }}
+              transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-white dark:bg-[#18181b] border border-slate-200/90 dark:border-white/[0.09] rounded-xl shadow-2xl overflow-y-auto custom-scrollbar"
+              style={{
+                ...newMenuStyle,
+                maxHeight: 'calc(100vh - 24px)',
+                transformOrigin: 'top left',
+              }}
+            >
+              <div className="p-2">
+                {CREATE_NEW_NAV.map((group, gi) => (
+                  <div key={group.group} className={cn(gi > 0 && "mt-1.5 pt-1.5 border-t border-slate-100 dark:border-white/[0.06]")}>
+                    <div className="px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-widest text-slate-400 dark:text-gray-500">
+                      {group.group}
+                    </div>
+                    <div className="space-y-0.5 mt-0.5">
+                      {group.items.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <button
+                            key={item.label}
+                            onClick={() => {
+                              navigate(`${item.path}?type=${item.type}`);
+                              window.dispatchEvent(new CustomEvent('new-chat', { detail: item.type }));
+                              setIsNewMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-2.5 px-2.5 h-[30px] rounded-lg text-[12.5px] font-normal text-slate-600 dark:text-gray-300 hover:bg-slate-100/80 dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white transition-colors duration-150 text-left group antialiased"
+                          >
+                            <Icon className="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-gray-400 group-hover:text-slate-900 dark:group-hover:text-[#c8e558] transition-colors duration-150" strokeWidth={1.6} />
+                            <span className="truncate leading-none flex-1">{item.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </motion.div>
   );
 }

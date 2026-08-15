@@ -60,10 +60,16 @@ export default function RecommendationCard({
     onAccept();
   };
 
-  const hasObjectives = message.recommendations.objectives?.length > 0;
-  const hasMisconceptions = message.recommendations.misconceptions?.length > 0;
-  const hasExamTips = message.recommendations.examTips?.length > 0;
-  const hasMemoryTricks = message.recommendations.memoryTricks?.length > 0;
+  const recs = message.recommendations || {};
+  const objectives = recs.objectives || message.objectives || [];
+  const misconceptions = recs.misconceptions || message.misconceptions || [];
+  const examTips = recs.examTips || message.examTips || [];
+  const memoryTricks = recs.memoryTricks || message.memoryTricks || [];
+
+  const hasObjectives = objectives.length > 0;
+  const hasMisconceptions = misconceptions.length > 0;
+  const hasExamTips = examTips.length > 0;
+  const hasMemoryTricks = memoryTricks.length > 0;
 
   return (
     <motion.div
@@ -104,13 +110,13 @@ export default function RecommendationCard({
                 id="objectives"
                 title="Learning Objectives"
                 icon={Target}
-                count={message.recommendations.objectives.length}
+                count={objectives.length}
                 isExpanded={expandedSections.has('objectives')}
                 onToggle={() => toggleSection('objectives')}
                 iconColor="text-blue-500"
               >
                 <div className="space-y-3">
-                  {message.recommendations.objectives.map((obj, idx) => (
+                  {objectives.map((obj: any, idx: number) => (
                     <ObjectiveItem key={idx} objective={obj} />
                   ))}
                 </div>
@@ -123,13 +129,13 @@ export default function RecommendationCard({
                 id="misconceptions"
                 title="Common Misconceptions"
                 icon={AlertTriangle}
-                count={message.recommendations.misconceptions.length}
+                count={misconceptions.length}
                 isExpanded={expandedSections.has('misconceptions')}
                 onToggle={() => toggleSection('misconceptions')}
                 iconColor="text-amber-500"
               >
                 <div className="space-y-3">
-                  {message.recommendations.misconceptions.map((misc, idx) => (
+                  {misconceptions.map((misc: any, idx: number) => (
                     <MisconceptionItem key={idx} misconception={misc} />
                   ))}
                 </div>
@@ -142,13 +148,13 @@ export default function RecommendationCard({
                 id="examTips"
                 title="Exam-Focused Tips"
                 icon={BookOpen}
-                count={message.recommendations.examTips.length}
+                count={examTips.length}
                 isExpanded={expandedSections.has('examTips')}
                 onToggle={() => toggleSection('examTips')}
                 iconColor="text-purple-500"
               >
                 <div className="space-y-2">
-                  {message.recommendations.examTips.map((tip, idx) => (
+                  {examTips.map((tip: any, idx: number) => (
                     <TipItem key={idx} tip={tip} />
                   ))}
                 </div>
@@ -161,13 +167,13 @@ export default function RecommendationCard({
                 id="memoryTricks"
                 title="Memory Tricks & Mnemonics"
                 icon={Lightbulb}
-                count={message.recommendations.memoryTricks.length}
+                count={memoryTricks.length}
                 isExpanded={expandedSections.has('memoryTricks')}
                 onToggle={() => toggleSection('memoryTricks')}
                 iconColor="text-green-500"
               >
                 <div className="space-y-2">
-                  {message.recommendations.memoryTricks.map((trick, idx) => (
+                  {memoryTricks.map((trick: any, idx: number) => (
                     <MemoryTrickItem key={idx} trick={trick} />
                   ))}
                 </div>
@@ -297,6 +303,9 @@ function ObjectiveItem({ objective }: ObjectiveItemProps) {
     'low': 'border-slate-300 dark:border-white/10',
   };
 
+  const bloom = (objective.bloomLevel || objective.bloomsLevel || 'understand').toLowerCase();
+  const title = objective.text || objective.description;
+
   return (
     <div className={cn(
       'p-3 rounded-lg border-l-4 bg-slate-50 dark:bg-white/5',
@@ -304,16 +313,16 @@ function ObjectiveItem({ objective }: ObjectiveItemProps) {
     )}>
       <div className="flex items-start justify-between gap-2 mb-2">
         <p className="text-[13px] font-medium text-slate-900 dark:text-white flex-1">
-          {objective.text}
+          {title}
         </p>
         <span className={cn(
           'px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-full shrink-0',
-          bloomColors[objective.bloomLevel || 'understand']
+          bloomColors[bloom] || 'bg-blue-100 text-blue-700'
         )}>
-          {objective.bloomLevel}
+          {bloom}
         </span>
       </div>
-      {objective.description && (
+      {objective.text && objective.description && (
         <p className="text-[12px] text-slate-600 dark:text-gray-400">
           {objective.description}
         </p>

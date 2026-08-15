@@ -158,7 +158,7 @@ export function useRespondToPlanning(sessionId: string | null) {
             session: {
               ...old.session,
               messages: data.messages,
-              status: data.status,
+              status: data.status as PlanningSession['status'],
               readyToGenerate: data.readyToGenerate,
               lessonPlan: data.planId ? old.session.lessonPlan : undefined,
             },

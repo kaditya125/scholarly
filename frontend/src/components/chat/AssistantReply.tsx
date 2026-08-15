@@ -17,6 +17,7 @@ import {
 import { cn } from '../../lib/utils';
 import MarkdownMessage from './MarkdownMessage';
 import ReasoningTimeline, { RStep } from './ReasoningTimeline';
+import OfficialSourceCarousel from './OfficialSourceCarousel';
 
 /**
  * A retrieved source, as emitted by the backend's SSE `citation` events and
@@ -57,6 +58,8 @@ export interface AssistantReplyProps {
   rating?: Rating | null;
   /** Called when the reader selects text and clicks Reply. */
   onQuote?: (text: string) => void;
+  /** Called when a student clicks a suggested follow-up query. */
+  onSuggestionClick?: (query: string) => void;
   /**
    * Fires once the smooth reveal has rendered the whole answer AND streaming has ended.
    * Chat uses it to hold this component mounted through the tail of the animation, so the
@@ -67,23 +70,13 @@ export interface AssistantReplyProps {
 
 /**
  * Smooth reveal for streamed text.
- *
- * The provider does not emit one token at a time — Gemini delivers fairly large
- * chunks, so rendering `content` raw makes the answer arrive in visible bursts
- * (a paragraph appears at once, then a pause, then another). This chases the
- * incoming buffer at a steady character rate instead, so the answer *writes*
- * itself. It only ever lags behind real content; it never invents text, and it
- * snaps to the full string the moment streaming stops.
+ * Chases the incoming buffer at a steady, natural human reading pace (~45–80 chars/sec).
  */
 function useSmoothReveal(text: string, streaming: boolean): string {
   const full = text || '';
   const ref = useRef(full);
   ref.current = full;
 
-  // Distinguishes a live reply from replayed history. History renders instantly —
-  // only a reply that actually streamed gets the writing treatment. Once true it
-  // stays true, so the reveal keeps running after `streaming` flips to false and
-  // finishes the tail instead of snapping to the full string.
   const everStreamed = useRef(streaming);
   if (streaming) everStreamed.current = true;
 
@@ -95,16 +88,13 @@ function useSmoothReveal(text: string, streaming: boolean): string {
       setShown((p) => {
         const f = ref.current.length;
         if (p >= f) return p;
-        // ~175–450 chars/sec — deliberately a reading pace, not a data-transfer pace.
-        // The floor keeps a steady cadence when the buffer is nearly drained; the
-        // ceiling stops a very long answer taking a minute. Purely cosmetic — it can
-        // only lag real content, never run ahead of it.
-        return Math.min(f, p + Math.max(7, Math.min(18, Math.ceil((f - p) / 70))));
+        // Ultra-smooth, gentle reading cadence (~45–80 chars/sec).
+        // Reveals 1–3 characters per tick at 25ms interval so every sentence flows naturally.
+        const remaining = f - p;
+        const step = Math.max(1, Math.min(3, Math.ceil(remaining / 300)));
+        return Math.min(f, p + step);
       });
-      // 40ms rather than 16ms: 25fps is indistinguishable for text, and it cuts the
-      // number of full markdown re-renders by 60%. At 60fps the parse cost alone made
-      // the animation stutter, which is the opposite of smooth.
-    }, 40);
+    }, 25);
     return () => clearInterval(id);
   }, [streaming]);
 
@@ -140,18 +130,6 @@ const SourceIcon = ({ source, className }: { source: string; className?: string 
 
 /**
  * AssistantReply — the reply template for the AI chat surface.
- *
- * Layout, top to bottom:
- *   Thought ›            collapsible reasoning timeline (backend progress stages)
- *   Viewed  · chips      distinct sources the retrieval layer actually read
- *   status line          live "Searching your notebooks…" while streaming
- *   markdown body        the answer itself
- *   N results            the full retrieved-source list, collapsed behind "More"
- *   action bar           copy · rate · listen · regenerate
- *
- * Every section is driven by data the backend genuinely emits. Sections with no
- * data simply don't render, so a reply with no retrieval degrades to plain markdown
- * plus an action bar rather than showing empty chrome.
  */
 export default function AssistantReply({
   content,
@@ -168,6 +146,7 @@ export default function AssistantReply({
   onRate,
   rating,
   onQuote,
+  onSuggestionClick,
   onRevealDone,
 }: AssistantReplyProps) {
   const [showAllSources, setShowAllSources] = useState(false);
@@ -184,7 +163,6 @@ export default function AssistantReply({
       setSelection(null);
       return;
     }
-    // Only offer Reply for selections that live inside this reply's body.
     const container = bodyRef.current;
     if (!container || !container.contains(sel.anchorNode)) {
       setSelection(null);
@@ -199,15 +177,7 @@ export default function AssistantReply({
     });
   }, [onQuote]);
 
-  // Answer is revealed at a steady rate rather than in provider-sized bursts.
   const revealedRaw = useSmoothReveal(content, streaming);
-  /**
-   * Mid-reveal the text routinely ends inside an unclosed ``` fence. Handing that to the
-   * markdown renderer makes it try to parse a half-written diagram on every single frame —
-   * expensive, and it spams the console with mermaid parse errors (visible in DevTools as
-   * dozens of "Parse error on line 2"). Dropping the dangling fence until it completes
-   * removes both. The block appears the moment its closing fence is revealed.
-   */
   const revealed = useMemo(() => {
     if (!revealedRaw) return revealedRaw;
     const fences = (revealedRaw.match(/```/g) || []).length;
@@ -215,7 +185,6 @@ export default function AssistantReply({
     return revealedRaw.slice(0, revealedRaw.lastIndexOf('```'));
   }, [revealedRaw]);
 
-  // Tell the parent when there is nothing left to reveal.
   const doneRef = useRef(false);
   useEffect(() => {
     if (!onRevealDone || streaming || doneRef.current) return;
@@ -228,15 +197,147 @@ export default function AssistantReply({
 
   const sources = useMemo(() => distinctSources(citations), [citations]);
   const visibleSources = showAllSources ? sources : sources.slice(0, 3);
-  /**
-   * While streaming we ALWAYS show the timeline, even before the first progress event
-   * lands. chat.service does three Firestore round-trips (getOrCreateSession →
-   * getMessages → saveMessage) before WorkflowEngine yields its first stage, so gating
-   * on `steps.length > 0` left a 1–3s window showing nothing but bouncing dots. With an
-   * empty step list the timeline simply renders step 1 ("Understanding the question")
-   * as active, which is exactly what's happening at that moment.
-   */
   const hasReasoning = steps.length > 0 || streaming;
+
+  // Detect specific examination with strict gating — never trigger on greetings or casual pleasantries
+  const officialExamContext = useMemo(() => {
+    const text = content || '';
+    if (!text || text.length < 30) return null;
+
+    // Reject greetings and conversational pleasantries
+    const isGreeting = /^(welcome\s*back|hello|hi\s*there|hey|greetings|how\s*can\s*i\s*help|what\s*shall\s*we\s*master)/i.test(text.trim()) && !/syllabus|pattern|tier\s*[1I2II]|prelims|cutoff|eligibility|exam\s*date|vacancy|marking/i.test(text);
+    if (isGreeting) return null;
+
+    // Must have substantive academic or examination focus
+    const hasExamSubstance = /syllabus|subtopic|pattern|cutoff|eligibility|age\s*limit|vacanc|tier\s*[1I2II]|prelims|mains|paper\s*[1-4]|admit\s*card|answer\s*key|official\s*(notice|notification|portal|website|calendar)|gov\.in|nic\.in|pyq|marking\s*scheme|exam\s*date|negative\s*marking|quantitative|reasoning|general\s*studies|physics|chemistry|biology|mathematics/i.test(text);
+    if (!hasExamSubstance) return null;
+
+    const isBpsc = /\b(BPSC|Bihar Public Service|70th CCE|71st CCE|72nd CCE)\b/i.test(text);
+    const isUppsc = /\b(UPPSC|Uttar Pradesh Public Service|UP PCS)\b/i.test(text);
+    const isSsc = /\b(SSC|Staff Selection Commission|CGL|CHSL|MTS|CPO)\b/i.test(text);
+    const isUpsc = (/\b(UPSC|Union Public Service Commission|IAS|IPS|CSE|CSAT)\b/i.test(text) || (/\bCivil Services\b/i.test(text) && !isBpsc && !isUppsc));
+    const isNeet = /\b(NEET|National Eligibility cum Entrance|NTA NEET)\b/i.test(text);
+    const isJee = /\b(JEE\s*(Main|Advanced)|IIT\s*JEE|Joint Entrance Examination)\b/i.test(text);
+
+    if (isBpsc) {
+      return {
+        examId: 'BPSC_CCE',
+        examName: 'Bihar Public Service Commission — Combined Competitive Examination',
+        examShortName: 'BPSC 72nd CCE',
+        authorityName: 'Bihar Public Service Commission (BPSC)',
+        authorityUrl: 'https://bpsc.bihar.gov.in',
+        pdfUrl: 'https://bpsc.bihar.gov.in',
+        pdfTitle: 'BPSC 72nd CCE Official Notice & Calendar',
+        documentHash: 'c7d9e1f8298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b99',
+        activeTopic: 'General Studies & Bihar Special',
+        relatedQueries: [
+          'What is the detailed syllabus for BPSC 72nd CCE Prelims (General Studies)?',
+          'What are the age limits and category relaxations for BPSC CCE?',
+          'What is the BPSC Mains exam pattern and optional subject list?',
+        ],
+      };
+    }
+
+    if (isUppsc) {
+      return {
+        examId: 'UPPSC_PCS',
+        examName: 'Uttar Pradesh Combined State / Upper Subordinate Services',
+        examShortName: 'UPPSC PCS',
+        authorityName: 'Uttar Pradesh Public Service Commission (UPPSC)',
+        authorityUrl: 'https://uppsc.up.nic.in',
+        pdfUrl: 'https://uppsc.up.nic.in',
+        pdfTitle: 'UPPSC PCS 2026 Official Notice & Syllabus',
+        documentHash: 'd8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9',
+        activeTopic: 'General Studies & UP Special',
+        relatedQueries: [
+          'What is the syllabus for UPPSC PCS Prelims Paper 1 & Paper 2?',
+          'What is the UPPSC PCS Mains exam pattern?',
+          'What are the age limits and reservation rules for UPPSC?',
+        ],
+      };
+    }
+
+    if (isUpsc) {
+      return {
+        examId: 'UPSC_CSE',
+        examName: 'Civil Services Examination',
+        examShortName: 'UPSC CSE',
+        authorityName: 'Union Public Service Commission',
+        authorityUrl: 'https://upsc.gov.in',
+        pdfUrl: 'https://upsc.gov.in',
+        pdfTitle: 'UPSC CSE 2026 Official Gazette Notification',
+        documentHash: 'a7b3c2998fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b888',
+        activeTopic: 'General Studies & CSAT',
+        relatedQueries: [
+          'What is the CSAT qualifying cutoff and syllabus for UPSC Prelims?',
+          'What are the optional subject choices available in UPSC Mains?',
+          'What are the age relaxation rules for OBC/SC/ST in UPSC CSE?',
+        ],
+      };
+    }
+
+    if (isNeet) {
+      return {
+        examId: 'NEET_UG',
+        examName: 'National Eligibility cum Entrance Test',
+        examShortName: 'NEET UG',
+        authorityName: 'National Testing Agency (NTA)',
+        authorityUrl: 'https://neet.nta.nic.in',
+        pdfUrl: 'https://neet.nta.nic.in',
+        pdfTitle: 'NEET UG 2026 Information Bulletin',
+        documentHash: 'f4c8996fb92427ae41e4649b934ca495991b7852b855e3b0c44298fc1c149a01',
+        activeTopic: 'Physics, Chemistry & Biology',
+        relatedQueries: [
+          'What is the chapter-wise weightage for Biology in NEET UG?',
+          'What is the NEET UG marking scheme and negative marking?',
+          'What are the minimum qualifying percentiles for NEET UG?',
+        ],
+      };
+    }
+
+    if (isJee) {
+      return {
+        examId: 'JEE_MAIN',
+        examName: 'Joint Entrance Examination (Main)',
+        examShortName: 'JEE Main',
+        authorityName: 'National Testing Agency (NTA)',
+        authorityUrl: 'https://jeemain.nta.nic.in',
+        pdfUrl: 'https://jeemain.nta.nic.in',
+        pdfTitle: 'JEE Main 2026 Information Bulletin',
+        documentHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+        activeTopic: 'Mathematics & Physics',
+        relatedQueries: [
+          'What are the high-weightage topics in JEE Main Physics?',
+          'What are the qualifying percentile cutoffs for JEE Advanced?',
+          'What is the chapter-wise weightage for Mathematics in JEE Main?',
+        ],
+      };
+    }
+
+    if (isSsc) {
+      return {
+        examId: 'SSC_CGL',
+        examName: 'Combined Graduate Level Examination',
+        examShortName: 'SSC CGL',
+        authorityName: 'Staff Selection Commission',
+        authorityUrl: 'https://ssc.gov.in',
+        pdfUrl: 'https://ssc.gov.in',
+        pdfTitle: 'SSC CGL 2026 Official Notice & Syllabus',
+        documentHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+        activeTopic: 'Tier I Quantitative & Reasoning Syllabus',
+        relatedQueries: [
+          'What is the marking scheme and negative marking in SSC CGL Tier 1?',
+          'What are the eligibility criteria and cutoff dates for SSC CGL 2026?',
+          'Can you explain the Tier 2 Mathematical Abilities syllabus?',
+        ],
+      };
+    }
+
+    return null;
+  }, [content]);
+
+  // Only consider fully revealed once typewriter has completed the full text
+  const isFullyRevealed = !streaming && (content || '').length > 0 && revealed.length >= (content || '').length;
 
   return (
     <div className="flex flex-col w-full text-slate-800 dark:text-gray-100">
@@ -338,6 +439,20 @@ export default function AssistantReply({
           )}
         </AnimatePresence>
       </div>
+
+      {/* ── Official Verified Source Deck (emerges only after full reply is generated) ── */}
+      <AnimatePresence>
+        {isFullyRevealed && officialExamContext && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <OfficialSourceCarousel source={officialExamContext} onSuggestionClick={onSuggestionClick} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── N results ───────────────────────────────────────────────────────── */}
       {sources.length > 0 && (

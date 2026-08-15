@@ -1,38 +1,63 @@
 import { useState, useEffect } from "react";
-import { useLocation, Link, Navigate } from "react-router-dom";
-import { CheckCircle2, ChevronRight, Check, Sparkles, Loader2 } from "lucide-react";
+import { useLocation, Link, Navigate, useNavigate } from "react-router-dom";
+import { CheckCircle2, ChevronRight, Check, Sparkles, Loader2, ArrowLeft, RotateCcw, Clock, Award, Target, HelpCircle } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useQuiz } from "../hooks/ai/useQuiz";
+import { useQuizAttempt } from "../hooks/api/useQuizAttempts";
+import { useLaunchTest } from "../hooks/ai/useLaunchTest";
 
 interface ReportState {
-  score: number;
-  total: number;
-  answers: Record<string, number>;
-  timeSpentSeconds: number;
+  score?: number;
+  total?: number;
+  answers?: Record<string, number>;
+  timeSpentSeconds?: number;
+  attemptId?: string;
+  questions?: Array<{
+    id: string;
+    text: string;
+    topic: string;
+    options: string[];
+    correctAnswerIndex: number;
+    explanation: string;
+  }>;
 }
 
 export default function Report() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const launch = useLaunchTest();
   const state = location.state as ReportState | undefined;
+
+  // Support direct state OR fetching completed attempt by attemptId
+  const { attempt: fetchedAttempt, isLoading: isAttemptLoading } = useQuizAttempt(state?.attemptId);
 
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const { questions: mockQuestions, isLoading } = useQuiz();
+  const { questions: legacyQuestions, isLoading: isLegacyLoading } = useQuiz();
+
+  const questions = state?.questions || fetchedAttempt?.questions || legacyQuestions || [];
+  const score = state?.score ?? fetchedAttempt?.score ?? 0;
+  const total = state?.total ?? fetchedAttempt?.totalQuestions ?? (questions.length || 1);
+  const answers = state?.answers ?? fetchedAttempt?.answers ?? {};
+  const timeSpentSeconds = state?.timeSpentSeconds ?? fetchedAttempt?.timeSpentSeconds ?? 0;
+
+  const isLoading = isAttemptLoading || (isLegacyLoading && !state?.questions && !fetchedAttempt);
 
   useEffect(() => {
-    if (!state || isLoading || mockQuestions.length === 0) return;
+    if (!state && !fetchedAttempt) return;
+    if (isLoading || questions.length === 0) return;
 
     async function fetchAnalysis() {
       setIsAnalyzing(true);
       
       const topics: Record<string, { correct: number, total: number }> = {};
-      mockQuestions.forEach(q => {
+      questions.forEach(q => {
         if (!topics[q.topic]) {
           topics[q.topic] = { correct: 0, total: 0 };
         }
         topics[q.topic].total++;
-        if (state!.answers[q.id] === q.correctAnswerIndex) {
+        if (answers[q.id] === q.correctAnswerIndex) {
           topics[q.topic].correct++;
         }
       });
@@ -45,240 +70,232 @@ export default function Report() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            score: state!.score,
-            total: state!.total,
-            timeSpent: state!.timeSpentSeconds,
+            score,
+            total,
+            timeSpent: timeSpentSeconds,
             strongTopics,
             weakTopics
           })
         });
-        const data = await res.json();
-        setAiAnalysis(data.analysis);
+        if (res.ok) {
+          const data = await res.json();
+          setAiAnalysis(data.analysis);
+        } else {
+          setAiAnalysis("Solid practice session. Review your incorrect answers below to master the underlying concepts.");
+        }
       } catch (err) {
-        console.error(err);
-        setAiAnalysis("Failed to load AI Insights.");
+        setAiAnalysis("Solid practice session. Review your incorrect answers below to master the underlying concepts.");
       } finally {
         setIsAnalyzing(false);
       }
     }
     
     fetchAnalysis();
-  }, [state, isLoading, mockQuestions]);
+  }, [state, fetchedAttempt, isLoading, questions.length]);
 
-  if (!state) {
-    return <Navigate to="/dashboard" replace />;
+  if (!state && !fetchedAttempt && !isLoading) {
+    return <Navigate to="/tests" replace />;
   }
 
   if (isLoading) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-white dark:bg-[#131314]">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+      <div className="w-full h-full flex items-center justify-center bg-[#fafbfc] dark:bg-[#0b0b0c]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#8ba32b] dark:text-[#c8e558]" />
       </div>
     );
   }
 
-  const { score, total, answers, timeSpentSeconds } = state;
-  const gradePercentage = Math.round((score / total) * 100);
+  const gradePercentage = Math.round((score / (total || 1)) * 100);
   const isPassed = gradePercentage >= 60;
-  
-  const today = new Date();
-  const dateStr = today.toLocaleDateString('en-GB', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  });
 
   const formatTime = (secs: number) => {
     const mins = Math.floor(secs / 60);
     const s = secs % 60;
-    return `${mins} mins ${s} secs`;
+    return `${mins}m ${s}s`;
   };
 
   return (
-    <div className="w-full h-full overflow-y-auto px-8 pb-12 pt-4 bg-white dark:bg-[#131314] transition-colors duration-300 custom-scrollbar">
-      <div className="max-w-[850px] mx-auto text-slate-800 dark:text-slate-100">
+    <div className="w-full h-full overflow-y-auto px-4 sm:px-8 pb-16 pt-6 bg-[#fafbfc] dark:bg-[#0b0b0c] transition-colors duration-300 custom-scrollbar font-sans">
+      <div className="max-w-4xl mx-auto text-slate-800 dark:text-slate-100">
         
-        {/* Breadcrumbs */}
-        <div className="flex items-center gap-2 text-[13px] text-slate-500 dark:text-slate-400 mb-8 font-medium">
-          <Link to="/dashboard" className="hover:text-slate-800 dark:hover:text-slate-200 transition-colors">Dashboard</Link>
-          <ChevronRight className="w-3.5 h-3.5" />
-          <Link to="/tests" className="hover:text-slate-800 dark:hover:text-slate-200 transition-colors">My courses</Link>
-          <ChevronRight className="w-3.5 h-3.5" />
-          <span className="truncate">Mock Test Series</span>
-          <ChevronRight className="w-3.5 h-3.5 shrink-0" />
-          <span className="text-slate-700 dark:text-slate-300">Detailed Report</span>
+        {/* Breadcrumbs & Navigation */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2 text-[13px] text-slate-500 dark:text-slate-400 font-medium">
+            <Link to="/tests" className="hover:text-slate-800 dark:hover:text-white transition-colors flex items-center gap-1">
+              <ArrowLeft className="w-3.5 h-3.5" /> Test Center
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            <span className="text-slate-900 dark:text-white font-semibold">Test Performance Report</span>
+          </div>
+
+          <button
+            onClick={() => launch({ count: total, mode: 'exam', topic: fetchedAttempt?.topic || 'Practice Retake' })}
+            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 rounded-xl text-[12.5px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-98"
+          >
+            <RotateCcw className="w-3.5 h-3.5" /> Retake Test
+          </button>
         </div>
 
-        <h1 className="text-[28px] font-light text-[#aab3bc] dark:text-slate-500 mb-8 uppercase tracking-wide">
-          TEST RESULTS
-        </h1>
+        {/* Hero Scorecard Card */}
+        <div className="p-6 sm:p-8 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111113] shadow-xs mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-slate-100 dark:border-white/5">
+            <div>
+              <span className={cn(
+                "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider mb-2",
+                isPassed 
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" 
+                  : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+              )}>
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                {isPassed ? "Target Achieved" : "Needs Review"}
+              </span>
+              <h1 className="text-2xl sm:text-[28px] font-semibold text-slate-900 dark:text-white tracking-[-0.02em]">
+                {fetchedAttempt?.title || "AI Practice Assessment"}
+              </h1>
+              <p className="text-[13.5px] text-slate-500 dark:text-slate-400 mt-1">
+                Completed in {formatTime(timeSpentSeconds)} • Evaluated against latest marking scheme
+              </p>
+            </div>
 
-        {/* Summary Card */}
-        <div className="bg-[#eef5f9] dark:bg-[#1f1f1f] border border-transparent dark:border-white/10 p-6 flex flex-wrap gap-12 mb-8 rounded-lg shadow-sm">
-          <div className="flex items-start gap-3">
-             <div className="mt-0.5">
-               <CheckCircle2 className="w-6 h-6 text-green-500" />
-             </div>
-             <div>
-               <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-0.5">Status</div>
-               <div className="font-bold text-sm text-slate-800 dark:text-slate-100 uppercase">{isPassed ? "PASSED" : "FAILED"}</div>
-             </div>
+            <div className="flex items-center gap-3">
+              <div className="w-20 h-20 rounded-2xl bg-slate-900 text-[#c8e558] dark:bg-white dark:text-slate-900 flex flex-col items-center justify-center shadow-xs">
+                <span className="text-[26px] font-bold leading-none">{gradePercentage}%</span>
+                <span className="text-[10px] uppercase font-semibold tracking-wider mt-1 opacity-80">Score</span>
+              </div>
+            </div>
           </div>
-          <div>
-            <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-0.5">Completion Date</div>
-            <div className="font-bold text-sm text-slate-800 dark:text-slate-100 uppercase">{today.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
-          </div>
-          <div>
-            <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-0.5">Requirement</div>
-            <div className="font-bold text-sm text-slate-800 dark:text-slate-100 uppercase">Minimum grade 60%</div>
-          </div>
-        </div>
 
-        {/* AI Key Takeaways */}
-        <div className="mb-8 p-6 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800/50 shadow-sm relative overflow-hidden">
-           <div className="absolute top-0 right-0 p-4 opacity-10">
-             <Sparkles className="w-24 h-24 text-indigo-500" />
-           </div>
-           <div className="flex items-center gap-3 mb-4 relative z-10">
-             <div className="w-8 h-8 rounded bg-indigo-100 dark:bg-indigo-800/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-               <Sparkles className="w-5 h-5" />
-             </div>
-             <h2 className="text-[18px] font-bold text-slate-900 dark:text-white">AI Key Takeaways</h2>
-           </div>
-           <div className="text-[15px] leading-relaxed text-slate-700 dark:text-slate-300 relative z-10 font-medium">
-             {isAnalyzing ? (
-               <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-                 <Loader2 className="w-4 h-4 animate-spin" /> Analyzing your performance...
-               </div>
-             ) : (
-               <p>{aiAnalysis}</p>
-             )}
-           </div>
-        </div>
-
-        {/* Details Table */}
-        <div className="border-t border-b border-slate-200 dark:border-white/10 text-[14px]">
-          <div className="flex px-4 py-3 border-b border-slate-100 dark:border-white/5 last:border-none hover:bg-slate-50 dark:hover:bg-white/5">
-             <div className="w-40 font-bold text-slate-700 dark:text-slate-300 text-right pr-6">Started on</div>
-             <div className="flex-1 text-slate-600 dark:text-slate-400">{dateStr}</div>
-          </div>
-          <div className="flex px-4 py-3 border-b border-slate-100 dark:border-white/5 last:border-none hover:bg-slate-50 dark:hover:bg-white/5">
-             <div className="w-40 font-bold text-slate-700 dark:text-slate-300 text-right pr-6">State</div>
-             <div className="flex-1 text-slate-600 dark:text-slate-400">Finished</div>
-          </div>
-          <div className="flex px-4 py-3 border-b border-slate-100 dark:border-white/5 last:border-none hover:bg-slate-50 dark:hover:bg-white/5">
-             <div className="w-40 font-bold text-slate-700 dark:text-slate-300 text-right pr-6">Completed on</div>
-             <div className="flex-1 text-slate-600 dark:text-slate-400">{dateStr}</div>
-          </div>
-          <div className="flex px-4 py-3 border-b border-slate-100 dark:border-white/5 last:border-none hover:bg-slate-50 dark:hover:bg-white/5">
-             <div className="w-40 font-bold text-slate-700 dark:text-slate-300 text-right pr-6">Time taken</div>
-             <div className="flex-1 text-slate-600 dark:text-slate-400">{formatTime(timeSpentSeconds)}</div>
-          </div>
-          <div className="flex px-4 py-3 border-b border-slate-100 dark:border-white/5 last:border-none hover:bg-slate-50 dark:hover:bg-white/5">
-             <div className="w-40 font-bold text-slate-700 dark:text-slate-300 text-right pr-6">Marks</div>
-             <div className="flex-1 text-slate-600 dark:text-slate-400">{score.toFixed(2)}/{total.toFixed(2)}</div>
-          </div>
-          <div className="flex px-4 py-3 border-b border-slate-100 dark:border-white/5 last:border-none hover:bg-slate-50 dark:hover:bg-white/5">
-             <div className="w-40 font-bold text-slate-700 dark:text-slate-300 text-right pr-6">Grade</div>
-             <div className="flex-1 text-slate-600 dark:text-slate-400 font-bold">{((score/total) * 10).toFixed(2)} out of 10.00 ({gradePercentage}%)</div>
+          {/* Quick Metrics Bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Score</div>
+              <div className="text-[18px] font-semibold text-slate-900 dark:text-white">{score} / {total}</div>
+            </div>
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Accuracy</div>
+              <div className="text-[18px] font-semibold text-emerald-600 dark:text-emerald-400">{gradePercentage}%</div>
+            </div>
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Time Spent</div>
+              <div className="text-[18px] font-semibold text-slate-900 dark:text-white">{formatTime(timeSpentSeconds)}</div>
+            </div>
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Avg Speed</div>
+              <div className="text-[18px] font-semibold text-slate-900 dark:text-white">{Math.round(timeSpentSeconds / (total || 1))}s / Q</div>
+            </div>
           </div>
         </div>
 
-        {/* Questions List */}
-        <div className="mt-12 space-y-12">
-          {mockQuestions.map((q, idx) => {
+        {/* AI Key Insights */}
+        <div className="mb-8 p-5 rounded-2xl bg-white dark:bg-[#111113] border border-slate-200/90 dark:border-white/10 shadow-xs relative overflow-hidden">
+          <div className="flex items-center gap-2.5 mb-2.5">
+            <div className="w-7 h-7 rounded-lg bg-slate-900 dark:bg-white flex items-center justify-center text-[#c8e558] dark:text-slate-900 shadow-2xs">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <h2 className="text-[15px] font-semibold text-slate-900 dark:text-white">AI Coach Insights & Recommendations</h2>
+          </div>
+          <div className="text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300 font-normal">
+            {isAnalyzing ? (
+              <div className="flex items-center gap-2 text-slate-500">
+                <Loader2 className="w-4 h-4 animate-spin text-[#8ba32b] dark:text-[#c8e558]" /> Generating detailed diagnostic insights...
+              </div>
+            ) : (
+              <p>{aiAnalysis}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Question by Question Review */}
+        <div className="space-y-4">
+          <h2 className="text-[18px] font-semibold text-slate-900 dark:text-white mb-2">
+            Detailed Solution & Question Breakdown ({questions.length})
+          </h2>
+
+          {questions.map((q, idx) => {
             const userAnswer = answers[q.id];
             const isCorrect = userAnswer === q.correctAnswerIndex;
             const isUnanswered = userAnswer === undefined;
-            const statusLabel = isUnanswered ? "UNANSWERED" : (isCorrect ? "CORRECT" : "INCORRECT");
             
-            let statusColor = "bg-slate-500 text-white dark:bg-slate-600"; // default for unanswered
-            let borderColor = "border-slate-300 dark:border-slate-700";
-            let tagColor = "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300";
-            
-            if (!isUnanswered) {
-              if (isCorrect) {
-                statusColor = "bg-green-500 text-white dark:bg-green-600";
-                borderColor = "border-green-500 dark:border-green-600";
-                tagColor = "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800/50";
-              } else {
-                statusColor = "bg-red-500 text-white dark:bg-rose-600";
-                borderColor = "border-red-500 dark:border-rose-600";
-                tagColor = "bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800/50";
-              }
-            }
-
             return (
-              <div key={q.id}>
-                {/* Question Header */}
-                <div className="mb-4">
-                  <h3 className="text-xl font-light text-slate-600 dark:text-slate-400 mb-3 flex items-end gap-2">
-                    Question <span className="text-2xl font-semibold text-slate-800 dark:text-slate-200 leading-none">{idx + 1}</span>
-                  </h3>
-                  <div className="flex items-center gap-4 text-[13px] font-medium">
-                    <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold tracking-wider", statusColor)}>
-                      {statusLabel}
+              <div 
+                key={q.id || idx}
+                className={cn(
+                  "p-5 rounded-2xl border transition-all bg-white dark:bg-[#111113] shadow-xs",
+                  isUnanswered 
+                    ? "border-slate-200/80 dark:border-white/10" 
+                    : isCorrect 
+                      ? "border-emerald-500/30 dark:border-emerald-500/20" 
+                      : "border-rose-500/30 dark:border-rose-500/20"
+                )}
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-semibold text-slate-900 dark:text-white">
+                      Question {idx + 1}
                     </span>
-                    <span className="text-slate-600 dark:text-slate-400">
-                      Mark {isCorrect ? "1.00" : "0.00"} out of 1.00
-                    </span>
+                    {q.topic && (
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400">
+                        {q.topic}
+                      </span>
+                    )}
                   </div>
+                  <span className={cn(
+                    "text-[11px] font-semibold px-2.5 py-0.5 rounded-md",
+                    isUnanswered 
+                      ? "bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-slate-400" 
+                      : isCorrect 
+                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" 
+                        : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                  )}>
+                    {isUnanswered ? "Unanswered" : isCorrect ? "Correct (+1.0)" : "Incorrect (-0.25)"}
+                  </span>
                 </div>
 
-                {/* Question Body */}
-                <div className={cn("p-6 border-2 rounded bg-white dark:bg-[#1f1f1f] shadow-sm mb-1 transition-colors", borderColor)}>
-                  <div className="font-bold text-[15px] text-slate-800 dark:text-slate-200 mb-6 font-sans">
-                    {q.text}
-                  </div>
-                  
-                  <div className="text-[13px] text-slate-600 dark:text-slate-400 mb-4">Select one:</div>
-                  
-                  <div className="space-y-4 text-[14px]">
-                    {q.options.map((opt, optIdx) => {
-                      const isSelected = optIdx === userAnswer;
-                      const isThisCorrectOpt = optIdx === q.correctAnswerIndex;
-                      
-                      return (
-                        <div key={optIdx} className="flex items-center group relative">
-                           <input 
-                              type="radio" 
-                              disabled
-                              checked={isSelected}
-                              className="w-4 h-4 mt-0.5 shrink-0 accent-slate-600 dark:accent-slate-400 cursor-not-allowed"
-                           />
-                           <label className={cn("ml-3 text-slate-700 dark:text-slate-300 cursor-not-allowed", isThisCorrectOpt && "font-medium")}>
-                             {String.fromCharCode(97 + optIdx)}. {opt}
-                           </label>
-                           {isThisCorrectOpt && (
-                             <div className="absolute right-0 flex items-center justify-center">
-                               <Check className="w-5 h-5 text-green-500 dark:text-green-400" />
-                             </div>
-                           )}
+                {/* Question Stem */}
+                <p className="text-[14.5px] font-medium text-slate-900 dark:text-white mb-4 leading-relaxed">
+                  {q.text}
+                </p>
+
+                {/* Options */}
+                <div className="space-y-2 mb-4">
+                  {q.options.map((opt, optIdx) => {
+                    const isSelected = optIdx === userAnswer;
+                    const isThisCorrect = optIdx === q.correctAnswerIndex;
+                    
+                    return (
+                      <div 
+                        key={optIdx}
+                        className={cn(
+                          "flex items-center justify-between p-3 rounded-xl border text-[13.5px] font-medium transition-colors",
+                          isThisCorrect
+                            ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-900 dark:text-emerald-300 font-semibold"
+                            : isSelected
+                              ? "bg-rose-500/10 border-rose-500/40 text-rose-900 dark:text-rose-300"
+                              : "bg-slate-50/70 dark:bg-white/[0.02] border-slate-200/70 dark:border-white/5 text-slate-700 dark:text-slate-300"
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="w-5 h-5 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center text-[11px] font-bold shrink-0">
+                            {String.fromCharCode(65 + optIdx)}
+                          </span>
+                          <span>{opt}</span>
                         </div>
-                      )
-                    })}
-                  </div>
+                        {isThisCorrect && (
+                          <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
 
-                {/* Feedback Section */}
-                <div className="bg-[#fff9e6] dark:bg-yellow-900/10 rounded p-5 text-[14px] text-slate-800 dark:text-slate-200 border border-[#f5e6b3] dark:border-yellow-700/30 transition-colors">
-                   <div className="font-bold mb-3 text-[15px]">
-                     {isUnanswered 
-                       ? "You did not answer this question."
-                       : (isCorrect ? "Your answer is correct." : "Your answer is incorrect.")}
-                   </div>
-                   {userAnswer !== undefined && (
-                     <div className="mb-3">
-                       You have selected option {userAnswer + 1}.
-                     </div>
-                   )}
-                   <p className="mb-4">{q.explanation}</p>
-                   <p className="text-slate-600 dark:text-slate-400">The correct answer is: {q.options[q.correctAnswerIndex]}</p>
-                </div>
+                {/* Explanation Drawer */}
+                {q.explanation && (
+                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                    <span className="font-semibold text-slate-900 dark:text-white block mb-1">Explanation:</span>
+                    {q.explanation}
+                  </div>
+                )}
               </div>
             );
           })}

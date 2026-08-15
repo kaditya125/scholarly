@@ -3,6 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatController = void 0;
 const chat_service_1 = require("../services/chat.service");
 const fileParser_service_1 = require("../services/fileParser.service");
+const roles_1 = require("../types/roles");
+/** Same claim capability.ts's middleware reads — decoded from the verified Firebase token. */
+function productRoleOf(req) {
+    const raw = req.user?.[roles_1.PRODUCT_ROLE_CLAIM];
+    return (0, roles_1.isProductRole)(raw) ? raw : undefined;
+}
 class ChatController {
     service = new chat_service_1.ChatService();
     handleChat = async (req, res, next) => {
@@ -16,7 +22,7 @@ class ChatController {
             if (!sessionId || !message || !model || !topicType) {
                 return res.status(400).json({ error: "Missing required fields: sessionId, message, model, topicType" });
             }
-            const response = await this.service.processChat(userId, sessionId, message, model, topicType);
+            const response = await this.service.processChat(userId, sessionId, message, model, topicType, productRoleOf(req));
             res.json(response);
         }
         catch (error) {
@@ -49,7 +55,7 @@ class ChatController {
             res.setHeader('Connection', 'keep-alive');
             res.flushHeaders();
             const traceId = req.headers['x-trace-id'];
-            await this.service.processChatStream(userId, sessionId, finalMessage, model, topicType, res, notebookId, traceId);
+            await this.service.processChatStream(userId, sessionId, finalMessage, model, topicType, res, notebookId, traceId, productRoleOf(req));
         }
         catch (error) {
             console.error("Chat Stream Error:", error);

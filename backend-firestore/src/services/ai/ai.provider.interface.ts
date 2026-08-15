@@ -20,11 +20,35 @@ export interface AIProvider {
    * @param systemPrompt Optional system instructions for the LLM.
    * @param traceId Optional trace ID for logging.
    */
-  generateResponse(history: ChatMessage[], systemPrompt?: string, opts?: { traceId?: string, model?: string, userId?: string }): Promise<AIProviderResponse>;
+  generateResponse(
+    history: ChatMessage[],
+    systemPrompt?: string,
+    opts?: {
+      traceId?: string;
+      model?: string;
+      userId?: string;
+      notebookId?: string;
+      operation?: string;
+      temperature?: number;
+      responseJson?: boolean;
+    }
+  ): Promise<AIProviderResponse>;
   
   /**
    * Generates a streaming response from the underlying LLM.
    * Yields chunks of text as they arrive.
    */
-  generateStreamResponse?(history: ChatMessage[], systemPrompt?: string, opts?: { traceId?: string, model?: string, userId?: string }): AsyncGenerator<string, void, unknown>;
+  generateStreamResponse?(
+    history: ChatMessage[],
+    systemPrompt?: string,
+    opts?: {
+      traceId?: string;
+      model?: string;
+      userId?: string;
+      notebookId?: string;
+      operation?: string;
+      temperature?: number;
+      responseJson?: boolean;
+    }
+  ): AsyncGenerator<string, void, unknown>;
 }

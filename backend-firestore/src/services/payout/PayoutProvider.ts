@@ -71,6 +71,8 @@ export class NotConfiguredPayoutProvider implements PayoutProvider {
   }
 }
 
+import { RazorpayXPayoutProvider } from './RazorpayXPayoutProvider';
+
 /**
  * Resolves the active provider. Currently always `NotConfiguredPayoutProvider` — the
  * RAZORPAYX_* env vars are read here (not hardcoded) specifically so that activating 3K later is
@@ -80,9 +82,7 @@ export class NotConfiguredPayoutProvider implements PayoutProvider {
 export function getPayoutProvider(): PayoutProvider {
   const configured = !!(env.RAZORPAYX_KEY_ID && env.RAZORPAYX_KEY_SECRET && env.RAZORPAYX_ACCOUNT_NUMBER);
   if (configured) {
-    // No implementation exists yet. Reaching here means credentials were set without the
-    // provider being built — fail loudly instead of silently falling through to the stub.
-    throw new Error('RAZORPAYX_* credentials are set, but no RazorpayXPayoutProvider implementation exists yet.');
+    return new RazorpayXPayoutProvider();
   }
   return new NotConfiguredPayoutProvider();
 }

@@ -117,9 +117,14 @@ app.get('/api/public/stats', async (_req, res) => {
     const getFallbackAvatar = (name: string, isTeacher = false) => 
       `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${isTeacher ? 'c8e558' : 'random'}&color=000&rounded=true&bold=true`;
 
-    // Sort users by creation time descending if possible, or just iterate. 
-    // auth.listUsers returns them in page order, but we can sort if we want true "recent".
-    for (const u of list.users) {
+    // Sort users by most recently active first, so when someone updates their profile, they appear in the stack
+    const sortedUsers = list.users.sort((a, b) => {
+      const timeA = new Date(a.metadata.lastSignInTime || a.metadata.creationTime || 0).getTime();
+      const timeB = new Date(b.metadata.lastSignInTime || b.metadata.creationTime || 0).getTime();
+      return timeB - timeA;
+    });
+
+    for (const u of sortedUsers) {
       if (u.disabled) continue;
       const claims = u.customClaims || {};
       const role = (claims.role as string) || (claims.productRole as string) || '';

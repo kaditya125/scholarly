@@ -304,6 +304,29 @@ service cloud.firestore {
     match /published_assets/{doc} { allow read: if isSignedIn(); allow write: if false; }
     match /leaderboard/{doc}      { allow read: if isSignedIn(); allow write: if false; }
 
+    // ---- Exam Intelligence: canonical catalog is readable by signed-in users, writable by admin ----
+    match /exams/{examId} {
+      allow read: if isSignedIn();
+      allow write: if hasAdminRole();
+
+      match /cycles/{cycleId} {
+        allow read: if isSignedIn();
+        allow write: if hasAdminRole();
+      }
+    }
+    match /exam_official_sources/{sourceId} {
+      allow read: if isSignedIn();
+      allow write: if hasAdminRole();
+    }
+    match /exam_syllabi/{syllabusId} {
+      allow read: if isSignedIn();
+      allow write: if hasAdminRole();
+    }
+    match /exam_audit_logs/{logId} {
+      allow read: if hasAdminRole();
+      allow write: if false;
+    }
+
     // ---- Study groups: MEMBER-scoped read; writes via backend ----
     //
     // Phase 3B fix. This block previously read `match /study_groups/{doc}` (snake_case) while

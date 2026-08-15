@@ -36,6 +36,8 @@ export interface ClassSessionRecord {
   roomCodes: Record<VideoRole, string>;
   startedAt: FirebaseFirestore.FieldValue | FirebaseFirestore.Timestamp;
   endedAt: FirebaseFirestore.FieldValue | FirebaseFirestore.Timestamp | null;
+  /** Optional reference to the session recording URL, populated by webhooks once processing is complete. */
+  recordingRef?: string;
   createdAt: FirebaseFirestore.FieldValue | FirebaseFirestore.Timestamp;
   updatedAt: FirebaseFirestore.FieldValue | FirebaseFirestore.Timestamp;
 }

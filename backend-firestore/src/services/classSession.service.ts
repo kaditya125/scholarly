@@ -139,6 +139,23 @@ export class ClassSessionService {
     const snap = await db.collection('classEnrollments').doc(`${classId}_${uid}`).get();
     return snap.exists && (snap.data() as { state: string }).state === 'ACTIVE';
   }
+
+  /**
+   * Called by webhooks when a recording is successfully processed by the provider (e.g. 100ms).
+   */
+  async updateRecordingRef(providerRoomId: string, recordingUrl: string): Promise<void> {
+    const session = await classSessionRepository.findByProviderRoomId(providerRoomId);
+    if (!session) {
+      logger.warn('[ClassSession] Received recording for unknown provider room', { providerRoomId });
+      return;
+    }
+    
+    await classSessionRepository.update(session.id, { 
+      recordingRef: recordingUrl, 
+      updatedAt: admin.firestore.FieldValue.serverTimestamp() 
+    });
+    logger.info('[ClassSession] Attached recording to session', { sessionId: session.id });
+  }
 }
 
 export const classSessionService = new ClassSessionService();

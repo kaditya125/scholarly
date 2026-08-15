@@ -248,19 +248,19 @@ export default function TextToSpeechView() {
         <div className="max-w-3xl mx-auto px-6 py-10">
           {/* Greeting */}
           <div className="text-center mb-8">
-            <h1 className="text-[24px] font-semibold text-gray-900 dark:text-gray-100">
+            <h1 className="text-[24px] sm:text-[26px] font-semibold text-slate-900 dark:text-white tracking-[-0.02em]">
               {greeting}, {firstName} <span aria-hidden>👋</span>
             </h1>
-            <p className="mt-2 text-[14px] text-gray-500 dark:text-gray-400 max-w-lg mx-auto">
+            <p className="mt-2 text-[14px] text-slate-500 dark:text-slate-400 max-w-lg mx-auto leading-relaxed">
               Turn any text into natural speech. Pick a voice, set the pace, and press play.
             </p>
           </div>
 
           {/* Card */}
-          <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#23262b] shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-gray-200 dark:border-white/10">
-              <div className="flex items-center gap-2 text-[13px] font-medium text-gray-700 dark:text-gray-200">
-                <FileText className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+          <div className="rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#141416] shadow-xs overflow-hidden">
+            <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-100 dark:border-white/[0.06]">
+              <div className="flex items-center gap-2 text-[13px] font-semibold text-slate-900 dark:text-white">
+                <FileText className="w-4 h-4 text-[#8ba32b] dark:text-[#c8e558]" />
                 Text to Speech
               </div>
               <div className="flex items-center gap-2">
@@ -276,7 +276,7 @@ export default function TextToSpeechView() {
                       setModelMenuOpen(false);
                     }}
                   >
-                    Browser TTS <span className="ml-2 text-[10.5px] text-gray-400">available</span>
+                    Browser TTS <span className="ml-2 text-[10.5px] text-slate-400">available</span>
                   </MenuItem>
                   <MenuItem
                     disabled
@@ -285,7 +285,7 @@ export default function TextToSpeechView() {
                       /* future */
                     }}
                   >
-                    Chirp 3 HD <span className="ml-2 text-[10.5px] text-gray-400">soon</span>
+                    Chirp 3 HD <span className="ml-2 text-[10.5px] text-slate-400">soon</span>
                   </MenuItem>
                 </DropdownButton>
 
@@ -297,7 +297,7 @@ export default function TextToSpeechView() {
                 >
                   <div className="max-h-64 overflow-y-auto scrollbar-hide">
                     {voices.length === 0 && (
-                      <div className="px-3 py-2 text-[12.5px] text-gray-500 dark:text-gray-400">
+                      <div className="px-3 py-2 text-[12.5px] text-slate-500 dark:text-slate-400">
                         No voices available in this browser.
                       </div>
                     )}
@@ -311,8 +311,8 @@ export default function TextToSpeechView() {
                         }}
                       >
                         <div className="flex-1">
-                          <div className="text-[13px]">{v.label}</div>
-                          <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                          <div className="text-[13px] font-medium">{v.label}</div>
+                          <div className="text-[11px] text-slate-400">
                             {v.accent} · {v.gender}
                           </div>
                         </div>
@@ -328,12 +328,12 @@ export default function TextToSpeechView() {
               onChange={(e) => setText(e.target.value)}
               placeholder="Type or paste the text you want to convert to speech..."
               rows={6}
-              className="w-full px-4 py-3 bg-transparent text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none resize-none text-[14px] leading-relaxed scrollbar-hide"
+              className="w-full px-4 py-3.5 bg-transparent text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none resize-none text-[14px] leading-relaxed scrollbar-hide"
             />
 
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-white/10">
+            <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 dark:border-white/[0.06]">
               <div className="flex items-center gap-3 flex-1 max-w-sm">
-                <span className="text-[12px] text-gray-500 dark:text-gray-400">Speed</span>
+                <span className="text-[12px] font-medium text-slate-500 dark:text-slate-400">Speed</span>
                 <input
                   type="range"
                   min={0.5}
@@ -341,9 +341,9 @@ export default function TextToSpeechView() {
                   step={0.1}
                   value={speed}
                   onChange={(e) => setSpeed(parseFloat(e.target.value))}
-                  className="flex-1 accent-indigo-600"
+                  className="flex-1 accent-[#8ba32b] dark:accent-[#c8e558]"
                 />
-                <span className="text-[12px] font-medium text-gray-600 dark:text-gray-300 w-14 text-right">
+                <span className="text-[12px] font-mono font-medium text-slate-600 dark:text-slate-300 w-14 text-right">
                   {speedLabel(speed)}
                 </span>
               </div>
@@ -351,8 +351,8 @@ export default function TextToSpeechView() {
               <div className="flex items-center gap-3">
                 <span
                   className={cn(
-                    'text-[11.5px]',
-                    overLimit ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'
+                    'text-[11.5px] font-mono',
+                    overLimit ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'
                   )}
                 >
                   {characterCount.toLocaleString()} / {MAX_CHARACTERS.toLocaleString()} characters
@@ -362,10 +362,10 @@ export default function TextToSpeechView() {
                   onClick={handleGenerate}
                   disabled={!canSpeak}
                   className={cn(
-                    'inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md text-[13px] font-medium transition-colors',
+                    'inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-[13px] font-semibold transition-all shadow-xs',
                     canSpeak
-                      ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                      ? 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 active:scale-95'
+                      : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-600 cursor-not-allowed'
                   )}
                 >
                   {isSpeaking ? (
@@ -376,7 +376,7 @@ export default function TextToSpeechView() {
                   ) : (
                     <>
                       <Sparkles className="w-3.5 h-3.5" />
-                      Regenerate speech
+                      Generate speech
                     </>
                   )}
                 </button>

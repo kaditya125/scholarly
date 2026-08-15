@@ -16,8 +16,8 @@ export function ExamSelector({ selectedExam, onSelect }: ExamSelectorProps) {
   const isDarkMode = theme === 'dark';
 
   return (
-    <div className="w-full overflow-x-auto custom-scrollbar pb-4 pt-2 -mx-6 px-6 lg:mx-0 lg:px-0">
-      <div className="flex items-center gap-3 w-max">
+    <div className="w-full overflow-x-auto custom-scrollbar pb-2 pt-1 -mx-6 px-6 lg:mx-0 lg:px-0">
+      <div className="flex items-center gap-2 w-max">
         {EXAMS.map((exam) => {
           const isSelected = selectedExam === exam;
           return (
@@ -25,20 +25,18 @@ export function ExamSelector({ selectedExam, onSelect }: ExamSelectorProps) {
               key={exam}
               onClick={() => onSelect(exam)}
               className={cn(
-                "relative px-6 py-3 rounded-full text-sm font-bold transition-all duration-300 whitespace-nowrap",
+                "relative px-3.5 py-1.5 rounded-full text-[12px] font-medium transition-all duration-200 whitespace-nowrap cursor-pointer",
                 isSelected 
-                  ? "text-white" 
-                  : isDarkMode 
-                    ? "bg-slate-800/50 text-slate-400 hover:bg-slate-800 hover:text-slate-200" 
-                    : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                  ? "text-white dark:text-slate-900 shadow-xs font-semibold" 
+                  : "bg-white dark:bg-white/[0.04] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/[0.08] border border-slate-200/80 dark:border-white/10"
               )}
             >
               {isSelected && (
                 <motion.div
                   layoutId="activeExam"
-                  className="absolute inset-0 bg-indigo-600 rounded-full z-0"
+                  className="absolute inset-0 bg-slate-900 dark:bg-[#c8e558] rounded-full z-0"
                   initial={false}
-                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 32 }}
                 />
               )}
               <span className="relative z-10">{exam}</span>

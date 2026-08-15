@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Clock, Info, CheckSquare, List, BookmarkPlus, Bookmark, ChevronRight, ChevronLeft, Target, Moon, Sun, Bot, X, Send, Loader2 } from "lucide-react";
+import { Clock, Info, CheckSquare, List, BookmarkPlus, Bookmark, ChevronRight, ChevronLeft, Target, Moon, Sun, Bot, X, Send, Loader2, Play } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "../lib/utils";
 import { useTheme } from "../lib/ThemeContext";
@@ -16,8 +16,10 @@ export default function TestEngine() {
   
   // Mode: "exam" or "study"
   const mode = location.state?.mode || 'exam';
+  const testTitle = location.state?.topic || location.state?.notebookTitle || 'AI Mock Practice Exam';
   const isStudyMode = mode === 'study';
   const { questions: mockQuestions, isLoading, submitQuiz } = useQuiz();
+  
   const [currentQIndex, setCurrentQIndex] = useState(() => {
     const saved = sessionStorage.getItem('testEngine_currentQIndex');
     return saved ? parseInt(saved, 10) : 0;
@@ -41,11 +43,14 @@ export default function TestEngine() {
       return remaining > 0 ? remaining : 0;
     }
     return 30 * 60;
-  }); // 30 minutes mock
+  }); // 30 minutes
   const [isPaletteOpen, setIsPaletteOpen] = useState(true);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [isAiHelperOpen, setIsAiHelperOpen] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const studentName = user?.displayName || user?.email?.split('@')[0] || 'Scholar';
 
   useEffect(() => {
     const savedEndDate = sessionStorage.getItem('testEngine_endDate');
@@ -86,11 +91,13 @@ export default function TestEngine() {
   }, [bookmarked]);
 
   const handleSubmit = async () => {
+    setIsSubmitting(true);
     sessionStorage.removeItem('testEngine_currentQIndex');
     sessionStorage.removeItem('testEngine_answers');
     sessionStorage.removeItem('testEngine_marked');
     sessionStorage.removeItem('testEngine_bookmarked');
     sessionStorage.removeItem('testEngine_endDate');
+    
     let score = 0;
     mockQuestions.forEach(q => {
       if (answers[q.id] === q.correctAnswerIndex) {
@@ -98,16 +105,21 @@ export default function TestEngine() {
       }
     });
 
-    const timeSpentSeconds = 1800 - timeLeft;
+    const timeSpentSeconds = Math.max(1, (30 * 60) - timeLeft);
 
-    await submitQuiz({ answers, timeSpent: timeSpentSeconds });
+    try {
+      await submitQuiz({ answers, timeSpent: timeSpentSeconds });
+    } catch (err) {
+      console.warn("Quiz submission sync fallback:", err);
+    }
 
     navigate("/report", { 
       state: { 
         score, 
         total: mockQuestions.length, 
         answers,
-        timeSpentSeconds
+        timeSpentSeconds,
+        questions: mockQuestions
       } 
     });
   };
@@ -116,30 +128,33 @@ export default function TestEngine() {
     if (timeLeft === 0) {
       handleSubmit();
     }
-  }, [timeLeft, answers]); // Include answers to capture the latest state
-
-  const answeredCount = Object.keys(answers).length;
-  const unansweredCount = mockQuestions.length - answeredCount;
+  }, [timeLeft]);
 
   if (isLoading) {
     return (
-      <div className="w-full h-screen flex items-center justify-center bg-slate-50 dark:bg-[#131314]">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+      <div className="w-full h-screen flex flex-col items-center justify-center bg-[#fafbfc] dark:bg-[#0b0b0c] font-sans">
+        <Loader2 className="w-8 h-8 animate-spin text-[#8ba32b] dark:text-[#c8e558] mb-3" />
+        <p className="text-[14px] text-slate-500 font-medium">Generating calibrated exam questions with Gemini AI...</p>
       </div>
     );
   }
 
   if (!mockQuestions || mockQuestions.length === 0) {
     return (
-      <div className="w-full h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-[#131314] text-slate-500">
-        <h2 className="text-xl font-bold mb-2">No Quiz Found</h2>
-        <p>Return to dashboard and generate a quiz first.</p>
-        <button onClick={() => navigate('/')} className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg">Go to Dashboard</button>
+      <div className="w-full h-screen flex flex-col items-center justify-center bg-[#fafbfc] dark:bg-[#0b0b0c] text-slate-500 font-sans p-6 text-center">
+        <h2 className="text-[18px] font-semibold text-slate-900 dark:text-white mb-1.5">No Active Practice Test</h2>
+        <p className="text-[13.5px] max-w-sm mb-4">Please return to the Test Center to start or generate a mock test.</p>
+        <button 
+          onClick={() => navigate('/tests')} 
+          className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 rounded-xl text-[13px] font-semibold transition-all shadow-xs"
+        >
+          Go to Test Center
+        </button>
       </div>
     );
   }
 
-  const currentQ = mockQuestions[currentQIndex];
+  const currentQ = mockQuestions[currentQIndex] || mockQuestions[0];
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -193,134 +208,147 @@ export default function TestEngine() {
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.3 }}
-      className={cn("fixed inset-0 z-50 flex flex-col font-sans transition-colors duration-300", isDarkMode ? "bg-slate-950 text-slate-100" : "bg-[#fafbfc] text-slate-900")}>
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className={cn("fixed inset-0 z-50 flex flex-col font-sans transition-colors duration-300", isDarkMode ? "bg-[#0b0b0c] text-slate-100" : "bg-[#fafbfc] text-slate-900")}
+    >
       {/* 5-minute Warning Toast */}
       {showWarning && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg font-bold flex items-center gap-3">
-            <Clock className="w-5 h-5" />
-            Warning: Only 5 minutes remaining!
+          <div className="bg-rose-600 text-white px-5 py-2.5 rounded-xl shadow-lg text-[13px] font-semibold flex items-center gap-2.5">
+            <Clock className="w-4 h-4" />
+            Warning: Only 5 minutes remaining in this test!
           </div>
         </div>
       )}
 
-      {/* Header - CBT Style */}
-      <header className={cn("h-auto md:h-16 py-3 md:py-0 border-b flex flex-col md:flex-row items-center justify-between px-4 md:px-6 gap-3 shrink-0 shadow-sm relative transition-colors duration-300", isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200")}>
-        <div className="absolute bottom-0 left-0 h-1 bg-slate-100 w-full overflow-hidden z-10">
-           <div 
-             className="h-full bg-teal-500 transition-all duration-300 ease-out" 
-             style={{ width: `${(Object.keys(answers).length / mockQuestions.length) * 100}%` }}
-           />
+      {/* Header - Modern Minimal CBT Style */}
+      <header className={cn(
+        "h-16 border-b flex items-center justify-between px-4 sm:px-6 shrink-0 relative transition-colors duration-300",
+        isDarkMode ? "bg-[#111113] border-white/10" : "bg-white border-slate-200/80"
+      )}>
+        {/* Progress Bar Top */}
+        <div className="absolute bottom-0 left-0 h-0.5 bg-slate-100 dark:bg-white/5 w-full overflow-hidden z-10">
+          <div 
+            className="h-full bg-[#c8e558] transition-all duration-300 ease-out" 
+            style={{ width: `${(Object.keys(answers).length / mockQuestions.length) * 100}%` }}
+          />
         </div>
-        <div className="flex items-center gap-2 mt-1 md:mt-0 md:gap-4 w-full md:w-auto overflow-hidden">
+
+        <div className="flex items-center gap-3 min-w-0">
           <button 
-             className="md:hidden p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 mr-1"
-             onClick={() => setIsPaletteOpen(!isPaletteOpen)}
-             aria-label={isPaletteOpen ? "Close Palette" : "Open Palette"}
-             aria-expanded={isPaletteOpen}
+            className="md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5"
+            onClick={() => setIsPaletteOpen(!isPaletteOpen)}
+            aria-label="Toggle Question Palette"
           >
-             <List className="w-5 h-5" aria-hidden="true" />
+            <List className="w-4.5 h-4.5" />
           </button>
-          <div className={cn("hidden md:flex items-center justify-center p-2 rounded shrink-0 border", isDarkMode ? "bg-slate-800 border-slate-700" : "bg-slate-100 border-slate-200")}>
-             <Target className={cn("w-5 h-5", isDarkMode ? "text-slate-300" : "text-slate-800")} aria-hidden="true" />
+          
+          <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-white flex items-center justify-center text-[#c8e558] dark:text-slate-900 shrink-0 shadow-2xs">
+            <Target className="w-4 h-4" />
           </div>
-          <div className="flex-1 min-w-0">
-            <div className={cn("font-bold text-sm md:text-[15px] truncate", isDarkMode ? "text-slate-100" : "text-slate-900")}>BPSC TRE 3.0 PRT (1-5) (Language & GS)</div>
-            <div className={cn("text-[11px] md:text-xs font-medium truncate", isDarkMode ? "text-slate-400" : "text-slate-500")}>Child Development & Pedagogy</div>
+
+          <div className="min-w-0">
+            <div className="font-semibold text-[14.5px] text-slate-900 dark:text-white truncate">
+              {testTitle}
+            </div>
+            <div className="text-[11.5px] text-slate-400 dark:text-slate-500 font-medium truncate">
+              Candidate: {studentName} • {isStudyMode ? 'Interactive Study' : 'Timed Assessment'}
+            </div>
           </div>
         </div>
         
-        <div className="flex items-center justify-between w-full md:w-auto gap-4 md:gap-6">
-          {isStudyMode && (
-            <span className="hidden md:inline-flex px-2 py-1 bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 text-xs font-bold rounded-full">
-              Study Mode
-            </span>
-          )}
+        <div className="flex items-center gap-3">
+          {/* Timer Capsule */}
+          <div className={cn(
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-mono text-[13px] font-semibold border",
+            timeLeft < 300 
+              ? "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400" 
+              : "bg-slate-100 dark:bg-white/[0.04] border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-200"
+          )}>
+            <Clock className="w-3.5 h-3.5 text-slate-400" />
+            <span>{formatTime(timeLeft)}</span>
+          </div>
+
           <button 
             onClick={toggleTheme}
-            className={cn("p-2 rounded-full border transition-colors shadow-sm cursor-pointer", isDarkMode ? "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700" : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50")}
-            title={isDarkMode ? "Switch to Day Mode" : "Switch to Night Mode"}
-            aria-label={isDarkMode ? "Switch to Day Mode" : "Switch to Night Mode"}
+            className="p-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors cursor-pointer"
+            title="Toggle theme"
           >
-            {isDarkMode ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />}
+            {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
-          <div className={cn("flex-1 text-center justify-center flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full font-mono font-medium text-xs md:text-sm border", isDarkMode ? "bg-red-900/20 border-red-900/50 text-red-400" : "bg-red-50 border-red-100 text-red-600")} role="timer" aria-live="polite">
-            <Clock className="w-3.5 h-3.5 md:w-4 md:h-4" aria-hidden="true" />
-            <span className="hidden sm:inline">Time Left:</span> {formatTime(timeLeft)}
-          </div>
+
           <button 
             onClick={() => setShowSubmitModal(true)}
-            className="px-4 md:px-6 py-1.5 md:py-2.5 bg-green-500 hover:bg-green-600 text-white rounded font-bold text-xs md:text-sm transition-colors shadow-sm cursor-pointer"
-            aria-label="Submit Test"
+            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 rounded-xl text-[12.5px] font-semibold transition-all shadow-xs active:scale-98 cursor-pointer"
           >
-            Submit
+            Submit Test
           </button>
         </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
         {/* Main Question Area */}
-        <div className={cn("flex-1 flex flex-col overflow-y-auto m-6 rounded-2xl border shadow-sm relative transition-colors duration-300", isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200")}>
+        <div className={cn(
+          "flex-1 flex flex-col overflow-y-auto m-4 sm:m-6 rounded-2xl border shadow-xs relative transition-colors duration-300",
+          isDarkMode ? "bg-[#111113] border-white/10" : "bg-white border-slate-200/90"
+        )}>
           
-          <div className={cn("p-5 border-b flex justify-between items-center rounded-t-2xl transition-colors duration-300", isDarkMode ? "bg-slate-800/50 border-slate-800" : "bg-slate-50 border-slate-100")}>
-            <div className="flex items-center gap-4">
-              <div className={cn("font-bold", isDarkMode ? "text-slate-200" : "text-slate-800")} aria-live="polite">Question {currentQIndex + 1} of {mockQuestions.length}</div>
+          {/* Question Sub-header */}
+          <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-slate-50/50 dark:bg-white/[0.02] rounded-t-2xl">
+            <div className="flex items-center gap-3">
+              <span className="text-[13.5px] font-semibold text-slate-900 dark:text-white">
+                Question {currentQIndex + 1} of {mockQuestions.length}
+              </span>
               <button 
                 onClick={toggleBookmark}
                 className={cn(
-                  "flex items-center justify-center p-1.5 rounded-md transition-colors cursor-pointer border shadow-sm",
+                  "flex items-center justify-center p-1.5 rounded-lg border transition-all cursor-pointer shadow-2xs",
                   bookmarked.has(currentQ.id)
-                    ? (isDarkMode ? 'bg-yellow-900/30 border-yellow-700/50 text-yellow-500' : 'bg-yellow-50 border-yellow-200 text-yellow-600')
-                    : (isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-slate-300' : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-slate-600')
+                    ? "bg-amber-500/10 border-amber-500/30 text-amber-500"
+                    : "bg-white dark:bg-white/5 border-slate-200/80 dark:border-white/10 text-slate-400 hover:text-slate-600"
                 )}
-                title={bookmarked.has(currentQ.id) ? "Remove Bookmark" : "Save for later review"}
-                aria-label={bookmarked.has(currentQ.id) ? "Remove Bookmark" : "Save for later review"}
-                aria-pressed={bookmarked.has(currentQ.id)}
+                title="Bookmark question"
               >
-                <Bookmark className={cn("w-4 h-4", bookmarked.has(currentQ.id) && "fill-current")} />
+                <Bookmark className={cn("w-3.5 h-3.5", bookmarked.has(currentQ.id) && "fill-current")} />
               </button>
             </div>
-            <div className="flex items-center gap-4 text-sm font-medium">
-              <span className="text-green-600 flex items-center gap-1"><CheckSquare className="w-4 h-4"/> +1 Marks</span>
-              <span className="text-red-500 flex items-center gap-1"><Info className="w-4 h-4"/> -0.25 Marks</span>
+            <div className="flex items-center gap-3 text-[12px] font-medium text-slate-500 dark:text-slate-400">
+              <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">+1.0 Mark</span>
+              <span>-0.25 Mark</span>
             </div>
           </div>
           
-          <div className="p-8 flex-1 overflow-y-auto">
-            <div className="max-w-4xl mx-auto">
-              <h2 className={cn("text-[17px] font-medium leading-relaxed mb-8", isDarkMode ? "text-slate-200" : "text-slate-900")}>
+          {/* Question Stem & Options */}
+          <div className="p-6 sm:p-8 flex-1 overflow-y-auto">
+            <div className="max-w-3xl mx-auto">
+              <h2 className="text-[16px] sm:text-[17px] font-medium leading-relaxed text-slate-900 dark:text-slate-100 mb-6">
                 {currentQ.text}
               </h2>
               
-              <div className="space-y-4" role="radiogroup" aria-label="Question options">
+              <div className="space-y-3">
                 {currentQ.options.map((opt, i) => {
                   const isSelected = answers[currentQ.id] === i;
                   return (
                     <button
                       key={i}
-                      role="radio"
-                      aria-checked={isSelected}
                       onClick={() => handleOptionSelect(i)}
                       className={cn(
-                        "w-full text-left p-4 rounded-xl border-2 transition-all duration-200 flex items-start gap-4 cursor-pointer",
+                        "w-full text-left p-3.5 sm:p-4 rounded-xl border text-[14px] transition-all flex items-start gap-3.5 cursor-pointer",
                         isSelected 
-                          ? (isDarkMode ? 'border-teal-500 bg-teal-900/20' : 'border-teal-500 bg-teal-50/50')
-                          : (isDarkMode ? 'border-slate-800 bg-slate-900 hover:bg-slate-800 hover:border-slate-700' : 'border-slate-100 bg-white hover:bg-slate-50 hover:border-slate-200')
+                          ? "border-[#8ba32b] dark:border-[#c8e558] bg-[#c8e558]/10 text-slate-900 dark:text-white font-medium shadow-2xs"
+                          : "border-slate-200/80 dark:border-white/10 bg-white dark:bg-white/[0.02] text-slate-700 dark:text-slate-300 hover:bg-slate-50/80 dark:hover:bg-white/[0.04]"
                       )}
                     >
                       <div className={cn(
-                        "w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center mt-0.5 transition-colors",
-                         isSelected ? 'border-teal-500' : (isDarkMode ? 'border-slate-600' : 'border-slate-300')
+                        "w-5 h-5 rounded-full border flex-shrink-0 flex items-center justify-center mt-0.5 text-[11px] font-bold transition-colors",
+                        isSelected 
+                          ? "border-slate-900 bg-slate-900 text-white dark:border-[#c8e558] dark:bg-[#c8e558] dark:text-slate-900" 
+                          : "border-slate-300 dark:border-white/20 text-slate-500"
                       )}>
-                        {isSelected && <div className="w-3 h-3 bg-teal-500 rounded-full" />}
+                        {String.fromCharCode(65 + i)}
                       </div>
-                      <span className={cn("text-[15px]", isSelected ? (isDarkMode ? 'text-slate-100 font-medium' : 'text-slate-900 font-medium') : (isDarkMode ? 'text-slate-400' : 'text-slate-700'))}>
-                        {opt}
-                      </span>
+                      <span className="leading-relaxed">{opt}</span>
                     </button>
                   );
                 })}
@@ -328,218 +356,172 @@ export default function TestEngine() {
             </div>
           </div>
 
-          {/* Action Bar */}
-          <div className={cn("h-auto md:h-20 py-3 md:py-0 border-t flex flex-col md:flex-row items-center justify-between px-4 md:px-8 shrink-0 rounded-b-2xl transition-colors duration-300 gap-3 md:gap-0", isDarkMode ? "bg-slate-800/50 border-slate-800" : "bg-slate-50 border-slate-200")}>
-            <div className="flex w-full md:w-auto gap-2 md:gap-4 justify-between md:justify-start">
+          {/* Action Bar Bottom */}
+          <div className="p-4 border-t border-slate-100 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/50 dark:bg-white/[0.02] rounded-b-2xl">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <button 
                 onClick={toggleReview}
-                aria-pressed={markedForReview.has(currentQ.id)}
                 className={cn(
-                  "flex-1 md:flex-none flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 rounded font-bold transition-colors cursor-pointer text-xs md:text-sm shadow-sm",
+                  "px-3 py-2 rounded-xl text-[12.5px] font-semibold border transition-all cursor-pointer shadow-2xs",
                   markedForReview.has(currentQ.id) 
-                    ? (isDarkMode ? 'bg-purple-900/30 text-purple-400 border border-purple-800/50 hover:bg-purple-900/50' : 'bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200')
-                    : (isDarkMode ? 'bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50')
+                    ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30" 
+                    : "bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 border-slate-200/80 dark:border-white/10 hover:bg-slate-50"
                 )}
               >
-                <BookmarkPlus className="w-4 h-4 md:w-5 md:h-5" />
-                <span>Mark<span className="hidden sm:inline"> for Review</span></span>
+                <BookmarkPlus className="w-3.5 h-3.5 inline mr-1" />
+                {markedForReview.has(currentQ.id) ? 'Marked for Review' : 'Mark for Review'}
               </button>
-              <button 
-                onClick={() => {
-                  setAnswers(prev => {
-                    const newAns = { ...prev };
-                    delete newAns[currentQ.id];
-                    return newAns;
-                  });
-                }}
-                className={cn("flex-1 md:flex-none px-3 md:px-5 py-2 md:py-2.5 border rounded text-xs md:text-sm font-bold shadow-sm transition-colors cursor-pointer", isDarkMode ? "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300" : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600")}
-              >
-                Clear<span className="hidden sm:inline"> Response</span>
-              </button>
+              
+              {answers[currentQ.id] !== undefined && (
+                <button 
+                  onClick={() => {
+                    setAnswers(prev => {
+                      const newAns = { ...prev };
+                      delete newAns[currentQ.id];
+                      return newAns;
+                    });
+                  }}
+                  className="px-3 py-2 rounded-xl text-[12px] font-medium text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
+                >
+                  Clear Selection
+                </button>
+              )}
             </div>
             
-            <div className="flex w-full md:w-auto gap-2 md:gap-4 justify-between md:justify-start">
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
               <button 
                 onClick={handlePrev}
                 disabled={currentQIndex === 0}
-                className={cn("flex-1 md:flex-none flex items-center justify-center gap-1 px-4 md:px-6 py-2 md:py-2.5 border disabled:opacity-50 rounded text-xs md:text-sm font-bold shadow-sm transition-colors cursor-pointer", isDarkMode ? "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300" : "bg-white hover:bg-slate-50 border-slate-200 text-slate-700")}
+                className="px-4 py-2 rounded-xl text-[12.5px] font-semibold border border-slate-200/80 dark:border-white/10 bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-slate-50 disabled:opacity-40 cursor-pointer shadow-2xs transition-all"
               >
-                <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" /> Prev<span className="hidden sm:inline">ious</span>
+                <ChevronLeft className="w-3.5 h-3.5 inline mr-1" /> Previous
               </button>
+              
               <button 
-                onClick={handleNext}
-                className="flex-1 md:flex-none flex items-center justify-center gap-1 px-6 md:px-8 py-2 md:py-2.5 bg-teal-600 text-white hover:bg-teal-700 rounded text-xs md:text-sm font-bold shadow-sm transition-colors cursor-pointer"
+                onClick={currentQIndex === mockQuestions.length - 1 ? () => setShowSubmitModal(true) : handleNext}
+                className="px-5 py-2 rounded-xl text-[12.5px] font-semibold bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 transition-all shadow-xs cursor-pointer active:scale-98"
               >
-                {currentQIndex === mockQuestions.length - 1 ? 'Finish' : 'Save & Next'} 
-                {currentQIndex !== mockQuestions.length - 1 && <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />}
+                {currentQIndex === mockQuestions.length - 1 ? 'Review & Submit' : 'Next Question'}
+                {currentQIndex !== mockQuestions.length - 1 && <ChevronRight className="w-3.5 h-3.5 inline ml-1" />}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Right Palette */}
-        <div className={cn("transition-all duration-300 shrink-0 z-40 bg-white dark:bg-slate-900 md:bg-transparent fixed top-auto md:relative right-0 bottom-0 top-[auto] md:top-auto h-[calc(100vh-auto)] md:h-auto border-l md:border-none shadow-2xl md:shadow-none", isPaletteOpen ? "w-[320px] translate-x-0" : "w-[320px] md:w-0 translate-x-full md:translate-x-0")}>
-          <button 
-            onClick={() => setIsPaletteOpen(!isPaletteOpen)}
-            className={cn("hidden md:flex absolute top-1/2 -left-[24px] -translate-y-1/2 z-10 w-6 h-16 border-y border-l items-center justify-center cursor-pointer shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.1)] rounded-l-lg transition-colors", isDarkMode ? "bg-slate-900 border-slate-800 hover:bg-slate-800 text-slate-400" : "bg-white border-slate-200 hover:bg-slate-50 text-slate-500")}
-            title={isPaletteOpen ? "Collapse Palette" : "Expand Palette"}
-            aria-label={isPaletteOpen ? "Collapse Palette" : "Expand Palette"}
-            aria-expanded={isPaletteOpen}
-          >
-            {isPaletteOpen ? <ChevronRight className="w-5 h-5" aria-hidden="true" /> : <ChevronLeft className="w-5 h-5" aria-hidden="true" />}
-          </button>
-
-          {/* Mobile Closer */}
-          {isPaletteOpen && (
-             <div className="fixed inset-0 z-[-1] bg-black/20 md:hidden" onClick={() => setIsPaletteOpen(false)} aria-hidden="true" />
-          )}
-
-          <div className={cn("absolute inset-0 md:border-l flex flex-col overflow-hidden transition-colors duration-300", isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200")}>
-            <div className="flex items-center justify-between p-4 border-b md:hidden dark:border-slate-800">
-          <div className="flex items-center justify-between p-4 border-b md:hidden dark:border-slate-800">
-               <span className="font-bold">Palette</span>
-               <button onClick={() => setIsPaletteOpen(false)} aria-label="Close Palette"><X className="w-5 h-5" aria-hidden="true" /></button>
+        {/* Right Question Palette Drawer */}
+        <div className={cn(
+          "transition-all duration-300 shrink-0 z-40 bg-white dark:bg-[#111113] fixed md:relative right-0 bottom-0 top-16 md:top-auto h-[calc(100vh-4rem)] md:h-auto border-l border-slate-200/80 dark:border-white/10 shadow-xl md:shadow-none flex flex-col",
+          isPaletteOpen ? "w-[300px] translate-x-0" : "w-[300px] md:w-0 translate-x-full md:translate-x-0 overflow-hidden"
+        )}>
+          {/* Palette Status Overview */}
+          <div className="p-5 border-b border-slate-100 dark:border-white/5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[13px] font-semibold text-slate-900 dark:text-white">Question Palette</span>
+              <button onClick={() => setIsPaletteOpen(false)} className="md:hidden text-slate-400 hover:text-slate-600">
+                <X className="w-4 h-4" />
+              </button>
             </div>
-            <div className="w-[320px] flex flex-col h-full shrink-0">
-              <div className={cn("p-6 border-b flex items-center gap-4 transition-colors duration-300", isDarkMode ? "border-slate-800" : "border-slate-100")}>
-                <div className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
-                  {user?.photoURL ? (
-                    <img src={user.photoURL} alt="User" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-lg font-bold text-slate-500">{user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}</span>
-                  )}
-                </div>
-                <div>
-                  <div className={cn("text-sm font-bold", isDarkMode ? "text-slate-200" : "text-slate-900")}>Rohan Kumar</div>
-                  <div className={cn("text-xs font-medium", isDarkMode ? "text-slate-400" : "text-slate-500")}>Roll No: 204918</div>
-                </div>
+            
+            <div className="grid grid-cols-2 gap-2 text-[11px] font-medium text-slate-600 dark:text-slate-400">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#c8e558]" />
+                <span>Answered ({Object.keys(answers).length})</span>
               </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+                <span>Marked ({markedForReview.size})</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                <span>Bookmarked ({bookmarked.size})</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-white/20" />
+                <span>Unattempted ({mockQuestions.length - Object.keys(answers).length})</span>
+              </div>
+            </div>
+          </div>
 
-              <div className={cn("p-6 grid grid-cols-2 gap-4 text-xs font-bold border-b shrink-0 transition-colors duration-300", isDarkMode ? "border-slate-800" : "border-slate-100")}>
-                <div className="flex items-center gap-2">
-                  <div className={cn("w-8 h-8 rounded-full border flex items-center justify-center", isDarkMode ? "bg-teal-900/30 border-teal-800/50 text-teal-400" : "bg-green-100 border-green-200 text-green-700")}>
-                    {Object.keys(answers).length}
-                  </div>
-                  <span className={isDarkMode ? "text-slate-400" : "text-slate-600"}>Answered</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={cn("w-8 h-8 rounded-full border flex items-center justify-center", isDarkMode ? "bg-purple-900/30 border-purple-800/50 text-purple-400" : "bg-purple-100 border-purple-200 text-purple-700")}>
-                    {markedForReview.size}
-                  </div>
-                  <span className={isDarkMode ? "text-slate-400" : "text-slate-600"}>Marked</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={cn("w-8 h-8 rounded-full border flex items-center justify-center", isDarkMode ? "bg-yellow-900/30 border-yellow-800/50 text-yellow-500" : "bg-yellow-100 border-yellow-200 text-yellow-700")}>
-                    {bookmarked.size}
-                  </div>
-                  <span className={isDarkMode ? "text-slate-400" : "text-slate-600"}>Bookmarked</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={cn("w-8 h-8 rounded-full border flex items-center justify-center", isDarkMode ? "bg-slate-800 border-slate-700 text-slate-400" : "bg-slate-100 border-slate-200 text-slate-500")}>
-                    {mockQuestions.length - Object.keys(answers).length}
-                  </div>
-                  <span className={isDarkMode ? "text-slate-400" : "text-slate-600"}>Not Visited</span>
-                </div>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-                <div className={cn("text-sm font-bold mb-4 pb-2 border-b", isDarkMode ? "text-slate-300 border-slate-800" : "text-slate-800 border-slate-100")}>Question Palette</div>
-                <div className="grid grid-cols-5 gap-3">
-                  {mockQuestions.map((_, i) => {
-                    const qId = mockQuestions[i].id;
-                    const isAnswered = answers[qId] !== undefined;
-                    const isMarked = markedForReview.has(qId);
-                    const isBookmarked = bookmarked.has(qId);
-                    const isActive = currentQIndex === i;
-                    
-                    let bgClasses = isDarkMode ? "bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50";
-                    if (isAnswered && !isMarked) bgClasses = isDarkMode ? "bg-teal-900/40 border border-teal-800 text-teal-400 font-bold" : "bg-green-50 border border-green-200 text-green-700 font-bold";
-                    if (isMarked) bgClasses = isDarkMode ? "bg-purple-900/40 border border-purple-800 text-purple-400 font-bold" : "bg-purple-50 border border-purple-200 text-purple-700 font-bold";
-                    
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => setCurrentQIndex(i)}
-                        className={cn(
-                          "w-full aspect-square rounded-[10px] flex items-center justify-center text-sm transition-all cursor-pointer shadow-sm relative overflow-hidden",
-                          bgClasses,
-                          isActive && (isDarkMode ? 'ring-2 ring-slate-400 ring-offset-2 ring-offset-slate-900' : 'ring-2 ring-[#111827] ring-offset-2')
-                        )}
-                      >
-                        {isBookmarked && (
-                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rotate-45 transform flex items-center justify-center shadow-sm" />
-                        )}
-                        {i + 1}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+          {/* Palette Grid Buttons */}
+          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+            <div className="grid grid-cols-5 gap-2">
+              {mockQuestions.map((_, i) => {
+                const qId = mockQuestions[i].id;
+                const isAnswered = answers[qId] !== undefined;
+                const isMarked = markedForReview.has(qId);
+                const isBookmarked = bookmarked.has(qId);
+                const isActive = currentQIndex === i;
+                
+                let bgClasses = isDarkMode ? "bg-white/[0.04] text-slate-400 border border-white/10" : "bg-slate-50 text-slate-600 border border-slate-200/80";
+                if (isAnswered && !isMarked) bgClasses = isDarkMode ? "bg-[#c8e558]/20 border-[#c8e558]/50 text-[#c8e558] font-bold" : "bg-emerald-50 border-emerald-300 text-emerald-700 font-bold";
+                if (isMarked) bgClasses = isDarkMode ? "bg-purple-500/20 border-purple-500/50 text-purple-400 font-bold" : "bg-purple-50 border-purple-300 text-purple-700 font-bold";
+                
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentQIndex(i)}
+                    className={cn(
+                      "w-full aspect-square rounded-xl flex items-center justify-center text-[12px] font-semibold transition-all cursor-pointer relative shadow-2xs",
+                      bgClasses,
+                      isActive && "ring-2 ring-slate-900 dark:ring-[#c8e558] ring-offset-2 ring-offset-white dark:ring-offset-[#111113]"
+                    )}
+                  >
+                    {isBookmarked && (
+                      <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-amber-400" />
+                    )}
+                    {i + 1}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
       </div>
-      </div>
 
-      {/* Submit Modal */}
+      {/* Submit Confirmation Modal */}
       {showSubmitModal && (
-        <div className="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div role="dialog" aria-modal="true" aria-labelledby="submit-modal-title" className={cn("rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200 transition-colors", isDarkMode ? "bg-slate-900 border border-slate-800" : "bg-white")}>
-            <div className={cn("p-6 border-b", isDarkMode ? "border-slate-800" : "border-slate-100")}>
-              <h3 id="submit-modal-title" className={cn("text-xl font-bold", isDarkMode ? "text-slate-100" : "text-slate-900")}>Submit Test</h3>
-              <p className={cn("text-sm mt-1", isDarkMode ? "text-slate-400" : "text-slate-500")}>Please review your progress before final submission.</p>
+        <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#141416] border border-slate-200/90 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-slate-100 dark:border-white/5">
+              <h3 className="text-[17px] font-semibold text-slate-900 dark:text-white">Submit Practice Assessment</h3>
+              <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-1">Review your question attempt breakdown before final scoring.</p>
             </div>
             
-            <div className="p-6 space-y-4">
-              <div className={cn("flex items-center justify-between p-4 rounded-xl border", isDarkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-100")}>
-                <div className="flex items-center gap-3">
-                  <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold", isDarkMode ? "bg-slate-700 text-slate-300" : "bg-slate-200 text-slate-600")}>
-                    {mockQuestions.length}
-                  </div>
-                  <span className={cn("font-semibold", isDarkMode ? "text-slate-200" : "text-slate-700")}>Total Questions</span>
-                </div>
+            <div className="p-6 space-y-3">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10">
+                <span className="text-[13px] font-medium text-slate-700 dark:text-slate-300">Total Questions</span>
+                <span className="text-[14px] font-bold text-slate-900 dark:text-white">{mockQuestions.length}</span>
               </div>
               
-              <div className={cn("flex items-center justify-between p-4 rounded-xl border", isDarkMode ? "bg-green-900/20 border-green-900/50" : "bg-green-50 border-green-100")}>
-                <div className="flex items-center gap-3">
-                  <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold", isDarkMode ? "bg-green-900/50 text-green-400" : "bg-green-200 text-green-700")}>
-                    {Object.keys(answers).length}
-                  </div>
-                  <span className={cn("font-semibold", isDarkMode ? "text-slate-200" : "text-slate-700")}>Answered</span>
-                </div>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300">
+                <span className="text-[13px] font-medium">Answered Questions</span>
+                <span className="text-[14px] font-bold">{Object.keys(answers).length}</span>
               </div>
               
-              <div className={cn("flex items-center justify-between p-4 rounded-xl border", isDarkMode ? "bg-purple-900/20 border-purple-900/50" : "bg-purple-50 border-purple-100")}>
-                <div className="flex items-center gap-3">
-                  <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold", isDarkMode ? "bg-purple-900/50 text-purple-400" : "bg-purple-200 text-purple-700")}>
-                    {markedForReview.size}
-                  </div>
-                  <span className={cn("font-semibold", isDarkMode ? "text-slate-200" : "text-slate-700")}>Marked for Review</span>
-                </div>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-700 dark:text-purple-300">
+                <span className="text-[13px] font-medium">Marked for Review</span>
+                <span className="text-[14px] font-bold">{markedForReview.size}</span>
               </div>
               
-              <div className={cn("flex items-center justify-between p-4 rounded-xl border", isDarkMode ? "bg-orange-900/20 border-orange-900/50" : "bg-orange-50 border-orange-100")}>
-                <div className="flex items-center gap-3">
-                  <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold", isDarkMode ? "bg-orange-900/50 text-orange-400" : "bg-orange-200 text-orange-700")}>
-                    {mockQuestions.length - Object.keys(answers).length}
-                  </div>
-                  <span className={cn("font-semibold", isDarkMode ? "text-slate-200" : "text-slate-700")}>Unanswered</span>
-                </div>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300">
+                <span className="text-[13px] font-medium">Unattempted</span>
+                <span className="text-[14px] font-bold">{mockQuestions.length - Object.keys(answers).length}</span>
               </div>
             </div>
             
-            <div className={cn("p-6 border-t flex items-center gap-4", isDarkMode ? "bg-slate-800/30 border-slate-800" : "bg-slate-50 border-slate-100")}>
+            <div className="p-5 border-t border-slate-100 dark:border-white/5 flex items-center gap-3 bg-slate-50/50 dark:bg-white/[0.02]">
               <button 
                 onClick={() => setShowSubmitModal(false)}
-                className={cn("flex-1 px-4 py-2.5 border rounded-lg font-bold shadow-sm transition-colors cursor-pointer", isDarkMode ? "bg-slate-800 border-slate-700 hover:border-slate-600 text-slate-300" : "bg-white border-slate-200 hover:border-slate-300 text-slate-700")}
+                className="flex-1 py-2.5 border border-slate-200/90 dark:border-white/10 rounded-xl text-[13px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all cursor-pointer shadow-2xs"
               >
-                Continue Test
+                Back to Test
               </button>
               <button 
                 onClick={handleSubmit}
-                className="flex-1 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-bold shadow-sm transition-colors cursor-pointer"
+                disabled={isSubmitting}
+                className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 rounded-xl text-[13px] font-semibold transition-all shadow-xs cursor-pointer active:scale-98"
               >
-                Confirm Submit
+                {isSubmitting ? "Scoring..." : "Confirm & Submit"}
               </button>
             </div>
           </div>
@@ -550,70 +532,43 @@ export default function TestEngine() {
       {!isAiHelperOpen && isStudyMode && (
         <button
           onClick={() => setIsAiHelperOpen(true)}
-          className="fixed bottom-6 right-6 z-40 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-[0_4px_14px_rgba(79,70,229,0.4)] flex items-center justify-center cursor-pointer transition-transform hover:scale-110"
+          className="fixed bottom-6 right-6 z-40 bg-slate-900 text-[#c8e558] dark:bg-white dark:text-slate-900 rounded-full p-3.5 shadow-xl flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
           title="Ask AI for Conceptual Help"
-          aria-label="Ask AI for Conceptual Help"
-          aria-expanded={isAiHelperOpen}
         >
-          <Bot className="w-6 h-6" aria-hidden="true" />
+          <Bot className="w-5 h-5" />
         </button>
       )}
 
       {/* Ask AI Contextual Modal */}
       {isAiHelperOpen && isStudyMode && (
-        <div className={cn(
-          "fixed bottom-6 right-6 w-80 md:w-[360px] border rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-[100] overflow-hidden flex flex-col transition-colors duration-300",
-          isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"
-        )}>
-          {/* Header */}
-          <div className="bg-indigo-600 p-4 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-white">
-              <div className="w-7 h-7 bg-white/20 rounded flex items-center justify-center">
-                <Bot className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <span className="font-bold text-[14px] leading-tight block">Ask AI</span>
-                <span className="text-[11px] text-indigo-200 font-medium leading-tight">Conceptual Assistant</span>
-              </div>
+        <div className="fixed bottom-6 right-6 w-80 md:w-[350px] border border-slate-200/90 dark:border-white/10 rounded-2xl shadow-2xl z-[100] overflow-hidden flex flex-col bg-white dark:bg-[#141416]">
+          <div className="p-3.5 bg-slate-900 text-white flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bot className="w-4 h-4 text-[#c8e558]" />
+              <span className="font-semibold text-[13px]">AI Concept Assistant</span>
             </div>
-            <button 
-              onClick={() => setIsAiHelperOpen(false)} 
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 text-white/80 hover:text-white transition-colors cursor-pointer"
-              aria-label="Close AI helper"
-            >
-               <X className="w-4 h-4" aria-hidden="true" />
+            <button onClick={() => setIsAiHelperOpen(false)} className="text-white/70 hover:text-white">
+              <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Body */}
-          <div className={cn("p-4 h-[300px] overflow-y-auto space-y-4", isDarkMode ? "bg-slate-950 text-slate-300" : "bg-slate-50 text-slate-700")}>
-             <div className="flex flex-col gap-1 items-center justify-center text-center h-full opacity-50" style={{ display: 'none' }}>
-                <Bot className="w-10 h-10 mb-2" aria-hidden="true" />
-                <p className="text-sm">I can help clarify concepts related to Question {currentQIndex + 1}.</p>
-             </div>
-             
-             {/* Stubbed message from bot */}
-             <div className={cn("inline-block p-3.5 rounded-2xl rounded-tl-sm max-w-[90%] text-[14px] shadow-sm", isDarkMode ? "bg-indigo-900/30 text-indigo-300 border border-indigo-800/50" : "bg-indigo-50 text-indigo-900 border border-indigo-100")}>
-               Hi! Need help with Question {currentQIndex + 1}? I can clarify concepts without giving away the direct answer.
-             </div>
+          <div className="p-4 h-[220px] overflow-y-auto space-y-3 text-[13px] bg-slate-50/50 dark:bg-white/[0.02]">
+            <div className="p-3 rounded-xl bg-white dark:bg-[#1e1e20] border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-200">
+              Need assistance with Question {currentQIndex + 1}? I can give you a guiding hint without spoiling the correct answer.
+            </div>
           </div>
 
-          {/* Input */}
-          <div className={cn("p-3 border-t", isDarkMode ? "border-slate-800 bg-slate-900" : "border-slate-200 bg-white")}>
-             <form className="relative flex items-center" onSubmit={(e) => e.preventDefault()}>
-                <input 
-                  type="text" 
-                  aria-label="Ask for a hint or concept explanation"
-                  placeholder="Ask for a hint or concept explanation..." 
-                  className={cn(
-                    "w-full rounded-full pl-4 pr-[44px] py-2.5 text-[14px] outline-none border focus:border-indigo-500 transition-colors shadow-sm", 
-                    isDarkMode ? "bg-slate-800 text-slate-100 border-slate-700 placeholder-slate-500 focus:bg-slate-900" : "bg-slate-100 text-slate-900 border-transparent placeholder-slate-500 focus:bg-white focus:border-indigo-300"
-                  )} 
-                />
-                <button type="submit" aria-label="Send message" className="absolute right-[4px] w-[32px] h-[32px] rounded-full bg-indigo-600 flex items-center justify-center text-white cursor-pointer hover:bg-indigo-700 shadow-sm transition-transform hover:scale-105 active:scale-95">
-                  <Send className="w-3.5 h-3.5 -ml-0.5" aria-hidden="true" />
-                </button>
-             </form>
+          <div className="p-3 border-t border-slate-100 dark:border-white/5 bg-white dark:bg-[#141416]">
+            <form className="relative flex items-center" onSubmit={(e) => e.preventDefault()}>
+              <input 
+                type="text" 
+                placeholder="Ask for a concept hint..." 
+                className="w-full rounded-xl pl-3.5 pr-10 py-2 text-[13px] outline-none border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white"
+              />
+              <button type="submit" className="absolute right-2 w-7 h-7 rounded-lg bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-900 flex items-center justify-center">
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            </form>
           </div>
         </div>
       )}

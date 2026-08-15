@@ -32,6 +32,7 @@ const COLUMNS: { title: string; links: { label: string; href: string; external?:
       { label: 'Podcast Studio', href: '/podcasts' },
       { label: 'Mock Tests', href: '/tests' },
       { label: 'Analytics', href: '/analytics' },
+      { label: 'Refer & Earn', href: '/referral-program' },
       { label: 'Pricing', href: '/pricing' },
     ],
   },
@@ -50,6 +51,7 @@ const COLUMNS: { title: string; links: { label: string; href: string; external?:
       { label: 'About', href: '/about' },
       { label: 'Contact', href: '/contact' },
       { label: 'Security', href: '/security' },
+      { label: 'Help & Queries', href: '/help' },
     ],
   },
   {

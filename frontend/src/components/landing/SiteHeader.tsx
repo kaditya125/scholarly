@@ -4,23 +4,11 @@ import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { ChevronDown, Menu, X, Sun, Moon, ArrowRight, Sparkles } from 'lucide-react';
 import { useTheme } from '../../lib/ThemeContext';
 import { cn } from '../../lib/utils';
-import { PRODUCT_GROUPS, TOP_LINKS } from './navData';
+import { PRODUCT_GROUPS, TEACHER_PRODUCT_GROUPS, TOP_LINKS, TEACHER_TOP_LINKS } from './navData';
 import { PRO_MONTHLY_INR } from '../../lib/siteConfig';
 
 /**
  * The public site header, shared by the landing page, /pricing, /about and the legal pages.
- *
- * The "Product" item opens a mega panel on hover, with the two behaviours that separate a
- * good hover menu from an infuriating one:
- *
- *   · An open delay, so sweeping the cursor across the nav on the way somewhere else
- *     doesn't flash the panel open.
- *   · A close delay, so the diagonal path from "Product" down into the panel's far column
- *     doesn't pass through dead space and dismiss it mid-travel.
- *
- * Hover alone would leave the menu unreachable by keyboard and unusable on touch, so the
- * trigger is a real <button> that toggles on click, reports aria-expanded, closes on
- * Escape, and stays open while focus is anywhere inside the panel.
  */
 
 const OPEN_DELAY = 90;
@@ -39,6 +27,10 @@ export default function SiteHeader() {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const reduced = useReducedMotion();
+
+  const isTeacherContext = location.pathname.startsWith('/for-teachers');
+  const currentProductGroups = isTeacherContext ? TEACHER_PRODUCT_GROUPS : PRODUCT_GROUPS;
+  const currentTopLinks = isTeacherContext ? TEACHER_TOP_LINKS : TOP_LINKS;
 
   const [megaOpen, setMegaOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -63,15 +55,13 @@ export default function SiteHeader() {
 
   useEffect(() => clearTimers, []);
 
-  // Navigating away must dismiss both menus, or the panel would still be hanging open
-  // over the page the visitor just asked for.
+  // Navigating away must dismiss both menus
   useEffect(() => {
     setMegaOpen(false);
     setMobileOpen(false);
   }, [location.pathname]);
 
-  // Escape closes; focus returns to the trigger so keyboard users aren't dropped at the
-  // top of the document.
+  // Escape closes
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
@@ -85,8 +75,7 @@ export default function SiteHeader() {
     return () => document.removeEventListener('keydown', onKey);
   }, [megaOpen]);
 
-  // The mobile drawer is a full-height overlay; leaving the body scrollable behind it
-  // lets the page drift under the visitor's finger.
+  // Mobile scroll lock
   useEffect(() => {
     if (!mobileOpen) return;
     const prev = document.body.style.overflow;
@@ -135,11 +124,16 @@ export default function SiteHeader() {
               </button>
             </div>
 
-            {TOP_LINKS.map((l) => (
+            {currentTopLinks.map((l) => (
               <Link
                 key={l.href}
                 to={l.href}
-                className="h-9 px-3 flex items-center rounded-lg text-[14px] font-medium text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+                className={cn(
+                  "h-9 px-3 flex items-center rounded-lg text-[14px] font-medium transition-colors",
+                  location.pathname === l.href
+                    ? "text-slate-900 dark:text-white font-semibold"
+                    : "text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white"
+                )}
               >
                 {l.label}
               </Link>
@@ -167,9 +161,10 @@ export default function SiteHeader() {
 
             <Link
               to="/signup"
+              state={isTeacherContext ? { role: 'teacher' } : undefined}
               className="inline-flex items-center h-9 px-4 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13.5px] font-semibold hover:opacity-90 transition-opacity whitespace-nowrap"
             >
-              Get started
+              {isTeacherContext ? 'Start teaching' : 'Get started'}
             </Link>
 
             <button
@@ -196,19 +191,28 @@ export default function SiteHeader() {
               onMouseLeave={scheduleClose}
             >
               <div className="max-w-[1160px] mx-auto rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416] shadow-[0_24px_60px_-20px_rgba(15,23,42,0.25)] dark:shadow-[0_24px_60px_-20px_rgba(0,0,0,0.7)] overflow-hidden">
-                <div className="px-7 pt-6 pb-2 flex items-center gap-4">
-                  <span className="text-[15px] font-semibold tracking-[-0.02em]">Product</span>
+                <div className="px-7 pt-6 pb-2 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[15px] font-semibold tracking-[-0.02em]">
+                      {isTeacherContext ? 'Teacher Suite' : 'Product'}
+                    </span>
+                    {isTeacherContext && (
+                      <span className="px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-[#c8e558]/20 text-slate-900 dark:text-[#c8e558] border border-[#c8e558]/30">
+                        Educator Workspace
+                      </span>
+                    )}
+                  </div>
                   <Link
-                    to="/signup"
+                    to={isTeacherContext ? "/for-teachers" : "/signup"}
                     className="group inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
-                    All features
+                    {isTeacherContext ? 'Teacher features overview' : 'All features'}
                     <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" strokeWidth={2} />
                   </Link>
                 </div>
 
                 <div className="grid grid-cols-4 gap-x-6 px-7 pb-7 pt-3">
-                  {PRODUCT_GROUPS.map((g, gi) => (
+                  {currentProductGroups.map((g, gi) => (
                     <div
                       key={g.title}
                       className={cn(
@@ -241,19 +245,25 @@ export default function SiteHeader() {
                   ))}
                 </div>
 
-                {/* Subscription strip — the plan detail lives one click from every page. */}
+                {/* Subscription / Teacher Strip */}
                 <div className="border-t border-slate-100 dark:border-white/[0.07] bg-slate-50/70 dark:bg-white/[0.02] px-7 py-4 flex items-center gap-4">
                   <Sparkles className="w-4 h-4 text-[#c8e558] shrink-0" strokeWidth={2} />
-                  <p className="text-[13px] text-slate-600 dark:text-gray-300">
-                    Everything above is included in{' '}
-                    <span className="font-semibold text-slate-900 dark:text-white">Pro</span>
-                    <span className="text-slate-500 dark:text-gray-400"> — ₹{PRO_MONTHLY_INR}/month, cancel anytime.</span>
-                  </p>
+                  {isTeacherContext ? (
+                    <p className="text-[13px] text-slate-600 dark:text-gray-300">
+                      Teacher accounts include <span className="font-semibold text-slate-900 dark:text-white">full AI studio tools</span>, classroom cohorts & automated RazorpayX payouts.
+                    </p>
+                  ) : (
+                    <p className="text-[13px] text-slate-600 dark:text-gray-300">
+                      Everything above is included in{' '}
+                      <span className="font-semibold text-slate-900 dark:text-white">Pro</span>
+                      <span className="text-slate-500 dark:text-gray-400"> — ₹{PRO_MONTHLY_INR}/month, cancel anytime.</span>
+                    </p>
+                  )}
                   <Link
-                    to="/pricing"
+                    to={isTeacherContext ? "/for-teachers" : "/pricing"}
                     className="ml-auto shrink-0 inline-flex items-center gap-1.5 h-8 px-3.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12.5px] font-semibold hover:opacity-90 transition-opacity"
                   >
-                    Compare plans
+                    {isTeacherContext ? 'Explore Teacher Suite' : 'Compare plans'}
                     <ArrowRight className="w-3.5 h-3.5" strokeWidth={2.25} />
                   </Link>
                 </div>
@@ -280,13 +290,13 @@ export default function SiteHeader() {
                 aria-expanded={mobileProductOpen}
                 className="w-full flex items-center justify-between py-2.5 text-[15px] font-medium text-slate-800 dark:text-gray-100"
               >
-                Product
+                {isTeacherContext ? 'Teacher Suite' : 'Product'}
                 <ChevronDown className={cn('w-4 h-4 transition-transform', mobileProductOpen && 'rotate-180')} />
               </button>
 
               {mobileProductOpen && (
                 <div className="pb-2 space-y-5">
-                  {PRODUCT_GROUPS.map((g) => (
+                  {currentProductGroups.map((g) => (
                     <div key={g.title}>
                       <div className="flex items-center gap-2 mb-1.5">
                         <g.icon className="w-4 h-4 text-slate-500 dark:text-gray-400" strokeWidth={1.9} />
@@ -309,7 +319,7 @@ export default function SiteHeader() {
               )}
 
               <div className="border-t border-slate-100 dark:border-white/[0.07] mt-2 pt-2">
-                {TOP_LINKS.map((l) => (
+                {currentTopLinks.map((l) => (
                   <Link key={l.href} to={l.href} className="block py-2.5 text-[15px] font-medium text-slate-800 dark:text-gray-100">
                     {l.label}
                   </Link>

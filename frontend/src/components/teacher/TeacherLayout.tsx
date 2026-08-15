@@ -74,7 +74,10 @@ const NAV: NavGroup[] = [
   },
   {
     title: 'Business',
-    items: [{ label: 'Earnings', icon: Wallet, to: '/teach/earnings' }],
+    items: [
+      { label: 'Earnings', icon: Wallet, to: '/teach/earnings' },
+      { label: 'Referrals', icon: Users, to: '/teach/referrals' },
+    ],
   },
   {
     title: 'Account',

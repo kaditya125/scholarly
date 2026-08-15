@@ -362,7 +362,7 @@ export default function PodcastStudioV2({ onClose, onOpenEpisode }: PodcastStudi
   }, [readyPodcast]);
 
   return (
-    <div className="w-full h-full bg-gray-50 dark:bg-[#1a1d21] flex overflow-hidden">
+    <div className="w-full h-full bg-[#fafbfc] dark:bg-[#0b0b0c] flex overflow-hidden">
       {/* Left Sidebar — Podcast Projects */}
       <StudioSidebar
         projects={projects}
@@ -382,38 +382,38 @@ export default function PodcastStudioV2({ onClose, onOpenEpisode }: PodcastStudi
       {/* Center + Right */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden h-full">
         {/* Breadcrumb header */}
-        <div className="h-12 px-4 flex items-center justify-between gap-3 border-b border-gray-200 dark:border-white/[0.07] bg-white dark:bg-[#23262b] flex-shrink-0">
+        <div className="h-12 px-4 sm:px-5 flex items-center justify-between gap-3 border-b border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-[#141416]/90 backdrop-blur-md flex-shrink-0">
           {/* Breadcrumb trail: ancestors muted, current page emphasised */}
           <nav
             className="flex items-center gap-2 text-[13px] min-w-0"
             aria-label="Breadcrumb"
           >
-            <span className="text-gray-500 dark:text-gray-400 shrink-0">Scholarly</span>
-            <span className="text-gray-300 dark:text-gray-600 shrink-0">/</span>
+            <span className="text-slate-500 dark:text-slate-400 shrink-0 font-medium">Scholarly</span>
+            <span className="text-slate-300 dark:text-slate-600 shrink-0">/</span>
             <button
               type="button"
               onClick={handleNewProject}
-              className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors shrink-0"
+              className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors shrink-0 font-medium"
               title="Start a new podcast"
             >
               Podcast Projects
             </button>
-            <span className="text-gray-300 dark:text-gray-600 shrink-0">/</span>
-            <span className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+            <span className="text-slate-300 dark:text-slate-600 shrink-0">/</span>
+            <span className="font-semibold text-slate-900 dark:text-white truncate">
               {breadcrumbTitle}
             </span>
           </nav>
 
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             {/* Icon actions */}
             <HeaderIconButton
               onClick={toggleTheme}
               title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {theme === 'dark' ? (
-                <Sun className="w-4 h-4" />
+                <Sun className="w-4 h-4 text-slate-300 hover:text-white" />
               ) : (
-                <Moon className="w-4 h-4" />
+                <Moon className="w-4 h-4 text-slate-600 hover:text-slate-900" />
               )}
             </HeaderIconButton>
 
@@ -423,9 +423,9 @@ export default function PodcastStudioV2({ onClose, onOpenEpisode }: PodcastStudi
                 title={isTranscriptExpanded ? 'Hide transcript' : 'Show transcript'}
               >
                 {isTranscriptExpanded ? (
-                  <PanelRightClose className="w-4 h-4" />
+                  <PanelRightClose className="w-4 h-4 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white" />
                 ) : (
-                  <PanelRightOpen className="w-4 h-4" />
+                  <PanelRightOpen className="w-4 h-4 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white" />
                 )}
               </HeaderIconButton>
             )}
@@ -436,12 +436,12 @@ export default function PodcastStudioV2({ onClose, onOpenEpisode }: PodcastStudi
                 title="Download audio"
                 disabled={readyPodcast?.status !== 'READY'}
               >
-                <Download className="w-4 h-4" />
+                <Download className="w-4 h-4 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white" />
               </HeaderIconButton>
             )}
 
             <span
-              className="mx-1.5 w-px h-5 bg-gray-200 dark:bg-white/10"
+              className="mx-1.5 w-px h-5 bg-slate-200 dark:bg-white/10"
               aria-hidden
             />
 
@@ -449,19 +449,19 @@ export default function PodcastStudioV2({ onClose, onOpenEpisode }: PodcastStudi
             {activeView === 'podcast' && readyPodcast?.status === 'READY' && onOpenEpisode ? (
               <button
                 onClick={() => onOpenEpisode(readyPodcast)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/12 bg-white dark:bg-transparent text-[13px] font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-[13px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-colors shadow-xs"
                 title="Open player, quiz, flashcards and mind map"
               >
-                <Pencil className="w-3.5 h-3.5" />
+                <Pencil className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558]" />
                 Edit episode
               </button>
             ) : (
               <button
                 onClick={handleNewProject}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/12 bg-white dark:bg-transparent text-[13px] font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-[13px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-colors shadow-xs"
                 title="Start a new podcast"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558]" />
                 New podcast
               </button>
             )}
@@ -470,7 +470,7 @@ export default function PodcastStudioV2({ onClose, onOpenEpisode }: PodcastStudi
             <button
               onClick={handleShare}
               disabled={!readyPodcast}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[13px] font-medium hover:bg-gray-800 dark:hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 text-[13px] font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs"
               title="Share this podcast"
             >
               {shareCopied ? (
@@ -491,7 +491,7 @@ export default function PodcastStudioV2({ onClose, onOpenEpisode }: PodcastStudi
         {/* Panes */}
         <div className="flex-1 flex overflow-hidden min-h-0">
           {/* Center — conversation */}
-          <div className="flex-1 flex flex-col overflow-hidden min-h-0 border-r border-gray-200 dark:border-gray-700">
+          <div className="flex-1 flex flex-col overflow-hidden min-h-0 border-r border-slate-200/80 dark:border-white/10">
             <div className="flex-1 overflow-hidden">
               {activeView === 'tts' ? (
                 <TextToSpeechView />

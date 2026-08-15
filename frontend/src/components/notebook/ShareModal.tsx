@@ -50,70 +50,70 @@ export function ShareModal({ notebookId, onClose }: ShareModalProps) {
   });
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-        <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-800">
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-            <UserPlus className="w-5 h-5 text-teal-500" />
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-[#141416] border border-slate-200/90 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden font-sans">
+        <div className="flex justify-between items-center px-6 py-4 border-b border-slate-200/80 dark:border-white/10">
+          <h2 className="text-[16px] font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <UserPlus className="w-4 h-4 text-[#8ba32b] dark:text-[#c8e558]" />
             Share Notebook
           </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-5">
           {/* Email Invite */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Invite via Email</label>
+          <div className="space-y-2.5">
+            <label className="text-[12.5px] font-medium text-slate-700 dark:text-slate-300">Invite via Email</label>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <Mail className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                <Mail className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                 <input 
                   type="email" 
                   placeholder="friend@scholarly.ai" 
-                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-teal-500"
+                  className="w-full pl-9 pr-3 py-2 text-[13.5px] rounded-xl border border-slate-200 dark:border-white/10 bg-transparent text-slate-900 dark:text-white focus:outline-none focus:border-[#8ba32b] dark:focus:border-[#c8e558]"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <select 
-                className="rounded-lg border border-slate-200 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-teal-500"
+                className="rounded-xl border border-slate-200 dark:border-white/10 bg-transparent text-slate-800 dark:text-slate-200 text-[13px] font-medium px-2.5 py-2 focus:outline-none focus:border-[#8ba32b] dark:focus:border-[#c8e558]"
                 value={role}
                 onChange={(e) => setRole(e.target.value as any)}
               >
-                <option value="viewer">Viewer</option>
-                <option value="editor">Editor</option>
+                <option value="viewer" className="dark:bg-[#1a1a1b]">Viewer</option>
+                <option value="editor" className="dark:bg-[#1a1a1b]">Editor</option>
               </select>
             </div>
             <button 
               onClick={() => shareMutation.mutate()}
               disabled={!email || shareMutation.isPending}
-              className="w-full py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg font-medium hover:bg-slate-800 transition disabled:opacity-50"
+              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 rounded-xl text-[13px] font-semibold transition-all shadow-xs disabled:opacity-50"
             >
               {shareMutation.isPending ? 'Sending Invite...' : 'Send Invite'}
             </button>
-            {shareMutation.isSuccess && <p className="text-green-500 text-sm">Invite sent successfully!</p>}
+            {shareMutation.isSuccess && <p className="text-emerald-600 dark:text-emerald-400 text-xs font-medium">Invite sent successfully!</p>}
           </div>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200 dark:border-slate-700" />
+              <div className="w-full border-t border-slate-200/80 dark:border-white/10" />
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-slate-900 text-slate-500">Or</span>
+            <div className="relative flex justify-center text-xs">
+              <span className="px-2 bg-white dark:bg-[#141416] text-slate-400 font-medium">Or</span>
             </div>
           </div>
 
           {/* Secure Link */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Create Secure Link (Expires in 24h)</label>
+          <div className="space-y-2.5">
+            <label className="text-[12.5px] font-medium text-slate-700 dark:text-slate-300">Create Secure Link (Expires in 24h)</label>
             <button 
               onClick={() => linkMutation.mutate()}
               disabled={linkMutation.isPending}
-              className="w-full flex items-center justify-center gap-2 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+              className="w-full flex items-center justify-center gap-2 py-2.5 border border-slate-200/90 dark:border-white/10 text-slate-700 dark:text-slate-300 text-[13px] font-medium rounded-xl hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-all shadow-2xs"
             >
-              {linkCopied ? <Copy className="w-4 h-4 text-green-500" /> : <LinkIcon className="w-4 h-4" />}
+              {linkCopied ? <Copy className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <LinkIcon className="w-4 h-4" />}
               {linkCopied ? 'Link Copied to Clipboard!' : 'Generate Shareable Link'}
             </button>
           </div>

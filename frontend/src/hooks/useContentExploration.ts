@@ -16,6 +16,8 @@ import {
   SourceLineageNode,
   DocumentChunk,
   PipelineSource,
+  DocumentVersion,
+  DocumentVersionDiff,
 } from '../types/pipeline.types';
 
 const API_BASE = '/api/v1/notebooks';

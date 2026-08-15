@@ -33,8 +33,13 @@ export interface VerificationReport {
 
 export interface ExamContext {
   exam: string;
-  subject: string;
+  examId?: string;
+  examCycle?: string;
+  subject?: string;
   syllabusTopic?: string;
+  topicId?: string;
+  stageId?: string;
+  scopeOfficialSyllabusOnly?: boolean;
 }
 
 const AUTHORITY_WEIGHTS: Record<string, number> = {
@@ -154,6 +159,13 @@ Standalone Search Query:`;
       // at the index level so the reranker never sees off-scope chunks.
       filter.sourceId = { $in: scopeSourceIds };
     }
+    // Exam Intelligence scoping (Phase 2)
+    if (examContext?.examId) {
+      filter.examId = examContext.examId;
+    }
+    if (examContext?.scopeOfficialSyllabusOnly) {
+      filter.documentType = 'OFFICIAL_SYLLABUS';
+    }
     const namespace = env.PINECONE_NAMESPACE;
     
     const tPinecone = performance.now();
@@ -190,12 +202,15 @@ Standalone Search Query:`;
       const authorityMultiplier = AUTHORITY_WEIGHTS[authorityLevel] || 1.0;
       weightedScore *= authorityMultiplier;
 
-      // Exam Relevance
+      // Exam Relevance & Official Syllabus Priority
       if (examContext) {
-        if (meta.exam === examContext.exam) weightedScore *= 1.1;
-        if (meta.subject === examContext.subject) weightedScore *= 1.1;
+        if (meta.examId === examContext.examId || meta.exam === examContext.exam) weightedScore *= 1.15;
+        if (examContext.subject && meta.subject === examContext.subject) weightedScore *= 1.1;
         if (examContext.syllabusTopic && (meta.tags as string[] | undefined)?.includes(examContext.syllabusTopic)) {
           weightedScore *= 1.15;
+        }
+        if (meta.documentType === 'OFFICIAL_SYLLABUS') {
+          weightedScore *= 1.25;
         }
       }
 
@@ -249,6 +264,108 @@ Standalone Search Query:`;
     await cacheService.set(cacheKey, combinedResults, 600); // 10 minutes
 
     Telemetry.logLatency('retrieval_total', performance.now() - tStart, { resultsCount: combinedResults.length });
+    return combinedResults;
+  }
+
+  /**
+   * Specifically retrieves context strictly from official syllabus vectors for an examination.
+   * Enforces { examId, documentType: 'OFFICIAL_SYLLABUS' } at the Pinecone filter layer.
+   */
+  async retrieveOfficialSyllabusContext(
+    examId: string,
+    query: string,
+    topK: number = 5
+  ): Promise<RetrievalResult[]> {
+    return this.retrieveContext(
+      query,
+      '', // global search across exam namespace
+      {
+        exam: examId,
+        examId,
+        scopeOfficialSyllabusOnly: true,
+      },
+      topK
+    );
+  }
+
+  /**
+   * Specifically retrieves context from the public knowledge base.
+   * EXPLICITLY enforces { public: true } at the Pinecone filter layer to isolate 
+   * public documentation from private user notebooks or credentials.
+   */
+  async retrievePublicKnowledge(
+    query: string,
+    topK: number = 5
+  ): Promise<RetrievalResult[]> {
+    const tStart = performance.now();
+    const cacheKey = `public_retrieval:${query}:${topK}`;
+    const cached = await cacheService.get<RetrievalResult[]>(cacheKey);
+    if (cached) {
+      Telemetry.logLatency('public_retrieval_cache_hit', performance.now() - tStart, { query });
+      return cached;
+    }
+
+    const tEmbed = performance.now();
+    const queryEmbedding = await this.embeddingProvider.generateEmbedding(query);
+    Telemetry.logLatency('public_query_embedding', performance.now() - tEmbed);
+    
+    // MANDATORY ISOLATION FILTER: Only retrieve public knowledge
+    const filter: any = { public: true };
+    const namespace = env.PINECONE_NAMESPACE;
+    
+    const tPinecone = performance.now();
+    // Fetch topK * 4 to ensure a wide net for the Reranker
+    const matches = await pineconeService.queryVectors(queryEmbedding, topK * 4, filter, namespace);
+    Telemetry.logLatency('public_pinecone_search', performance.now() - tPinecone);
+    
+    // Filter out completely irrelevant vectors
+    const validMatches = matches.filter((m: any) => (m.score || 0) >= 0.50);
+    if (validMatches.length === 0) return [];
+
+    // Deduplicate before reranking
+    const uniqueMatchesMap = new Map<string, any>();
+    for (const m of validMatches) {
+      const textVal = m.metadata?.text as string;
+      if (textVal && !uniqueMatchesMap.has(textVal)) {
+        uniqueMatchesMap.set(textVal, m);
+      }
+    }
+    const deduplicatedMatches = Array.from(uniqueMatchesMap.values());
+
+    // 1. Cohere Reranking Phase
+    const documentsToRerank = deduplicatedMatches.map(m => m.metadata?.text as string);
+    const rerankedDocs = await this.rerankerProvider.rerank(query, documentsToRerank, topK * 2);
+
+    // 2. Score mapping
+    const rankedResults: RetrievalResult[] = rerankedDocs.map(reranked => {
+      const match = deduplicatedMatches[reranked.index];
+      const meta = match.metadata || {};
+      
+      return {
+        text: this.sanitizeContext(String(meta.text || '')),
+        source: String(meta.sourceTitle || meta.filename || 'Scholarly Public Guide'),
+        score: reranked.relevanceScore,
+        metadata: meta,
+        weightedScore: reranked.relevanceScore,
+        selectionReasoning: `Selected via public knowledge search (score: ${reranked.relevanceScore.toFixed(2)})`
+      };
+    });
+
+    rankedResults.sort((a, b) => (b.weightedScore || 0) - (a.weightedScore || 0));
+
+    let combinedResults = rankedResults;
+    if (combinedResults.length > topK) {
+       const tRerank = performance.now();
+       const finalRerank = await this.rerankerProvider.rerank(query, combinedResults.map(r => r.text), topK);
+       Telemetry.logLatency('public_cohere_rerank', performance.now() - tRerank);
+       combinedResults = finalRerank.length > 0
+         ? finalRerank
+             .map(rr => combinedResults[rr.index])
+             .filter((r): r is RetrievalResult => Boolean(r))
+         : combinedResults.slice(0, topK);
+    }
+
+    await cacheService.set(cacheKey, combinedResults, 600);
     return combinedResults;
   }
 

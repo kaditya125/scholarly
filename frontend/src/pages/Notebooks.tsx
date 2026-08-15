@@ -255,90 +255,92 @@ export default function Notebooks() {
   }
 
   return (
-    <div className="flex w-full h-[calc(100vh-80px)] bg-slate-50 dark:bg-[#121212] overflow-hidden font-sans">
+    <div className="flex w-full h-[calc(100vh-80px)] bg-[#fafbfc] dark:bg-[#131315] overflow-hidden font-sans">
       
       {/* LEFT SIDEBAR: NOTEBOOK MANAGEMENT */}
-      <div className="w-[280px] bg-white dark:bg-[#1a1a1a] border-r border-slate-200 dark:border-white/5 flex flex-col h-full flex-shrink-0 relative z-20 shadow-[4px_0_24px_rgb(0,0,0,0.02)]">
-         <div className="p-5 border-b border-slate-100 dark:border-white/5">
+      <div className="w-[280px] bg-white dark:bg-[#111113] border-r border-slate-200/80 dark:border-white/10 flex flex-col h-full flex-shrink-0 relative z-20 shadow-2xs font-sans">
+         <div className="p-4 border-b border-slate-200/80 dark:border-white/10">
            <button 
              onClick={handleNewNotebook}
-             className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm">
-             <Plus className="w-4 h-4" />
+             className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 font-semibold py-2.5 px-4 rounded-xl transition-all shadow-xs active:scale-[0.98] text-[13px]">
+             <Plus className="w-4 h-4 text-[#c8e558] dark:text-slate-900" />
              New Notebook
            </button>
          </div>
 
-         <div className="flex-1 overflow-y-auto p-4 space-y-4">
+         <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
            <div>
-             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-2">Your Notebooks</h3>
-             {notebooks.filter(nb => nb.owner === (nb as any).userId /* Replace with actual user ID check in real app */).map(nb => (
+             <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 px-2">Your Notebooks</h3>
+             {notebooks.filter(nb => nb.owner === (nb as any).userId).map(nb => (
                <button
                  key={nb.id}
                  onClick={() => setActiveNotebook(nb.id)}
                  className={cn(
-                   "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all",
+                   "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-all",
                    activeNotebook === nb.id 
-                     ? "bg-slate-100 dark:bg-white/10 shadow-sm border border-slate-200 dark:border-white/5" 
-                     : "hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent"
+                     ? "bg-slate-100/90 dark:bg-white/[0.08] shadow-2xs border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white font-semibold" 
+                     : "hover:bg-slate-50 dark:hover:bg-white/[0.04] text-slate-700 dark:text-slate-300 font-medium"
                  )}
                >
-                 <div className={cn("w-3 h-3 rounded-full", nb.color)} />
-                 <span className="text-sm font-semibold text-slate-800 dark:text-gray-200 truncate">{nb.title}</span>
+                 <div className={cn("w-2.5 h-2.5 rounded-full shrink-0", nb.color || "bg-[#8ba32b] dark:bg-[#c8e558]")} />
+                 <span className="text-[13px] truncate">{nb.title}</span>
                </button>
              ))}
            </div>
            
            <div>
-             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-2 mt-4">Shared with me</h3>
+             <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 px-2 mt-4">Shared with me</h3>
              {notebooks.filter(nb => nb.owner !== (nb as any).userId).map(nb => (
                <button
                  key={nb.id}
                  onClick={() => setActiveNotebook(nb.id)}
                  className={cn(
-                   "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all opacity-80",
+                   "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-all opacity-80",
                    activeNotebook === nb.id 
-                     ? "bg-slate-100 dark:bg-white/10 shadow-sm border border-slate-200 dark:border-white/5" 
-                     : "hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent"
+                     ? "bg-slate-100/90 dark:bg-white/[0.08] shadow-2xs border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white font-semibold" 
+                     : "hover:bg-slate-50 dark:hover:bg-white/[0.04] text-slate-700 dark:text-slate-300 font-medium"
                  )}
                >
-                 <div className={cn("w-3 h-3 rounded-full", nb.color)} />
-                 <span className="text-sm font-semibold text-slate-800 dark:text-gray-200 truncate">{nb.title}</span>
+                 <div className={cn("w-2.5 h-2.5 rounded-full shrink-0", nb.color || "bg-slate-400")} />
+                 <span className="text-[13px] truncate">{nb.title}</span>
                </button>
              ))}
            </div>
          </div>
 
-         <div className="p-4 border-t border-slate-100 dark:border-white/5">
-            <button className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800 dark:hover:text-gray-300 transition-colors px-2">
-              <Settings className="w-4 h-4" />
+         <div className="p-3.5 border-t border-slate-200/80 dark:border-white/10">
+            <button className="flex items-center gap-2 text-[12.5px] font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors px-2">
+              <Settings className="w-4 h-4 text-slate-400" />
               Notebook Settings
             </button>
          </div>
       </div>
       
       {/* CENTER: CHAT INTERFACE & CITATION VIEWER */}
-      <div className="flex-1 flex flex-col relative h-full bg-[#fcfcfc] dark:bg-[#141414]">
+      <div className="flex-1 flex flex-col relative h-full bg-[#fafbfc] dark:bg-[#0b0b0c] min-w-0">
          
          {/* Top Bar: Learning Modes */}
-         <div className="h-16 border-b border-slate-200 dark:border-white/5 flex items-center justify-between px-6 bg-white dark:bg-[#1a1a1a]">
-            <div className="flex items-center gap-4">
+         <div className="h-14 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between px-5 bg-white/80 dark:bg-[#141416]/90 backdrop-blur-md">
+            <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <Brain className="w-5 h-5 text-indigo-600" />
-                <span className="font-bold text-slate-800 dark:text-gray-100">Scholarly AI Studio</span>
+                <div className="w-6 h-6 rounded-lg bg-slate-900 dark:bg-white flex items-center justify-center shadow-xs">
+                  <Brain className="w-3.5 h-3.5 text-[#c8e558] dark:text-slate-900" />
+                </div>
+                <span className="text-[13.5px] font-semibold text-slate-900 dark:text-white">Scholarly AI Studio</span>
               </div>
               
-              <div className="h-4 w-[1px] bg-slate-300 dark:bg-slate-700 mx-2" />
+              <div className="h-4 w-px bg-slate-200 dark:bg-white/10 mx-1" />
               
-              <div className="flex space-x-4">
-                {['CHAT', 'GRAPH', 'ASSETS'].map(tab => (
+              <div className="flex rounded-full bg-slate-100/90 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 p-0.5">
+                {(['CHAT', 'GRAPH', 'ASSETS'] as const).map(tab => (
                   <button
                     key={tab}
-                    onClick={() => setActiveTab(tab as any)}
+                    onClick={() => setActiveTab(tab)}
                     className={cn(
-                      "text-sm font-semibold transition-colors pb-1 border-b-2",
+                      "px-3 py-1 rounded-full text-[12px] font-semibold transition-all",
                       activeTab === tab 
-                        ? "text-indigo-600 border-indigo-600" 
-                        : "text-slate-500 border-transparent hover:text-slate-800 dark:hover:text-gray-300"
+                        ? "bg-white dark:bg-[#1f1f23] text-slate-900 dark:text-white shadow-xs" 
+                        : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
                     )}
                   >
                     {tab.charAt(0) + tab.slice(1).toLowerCase()}
@@ -346,44 +348,44 @@ export default function Notebooks() {
                 ))}
               </div>
 
-              <div className="h-4 w-[1px] bg-slate-300 dark:bg-slate-700 mx-2" />
+              <div className="h-4 w-px bg-slate-200 dark:bg-white/10 mx-1" />
 
-              <div className="flex space-x-1 bg-slate-100 dark:bg-white/5 p-1 rounded-lg">
+              <div className="flex space-x-1 bg-slate-100/90 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 p-0.5 rounded-full">
                 {LEARNING_MODES.slice(0, 3).map(mode => (
                   <button 
                     key={mode.id}
                     onClick={() => setActiveMode(mode.id)}
                     className={cn(
-                      "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all",
+                      "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11.5px] font-semibold transition-all",
                       activeMode === mode.id
-                        ? "bg-white dark:bg-[#2a2a2a] text-slate-900 dark:text-white shadow-sm"
-                        : "text-slate-500 hover:text-slate-700 dark:hover:text-gray-300"
+                        ? "bg-white dark:bg-[#1f1f23] text-slate-900 dark:text-white shadow-xs"
+                        : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                     )}
                   >
-                    <mode.icon className={cn("w-3.5 h-3.5", activeMode === mode.id ? mode.color : "")} />
+                    <mode.icon className={cn("w-3 h-3", activeMode === mode.id ? "text-[#8ba32b] dark:text-[#c8e558]" : "text-slate-400")} />
                     {mode.label}
                   </button>
                 ))}
-                <button className="px-3 py-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-gray-300">
-                  <ChevronRight className="w-4 h-4" />
+                <button className="px-2 py-1 text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                  <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {activeNotebook && (
                 <>
                   <button 
                     onClick={() => setIsExportModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-gray-200 font-bold rounded-lg transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-200 text-[12px] font-semibold rounded-lg transition-colors shadow-2xs"
                   >
-                    <FileDown className="w-4 h-4" />
+                    <FileDown className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558]" />
                     Export PDF
                   </button>
                   <button 
                     onClick={() => setIsShareModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 text-[12px] font-semibold rounded-lg transition-all shadow-xs"
                   >
-                    <UserPlus className="w-4 h-4" />
+                    <UserPlus className="w-3.5 h-3.5" />
                     Share
                   </button>
                 </>
@@ -400,22 +402,24 @@ export default function Notebooks() {
          {activeTab === 'CHAT' && (
            <>
              {/* Chat History Area */}
-             <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 custom-scrollbar">
+             <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar">
                 {displayMessages.length === 0 ? (
                   /* Initial empty state */
-                  <div className="flex flex-col items-center justify-center h-full text-center max-w-lg mx-auto mt-20">
-                    <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center mb-6">
-                       <Brain className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                  <div className="flex flex-col items-center justify-center h-full text-center max-w-lg mx-auto mt-16">
+                    <div className="w-14 h-14 rounded-2xl bg-slate-900 dark:bg-white flex items-center justify-center mb-5 shadow-xs">
+                       <Brain className="w-7 h-7 text-[#c8e558] dark:text-slate-900" />
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Your Learning Workspace</h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+                    <h2 className="text-[24px] sm:text-[26px] font-semibold text-slate-900 dark:text-white tracking-[-0.025em] mb-2">
+                      Your Learning Workspace
+                    </h2>
+                    <p className="text-[13.5px] text-slate-500 dark:text-slate-400 mb-7 leading-relaxed max-w-md">
                       Upload your study materials, and I'll act as your personal tutor. Every answer is grounded in your documents with precise citations.
                     </p>
 
-                    <div className="flex flex-wrap justify-center gap-3 w-full">
+                    <div className="flex flex-wrap justify-center gap-2.5 w-full">
                       {ONE_CLICK_ACTIONS.map((action, i) => (
-                        <button key={i} className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full text-sm font-semibold text-slate-600 dark:text-gray-300 hover:border-indigo-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all shadow-sm">
-                          <action.icon className="w-4 h-4" />
+                        <button key={i} className="flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-white/[0.04] border border-slate-200/90 dark:border-white/10 rounded-full text-[12.5px] font-medium text-slate-700 dark:text-slate-200 hover:border-[#8ba32b]/40 dark:hover:border-[#c8e558]/40 hover:bg-slate-50/80 dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white transition-all shadow-2xs">
+                          <action.icon className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558]" />
                           {action.label}
                         </button>
                       ))}
@@ -433,10 +437,10 @@ export default function Notebooks() {
              </div>
 
              {/* Chat Input Bar */}
-             <div className="p-6 pt-0">
-               <div className="max-w-4xl mx-auto relative bg-white dark:bg-[#1a1a1b] rounded-2xl border border-slate-200 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all p-3 pl-4 flex items-end gap-3">
-                 <button className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors shrink-0 mb-0.5">
-                   <Plus className="w-5 h-5" />
+             <div className="p-5 pt-0">
+               <div className="max-w-3xl mx-auto relative bg-white dark:bg-[#141416] rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-white/10 shadow-xs focus-within:border-slate-400 dark:focus-within:border-white/25 focus-within:shadow-sm transition-all p-2 pl-3 flex items-center gap-2.5">
+                 <button className="p-1.5 rounded-xl text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors shrink-0">
+                   <Plus className="w-4 h-4" />
                  </button>
                  
                  <textarea 
@@ -444,18 +448,16 @@ export default function Notebooks() {
                    onChange={e => setPrompt(e.target.value)}
                    onKeyDown={handleKeyDown}
                    placeholder={`Ask anything in ${activeMode.toLowerCase()} mode...`}
-                   className="flex-1 max-h-48 min-h-[44px] bg-transparent border-none outline-none resize-none text-[15px] text-slate-800 dark:text-gray-200 py-2.5 placeholder:text-slate-400 custom-scrollbar"
+                   className="flex-1 max-h-48 min-h-[40px] bg-transparent border-none outline-none resize-none text-[14px] text-slate-900 dark:text-white py-2 placeholder:text-slate-400 custom-scrollbar"
                    rows={1}
                  />
 
                  <button 
                    onClick={handleSendMessage}
                    disabled={!prompt.trim() || !activeNotebook || isStreaming}
-                   className="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 dark:disabled:bg-slate-800 flex items-center justify-center text-white transition-colors shrink-0 shadow-sm mb-0.5"
+                   className="w-8 h-8 rounded-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 disabled:bg-slate-100 dark:disabled:bg-white/5 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed flex items-center justify-center transition-all shadow-xs shrink-0 active:scale-95"
                  >
-                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                     <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                   </svg>
+                   <ArrowUp className="w-4 h-4" strokeWidth={2.5} />
                  </button>
                </div>
              </div>
@@ -466,7 +468,7 @@ export default function Notebooks() {
            <div className="flex-1 overflow-hidden relative">
               {isLoadingGraph ? (
                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8ba32b] dark:border-[#c8e558]"></div>
                  </div>
               ) : (
                  <KnowledgeGraphViewer nodes={graph?.nodes || []} edges={graph?.edges || []} />
@@ -478,7 +480,7 @@ export default function Notebooks() {
            <div className="flex-1 flex overflow-hidden relative">
               {isLoadingAssets ? (
                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8ba32b] dark:border-[#c8e558]"></div>
                  </div>
               ) : activeAsset ? (
                  <AssetViewer asset={activeAsset} onBack={() => setActiveAsset(null)} />
@@ -490,7 +492,7 @@ export default function Notebooks() {
       </div>
       
       {/* RIGHT SIDEBAR: RESOURCE PANEL */}
-      <div className="w-[320px] bg-white dark:bg-[#1a1a1a] border-l border-slate-200 dark:border-white/5 flex flex-col h-full flex-shrink-0 relative z-20">
+      <div className="w-[320px] bg-white dark:bg-[#111113] border-l border-slate-200/80 dark:border-white/10 flex flex-col h-full flex-shrink-0 relative z-20 font-sans">
         
         {/* Render CitationViewerPanel absolute to right sidebar when active */}
         <AnimatePresence>
@@ -502,15 +504,15 @@ export default function Notebooks() {
            )}
         </AnimatePresence>
 
-        <div className="p-5 border-b border-slate-100 dark:border-white/5 flex justify-between items-center">
-          <h3 className="font-bold text-slate-800 dark:text-gray-100 flex items-center gap-2">
-            <Book className="w-4 h-4 text-indigo-500" />
+        <div className="p-4 border-b border-slate-200/80 dark:border-white/10 flex justify-between items-center">
+          <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2 text-[13.5px]">
+            <Book className="w-4 h-4 text-[#8ba32b] dark:text-[#c8e558]" />
             Knowledge Base
           </h3>
-          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500">{sources?.length || 0} Sources</span>
+          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">{sources?.length || 0} Sources</span>
         </div>
 
-        <div className="p-4">
+        <div className="p-3.5">
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -523,72 +525,72 @@ export default function Notebooks() {
             onDrop={handleDrop}
             onClick={handleUploadClick}
             className={cn(
-              "w-full border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-3 transition-all group relative overflow-hidden",
+              "w-full border-2 border-dashed rounded-2xl p-5 flex flex-col items-center justify-center gap-2.5 transition-all group relative overflow-hidden",
               isUploading 
-                ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 opacity-90 cursor-not-allowed" 
+                ? "border-[#8ba32b] bg-[#8ba32b]/5 dark:border-[#c8e558] dark:bg-[#c8e558]/5 opacity-90 cursor-not-allowed" 
                 : isDragging 
-                  ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/20 scale-[1.02]"
-                  : "border-slate-200 dark:border-white/10 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/5 cursor-pointer"
+                  ? "border-[#8ba32b] bg-[#8ba32b]/10 dark:border-[#c8e558] dark:bg-[#c8e558]/10 scale-[1.01]"
+                  : "border-slate-200 dark:border-white/10 hover:border-[#8ba32b]/60 dark:hover:border-[#c8e558]/60 hover:bg-slate-50/70 dark:hover:bg-white/[0.02] cursor-pointer"
             )}
           >
             {isUploading && (
               <div 
-                className="absolute left-0 bottom-0 top-0 bg-indigo-100 dark:bg-indigo-900/30 transition-all duration-300 -z-10"
+                className="absolute left-0 bottom-0 top-0 bg-[#8ba32b]/10 dark:bg-[#c8e558]/10 transition-all duration-300 -z-10"
                 style={{ width: `${uploadProgress}%` }}
               />
             )}
-            <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform z-10">
-              {isUploading ? <RefreshCcw className="w-5 h-5 animate-spin" /> : <UploadCloud className="w-5 h-5" />}
+            <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 group-hover:text-[#8ba32b] dark:group-hover:text-[#c8e558] group-hover:scale-105 transition-all flex items-center justify-center z-10">
+              {isUploading ? <RefreshCcw className="w-4 h-4 animate-spin text-[#8ba32b] dark:text-[#c8e558]" /> : <UploadCloud className="w-4 h-4" />}
             </div>
             <div className="text-center z-10">
-              <p className="text-sm font-semibold text-slate-700 dark:text-gray-200">
+              <p className="text-[13px] font-semibold text-slate-800 dark:text-white">
                 {isUploading ? `Uploading... ${uploadProgress}%` : isDragging ? "Drop file here" : "Upload Source"}
               </p>
-              <p className="text-[11px] text-slate-500 mt-1">PDF, DOCX, TXT, Images (Max 50MB)</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">PDF, DOCX, TXT, Images (Max 50MB)</p>
             </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">Indexed Documents</h3>
+        <div className="flex-1 overflow-y-auto px-3.5 pb-3.5 space-y-2.5 custom-scrollbar">
+          <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 px-1">Indexed Documents</h3>
           {sources?.map(doc => (
-            <div key={doc.id} className="bg-white dark:bg-[#1a1a1b] p-3.5 rounded-xl border border-slate-100 dark:border-white/5 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-colors shadow-sm cursor-pointer group">
-              <div className="flex items-start gap-3">
+            <div key={doc.id} className="bg-white dark:bg-white/[0.03] p-3 rounded-xl border border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-all shadow-2xs cursor-pointer group">
+              <div className="flex items-start gap-2.5">
                 <div className={cn(
-                  "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5",
-                  doc.type === 'PDF' ? "bg-red-50 text-red-500 dark:bg-red-500/10" : "bg-blue-50 text-blue-500 dark:bg-blue-500/10"
+                  "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5",
+                  doc.type === 'PDF' ? "bg-red-50 text-red-500 dark:bg-red-500/10" : "bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300"
                 )}>
-                  <FileText className="w-4 h-4" />
+                  <FileText className="w-3.5 h-3.5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-800 dark:text-gray-200 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                  <p className="text-[12.5px] font-semibold text-slate-800 dark:text-slate-100 truncate group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                     {doc.title}
                   </p>
-                  <div className="flex items-center gap-3 mt-1.5">
-                    <span className="text-[11px] font-medium text-slate-500 bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full">
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[10.5px] font-medium text-slate-500 bg-slate-100 dark:bg-white/5 px-1.5 py-0.5 rounded-md">
                       {doc.type}
                     </span>
                     {doc.totalPages && (
-                      <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                      <span className="text-[10.5px] text-slate-400 flex items-center gap-1">
                         <Book className="w-3 h-3" /> {doc.totalPages} pages
                       </span>
                     )}
                     <span className={cn(
-                      "text-[11px] flex items-center gap-1 ml-auto font-medium px-2 py-0.5 rounded border",
+                      "text-[10px] flex items-center gap-1 ml-auto font-semibold px-1.5 py-0.5 rounded border",
                       doc.status === 'READY' ? "text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-500/10 dark:border-emerald-500/20" :
                       doc.status === 'FAILED' ? "text-red-600 border-red-200 bg-red-50 dark:bg-red-500/10 dark:border-red-500/20" :
-                      "text-indigo-600 border-indigo-200 bg-indigo-50 dark:bg-indigo-500/10 dark:border-indigo-500/20"
+                      "text-slate-600 border-slate-200 bg-slate-50 dark:bg-white/5 dark:border-white/10"
                     )}>
-                      {doc.status !== 'READY' && doc.status !== 'FAILED' && <RefreshCcw className="w-3 h-3 animate-spin mr-1" />}
+                      {doc.status !== 'READY' && doc.status !== 'FAILED' && <RefreshCcw className="w-2.5 h-2.5 animate-spin mr-0.5" />}
                       {doc.status}
                     </span>
                     {doc.gcsPath && (
                       <button 
                         onClick={(e) => handleDownloadPdf(e, doc)}
-                        className="ml-2 p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors"
+                        className="ml-1 p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                         title="Download PDF"
                       >
-                        <Download className="w-3.5 h-3.5" />
+                        <Download className="w-3 h-3" />
                       </button>
                     )}
                   </div>
@@ -599,12 +601,12 @@ export default function Notebooks() {
         </div>
         
         {/* Verification Engine Status */}
-        <div className="p-4 border-t border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-black/20">
-           <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-500 mb-2">
+        <div className="p-3.5 border-t border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02]">
+           <div className="flex items-center gap-2 text-[11.5px] font-semibold text-emerald-600 dark:text-emerald-400 mb-1">
              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
              Hallucination Shield Active
            </div>
-           <p className="text-[11px] text-slate-500 leading-tight">Responses are cross-verified against your uploaded sources and citations are provided automatically.</p>
+           <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">Responses are cross-verified against your uploaded sources and citations are provided automatically.</p>
         </div>
       </div>
 

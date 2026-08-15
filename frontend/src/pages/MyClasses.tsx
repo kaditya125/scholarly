@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   GraduationCap, Loader2, Clock, LogOut, AlertTriangle, IndianRupee, CalendarDays,
-  NotebookPen, ChevronDown, ExternalLink, ClipboardCheck, MessageCircle, Radio,
+  NotebookPen, ChevronDown, ExternalLink, ClipboardCheck, MessageCircle, Radio, History,
 } from 'lucide-react';
 import { useMyEnrollments, useEnrollmentMutations } from '../hooks/api/useEnrollments';
 import { useClassResources } from '../hooks/api/useClassResources';
@@ -129,6 +129,47 @@ function ActiveClassTests({ classId }: { classId: string }) {
   );
 }
 
+function ActiveClassSessions({ classId }: { classId: string }) {
+  const { data: sessions, isLoading, isError } = useClassSessions(classId);
+  const past = sessions?.filter((s) => s.status !== 'live') ?? [];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-[12.5px] text-slate-500 dark:text-gray-400 py-2">
+        <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden /> Loading sessions…
+      </div>
+    );
+  }
+  if (isError) return <p className="text-[12.5px] text-red-700 dark:text-red-400 py-2">Couldn&rsquo;t load sessions.</p>;
+  if (past.length === 0) {
+    return <p className="text-[12.5px] text-slate-500 dark:text-gray-400 py-2">No past sessions.</p>;
+  }
+
+  return (
+    <div className="space-y-1.5 pl-12">
+      {past.map((s) => (
+        <div key={s.id} className="flex items-center gap-3 py-1">
+          <span className="text-[13px] font-medium text-slate-700 dark:text-gray-200 truncate flex-1">{s.title}</span>
+          <span className="text-[11.5px] text-slate-400 dark:text-gray-500 shrink-0">
+            {s.startedAt ? new Date((s.startedAt as any)._seconds ? (s.startedAt as any)._seconds * 1000 : s.startedAt as string).toLocaleDateString() : ''}
+          </span>
+          {s.recordingRef && (
+            <a
+              href={s.recordingRef}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-2 inline-flex items-center gap-1.5 h-7 px-3 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-[11.5px] font-semibold hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors shrink-0"
+            >
+              <Radio className="w-3 h-3" aria-hidden />
+              Watch
+            </a>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /**
  * A quiet "is this class live right now" check, always on (not behind an accordion like the
  * others) — a live indicator that only shows up when clicked defeats its own purpose. Renders
@@ -154,6 +195,7 @@ function ActiveClassRow({ e, onLeave, leaving }: { e: MyEnrollment; onLeave: () 
   const [openResources, setOpenResources] = useState(false);
   const [openTests, setOpenTests] = useState(false);
   const [openDiscussion, setOpenDiscussion] = useState(false);
+  const [openSessions, setOpenSessions] = useState(false);
   const { data: resources, isLoading, isError } = useClassResources(e.classId, openResources);
 
   return (
@@ -191,6 +233,15 @@ function ActiveClassRow({ e, onLeave, leaving }: { e: MyEnrollment; onLeave: () 
               <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', openDiscussion && 'rotate-180')} strokeWidth={2} aria-hidden />
             </button>
             <button
+              onClick={() => setOpenSessions((v) => !v)}
+              aria-expanded={openSessions}
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-slate-200 dark:border-white/12 text-[12.5px] font-medium hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors"
+            >
+              <History className="w-3.5 h-3.5" strokeWidth={2} aria-hidden />
+              Recordings
+              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', openSessions && 'rotate-180')} strokeWidth={2} aria-hidden />
+            </button>
+            <button
               onClick={onLeave}
               disabled={leaving}
               className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-slate-200 dark:border-white/12 text-[12.5px] font-medium text-slate-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-60"
@@ -204,6 +255,11 @@ function ActiveClassRow({ e, onLeave, leaving }: { e: MyEnrollment; onLeave: () 
       {openTests && (
         <div className="px-5 pb-4 -mt-1">
           <ActiveClassTests classId={e.classId} />
+        </div>
+      )}
+      {openSessions && (
+        <div className="px-5 pb-4 -mt-1">
+          <ActiveClassSessions classId={e.classId} />
         </div>
       )}
       {openResources && (

@@ -10,4 +10,7 @@ router.get('/whatsapp', controller.verifyWhatsApp);
 // POST endpoint for Meta events
 router.post('/whatsapp', controller.handleWhatsAppEvent);
 
+// POST endpoint for 100ms events
+router.post('/100ms', controller.handle100msEvent);
+
 export default router;

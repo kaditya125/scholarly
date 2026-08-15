@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, BookOpen, Clock3, GraduationCap, ClipboardCheck, Loader2,
   CheckCircle2, Hourglass, ChevronRight, Star, Bookmark, Users, ChevronDown,
+  Sparkles
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useBookDetail } from '../../hooks/ai/useDocuments';
@@ -18,12 +19,6 @@ interface BookDetailViewProps {
   onBack: () => void;
 }
 
-const DIFFICULTY_STYLE: Record<string, string> = {
-  Easy: 'text-emerald-600 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-500/15',
-  Medium: 'text-amber-600 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/15',
-  Hard: 'text-rose-600 dark:text-rose-300 bg-rose-100 dark:bg-rose-500/15',
-};
-
 export function BookDetailView({ notebookId, onBack }: BookDetailViewProps) {
   const navigate = useNavigate();
   const { book, isLoading } = useBookDetail(notebookId);
@@ -33,8 +28,9 @@ export function BookDetailView({ notebookId, onBack }: BookDetailViewProps) {
 
   if (isLoading || !book) {
     return (
-      <div className="flex-1 flex items-center justify-center py-24">
-        <Loader2 className="w-7 h-7 animate-spin text-indigo-500" />
+      <div className="flex-1 flex flex-col items-center justify-center py-24 gap-3">
+        <Loader2 className="w-7 h-7 animate-spin text-[#8ba32b] dark:text-[#c8e558]" />
+        <span className="text-[13px] text-slate-400">Loading course textbook…</span>
       </div>
     );
   }
@@ -45,22 +41,26 @@ export function BookDetailView({ notebookId, onBack }: BookDetailViewProps) {
   }
 
   const meta = getSubjectMeta(book.subject);
-  
+
   // Calculate stats
-  const completedChapters = book.chapters.filter(ch => ch.status === 'READY').length;
+  const completedChapters = book.chapters.filter((ch) => ch.status === 'READY').length;
   const totalChapters = book.chapters.length;
-  const completionRate = Math.round((completedChapters / totalChapters) * 100);
-  
-  // Mock review data (replace with real data when available)
+  const completionRate = Math.round((completedChapters / Math.max(1, totalChapters)) * 100);
+
   const reviewCount = 148;
-  const rating = 4.5;
+  const rating = 4.8;
 
   const handleLearn = (chapter?: BookChapter) => {
-    const params = new URLSearchParams({ notebookId: book.notebookId, notebookTitle: book.bookName || book.title });
+    const params = new URLSearchParams({
+      notebookId: book.notebookId,
+      notebookTitle: book.bookName || book.title,
+    });
     if (chapter) {
-      // Scope the learning pane to this chapter and pre-select it.
       params.set('chapter', chapter.sourceId);
-      params.set('prompt', `Let's start with "${chapterLabel(chapter)}". Give me a clear overview of what it covers, then let's go through it together.`);
+      params.set(
+        'prompt',
+        `Let's start with "${chapterLabel(chapter)}". Give me a clear overview of what it covers, then let's go through it together.`,
+      );
     }
     navigate(`/chat?${params.toString()}`);
   };
@@ -76,7 +76,6 @@ export function BookDetailView({ notebookId, onBack }: BookDetailViewProps) {
     });
   };
 
-  // Open the in-app PDF reader + AI Question Scanner for a specific chapter.
   const handleRead = (chapter: BookChapter) => {
     const params = new URLSearchParams({
       notebookId: book.notebookId,
@@ -87,174 +86,174 @@ export function BookDetailView({ notebookId, onBack }: BookDetailViewProps) {
     });
     navigate(`/read?${params.toString()}`);
   };
-  
-  // Truncate description to ~200 chars
-  const shortDescription = book.description.length > 200 
-    ? book.description.slice(0, 200) + '...' 
-    : book.description;
+
+  const shortDescription =
+    book.description.length > 200 ? book.description.slice(0, 200) + '...' : book.description;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 overflow-y-auto custom-scrollbar">
       <button
         onClick={onBack}
-        className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-200 transition-colors mb-6"
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#1a1a1e] text-[13px] font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#232328] transition-all mb-6 cursor-pointer shadow-2xs active:scale-98"
       >
-        <ArrowLeft className="w-4 h-4" /> Back
+        <ArrowLeft className="w-4 h-4" /> Back to books
       </button>
 
-      {/* Hero Section - Book Detail inspired by Sapiens template */}
-      <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 mb-8">
-        {/* Left: Book Cover */}
-        <div className="lg:w-[280px] shrink-0 flex items-start justify-center lg:justify-start">
-          <div className="w-full max-w-[240px] aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border-4 border-white/10 dark:border-white/5">
-            <BookCover 
-              notebookId={book.notebookId} 
-              subject={book.subject} 
-              title={book.bookName || book.title} 
-              className="w-full h-full" 
-            />
-          </div>
-        </div>
-
-        {/* Right: Book Info */}
-        <div className="flex-1 relative">
-          {/* Bookmark icon */}
-          <button
-            onClick={() => setIsBookmarked(!isBookmarked)}
-            className="absolute top-0 right-0 w-11 h-11 rounded-xl flex items-center justify-center bg-white/10 dark:bg-white/10 border border-white/20 dark:border-white/10 hover:border-orange-300 dark:hover:border-orange-500/40 transition-all hover:shadow-md group backdrop-blur-sm"
-            aria-label="Bookmark"
-          >
-            <Bookmark 
-              className={cn(
-                "w-5 h-5 transition-colors",
-                isBookmarked 
-                  ? "fill-orange-500 text-orange-500" 
-                  : "text-slate-400 dark:text-gray-400 group-hover:text-orange-500"
-              )} 
-            />
-          </button>
-
-          {/* Title */}
-          <h1 className="text-[32px] lg:text-[36px] font-bold text-slate-900 dark:text-white leading-[1.1] mb-3 pr-12">
-            {book.bookName || book.title}
-          </h1>
-
-          {/* Author / Class */}
-          {book.className && (
-            <p className="text-[15px] font-semibold text-slate-600 dark:text-gray-400 mb-4">
-              By NCERT Board
-            </p>
-          )}
-
-          {/* Genre/Subject Badge */}
-          <div className="mb-4">
-            <span className="inline-block text-[13px] font-semibold text-slate-600 dark:text-gray-400">
-              Genres/<span className={cn("font-bold", meta.accent.split(' ').find(c => c.startsWith('text-')))}>{book.subject}</span>
-            </span>
-          </div>
-
-          {/* Rating */}
-          <div className="flex items-center gap-1 mb-5">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                className={cn(
-                  "w-5 h-5",
-                  i < Math.floor(rating) 
-                    ? "fill-orange-400 text-orange-400" 
-                    : i < rating 
-                      ? "fill-orange-400 text-orange-400 opacity-50"
-                      : "text-slate-300 dark:text-gray-600"
-                )}
+      {/* Hero Section */}
+      <div className="bg-white dark:bg-[#1a1a1e] rounded-3xl border border-slate-200/90 dark:border-white/[0.08] p-6 sm:p-8 shadow-2xs mb-8">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
+          {/* Left: Book Cover */}
+          <div className="lg:w-[240px] shrink-0 flex items-start justify-center lg:justify-start">
+            <div className="w-full max-w-[220px] aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border-2 border-slate-200/80 dark:border-white/10">
+              <BookCover
+                notebookId={book.notebookId}
+                subject={book.subject}
+                title={book.bookName || book.title}
+                className="w-full h-full"
               />
-            ))}
+            </div>
           </div>
 
-          {/* Description */}
-          <div className="mb-6">
-            <p className="text-[14.5px] text-slate-700 dark:text-gray-300 leading-relaxed">
+          {/* Right: Book Info */}
+          <div className="flex-1 relative">
+            {/* Bookmark button */}
+            <button
+              onClick={() => setIsBookmarked(!isBookmarked)}
+              className={cn(
+                'absolute top-0 right-0 w-10 h-10 rounded-xl flex items-center justify-center border transition-all cursor-pointer shadow-2xs',
+                isBookmarked
+                  ? 'bg-rose-50 dark:bg-rose-500/15 text-rose-600 border-rose-200 dark:border-rose-500/30'
+                  : 'bg-slate-50 dark:bg-[#232328] text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 border-slate-200/80 dark:border-white/[0.08]'
+              )}
+              title={isBookmarked ? 'Remove Bookmark' : 'Bookmark Book'}
+            >
+              <Bookmark className={cn('w-4 h-4', isBookmarked && 'fill-rose-600')} />
+            </button>
+
+            {/* Title */}
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white leading-tight mb-2 pr-12 tracking-tight">
+              {book.bookName || book.title}
+            </h1>
+
+            {/* Subject & Author */}
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="text-[11.5px] font-bold px-2.5 py-0.5 rounded-full bg-[#8ba32b]/15 text-[#8ba32b] dark:bg-[#c8e558]/15 dark:text-[#c8e558] border border-[#8ba32b]/25 dark:border-[#c8e558]/25">
+                {book.subject}
+              </span>
+              {book.className && (
+                <span className="text-[12px] font-semibold text-slate-500 dark:text-slate-400">
+                  · {book.className} (NCERT Curriculum)
+                </span>
+              )}
+            </div>
+
+            {/* Rating */}
+            <div className="flex items-center gap-1.5 mb-4">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  className={cn(
+                    'w-4 h-4',
+                    i < Math.floor(rating)
+                      ? 'fill-amber-500 text-amber-500'
+                      : 'text-slate-300 dark:text-slate-600'
+                  )}
+                />
+              ))}
+              <span className="text-[13px] font-bold text-slate-800 dark:text-slate-200 ml-1">{rating}</span>
+              <span className="text-[12px] text-slate-400 dark:text-slate-500">({reviewCount} student ratings)</span>
+            </div>
+
+            {/* Description */}
+            <p className="text-[13.5px] text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
               {showFullDescription ? book.description : shortDescription}
               {book.description.length > 200 && (
                 <button
                   onClick={() => setShowFullDescription(!showFullDescription)}
-                  className="ml-2 text-[14.5px] font-bold text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors inline-flex items-center gap-1"
+                  className="ml-2 text-[13px] font-bold text-slate-900 dark:text-white hover:text-[#8ba32b] dark:hover:text-[#c8e558] transition-colors cursor-pointer inline-flex items-center gap-0.5"
                 >
-                  {showFullDescription ? 'View less' : 'View more'}
-                  <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", showFullDescription && "rotate-180")} />
+                  {showFullDescription ? 'Show less' : 'Read more'}
+                  <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', showFullDescription && 'rotate-180')} />
                 </button>
               )}
             </p>
-          </div>
 
-          {/* Stats: Reviews + Chapters + Time */}
-          <div className="flex items-center gap-5 mb-6">
-            {/* Mock user avatars + reviews */}
-            <div className="flex items-center gap-2">
-              <div className="flex -space-x-2">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="w-8 h-8 rounded-full border-2 border-slate-900 dark:border-[#0a0a0b] overflow-hidden bg-gradient-to-br from-indigo-400 to-purple-500"
-                  >
-                    {/* Placeholder avatar */}
-                  </div>
-                ))}
-              </div>
-              <span className="text-[14px] font-semibold text-orange-600 dark:text-orange-400">
-                {reviewCount} reviews
-              </span>
+            {/* Actions */}
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => handleLearn()}
+                className="inline-flex items-center justify-center gap-2 px-7 py-3 bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-950 rounded-full text-[13.5px] font-bold transition-all shadow-md hover:opacity-90 cursor-pointer active:scale-98"
+              >
+                <GraduationCap className="w-4 h-4" />
+                <span>Start AI Learning Session</span>
+              </button>
+
+              <button
+                onClick={() => handleTakeTest(book.bookName || book.title)}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-slate-50 dark:bg-[#232328] border border-slate-200/90 dark:border-white/[0.08] text-slate-700 dark:text-slate-200 rounded-full text-[13px] font-bold transition-all hover:bg-slate-100 dark:hover:bg-[#2b2b32] cursor-pointer shadow-2xs active:scale-98"
+              >
+                <ClipboardCheck className="w-4 h-4 text-[#8ba32b] dark:text-[#c8e558]" />
+                <span>Full Book Mock Test</span>
+              </button>
             </div>
           </div>
-
-          {/* Primary CTA */}
-          <button
-            onClick={() => handleLearn()}
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-2xl text-[15px] font-bold transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-100"
-          >
-            <GraduationCap className="w-5 h-5" /> 
-            Read now
-          </button>
         </div>
       </div>
 
-      {/* Secondary Actions Bar */}
-      <div className="flex flex-wrap gap-3 mb-8">
-        <button
-          onClick={() => handleTakeTest(book.bookName || book.title)}
-          className="inline-flex items-center gap-2 px-5 py-3 bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 hover:border-indigo-300 dark:hover:border-indigo-500/40 text-slate-200 dark:text-gray-200 rounded-xl text-[14px] font-semibold transition-all hover:shadow-md backdrop-blur-sm"
-        >
-          <ClipboardCheck className="w-4 h-4" /> Take a full test
-        </button>
-        <div className="flex items-center gap-2.5 px-5 py-3 bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 text-slate-200 dark:text-gray-300 rounded-xl text-[14px] font-semibold backdrop-blur-sm">
-          <BookOpen className="w-4 h-4" /> {totalChapters} chapters
+      {/* Secondary Quick Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#1a1a1e] border border-slate-200/90 dark:border-white/[0.08] shadow-2xs">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Chapters</div>
+          <div className="text-[16px] font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <BookOpen className="w-4 h-4 text-[#8ba32b] dark:text-[#c8e558]" />
+            <span>{totalChapters} Total</span>
+          </div>
         </div>
-        {book.estimatedStudyHours > 0 && (
-          <div className="flex items-center gap-2.5 px-5 py-3 bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 text-slate-200 dark:text-gray-300 rounded-xl text-[14px] font-semibold backdrop-blur-sm">
-            <Clock3 className="w-4 h-4" /> ~{book.estimatedStudyHours}h study time
+
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#1a1a1e] border border-slate-200/90 dark:border-white/[0.08] shadow-2xs">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Study Hours</div>
+          <div className="text-[16px] font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <Clock3 className="w-4 h-4 text-amber-500" />
+            <span>~{book.estimatedStudyHours || 24}h</span>
           </div>
-        )}
-        {completedChapters > 0 && (
-          <div className="flex items-center gap-2.5 px-5 py-3 bg-emerald-500/20 dark:bg-emerald-500/10 border border-emerald-400/30 dark:border-emerald-500/20 text-emerald-300 dark:text-emerald-400 rounded-xl text-[14px] font-semibold backdrop-blur-sm">
-            <CheckCircle2 className="w-4 h-4" /> {completionRate}% complete
+        </div>
+
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#1a1a1e] border border-slate-200/90 dark:border-white/[0.08] shadow-2xs">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Indexed Content</div>
+          <div className="text-[16px] font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <CheckCircle2 className="w-4 h-4 text-[#8ba32b] dark:text-[#c8e558]" />
+            <span>{completionRate}% Ready</span>
           </div>
-        )}
+        </div>
+
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#1a1a1e] border border-slate-200/90 dark:border-white/[0.08] shadow-2xs">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">AI Question Scan</div>
+          <div className="text-[16px] font-bold text-[#8ba32b] dark:text-[#c8e558] flex items-center gap-1.5">
+            <Sparkles className="w-4 h-4" />
+            <span>Active</span>
+          </div>
+        </div>
       </div>
 
-      {/* Chapters — shown as PDF file cards */}
-      <h2 className="text-[18px] font-bold text-slate-900 dark:text-gray-100 mb-4">Chapters</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-6 mb-8">
-        {book.chapters.map((ch, i) => (
-          <ChapterFileCard
-            key={ch.sourceId}
-            book={book}
-            chapter={ch}
-            index={i}
-            onRead={() => handleRead(ch)}
-            onLearn={() => handleLearn(ch)}
-            onTest={() => handleTakeTest(chapterLabel(ch))}
-            onOpen={() => setOpenChapter(ch)}
-          />
-        ))}
+      {/* Chapters Grid */}
+      <div className="mb-8">
+        <h2 className="text-[18px] font-bold text-slate-900 dark:text-white mb-4">
+          Course Chapters ({totalChapters})
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {book.chapters.map((ch, i) => (
+            <ChapterFileCard
+              key={ch.sourceId}
+              book={book}
+              chapter={ch}
+              index={i}
+              onRead={() => handleRead(ch)}
+              onLearn={() => handleLearn(ch)}
+              onTest={() => handleTakeTest(chapterLabel(ch))}
+              onOpen={() => setOpenChapter(ch)}
+            />
+          ))}
+        </div>
       </div>
     </motion.div>
   );

@@ -21,6 +21,7 @@ import {
   Calculator,
   FileText,
   ArrowRight,
+  ArrowUp,
   Image as ImageIcon,
   User,
   Mail,
@@ -35,7 +36,13 @@ import {
   Lock,
   Share2,
   Sun,
-  Moon
+  Moon,
+  Award,
+  Layers,
+  CheckSquare,
+  BrainCircuit,
+  BarChart2,
+  Map
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -128,8 +135,64 @@ const TEACHER_PROMPT_POOL: { icon: any; text: string; prompt: string }[] = [
   { icon: Clock, text: 'Help me structure a class session in the time I have', prompt: 'Help me structure a class session — I\'ll tell you the topic and how much time I have.' },
 ];
 
+const MODE_PROMPTS: Record<string, { icon: any; text: string; prompt: string }[]> = {
+  'study-guide': [
+    { icon: BookOpen, text: 'Create high-yield revision notes for Organic Chemistry', prompt: 'Create a structured, high-yield study guide for Organic Chemistry reaction mechanisms with key formulas.' },
+    { icon: FileText, text: 'Generate an exam-oriented summary for Newton\'s Laws', prompt: 'Generate a comprehensive study guide covering Newton\'s Laws of Motion with derivations and practice problems.' },
+    { icon: Sparkles, text: 'Build a quick reference guide for Macroeconomics', prompt: 'Build a structured study guide summarizing key Macroeconomics formulas, definitions, and graphs.' },
+    { icon: Lightbulb, text: 'Summarize key articles of the Indian Constitution', prompt: 'Create a concise study guide covering the most important Fundamental Rights and Articles of the Indian Constitution.' },
+  ],
+  'slides': [
+    { icon: Layers, text: 'Create a 6-slide presentation deck on Photosynthesis', prompt: 'Generate a 6-slide presentation outline on Photosynthesis with title, key bullet points, and speaker notes for each slide.' },
+    { icon: Sparkles, text: 'Draft presentation slides on Machine Learning basics', prompt: 'Generate structured presentation slides explaining Supervised vs Unsupervised Machine Learning with examples.' },
+    { icon: BookOpen, text: 'Build a slide outline on Climate Change and Solutions', prompt: 'Create a 5-slide educational presentation deck on Climate Change causes, impacts, and sustainable solutions.' },
+    { icon: FileText, text: 'Generate presentation slides for Indian Monsoon dynamics', prompt: 'Generate a structured slide deck explaining the mechanism and seasonal cycle of the Indian Monsoon.' },
+  ],
+  'worksheet': [
+    { icon: FileText, text: 'Generate a 10-question worksheet on Quadratic Equations', prompt: 'Create a printable 10-question practice worksheet on Quadratic Equations with a mix of easy, medium, and hard problems, plus complete solutions.' },
+    { icon: CheckSquare, text: 'Build fill-in-the-blanks and exercises on Cell Biology', prompt: 'Generate a worksheet on Cell Structure and Function with 5 multiple-choice questions, 5 fill-in-the-blanks, and answer key.' },
+    { icon: Lightbulb, text: 'Create a problem-solving drill on Kinematics', prompt: 'Create a physics practice worksheet with 6 numerical problems on 1D/2D Kinematics with step-by-step solutions.' },
+    { icon: Sparkles, text: 'Design an English grammar practice exercise sheet', prompt: 'Create a practice worksheet on Active vs Passive voice and Direct/Indirect speech with 10 exercises and answers.' },
+  ],
+  'mindmap': [
+    { icon: Map, text: 'Generate a mind map outline for Plant Kingdom classification', prompt: 'Generate a hierarchical, structured mind map outline in Markdown for Plant Kingdom classification with characteristics of each division.' },
+    { icon: BrainCircuit, text: 'Map out Data Structures and Algorithms categories', prompt: 'Create a comprehensive mind map outline breaking down Linear and Non-Linear Data Structures and their common algorithms.' },
+    { icon: Sparkles, text: 'Build a visual concept map for Human Digestive System', prompt: 'Generate a structured mind map outline of the Human Digestive System showing organs, enzymes, and digestion stages.' },
+    { icon: FileText, text: 'Map the causes and consequences of World War I', prompt: 'Create a mind map outline detailing the immediate causes, alliances, major battles, and aftermath of World War I.' },
+  ],
+  'infographic': [
+    { icon: BarChart2, text: 'Structure an infographic flow for the Water Cycle', prompt: 'Describe an infographic layout for the Water Cycle with 4 visual stages, key facts, and statistical callout boxes.' },
+    { icon: Sparkles, text: 'Design a visual comparison of Mitochondria vs Chloroplast', prompt: 'Structure a side-by-side comparison infographic layout for Mitochondria vs Chloroplast with structural differences and functions.' },
+    { icon: FileText, text: 'Create a visual process guide for DNA Replication', prompt: 'Outline a step-by-step infographic layout explaining DNA Replication with enzyme callouts and key steps.' },
+    { icon: Lightbulb, text: 'Structure a summary infographic on Renewable Energy types', prompt: 'Create an infographic content plan comparing Solar, Wind, and Hydro power with pros, cons, and efficiency stats.' },
+  ],
+  'image': [
+    { icon: ImageIcon, text: 'Describe a labeled diagram of the Human Heart', prompt: 'Provide a detailed descriptive prompt and layout for a medical educational diagram showing the 4 chambers of the Human Heart and blood flow.' },
+    { icon: Sparkles, text: 'Concept illustration for Solar vs Lunar Eclipse', prompt: 'Describe an educational visual illustration showing the alignment of Sun, Earth, and Moon during Solar and Lunar eclipses.' },
+    { icon: Lightbulb, text: 'Technical visual diagram for Electric Motor principle', prompt: 'Describe a clear physics textbook illustration of an AC Electric Motor with magnetic fields, armature, and commutator labeled.' },
+    { icon: FileText, text: 'Educational visual chart for Periodic Trends', prompt: 'Design a visual illustration concept showing Electronegativity, Ionization Energy, and Atomic Radius trends across the Periodic Table.' },
+  ],
+  'meeting-notes': [
+    { icon: FileText, text: 'Organize raw class notes into structured key takeaways', prompt: 'Turn the rough lecture notes I paste next into structured notes with core concepts, formulas, and action items.' },
+    { icon: Sparkles, text: 'Summarize a study session into high-yield points', prompt: 'Summarize our study group discussion notes into a high-yield summary with questions to review.' },
+    { icon: CheckSquare, text: 'Extract homework, test dates, and priority tasks', prompt: 'Extract all assignments, upcoming quiz dates, and key review topics from the lecture transcript I paste.' },
+    { icon: Lightbulb, text: 'Create a clean meeting recap with action items', prompt: 'Structure these raw bullet points into a formal recap with decisions made, open questions, and next steps.' },
+  ],
+  'page': [
+    { icon: FileText, text: 'Draft an academic essay on AI in Healthcare', prompt: 'Draft a well-structured academic essay on the applications and ethical considerations of Artificial Intelligence in modern Healthcare.' },
+    { icon: Sparkles, text: 'Write a structured lab experiment report', prompt: 'Help me write a formal science lab report including Hypothesis, Apparatus, Procedure, Observations, and Conclusion.' },
+    { icon: Lightbulb, text: 'Compose an argumentative essay with counterarguments', prompt: 'Write a persuasive argumentative essay on Renewable Energy transition with strong evidence and addressed counterpoints.' },
+    { icon: BookOpen, text: 'Draft a comprehensive literature review outline', prompt: 'Draft a structured literature review outline with thematic sections, critical analysis, and research gaps.' },
+  ],
+};
+
+const getPromptPoolForType = (type: string, isTeacher: boolean) => {
+  if (MODE_PROMPTS[type]) return MODE_PROMPTS[type];
+  return isTeacher ? TEACHER_PROMPT_POOL : PROMPT_POOL;
+};
+
 /** Four distinct prompts at random from the given pool, excluding what's currently on screen where possible. */
-const pickPrompts = (pool: typeof PROMPT_POOL, exclude: string[] = []) => {
+const pickPrompts = (pool: { icon: any; text: string; prompt: string }[], exclude: string[] = []) => {
   const fresh = pool.filter((p) => !exclude.includes(p.text));
   const source = fresh.length >= 4 ? fresh : pool;
   return [...source].sort(() => Math.random() - 0.5).slice(0, 4);
@@ -152,6 +215,8 @@ export default function Chat() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const typeParam = searchParams.get('type') || 'chat';
+  const examParam = searchParams.get('exam');
+  const topicParam = searchParams.get('topic');
   const config = TYPE_CONFIG[typeParam] || TYPE_CONFIG['chat'];
   
   const { user, role } = useAuth();
@@ -180,9 +245,16 @@ export default function Chat() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ─── Empty-state prompt cards ──────────────────────────────────────────────
-  const [visiblePrompts, setVisiblePrompts] = useState(() => pickPrompts(promptPool));
+  const activePromptPool = getPromptPoolForType(typeParam, isTeacher);
+  const [visiblePrompts, setVisiblePrompts] = useState(() => pickPrompts(activePromptPool));
+
+  useEffect(() => {
+    const pool = getPromptPoolForType(typeParam, isTeacher);
+    setVisiblePrompts(pickPrompts(pool));
+  }, [typeParam, isTeacher]);
+
   const refreshPrompts = () =>
-    setVisiblePrompts((cur) => pickPrompts(promptPool, cur.map((p) => p.text)));
+    setVisiblePrompts((cur) => pickPrompts(activePromptPool, cur.map((p) => p.text)));
 
   // ─── Retrieval scope (the "All Web" pill) ──────────────────────────────────
   const [scope, setScope] = useState<Scope>(DEFAULT_SCOPE);
@@ -231,7 +303,15 @@ export default function Chat() {
   const [pendingFinal, setPendingFinal] = useState<any>(null);
   const commitPending = React.useCallback(() => {
     setPendingFinal((p: any) => {
-      if (p) setMessages((prev) => [...prev, p]);
+      if (p) {
+        setMessages((prev) => {
+          const isDuplicate = prev.some(
+            (m) => m.role === 'ai' && (m.id === p.id || (m.content && m.content === p.content))
+          );
+          if (isDuplicate) return prev;
+          return [...prev, p];
+        });
+      }
       return null;
     });
   }, []);
@@ -519,6 +599,12 @@ export default function Chat() {
     await sendAIRequest(lastUserMessage, []);
   };
 
+  const handleSuggestionSubmit = async (suggestionText: string) => {
+    if (!user?.uid || !suggestionText.trim()) return;
+    setMessages(prev => [...prev, { role: 'user', content: suggestionText.trim() }]);
+    await sendAIRequest(suggestionText.trim(), []);
+  };
+
   const sendAIRequest = async (userMessage: string, sentAttachments: any[] = []) => {
     // Generate new session ID if it's the first message
     let sessionId = currentSessionId;
@@ -678,43 +764,43 @@ export default function Chat() {
         {/* Header — only actions that are actually backed by an API: the session title
             (generated server-side after the first exchange), New Chat, and Delete.
             No Share/Private here: there is no chat-session sharing endpoint. */}
-        <div className="flex items-center gap-2 px-6 h-14 shrink-0">
-          <span className="text-[14px] font-semibold text-slate-800 dark:text-gray-100 truncate">
+        <div className="flex items-center gap-2 px-6 h-12 sm:h-14 shrink-0 border-b border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-[#141416]/90 backdrop-blur-md">
+          <span className="text-[13.5px] font-semibold text-slate-900 dark:text-white truncate">
             {sessions.find((s) => s.sessionId === currentSessionId)?.title || 'New AI chat'}
           </span>
 
           {/* Every chat session is owner-scoped server-side (chat.service.getSessionHistory
               rejects a requesterId that doesn't own the session), so "Private" is an
               accurate description of the current state rather than decoration. */}
-          <span className="inline-flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.08] text-slate-500 dark:text-gray-400 text-[11px] font-medium">
-            <Lock className="w-3 h-3" strokeWidth={2} />
+          <span className="inline-flex items-center gap-1 shrink-0 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] border border-slate-200/60 dark:border-white/10 text-slate-500 dark:text-slate-400 text-[11px] font-medium">
+            <Lock className="w-3 h-3 text-slate-400 dark:text-slate-500" strokeWidth={2} />
             Private
           </span>
 
           <div className="ml-auto flex items-center gap-1">
             <button
               onClick={() => setIsShareOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12.5px] font-medium text-slate-600 hover:text-slate-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12.5px] font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
               title="Share"
             >
-              <Share2 className="w-4 h-4" strokeWidth={1.75} />
+              <Share2 className="w-3.5 h-3.5" strokeWidth={1.75} />
               <span className="hidden sm:inline">Share</span>
             </button>
 
             <button
               onClick={toggleTheme}
-              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.08] dark:text-slate-400 transition-colors"
+              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.08] dark:text-slate-400 dark:hover:text-white transition-colors"
               title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
               aria-label="Toggle colour theme"
             >
               {theme === 'dark'
-                ? <Sun className="w-4 h-4" strokeWidth={1.75} />
-                : <Moon className="w-4 h-4" strokeWidth={1.75} />}
+                ? <Sun className="w-4 h-4 text-slate-300" strokeWidth={1.75} />
+                : <Moon className="w-4 h-4 text-slate-600" strokeWidth={1.75} />}
             </button>
 
             <button
               onClick={handleNewChat}
-              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-200/60 dark:hover:bg-white/5 dark:text-slate-400 transition-colors"
+              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.08] dark:text-slate-400 dark:hover:text-white transition-colors"
               title="New chat"
             >
               <Plus className="w-4 h-4" strokeWidth={2} />
@@ -722,7 +808,7 @@ export default function Chat() {
             {currentSessionId && (
               <button
                 onClick={(e) => handleDeleteSession(e, currentSessionId)}
-                className="p-1.5 rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:text-slate-400 dark:hover:text-red-400 transition-colors"
+                className="p-1.5 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400 transition-colors"
                 title="Delete this chat"
               >
                 <Trash2 className="w-4 h-4" strokeWidth={1.75} />
@@ -731,87 +817,125 @@ export default function Chat() {
           </div>
         </div>
 
+        {/* Active Exam Copilot Banner */}
+        {examParam && (
+          <div className="bg-indigo-50/90 dark:bg-indigo-950/40 border-b border-indigo-200/60 dark:border-indigo-800/30 px-6 py-2 flex items-center justify-between text-xs shrink-0 z-20">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
+                <Award className="w-4 h-4 text-indigo-500" /> Grounded in {examParam} Official Syllabus
+              </span>
+              {topicParam && (
+                <span className="text-slate-600 dark:text-slate-300">
+                  • Focus Topic: <strong className="text-indigo-600 dark:text-indigo-400">{topicParam}</strong>
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => navigate('/exam-center')}
+              className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline flex items-center gap-1"
+            >
+              Exam Command Center →
+            </button>
+          </div>
+        )}
+
         {loadingHistory ? (
           <div className="flex-1 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+            <Loader2 className="w-8 h-8 animate-spin text-[#8ba32b] dark:text-[#c8e558]" />
           </div>
         ) : messages.length === 0 ? (
           <div className="flex-1 min-h-0 flex flex-col items-center justify-center pb-40 px-6 relative w-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, ease: 'easeOut' }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
               className="flex flex-col items-start text-left z-10 w-full max-w-3xl"
             >
-              {/* Greeting — the first name is the only personalised token; wording branches on
-                  account role (isTeacher) so a teacher isn't greeted as if they're the one
-                  being taught. The AI's actual response persona is a separate, backend-side
-                  change — see prompts.ts's viewerRole branch. */}
-              <h1 className="text-[34px] md:text-[38px] font-bold tracking-[-0.02em] leading-[1.12] text-slate-900 dark:text-gray-50">
-                Hi there,{' '}
-                <span className="bg-gradient-to-r from-purple-500 to-fuchsia-500 bg-clip-text text-transparent">
-                  {firstName}
-                </span>
-                <br />
-                {isTeacher ? (
-                  <>
-                    What are you{' '}
-                    <span className="bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
-                      preparing today?
+              {/* Greeting / Tool Mode Header — responsive to typeParam */}
+              {typeParam !== 'chat' ? (
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#c8e558]/15 text-[#8ba32b] dark:text-[#c8e558] text-[12px] font-semibold mb-3 border border-[#c8e558]/30">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{config.title}</span>
+                  </div>
+                  <h1 className="text-[28px] sm:text-[34px] font-semibold tracking-[-0.025em] leading-[1.18] text-slate-900 dark:text-white">
+                    {config.title}
+                  </h1>
+                  <p className="mt-2 text-slate-500 dark:text-slate-400 text-[14px] leading-relaxed max-w-[520px]">
+                    {config.subtitle}
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <h1 className="text-[30px] sm:text-[34px] font-semibold tracking-[-0.025em] leading-[1.18] text-slate-900 dark:text-white">
+                    Hi there,{' '}
+                    <span className="text-[#8ba32b] dark:text-[#c8e558] font-semibold">
+                      {firstName}
                     </span>
-                  </>
-                ) : (
-                  <>
-                    What would{' '}
-                    <span className="bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
-                      you like to know?
-                    </span>
-                  </>
-                )}
-              </h1>
+                    <br />
+                    {isTeacher ? (
+                      <span>
+                        What are you{' '}
+                        <span className="text-slate-900 dark:text-white font-semibold">
+                          preparing today?
+                        </span>
+                      </span>
+                    ) : (
+                      <span>
+                        What would{' '}
+                        <span className="text-slate-900 dark:text-white font-semibold">
+                          you like to know?
+                        </span>
+                      </span>
+                    )}
+                  </h1>
 
-              <p className="mt-3 text-slate-500 dark:text-gray-400 text-[14.5px] leading-[1.55] max-w-[340px]">
-                {isTeacher
-                  ? 'Use one of the prompts below, or ask your own — I can help you prepare and teach.'
-                  : 'Use one of the most common prompts below or use your own to begin'}
-              </p>
+                  <p className="mt-2.5 text-slate-500 dark:text-slate-400 text-[14px] leading-relaxed max-w-[420px]">
+                    {isTeacher
+                      ? 'Use one of the prompts below, or ask your own — I can help you prepare and teach.'
+                      : 'Use one of the most common prompts below or use your own to begin'}
+                  </p>
+                </div>
+              )}
 
-              {/* Suggestion cards — one row of four, copy on top, icon anchored bottom-left. */}
+              {/* Suggestion cards — sleek 4-column glass grid */}
               <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3 w-full">
                 {visiblePrompts.map((item, idx) => (
                   <motion.button
                     key={`${item.text}-${idx}`}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.06 + 0.1, duration: 0.35 }}
+                    transition={{ delay: idx * 0.05 + 0.08, duration: 0.3 }}
                     onClick={() => {
                       setInput(item.prompt);
                       setTimeout(() => handleSend(), 50);
                     }}
-                    className="flex flex-col justify-between text-left h-[100px] p-3.5 rounded-xl bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:border-indigo-300 dark:hover:border-indigo-500/40 hover:shadow-[0_2px_10px_rgba(15,23,42,0.06)] dark:hover:bg-white/[0.07] transition-all duration-200 group cursor-pointer"
+                    className="flex flex-col justify-between text-left h-[110px] p-3.5 rounded-2xl bg-white dark:bg-[#141416] border border-slate-200/90 dark:border-white/10 hover:border-[#8ba32b]/40 dark:hover:border-[#c8e558]/40 hover:shadow-xs hover:bg-slate-50/70 dark:hover:bg-white/[0.04] transition-all duration-200 group cursor-pointer"
                   >
-                    <span className="text-[13px] leading-[1.4] text-slate-700 dark:text-gray-300 line-clamp-3">
+                    <span className="text-[12.5px] font-medium leading-[1.4] text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white line-clamp-3">
                       {item.text}
                     </span>
-                    <item.icon
-                      className="w-4 h-4 text-slate-400 dark:text-gray-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors shrink-0"
-                      strokeWidth={1.75}
-                    />
+                    <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 dark:text-slate-500 group-hover:text-[#8ba32b] dark:group-hover:text-[#c8e558] transition-colors shrink-0">
+                      <item.icon
+                        className="w-3.5 h-3.5"
+                        strokeWidth={1.75}
+                      />
+                    </div>
                   </motion.button>
                 ))}
               </div>
 
               <button
                 onClick={refreshPrompts}
-                className="mt-4 inline-flex items-center gap-1.5 text-[13px] text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-200 transition-colors group"
+                className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-white/[0.03] text-[12px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-all shadow-2xs group"
               >
-                <RefreshCw className="w-3.5 h-3.5 group-hover:rotate-180 transition-transform duration-500" strokeWidth={1.75} />
+                <RefreshCw className="w-3 h-3 group-hover:rotate-180 transition-transform duration-500 text-[#8ba32b] dark:text-[#c8e558]" strokeWidth={2} />
                 Refresh Prompts
               </button>
             </motion.div>
           </div>
         ) : (
-          <div className="flex-1 min-h-0 overflow-y-auto pb-32 px-4 md:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex justify-center">
+          <div className="flex-1 min-h-0 overflow-y-auto pb-60 md:pb-68 px-4 md:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex justify-center">
             <div className="flex flex-col gap-6 py-6 border-none w-full max-w-3xl">
               {messages.map((msg, i) => (
                 <div key={i} className={cn("flex w-full", msg.role === 'user' ? "justify-end" : "justify-start")}>
@@ -850,17 +974,17 @@ export default function Chat() {
                         </div>
                       )}
                       {msg.content && (
-                        <div className="bg-[#1e1e1e] dark:bg-[#1a1a1b] text-slate-100 dark:text-gray-200 px-5 py-2.5 rounded-3xl rounded-tr-sm text-[15px] whitespace-pre-wrap tracking-wide shadow-sm">
+                        <div className="bg-slate-900 text-white dark:bg-[#18181b] dark:text-slate-100 border border-transparent dark:border-white/10 px-4.5 py-2.5 rounded-2xl rounded-tr-xs text-[14.5px] whitespace-pre-wrap tracking-wide shadow-xs">
                           {msg.content}
                         </div>
                       )}
                     </div>
                   ) : (
                     <div className="flex gap-4 w-full min-w-0">
-                      <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center shrink-0 mt-1">
-                        <Bot className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                      <div className="w-8 h-8 rounded-xl bg-slate-900 text-[#c8e558] dark:bg-white dark:text-slate-900 flex items-center justify-center shrink-0 mt-1 shadow-2xs">
+                        <Sparkles className="w-4 h-4" />
                       </div>
-                      <div className="flex flex-col text-slate-800 dark:text-gray-100 w-full min-w-0">
+                      <div className="flex flex-col text-slate-800 dark:text-slate-100 w-full min-w-0">
                         {/* Reasoning timeline, sources, answer body and action bar all
                             live in AssistantReply — see components/chat/AssistantReply.tsx. */}
                         <AssistantReply
@@ -877,6 +1001,7 @@ export default function Chat() {
                           onRate={msg.id ? (r) => handleRate(msg.id, r) : undefined}
                           rating={msg.id ? ratings[msg.id] ?? null : null}
                           onQuote={setQuotedText}
+                          onSuggestionClick={handleSuggestionSubmit}
                         />
                       </div>
                     </div>
@@ -888,18 +1013,14 @@ export default function Chat() {
               {(stream.isStreaming || pendingFinal) && (
                 <div className="flex w-full justify-start">
                   <div className="flex gap-4 w-full min-w-0">
-                    {/* Thinking-mode avatar: a slow breathing ring while the pipeline runs,
-                        so the identity glyph itself signals work rather than sitting inert. */}
+                    {/* Thinking-mode avatar: a slow breathing ring while the pipeline runs */}
                     <div className="relative w-8 h-8 shrink-0 mt-1">
-                      <span className="absolute inset-0 rounded-full bg-indigo-500/25 animate-ping [animation-duration:2s]" aria-hidden />
-                      <span className="relative w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-500/20 ring-1 ring-indigo-400/40 flex items-center justify-center">
-                        <Bot className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                      <span className="absolute inset-0 rounded-xl bg-[#8ba32b]/25 dark:bg-[#c8e558]/25 animate-ping [animation-duration:2s]" aria-hidden />
+                      <span className="relative w-8 h-8 rounded-xl bg-slate-900 text-[#c8e558] dark:bg-white dark:text-slate-900 ring-1 ring-[#8ba32b]/40 dark:ring-[#c8e558]/40 flex items-center justify-center shadow-2xs">
+                        <Sparkles className="w-4 h-4" />
                       </span>
                     </div>
-                    <div className="flex flex-col text-slate-800 dark:text-gray-100 w-full min-w-0">
-                      {/* Same template as a finished reply, in its streaming state:
-                          the timeline animates, the status line tracks the current
-                          stage, and citations appear as the backend emits them. */}
+                    <div className="flex flex-col text-slate-800 dark:text-slate-100 w-full min-w-0">
                       <AssistantReply
                         content={pendingFinal ? pendingFinal.content : stream.content}
                         streaming={stream.isStreaming}
@@ -907,6 +1028,7 @@ export default function Chat() {
                         statusMessage={stream.isStreaming ? stream.progressEvents[stream.progressEvents.length - 1]?.message : undefined}
                         reasoning={pendingFinal ? pendingFinal.reasoning : stream.reasoning}
                         citations={pendingFinal ? pendingFinal.citations || [] : stream.citations}
+                        onSuggestionClick={handleSuggestionSubmit}
                         onRevealDone={commitPending}
                       />
                     </div>
@@ -914,27 +1036,26 @@ export default function Chat() {
                 </div>
               )}
               
-              <div ref={endOfMessagesRef} className="h-40 shrink-0 w-full" />
+              <div ref={endOfMessagesRef} className="h-56 shrink-0 w-full" />
             </div>
           </div>
         )}
 
         {/* Input Box - absolute positioned at bottom */}
         <div className="absolute bottom-3 left-0 right-0 flex flex-col items-center px-4 md:px-8">
-          <div className="w-full max-w-3xl bg-white dark:bg-[#1e1e20] border border-slate-200 dark:border-white/10 rounded-2xl flex flex-col shadow-[0_1px_3px_rgba(15,23,42,0.06)] focus-within:shadow-[0_4px_16px_rgba(15,23,42,0.08)] dark:focus-within:ring-1 dark:focus-within:ring-white/10 transition-all">
+          <div className="w-full max-w-3xl bg-white dark:bg-[#141416] border border-slate-200/90 dark:border-white/10 rounded-2xl sm:rounded-3xl flex flex-col shadow-xs focus-within:border-slate-400 dark:focus-within:border-white/25 focus-within:shadow-sm transition-all">
 
-              {/* Scope pill — top-right, mirrors the reference mock. Controls which
-                  corpus the next message is grounded in. See the Scope type above. */}
+              {/* Scope pill — top-right */}
               <div className="flex items-start justify-end px-3 pt-3 -mb-1">
                 <div className="relative">
                   <button
                     onClick={() => setIsScopeOpen(!isScopeOpen)}
-                    className="flex items-center gap-1.5 max-w-[190px] text-[12px] font-medium px-2.5 py-1.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/[0.16] transition-colors"
+                    className="flex items-center gap-1.5 max-w-[190px] text-[11.5px] font-semibold px-2.5 py-1 rounded-full bg-slate-100/90 dark:bg-white/[0.06] border border-slate-200/60 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-white/10 transition-colors"
                     title="Choose what this chat is grounded in"
                   >
                     {scope.kind === 'notebook'
-                      ? <Notebook className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
-                      : <Globe className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />}
+                      ? <Notebook className="w-3.5 h-3.5 shrink-0 text-[#8ba32b] dark:text-[#c8e558]" strokeWidth={1.75} />
+                      : <Globe className="w-3.5 h-3.5 shrink-0 text-[#8ba32b] dark:text-[#c8e558]" strokeWidth={1.75} />}
                     <span className="truncate">{scopeLabel(scope)}</span>
                     <ChevronDown className="w-3 h-3 shrink-0" strokeWidth={2.5} />
                   </button>
@@ -942,7 +1063,7 @@ export default function Chat() {
                   {isScopeOpen && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setIsScopeOpen(false)} />
-                      <div className="absolute right-0 top-full mt-2 w-60 max-h-[280px] overflow-y-auto custom-scrollbar bg-white dark:bg-[#1a1a1b] rounded-xl shadow-lg border border-slate-200 dark:border-white/10 overflow-hidden z-50 py-1">
+                      <div className="absolute right-0 top-full mt-2 w-60 max-h-[280px] overflow-y-auto custom-scrollbar bg-white dark:bg-[#1a1a1b] rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 overflow-hidden z-50 py-1.5">
                         {([
                           { key: 'auto', icon: Sparkles, label: 'Auto', hint: 'Let Scholarly decide' },
                           { key: 'web', icon: Globe, label: 'All Web', hint: 'Search the web (research mode)' },
@@ -953,22 +1074,22 @@ export default function Chat() {
                             className={cn(
                               'w-full flex items-start gap-2.5 px-3 py-2 text-left transition-colors',
                               scope.kind === opt.key
-                                ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300'
-                                : 'text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-white/5'
+                                ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white font-semibold'
+                                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
                             )}
                           >
-                            <opt.icon className="w-3.5 h-3.5 mt-0.5 shrink-0" strokeWidth={1.75} />
+                            <opt.icon className="w-3.5 h-3.5 mt-0.5 shrink-0 text-[#8ba32b] dark:text-[#c8e558]" strokeWidth={1.75} />
                             <span className="flex-1 min-w-0">
                               <span className="block text-[13px] font-medium">{opt.label}</span>
-                              <span className="block text-[11px] text-slate-400 dark:text-gray-500 truncate">{opt.hint}</span>
+                              <span className="block text-[11px] text-slate-400 dark:text-slate-500 truncate">{opt.hint}</span>
                             </span>
-                            {scope.kind === opt.key && <Check className="w-3.5 h-3.5 mt-0.5 shrink-0" strokeWidth={2.5} />}
+                            {scope.kind === opt.key && <Check className="w-3.5 h-3.5 mt-0.5 shrink-0 text-[#8ba32b] dark:text-[#c8e558]" strokeWidth={2.5} />}
                           </button>
                         ))}
 
                         {notebooks.length > 0 && (
                           <>
-                            <div className="px-3 pt-2 pb-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-400 dark:text-gray-500">
+                            <div className="px-3 pt-2 pb-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-400 dark:text-slate-500">
                               My Notebooks
                             </div>
                             {notebooks.map((nb) => (
@@ -978,14 +1099,14 @@ export default function Chat() {
                                 className={cn(
                                   'w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors',
                                   scope.kind === 'notebook' && scope.id === nb.id
-                                    ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300'
-                                    : 'text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-white/5'
+                                    ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white font-semibold'
+                                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
                                 )}
                               >
-                                <Notebook className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
+                                <Notebook className="w-3.5 h-3.5 shrink-0 text-[#8ba32b] dark:text-[#c8e558]" strokeWidth={1.75} />
                                 <span className="flex-1 text-[13px] truncate">{nb.title}</span>
                                 {scope.kind === 'notebook' && scope.id === nb.id && (
-                                  <Check className="w-3.5 h-3.5 shrink-0" strokeWidth={2.5} />
+                                  <Check className="w-3.5 h-3.5 shrink-0 text-[#8ba32b] dark:text-[#c8e558]" strokeWidth={2.5} />
                                 )}
                               </button>
                             ))}
@@ -998,17 +1119,16 @@ export default function Chat() {
               </div>
 
               
-              {/* Quoted reply — set by selecting text in an answer and clicking "Reply".
-                  Prepended to the next message so the model knows what's being referred to. */}
+              {/* Quoted reply */}
               {quotedText && (
-                <div className="flex items-start gap-2 mx-3 mt-3 px-2.5 py-2 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 border-l-2 border-indigo-500">
-                  <CornerUpLeft className="w-3.5 h-3.5 mt-0.5 shrink-0 text-indigo-500" strokeWidth={1.75} />
-                  <span className="flex-1 min-w-0 text-[12.5px] leading-snug text-slate-600 dark:text-gray-300 line-clamp-2">
+                <div className="flex items-start gap-2 mx-3 mt-3 px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.04] border-l-2 border-[#8ba32b] dark:border-[#c8e558]">
+                  <CornerUpLeft className="w-3.5 h-3.5 mt-0.5 shrink-0 text-[#8ba32b] dark:text-[#c8e558]" strokeWidth={1.75} />
+                  <span className="flex-1 min-w-0 text-[12.5px] leading-snug text-slate-600 dark:text-slate-300 line-clamp-2">
                     {quotedText}
                   </span>
                   <button
                     onClick={() => setQuotedText(null)}
-                    className="shrink-0 text-slate-400 hover:text-slate-700 dark:hover:text-gray-200 transition-colors"
+                    className="shrink-0 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
                     title="Remove quote"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -1021,7 +1141,7 @@ export default function Chat() {
                   {attachments.map((att, i) => (
                     <div
                       key={i}
-                      className="group relative flex items-center gap-2.5 pl-2.5 pr-8 py-2 rounded-xl bg-white dark:bg-white/[0.06] border border-slate-200 dark:border-white/10 shadow-sm animate-in fade-in zoom-in duration-200"
+                      className="group relative flex items-center gap-2.5 pl-2.5 pr-8 py-2 rounded-xl bg-white dark:bg-white/[0.06] border border-slate-200 dark:border-white/10 shadow-xs animate-in fade-in zoom-in duration-200"
                     >
                       <span className={cn(
                         'w-7 h-7 rounded-lg flex items-center justify-center shrink-0',
@@ -1029,17 +1149,17 @@ export default function Chat() {
                           ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400'
                           : att.mimeType === 'application/pdf'
                             ? 'bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400'
-                            : 'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400'
+                            : 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300'
                       )}>
                         {att.mimeType?.startsWith('image/')
                           ? <ImageIcon className="w-3.5 h-3.5" strokeWidth={1.75} />
                           : <FileText className="w-3.5 h-3.5" strokeWidth={1.75} />}
                       </span>
                       <span className="flex flex-col min-w-0">
-                        <span className="text-[12.5px] font-medium text-slate-800 dark:text-gray-100 truncate max-w-[150px] leading-tight">
+                        <span className="text-[12.5px] font-medium text-slate-800 dark:text-slate-100 truncate max-w-[150px] leading-tight">
                           {att.name}
                         </span>
-                        <span className="text-[11px] text-slate-400 dark:text-gray-500 leading-tight">
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500 leading-tight">
                           {new Date().toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}
                         </span>
                       </span>
@@ -1053,8 +1173,8 @@ export default function Chat() {
                     </div>
                   ))}
                   {isUploadingFile && (
-                    <div className="flex items-center gap-2 bg-slate-200/50 dark:bg-white/5 text-slate-500 dark:text-gray-400 px-3 py-1.5 rounded-lg text-[13px] font-medium animate-pulse">
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 px-3 py-1.5 rounded-lg text-[13px] font-medium animate-pulse">
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#8ba32b] dark:text-[#c8e558]" />
                       <span>Reading file...</span>
                     </div>
                   )}
@@ -1071,9 +1191,19 @@ export default function Chat() {
                       handleSend();
                     }
                   }}
-                  placeholder="Ask whatever you want...."
+                  placeholder={
+                    typeParam === 'study-guide' ? 'Enter a topic or paste notes to generate a study guide...' :
+                    typeParam === 'slides' ? 'Describe the presentation slides you want to generate...' :
+                    typeParam === 'worksheet' ? 'Describe the worksheet exercises and subject you need...' :
+                    typeParam === 'mindmap' ? 'Enter a central topic to build a concept mind map...' :
+                    typeParam === 'infographic' ? 'Describe the concept to outline an infographic...' :
+                    typeParam === 'image' ? 'Describe the educational diagram or illustration...' :
+                    typeParam === 'meeting-notes' ? 'Paste your raw notes or transcript here...' :
+                    typeParam === 'page' ? 'Enter a topic or outline to draft your page...' :
+                    'Ask whatever you want...'
+                  }
                   maxLength={MAX_CHARS}
-                  className="w-full bg-transparent text-slate-800 dark:text-gray-200 placeholder:text-slate-400 dark:placeholder:text-gray-500 px-4 pt-1 pb-2 min-h-[46px] max-h-[200px] outline-none resize-none text-[15px]"
+                  className="w-full bg-transparent text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 px-4 pt-1 pb-2 min-h-[46px] max-h-[200px] outline-none resize-none text-[14.5px] leading-relaxed"
                   rows={1}
                   disabled={loadingHistory}
                 />
@@ -1092,7 +1222,7 @@ export default function Chat() {
                     <div className="relative">
                       <button
                         onClick={() => setIsAttachmentDropdownOpen(!isAttachmentDropdownOpen)}
-                        className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-100 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
+                        className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
                         title="Add attachment — PDF, document, image or text"
                         aria-label="Add attachment"
                       >
@@ -1102,28 +1232,28 @@ export default function Chat() {
                       {isAttachmentDropdownOpen && (
                         <>
                           <div className="fixed inset-0 z-40" onClick={() => setIsAttachmentDropdownOpen(false)}></div>
-                          <div className="absolute left-0 bottom-full mb-2 w-48 bg-white dark:bg-[#1a1a1b] rounded-xl shadow-lg border border-slate-200 dark:border-white/10 overflow-hidden z-50">
+                          <div className="absolute left-0 bottom-full mb-2 w-48 bg-white dark:bg-[#1a1a1b] rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 overflow-hidden z-50 py-1">
                             <button 
                               onClick={() => { setAttachmentAccept(".pdf"); setIsAttachmentDropdownOpen(false); setTimeout(() => fileInputRef.current?.click(), 0); }}
-                              className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-gray-200 transition-colors"
+                              className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 transition-colors"
                             >
                               Upload PDF
                             </button>
                             <button 
                               onClick={() => { setAttachmentAccept(".docx"); setIsAttachmentDropdownOpen(false); setTimeout(() => fileInputRef.current?.click(), 0); }}
-                              className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-gray-200 transition-colors"
+                              className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 transition-colors"
                             >
                               Upload Document (.docx)
                             </button>
                             <button 
                               onClick={() => { setAttachmentAccept(".jpg,.jpeg,.png"); setIsAttachmentDropdownOpen(false); setTimeout(() => fileInputRef.current?.click(), 0); }}
-                              className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-gray-200 transition-colors"
+                              className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 transition-colors"
                             >
                               Upload Image (OCR)
                             </button>
                             <button 
                               onClick={() => { setAttachmentAccept(".txt,.md,.csv,.json,.js,.ts,.tsx,.py,.html,.css"); setIsAttachmentDropdownOpen(false); setTimeout(() => fileInputRef.current?.click(), 0); }}
-                              className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-gray-200 transition-colors"
+                              className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 transition-colors"
                             >
                               Upload Text / Code
                             </button>
@@ -1132,15 +1262,13 @@ export default function Chat() {
                       )}
                     </div>
 
-                    {/* Icon-only from here on: the labels crowded the bar. Every control
-                        keeps a title + aria-label so the meaning stays discoverable. */}
                     <button
                       onClick={() => {
                         setAttachmentAccept('.jpg,.jpeg,.png');
                         setIsAttachmentDropdownOpen(false);
                         setTimeout(() => fileInputRef.current?.click(), 0);
                       }}
-                      className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-100 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
+                      className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
                       title="Use image — attach a photo or screenshot (OCR)"
                       aria-label="Use image"
                     >
@@ -1153,7 +1281,7 @@ export default function Chat() {
                         'w-8 h-8 flex items-center justify-center rounded-lg transition-colors',
                         isListening
                           ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 animate-pulse'
-                          : 'text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-slate-100 dark:hover:bg-white/[0.08]'
+                          : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.08]'
                       )}
                       title={isListening ? 'Listening — click to stop' : 'Talk — dictate your question'}
                       aria-label={isListening ? 'Stop dictation' : 'Start dictation'}
@@ -1165,7 +1293,7 @@ export default function Chat() {
 
                     <Link
                       to="/research"
-                      className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-100 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
+                      className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
                       title="Deep Research — open the long-form research workspace"
                       aria-label="Deep Research"
                     >
@@ -1177,11 +1305,11 @@ export default function Chat() {
                     <div className="relative">
                       <button
                         onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
-                        className="flex items-center gap-1.5 max-w-[190px] text-slate-600 hover:text-slate-900 dark:text-gray-300 dark:hover:text-gray-100 text-[12.5px] font-medium px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
+                        className="flex items-center gap-1.5 max-w-[190px] text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white text-[12.5px] font-medium px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
                         title="Choose model"
                       >
                         {activeModel.icon}
-                        <span className="truncate">{activeModel.name}</span>
+                        <span className="truncate font-semibold">{activeModel.name}</span>
                         <ChevronDown className="w-3 h-3 shrink-0" strokeWidth={2.5}/>
                       </button>
 
@@ -1192,10 +1320,6 @@ export default function Chat() {
                             onClick={() => { setIsModelDropdownOpen(false); setModelQuery(''); setShowMoreModels(false); }}
                           />
 
-                          {/* Model picker, laid out like the reference: search field, a
-                              primary list, and a "More models ›" flyout for the rest.
-                              Populated only with models this deployment actually has
-                              (see modelOptions) — no placeholder entries. */}
                           <div className="absolute right-0 bottom-full mb-2 w-[264px] bg-white dark:bg-[#242426] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 z-50 py-1.5">
                             <div className="px-3 pt-1 pb-2">
                               <input
@@ -1203,18 +1327,16 @@ export default function Chat() {
                                 value={modelQuery}
                                 onChange={(e) => setModelQuery(e.target.value)}
                                 placeholder="Search models..."
-                                className="w-full bg-transparent text-[13.5px] text-slate-800 dark:text-gray-100 placeholder:text-slate-400 dark:placeholder:text-gray-500 outline-none"
+                                className="w-full bg-transparent text-[13.5px] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
                               />
                               <div className="mt-2 h-px bg-slate-200 dark:bg-white/10" />
                             </div>
 
-                            <div className="px-3 pb-1 text-[11.5px] font-medium text-slate-400 dark:text-gray-500">
+                            <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                               Models
                             </div>
 
                             <div className="max-h-[260px] overflow-y-auto custom-scrollbar px-1.5 pb-1">
-                              {/* "More models" only makes sense when nothing is being searched —
-                                  a query searches the full list already. */}
                               {!modelQuery.trim() && (
                                 <div
                                   className="relative"
@@ -1224,10 +1346,10 @@ export default function Chat() {
                                   <button
                                     onClick={() => setShowMoreModels((v) => !v)}
                                     className={cn(
-                                      'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] text-left transition-colors',
+                                      'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-left transition-colors',
                                       showMoreModels
-                                        ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-gray-100'
-                                        : 'text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                                        ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white font-semibold'
+                                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                                     )}
                                   >
                                     <span className="flex-1">More models</span>
@@ -1246,16 +1368,16 @@ export default function Chat() {
                                             setShowMoreModels(false);
                                           }}
                                           className={cn(
-                                            'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] text-left transition-colors',
+                                            'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-left transition-colors',
                                             selectedModel === model.id
-                                              ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-gray-100'
-                                              : 'text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                                              ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white font-semibold'
+                                              : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                                           )}
                                         >
                                           <span className="shrink-0 flex items-center">{model.icon}</span>
                                           <span className="flex-1 truncate">{model.name}</span>
                                           {selectedModel === model.id && (
-                                            <Check className="w-3.5 h-3.5 shrink-0 text-indigo-500" strokeWidth={2.5} />
+                                            <Check className="w-3.5 h-3.5 shrink-0 text-[#8ba32b] dark:text-[#c8e558]" strokeWidth={2.5} />
                                           )}
                                         </button>
                                       ))}
@@ -1274,22 +1396,22 @@ export default function Chat() {
                                     setShowMoreModels(false);
                                   }}
                                   className={cn(
-                                    'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] text-left transition-colors',
+                                    'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-left transition-colors',
                                     selectedModel === model.id
-                                      ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-gray-100'
-                                      : 'text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                                      ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white font-semibold'
+                                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                                   )}
                                 >
                                   <span className="shrink-0 flex items-center">{model.icon}</span>
                                   <span className="flex-1 truncate">{model.name}</span>
                                   {selectedModel === model.id && (
-                                    <Check className="w-3.5 h-3.5 shrink-0 text-indigo-500" strokeWidth={2.5} />
+                                    <Check className="w-3.5 h-3.5 shrink-0 text-[#8ba32b] dark:text-[#c8e558]" strokeWidth={2.5} />
                                   )}
                                 </button>
                               ))}
 
                               {visibleModels.length === 0 && (
-                                <div className="px-2.5 py-3 text-[13px] text-slate-400 dark:text-gray-500">
+                                <div className="px-2.5 py-3 text-[13px] text-slate-400 dark:text-slate-500">
                                   No models match “{modelQuery}”.
                                 </div>
                               )}
@@ -1298,16 +1420,15 @@ export default function Chat() {
                         </>
                       )}
                     </div>
-                    {/* Character budget. Turns amber past 90% so the hard stop at
-                        MAX_CHARS (enforced by the textarea's maxLength) isn't a surprise. */}
+                    {/* Character budget */}
                     <span
                       className={cn(
-                        'text-[11.5px] tabular-nums transition-colors',
+                        'text-[11.5px] font-mono tabular-nums transition-colors',
                         input.length >= MAX_CHARS
                           ? 'text-red-500'
                           : input.length > MAX_CHARS * 0.9
                             ? 'text-amber-500'
-                            : 'text-slate-400 dark:text-gray-500'
+                            : 'text-slate-400 dark:text-slate-500'
                       )}
                     >
                       {input.length}/{MAX_CHARS}
@@ -1316,18 +1437,38 @@ export default function Chat() {
                     <button
                       onClick={handleSend}
                       disabled={(!input.trim() && attachments.length === 0) || loadingHistory}
-                      className="w-8 h-8 rounded-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 dark:disabled:bg-white/10 disabled:cursor-not-allowed flex items-center justify-center text-white transition-colors cursor-pointer shrink-0"
-                      title="Send"
+                      className="w-8 h-8 rounded-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 disabled:bg-slate-100 dark:disabled:bg-white/5 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-md active:scale-95"
+                      title="Send question"
+                      aria-label="Send question"
                     >
-                      <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
+                      <ArrowUp className="w-4 h-4" strokeWidth={2.5} />
                     </button>
                 </div>
               </div>
 
           </div>
 
-          <p className="mt-2 text-[11px] text-slate-400 dark:text-gray-500 text-center">
-            Scholarly AI can make mistakes. Please double-check important answers.
+          {/* Quick Learning Action Chips (matching landing page UI) */}
+          <div className="flex items-center justify-center gap-1.5 mt-2 flex-wrap px-2">
+            {[
+              { label: 'Explain', prompt: 'Can you explain this concept step-by-step with simple examples and analogies?' },
+              { label: 'Revise', prompt: 'Give me a quick 5-bullet high-yield revision summary for this topic.' },
+              { label: 'Quiz', prompt: 'Generate 3 exam-level practice questions on this topic with detailed explanations.' },
+              { label: 'Essay', prompt: 'Structure a high-scoring answer-writing format and outline for this topic.' },
+              { label: 'Research', prompt: 'Provide a deep dive research analysis and official source context for this.' },
+            ].map((action) => (
+              <button
+                key={action.label}
+                onClick={() => handleSuggestionSubmit(action.prompt)}
+                className="px-3 py-1 rounded-full text-[11px] font-medium bg-white/80 dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200/80 dark:border-white/10 shadow-2xs transition-all active:scale-95 cursor-pointer"
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+
+          <p className="mt-1.5 text-[10.5px] text-slate-400 dark:text-gray-500 text-center">
+            Scholarly AI can make mistakes. Please verify important exam facts.
           </p>
         </div>
       </div>

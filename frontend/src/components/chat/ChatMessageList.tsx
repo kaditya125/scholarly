@@ -32,19 +32,21 @@ export function ChatMessageList({ messages, isStreaming, onCitationClick }: Chat
   return (
     <div className="space-y-6">
       {messages.map((msg, idx) => (
-        <div key={msg.id || idx} className={cn("flex gap-4", msg.role === 'user' ? "flex-row-reverse" : "flex-row")}>
+        <div key={msg.id || idx} className={cn("flex gap-3.5", msg.role === 'user' ? "flex-row-reverse" : "flex-row")}>
           <div className={cn(
-            "w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1",
-            msg.role === 'user' ? "bg-slate-800 text-white dark:bg-gray-200 dark:text-slate-900" : "bg-indigo-600 text-white"
+            "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-1 shadow-2xs",
+            msg.role === 'user' 
+              ? "bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900" 
+              : "bg-slate-900 text-[#c8e558] dark:bg-white dark:text-slate-900"
           )}>
             {msg.role === 'user' ? <User className="w-4 h-4" /> : <Brain className="w-4 h-4" />}
           </div>
           
           <div className={cn(
-            "max-w-[85%] rounded-2xl px-5 py-4",
+            "max-w-[85%] rounded-2xl px-5 py-3.5 shadow-xs",
             msg.role === 'user' 
-              ? "bg-slate-800 text-white dark:bg-gray-200 dark:text-slate-900 rounded-tr-sm" 
-              : "bg-white dark:bg-[#1a1a1b] text-slate-800 dark:text-gray-200 border border-slate-200 dark:border-white/10 shadow-sm rounded-tl-sm"
+              ? "bg-slate-900 text-white dark:bg-[#18181b] dark:text-slate-100 rounded-tr-xs border border-transparent dark:border-white/10" 
+              : "bg-white dark:bg-[#141416] text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-white/10 rounded-tl-xs"
           )}>
             <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:text-slate-50">
               <ReactMarkdown 
@@ -54,13 +56,13 @@ export function ChatMessageList({ messages, isStreaming, onCitationClick }: Chat
                   code({node, inline, className, children, ...props}: any) {
                     const match = /language-(\w+)/.exec(className || '');
                     return !inline ? (
-                      <pre className="bg-[#1e1e1e] p-4 rounded-xl overflow-x-auto my-4 text-sm font-mono border border-white/10 shadow-lg">
+                      <pre className="bg-[#141416] p-4 rounded-xl overflow-x-auto my-4 text-sm font-mono border border-white/10 shadow-sm">
                         <code className={className} {...props}>
                           {children}
                         </code>
                       </pre>
                     ) : (
-                      <code className="bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded text-indigo-600 dark:text-indigo-400 font-mono text-[0.9em]" {...props}>
+                      <code className="bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded text-[#8ba32b] dark:text-[#c8e558] font-mono text-[0.9em]" {...props}>
                         {children}
                       </code>
                     )
@@ -82,14 +84,14 @@ export function ChatMessageList({ messages, isStreaming, onCitationClick }: Chat
             )}
             
             {msg.citations && msg.citations.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/10">
-                <p className="text-xs font-semibold text-slate-500 mb-2">Sources:</p>
-                <div className="flex flex-wrap gap-2">
+              <div className="mt-3.5 pt-3 border-t border-slate-100 dark:border-white/10">
+                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Sources:</p>
+                <div className="flex flex-wrap gap-1.5">
                   {msg.citations.map((cit, i) => (
                     <button 
                       key={i} 
                       onClick={() => onCitationClick && onCitationClick(cit)}
-                      className="text-[11px] px-2 py-1 bg-slate-100 dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 text-slate-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded transition-colors border border-slate-200 dark:border-white/10 flex items-center gap-1"
+                      className="text-[11px] px-2.5 py-1 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors border border-slate-200/80 dark:border-white/10 flex items-center gap-1 shadow-2xs"
                     >
                       {cit.source} {cit.pageNumber ? `(p. ${cit.pageNumber})` : ''}
                     </button>
@@ -101,14 +103,14 @@ export function ChatMessageList({ messages, isStreaming, onCitationClick }: Chat
         </div>
       ))}
       {isStreaming && (
-        <div className="flex gap-4">
-          <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0 mt-1">
+        <div className="flex gap-3.5">
+          <div className="w-8 h-8 rounded-xl bg-slate-900 text-[#c8e558] dark:bg-white dark:text-slate-900 flex items-center justify-center shrink-0 mt-1 shadow-2xs">
             <Brain className="w-4 h-4" />
           </div>
-          <div className="bg-white dark:bg-[#1a1a1b] border border-slate-200 dark:border-white/10 rounded-2xl rounded-tl-sm px-5 py-4 flex gap-1">
-             <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" />
-             <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce delay-100" />
-             <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce delay-200" />
+          <div className="bg-white dark:bg-[#141416] border border-slate-200/80 dark:border-white/10 rounded-2xl rounded-tl-xs px-4 py-3 flex gap-1 items-center shadow-xs">
+             <span className="w-2 h-2 rounded-full bg-[#8ba32b] dark:bg-[#c8e558] animate-bounce" />
+             <span className="w-2 h-2 rounded-full bg-[#8ba32b] dark:bg-[#c8e558] animate-bounce delay-100" />
+             <span className="w-2 h-2 rounded-full bg-[#8ba32b] dark:bg-[#c8e558] animate-bounce delay-200" />
           </div>
         </div>
       )}

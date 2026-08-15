@@ -40,30 +40,43 @@ class AIOrchestrator {
         });
     }
     getProviderForMode(mode) {
-        switch (mode) {
-            case AILearningMode.FLASHCARDS:
-            case AILearningMode.QUIZ:
-            case AILearningMode.SUMMARY:
-                return this.fastProvider; // Use Groq for fast, structured generation
-            default:
-                return this.primaryProvider; // Use Gemini for complex reasoning and large context
-        }
+        // We now have unlimited Gemini 2.5 Flash, so we use it for EVERYTHING!
+        // No more falling back to the free tier of Groq.
+        return this.primaryProvider;
     }
     async generateGroundedResponse(mode, history, contextData, studentContext) {
         const provider = this.getProviderForMode(mode);
         const systemPrompt = this.getSystemPromptForMode(mode, contextData, studentContext);
-        return provider.generateResponse(history, systemPrompt);
+        try {
+            return await provider.generateResponse(history, systemPrompt);
+        }
+        catch (error) {
+            console.error(`[AI Orchestrator] Primary provider (${provider.constructor.name}) failed. Falling back to Groq...`, error);
+            // Fallback to Groq if Gemini hits a temporary error or rate limit
+            return await this.fastProvider.generateResponse(history, systemPrompt);
+        }
     }
     async *generateStreamGroundedResponse(mode, history, contextData, studentContext) {
         const provider = this.getProviderForMode(mode);
         const systemPrompt = this.getSystemPromptForMode(mode, contextData, studentContext);
-        if (provider.generateStreamResponse) {
-            yield* provider.generateStreamResponse(history, systemPrompt);
+        try {
+            if (provider.generateStreamResponse) {
+                yield* provider.generateStreamResponse(history, systemPrompt);
+            }
+            else {
+                const response = await provider.generateResponse(history, systemPrompt);
+                yield response.reply;
+            }
         }
-        else {
-            // Fallback if provider doesn't support streaming
-            const response = await provider.generateResponse(history, systemPrompt);
-            yield response.reply;
+        catch (error) {
+            console.error(`[AI Orchestrator] Primary stream provider (${provider.constructor.name}) failed. Falling back to Groq stream...`, error);
+            if (this.fastProvider.generateStreamResponse) {
+                yield* this.fastProvider.generateStreamResponse(history, systemPrompt);
+            }
+            else {
+                const fallbackResponse = await this.fastProvider.generateResponse(history, systemPrompt);
+                yield fallbackResponse.reply;
+            }
         }
     }
 }

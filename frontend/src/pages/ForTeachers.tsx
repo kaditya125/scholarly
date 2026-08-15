@@ -118,6 +118,16 @@ function TeacherCta({ className }: { className?: string }) {
 }
 
 function GhostCta({ to, children }: { to: string; children: ReactNode }) {
+  if (to.startsWith('/')) {
+    return (
+      <Link
+        to={to}
+        className="inline-flex items-center justify-center h-12 px-6 rounded-xl border border-slate-200 dark:border-white/12 text-[14.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+      >
+        {children}
+      </Link>
+    );
+  }
   return (
     <a
       href={to}
@@ -317,7 +327,7 @@ export default function ForTeachers() {
 
               <div className="mt-9 flex flex-col sm:flex-row gap-3">
                 <TeacherCta />
-                <GhostCta to="#how">See how it works</GhostCta>
+                <GhostCta to="/how-it-works?role=teacher">See how it works</GhostCta>
               </div>
 
               <p className="mt-6 text-[13px] leading-relaxed text-slate-500 dark:text-gray-400">

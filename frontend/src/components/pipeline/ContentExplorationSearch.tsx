@@ -109,6 +109,8 @@ export const ContentExplorationSearch: React.FC<ContentExplorationSearchProps> =
         createdAt: Date.now(),
         chunksExtracted: 10,
         conceptsExtracted: 5,
+        authorityScore: 1.0,
+        processingDurationMs: 1000,
         metadata: result.metadata,
       };
       onNavigateToSource(syntheticSource, result.chunkId, result.pageNumber);

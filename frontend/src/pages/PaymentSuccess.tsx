@@ -1,14 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { CheckCircle2, Mail, ArrowRight, Bot, Target, CalendarCheck, Printer } from "lucide-react";
+import { CheckCircle2, Mail, ArrowRight, Bot, Target, CalendarCheck, Printer, Sparkles, Check } from "lucide-react";
 import { api } from "../lib/api/client";
 import { useAuth } from "../lib/AuthContext";
 
 const NEXT_STEPS = [
-  "Start a session with your GraphRAG AI tutor",
-  "Take an adaptive mock test to find weak areas",
-  "Build a personalised study plan to exam day",
+  "Start an interactive session with your AI tutor",
+  "Take an adaptive mock test to identify weak areas",
+  "Generate a personalized daily study plan to exam day",
 ];
 
 interface Receipt {
@@ -71,7 +71,7 @@ export default function PaymentSuccess() {
         .val{font-size:15px;font-weight:700;color:#0f172a;word-break:break-all}
         .amt{font-size:15px;font-weight:700;color:#0f172a;text-align:right}
         .pm{display:flex;align-items:center;gap:12px;background:#f1f5f9;border-radius:14px;padding:12px 14px;margin-top:6px}
-        .pm .ic{width:36px;height:36px;border-radius:9px;background:#4f46e5;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+        .pm .ic{width:36px;height:36px;border-radius:9px;background:#0f172a;color:#c8e558;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
         .pm .nm{font-size:14px;font-weight:600;color:#0f172a}
         .pm .sub{font-size:12px;color:#64748b}
         .bc{display:flex;align-items:flex-end;justify-content:center;gap:2px;height:56px;margin-top:24px}
@@ -93,7 +93,7 @@ export default function PaymentSuccess() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-neutral-900 dark:text-neutral-100 font-sans antialiased flex items-center justify-center px-6 py-16">
+    <div className="min-h-screen bg-[#fafbfc] dark:bg-[#0b0b0c] text-slate-900 dark:text-white font-sans antialiased flex items-center justify-center px-6 py-16">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -105,59 +105,80 @@ export default function PaymentSuccess() {
           initial={{ scale: 0.6, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.1, type: "spring", stiffness: 220, damping: 16 }}
-          className="w-20 h-20 rounded-3xl bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center mx-auto mb-7"
+          className="w-20 h-20 rounded-3xl bg-[#8ba32b]/15 dark:bg-[#c8e558]/15 text-[#8ba32b] dark:text-[#c8e558] border border-[#8ba32b]/25 dark:border-[#c8e558]/25 flex items-center justify-center mx-auto mb-7 shadow-xs"
         >
-          <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400" strokeWidth={2} />
+          <Check className="w-10 h-10 stroke-[2.5]" />
         </motion.div>
 
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">Thank You!</h1>
-        <p className="text-[15px] text-slate-500 dark:text-gray-400 mb-8">Your payment was successful and your Pro plan is now active.</p>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2 text-slate-900 dark:text-white">
+          Payment Successful!
+        </h1>
+        <p className="text-[14.5px] text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+          Your payment has been verified and your Scholarly Pro subscription is now active.
+        </p>
 
         {/* Check inbox card */}
-        <div className="rounded-2xl bg-gradient-to-b from-indigo-50 to-white dark:from-indigo-500/10 dark:to-transparent border border-indigo-100 dark:border-white/10 p-6 mb-8">
-          <div className="w-12 h-12 rounded-xl bg-white dark:bg-white/10 shadow-sm flex items-center justify-center mx-auto mb-3">
-            <Mail className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+        <div className="rounded-2xl bg-white dark:bg-[#141416] border border-slate-200/90 dark:border-white/10 p-6 mb-8 shadow-2xs">
+          <div className="w-11 h-11 rounded-xl bg-[#8ba32b]/10 dark:bg-[#c8e558]/10 text-[#8ba32b] dark:text-[#c8e558] flex items-center justify-center mx-auto mb-3 border border-[#8ba32b]/20 dark:border-[#c8e558]/20">
+            <Mail className="w-5 h-5" />
           </div>
-          <h2 className="text-[16px] font-bold mb-1.5">Check your inbox</h2>
-          <p className="text-[13.5px] text-slate-500 dark:text-gray-400 leading-relaxed">
-            Your payment receipt and getting-started guide are on their way — expect them within{" "}
-            <span className="font-semibold text-indigo-600 dark:text-indigo-400">3 to 5 minutes</span>.
+          <h2 className="text-[16px] font-bold text-slate-900 dark:text-white mb-1">Check your inbox</h2>
+          <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed">
+            Your official tax receipt and Pro getting-started guide have been dispatched to{" "}
+            <span className="font-bold text-slate-800 dark:text-slate-200">{user?.email || "your registered email"}</span>.
           </p>
           {/* Print receipt option */}
           <button
             onClick={printReceipt}
-            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-white/15 bg-white dark:bg-white/5 text-[13px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors"
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-white/5 text-[12.5px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-all cursor-pointer shadow-xs active:scale-98"
           >
             <Printer className="w-4 h-4" /> Print receipt
           </button>
         </div>
 
         {/* What's next */}
-        <div className="text-left mb-8">
-          <div className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-gray-500 text-center mb-4">What's next?</div>
-          <ul className="space-y-3">
+        <div className="text-left mb-8 bg-white dark:bg-[#141416] border border-slate-200/90 dark:border-white/10 rounded-2xl p-5 shadow-2xs">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558]" />
+            <span>What to do next</span>
+          </div>
+          <ul className="space-y-2.5">
             {NEXT_STEPS.map((step, i) => (
-              <li key={i} className="flex items-center gap-3 text-[13.5px] text-slate-600 dark:text-gray-300">
-                <span className="w-6 h-6 rounded-full bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 text-[12px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
-                {step}
+              <li key={i} className="flex items-center gap-3 text-[13px] text-slate-700 dark:text-slate-300">
+                <span className="w-5 h-5 rounded-full bg-[#8ba32b]/15 dark:bg-[#c8e558]/15 text-[#8ba32b] dark:text-[#c8e558] text-[11px] font-bold flex items-center justify-center shrink-0">
+                  {i + 1}
+                </span>
+                <span>{step}</span>
               </li>
             ))}
           </ul>
         </div>
 
+        {/* Return to Dashboard */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link to="/dashboard" className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-[13.5px] font-semibold hover:opacity-90 transition-opacity">
-            Go to Dashboard <ArrowRight className="w-4 h-4" />
+          <Link
+            to="/dashboard"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-2.5 rounded-full bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-900 text-[13.5px] font-bold hover:opacity-90 transition-all shadow-md active:scale-98"
+          >
+            <span>Go to Dashboard</span>
+            <ArrowRight className="w-4 h-4" />
           </Link>
-          <Link to="/chat" className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full border border-slate-200 dark:border-white/15 text-[13.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+          <Link
+            to="/chat"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full border border-slate-200 dark:border-white/15 text-[13.5px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-xs cursor-pointer"
+          >
             <Bot className="w-4 h-4" /> Open AI Tutor
           </Link>
         </div>
 
         {/* Small quick-links row */}
-        <div className="flex items-center justify-center gap-6 mt-8 text-slate-400 dark:text-gray-500">
-          <Link to="/tests" className="inline-flex items-center gap-1.5 text-[12.5px] hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"><Target className="w-3.5 h-3.5" /> Mock tests</Link>
-          <Link to="/planner" className="inline-flex items-center gap-1.5 text-[12.5px] hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"><CalendarCheck className="w-3.5 h-3.5" /> Study plan</Link>
+        <div className="flex items-center justify-center gap-6 mt-8 text-slate-400 dark:text-slate-500">
+          <Link to="/tests" className="inline-flex items-center gap-1.5 text-[12.5px] hover:text-[#8ba32b] dark:hover:text-[#c8e558] transition-colors">
+            <Target className="w-3.5 h-3.5" /> Mock tests
+          </Link>
+          <Link to="/planner" className="inline-flex items-center gap-1.5 text-[12.5px] hover:text-[#8ba32b] dark:hover:text-[#c8e558] transition-colors">
+            <CalendarCheck className="w-3.5 h-3.5" /> Study plan
+          </Link>
         </div>
       </motion.div>
     </div>

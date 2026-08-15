@@ -1,79 +1,160 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Loader2, Settings, Crosshair } from 'lucide-react';
+import { Sparkles, Loader2, Crosshair, BookOpen, GraduationCap, Timer } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useTheme } from '../../lib/ThemeContext';
-import { useNavigate } from 'react-router-dom';
+import { useLaunchTest } from '../../hooks/ai/useLaunchTest';
+import type { QuizMode } from '../../lib/api/quiz';
+
+const COUNTS = [5, 10, 15, 20];
 
 export function AdaptiveTestGenerator() {
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
-  const navigate = useNavigate();
+  const launch = useLaunchTest();
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [subject, setSubject] = useState('Mathematics');
+  const [customTopic, setCustomTopic] = useState('');
   const [difficulty, setDifficulty] = useState('Medium');
-  
-  const handleGenerate = () => {
+  const [count, setCount] = useState(10);
+  const [mode, setMode] = useState<QuizMode>('exam');
+
+  const handleGenerate = async () => {
     setIsGenerating(true);
-    // Simulate AI Generation
-    setTimeout(() => {
+    const targetTopic = customTopic.trim() ? `${subject} - ${customTopic.trim()}` : subject;
+    try {
+      await launch({
+        topic: targetTopic,
+        count,
+        mode,
+      });
+    } finally {
       setIsGenerating(false);
-      navigate('/test', { state: { mode: 'study' } });
-    }, 2500);
+    }
   };
 
   return (
     <div className={cn(
-      "p-6 rounded-[24px] border relative overflow-hidden",
-      isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200 shadow-sm"
+      "p-6 rounded-2xl border relative overflow-hidden transition-all font-sans",
+      isDarkMode ? "bg-white/[0.04] border-white/[0.07] shadow-xs" : "bg-white border-slate-200/90 shadow-xs"
     )}>
-      {/* Background Effect */}
-      <div className="absolute -top-24 -right-24 w-48 h-48 bg-teal-500/20 blur-3xl rounded-full" />
+      {/* Subtle Ambient Brand Glow */}
+      <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#c8e558]/10 blur-3xl rounded-full pointer-events-none" />
       
       <div className="relative z-10">
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="w-5 h-5 text-teal-500" />
-          <h3 className="text-xl font-bold">AI Adaptive Test</h3>
+        <div className="flex items-center gap-2 mb-1.5">
+          <div className="w-7 h-7 rounded-lg bg-slate-900 dark:bg-white flex items-center justify-center text-[#c8e558] dark:text-slate-900 shadow-2xs">
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <h3 className="text-[17px] font-semibold text-slate-900 dark:text-white">AI Adaptive Test</h3>
         </div>
-        <p className={cn("text-sm mb-6", isDarkMode ? "text-slate-400" : "text-slate-500")}>
-          Generate a custom test based on your weak topics and memory graph.
+        <p className="text-[13px] text-slate-500 dark:text-slate-400 mb-5 leading-relaxed">
+          Generate an intelligent, Gemini-calibrated practice test customized to your focus and difficulty.
         </p>
 
-        <div className="space-y-4 mb-6">
+        <div className="space-y-4 mb-5">
           <div>
-            <label className={cn("block text-xs font-bold uppercase tracking-wider mb-2", isDarkMode ? "text-slate-500" : "text-slate-400")}>Subject Focus</label>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
+              Subject Focus
+            </label>
             <select 
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               className={cn(
-                "w-full p-3 rounded-xl border text-sm font-medium outline-none",
-                isDarkMode ? "bg-slate-950 border-slate-800 text-slate-200" : "bg-slate-50 border-slate-200 text-slate-800"
+                "w-full p-2 rounded-xl border text-[12.5px] font-medium outline-none transition-colors",
+                isDarkMode 
+                  ? "bg-white/[0.04] border-white/10 text-slate-200 focus:border-[#c8e558]" 
+                  : "bg-slate-50 border-slate-200 text-slate-900 focus:border-slate-400"
               )}
             >
-              <option>Mathematics</option>
-              <option>General Studies</option>
-              <option>English Comprehension</option>
-              <option>Reasoning</option>
+              <option value="Mathematics" className="dark:bg-[#1a1a1b]">Mathematics & Quantitative</option>
+              <option value="General Studies" className="dark:bg-[#1a1a1b]">General Studies & Current Affairs</option>
+              <option value="English Comprehension" className="dark:bg-[#1a1a1b]">English Comprehension & Verbal</option>
+              <option value="Reasoning & Logic" className="dark:bg-[#1a1a1b]">Reasoning & Logical Ability</option>
+              <option value="Science & Tech" className="dark:bg-[#1a1a1b]">Science & Technology</option>
             </select>
           </div>
+
           <div>
-            <label className={cn("block text-xs font-bold uppercase tracking-wider mb-2", isDarkMode ? "text-slate-500" : "text-slate-400")}>Difficulty</label>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
+              Topic / Chapter (Optional)
+            </label>
+            <input
+              type="text"
+              value={customTopic}
+              onChange={(e) => setCustomTopic(e.target.value)}
+              placeholder="e.g. Percentage, Optics, Indian Constitution..."
+              className={cn(
+                "w-full p-2 rounded-xl border text-[12.5px] font-medium outline-none transition-colors",
+                isDarkMode 
+                  ? "bg-white/[0.04] border-white/10 text-slate-200 placeholder:text-slate-500 focus:border-[#c8e558]" 
+                  : "bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-slate-400"
+              )}
+            />
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
+              Questions
+            </label>
             <div className="flex gap-2">
-              {['Easy', 'Medium', 'Hard'].map(lvl => (
+              {COUNTS.map(c => (
                 <button
-                  key={lvl}
-                  onClick={() => setDifficulty(lvl)}
+                  key={c}
+                  type="button"
+                  onClick={() => setCount(c)}
                   className={cn(
-                    "flex-1 py-2 text-sm font-bold rounded-lg border transition-colors",
-                    difficulty === lvl 
-                      ? "bg-teal-500/20 border-teal-500 text-teal-600 dark:text-teal-400" 
-                      : (isDarkMode ? "bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-800" : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50")
+                    "flex-1 py-1.5 text-[12.5px] font-semibold rounded-lg border transition-all cursor-pointer",
+                    count === c 
+                      ? "bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-900 border-transparent shadow-2xs" 
+                      : (isDarkMode ? "bg-white/[0.03] border-white/10 text-slate-400 hover:bg-white/[0.08]" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50")
                   )}
                 >
-                  {lvl}
+                  {c}
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
+              Mode
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setMode('exam')}
+                className={cn(
+                  "flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all cursor-pointer",
+                  mode === 'exam'
+                    ? "bg-slate-100 dark:bg-white/[0.08] border-slate-300 dark:border-white/20 text-slate-900 dark:text-white"
+                    : "bg-white dark:bg-white/[0.02] border-slate-200/80 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-50"
+                )}
+              >
+                <Timer className={cn("w-4 h-4 shrink-0", mode === 'exam' ? "text-[#8ba32b] dark:text-[#c8e558]" : "text-slate-400")} />
+                <div>
+                  <div className="text-[12px] font-semibold">Timed Exam</div>
+                  <div className="text-[10.5px] text-slate-400 leading-tight">CBT timer</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMode('study')}
+                className={cn(
+                  "flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all cursor-pointer",
+                  mode === 'study'
+                    ? "bg-slate-100 dark:bg-white/[0.08] border-slate-300 dark:border-white/20 text-slate-900 dark:text-white"
+                    : "bg-white dark:bg-white/[0.02] border-slate-200/80 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-50"
+                )}
+              >
+                <GraduationCap className={cn("w-4 h-4 shrink-0", mode === 'study' ? "text-[#8ba32b] dark:text-[#c8e558]" : "text-slate-400")} />
+                <div>
+                  <div className="text-[12px] font-semibold">Study Mode</div>
+                  <div className="text-[10.5px] text-slate-400 leading-tight">AI hints</div>
+                </div>
+              </button>
             </div>
           </div>
         </div>
@@ -81,18 +162,16 @@ export function AdaptiveTestGenerator() {
         <button
           onClick={handleGenerate}
           disabled={isGenerating}
-          className="w-full py-3.5 bg-gradient-to-r from-teal-500 to-indigo-500 hover:from-teal-400 hover:to-indigo-400 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-teal-500/20"
+          className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 rounded-xl text-[13px] font-semibold flex items-center justify-center gap-2 transition-all shadow-xs active:scale-[0.98] cursor-pointer disabled:opacity-50"
         >
           {isGenerating ? (
-            <AnimatePresence>
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Crafting your test...</span>
-              </motion.div>
-            </AnimatePresence>
+            <div className="flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin text-[#c8e558] dark:text-slate-900" />
+              <span>Generating Questions with Gemini...</span>
+            </div>
           ) : (
             <>
-              <Crosshair className="w-5 h-5" /> Generate Test
+              <Crosshair className="w-4 h-4" /> Generate Practice Test
             </>
           )}
         </button>

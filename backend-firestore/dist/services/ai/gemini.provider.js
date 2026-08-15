@@ -17,17 +17,40 @@ class GeminiProvider {
     modelName;
     constructor(modelName = env_1.env.GEMINI_MODEL || 'gemini-2.5-flash') {
         this.modelName = modelName;
-        if (!env_1.env.GEMINI_API_KEY) {
-            throw new Error('GEMINI_API_KEY is not defined in environment.');
+        // Vertex AI routing — when GOOGLE_GENAI_USE_VERTEXAI is "true" the SDK
+        // must be constructed in Vertex mode with the service-account project +
+        // location. In that mode the SDK picks up GOOGLE_APPLICATION_CREDENTIALS
+        // automatically. Passing an apiKey alongside vertexai:true makes the SDK
+        // send the API key as a bearer token to the Vertex endpoint, which
+        // Vertex rejects with 401 ACCESS_TOKEN_TYPE_UNSUPPORTED — the exact
+        // symptom we hit after the July revert.
+        if (env_1.env.GOOGLE_GENAI_USE_VERTEXAI === 'true') {
+            if (!env_1.env.GOOGLE_VERTEX_PROJECT || !env_1.env.GOOGLE_VERTEX_LOCATION) {
+                throw new Error('Vertex AI mode is enabled but GOOGLE_VERTEX_PROJECT or GOOGLE_VERTEX_LOCATION is missing.');
+            }
+            this.ai = new genai_1.GoogleGenAI({
+                vertexai: true,
+                project: env_1.env.GOOGLE_VERTEX_PROJECT,
+                location: env_1.env.GOOGLE_VERTEX_LOCATION,
+            });
         }
-        this.ai = new genai_1.GoogleGenAI({ apiKey: env_1.env.GEMINI_API_KEY });
+        else {
+            if (!env_1.env.GEMINI_API_KEY) {
+                throw new Error('GEMINI_API_KEY is not defined in environment.');
+            }
+            this.ai = new genai_1.GoogleGenAI({ apiKey: env_1.env.GEMINI_API_KEY });
+        }
     }
     async generateResponse(history, systemPrompt, opts) {
+        (0, env_1.assertAIEnabled)('Gemini generateResponse');
         const start = Date.now();
         const tid = opts?.traceId || `gemini_${start}`;
         const uid = opts?.userId;
         let modelToUse = opts?.model || this.modelName;
-        if (modelToUse.includes('gemini-3.') || modelToUse.includes('gemini-1.5')) {
+        if (modelToUse === 'gemini' || modelToUse.toLowerCase() === 'gemini') {
+            modelToUse = 'gemini-2.5-flash';
+        }
+        else if (modelToUse.includes('gemini-3.') || modelToUse.includes('gemini-1.5')) {
             modelToUse = modelToUse.includes('pro') ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
         }
         // Map internal ChatMessage format to Gemini Content format
@@ -78,6 +101,7 @@ class GeminiProvider {
         };
     }
     async extractTextFromPdf(base64Data, mimeType = 'application/pdf') {
+        (0, env_1.assertAIEnabled)('Gemini extractTextFromPdf');
         const response = await this.ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: [
@@ -98,18 +122,31 @@ class GeminiProvider {
         return response.text || '';
     }
     async *generateStreamResponse(history, systemPrompt, opts) {
+        (0, env_1.assertAIEnabled)('Gemini generateStreamResponse');
         const start = Date.now();
         const tid = opts?.traceId || `gemini_${start}`;
         const uid = opts?.userId;
         let modelToUse = opts?.model || this.modelName;
-        if (modelToUse.includes('gemini-3.') || modelToUse.includes('gemini-1.5')) {
+        if (modelToUse === 'gemini' || modelToUse.toLowerCase() === 'gemini') {
+            modelToUse = 'gemini-2.5-flash';
+        }
+        else if (modelToUse.includes('gemini-3.') || modelToUse.includes('gemini-1.5')) {
             modelToUse = modelToUse.includes('pro') ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
         }
         const contents = history.map(msg => ({
             role: msg.role === 'ai' ? 'model' : 'user',
             parts: [{ text: msg.content }]
         }));
-        const config = { temperature: 0.7 };
+        const config = {
+            temperature: 0.7,
+            // Gemini 2.5 flash/pro run an internal "thinking" phase whose tokens
+            // are accounted separately from output. In some cases (short prompts,
+            // certain safety heuristics) the model spent its thinking budget and
+            // returned only 2–4 output tokens, which surfaced as an empty plan.
+            // Setting thinkingBudget: 0 disables that phase for streaming calls
+            // where we want the text tokens directly. It also cuts TTFT noticeably.
+            thinkingConfig: { thinkingBudget: 0 },
+        };
         if (systemPrompt && systemPrompt.trim().length > 0) {
             config.systemInstruction = systemPrompt;
         }
@@ -124,5 +161,8 @@ class GeminiProvider {
             }
         }
     }
+    async extractQuestionFromImage(...args) { throw new Error('Not implemented'); }
+    async generateVisionStream(...args) { throw new Error('Not implemented'); }
+    async describeFigures(...args) { throw new Error('Not implemented'); }
 }
 exports.GeminiProvider = GeminiProvider;

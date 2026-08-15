@@ -163,14 +163,36 @@ export default function Chats() {
       );
     }
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-center px-6 bg-white dark:bg-[#131314]">
-        <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-4">
-          <MessagesSquare className="w-8 h-8 text-slate-400" />
+      <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-12 bg-[#fafbfc] dark:bg-[#0b0b0c] font-sans">
+        <div className="max-w-md w-full p-8 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#141416] shadow-2xs space-y-5">
+          <div className="w-14 h-14 rounded-2xl bg-[#8ba32b]/10 dark:bg-[#c8e558]/10 text-[#8ba32b] dark:text-[#c8e558] flex items-center justify-center mx-auto border border-[#8ba32b]/20 dark:border-[#c8e558]/20">
+            <MessagesSquare className="w-7 h-7" />
+          </div>
+
+          <div className="space-y-1.5">
+            <h3 className="text-[16px] font-bold text-slate-900 dark:text-white">
+              Connect with Study Circles &amp; Peers
+            </h3>
+            <p className="text-[12.5px] text-slate-500 dark:text-slate-400">
+              Select a conversation from the sidebar or start a new direct message to collaborate with classmates.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+            <button
+              onClick={() => setParams({ tab: "people" })}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-semibold bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-900 hover:opacity-90 transition-opacity cursor-pointer shadow-xs"
+            >
+              <span>Find Classmates</span>
+            </button>
+            <button
+              onClick={() => setParams({ tab: "discussions" })}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-medium border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+            >
+              <span>Explore Discussions</span>
+            </button>
+          </div>
         </div>
-        <p className="text-[15px] font-bold text-slate-900 dark:text-white mb-1">Your conversations</p>
-        <p className="text-[13px] text-slate-400 dark:text-gray-500 max-w-xs">
-          Pick a direct message or a group channel from the left to start chatting.
-        </p>
       </div>
     );
   })();

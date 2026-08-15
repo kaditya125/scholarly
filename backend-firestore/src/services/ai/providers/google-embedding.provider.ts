@@ -18,7 +18,8 @@ export class GoogleEmbeddingProvider implements EmbeddingProvider {
     if (!env.GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY is not defined in environment.');
     }
-    this.ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
+    const { createGoogleGenAIClient } = require('../googleGenAIClient');
+    this.ai = createGoogleGenAIClient();
   }
 
   async generateEmbedding(text: string, userId?: string): Promise<number[]> {

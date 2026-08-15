@@ -148,16 +148,22 @@ export default function Pricing() {
                   Before you pay.
                 </h2>
                 <p className="mt-4 text-[15px] leading-relaxed text-slate-500 dark:text-gray-400">
-                  Still unsure? Write to{' '}
+                  Still unsure? Ask our 24/7 AI guide, chat live with a support specialist, or write to{' '}
                   <a
                     href={`mailto:${SITE.email.support}`}
                     className="font-medium text-slate-900 dark:text-white underline underline-offset-2"
                   >
                     {SITE.email.support}
-                  </a>{' '}
-                  and ask. We&rsquo;d rather answer the question than take a subscription you
-                  regret.
+                  </a>. We&rsquo;d rather answer the question than take a subscription you regret.
                 </p>
+                <div className="mt-6">
+                  <Link
+                    to="/help"
+                    className="inline-flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13.5px] font-semibold hover:opacity-90 transition-opacity"
+                  >
+                    Ask Scholarly Guide
+                  </Link>
+                </div>
               </div>
 
               <div>

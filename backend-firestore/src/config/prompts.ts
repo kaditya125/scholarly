@@ -599,6 +599,33 @@ function buildStudentContextBlock(ctx: StudentContext | undefined): string {
     block += `\n**ADAPTIVE INSTRUCTION**: This student has advanced comprehension. Skip basic definitions. Focus on edge cases, derivations, advanced applications, and exam-level problem solving.\n`;
   }
 
+  // Exam Intelligence Context & Verified Official Sources
+  if (ctx.examContext) {
+    block += `\n### Target Examination Intelligence\n`;
+    block += `- **Target Exam**: ${ctx.examContext.examName} (${ctx.examContext.examId})\n`;
+    block += `- **Conducting Authority**: ${ctx.examContext.conductingAuthority}\n`;
+    block += `- **Active Cycle**: ${ctx.examContext.cycleId}\n`;
+    if (ctx.examContext.activeSyllabusVersionId) {
+      block += `- **Active Canonical Syllabus Version**: ${ctx.examContext.activeSyllabusVersionId}\n`;
+    }
+    if (ctx.examContext.timelineCountdowns && ctx.examContext.timelineCountdowns.length > 0) {
+      block += `- **Upcoming Milestones**: ${ctx.examContext.timelineCountdowns.map((t: any) => `${t.label} on ${t.targetDate} (${t.daysRemaining !== undefined ? `${t.daysRemaining}d left` : t.status})`).join('; ')}\n`;
+    }
+    if (ctx.examContext.totalVacancies) {
+      block += `- **Total Advertised Vacancies**: ${ctx.examContext.totalVacancies}\n`;
+    }
+    block += `\n**OFFICIAL SOURCE & TOPIC BOX FORMATTING INSTRUCTION**:
+1. Reference the official conducting authority (${ctx.examContext.conductingAuthority}) and mention official exam notice & syllabus alignment.
+2. When listing syllabus topics, weightage breakdowns, or common student errors, ALWAYS format each topic and common mistake inside a distinct markdown callout box using blockquote format:
+> **OFFICIAL TOPIC: [NAME OF TOPIC]**
+> - **Subtopics**: [List official subtopics]
+> - **Stage Weightage**: [Questions & marks]
+> - **Exam Strategy**: [High-yield focus areas]
+
+> **COMMON MISTAKE**
+> [Explain common pitfall or misconception]\n`;
+  }
+
   return block;
 }
 
@@ -761,8 +788,14 @@ export function getGreetingOrOnboardingPrompt(ctx: StudentContext): string {
  * Detects if a message is a greeting or generic "help" request.
  */
 export function isGreetingMessage(query: string): boolean {
-  const greetingPatterns = /^(hi+|hello+|hey+|hy+|helo+|hlo+|yo+|sup|howdy|greetings|namaste|hola|good\s*(morning|afternoon|evening)|how\s*(can|do)\s*you\s*help|what\s*can\s*you\s*do|help\s*me|start|begin|get\s*started)\s*[.!?]*$/i;
-  return greetingPatterns.test(query.trim());
+  const q = query.trim().toLowerCase();
+  // Core greeting openers
+  const greetingCore = /^(hi+|hello+|hey+|hy+|helo+|hlo+|yo+|sup|howdy|greetings|namaste|hola|good\s*(morning|afternoon|evening)|how\s*(can|do)\s*you\s*help|what\s*can\s*you\s*do|help\s*me|start|begin|get\s*started)/i;
+  // Social fillers that can follow a greeting opener
+  const socialFiller = /\s+(there|everyone|buddy|friends|again|all|guys|bro|mate)?[.!?]*$/i;
+  // Standalone farewells and acknowledgements
+  const farewell = /^(bye|goodbye|see\s*you|see\s*ya|take\s*care|cya|later|ok\s*thanks?|okay\s*thanks?|thanks?(\s*so\s*much|\s*a\s*lot)?|thank\s*you(\s*so\s*much)?|cheers|alright|ok|okay|sure|got\s*it|noted|perfect|great|awesome|sounds\s*good)[.!?]*$/i;
+  return farewell.test(q) || (greetingCore.test(q) && socialFiller.test(q)) || /^(hi+|hello+|hey+|hy+|yo+|sup|howdy|greetings|namaste|hola|good\s*(morning|afternoon|evening))\s*[.!?]*$/i.test(q);
 }
 
 

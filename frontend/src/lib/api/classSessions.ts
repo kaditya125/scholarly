@@ -14,6 +14,7 @@ export interface ClassSession {
   status: SessionStatus;
   startedAt: unknown;
   endedAt: unknown;
+  recordingRef?: string;
 }
 
 export interface SessionJoinInfo {

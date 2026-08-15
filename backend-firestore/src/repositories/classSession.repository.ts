@@ -36,6 +36,12 @@ export class ClassSessionRepository {
     const snap = await this.collection.where('classId', '==', classId).where('status', '==', 'live').limit(1).get();
     return snap.empty ? null : (snap.docs[0].data() as ClassSessionRecord);
   }
+
+  /** Find a session by its vendor room ID (e.g. for incoming webhooks). */
+  async findByProviderRoomId(providerRoomId: string): Promise<ClassSessionRecord | null> {
+    const snap = await this.collection.where('providerRoomId', '==', providerRoomId).limit(1).get();
+    return snap.empty ? null : (snap.docs[0].data() as ClassSessionRecord);
+  }
 }
 
 export const classSessionRepository = new ClassSessionRepository();

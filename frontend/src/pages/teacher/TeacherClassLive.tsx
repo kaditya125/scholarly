@@ -111,9 +111,22 @@ export default function TeacherClassLive() {
         ) : (
           <Card>
             {past.map((s) => (
-              <div key={s.id} className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-100 dark:border-white/[0.06] last:border-0">
-                <span className="min-w-0 flex-1 text-[13.5px] font-medium truncate">{s.title}</span>
-                <span className="text-[11.5px] text-slate-500 dark:text-gray-400 shrink-0">{formatDate(s.startedAt)}</span>
+              <div key={s.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-3.5 border-b border-slate-100 dark:border-white/[0.06] last:border-0">
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="text-[13.5px] font-medium truncate">{s.title}</span>
+                  <span className="text-[11.5px] text-slate-500 dark:text-gray-400 mt-0.5">{formatDate(s.startedAt)}</span>
+                </div>
+                {s.recordingRef && (
+                  <a
+                    href={s.recordingRef}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-[12px] font-medium transition-colors shrink-0"
+                  >
+                    <Video className="w-3.5 h-3.5" aria-hidden />
+                    Watch Recording
+                  </a>
+                )}
               </div>
             ))}
           </Card>

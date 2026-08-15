@@ -20,6 +20,7 @@ class GoogleEmbeddingProvider {
         this.ai = new genai_1.GoogleGenAI({ apiKey: env_1.env.GEMINI_API_KEY });
     }
     async generateEmbedding(text, userId) {
+        (0, env_1.assertAIEnabled)('embedding');
         // Resilience: 20s timeout + retry with backoff on transient errors.
         const response = await (0, retry_1.withRetry)(() => (0, retry_1.withTimeout)(this.ai.models.embedContent({
             model: this.modelName,

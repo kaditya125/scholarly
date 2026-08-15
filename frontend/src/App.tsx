@@ -20,6 +20,7 @@ import Report from "./pages/Report";
 import Signup from "./pages/Signup";
 import Signin from "./pages/Signin";
 import SelectRole from "./pages/SelectRole";
+import ExamCommandCenter from "./pages/ExamCommandCenter";
 import TeacherOnboarding from "./pages/TeacherOnboarding";
 // Teacher workspace (Phase 3C) — replaces the former TeacherLanding placeholder at /teach.
 import TeacherLayout from "./components/teacher/TeacherLayout";
@@ -32,6 +33,7 @@ import TeacherClassAssignments from "./pages/teacher/TeacherClassAssignments";
 import TeacherClassDiscussion from "./pages/teacher/TeacherClassDiscussion";
 import TeacherEarnings from "./pages/teacher/TeacherEarnings";
 import TeacherClassLive from "./pages/teacher/TeacherClassLive";
+import TeacherReferrals from "./pages/teacher/TeacherReferrals";
 import TeacherStudents from "./pages/teacher/TeacherStudents";
 import QuizAttemptPage from "./pages/QuizAttempt";
 import ClassSessionJoin from "./pages/ClassSessionJoin";
@@ -41,6 +43,9 @@ import Refer from "./pages/Refer";
 import RoleLanding from "./components/RoleLanding";
 import Leaderboard from "./pages/Leaderboard";
 import Pricing from "./pages/Pricing";
+import ReferralProgram from "./pages/ReferralProgram";
+import Help from "./pages/Help";
+import { StudentHelpHub } from "./components/help/StudentHelpHub";
 import Chat from "./pages/Chat";
 import Research from "./pages/Research";
 import Flashcards from "./pages/Flashcards";
@@ -59,6 +64,7 @@ import People from "./pages/People";
 import Documents from "./pages/Documents";
 import VideoLesson from "./pages/VideoLesson";
 import Settings from "./pages/Settings";
+import Notifications from "./pages/Notifications";
 import BaselineAssessmentEngine from "./pages/BaselineAssessmentEngine";
 import AssessmentReportDashboard from "./pages/AssessmentReportDashboard";
 import Onboarding from "./pages/Onboarding";
@@ -71,6 +77,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import ForTeachers from "./pages/ForTeachers";
+import HowItWorks from "./pages/HowItWorks";
 import Terms from "./pages/legal/Terms";
 import Privacy from "./pages/legal/Privacy";
 import Refunds from "./pages/legal/Refunds";
@@ -180,6 +187,10 @@ function AppRoutes() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/signin" element={<Signin />} />
         <Route path="/pricing" element={<Pricing />} />
+        <Route path="/how-it-works" element={<HowItWorks />} />
+        <Route path="/demo" element={<HowItWorks />} />
+        <Route path="/referral-program" element={<ReferralProgram />} />
+        <Route path="/help" element={<Help />} />
         <Route path="/about" element={<About />} />
         {/* Public marketing page. Outside ProtectedRoute on purpose: a signed-out visitor,
             a signed-in student and a signed-in teacher must all see the same page, and none
@@ -225,6 +236,7 @@ function AppRoutes() {
           <Route path="classes/:id/discussion" element={<TeacherClassDiscussion />} />
           <Route path="students" element={<TeacherStudents />} />
           <Route path="earnings" element={<TeacherEarnings />} />
+          <Route path="referrals" element={<TeacherReferrals />} />
           <Route path="classes/:id/live" element={<TeacherClassLive />} />
           {/*
             Shared surfaces, reused unmodified — same component as the student route below,
@@ -250,8 +262,7 @@ function AppRoutes() {
           <Route path="/chat" element={<Chat />} />
           <Route path="/research" element={<Research />} />
           <Route path="/flashcards" element={<Flashcards />} />
-          <Route
-            path="/dashboard"
+          <Route path="/dashboard"
             element={
               <RoleLanding
                 student={<StudentDashboard />}
@@ -259,6 +270,7 @@ function AppRoutes() {
               />
             }
           />
+          <Route path="/exam-center" element={<ExamCommandCenter />} />
           <Route path="/tests" element={<TestCenter />} />
           <Route path="/analytics" element={<Dashboard />} />
           <Route path="/report" element={<Report />} />
@@ -272,6 +284,7 @@ function AppRoutes() {
 
           {/* Modern Routes */}
           <Route path="/pipeline" element={<ContentPipeline />} />
+          <Route path="/content-pipeline" element={<ContentPipeline />} />
           <Route path="/podcasts" element={<Podcasts />} />
           <Route path="/podcasts/studio" element={<Podcasts />} />
           <Route path="/workspace" element={<AIWorkspace />} />
@@ -281,12 +294,16 @@ function AppRoutes() {
           <Route path="/documents" element={<Documents />} />
           <Route path="/video-lesson" element={<VideoLesson />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/notifications" element={<Notifications />} />
           <Route path="/assessment" element={<BaselineAssessmentEngine />} />
           <Route path="/assessment/report" element={<AssessmentReportDashboard />} />
           <Route path="/doubts" element={<MyDoubts />} />
+          <Route path="/support" element={<StudentHelpHub />} />
+          <Route path="/help-center" element={<StudentHelpHub />} />
           {/* Student side of the enrolment loop (Phase 3E). */}
           <Route path="/my-classes" element={<MyClasses />} />
           <Route path="/refer" element={<Refer />} />
+          <Route path="/referral-program" element={<Refer />} />
           <Route path="/trash" element={<Trash />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />

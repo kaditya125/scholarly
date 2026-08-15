@@ -94,17 +94,43 @@ export interface StudyGroup {
   weeklyChallenges?: { id: string; title: string; completedBy: string[] }[];
 }
 
+export interface DiscussionAuthor {
+  uid: string;
+  displayName: string;
+  photoURL?: string;
+}
+
+export interface DiscussionResponseItem {
+  id: string;
+  author: DiscussionAuthor;
+  authorId: string;
+  createdAt: number;
+  text: string;
+  isBest?: boolean;
+}
+
 export interface Discussion {
   id: string; // Document ID
-  chapter: string;
+  chapter?: string;
   topic: string;
   title: string;
-  description: string;
-  roomId: string; // Foreign key to Room
+  description?: string;
+  roomId?: string; // Foreign key to Room
+  authorId?: string;
+  authorName?: string;
+  authorPhotoURL?: string;
+  author?: DiscussionAuthor;
+  status?: 'active' | 'resolved' | 'closed';
+  tags?: string[];
   replies: number;
   views: number;
-  participants: string[]; // Array of avatar URLs
-  aiAssisted: boolean;
+  likes?: string[]; // Array of user UIDs who liked
+  likeCount?: number;
+  liked?: boolean;
+  participants: string[];
+  participantProfiles?: DiscussionAuthor[];
+  bestResponseId?: string;
+  aiAssisted?: boolean;
   aiSummary?: string;
   similarThreadIds?: string[];
   createdAt: number; // Unix timestamp
@@ -258,26 +284,43 @@ export interface PodcastMetadata {
 }
 export * from "./notebook";
 export * from "./observability";
+export * from "./exam.types";
 
 export const isReadyStatus = (status: string) => status === 'READY' || status === 'READY_DEGRADED';
 export type KGRelationshipType = string;
 
 export interface CircleChatTurn {
-  role: string;
-  content: string;
+  id?: string;
+  role?: string;
+  question?: string;
+  answer?: string;
+  content?: string;
+  createdAt?: number;
 }
 
 export interface CircleConcept {
   id: string;
-  name: string;
+  label?: string;
+  name?: string;
+  definition?: string;
+  importance?: number;
+  mentions?: number;
+  groupId?: string;
+  relatedConceptIds?: string[];
+  updatedAt?: number;
 }
 
 export interface CircleKnowledgeItem {
   id: string;
-  content: string;
+  title?: string;
+  text?: string;
+  content?: string;
+  groupId?: string;
+  addedBy?: string;
 }
 
-export interface CircleKnowledgeSource {
-  id: string;
-  type: string;
-}
+export type CircleKnowledgeSource = string | {
+  id?: string;
+  type?: string;
+  [key: string]: any;
+};

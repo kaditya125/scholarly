@@ -19,6 +19,7 @@ const TITLES: Record<string, string> = {
   "/admin/system-health": "System Health",
   "/admin/costs": "Cost Analytics",
   "/admin/curriculum": "Curriculum Ingestion",
+  "/admin/exams": "Exam Registry",
   "/admin/knowledge-graph": "Knowledge Graph",
   "/admin/vector-db": "Vector Database",
   "/admin/prompts": "Prompt Studio",

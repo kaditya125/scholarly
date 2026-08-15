@@ -288,7 +288,7 @@ export function KnowledgeGraphViewer({ nodes, edges }: KnowledgeGraphViewerProps
               linkDirectionalParticles={2}
               linkDirectionalParticleSpeed={0.005}
               linkDirectionalParticleWidth={2.5}
-              linkDirectionalParticleColor={(link: any) => isLearningPathView ? '#6366f1' : document.documentElement.classList.contains('dark') ? 'rgba(99, 102, 241, 0.4)' : 'rgba(99, 102, 241, 0.6)'}
+              linkDirectionalParticleColor={(_link: any) => isLearningPathView ? '#6366f1' : document.documentElement.classList.contains('dark') ? 'rgba(99, 102, 241, 0.4)' : 'rgba(99, 102, 241, 0.6)'}
               d3VelocityDecay={0.2}
               onNodeClick={handleNodeClick}
               onBackgroundClick={() => setActiveNode(null)}
