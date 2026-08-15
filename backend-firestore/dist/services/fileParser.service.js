@@ -4,7 +4,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FileParserService = void 0;
-const pdf = require('pdf-parse');
+// pdf-parse v2.x exposes a class-based API (PDFParse) rather than the old
+// callable `pdf(buffer)` function. Destructure the class from the CJS build.
+const { PDFParse } = require('pdf-parse');
 const mammoth_1 = __importDefault(require("mammoth"));
 const tesseract_js_1 = __importDefault(require("tesseract.js"));
 class FileParserService {
@@ -16,35 +18,30 @@ class FileParserService {
             const buffer = Buffer.from(base64Data, 'base64');
             const ext = filename.split('.').pop()?.toLowerCase() || '';
             if (ext === 'pdf' || mimeType === 'application/pdf') {
-                const pages = [];
-                // Custom page render to capture page-by-page text
-                function renderPage(pageData) {
-                    const renderOptions = {
-                        normalizeWhitespace: false,
-                        disableCombineTextItems: false
-                    };
-                    return pageData.getTextContent(renderOptions).then(function (textContent) {
-                        let lastY, text = '';
-                        for (let item of textContent.items) {
-                            if (lastY == item.transform[5] || !lastY) {
-                                text += item.str;
-                            }
-                            else {
-                                text += '\n' + item.str;
-                            }
-                            lastY = item.transform[5];
+                // pdf-parse v2 API: construct with binary data, then getText() returns
+                // { text, pages: [{ num, text }] }.
+                const parser = new PDFParse({ data: new Uint8Array(buffer) });
+                try {
+                    const result = await parser.getText();
+                    const pages = (result.pages || [])
+                        .map((p) => ({ pageNumber: p.num ?? 1, text: (p.text || '').trim() }))
+                        .filter((p) => p.text.length > 0);
+                    if (pages.length === 0 && (!result.text || result.text.trim().length === 0)) {
+                        // OCR Fallback for scanned PDFs
+                        const gemini = new (require('./ai/gemini.provider').GeminiProvider)();
+                        const text = await gemini.extractTextFromPdf(base64Data, mimeType);
+                        return [{ pageNumber: 1, text: text.trim() }];
+                    }
+                    return pages.length > 0 ? pages : [{ pageNumber: 1, text: (result.text || '').trim() }];
+                }
+                finally {
+                    if (typeof parser.destroy === 'function') {
+                        try {
+                            await parser.destroy();
                         }
-                        return text + '\n---PAGE_BREAK---\n';
-                    });
+                        catch { /* ignore cleanup errors */ }
+                    }
                 }
-                const data = await pdf(buffer, { pagerender: renderPage });
-                const rawPages = data.text.split('---PAGE_BREAK---');
-                for (let i = 0; i < rawPages.length; i++) {
-                    const text = rawPages[i].trim();
-                    if (text)
-                        pages.push({ pageNumber: i + 1, text });
-                }
-                return pages.length > 0 ? pages : [{ pageNumber: 1, text: data.text }];
             }
             else if (ext === 'docx' || mimeType.includes('wordprocessingml')) {
                 const result = await mammoth_1.default.extractRawText({ buffer });

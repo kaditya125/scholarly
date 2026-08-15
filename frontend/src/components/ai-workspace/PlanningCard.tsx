@@ -90,13 +90,16 @@ export default function PlanningCard({
             )}
           </div>
 
-          {/* Metadata Pills */}
+            {/* Metadata Pills */}
           <div className="flex flex-wrap gap-2 mb-4">
             {plan.estimatedDuration && (
               <MetadataPill icon={Clock} label={`${plan.estimatedDuration} min`} />
             )}
             {plan.targetAudience && (
-              <MetadataPill icon={Users} label={plan.targetAudience} />
+              <MetadataPill 
+                icon={Users} 
+                label={typeof plan.targetAudience === 'string' ? plan.targetAudience : (plan.targetAudience.grade || 'Target Audience')} 
+              />
             )}
             {plan.curriculum && (
               <MetadataPill icon={BookOpen} label={plan.curriculum} />
@@ -260,7 +263,7 @@ function MetadataPill({ icon: Icon, label, color = 'gray' }: MetadataPillProps) 
 interface OutlineSectionProps {
   section: {
     title: string;
-    duration?: string;
+    duration?: string | number;
     keyPoints?: string[];
     description?: string;
   };
@@ -282,7 +285,7 @@ function OutlineSection({ section, index }: OutlineSectionProps) {
           {section.duration && (
             <div className="flex items-center gap-1 mt-1 text-[12px] text-slate-500 dark:text-gray-400">
               <Clock className="w-3 h-3" />
-              <span>{section.duration}</span>
+              <span>{section.duration} min</span>
             </div>
           )}
         </div>
@@ -314,11 +317,14 @@ function OutlineSection({ section, index }: OutlineSectionProps) {
  * Source Item
  */
 interface SourceItemProps {
-  source: string;
+  source: string | type_ResearchSource;
 }
 
+import type { ResearchSource as type_ResearchSource } from '../../types/workspace.types';
+
 function SourceItem({ source }: SourceItemProps) {
-  const isUrl = source.startsWith('http://') || source.startsWith('https://');
+  const sourceTitle = typeof source === 'string' ? source : (source.title || source.id);
+  const isUrl = typeof source === 'string' && (source.startsWith('http://') || source.startsWith('https://'));
 
   if (isUrl) {
     return (
@@ -329,7 +335,7 @@ function SourceItem({ source }: SourceItemProps) {
         className="flex items-center gap-2 text-[12px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors group"
       >
         <ExternalLink className="w-3 h-3 shrink-0" />
-        <span className="truncate group-hover:underline">{source}</span>
+        <span className="truncate group-hover:underline">{sourceTitle}</span>
       </a>
     );
   }
@@ -337,7 +343,7 @@ function SourceItem({ source }: SourceItemProps) {
   return (
     <div className="flex items-start gap-2 text-[12px] text-slate-600 dark:text-gray-400">
       <span className="text-slate-400 dark:text-gray-600">•</span>
-      <span>{source}</span>
+      <span>{sourceTitle}</span>
     </div>
   );
 }

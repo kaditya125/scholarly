@@ -45,7 +45,19 @@ export class GeminiProvider implements AIProvider {
     }
   }
 
-  async generateResponse(history: ChatMessage[], systemPrompt?: string, opts?: { traceId?: string, model?: string, userId?: string, notebookId?: string, operation?: string }): Promise<AIProviderResponse> {
+  async generateResponse(
+    history: ChatMessage[],
+    systemPrompt?: string,
+    opts?: {
+      traceId?: string;
+      model?: string;
+      userId?: string;
+      notebookId?: string;
+      operation?: string;
+      temperature?: number;
+      responseJson?: boolean;
+    }
+  ): Promise<AIProviderResponse> {
     assertAIEnabled('Gemini generateResponse');
     const start = Date.now();
     const tid = opts?.traceId || `gemini_${start}`;

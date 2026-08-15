@@ -4,8 +4,15 @@ jest.mock('../../src/config/firebase', () => ({
   db: {},
 }));
 
+jest.mock('../../src/config/env', () => ({
+  env: {
+    CRON_SECRET: '',
+  },
+}));
+
 import { requireAuth, enforceSelf, requireCronSecret } from '../../src/middlewares/auth';
 import { auth } from '../../src/config/firebase';
+import { env } from '../../src/config/env';
 
 function mockRes() {
   const res: any = {};
@@ -78,10 +85,30 @@ describe('enforceSelf', () => {
 
 describe('requireCronSecret', () => {
   it('allows the request when CRON_SECRET is not configured (backward compatible)', () => {
+    (env as any).CRON_SECRET = '';
     const req: any = { headers: {} };
     const res = mockRes();
     const next = jest.fn();
     requireCronSecret(req, res, next);
     expect(next).toHaveBeenCalled();
+  });
+
+  it('allows request when valid x-cron-secret header is provided', () => {
+    (env as any).CRON_SECRET = 'test-secret-123';
+    const req: any = { headers: { 'x-cron-secret': 'test-secret-123' } };
+    const res = mockRes();
+    const next = jest.fn();
+    requireCronSecret(req, res, next);
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('rejects with 401 when invalid cron secret is provided', () => {
+    (env as any).CRON_SECRET = 'test-secret-123';
+    const req: any = { headers: { 'x-cron-secret': 'wrong-secret' } };
+    const res = mockRes();
+    const next = jest.fn();
+    requireCronSecret(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(next).not.toHaveBeenCalled();
   });
 });

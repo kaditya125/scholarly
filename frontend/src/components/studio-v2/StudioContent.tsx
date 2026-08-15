@@ -273,7 +273,7 @@ function useLiveNarration(
   const currentStage = useMemo(() => {
     for (let i = rawEvents.length - 1; i >= 0; i--) {
       const ev = rawEvents[i];
-      if (!ev.detail && ev.stage) return ev.stage;
+      if (!(ev as any).detail && ev.stage) return ev.stage;
     }
     return null;
   }, [rawEvents]);
@@ -325,7 +325,7 @@ function useLiveNarration(
     const merged: RStep[] = rawEvents.map((e) => ({
       stage: e.stage,
       message: e.message,
-      detail: e.detail,
+      detail: (e as any).detail,
     }));
     merged.push(...narration);
     return merged;
@@ -407,7 +407,7 @@ const SENTENCE_ENDS = '.!?।॥';
  */
 
 // Statuses that mean the job is still in flight — we keep polling for these.
-const STAGE_IN_PROGRESS: PodcastStatus[] = [
+const STAGE_IN_PROGRESS: string[] = [
   'PENDING',
   'PLANNING',
   'GENERATING_SCRIPT',
@@ -1084,7 +1084,7 @@ export default function StudioContent({
           setPhase('completed');
           return;
         }
-        if (podcast.status === 'FAILED' || podcast.status === 'CANCELLED') {
+        if (podcast.status === 'FAILED' || (podcast.status as string) === 'CANCELLED') {
           if (projectId) {
             updateProject(projectId, {
               podcastStatus: podcast.status,
@@ -1214,8 +1214,8 @@ export default function StudioContent({
           {(showProducingIndicator || (phase === 'completed' && producingPodcast)) && (
             <ProductionProgress
               status={lastPodcastStatus}
-              progressPct={producingPodcast?.progressPct}
-              stageDetails={producingPodcast?.stageDetails}
+              progressPct={(producingPodcast as any)?.progressPct}
+              stageDetails={(producingPodcast as any)?.stageDetails}
               defaultCollapsed={phase === 'completed'}
             />
           )}
@@ -1618,14 +1618,14 @@ function EmptyPromptState({
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+    <div className="flex-1 flex flex-col overflow-hidden min-h-0 bg-[#fafbfc] dark:bg-[#0b0b0c]">
       <div className="flex-1 overflow-y-auto scrollbar-hide">
-        <div className="max-w-2xl mx-auto px-6 pt-5 pb-8">
+        <div className="max-w-2xl mx-auto px-6 pt-6 pb-8">
           {/* Quick actions */}
           <QuickActions />
 
           {/* Title */}
-          <h2 className="mt-4 text-[19px] font-bold text-gray-900 dark:text-gray-100 tracking-[-0.01em]">
+          <h2 className="mt-5 text-[22px] sm:text-[24px] font-semibold text-slate-900 dark:text-white tracking-[-0.025em]">
             Create Content
           </h2>
 
@@ -1655,14 +1655,14 @@ function EmptyPromptState({
       </div>
 
       {/* Prompt composer */}
-      <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a1d21] flex-shrink-0">
+      <div className="border-t border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-[#111113]/80 backdrop-blur-md flex-shrink-0">
         <div className="max-w-2xl mx-auto px-6 py-4">
           {errorMessage && (
-            <div className="mb-3 rounded-md border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 px-3 py-2 text-[13.5px] text-red-700 dark:text-red-300">
+            <div className="mb-3 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 px-3.5 py-2.5 text-[13px] text-red-700 dark:text-red-300">
               {errorMessage}
             </div>
           )}
-          <div className="bg-white dark:bg-[#2a2d32] rounded-xl border border-gray-300 dark:border-white/10 shadow-sm">
+          <div className="bg-white dark:bg-[#141416] rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-xs focus-within:border-slate-400 dark:focus-within:border-white/25 focus-within:shadow-sm transition-all">
             <textarea
               value={prompt}
               onChange={(e) => onPromptChange(e.target.value)}
@@ -1670,8 +1670,8 @@ function EmptyPromptState({
               placeholder="What podcast would you like to create today?"
               rows={1}
               disabled={isStarting}
-              className="w-full px-4 py-3 bg-transparent text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none resize-none text-[14.5px] leading-relaxed disabled:opacity-60 scrollbar-hide"
-              style={{ minHeight: '40px', maxHeight: '200px' }}
+              className="w-full px-4 py-3.5 bg-transparent text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none resize-none text-[14px] leading-relaxed disabled:opacity-60 scrollbar-hide"
+              style={{ minHeight: '44px', maxHeight: '200px' }}
               onInput={(e) => {
                 const target = e.target as HTMLTextAreaElement;
                 target.style.height = 'auto';
@@ -1679,18 +1679,18 @@ function EmptyPromptState({
               }}
             />
 
-            <div className="flex items-center justify-between px-4 pb-3 pt-2 border-t border-gray-100 dark:border-white/5">
-              <div className="text-[12px] text-gray-400 dark:text-gray-500">
+            <div className="flex items-center justify-between px-4 pb-3 pt-1.5 border-t border-slate-100 dark:border-white/[0.04]">
+              <div className="text-[11.5px] font-mono text-slate-400 dark:text-slate-500">
                 {prompt.length} characters
               </div>
               <button
                 onClick={onSubmit}
                 disabled={!prompt.trim() || isStarting}
                 className={cn(
-                  'inline-flex items-center gap-2 px-4 py-1.5 rounded-md text-[14px] font-medium transition-all',
+                  'inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-[13.5px] font-semibold transition-all shadow-xs',
                   prompt.trim() && !isStarting
-                    ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                    ? 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 active:scale-95'
+                    : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-600 cursor-not-allowed'
                 )}
               >
                 <Sparkles className="w-3.5 h-3.5" /> Continue
@@ -1712,16 +1712,16 @@ function QuickActions() {
   ];
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-[12.5px] text-gray-500 dark:text-gray-400">Quick Actions:</span>
+      <span className="text-[12px] font-medium text-slate-400 dark:text-slate-500">Quick Actions:</span>
       {actions.map(({ label, icon: Icon }) => (
         <button
           key={label}
           type="button"
-          className="inline-flex items-center gap-1.5 pl-2.5 pr-2 py-1 rounded-md border border-gray-200 dark:border-white/10 bg-white dark:bg-[#23262b] text-[12.5px] font-medium text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-white/20 hover:bg-gray-50 dark:hover:bg-[#2a2d32] transition-colors"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200/80 dark:border-white/10 bg-white dark:bg-white/[0.03] text-[12px] font-medium text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-colors shadow-2xs"
         >
-          <Icon className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+          <Icon className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558]" />
           {label}
-          <ArrowUpRight className="w-3 h-3 text-gray-400 dark:text-gray-500" />
+          <ArrowUpRight className="w-3 h-3 text-slate-400 dark:text-slate-500" />
         </button>
       ))}
     </div>
@@ -1739,21 +1739,21 @@ function SegmentedTabs({
   templateCount: number;
 }) {
   return (
-    <div className="mt-3 rounded-full bg-gray-100 dark:bg-white/[0.06] p-1 flex items-center">
+    <div className="mt-4 rounded-full bg-slate-100/90 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 p-1 flex items-center max-w-[340px]">
       <button
         type="button"
         onClick={() => onChange('create')}
         className={cn(
-          'flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-semibold transition-all',
+          'flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-full text-[12.5px] font-semibold transition-all',
           tab === 'create'
-            ? 'bg-white dark:bg-[#2f3338] text-gray-900 dark:text-gray-100 shadow-sm'
-            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+            ? 'bg-white dark:bg-[#1f1f23] text-slate-900 dark:text-white shadow-xs'
+            : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
         )}
       >
         <Sparkles
           className={cn(
             'w-3.5 h-3.5',
-            tab === 'create' ? 'text-indigo-500' : 'text-gray-400 dark:text-gray-500'
+            tab === 'create' ? 'text-[#8ba32b] dark:text-[#c8e558]' : 'text-slate-400'
           )}
         />
         Create
@@ -1762,16 +1762,15 @@ function SegmentedTabs({
         type="button"
         onClick={() => onChange('templates')}
         className={cn(
-          'flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-semibold transition-all',
+          'flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-full text-[12.5px] font-semibold transition-all',
           tab === 'templates'
-            ? 'bg-white dark:bg-[#2f3338] text-gray-900 dark:text-gray-100 shadow-sm'
-            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+            ? 'bg-white dark:bg-[#1f1f23] text-slate-900 dark:text-white shadow-xs'
+            : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
         )}
       >
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-        <FileText className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+        <FileText className="w-3.5 h-3.5 text-slate-400" />
         Templates
-        <span className="ml-0.5 px-1.5 py-px rounded border border-gray-200 dark:border-white/15 text-[10.5px] font-semibold text-gray-500 dark:text-gray-400 tabular-nums">
+        <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-white/10 text-[10px] font-semibold text-slate-600 dark:text-slate-300 tabular-nums">
           {templateCount}
         </span>
       </button>
@@ -1780,8 +1779,7 @@ function SegmentedTabs({
 }
 
 /**
- * The Create pane: hand-drawn arrow pointing at the tabs, three starter
- * prompt rows, and the recurring-prompts explainer.
+ * The Create pane: three starter prompt rows and the recurring-prompts explainer.
  */
 function CreatePane({
   onPick,
@@ -1796,49 +1794,44 @@ function CreatePane({
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
-      className="pt-2"
+      transition={{ duration: 0.2 }}
+      className="pt-5"
     >
-      {/* Doodle arrow, nudging the eye up toward the tabs */}
-      <div className="flex justify-center pr-8">
-        <SquiggleArrow />
-      </div>
-
       {/* Starter prompt rows */}
-      <div className="mt-1 space-y-2 max-w-[420px] mx-auto">
+      <div className="space-y-2 max-w-[500px]">
         {EXAMPLE_PROMPTS.slice(0, 3).map((example) => (
           <button
             key={example}
             type="button"
             onClick={() => onPick(example)}
             disabled={disabled}
-            className="group w-full flex items-center gap-2 pl-3 pr-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#23262b] shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:shadow-[0_2px_8px_rgba(16,24,40,0.06)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="group w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-xs hover:border-[#8ba32b]/40 dark:hover:border-[#c8e558]/40 hover:bg-slate-50/80 dark:hover:bg-white/[0.06] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <AlignJustify className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 shrink-0" />
-            <ChevronRight className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 shrink-0" />
-            <span className="flex-1 text-left text-[13px] text-gray-700 dark:text-gray-300 truncate">
+            <div className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-[#8ba32b] dark:group-hover:text-[#c8e558] transition-colors shrink-0">
+              <Sparkles className="w-3 h-3" />
+            </div>
+            <span className="flex-1 text-left text-[13px] font-medium text-slate-700 dark:text-slate-200 truncate group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
               {example}
             </span>
-            <span className="w-4 h-1 rounded-full bg-gray-200 dark:bg-white/10 shrink-0 group-hover:bg-indigo-300 dark:group-hover:bg-indigo-500/40 transition-colors" />
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0 group-hover:translate-x-0.5 transition-transform" />
           </button>
         ))}
       </div>
 
-      {/* Recurring prompts explainer */}
-      <div className="mt-6 text-center">
-        <h3 className="text-[13.5px] font-semibold text-gray-900 dark:text-gray-100">
+      {/* Recurring prompts explainer card */}
+      <div className="mt-8 p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02] text-center max-w-[500px]">
+        <h3 className="text-[13.5px] font-semibold text-slate-900 dark:text-white">
           Manage recurring prompts
         </h3>
-        <p className="mt-1 mx-auto max-w-[300px] text-[12px] text-gray-500 dark:text-gray-400 leading-[1.6]">
-          Recurring prompts generate content for recordings. Manage your prompts in
-          settings
+        <p className="mt-1 mx-auto max-w-[340px] text-[12px] text-slate-500 dark:text-slate-400 leading-[1.6]">
+          Recurring prompts generate structured revision content and daily podcasts automatically.
         </p>
         <button
           type="button"
           onClick={onViewTemplates}
-          className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-gray-300 dark:border-white/15 bg-white dark:bg-[#23262b] text-[12.5px] font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#2a2d32] hover:border-gray-400 dark:hover:border-white/25 transition-colors shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+          className="mt-3.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/12 bg-white dark:bg-white/[0.04] text-[12px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-colors shadow-2xs"
         >
-          View Recurring Prompt
+          View Recommended Prompts
         </button>
       </div>
     </motion.div>
@@ -1857,8 +1850,8 @@ function TemplatesPane({
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
-      className="pt-4 space-y-2"
+      transition={{ duration: 0.2 }}
+      className="pt-5 space-y-2 max-w-[500px]"
     >
       {PODCAST_TEMPLATES.map((tpl) => (
         <button
@@ -1866,63 +1859,31 @@ function TemplatesPane({
           type="button"
           onClick={() => onPick(tpl.prompt)}
           disabled={disabled}
-          className="group w-full flex items-start gap-3 px-3 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#23262b] shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:shadow-[0_2px_8px_rgba(16,24,40,0.06)] transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
+          className="group w-full flex items-start gap-3 p-3.5 rounded-xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-white/[0.03] shadow-xs hover:border-[#8ba32b]/40 dark:hover:border-[#c8e558]/40 hover:bg-slate-50/80 dark:hover:bg-white/[0.06] transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span
             className={cn(
-              'w-8 h-8 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0',
-              tpl.accent
+              'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-2xs',
+              tpl.accent || 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
             )}
           >
-            <FileText className="w-4 h-4 text-white" />
+            <FileText className="w-4 h-4" />
           </span>
           <span className="flex-1 min-w-0">
-            <span className="block text-[13px] font-semibold text-gray-900 dark:text-gray-100">
+            <span className="block text-[13px] font-semibold text-slate-900 dark:text-white">
               {tpl.name}
             </span>
-            <span className="block text-[12px] text-gray-500 dark:text-gray-400 leading-[1.5] mt-0.5">
+            <span className="block text-[12px] text-slate-500 dark:text-slate-400 leading-[1.5] mt-0.5">
               {tpl.blurb}
             </span>
           </span>
-          <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 shrink-0 mt-1 group-hover:text-indigo-400 transition-colors" />
+          <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0 mt-1 group-hover:translate-x-0.5 transition-transform" />
         </button>
       ))}
-      <p className="pt-1 text-center text-[11.5px] text-gray-400 dark:text-gray-500">
+      <p className="pt-2 text-center text-[11.5px] text-slate-400 dark:text-slate-500">
         Pick a template to prefill the prompt, then edit it however you like.
       </p>
     </motion.div>
-  );
-}
-
-/**
- * Hand-drawn arrow doodle (a small loop then a sweep up-right) matching the
- * reference illustration. Decorative only.
- */
-function SquiggleArrow() {
-  return (
-    <svg
-      width="104"
-      height="74"
-      viewBox="0 0 110 80"
-      fill="none"
-      aria-hidden="true"
-      className="text-gray-800 dark:text-gray-300"
-    >
-      <path
-        d="M4 60c14 14 38 10 36-6-1-12-17-13-14 2 3 16 32 18 50-4 13-16 20-34 22-44"
-        stroke="currentColor"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M85 14 98 6l1 16"
-        stroke="currentColor"
-        strokeWidth="2.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }
 

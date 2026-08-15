@@ -292,12 +292,31 @@ export class QuizAttemptsService {
     const performanceHistory = Array.isArray(stats?.performanceHistory) ? stats.performanceHistory.slice(-19) : [];
     performanceHistory.push({ topic: r.title, score: r.accuracy });
 
+    // Update Activity Heatmap for today
+    const today = new Date().toISOString().split('T')[0];
+    const activityHeatmap = Array.isArray(stats?.activityHeatmap) ? [...stats.activityHeatmap] : [];
+    const todayIndex = activityHeatmap.findIndex(h => h.date === today);
+    if (todayIndex >= 0) {
+      activityHeatmap[todayIndex].count = (activityHeatmap[todayIndex].count || 0) + 1;
+      activityHeatmap[todayIndex].intensity = Math.min(3, activityHeatmap[todayIndex].count);
+    } else {
+      activityHeatmap.push({ date: today, count: 1, intensity: 1 });
+    }
+
+    const currentStreak = stats?.gamification?.studyStreakDays || 0;
+    const newStreak = currentStreak === 0 ? 1 : currentStreak;
+
     await this.statsRepo.upsertUserStats(userId, {
       totalTestsAttempted: newCount,
       averageAccuracy: newAvg,
       weakTopics: Array.from(weakSet).slice(0, 12),
       strongTopics: Array.from(strongSet).slice(0, 12),
       performanceHistory,
+      activityHeatmap,
+      gamification: {
+        ...(stats?.gamification || {}),
+        studyStreakDays: newStreak,
+      }
     } as any);
   }
 

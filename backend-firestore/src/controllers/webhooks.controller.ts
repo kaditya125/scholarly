@@ -78,6 +78,35 @@ export class WebhooksController {
   };
 
   /**
+   * POST /webhooks/100ms
+   * Event receiver endpoint for 100ms.live webhooks (e.g. recording.success)
+   */
+  public handle100msEvent = async (req: Request, res: Response): Promise<void> => {
+    try {
+      // For a production app, verify the 100ms webhook signature here.
+      // 100ms sends x-100ms-signature header.
+      const body = req.body;
+      logger.info('[100msWebhook] Received event', { type: body.type, roomId: body.data?.room_id });
+
+      if (body.type === 'recording.success' || body.type === 'beam.recording.success') {
+        const providerRoomId = body.data?.room_id;
+        // The recording URL might be in different fields depending on the destination (S3 vs 100ms storage)
+        const recordingUrl = body.data?.location || body.data?.recording_presigned_url || body.data?.url;
+        
+        if (providerRoomId && recordingUrl) {
+          const { classSessionService } = require('../services/classSession.service');
+          await classSessionService.updateRecordingRef(providerRoomId, recordingUrl);
+        }
+      }
+
+      res.status(200).send('OK');
+    } catch (error: any) {
+      logger.error('[100msWebhook] Error handling event:', error);
+      res.sendStatus(500);
+    }
+  };
+
+  /**
    * POST /webhooks/whatsapp
    * Event receiver endpoint that receives user messages, button replies, and status reports.
    */

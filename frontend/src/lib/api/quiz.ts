@@ -136,6 +136,7 @@ export interface QuizAttemptSummary {
   maxMarks?: number;
   accuracy?: number;
   correctCount?: number;
+  answeredCount?: number;
 }
 
 export interface ProgressTopicMastery {

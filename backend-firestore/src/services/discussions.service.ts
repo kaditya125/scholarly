@@ -1,29 +1,39 @@
 import { DiscussionsRepository } from '../repositories/discussions.repository';
-import { Discussion } from '../types';
+import { Discussion, DiscussionResponseItem } from '../types';
 
 export class DiscussionsService {
   private repository = new DiscussionsRepository();
 
-  async getDiscussions(roomId?: string, limit?: number) {
-    return this.repository.findByRoom(roomId, limit);
+  async getDiscussions(params: {
+    topics?: string[];
+    mine?: boolean;
+    status?: string;
+    q?: string;
+    sort?: string;
+    limit?: number;
+    currentUid?: string;
+  }): Promise<Discussion[]> {
+    return this.repository.findFiltered(params);
   }
 
-  async createDiscussion(data: { topic: string, title: string, description: string, roomId: string, participantId: string }): Promise<Discussion> {
-    
-    // Simulate AI Moderation
+  async getDiscussionById(id: string, currentUid?: string): Promise<{ discussion: Discussion; responses: DiscussionResponseItem[] } | null> {
+    return this.repository.getById(id, currentUid);
+  }
+
+  async createDiscussion(data: {
+    topic: string;
+    title: string;
+    description: string;
+    roomId?: string;
+    tags?: string[];
+    participantId: string;
+  }): Promise<Discussion> {
+    // Basic AI Moderation check
     const isAppropriate = this.simulateAIModeration(data.title, data.description);
     if (!isAppropriate) {
-      throw new Error("Content violates community guidelines.");
+      throw new Error('Content violates community guidelines.');
     }
 
-    // Duplicate Detection (Similarity Search Mock)
-    const similarThreads = await this.findSimilarThreads(data.title, data.roomId);
-    if (similarThreads.length > 0) {
-      // In a real app we might return a 409 or a warning. 
-      // For now, we'll just link them.
-    }
-
-    // Simulate AI Summarization / Title generation if title is empty
     let finalTitle = data.title;
     if (!finalTitle || finalTitle.trim() === '') {
       finalTitle = this.simulateAITitleGeneration(data.description);
@@ -32,40 +42,68 @@ export class DiscussionsService {
     const aiSummary = this.simulateAISummarization(data.description);
 
     const newDiscussion: Omit<Discussion, 'id'> = {
-      chapter: 'General',
-      topic: data.topic,
+      chapter: data.topic || 'General',
+      topic: data.topic || 'General',
       title: finalTitle,
-      description: data.description,
-      roomId: data.roomId,
+      description: data.description || '',
+      roomId: data.roomId || 'general',
+      authorId: data.participantId,
+      tags: Array.isArray(data.tags) ? data.tags : [],
+      status: 'active',
       replies: 0,
-      views: 0,
+      views: 1,
+      likes: [],
+      likeCount: 0,
+      liked: false,
       participants: [data.participantId],
-      aiAssisted: true, // We processed it via AI
+      aiAssisted: true,
       aiSummary: aiSummary,
-      similarThreadIds: similarThreads,
-      createdAt: Date.now()
+      similarThreadIds: [],
+      createdAt: Date.now(),
     };
 
     return this.repository.create(newDiscussion);
   }
 
+  async toggleVote(id: string, currentUid: string): Promise<{ liked: boolean; likeCount: number }> {
+    return this.repository.toggleVote(id, currentUid);
+  }
+
+  async addResponse(discussionId: string, currentUid: string, text: string): Promise<DiscussionResponseItem> {
+    if (!text || !text.trim()) {
+      throw new Error('Response text cannot be empty');
+    }
+    return this.repository.addResponse(discussionId, currentUid, text.trim());
+  }
+
+  async setBestResponse(discussionId: string, responseId: string, currentUid: string): Promise<void> {
+    return this.repository.setBestResponse(discussionId, responseId, currentUid);
+  }
+
+  async setStatus(discussionId: string, status: 'active' | 'resolved' | 'closed', currentUid: string): Promise<void> {
+    return this.repository.setStatus(discussionId, status, currentUid);
+  }
+
+  async getTrending(limit = 6): Promise<Discussion[]> {
+    return this.repository.getTrending(limit);
+  }
+
+  async getContributors(limit = 5): Promise<{ uid: string; displayName: string; photoURL?: string; posts: number }[]> {
+    return this.repository.getContributors(limit);
+  }
+
   private simulateAIModeration(title: string, description: string): boolean {
-    const toxicWords = ['spam', 'abuse', 'hate'];
+    const toxicWords = ['hate speech', 'illegal activity', 'phishing scam'];
     const content = (title + ' ' + description).toLowerCase();
-    return !toxicWords.some(w => content.includes(w));
+    return !toxicWords.some((w) => content.includes(w));
   }
 
   private simulateAITitleGeneration(description: string): string {
-    return description.substring(0, 30) + "...";
+    return description.substring(0, 40) + '...';
   }
 
   private simulateAISummarization(description: string): string {
-    return `AI Summary: This discussion revolves around key concepts mentioned in the description. Exploring the nuances of ${description.split(' ').slice(0, 3).join(' ')}...`;
-  }
-
-  private async findSimilarThreads(title: string, roomId: string): Promise<string[]> {
-    // In production, this would use vector search (Pinecone) to find semantic duplicates
-    // For now, return empty or mock
-    return [];
+    if (!description || description.length < 50) return '';
+    return `AI Summary: ${description.substring(0, 100)}...`;
   }
 }

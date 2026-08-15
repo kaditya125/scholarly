@@ -75,10 +75,19 @@ export function useNotebookSources(notebookId: string | null) {
     onError: () => setUploadProgress(0),
   });
 
+  const deleteSourceMutation = useMutation({
+    mutationFn: (sourceId: string) => notebooksApi.deleteSource(notebookId!, sourceId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notebookSources', notebookId, user?.uid] });
+    },
+  });
+
   return {
     sources: sourcesQuery.data || [],
     isLoading: sourcesQuery.isLoading,
     uploadSource: uploadSourceMutation.mutateAsync,
+    deleteSource: deleteSourceMutation.mutateAsync,
+    refetchSources: sourcesQuery.refetch,
     isUploading: uploadSourceMutation.isPending,
     uploadProgress,
   };

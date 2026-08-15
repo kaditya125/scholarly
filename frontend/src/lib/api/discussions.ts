@@ -74,6 +74,7 @@ export interface CommunityDiscussion {
   status?: DiscussionStatus;
   createdAt: number | string;
   topic: string;
+  chapter?: string;
   title: string;
   description?: string;
   tags: string[];
@@ -81,6 +82,8 @@ export interface CommunityDiscussion {
   replies: number;
   liked?: boolean;
   likeCount: number;
+  participants?: string[];
+  participantProfiles?: DiscussionAuthor[];
   bestResponseId?: string;
 }
 
@@ -168,6 +171,14 @@ function normalizeDiscussion(raw: any): CommunityDiscussion {
   const status: DiscussionStatus | undefined = ['active', 'resolved', 'closed'].includes(src.status)
     ? (src.status as DiscussionStatus)
     : undefined;
+
+  const rawProfiles = Array.isArray(src.participantProfiles) ? src.participantProfiles : [];
+  const participantProfiles: DiscussionAuthor[] = rawProfiles.map((p: any) => ({
+    uid: p?.uid || p?.userId || 'unknown',
+    displayName: p?.displayName || p?.name || 'Student',
+    photoURL: p?.photoURL || p?.avatar || undefined,
+  }));
+
   return {
     id: String(src.id ?? ''),
     authorId: src.authorId ?? rawAuthor.uid ?? undefined,
@@ -175,6 +186,7 @@ function normalizeDiscussion(raw: any): CommunityDiscussion {
     status,
     createdAt: src.createdAt ?? src.time ?? Date.now(),
     topic: src.topic ?? src.chapter ?? 'General',
+    chapter: src.chapter ?? undefined,
     title: src.title ?? src.subject ?? '(untitled)',
     description: src.description ?? src.content ?? undefined,
     tags,
@@ -184,6 +196,8 @@ function normalizeDiscussion(raw: any): CommunityDiscussion {
     likeCount: Number.isFinite(src.likeCount)
       ? Number(src.likeCount)
       : Number.isFinite(src.likes) ? Number(src.likes) : 0,
+    participants: Array.isArray(src.participants) ? src.participants : undefined,
+    participantProfiles: participantProfiles.length > 0 ? participantProfiles : [author],
     bestResponseId: src.bestResponseId ?? undefined,
   };
 }

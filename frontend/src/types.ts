@@ -58,7 +58,7 @@ export interface Notebook {
   };
 }
 
-export type ProcessingStatus = 'PENDING' | 'UPLOADING' | 'PROCESSING' | 'OCR' | 'EXTRACTING' | 'CHUNKING' | 'EMBEDDING' | 'INDEXING' | 'GENERATING_GRAPH' | 'READY' | 'FAILED';
+export type ProcessingStatus = 'DRAFT' | 'QUEUED' | 'PENDING' | 'UPLOADING' | 'PROCESSING' | 'OCR' | 'EXTRACTING' | 'CHUNKING' | 'EMBEDDING' | 'INDEXING' | 'GENERATING_GRAPH' | 'READY' | 'FAILED' | 'FAILED_NONRETRYABLE' | 'CANCELLED' | 'ARCHIVED';
 
 export interface DocumentSource {
   id: string;

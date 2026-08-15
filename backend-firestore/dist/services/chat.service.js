@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatService = void 0;
 const chat_repository_1 = require("../repositories/chat.repository");
@@ -7,7 +40,7 @@ const logger_1 = require("../utils/logger");
 class ChatService {
     repository = new chat_repository_1.ChatRepository();
     // Removed getProvider because DI container handles it now.
-    async processChat(userId, sessionId, message, model, topicType) {
+    async processChat(userId, sessionId, message, model, topicType, productRole) {
         // 1. Get or create session
         await this.repository.getOrCreateSession(sessionId, userId, topicType, model);
         // 2. Load conversation history
@@ -26,7 +59,9 @@ class ChatService {
             sessionId,
             query: message,
             history: history,
-            mode: topicType
+            mode: topicType,
+            model,
+            productRole
         };
         // Because this is the non-streaming fallback, we manually consume the stream to get the full reply
         const stream = WorkflowEngine_1.workflowEngine.executeStream(req);
@@ -44,6 +79,10 @@ class ChatService {
         };
         // 7. Store both user and assistant messages
         await this.repository.saveMessagesBatch(sessionId, [userMessage, assistantMessage]);
+        // Asynchronously generate a proper subject title if this is early in the conversation
+        if (history.length <= 4) {
+            this.generateAndSaveTitle(sessionId, [...history, userMessage, assistantMessage]).catch(e => console.error(e));
+        }
         // 8. Return data
         return {
             reply: fullReply,
@@ -52,7 +91,7 @@ class ChatService {
             conversationHistory: [...history, assistantMessage]
         };
     }
-    async processChatStream(userId, sessionId, message, model, topicType, res, notebookId, traceId) {
+    async processChatStream(userId, sessionId, message, model, topicType, res, notebookId, traceId, productRole) {
         logger_1.logger.info(`Starting stream workflow for user ${userId}`, { traceId, sessionId });
         // 1. Get or create session
         await this.repository.getOrCreateSession(sessionId, userId, topicType, model);
@@ -75,14 +114,26 @@ class ChatService {
             query: message,
             history: history,
             mode: topicType,
-            traceId
+            model,
+            traceId,
+            productRole
         };
         const stream = WorkflowEngine_1.workflowEngine.executeStream(req);
         let fullReply = '';
         try {
             for await (const event of stream) {
                 if (event.type === 'progress') {
-                    res.write(`data: ${JSON.stringify({ type: 'progress', message: event.message })}\n\n`);
+                    // Forward the `stage` too — the frontend's ReasoningTimeline
+                    // matches each step to a backend stage id to decide whether that
+                    // row lights up or is grayed out as "not needed for this reply".
+                    // Dropping `stage` here (as we used to) meant every stage arrived
+                    // as undefined, so every timeline row rendered as skipped even
+                    // though the backend was actually emitting them.
+                    res.write(`data: ${JSON.stringify({
+                        type: 'progress',
+                        stage: event.stage,
+                        message: event.message
+                    })}\n\n`);
                 }
                 else if (event.type === 'chunk') {
                     fullReply += event.chunk;
@@ -90,6 +141,11 @@ class ChatService {
                 }
                 else if (event.type === 'error') {
                     throw new Error(event.message);
+                }
+                else if (event.type === 'reasoning') {
+                    // Forwarded verbatim; the client types it out in the reasoning timeline.
+                    // Deliberately NOT appended to fullReply — this is thinking, not the answer.
+                    res.write(`data: ${JSON.stringify({ type: 'reasoning', content: event.text })}\n\n`);
                 }
                 else if (event.type === 'citation') {
                     res.write(`data: ${JSON.stringify({ type: 'citation', citation: event.citation })}\n\n`);
@@ -137,6 +193,26 @@ class ChatService {
         };
         // Only save the assistant message since user message was saved earlier
         await this.repository.saveMessage(sessionId, assistantMessage);
+        // Asynchronously generate a proper subject title if this is early in the conversation
+        if (history.length <= 4) {
+            this.generateAndSaveTitle(sessionId, [...history, userMessage, assistantMessage]).catch(e => console.error(e));
+        }
+    }
+    async generateAndSaveTitle(sessionId, messages) {
+        try {
+            const { GeminiProvider } = await Promise.resolve().then(() => __importStar(require('./ai/gemini.provider')));
+            const llm = new GeminiProvider();
+            const prompt = `Based on the following conversation, generate a short 2-5 word title that summarizes the main topic of discussion. Do not include quotes, punctuation, or any prefixes like "Title:". Just the raw title text.\n\n` +
+                messages.map(m => `${m.role}: ${m.content}`).join('\n');
+            const response = await llm.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }]);
+            const title = response.reply.trim().replace(/^["']|["']$/g, '');
+            if (title && title.length < 50) {
+                await this.repository.updateSessionTitle(sessionId, title);
+            }
+        }
+        catch (e) {
+            console.error('Failed to generate dynamic title', e);
+        }
     }
     async getUserSessions(userId) {
         return this.repository.getSessionsByUser(userId);
@@ -154,5 +230,8 @@ class ChatService {
     async deleteSession(sessionId, userId) {
         return this.repository.deleteSession(sessionId, userId);
     }
+    async getDeletedSessions(userId) { return []; }
+    async restoreSession(sessionId, userId) { }
+    async permanentlyDeleteSession(sessionId, userId) { }
 }
 exports.ChatService = ChatService;

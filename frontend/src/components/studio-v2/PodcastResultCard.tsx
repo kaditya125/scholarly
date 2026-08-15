@@ -70,7 +70,7 @@ export default function PodcastResultCard({
   const [copied, setCopied] = useState(false);
   const [chapterIndex, setChapterIndex] = useState(0);
 
-  const chapters = podcast.chapters ?? [];
+  const chapters = (podcast as any).chapters ?? [];
   const hasChapters = chapters.length > 1;
   const isReady = podcast.status === 'READY';
 
@@ -82,7 +82,7 @@ export default function PodcastResultCard({
         podcast.speakers && podcast.speakers.length > 0
           ? podcast.speakers.join(', ')
           : null,
-        podcast.difficulty || null,
+        (podcast as any).difficulty || null,
       ]
         .filter(Boolean)
         .join(' · '),
@@ -359,7 +359,7 @@ function IconButton({
 
 function fallbackDurationSeconds(podcast: PodcastMetadata): number {
   if (podcast.duration && podcast.duration > 0) return podcast.duration;
-  if (podcast.durationMs && podcast.durationMs > 0) return podcast.durationMs / 1000;
+  if ((podcast as any).durationMs && (podcast as any).durationMs > 0) return (podcast as any).durationMs / 1000;
   return 0;
 }
 

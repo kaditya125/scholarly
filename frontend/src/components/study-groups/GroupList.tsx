@@ -105,7 +105,7 @@ export function GroupList({
                       {group.name}
                     </h3>
                     <span className="text-[10px] text-slate-400 shrink-0 whitespace-nowrap">
-                      {formatDate(group.updatedAt || group.createdAt)}
+                      {formatDate(typeof group.updatedAt === 'number' ? group.updatedAt : group.createdAt)}
                     </span>
                   </div>
                   <p

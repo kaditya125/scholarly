@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion } from "motion/react";
 import { cn } from "../../lib/utils";
 import {
-  Activity, BarChart2, BookOpen, BrainCircuit, Database,
+  Activity, Award, BarChart2, BookOpen, BrainCircuit, Database,
   Flag, FolderOpen, GraduationCap, HeartPulse, History, LayoutDashboard, Library,
   MessageSquare, Network, Settings, ShieldAlert, Users, Bell,
   Save, Search, Wallet
@@ -25,6 +25,7 @@ const ADMIN_MENU: MenuGroup[] = [
   {
     group: "Knowledge & Data",
     items: [
+      { label: "Exam Registry", path: "/admin/exams", icon: Award },
       { label: "Curriculum Ingestion", path: "/admin/curriculum", icon: BookOpen },
       { label: "Knowledge Graph", path: "/admin/knowledge-graph", icon: Network },
       { label: "Vector Database", path: "/admin/vector-db", icon: Database },

@@ -25,7 +25,7 @@ export interface BaseMessage {
   id: string;
   role: MessageRole;
   type: MessageType;
-  timestamp: Date;
+  timestamp: Date | string;
   content?: string;
 }
 
@@ -58,8 +58,11 @@ export interface ClarificationOption {
 export interface LearningObjective {
   id: string;
   description: string;
+  text?: string;
   bloomsLevel?: string;
+  bloomLevel?: string;
   importance?: 'essential' | 'important' | 'nice_to_have';
+  priority?: 'high' | 'medium' | 'low';
 }
 
 export interface Misconception {
@@ -72,7 +75,7 @@ export interface Misconception {
 export interface RecommendationMessage extends BaseMessage {
   type: 'recommendation';
   title: string;
-  recommendations: Recommendation[];
+  recommendations: any;
   accepted?: boolean;
   summary?: string;
   objectives?: any[];

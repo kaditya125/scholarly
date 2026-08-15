@@ -39,6 +39,8 @@ import trashRoutes from './trash.routes';
 import uploadsRoutes from './uploads.routes';
 import videoLessonRoutes from './video-lesson.routes';
 import webhooksRoutes from './webhooks.routes';
+import helpRoutes from './help.routes';
+import examRoutes from './exam.routes';
 
 const router = Router();
 
@@ -83,5 +85,7 @@ router.use('/trash', trashRoutes);
 router.use('/uploads', uploadsRoutes);
 router.use('/video-lesson', videoLessonRoutes);
 router.use('/webhooks', webhooksRoutes);
+router.use('/help', helpRoutes);
+router.use('/exams', examRoutes);
 
 export default router;

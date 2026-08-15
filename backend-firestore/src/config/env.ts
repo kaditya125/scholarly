@@ -109,6 +109,10 @@ const envSchema = z.object({
   // Chat fast-path toggle read by GenerationOrchestrator; keep declared so it
   // can be set from .env without a schema failure.
   CHAT_FAST_ANSWER: z.string().optional(),
+
+  // Reasoning model toggles
+  CHAT_REASONING_ENABLED: z.string().optional(),
+  CHAT_REASONING_MODEL: z.string().optional(),
 }).refine(
   (data) => {
     // Either GOOGLE_APPLICATION_CREDENTIALS must be provided, OR all three manual FIREBASE vars must be provided.

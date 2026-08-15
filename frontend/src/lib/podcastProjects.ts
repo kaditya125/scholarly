@@ -509,7 +509,7 @@ function toMeta(detail: PodcastProjectDetail): PodcastProjectMeta {
 
 /** Map a backend podcast status onto the coarser project status. */
 export function projectStatusFromPodcast(status: PodcastStatus): ProjectStatus {
-  switch (status) {
+  switch (status as string) {
     case 'READY':
       return 'ready';
     case 'FAILED':
@@ -532,7 +532,7 @@ export function projectStatusLabel(project: PodcastProjectMeta): string {
     case 'ready':
       return 'Completed';
     case 'failed':
-      return project.podcastStatus === 'CANCELLED' ? 'Cancelled' : 'Failed';
+      return (project.podcastStatus as string) === 'CANCELLED' ? 'Cancelled' : 'Failed';
     case 'planning':
       return 'Planning...';
     case 'generating':

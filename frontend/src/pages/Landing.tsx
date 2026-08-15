@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   ArrowRight, Camera, NotebookPen, Headphones,
-  SlidersHorizontal, Gauge, Languages, Presentation, Check, Users,
+  SlidersHorizontal, Gauge, Languages, Presentation, Check, Users, Radio, ClipboardCheck,
+  Bot, MessageCircleQuestion, Sparkles, HelpCircle, ArrowUpRight
 } from 'lucide-react';
 import ProductPreview from '../components/landing/ProductPreview';
 import SiteHeader from '../components/landing/SiteHeader';
@@ -67,8 +68,13 @@ const CAPABILITIES = [
   },
   {
     icon: NotebookPen,
-    title: 'Bring your own material',
-    body: 'Upload your PDFs, class notes and question papers into a notebook. Scholarly indexes them, maps how the concepts connect, and answers from your material — citing it back.',
+    title: 'Your material & teacher notes',
+    body: 'Upload your own PDFs or access exclusive notes, revision sheets, and curated question banks shared directly by verified educators into your notebooks.',
+  },
+  {
+    icon: Presentation,
+    title: 'Learn from any teacher',
+    body: 'Join live & paid classes taught by expert teachers. Enroll in dedicated batches, get homework auto-graded, and ask questions directly during interactive sessions.',
   },
   {
     icon: Headphones,
@@ -79,6 +85,11 @@ const CAPABILITIES = [
     icon: SlidersHorizontal,
     title: 'Change what it does',
     body: 'One tutor, different jobs: explain a concept, condense a chapter into revision notes, get quizzed one question at a time, draft a full-length answer, or sit a mock interview.',
+  },
+  {
+    icon: ClipboardCheck,
+    title: 'Adaptive tests & tracking',
+    body: 'Test your knowledge with adaptive baseline assessments and comprehensive chapter quizzes. Track your progress with detailed analytics and insights.',
   },
 ];
 
@@ -376,12 +387,12 @@ export default function LandingPage() {
               <Item>
                 <div className="mt-9 flex flex-col sm:flex-row gap-3">
                   <PrimaryCta to="/signup">Start learning</PrimaryCta>
-                  <a
-                    href="#how"
+                  <Link
+                    to="/how-it-works"
                     className="inline-flex items-center justify-center h-12 px-6 rounded-xl border border-slate-200 dark:border-white/12 text-[14.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
                   >
                     See how it works
-                  </a>
+                  </Link>
                 </div>
               </Item>
 
@@ -393,6 +404,23 @@ export default function LandingPage() {
                   </span>{' '}
                   already learning
                 </p>
+
+                <div className="mt-3 flex items-center">
+                  <Link
+                    to="/help"
+                    className="inline-flex items-center gap-1.5 text-[12.5px] sm:text-[13px] font-medium text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors group"
+                  >
+                    <Bot className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558] group-hover:scale-110 transition-transform" />
+                    <span>
+                      Have questions? Ask{' '}
+                      <span className="font-semibold text-slate-700 dark:text-gray-200 group-hover:text-[#8ba32b] dark:group-hover:text-[#c8e558] transition-colors">
+                        Scholarly
+                      </span>{' '}
+                      AI
+                    </span>
+                    <ArrowRight className="w-3 h-3 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:text-[#8ba32b] dark:group-hover:text-[#c8e558] transition-all" />
+                  </Link>
+                </div>
               </Item>
             </Stagger>
 
@@ -453,14 +481,13 @@ export default function LandingPage() {
                 <Eyebrow>Ways in</Eyebrow>
                 <SectionHeading>Learning doesn&rsquo;t stay inside a textbook.</SectionHeading>
                 <Lede>
-                  A question you photograph. A PDF you already have. A topic you&rsquo;d rather listen
-                  to on the way to class. Scholarly takes all of them — and answers in whatever shape
-                  actually helps.
+                  A question you photograph. A PDF you upload. Live &amp; paid classes taught by top verified
+                  teachers, complete with their exclusive notes and question banks. Scholarly brings AI and expert educators together in one place.
                 </Lede>
               </div>
             </Reveal>
 
-            <Stagger className="mt-14 sm:mt-16 grid sm:grid-cols-2 gap-4 sm:gap-5" gap={0.08}>
+            <Stagger className="mt-14 sm:mt-16 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5" gap={0.08}>
               {CAPABILITIES.map((c) => (
                 <Item key={c.title} className="h-full">
                   <CapabilityCard {...c} />
@@ -545,6 +572,102 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ══ Student Questions & Live Helpdesk ════════════════════════════ */}
+        <section id="help" className="scroll-mt-16 border-t border-slate-100 dark:border-white/[0.07] bg-slate-50/60 dark:bg-white/[0.02]">
+          <div className="max-w-[1160px] mx-auto px-5 sm:px-8 py-20 sm:py-24">
+            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+              <Reveal>
+                <span className="inline-flex w-10 h-10 rounded-xl bg-white dark:bg-white/[0.06] border border-slate-200 dark:border-white/10 items-center justify-center">
+                  <MessageCircleQuestion className="w-[18px] h-[18px] text-slate-700 dark:text-gray-300" strokeWidth={1.9} />
+                </span>
+                <div className="mt-5">
+                  <Eyebrow>Instant Answers & Helpdesk</Eyebrow>
+                </div>
+                <SectionHeading>Have questions before starting? Ask Scholarly.</SectionHeading>
+                <Lede>
+                  Whether you want to understand how our 24/7 AI tutor reasons, verify syllabus coverage for your exam, or check our 7-day money-back guarantee — get immediate answers with cited explanations.
+                </Lede>
+                <p className="mt-4 text-[14.5px] leading-relaxed text-slate-500 dark:text-gray-400">
+                  Need personalized guidance? Chat instantly with our senior support specialists with response times under 30 seconds.
+                </p>
+
+                <div className="mt-8 flex flex-wrap items-center gap-3">
+                  <Link
+                    to="/help"
+                    className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13.5px] font-semibold hover:opacity-90 transition-opacity"
+                  >
+                    <Bot className="w-4 h-4" />
+                    Ask Scholarly AI Guide
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    to="/help?q=I%20want%20to%20talk%20to%20a%20live%20helpdesk%20agent"
+                    className="inline-flex items-center gap-2 h-11 px-5 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/5 text-slate-900 dark:text-white text-[13.5px] font-semibold hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                  >
+                    <Headphones className="w-4 h-4 text-emerald-500" />
+                    Talk to Live Specialist
+                  </Link>
+                </div>
+              </Reveal>
+
+              <Reveal delay={0.1}>
+                <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416] p-5 sm:p-6 shadow-sm flex flex-col gap-3.5">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="text-[13px] font-semibold text-slate-900 dark:text-white">
+                        Common Student Queries
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-medium text-slate-400">Click to explore answers</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {[
+                      {
+                        q: "How does OCR scan & solve work on handwritten problem sets?",
+                        tag: "AI Tutor"
+                      },
+                      {
+                        q: "Can I generate audio podcasts from uploaded textbook PDFs?",
+                        tag: "Podcast Studio"
+                      },
+                      {
+                        q: "What is the 7-day unconditional money-back guarantee?",
+                        tag: "Pricing & Plans"
+                      },
+                      {
+                        q: "How do teachers host live video classes and manage payouts?",
+                        tag: "For Teachers"
+                      },
+                      {
+                        q: "Do you sell student data or share private notes?",
+                        tag: "Privacy & Security"
+                      }
+                    ].map((item, idx) => (
+                      <Link
+                        key={idx}
+                        to={`/help?q=${encodeURIComponent(item.q)}`}
+                        className="group p-3 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/60 dark:bg-white/[0.02] hover:bg-slate-100/80 dark:hover:bg-white/[0.06] hover:border-slate-300 dark:hover:border-white/20 transition-all flex items-center justify-between"
+                      >
+                        <div className="flex flex-col pr-2">
+                          <span className="text-[13px] font-medium text-slate-800 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white leading-snug">
+                            {item.q}
+                          </span>
+                          <span className="text-[11px] text-slate-400 mt-0.5">{item.tag}</span>
+                        </div>
+                        <div className="w-6 h-6 rounded-full bg-white dark:bg-white/5 flex items-center justify-center flex-shrink-0 group-hover:bg-[#c8e558]/20 transition-colors">
+                          <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-slate-900 dark:group-hover:text-[#c8e558] transition-colors" />
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </Reveal>
+            </div>
+          </div>
+        </section>
+
         {/* ══ Teachers ═══════════════════════════════════════════════════════ */}
         <section
           id="teachers"
@@ -560,17 +683,17 @@ export default function LandingPage() {
                   <Eyebrow>For teachers</Eyebrow>
                 </div>
                 <h2 className="mt-3 text-[26px] sm:text-[32px] leading-[1.15] font-semibold tracking-[-0.03em] max-w-[30rem]">
-                  Teaching? You get the whole platform, plus a profile.
+                  Teaching? You get the whole platform, plus a dashboard.
                 </h2>
                 <p className="mt-4 max-w-[36rem] text-[15.5px] leading-relaxed text-slate-500 dark:text-gray-400">
                   A teacher account includes everything above — chat, notebooks, practice, the
-                  podcast studio — and a teaching profile: the subjects you cover, the classes and
-                  boards you teach, the exams you prepare students for, and how you like to explain.
+                  podcast studio — and a powerful teaching dashboard. Manage your classes, track
+                  student progress, and organize your cohorts effortlessly.
                 </p>
                 <p className="mt-4 max-w-[36rem] text-[15px] leading-relaxed text-slate-500 dark:text-gray-400">
-                  Classes, cohorts, publishing to your own students, and AI that reads your teaching
-                  profile are all still being built. We would rather say that plainly than show you
-                  an empty dashboard.
+                  Host live interactive sessions, assign quizzes using our built-in test engine, and
+                  leverage the AI content pipeline to instantly generate course materials and book covers.
+                  Plus, invite peers via the referral program and receive automated weekly payouts straight to your bank.
                 </p>
                 <Link
                   to="/for-teachers"
@@ -652,6 +775,23 @@ export default function LandingPage() {
           </Reveal>
         </section>
       </main>
+
+      {/* Floating Help Widget */}
+      <div className="fixed bottom-6 right-6 sm:bottom-7 sm:right-7 z-50">
+        <Link
+          to="/help"
+          className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/85 dark:bg-[#18181c]/85 text-slate-200 hover:text-white backdrop-blur-xl border border-slate-800 dark:border-white/[0.08] hover:border-slate-700 dark:hover:border-white/20 shadow-[0_4px_16px_rgba(0,0,0,0.15)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-200"
+          title="Ask Scholarly AI"
+        >
+          <div className="relative flex items-center justify-center">
+            <Bot className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558]" />
+            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          </div>
+          <span className="text-[12px] font-medium tracking-normal text-slate-200 group-hover:text-white transition-colors">
+            Ask AI
+          </span>
+        </Link>
+      </div>
 
       <SiteFooter />
     </div>

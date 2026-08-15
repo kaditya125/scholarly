@@ -17,10 +17,18 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Check, ChevronDown, ChevronRight, Loader2, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import type { PodcastStatus, PodcastStageDetail } from '../../types';
+import type { PodcastStatus } from '../../types';
+
+export interface PodcastStageDetail {
+  stage?: string;
+  message?: string;
+  timestamp?: string;
+  at?: string;
+  detail?: string | boolean;
+}
 
 /** Pipeline order. Terminal states are handled separately. */
-const STEPS: { status: PodcastStatus; label: string }[] = [
+const STEPS: { status: string; label: string }[] = [
   { status: 'PENDING', label: 'Queued for production' },
   { status: 'PLANNING', label: 'Planning the episode' },
   { status: 'GENERATING_SCRIPT', label: 'Writing the script' },
@@ -30,7 +38,7 @@ const STEPS: { status: PodcastStatus; label: string }[] = [
   { status: 'GENERATING_ASSETS', label: 'Building study assets' },
 ];
 
-const ORDER: PodcastStatus[] = STEPS.map((s) => s.status);
+const ORDER: string[] = STEPS.map((s) => s.status);
 
 /** Matches the studio prose cadence so the whole surface reveals text alike. */
 const DETAIL_CHARS_PER_SECOND = 90;
@@ -50,17 +58,17 @@ export default function ProductionProgress({
 }: ProductionProgressProps) {
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
 
-  const isFailed = status === 'FAILED' || status === 'CANCELLED';
+  const isFailed = (status as string) === 'FAILED' || (status as string) === 'CANCELLED';
   const isReady = status === 'READY';
 
   const activeIndex = useMemo(() => {
     if (!status) return 0;
     if (isReady) return ORDER.length;
-    const idx = ORDER.indexOf(status);
+    const idx = ORDER.indexOf(status as string);
     return idx === -1 ? 0 : idx;
   }, [status, isReady]);
 
-  const detailsFor = (stepStatus: PodcastStatus) =>
+  const detailsFor = (stepStatus: string) =>
     (stageDetails ?? []).filter((d) => d.stage === stepStatus);
 
   const percent = useMemo(() => {
@@ -179,8 +187,8 @@ export default function ProductionProgress({
                         <ul className="mt-0.5 space-y-[3px]">
                           {details.map((d, j) => (
                             <DetailLine
-                              key={`${d.at}-${j}`}
-                              text={d.detail}
+                              key={`${d.at || j}-${j}`}
+                              text={typeof d.detail === 'string' ? d.detail : d.message || ''}
                               // Only the newest line in the active step types in;
                               // older lines and completed steps render instantly so
                               // a re-render never replays the whole history.

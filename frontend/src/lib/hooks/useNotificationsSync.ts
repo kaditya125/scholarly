@@ -120,8 +120,12 @@ async function seedDefaultNotifications(userId: string) {
         updatedAt: timeOffset
       });
     }
-  } catch (err) {
-    console.error('Error seeding default notifications:', err);
+  } catch (err: any) {
+    if (err?.code === 'permission-denied' || err?.message?.includes('Missing or insufficient permissions')) {
+      // Expected when client lacks direct collection write permissions (handled server-side)
+    } else {
+      console.warn('Notice: Default notification seeding skipped:', err?.message || err);
+    }
   } finally {
     isSeeding = false;
   }

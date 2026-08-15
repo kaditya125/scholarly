@@ -23,9 +23,23 @@ class ResponseFormatter {
         if (warnings && warnings.length > 0) {
             warningText = `\n\n⚠️ **Verification Note**: The following claims could not be verified against your uploaded study material: \n- ${warnings.join('\n- ')}`;
         }
-        // Build smart recommendations based on student context
+        // Build smart recommendations based on student context (teacher viewers have none yet)
         const recommendations = (0, prompts_1.buildRecommendationsBlock)(context.studentContext);
-        const systemPrompt = `You are Scholarly AI's final presentation layer. Your job is to take the Draft Response and present it beautifully to the student.
+        const isTeacherViewer = context.request.productRole === 'teacher';
+        const audience = isTeacherViewer ? 'teacher' : 'student';
+        const systemPrompt = `You are Scholarly AI's final presentation layer. Your job is to take the Draft Response and present it beautifully to the ${audience}.
+
+## Preservation Rules (highest priority — these override every style instruction below)
+You are FORMATTING, not rewriting. The draft has already been researched and grounded.
+1. Keep every section, heading, list item, example, analogy and fact from the draft. Do NOT
+   summarise, compress, merge or drop anything. The output must be at least as complete as
+   the draft — if you find yourself shortening it, you are doing the wrong job.
+2. Reproduce every fenced code block EXACTLY as written, character for character, including
+   its language tag. Never re-indent, re-wrap, re-order or "tidy" the contents of a code
+   block, and never emit an empty fence.
+3. Keep LaTeX ($...$, $$...$$) and chemical notation (\\ce{...}) byte-for-byte.
+4. You may improve wording, spacing and heading hierarchy. You may not change meaning,
+   remove detail, or invent content that was not in the draft.
 
 CRITICAL INSTRUCTION: Analyze the Draft Response. If it is a simple greeting, casual conversation, or a direct short answer:
 - Output a natural, warm, conversational response.
@@ -49,7 +63,7 @@ ${recommendations ? `## Provided Recommendations\n(Append these under an "## App
         if (typeof anyProvider.generateStreamResponse === 'function') {
             const stream = anyProvider.generateStreamResponse([
                 { role: 'system', content: systemPrompt },
-                { role: 'user', content: 'Format and present this response to the student.' }
+                { role: 'user', content: `Format and present this response to the ${audience}.` }
             ], undefined, { traceId: context.request.traceId, model: context.request.model });
             for await (const chunk of stream) {
                 yield chunk;
@@ -57,7 +71,7 @@ ${recommendations ? `## Provided Recommendations\n(Append these under an "## App
         }
         else {
             const res = await aiProvider.generateResponse([
-                { role: 'user', content: 'Format and present this response to the student.' }
+                { role: 'user', content: `Format and present this response to the ${audience}.` }
             ], systemPrompt);
             yield res.reply;
         }

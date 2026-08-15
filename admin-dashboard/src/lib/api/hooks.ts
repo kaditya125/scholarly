@@ -220,3 +220,112 @@ export const useRenameNotebook = () => {
     onSettled: () => qc.invalidateQueries({ queryKey: ['notebooks'] }),
   });
 };
+
+// ─── Exam Intelligence (Phase 1) ────────────────────────────────────
+export const useExams = (category?: string) =>
+  useQuery({
+    queryKey: ['exams', category],
+    queryFn: () => get('/exams', category ? { category } : undefined),
+  });
+
+export const useExamDetail = (examId: string | null) =>
+  useQuery({
+    queryKey: ['exam-detail', examId],
+    queryFn: () => (examId ? get(`/exams/${examId}`) : Promise.resolve(null)),
+    enabled: !!examId,
+  });
+
+export const useExamCycles = (examId: string | null) =>
+  useQuery({
+    queryKey: ['exam-cycles', examId],
+    queryFn: () => (examId ? get(`/exams/${examId}/cycles`) : Promise.resolve(null)),
+    enabled: !!examId,
+  });
+
+export const useExamSyllabus = (examId: string | null, cycleId?: string) =>
+  useQuery({
+    queryKey: ['exam-syllabus', examId, cycleId],
+    queryFn: () => (examId ? get(`/exams/${examId}/syllabus`, cycleId ? { cycleId } : undefined) : Promise.resolve(null)),
+    enabled: !!examId,
+  });
+
+export const useExamSources = (examId: string | null) =>
+  useQuery({
+    queryKey: ['exam-sources', examId],
+    queryFn: () => (examId ? get(`/exams/${examId}/sources`, { verifiedOnly: 'false' }) : Promise.resolve(null)),
+    enabled: !!examId,
+  });
+
+export const useCreateExam = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: any) => apiClient.post('/exams/admin', payload).then((r) => r.data),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['exams'] }),
+  });
+};
+
+export const useAddOfficialSource = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ examId, payload }: { examId: string; payload: any }) =>
+      apiClient.post(`/exams/admin/${examId}/sources`, payload).then((r) => r.data),
+    onSettled: (_d, _e, { examId }) => {
+      qc.invalidateQueries({ queryKey: ['exam-sources', examId] });
+      qc.invalidateQueries({ queryKey: ['exam-detail', examId] });
+    },
+  });
+};
+
+export const useExtractSyllabus = () => {
+  return useMutation({
+    mutationFn: ({ examId, rawText }: { examId: string; rawText: string }) =>
+      apiClient.post(`/exams/admin/${examId}/syllabi/extract`, { rawText }).then((r) => r.data),
+  });
+};
+
+export const useDiffSyllabus = () => {
+  return useMutation({
+    mutationFn: ({
+      examId,
+      baseSyllabusId,
+      targetSyllabus,
+    }: {
+      examId: string;
+      baseSyllabusId: string;
+      targetSyllabus: any;
+    }) =>
+      apiClient
+        .post(`/exams/admin/${examId}/syllabi/diff`, { baseSyllabusId, targetSyllabus })
+        .then((r) => r.data),
+  });
+};
+
+export const useCreateAndPublishSyllabus = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      examId,
+      cycleId,
+      payload,
+    }: {
+      examId: string;
+      cycleId: string;
+      payload: any;
+    }) => {
+      // 1. Create syllabus version
+      const { syllabus } = await apiClient
+        .post(`/exams/admin/${examId}/syllabi`, { ...payload, cycleId })
+        .then((r) => r.data);
+      // 2. Publish as current
+      await apiClient.post(`/exams/admin/${examId}/syllabi/${syllabus.syllabusId}/publish`, { cycleId });
+      // 3. Index to Vector DB & Graph
+      await apiClient.post(`/exams/admin/${examId}/syllabi/${syllabus.syllabusId}/index`, {});
+      return syllabus;
+    },
+    onSettled: (_d, _e, { examId, cycleId }) => {
+      qc.invalidateQueries({ queryKey: ['exam-syllabus', examId, cycleId] });
+      qc.invalidateQueries({ queryKey: ['exam-detail', examId] });
+      qc.invalidateQueries({ queryKey: ['exams'] });
+    },
+  });
+};

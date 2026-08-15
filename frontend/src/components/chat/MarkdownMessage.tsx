@@ -48,19 +48,21 @@ const markdownComponents: any = {
       </code>
     );
   },
+
+  blockquote({ children }: any) {
+    return (
+      <div className="my-3.5 rounded-2xl border border-amber-500/35 dark:border-amber-500/25 bg-amber-500/[0.04] dark:bg-amber-950/20 p-4 text-[14px] text-slate-800 dark:text-gray-200 shadow-2xs leading-relaxed not-italic">
+        {children}
+      </div>
+    );
+  },
 };
 
 /**
  * Shared markdown renderer for chat answers (main chat + notebook chat). Handles GFM,
  * math/chemistry (KaTeX + mhchem) and inline mind-map/timeline JSON widgets.
- *
- * Mermaid support was removed: model-generated diagrams failed to parse often enough
- * (unquoted parentheses in node labels, truncated blocks mid-stream) that they reached
- * students as raw source more often than as diagrams. The prompt no longer asks for them.
  */
 function MarkdownMessageInner({ content }: { content: string }) {
-  // normalizeMath walks the whole string; memoise so it isn't redone on parent re-renders
-  // that didn't change the text.
   const normalized = useMemo(() => normalizeMath(content), [content]);
   return (
     <ReactMarkdown remarkPlugins={REMARK_PLUGINS} rehypePlugins={REHYPE_PLUGINS} components={markdownComponents}>
@@ -69,14 +71,4 @@ function MarkdownMessageInner({ content }: { content: string }) {
   );
 }
 
-/**
- * Memoised on `content`.
- *
- * This is rendered inside a typewriter reveal that ticks many times a second. Without
- * memoisation every tick re-ran the full remark/rehype pipeline (GFM + math + KaTeX +
- * mermaid) over the entire document — 60 complete markdown parses per second on a growing
- * answer. That starved the main thread, so the reveal stuttered and jumped instead of
- * writing smoothly. Re-rendering only when the string actually changes is what makes a
- * character-level animation affordable at all.
- */
 export default React.memo(MarkdownMessageInner);

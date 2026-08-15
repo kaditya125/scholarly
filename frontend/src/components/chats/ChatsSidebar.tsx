@@ -277,17 +277,17 @@ export function ChatsSidebar({
   return (
     <div
       className={cn(
-        "flex flex-col h-full bg-white dark:bg-[#111111] border-r border-slate-200 dark:border-white/5",
+        "flex flex-col h-full bg-white dark:bg-[#111113] border-r border-slate-200/80 dark:border-white/5 font-sans",
         className
       )}
     >
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 h-14 border-b border-slate-100 dark:border-white/5">
-        <h2 className="text-[15px] font-bold text-slate-900 dark:text-white">Messages</h2>
+      <div className="shrink-0 flex items-center justify-between px-4 h-13 border-b border-slate-100 dark:border-white/5">
+        <h2 className="text-[14px] font-bold text-slate-900 dark:text-white tracking-tight">Messages</h2>
         <div className="relative">
           <button
             onClick={() => setNewOpen((v) => !v)}
-            className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-gray-200 transition-colors"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
             aria-label="New conversation or group"
           >
             <Plus className="w-4 h-4" />
@@ -295,13 +295,13 @@ export function ChatsSidebar({
           {newOpen && (
             <>
               <div className="fixed inset-0 z-30" onClick={() => setNewOpen(false)} />
-              <div className="absolute right-0 top-full mt-1 w-56 z-40 rounded-xl bg-white dark:bg-[#1e1e1f] border border-slate-200 dark:border-white/10 shadow-xl p-1.5">
+              <div className="absolute right-0 top-full mt-1.5 w-56 z-40 rounded-2xl bg-white dark:bg-[#1c1c1f] border border-slate-200 dark:border-white/10 shadow-2xl p-1.5 space-y-0.5">
                 <button
                   onClick={() => {
                     setNewOpen(false);
                     navigate("/people");
                   }}
-                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12.5px] font-medium text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 >
                   <UserPlus className="w-4 h-4 text-slate-400" /> Message someone
                 </button>
@@ -310,28 +310,28 @@ export function ChatsSidebar({
                     setNewOpen(false);
                     setCreateOpen(true);
                   }}
-                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12.5px] font-medium text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 >
                   <Users className="w-4 h-4 text-slate-400" /> New study group
                 </button>
                 <div className="border-t border-slate-100 dark:border-white/5 my-1" />
-                <div className="px-2 py-1">
-                  <p className="text-[11px] font-semibold text-slate-400 mb-1.5">Join with a code</p>
+                <div className="px-2.5 py-1.5">
+                  <p className="text-[10.5px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Join with a code</p>
                   <div className="flex items-center gap-1.5">
                     <input
                       value={joinCode}
                       onChange={(e) => setJoinCode(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleJoin()}
                       placeholder="Invite code"
-                      className="flex-1 min-w-0 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[12.5px] outline-none focus:border-indigo-400"
+                      className="flex-1 min-w-0 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 px-2.5 py-1.5 text-[12px] outline-none focus:border-slate-400"
                     />
                     <button
                       onClick={handleJoin}
                       disabled={!joinCode.trim() || joining}
-                      className="shrink-0 w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center disabled:opacity-40"
+                      className="shrink-0 w-7 h-7 rounded-lg bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-900 flex items-center justify-center disabled:opacity-40 cursor-pointer"
                       aria-label="Join group"
                     >
-                      {joining ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
+                      {joining ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogIn className="w-3.5 h-3.5" />}
                     </button>
                   </div>
                 </div>
@@ -341,43 +341,43 @@ export function ChatsSidebar({
         </div>
       </div>
 
-      {/* Search */}
-      <div className="shrink-0 px-3 pt-3">
-        <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 rounded-lg px-3 py-2">
-          <Search className="w-4 h-4 text-slate-400 shrink-0" />
+      {/* Minimalist Search Capsule */}
+      <div className="shrink-0 px-3 pt-2.5">
+        <div className="flex items-center gap-2 bg-slate-100/80 dark:bg-white/[0.04] border border-transparent dark:border-white/5 rounded-full px-3 py-1.5 focus-within:border-slate-300 dark:focus-within:border-white/15 transition-all shadow-2xs">
+          <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search conversations"
-            className="flex-1 bg-transparent outline-none text-[13px] text-slate-700 dark:text-gray-200 placeholder:text-slate-400"
+            placeholder="Search conversations..."
+            className="flex-1 bg-transparent outline-none text-[12px] text-slate-800 dark:text-gray-200 placeholder:text-slate-400"
           />
           {search && (
-            <button onClick={() => setSearch("")} aria-label="Clear search">
-              <X className="w-3.5 h-3.5 text-slate-400" />
+            <button onClick={() => setSearch("")} aria-label="Clear search" className="text-slate-400 hover:text-slate-600 dark:hover:text-white text-[11px] font-bold">
+              ✕
             </button>
           )}
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Filter Tabs */}
       <div className="shrink-0 flex items-center gap-1 px-3 py-2">
         {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={cn(
-              "flex items-center gap-1 px-2.5 h-7 rounded-full text-[12px] font-semibold transition-colors",
+              "flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all cursor-pointer",
               tab === t.id
-                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
-                : "text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/10"
+                ? "bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-900 font-semibold shadow-2xs"
+                : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
             )}
           >
             {t.label}
             {t.id === "unread" && unreadTotal > 0 && (
               <span
                 className={cn(
-                  "min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center",
-                  tab === t.id ? "bg-white/20" : "bg-indigo-600 text-white"
+                  "min-w-[15px] h-3.5 px-1 rounded-full text-[9.5px] font-bold flex items-center justify-center",
+                  tab === t.id ? "bg-white/30 text-white dark:text-slate-900" : "bg-[#8ba32b] dark:bg-[#c8e558] text-white dark:text-slate-900"
                 )}
               >
                 {unreadTotal}
@@ -388,16 +388,27 @@ export function ChatsSidebar({
       </div>
 
       {/* Lists */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar px-2 pb-3">
+      <div className="flex-1 overflow-y-auto custom-scrollbar px-2 pb-3 space-y-3">
         {showDms && (
-          <div className="mb-2">
-            <p className="px-2 pt-2 pb-1 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-gray-500">
-              Personal Messages
-            </p>
+          <div>
+            <div className="flex items-center justify-between px-2 pt-1 pb-1">
+              <span className="text-[10.5px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                Personal Messages
+              </span>
+              <button 
+                onClick={() => navigate("/people")}
+                className="text-[10px] font-semibold text-[#8ba32b] dark:text-[#c8e558] hover:underline cursor-pointer"
+              >
+                Find Peers
+              </button>
+            </div>
+
             {filteredConvs.length === 0 ? (
-              <p className="px-2 py-2 text-[12px] text-slate-400 dark:text-gray-600">
-                {tab === "unread" ? "No unread messages." : "No conversations yet."}
-              </p>
+              <div className="px-2 py-3 text-center rounded-xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 my-1">
+                <p className="text-[11.5px] text-slate-400 dark:text-slate-500">
+                  {tab === "unread" ? "No unread messages." : "No conversations yet."}
+                </p>
+              </div>
             ) : (
               filteredConvs.map((conv) => (
                 <DmRow
@@ -414,13 +425,24 @@ export function ChatsSidebar({
 
         {showChannels && (
           <div>
-            <p className="px-2 pt-2 pb-1 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-gray-500">
-              Channels
-            </p>
+            <div className="flex items-center justify-between px-2 pt-1 pb-1">
+              <span className="text-[10.5px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                Study Group Channels
+              </span>
+              <button 
+                onClick={() => setCreateOpen(true)}
+                className="text-[10px] font-semibold text-[#8ba32b] dark:text-[#c8e558] hover:underline cursor-pointer"
+              >
+                + New
+              </button>
+            </div>
+
             {filteredGroups.length === 0 ? (
-              <p className="px-2 py-2 text-[12px] text-slate-400 dark:text-gray-600">
-                {q ? "No groups match." : "No study groups yet."}
-              </p>
+              <div className="px-2 py-3 text-center rounded-xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 my-1">
+                <p className="text-[11.5px] text-slate-400 dark:text-slate-500">
+                  {q ? "No groups match." : "No study groups joined."}
+                </p>
+              </div>
             ) : (
               filteredGroups.map((group) => (
                 <GroupRow
@@ -437,34 +459,36 @@ export function ChatsSidebar({
         )}
       </div>
 
-      {/* AI Assistant */}
-      <button
-        onClick={() => activeGroupId && onOpenAssistant(activeGroupId)}
-        disabled={!activeGroupId}
-        title={activeGroupId ? "Open the Study Circle AI" : "Join or create a group to use the AI"}
-        className={cn(
-          "shrink-0 m-2 flex items-center gap-3 p-3 rounded-xl text-left transition-colors",
-          selection.kind === "ai" && "ring-1 ring-violet-400 dark:ring-violet-500/50",
-          activeGroupId
-            ? "bg-gradient-to-br from-violet-500/10 to-indigo-500/10 border border-violet-200 dark:border-violet-500/20 hover:from-violet-500/15 hover:to-indigo-500/15"
-            : "bg-slate-50 dark:bg-white/5 opacity-60 cursor-not-allowed"
-        )}
-      >
-        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white shrink-0">
-          <Sparkles className="w-4 h-4" />
-        </div>
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[13px] font-bold text-slate-900 dark:text-white">AI Assistant</span>
-            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300 uppercase tracking-wider">
-              Beta
-            </span>
+      {/* AI Assistant Card */}
+      <div className="p-2 shrink-0 border-t border-slate-100 dark:border-white/5">
+        <button
+          onClick={() => activeGroupId && onOpenAssistant(activeGroupId)}
+          disabled={!activeGroupId}
+          title={activeGroupId ? "Open the Study Circle AI" : "Join or create a group to use the AI"}
+          className={cn(
+            "w-full flex items-center gap-2.5 p-2.5 rounded-xl text-left transition-all border",
+            selection.kind === "ai" && "ring-1 ring-[#8ba32b] dark:ring-[#c8e558]",
+            activeGroupId
+              ? "bg-slate-50 dark:bg-white/[0.03] border-slate-200/80 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/[0.06] cursor-pointer"
+              : "bg-slate-50/50 dark:bg-white/[0.02] border-transparent opacity-60 cursor-not-allowed"
+          )}
+        >
+          <div className="w-8 h-8 rounded-lg bg-[#8ba32b]/15 dark:bg-[#c8e558]/15 text-[#8ba32b] dark:text-[#c8e558] flex items-center justify-center shrink-0">
+            <Sparkles className="w-4 h-4" />
           </div>
-          <p className="text-[11.5px] text-slate-500 dark:text-gray-400 truncate">
-            Summarize chats, find info, write better.
-          </p>
-        </div>
-      </button>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[12px] font-bold text-slate-900 dark:text-white">AI Assistant</span>
+              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-[#8ba32b]/15 text-[#8ba32b] dark:bg-[#c8e558]/15 dark:text-[#c8e558] uppercase tracking-wider">
+                BETA
+              </span>
+            </div>
+            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 truncate">
+              Summarize chats, find info, write better.
+            </p>
+          </div>
+        </button>
+      </div>
 
       <CreateGroupModal
         isOpen={createOpen}

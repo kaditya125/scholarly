@@ -55,7 +55,11 @@ export interface StudentProfile {
   onboardedAt?: string;
   /** Whether the onboarding is complete */
   isComplete?: boolean;
-  
+  /** ISO timestamp of last profile update */
+  updatedAt?: string;
+  /** ISO timestamp of profile creation */
+  createdAt?: string;
+
   // New Digital Twin fields
   board?: string;
   classLevel?: string;
@@ -139,6 +143,18 @@ export interface StudentContext {
 
   /** Notebook overview */
   notebooks: NotebookSummary | null;
+
+  /** Canonical Exam Intelligence Context (Phases 1-3) */
+  examContext?: {
+    examId: string;
+    examName: string;
+    cycleId: string;
+    conductingAuthority: string;
+    activeSyllabusVersionId?: string;
+    totalVacancies?: number;
+    timelineCountdowns?: import('./exam.types').ExamTimelineCountdown[];
+    eligibilityEvaluation?: import('./exam.types').StudentEligibilityEvaluation;
+  } | null;
 
   /** Whether this is the user's first interaction (no onboarding profile) */
   isFirstTimeUser: boolean;

@@ -132,7 +132,7 @@ export default function People() {
     const reasons = (peer.matchReasons || []).slice(0, 3);
 
     return (
-      <div className="relative bg-white dark:bg-[#151516] rounded-2xl p-4 border border-slate-100 dark:border-white/5 shadow-[0_4px_20px_rgb(0,0,0,0.03)] flex flex-col">
+      <div className="relative bg-white dark:bg-[#141416] rounded-2xl p-4 border border-slate-200/90 dark:border-white/10 shadow-2xs flex flex-col font-sans">
         <div className="flex items-start gap-3">
           <PeerAvatar
             name={peer.displayName}
@@ -147,7 +147,7 @@ export default function People() {
                 <p className="text-[14px] font-bold text-slate-900 dark:text-white truncate">
                   {peer.displayName}
                 </p>
-                <p className="text-[12px] font-medium text-slate-400 dark:text-gray-500 truncate">
+                <p className="text-[12px] font-medium text-slate-400 dark:text-slate-500 truncate">
                   {subtitleFor(peer)}
                 </p>
               </div>
@@ -164,7 +164,7 @@ export default function People() {
                   {menuId === peer.uid && (
                     <>
                       <div className="fixed inset-0 z-10" onClick={() => setMenuId(null)} />
-                      <div className="absolute right-0 top-8 z-20 w-48 rounded-xl bg-white dark:bg-[#1e1e1f] border border-slate-200 dark:border-white/10 shadow-xl py-1 text-[13px]">
+                      <div className="absolute right-0 top-8 z-20 w-48 rounded-xl bg-white dark:bg-[#1c1c1f] border border-slate-200 dark:border-white/10 shadow-xl py-1 text-[12.5px]">
                         <button
                           onClick={() =>
                             run(
@@ -178,17 +178,19 @@ export default function People() {
                           <Rss className="w-3.5 h-3.5" />
                           {peer.isFollowing ? 'Unfollow' : 'Follow'}
                         </button>
-                        {rel === 'connected' && (
-                          <button
-                            onClick={() =>
-                              run(peer.uid, () => removeConnection(peer.uid), 'Connection removed')
-                            }
-                            className="w-full flex items-center gap-2.5 px-3 py-2 text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5"
-                          >
-                            <UserMinus className="w-3.5 h-3.5" />
-                            Remove connection
-                          </button>
-                        )}
+                        <button
+                          onClick={() =>
+                            run(
+                              peer.uid,
+                              () => removeConnection(peer.uid),
+                              'Removed from connections'
+                            )
+                          }
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5"
+                        >
+                          <UserMinus className="w-3.5 h-3.5 text-slate-400" />
+                          Remove connection
+                        </button>
                         <button
                           onClick={() => onBlock(peer)}
                           className="w-full flex items-center gap-2.5 px-3 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10"
@@ -210,7 +212,7 @@ export default function People() {
             {reasons.map((r, i) => (
               <span
                 key={i}
-                className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300"
+                className="text-[10.5px] font-semibold px-2 py-0.5 rounded-md bg-[#8ba32b]/10 text-[#8ba32b] dark:bg-[#c8e558]/10 dark:text-[#c8e558] border border-[#8ba32b]/20 dark:border-[#c8e558]/20"
               >
                 {r}
               </span>
@@ -219,7 +221,7 @@ export default function People() {
         )}
 
         {peer.mutuals > 0 && (
-          <p className="text-[11.5px] font-medium text-slate-400 dark:text-gray-500 mt-2">
+          <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mt-2">
             {peer.mutuals} mutual connection{peer.mutuals > 1 ? 's' : ''}
           </p>
         )}
@@ -229,7 +231,7 @@ export default function People() {
             <button
               disabled={busy}
               onClick={() => run(peer.uid, () => sendRequest(peer.uid), 'Request sent')}
-              className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12.5px] font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="flex-1 flex items-center justify-center gap-1.5 h-8.5 rounded-full bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-900 text-[12px] font-semibold hover:opacity-90 transition-all cursor-pointer shadow-xs disabled:opacity-50"
             >
               {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5" />}
               Connect
@@ -240,7 +242,7 @@ export default function People() {
             <button
               disabled={busy}
               onClick={() => run(peer.uid, () => cancelRequest(peer.uid), 'Request canceled')}
-              className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-gray-300 text-[12.5px] font-bold hover:bg-slate-200 dark:hover:bg-white/15 transition-colors disabled:opacity-50"
+              className="flex-1 flex items-center justify-center gap-1.5 h-8.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-gray-300 text-[12px] font-semibold hover:bg-slate-200 dark:hover:bg-white/15 transition-colors disabled:opacity-50"
               title="Cancel request"
             >
               {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Clock className="w-3.5 h-3.5" />}
@@ -253,7 +255,7 @@ export default function People() {
               <button
                 disabled={busy}
                 onClick={() => run(peer.uid, () => accept(peer.uid), 'Connected')}
-                className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-full bg-indigo-600 text-white text-[12.5px] font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-1.5 h-8.5 rounded-full bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-900 text-[12px] font-semibold hover:opacity-90 transition-all cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                 Accept
@@ -261,7 +263,7 @@ export default function People() {
               <button
                 disabled={busy}
                 onClick={() => run(peer.uid, () => decline(peer.uid))}
-                className="h-9 px-3 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-gray-400 text-[12.5px] font-bold hover:bg-slate-200 dark:hover:bg-white/15 transition-colors disabled:opacity-50"
+                className="h-8.5 px-3 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-gray-400 text-[12px] font-semibold hover:bg-slate-200 dark:hover:bg-white/15 transition-colors disabled:opacity-50"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -271,7 +273,7 @@ export default function People() {
           {rel === 'connected' && (
             <button
               onClick={() => navigate(`/community?tab=chats&dm=${peer.uid}`)}
-              className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12.5px] font-bold hover:opacity-90 transition-opacity"
+              className="flex-1 flex items-center justify-center gap-1.5 h-8.5 rounded-full bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-900 text-[12px] font-semibold hover:opacity-90 transition-all cursor-pointer shadow-xs"
             >
               <MessageCircle className="w-3.5 h-3.5" />
               Message
@@ -313,19 +315,25 @@ export default function People() {
     action?: { label: string; onClick: () => void };
   }) => (
     <div className="flex flex-col items-center justify-center text-center py-16 px-6">
-      <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-4">
-        <Icon className="w-5 h-5 text-slate-400 dark:text-gray-500" />
+      <div className="max-w-md w-full p-8 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#141416] shadow-2xs space-y-4">
+        <div className="w-14 h-14 rounded-2xl bg-[#8ba32b]/10 dark:bg-[#c8e558]/10 text-[#8ba32b] dark:text-[#c8e558] flex items-center justify-center mx-auto border border-[#8ba32b]/20 dark:border-[#c8e558]/20">
+          <Icon className="w-7 h-7" />
+        </div>
+        <div className="space-y-1.5">
+          <h3 className="text-[16px] font-bold text-slate-900 dark:text-white">{title}</h3>
+          <p className="text-[12.5px] text-slate-500 dark:text-slate-400 leading-relaxed">{body}</p>
+        </div>
+        {action && (
+          <div className="pt-2">
+            <button
+              onClick={action.onClick}
+              className="px-5 py-2 rounded-full bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-900 text-[12px] font-semibold hover:opacity-90 transition-all cursor-pointer shadow-xs active:scale-98"
+            >
+              {action.label}
+            </button>
+          </div>
+        )}
       </div>
-      <h3 className="text-[15px] font-bold text-slate-900 dark:text-white mb-1">{title}</h3>
-      <p className="text-[13px] text-slate-500 dark:text-gray-400 max-w-sm mb-4">{body}</p>
-      {action && (
-        <button
-          onClick={action.onClick}
-          className="px-4 h-9 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12.5px] font-bold hover:opacity-90 transition-opacity"
-        >
-          {action.label}
-        </button>
-      )}
     </div>
   );
 
@@ -334,7 +342,7 @@ export default function People() {
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
-          className="bg-white dark:bg-[#151516] rounded-2xl p-4 border border-slate-100 dark:border-white/5"
+          className="bg-white dark:bg-[#141416] rounded-2xl p-4 border border-slate-200/80 dark:border-white/10 shadow-2xs"
         >
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-white/10 animate-pulse" />
@@ -427,31 +435,31 @@ export default function People() {
   }, [hasQuery, isSearching, results, search, isLoading, tab, suggestions, incoming, outgoing, connections, busyId, menuId]);
 
   return (
-    <div className="h-full overflow-y-auto custom-scrollbar">
+    <div className="h-full overflow-y-auto custom-scrollbar font-sans bg-[#fafbfc] dark:bg-[#0b0b0c]">
       <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-[1100px] mx-auto w-full">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-[26px] font-extrabold text-slate-900 dark:text-white tracking-tight">People</h1>
-            <p className="text-[14px] text-slate-500 dark:text-gray-400 mt-1">
+            <h1 className="text-2xl sm:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">People</h1>
+            <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-1">
               Find study partners who share your goal, subjects and focus areas.
             </p>
           </div>
           <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               value={rawSearch}
               onChange={(e) => setRawSearch(e.target.value)}
-              placeholder="Search people by name or email"
-              className="w-full h-10 pl-10 pr-9 rounded-full bg-white dark:bg-[#151516] border border-slate-200 dark:border-white/10 text-[13px] text-slate-800 dark:text-gray-200 placeholder:text-slate-400 outline-none focus:border-slate-400 dark:focus:border-white/25 transition-colors"
+              placeholder="Search people by name or email..."
+              className="w-full h-9 pl-9 pr-8 rounded-full bg-white dark:bg-[#141416] border border-slate-200/90 dark:border-white/10 text-[12px] text-slate-800 dark:text-gray-200 placeholder:text-slate-400 outline-none focus:border-slate-400 dark:focus:border-white/25 transition-all shadow-2xs"
             />
             {rawSearch && (
               <button
                 onClick={() => setRawSearch('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-[11px] font-bold"
                 aria-label="Clear search"
               >
-                <X className="w-4 h-4" />
+                ✕
               </button>
             )}
           </div>
@@ -459,7 +467,7 @@ export default function People() {
 
         {/* Tabs (hidden while searching) */}
         {!hasQuery && (
-          <div className="flex items-center gap-1 mb-6 border-b border-slate-200 dark:border-white/10">
+          <div className="flex items-center gap-1.5 mb-6">
             {tabs.map((t) => {
               const Icon = t.icon;
               const active = tab === t.id;
@@ -468,21 +476,21 @@ export default function People() {
                   key={t.id}
                   onClick={() => setTab(t.id)}
                   className={cn(
-                    'flex items-center gap-2 px-4 py-2.5 text-[13.5px] font-semibold border-b-2 -mb-px transition-colors',
+                    'flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-semibold transition-all cursor-pointer',
                     active
-                      ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white'
-                      : 'border-transparent text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-200'
+                      ? 'bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-900 shadow-2xs'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white'
                   )}
                 >
-                  <Icon className="w-4 h-4" />
-                  {t.label}
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{t.label}</span>
                   {typeof t.count === 'number' && t.count > 0 && (
                     <span
                       className={cn(
-                        'text-[11px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center',
+                        'text-[10px] font-bold px-1.5 py-0.2 rounded-full min-w-4 text-center',
                         active
-                          ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
-                          : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-gray-400'
+                          ? 'bg-white/20 text-white dark:text-slate-900'
+                          : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300'
                       )}
                     >
                       {t.count}

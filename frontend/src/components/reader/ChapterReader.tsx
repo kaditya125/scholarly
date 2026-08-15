@@ -816,10 +816,8 @@ export function ChapterReader({
       <style>{`
         .dark .reader-root { --reader-bg: #131315; }
         .reader-root { --reader-bg: #F9F8F4; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #D0CEC6; border-radius: 2px; }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #3a3a3e; }
+        .custom-scrollbar { -ms-overflow-style: none !important; scrollbar-width: none !important; }
+        .custom-scrollbar::-webkit-scrollbar { display: none !important; width: 0px !important; }
       `}</style>
 
       {/* ── Top Toolbar ── */}

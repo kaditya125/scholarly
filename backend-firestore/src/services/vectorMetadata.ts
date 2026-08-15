@@ -82,6 +82,16 @@ export interface BuildVectorMetadataParams {
   difficulty?: string;
   tags?: string[];
   chunkVersion?: number;
+  // Exam Intelligence (Phase 1)
+  examId?: string;
+  examCycle?: string;
+  syllabusVersionId?: string;
+  stageId?: string;
+  paperId?: string;
+  topicId?: string;
+  documentType?: 'OFFICIAL_SYLLABUS' | 'OFFICIAL_NOTIFICATION' | 'CURRICULUM' | 'NOTES' | 'GENERAL';
+  authority?: string;
+  status?: string;
 }
 
 /**
@@ -104,6 +114,16 @@ export function buildVectorMetadata(params: BuildVectorMetadataParams): RecordMe
     embeddingVersion: EMBEDDING_VERSION,
     chunkVersion: params.chunkVersion ?? CHUNK_VERSION,
     metadataVersion: METADATA_VERSION,
+    // Exam Intelligence scoping fields (Phase 1)
+    examId: params.examId || '',
+    examCycle: params.examCycle || '',
+    syllabusVersionId: params.syllabusVersionId || '',
+    stageId: params.stageId || '',
+    paperId: params.paperId || '',
+    topicId: params.topicId || '',
+    documentType: params.documentType || (ctx.board === 'NCERT' ? 'CURRICULUM' : 'GENERAL'),
+    authority: params.authority || (ctx.board === 'NCERT' ? 'NCERT' : 'USER_UPLOAD'),
+    status: params.status || 'CURRENT',
     // Existing retrieval fields (unchanged shape/semantics).
     sourceTitle: source.title || '',
     chapter: source.title || '',

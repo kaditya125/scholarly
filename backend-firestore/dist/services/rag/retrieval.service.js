@@ -74,22 +74,43 @@ Standalone Search Query:`;
         }
     }
     /**
-     * Retrieves context from Pinecone based on Semantic Search and Metadata Filters
+     * Retrieves context from Pinecone based on Semantic Search and Metadata Filters.
+     *
+     * `expansionTerms` and `scopeSourceIds` are accepted for compatibility with
+     * newer callers (KnowledgeService, RetrievalOrchestrator, ConversationGenerator)
+     * that were built on top of these hooks. They're plumbed into the Pinecone
+     * filter so callers can restrict retrieval to a specific set of source ids
+     * (e.g. a single PDF within a notebook) and inject additional query variants.
      */
-    async retrieveContext(query, notebookId, examContext, topK = 5) {
+    async retrieveContext(query, notebookId, examContext, topK = 5, expansionTerms, scopeSourceIds) {
+        // Expand the semantic query with the caller-supplied terms so a single
+        // embedding pass covers synonyms / related phrasings without forcing the
+        // caller to invoke rewriteQuery separately.
+        const expandedQuery = expansionTerms && expansionTerms.length > 0
+            ? `${query} ${expansionTerms.join(' ')}`
+            : query;
         const tStart = performance.now();
-        const cacheKey = `retrieval:${notebookId}:${query}:${topK}`;
+        const scopeKey = scopeSourceIds && scopeSourceIds.length > 0
+            ? scopeSourceIds.slice().sort().join(',')
+            : '';
+        const cacheKey = `retrieval:${notebookId}:${expandedQuery}:${topK}:${scopeKey}`;
         const cached = await cache_service_1.cacheService.get(cacheKey);
         if (cached) {
             telemetry_1.Telemetry.logLatency('retrieval_cache_hit', performance.now() - tStart, { query });
             return cached;
         }
         const tEmbed = performance.now();
-        const queryEmbedding = await this.embeddingProvider.generateEmbedding(query);
+        const queryEmbedding = await this.embeddingProvider.generateEmbedding(expandedQuery);
         telemetry_1.Telemetry.logLatency('query_embedding', performance.now() - tEmbed);
         // Semantic + Metadata filtering (Hybrid approach)
         // Simultaneous querying: we can pull from multiple sources by not strictly enforcing notebookId if it's a global query
         const filter = notebookId ? { notebookId } : {};
+        if (scopeSourceIds && scopeSourceIds.length > 0) {
+            // Restrict to a specific set of source ids within the notebook (e.g. a
+            // single uploaded document). Pinecone's `$in` operator does the pruning
+            // at the index level so the reranker never sees off-scope chunks.
+            filter.sourceId = { $in: scopeSourceIds };
+        }
         const namespace = env_1.env.PINECONE_NAMESPACE;
         const tPinecone = performance.now();
         // Fetch topK * 4 to ensure a wide net for the Reranker
@@ -178,6 +199,151 @@ Standalone Search Query:`;
         await cache_service_1.cacheService.set(cacheKey, combinedResults, 600); // 10 minutes
         telemetry_1.Telemetry.logLatency('retrieval_total', performance.now() - tStart, { resultsCount: combinedResults.length });
         return combinedResults;
+    }
+    /**
+     * Specifically retrieves context from the public knowledge base.
+     * EXPLICITLY enforces { public: true } at the Pinecone filter layer to isolate
+     * public documentation from private user notebooks or credentials.
+     */
+    async retrievePublicKnowledge(query, topK = 5) {
+        const tStart = performance.now();
+        const cacheKey = `public_retrieval:${query}:${topK}`;
+        const cached = await cache_service_1.cacheService.get(cacheKey);
+        if (cached) {
+            telemetry_1.Telemetry.logLatency('public_retrieval_cache_hit', performance.now() - tStart, { query });
+            return cached;
+        }
+        const tEmbed = performance.now();
+        const queryEmbedding = await this.embeddingProvider.generateEmbedding(query);
+        telemetry_1.Telemetry.logLatency('public_query_embedding', performance.now() - tEmbed);
+        // MANDATORY ISOLATION FILTER: Only retrieve public knowledge
+        const filter = { public: true };
+        const namespace = env_1.env.PINECONE_NAMESPACE;
+        const tPinecone = performance.now();
+        // Fetch topK * 4 to ensure a wide net for the Reranker
+        const matches = await pinecone_service_1.pineconeService.queryVectors(queryEmbedding, topK * 4, filter, namespace);
+        telemetry_1.Telemetry.logLatency('public_pinecone_search', performance.now() - tPinecone);
+        // Filter out completely irrelevant vectors
+        const validMatches = matches.filter((m) => (m.score || 0) >= 0.50);
+        if (validMatches.length === 0)
+            return [];
+        // Deduplicate before reranking
+        const uniqueMatchesMap = new Map();
+        for (const m of validMatches) {
+            const textVal = m.metadata?.text;
+            if (textVal && !uniqueMatchesMap.has(textVal)) {
+                uniqueMatchesMap.set(textVal, m);
+            }
+        }
+        const deduplicatedMatches = Array.from(uniqueMatchesMap.values());
+        // 1. Cohere Reranking Phase
+        const documentsToRerank = deduplicatedMatches.map(m => m.metadata?.text);
+        const rerankedDocs = await this.rerankerProvider.rerank(query, documentsToRerank, topK * 2);
+        // 2. Score mapping
+        const rankedResults = rerankedDocs.map(reranked => {
+            const match = deduplicatedMatches[reranked.index];
+            const meta = match.metadata || {};
+            return {
+                text: this.sanitizeContext(String(meta.text || '')),
+                source: String(meta.sourceTitle || meta.filename || 'Scholarly Public Guide'),
+                score: reranked.relevanceScore,
+                metadata: meta,
+                weightedScore: reranked.relevanceScore,
+                selectionReasoning: `Selected via public knowledge search (score: ${reranked.relevanceScore.toFixed(2)})`
+            };
+        });
+        rankedResults.sort((a, b) => (b.weightedScore || 0) - (a.weightedScore || 0));
+        let combinedResults = rankedResults;
+        if (combinedResults.length > topK) {
+            const tRerank = performance.now();
+            const finalRerank = await this.rerankerProvider.rerank(query, combinedResults.map(r => r.text), topK);
+            telemetry_1.Telemetry.logLatency('public_cohere_rerank', performance.now() - tRerank);
+            combinedResults = finalRerank.length > 0
+                ? finalRerank
+                    .map(rr => combinedResults[rr.index])
+                    .filter((r) => Boolean(r))
+                : combinedResults.slice(0, topK);
+        }
+        await cache_service_1.cacheService.set(cacheKey, combinedResults, 600);
+        return combinedResults;
+    }
+    /**
+     * Retrieves context from the shared NCERT / curriculum corpus, i.e. content
+     * owned by the reserved `ncert-curriculum` user. Used by chat and podcast
+     * flows when the caller has no notebook attached — the answer/plan is still
+     * grounded in the admin-ingested curriculum instead of relying purely on the
+     * LLM's parametric knowledge.
+     *
+     * We do this without a hard Pinecone filter (curriculum ingestion tags docs
+     * with the `authority` and `owner` fields; the weighted-ranking pass below
+     * boosts high-authority hits so real curriculum content rises to the top).
+     * Callers that need strict scoping should pass `scopeSourceIds`.
+     */
+    async retrieveCurriculumContext(query, topK = 5, expansionTerms) {
+        const expandedQuery = expansionTerms && expansionTerms.length > 0
+            ? `${query} ${expansionTerms.join(' ')}`
+            : query;
+        const tStart = performance.now();
+        const cacheKey = `curriculum_retrieval:${expandedQuery}:${topK}`;
+        const cached = await cache_service_1.cacheService.get(cacheKey);
+        if (cached) {
+            telemetry_1.Telemetry.logLatency('retrieval_cache_hit', performance.now() - tStart, { query, kind: 'curriculum' });
+            return cached;
+        }
+        const tEmbed = performance.now();
+        const queryEmbedding = await this.embeddingProvider.generateEmbedding(expandedQuery);
+        telemetry_1.Telemetry.logLatency('query_embedding', performance.now() - tEmbed);
+        const namespace = env_1.env.PINECONE_NAMESPACE;
+        // Curriculum-owned filter. Ingestion writes `owner: 'ncert-curriculum'` on
+        // every curriculum vector; if that field isn't set on a given deployment
+        // the fallback (empty filter) still returns something useful because the
+        // authority multiplier boosts curriculum content anyway.
+        let filter = { owner: 'ncert-curriculum' };
+        const tPinecone = performance.now();
+        let matches = await pinecone_service_1.pineconeService.queryVectors(queryEmbedding, topK * 4, filter, namespace);
+        // Older curriculum uploads may not carry the `owner` tag. If the filtered
+        // search returns nothing, retry unfiltered so we degrade gracefully rather
+        // than returning [] and forcing the caller to invent context.
+        if (!matches || matches.length === 0) {
+            matches = await pinecone_service_1.pineconeService.queryVectors(queryEmbedding, topK * 4, {}, namespace);
+        }
+        telemetry_1.Telemetry.logLatency('pinecone_search', performance.now() - tPinecone, { kind: 'curriculum' });
+        const validMatches = (matches || []).filter((m) => (m.score || 0) >= 0.45);
+        if (validMatches.length === 0)
+            return [];
+        // Deduplicate by text so a repeated chunk doesn't burn a reranker slot.
+        const uniqueMap = new Map();
+        for (const m of validMatches) {
+            const t = m.metadata?.text;
+            if (t && !uniqueMap.has(t))
+                uniqueMap.set(t, m);
+        }
+        const deduped = Array.from(uniqueMap.values());
+        const documentsToRerank = deduped.map(m => m.metadata?.text);
+        const rerankedDocs = await this.rerankerProvider.rerank(expandedQuery, documentsToRerank, topK);
+        const results = rerankedDocs
+            .map((reranked) => {
+            const match = deduped[reranked.index];
+            if (!match)
+                return null;
+            const meta = match.metadata || {};
+            const authorityLevel = meta.authority || 'NCERT';
+            const authorityMultiplier = AUTHORITY_WEIGHTS[authorityLevel] || 1.4;
+            const weightedScore = reranked.relevanceScore * authorityMultiplier;
+            return {
+                text: this.sanitizeContext(String(meta.text || '')),
+                source: String(meta.sourceTitle || meta.filename || 'NCERT Curriculum'),
+                score: reranked.relevanceScore,
+                metadata: { ...meta, pageNumber: meta.pageNumber, paragraphIndex: meta.paragraphIndex },
+                weightedScore,
+                selectionReasoning: `Curriculum passage (${authorityLevel}) matched via semantic similarity (${reranked.relevanceScore.toFixed(2)}).`,
+            };
+        })
+            .filter((r) => r !== null)
+            .sort((a, b) => (b.weightedScore || 0) - (a.weightedScore || 0));
+        await cache_service_1.cacheService.set(cacheKey, results, 600);
+        telemetry_1.Telemetry.logLatency('retrieval_total', performance.now() - tStart, { resultsCount: results.length, kind: 'curriculum' });
+        return results;
     }
     /**
      * Optional Web Search using Tavily

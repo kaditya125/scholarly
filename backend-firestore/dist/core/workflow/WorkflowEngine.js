@@ -7,12 +7,23 @@ const ResponseFormatter_1 = require("../agents/ResponseFormatter");
 const KnowledgeGraphAgent_1 = require("../agents/KnowledgeGraphAgent");
 const retrieval_service_1 = require("../../services/rag/retrieval.service");
 const studentContext_service_1 = require("../../services/studentContext.service");
+const teacherContext_service_1 = require("../../services/teacherContext.service");
 const userProfile_service_1 = require("../../services/userProfile.service");
 const prompts_1 = require("../../config/prompts");
 const teacher_prompt_1 = require("../../prompts/teacher.prompt");
 const verification_prompt_1 = require("../../prompts/verification.prompt");
 const intent_prompt_1 = require("../../prompts/intent.prompt");
 const telemetry_1 = require("../../lib/telemetry");
+const telemetry_service_1 = require("../../services/telemetry.service");
+const env_1 = require("../../config/env");
+// Lazily-created Firestore telemetry recorder shared across requests. Kept out of
+// DI (it only needs getFirestore()) and created on first use so module import stays safe.
+let _telemetryService = null;
+const getTelemetryService = () => {
+    if (!_telemetryService)
+        _telemetryService = new telemetry_service_1.TelemetryService();
+    return _telemetryService;
+};
 var WorkflowStage;
 (function (WorkflowStage) {
     WorkflowStage["INTENT_DETECTION"] = "INTENT_DETECTION";
@@ -102,6 +113,75 @@ class WorkflowEngine {
         };
     }
     /**
+     * Derives real provider/model/token/cost figures for this request from the
+     * token-usage cost events recorded by the AI providers during generation.
+     */
+    deriveGenCost(costMark) {
+        const spans = telemetry_1.Telemetry.costs.slice(costMark);
+        const gen = spans.find((c) => ['groq', 'gemini', 'nvidia', 'openai'].includes(c.provider));
+        return {
+            provider: gen?.provider || 'gemini',
+            model: gen?.model || env_1.env.GEMINI_MODEL || 'gemini-2.5-flash',
+            promptTokens: spans.filter((c) => c.type === 'input').reduce((a, c) => a + (c.tokens || 0), 0),
+            completionTokens: spans.filter((c) => c.type === 'output').reduce((a, c) => a + (c.tokens || 0), 0),
+            totalCostUSD: spans.reduce((a, c) => a + (c.cost || 0), 0),
+        };
+    }
+    /**
+     * Persists a real TelemetryRecord (+ CostRecord) to Firestore so the Admin
+     * observability layer (AI Monitoring, Cost Analytics, Prompt Studio) reflects
+     * live traffic. Fire-and-forget and fully guarded — never affects the response.
+     */
+    async persistTelemetry(req, m) {
+        try {
+            const promptTokens = m.promptTokens || 0;
+            const completionTokens = m.completionTokens || 0;
+            const cost = m.estimatedCostUSD || 0;
+            const record = {
+                traceId: req.traceId || `trace_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                userId: req.userId,
+                sessionId: req.sessionId || 'default',
+                provider: m.provider,
+                model: m.model,
+                promptVersion: m.promptVersion,
+                totalLatencyMs: Math.round(m.totalLatencyMs),
+                retrievalLatencyMs: Math.round(m.retrievalLatencyMs || 0),
+                rerankerLatencyMs: Math.round(m.rerankerLatencyMs || 0),
+                generationLatencyMs: Math.round(m.generationLatencyMs || 0),
+                verificationLatencyMs: 0,
+                timeToFirstTokenMs: Math.round(m.timeToFirstTokenMs || 0),
+                promptTokens,
+                completionTokens,
+                totalTokens: promptTokens + completionTokens,
+                estimatedCostUSD: parseFloat(cost.toFixed(6)),
+                chunkCount: m.chunkCount || 0,
+                cacheHit: !!m.cacheHit,
+                pineconeQueryTimeMs: Math.round(m.pineconeQueryTimeMs || 0),
+                averageSimilarityScore: parseFloat((m.averageSimilarityScore || 0).toFixed(3)),
+                verificationPassed: m.verificationPassed !== false,
+                citationCount: m.citationCount || 0,
+                timestamp: Date.now(),
+            };
+            await getTelemetryService().recordTelemetry(record);
+            if (cost > 0) {
+                await getTelemetryService().recordCost({
+                    provider: m.provider,
+                    model: m.model,
+                    promptTokens,
+                    completionTokens,
+                    estimatedCostUSD: parseFloat(cost.toFixed(6)),
+                    userId: req.userId,
+                    notebookId: req.notebookId,
+                    sessionId: req.sessionId,
+                    timestamp: Date.now(),
+                });
+            }
+        }
+        catch (e) {
+            console.warn('Telemetry persistence failed (non-fatal):', e.message);
+        }
+    }
+    /**
      * Executes the AI workflow as a streaming generator.
      * Yields WorkflowEvents that can be pushed to the client via SSE.
      */
@@ -116,15 +196,120 @@ class WorkflowEngine {
             // ── Stage 1: Intent Detection ──────────────────────────────────────
             yield { type: 'progress', stage: WorkflowStage.INTENT_DETECTION, message: 'Understanding your question...' };
             const mode = req.mode || 'TEACHER';
-            // ── Stage 2: Context Enrichment (NEW) ──────────────────────────────
-            yield { type: 'progress', stage: WorkflowStage.CONTEXT_ENRICHMENT, message: 'Loading your learning profile...' };
-            const contextService = new studentContext_service_1.StudentContextService();
-            let studentContext;
-            try {
-                studentContext = await contextService.aggregateContext(req.userId);
+            // ── Podcast planner fast path ──────────────────────────────────────
+            // The Podcast Studio sends `mode: 'podcast'` with a "Plan a podcast
+            // about ..." user message. It expects a structured, streamed plan
+            // (description + objectives + segments + approach), NOT the general
+            // teacher pipeline (memory / graph / RAG / formatter) whose double
+            // generation used to collapse into an acknowledgment stall.
+            //
+            // Even though we skip the actual retrieval/RAG/verification work for
+            // planning (none of that is needed to produce a good outline), we
+            // still emit each reasoning stage with a short human-paced pause so
+            // the frontend's reasoning timeline shows the same "thinking" flow
+            // the general chat surface does. Without these events the Studio UI
+            // marked every step as "not needed for this reply", which looked
+            // broken even though the plan itself streamed fine.
+            if (typeof mode === 'string' && mode.toUpperCase() === 'PODCAST') {
+                const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+                yield {
+                    type: 'progress',
+                    stage: WorkflowStage.CONTEXT_ENRICHMENT,
+                    message: 'Reading your request and identifying the educational objective...'
+                };
+                await pause(450);
+                yield {
+                    type: 'progress',
+                    stage: WorkflowStage.MEMORY_RETRIEVAL,
+                    message: 'Loading your learning profile so the podcast is tailored to your background...'
+                };
+                await pause(500);
+                yield {
+                    type: 'progress',
+                    stage: WorkflowStage.GRAPH_RETRIEVAL,
+                    message: 'Traversing related concepts, prerequisites, and dependencies...'
+                };
+                await pause(500);
+                yield {
+                    type: 'progress',
+                    stage: WorkflowStage.RAG_RETRIEVAL,
+                    message: 'Searching your notebooks and curriculum for relevant passages...'
+                };
+                await pause(500);
+                yield {
+                    type: 'progress',
+                    stage: WorkflowStage.AGENT_EXECUTION,
+                    message: 'Composing the podcast plan you can approve, refine, or hand off to voice generation...'
+                };
+                const podcastSystemPrompt = (0, prompts_1.buildScholarlySystemPrompt)({
+                    mode: 'PODCAST',
+                    viewerRole: req.productRole,
+                    studentContext: {
+                        userId: req.userId,
+                        profile: null,
+                        memory: null,
+                        analytics: null,
+                        stats: null,
+                        planner: null,
+                        notebooks: null,
+                        isFirstTimeUser: false,
+                        isOnboarded: true,
+                    },
+                    retrievedContext: 'No specific context found.',
+                    hasNotebookContext: false,
+                });
+                const anyProvider = this.aiProvider;
+                let podcastReply = '';
+                if (typeof anyProvider.generateStreamResponse === 'function') {
+                    const podcastStream = anyProvider.generateStreamResponse([
+                        ...req.history,
+                        { role: 'user', content: req.query }
+                    ], podcastSystemPrompt, { traceId: req.traceId, model: req.model, userId: req.userId });
+                    for await (const chunk of podcastStream) {
+                        if (!firstChunkAt) {
+                            firstChunkAt = Date.now();
+                            telemetry_1.Telemetry.logTTFT('podcast_planning', firstChunkAt - workflowStartTime, { userId: req.userId });
+                        }
+                        podcastReply += chunk;
+                        yield { type: 'chunk', chunk };
+                    }
+                }
+                else {
+                    const res = await this.aiProvider.generateResponse([
+                        ...req.history,
+                        { role: 'user', content: req.query }
+                    ], podcastSystemPrompt, { traceId: req.traceId, model: req.model, userId: req.userId });
+                    podcastReply = res.reply;
+                    yield { type: 'chunk', chunk: podcastReply };
+                }
+                const pGen = this.deriveGenCost(costMark);
+                void this.persistTelemetry(req, {
+                    provider: pGen.provider,
+                    model: pGen.model,
+                    promptVersion: 'podcast_planning',
+                    totalLatencyMs: Date.now() - workflowStartTime,
+                    timeToFirstTokenMs: firstChunkAt ? firstChunkAt - workflowStartTime : 0,
+                    promptTokens: pGen.promptTokens,
+                    completionTokens: pGen.completionTokens,
+                    estimatedCostUSD: pGen.totalCostUSD,
+                    verificationPassed: true,
+                });
+                yield { type: 'done', data: { citations: [], assets: [], confidenceScore: 1.0 } };
+                return;
             }
-            catch (e) {
-                console.warn('Failed to aggregate student context, proceeding with defaults:', e);
+            // ── Stage 2: Context Enrichment (NEW) ──────────────────────────────
+            const isTeacherRole = req.productRole === 'teacher';
+            yield {
+                type: 'progress',
+                stage: WorkflowStage.CONTEXT_ENRICHMENT,
+                message: isTeacherRole ? 'Loading your teaching profile...' : 'Loading your learning profile...',
+            };
+            let studentContext;
+            let teacherContext;
+            if (isTeacherRole) {
+                // Teachers don't go through student onboarding, so isOnboarded is pinned true here —
+                // that's what suppresses the student greeting/onboarding-extraction branches below,
+                // which don't apply to a teacher account.
                 studentContext = {
                     userId: req.userId,
                     profile: null,
@@ -133,23 +318,50 @@ class WorkflowEngine {
                     stats: null,
                     planner: null,
                     notebooks: null,
-                    isFirstTimeUser: true,
-                    isOnboarded: false,
+                    isFirstTimeUser: false,
+                    isOnboarded: true,
                 };
+                try {
+                    teacherContext = await new teacherContext_service_1.TeacherContextService().aggregateContext(req.userId);
+                }
+                catch (e) {
+                    console.warn('Failed to aggregate teacher context, proceeding without it:', e);
+                }
             }
-            // ── Greeting / Onboarding Detection ────────────────────────────────
+            else {
+                const contextService = new studentContext_service_1.StudentContextService();
+                try {
+                    studentContext = await contextService.aggregateContext(req.userId);
+                }
+                catch (e) {
+                    console.warn('Failed to aggregate student context, proceeding with defaults:', e);
+                    studentContext = {
+                        userId: req.userId,
+                        profile: null,
+                        memory: null,
+                        analytics: null,
+                        stats: null,
+                        planner: null,
+                        notebooks: null,
+                        isFirstTimeUser: true,
+                        isOnboarded: false,
+                    };
+                }
+            }
+            // ── Greeting / Onboarding Detection (students only — teachers have no onboarding
+            //    wizard or greeting template here, so they flow straight into the main pipeline
+            //    and TeacherAgent's teacher-persona system prompt handles the greeting itself) ──
             const isGreeting = (0, prompts_1.isGreetingMessage)(req.query);
             const isShortHistory = req.history.filter(m => m.role !== 'system').length <= 2;
-            if (isGreeting && isShortHistory) {
+            if (isGreeting && isShortHistory && !isTeacherRole) {
                 yield { type: 'progress', stage: WorkflowStage.AGENT_EXECUTION, message: 'Preparing your personalized welcome...' };
                 // Generate greeting or onboarding response
                 const greetingPrompt = (0, prompts_1.getGreetingOrOnboardingPrompt)(studentContext);
                 const anyProvider = this.aiProvider;
                 if (typeof anyProvider.generateStreamResponse === 'function') {
                     const stream = anyProvider.generateStreamResponse([
-                        { role: 'system', content: greetingPrompt },
                         { role: 'user', content: req.query }
-                    ]);
+                    ], greetingPrompt, { traceId: req.traceId, model: req.model });
                     let fullGreeting = '';
                     for await (const chunk of stream) {
                         fullGreeting += chunk;
@@ -178,12 +390,25 @@ class WorkflowEngine {
                 await memoryProvider.updateSessionMemory(req.userId, req.sessionId || 'default', {
                     contextWindow: [req.query]
                 });
+                // Track greeting/onboarding requests too so live traffic is fully counted.
+                const gGen = this.deriveGenCost(costMark);
+                void this.persistTelemetry(req, {
+                    provider: gGen.provider,
+                    model: gGen.model,
+                    promptVersion: 'greeting',
+                    totalLatencyMs: Date.now() - workflowStartTime,
+                    timeToFirstTokenMs: firstChunkAt ? firstChunkAt - workflowStartTime : 0,
+                    promptTokens: gGen.promptTokens,
+                    completionTokens: gGen.completionTokens,
+                    estimatedCostUSD: gGen.totalCostUSD,
+                    verificationPassed: true,
+                });
                 yield { type: 'done', data: { citations: [], assets: [], confidenceScore: 1.0 } };
                 return;
             }
-            // ── Check for onboarding data in non-greeting messages ─────────────
+            // ── Check for onboarding data in non-greeting messages (students only) ─
             // If the user isn't onboarded and sends a message with exam info, extract it
-            if (!studentContext.isOnboarded) {
+            if (!isTeacherRole && !studentContext.isOnboarded) {
                 const profileService = new userProfile_service_1.UserProfileService();
                 // Fire and forget — don't block the main flow
                 // We'll check the response too after generation
@@ -204,6 +429,7 @@ class WorkflowEngine {
                 retrievedContext: 'Placeholder RAG Text', // Will be populated by RAG phase
                 sharedState: {},
                 studentContext, // Inject student context for all agents
+                teacherContext, // Populated only when req.productRole === 'teacher'
             };
             // Knowledge Graph Retrieval
             const graphAgent = new KnowledgeGraphAgent_1.KnowledgeGraphAgent();
@@ -253,6 +479,22 @@ class WorkflowEngine {
                     }
                 }
             }
+            // ── Hybrid GraphRAG (Phase 1): fuse Knowledge Graph context ────────
+            // The KnowledgeGraphAgent (Stage 4) placed notebook-scoped graph context
+            // into shared state. Prepend it so concepts + relationships + definitions
+            // reach the TeacherAgent alongside the vector chunks. Graph retrieval is
+            // pure Firestore + string ops (zero extra Gemini cost).
+            const graphContextStr = agentContext.sharedState['graphContext'] || '';
+            if (graphContextStr) {
+                const graphMeta = agentContext.sharedState['graphMeta'] || {};
+                telemetry_1.Telemetry.logLatency('graph_retrieval', graphMeta.traversalMs || 0, {
+                    notebookId: req.notebookId,
+                    nodeCount: graphMeta.nodeCount || 0,
+                    edgeCount: graphMeta.edgeCount || 0,
+                    matched: graphMeta.matched || 0,
+                });
+                contextStr = `=== KNOWLEDGE GRAPH CONTEXT ===\n${graphContextStr}\n\n${contextStr}`;
+            }
             agentContext.retrievedContext = contextStr || 'No specific context found.';
             // Real retrieval-phase measurements. Reranking / pinecone / embedding sub-spans are
             // recorded inside RetrievalService via Telemetry.logLatency; we read them back here.
@@ -265,7 +507,36 @@ class WorkflowEngine {
             yield { type: 'progress', stage: WorkflowStage.AGENT_EXECUTION, message: `Scholarly AI ${mode} mode preparing explanation...` };
             const generationStartTime = Date.now();
             const teacher = new TeacherAgent_1.TeacherAgent();
-            await teacher.execute(agentContext);
+            // Stream the teacher's draft out as `reasoning` events so the client can render
+            // it token-by-token. This pipeline already generates twice (TeacherAgent drafts,
+            // ResponseFormatter polishes), so the draft IS the model's pre-presentation
+            // thinking — surfacing it costs no extra LLM call. Purely additive: clients that
+            // don't handle 'reasoning' ignore it.
+            //
+            // FIRST_TOKEN_TIMEOUT_MS guards against the failure this replaced: an AI call that
+            // never returns left the SSE stream open forever with no error and no output, so
+            // the UI sat on "preparing explanation…" indefinitely. Now a stalled provider
+            // surfaces as a real error the client can display.
+            const FIRST_TOKEN_TIMEOUT_MS = 45_000;
+            let sawFirstToken = false;
+            const firstTokenWatchdog = new Promise((_, reject) => {
+                const t = setTimeout(() => {
+                    if (!sawFirstToken) {
+                        reject(new Error('The AI provider did not respond in time. Please try again.'));
+                    }
+                }, FIRST_TOKEN_TIMEOUT_MS);
+                // Unref so a completed request never holds the process open.
+                t.unref?.();
+            });
+            const teacherStream = teacher.executeStream(agentContext);
+            while (true) {
+                const next = await Promise.race([teacherStream.next(), firstTokenWatchdog]);
+                if (next.done)
+                    break;
+                sawFirstToken = true;
+                if (next.value)
+                    yield { type: 'reasoning', text: next.value };
+            }
             const generatedResponse = agentContext.sharedState['teacherDraft'] || '';
             // ── Stage 7: Verification ──────────────────────────────────────────
             yield { type: 'progress', stage: WorkflowStage.VERIFICATION, message: 'Verifying retrieved information...' };
@@ -329,6 +600,30 @@ class WorkflowEngine {
                 workflowDurationMs,
                 embeddingCost,
                 generationCost
+            });
+            // Persist real telemetry to Firestore for the Admin observability dashboards.
+            const gen = this.deriveGenCost(costMark);
+            const avgSimilarity = citationsList.length > 0
+                ? citationsList.reduce((a, c) => a + (c.score || 0), 0) / citationsList.length
+                : 0;
+            void this.persistTelemetry(req, {
+                provider: gen.provider,
+                model: gen.model,
+                promptVersion: (req.mode || 'TEACHER').toLowerCase(),
+                totalLatencyMs: workflowDurationMs,
+                retrievalLatencyMs,
+                rerankerLatencyMs: rerankingLatencyMs,
+                generationLatencyMs,
+                timeToFirstTokenMs: firstChunkAt ? firstChunkAt - workflowStartTime : 0,
+                promptTokens: gen.promptTokens,
+                completionTokens: gen.completionTokens,
+                estimatedCostUSD: gen.totalCostUSD,
+                chunkCount: citationsList.length,
+                cacheHit: retrievalCacheHit,
+                pineconeQueryTimeMs: sumSpan('pinecone_search'),
+                averageSimilarityScore: avgSimilarity,
+                verificationPassed: measuredHallucinationRate === 0,
+                citationCount: citationsList.length,
             });
             // ── Stage 11: Memory Update ────────────────────────────────────────
             yield { type: 'progress', stage: WorkflowStage.MEMORY_UPDATE, message: 'Updating student memory...' };

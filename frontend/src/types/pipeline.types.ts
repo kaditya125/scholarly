@@ -82,6 +82,12 @@ export interface PipelineSource extends DocumentSource {
   kgNodeCount?: number;
   extractedRawText?: string;
   updatedAt?: number;
+  failureReason?: string;
+  errorDetails?: string;
+  documentVersionId?: string;
+  pageCount?: number;
+  pagesCount?: number;
+  totalChunks?: number;
 }
 
 export interface PipelineCollection extends Notebook {

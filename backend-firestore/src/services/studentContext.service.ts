@@ -48,6 +48,57 @@ export class StudentContextService {
     const isOnboarded = !!(profile && profile.targetExam && profile.isComplete);
     const isFirstTimeUser = !profile;
 
+    // Resolve Canonical Exam Intelligence (Phases 1-3)
+    let examContext: StudentContext['examContext'] = null;
+    const targetGoal = profile?.targetExam || profile?.goal || stats?.activeExam;
+    if (targetGoal) {
+      try {
+        const { examMasterService } = await import('./exam/examMaster.service');
+        const resolved = await examMasterService.resolveExam(String(targetGoal));
+        if (resolved) {
+          const targetCycle = profile?.targetYear || stats?.targetYear || resolved.currentCycle || new Date().getFullYear().toString();
+          
+          let totalVacancies: number | undefined = undefined;
+          let timelineCountdowns: any[] | undefined = undefined;
+          let eligibilityEvaluation: any | undefined = undefined;
+
+          try {
+            const { notificationTimelineService } = await import('./exam/notificationTimeline.service');
+            const notif = await notificationTimelineService.getActiveNotification(resolved.examId, targetCycle);
+            if (notif) {
+              totalVacancies = notif.vacancies?.total;
+              timelineCountdowns = notificationTimelineService.computeTimeline(notif);
+              if ((profile as any)?.dob) {
+                const { eligibilityCheckerService } = await import('./exam/eligibilityChecker.service');
+                eligibilityEvaluation = eligibilityCheckerService.evaluateEligibility(notif, {
+                  dob: (profile as any).dob,
+                  category: (profile as any).category || 'UR',
+                  gender: (profile as any).gender || 'MALE',
+                  highestQualification: profile?.classLevel || profile?.target || "Bachelor's Degree",
+                  hasDegreeCompleted: true,
+                });
+              }
+            }
+          } catch (notifErr) {
+            console.warn('StudentContext: Failed to fetch notification context', notifErr);
+          }
+
+          examContext = {
+            examId: resolved.examId,
+            examName: resolved.name,
+            cycleId: targetCycle,
+            conductingAuthority: resolved.conductingAuthority,
+            activeSyllabusVersionId: resolved.activeSyllabusVersionId,
+            totalVacancies,
+            timelineCountdowns,
+            eligibilityEvaluation,
+          };
+        }
+      } catch (e) {
+        console.warn('StudentContext: Failed to resolve examContext', e);
+      }
+    }
+
     return {
       userId,
       profile,
@@ -56,6 +107,7 @@ export class StudentContextService {
       stats,
       planner,
       notebooks,
+      examContext,
       isFirstTimeUser,
       isOnboarded,
     };

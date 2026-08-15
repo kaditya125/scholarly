@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
-import { Bell, Settings, Filter, ArrowUpDown, Check, X, Sparkles, SlidersHorizontal, CheckCheck } from 'lucide-react';
+import { Bell, Settings, Filter, ArrowUpDown, Check, X, Sparkles, CheckCheck, ArrowRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useNotificationStore } from '../lib/store/useNotificationStore';
 import { useNotificationsSync } from '../lib/hooks/useNotificationsSync';
@@ -52,6 +53,7 @@ function groupNotificationsByDate(items: NotificationPayload[]) {
 }
 
 export function NotificationsMenu() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<TabId>('all');
   const [sortBy, setSortBy] = useState<SortOrder>('latest');
@@ -126,24 +128,24 @@ export function NotificationsMenu() {
   }, [hasMore, loadMore, open, items.length]);
 
   return (
-    <div className="relative hidden sm:block">
+    <div className="relative hidden sm:block font-sans">
       {/* Bell Trigger */}
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label="Notifications"
         className={cn(
-          "relative w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
-          "border border-slate-200 dark:border-white/10 shadow-[0_2px_10px_rgb(0,0,0,0.02)]",
+          "relative w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer",
+          "border border-slate-200/90 dark:border-white/10 shadow-2xs",
           open 
-            ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/20 scale-105" 
-            : "bg-white dark:bg-[#1f1f1f] text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200 hover:border-slate-300 dark:hover:border-white/20"
+            ? "bg-[#8ba32b]/15 dark:bg-[#c8e558]/15 text-[#8ba32b] dark:text-[#c8e558] border-[#8ba32b]/30 dark:border-[#c8e558]/30 scale-102" 
+            : "bg-white dark:bg-[#141416] text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
         )}
       >
-        <Bell className="w-[18px] h-[18px]" aria-hidden="true" />
+        <Bell className="w-4 h-4" aria-hidden="true" />
         {unreadCount > 0 && (
-          <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 border-2 border-white dark:border-[#1f1f1f]" />
+          <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#8ba32b] dark:bg-[#c8e558] opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#8ba32b] dark:bg-[#c8e558] border border-white dark:border-[#141416]" />
           </span>
         )}
       </button>
@@ -156,44 +158,51 @@ export function NotificationsMenu() {
             
             {/* Main Panel */}
             <motion.div
-              initial={{ opacity: 0, y: 12, scale: 0.96 }}
+              initial={{ opacity: 0, y: 10, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 12, scale: 0.96 }}
-              transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+              exit={{ opacity: 0, y: 10, scale: 0.98 }}
+              transition={{ duration: 0.2 }}
               className={cn(
-                "absolute right-0 top-[calc(100%+12px)] w-[440px] sm:w-[460px] max-w-[calc(100vw-2rem)]",
-                "bg-white/95 dark:bg-[#121214]/95 backdrop-blur-2xl",
-                "rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.25)] border border-slate-200/80 dark:border-white/10 z-50 overflow-hidden flex flex-col"
+                "absolute right-0 top-[calc(100%+10px)] w-[420px] sm:w-[440px] max-w-[calc(100vw-2rem)]",
+                "bg-white dark:bg-[#141416]",
+                "rounded-2xl shadow-xl border border-slate-200/90 dark:border-white/10 z-50 overflow-hidden flex flex-col"
               )}
-              style={{ maxHeight: 'min(720px, calc(100vh - 90px))' }}
+              style={{ maxHeight: 'min(640px, calc(100vh - 100px))' }}
             >
               {/* Sticky Top Header */}
-              <div className="flex items-center justify-between px-6 pt-5 pb-3 bg-white/50 dark:bg-[#121214]/50 border-b border-slate-100 dark:border-white/5 shrink-0">
-                <div className="flex items-center gap-2.5">
-                  <h3 className="text-[19px] font-bold text-slate-900 dark:text-white tracking-tight">Notifications</h3>
+              <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 dark:border-white/5 shrink-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-[16px] font-bold text-slate-900 dark:text-white tracking-tight">Notifications</h3>
                   {unreadCount > 0 && (
-                    <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                    <span className="bg-[#8ba32b]/15 text-[#8ba32b] dark:bg-[#c8e558]/15 dark:text-[#c8e558] text-[10.5px] font-bold px-2 py-0.2 rounded-full">
                       {unreadCount} new
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <button 
                     onClick={() => markAllAsRead()} 
-                    className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                    className="inline-flex items-center gap-1 text-[12px] font-semibold text-[#8ba32b] dark:text-[#c8e558] hover:underline transition-colors cursor-pointer"
                   >
-                    <CheckCheck className="w-4 h-4" /> Mark all as read
+                    <CheckCheck className="w-3.5 h-3.5" /> Mark all read
                   </button>
-                  <button className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-gray-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors" title="Notification Settings">
-                    <Settings className="w-4 h-4" />
+                  <button
+                    onClick={() => {
+                      setOpen(false);
+                      navigate('/settings');
+                    }}
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-gray-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                    title="Notification Settings"
+                  >
+                    <Settings className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
 
               {/* Tabs + Toolbar Row */}
-              <div className="flex items-center justify-between px-6 pt-3 pb-2 border-b border-slate-100 dark:border-white/5 shrink-0 bg-slate-50/40 dark:bg-white/[0.01]">
+              <div className="flex items-center justify-between px-5 py-2.5 border-b border-slate-100 dark:border-white/5 shrink-0 bg-slate-50/50 dark:bg-white/[0.01]">
                 {/* Pill Tabs */}
-                <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
+                <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
                   {TABS.map((t) => {
                     const isActive = tab === t.id;
                     return (
@@ -201,10 +210,10 @@ export function NotificationsMenu() {
                         key={t.id}
                         onClick={() => setTab(t.id)}
                         className={cn(
-                          'px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all duration-200 whitespace-nowrap',
+                          'px-3 py-1 rounded-full text-[12px] font-semibold transition-all duration-150 whitespace-nowrap cursor-pointer',
                           isActive 
-                            ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-sm' 
-                            : 'text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-slate-100 dark:hover:bg-white/5'
+                            ? 'bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-900 shadow-2xs' 
+                            : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
                         )}
                       >
                         {t.label}
@@ -220,47 +229,47 @@ export function NotificationsMenu() {
                     <button
                       onClick={() => { setShowFilterMenu(v => !v); setShowSortMenu(false); }}
                       className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center border transition-all",
+                        "w-7 h-7 rounded-full flex items-center justify-center border transition-all cursor-pointer",
                         categoryFilter !== 'all'
-                          ? "bg-indigo-500/15 border-indigo-500/30 text-indigo-500"
-                          : "border-slate-200 dark:border-white/10 text-slate-400 hover:text-slate-700 dark:hover:text-gray-200 hover:bg-slate-100 dark:hover:bg-white/5"
+                          ? "bg-[#8ba32b]/15 dark:bg-[#c8e558]/15 border-[#8ba32b]/30 dark:border-[#c8e558]/30 text-[#8ba32b] dark:text-[#c8e558]"
+                          : "border-slate-200/90 dark:border-white/10 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5"
                       )}
                       title="Filter notifications"
                     >
-                      <Filter className="w-3.5 h-3.5" />
+                      <Filter className="w-3 h-3" />
                     </button>
 
                     {/* Filter Popup Menu */}
                     <AnimatePresence>
                       {showFilterMenu && (
                         <motion.div
-                          initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                          initial={{ opacity: 0, y: 6, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                          className="absolute right-0 top-10 w-48 bg-white dark:bg-[#1a1a1c] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl z-50 p-2 text-left"
+                          exit={{ opacity: 0, y: 6, scale: 0.95 }}
+                          className="absolute right-0 top-9 w-48 bg-white dark:bg-[#1a1a1c] border border-slate-200/90 dark:border-white/10 rounded-2xl shadow-xl z-50 p-2 text-left"
                         >
-                          <div className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500 px-2 py-1 mb-1">
-                            Filter Category
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 py-1 mb-1">
+                            Category
                           </div>
                           {[
                             { id: 'all', label: 'All Categories' },
-                            { id: 'ai', label: 'AI Assistant & Digital Twin' },
+                            { id: 'ai', label: 'AI Assistant' },
                             { id: 'social', label: 'Social & Requests' },
-                            { id: 'achievement', label: 'Achievements & Badges' },
+                            { id: 'achievement', label: 'Achievements' },
                             { id: 'system', label: 'System & Security' },
                           ].map((cat) => (
                             <button
                               key={cat.id}
                               onClick={() => { setCategoryFilter(cat.id); setShowFilterMenu(false); }}
                               className={cn(
-                                "w-full text-left px-3 py-1.5 rounded-xl text-[12.5px] font-semibold flex items-center justify-between transition-colors",
+                                "w-full text-left px-2.5 py-1.5 rounded-xl text-[12px] font-semibold flex items-center justify-between transition-colors cursor-pointer",
                                 categoryFilter === cat.id
-                                  ? "bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400"
-                                  : "text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/5"
+                                  ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white font-bold"
+                                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5"
                               )}
                             >
                               {cat.label}
-                              {categoryFilter === cat.id && <Check className="w-3.5 h-3.5 text-indigo-500" />}
+                              {categoryFilter === cat.id && <Check className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558]" />}
                             </button>
                           ))}
                         </motion.div>
@@ -273,27 +282,27 @@ export function NotificationsMenu() {
                     <button
                       onClick={() => { setShowSortMenu(v => !v); setShowFilterMenu(false); }}
                       className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center border transition-all",
+                        "w-7 h-7 rounded-full flex items-center justify-center border transition-all cursor-pointer",
                         sortBy !== 'latest'
-                          ? "bg-indigo-500/15 border-indigo-500/30 text-indigo-500"
-                          : "border-slate-200 dark:border-white/10 text-slate-400 hover:text-slate-700 dark:hover:text-gray-200 hover:bg-slate-100 dark:hover:bg-white/5"
+                          ? "bg-[#8ba32b]/15 dark:bg-[#c8e558]/15 border-[#8ba32b]/30 dark:border-[#c8e558]/30 text-[#8ba32b] dark:text-[#c8e558]"
+                          : "border-slate-200/90 dark:border-white/10 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5"
                       )}
                       title="Sort notifications"
                     >
-                      <ArrowUpDown className="w-3.5 h-3.5" />
+                      <ArrowUpDown className="w-3 h-3" />
                     </button>
 
                     {/* Sort Popup Menu */}
                     <AnimatePresence>
                       {showSortMenu && (
                         <motion.div
-                          initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                          initial={{ opacity: 0, y: 6, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                          className="absolute right-0 top-10 w-44 bg-white dark:bg-[#1a1a1c] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl z-50 p-2 text-left"
+                          exit={{ opacity: 0, y: 6, scale: 0.95 }}
+                          className="absolute right-0 top-9 w-44 bg-white dark:bg-[#1a1a1c] border border-slate-200/90 dark:border-white/10 rounded-2xl shadow-xl z-50 p-2 text-left"
                         >
-                          <div className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500 px-2 py-1 mb-1">
-                            Sort Order
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 py-1 mb-1">
+                            Sort By
                           </div>
                           {[
                             { id: 'latest', label: 'Latest First' },
@@ -304,14 +313,14 @@ export function NotificationsMenu() {
                               key={s.id}
                               onClick={() => { setSortBy(s.id as SortOrder); setShowSortMenu(false); }}
                               className={cn(
-                                "w-full text-left px-3 py-1.5 rounded-xl text-[12.5px] font-semibold flex items-center justify-between transition-colors",
+                                "w-full text-left px-2.5 py-1.5 rounded-xl text-[12px] font-semibold flex items-center justify-between transition-colors cursor-pointer",
                                 sortBy === s.id
-                                  ? "bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400"
-                                  : "text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/5"
+                                  ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white font-bold"
+                                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5"
                               )}
                             >
                               {s.label}
-                              {sortBy === s.id && <Check className="w-3.5 h-3.5 text-indigo-500" />}
+                              {sortBy === s.id && <Check className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558]" />}
                             </button>
                           ))}
                         </motion.div>
@@ -322,17 +331,17 @@ export function NotificationsMenu() {
               </div>
 
               {/* Notification List Container */}
-              <div className="flex-1 overflow-y-auto px-5 py-4 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto px-4 py-3 custom-scrollbar">
                 <AnimatePresence mode="popLayout">
                   {groupedItems.length > 0 ? (
                     groupedItems.map(([groupName, groupList]) => (
-                      <div key={groupName} className="mb-4">
+                      <div key={groupName} className="mb-3">
                         {/* Group Header Pill Divider */}
-                        <div className="relative flex items-center justify-center my-4">
+                        <div className="relative flex items-center justify-center my-3">
                           <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-dashed border-slate-200 dark:border-white/10" />
+                            <div className="w-full border-t border-slate-200/80 dark:border-white/5" />
                           </div>
-                          <span className="relative z-10 px-3 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-[10px] font-bold tracking-wider text-slate-500 dark:text-gray-400 uppercase">
+                          <span className="relative z-10 px-2.5 py-0.2 rounded-full bg-slate-100 dark:bg-white/10 border border-slate-200/80 dark:border-white/5 text-[9.5px] font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase">
                             {groupName}
                           </span>
                         </div>
@@ -345,6 +354,10 @@ export function NotificationsMenu() {
                             onRead={markAsRead}
                             onArchive={archive}
                             onAction={handleAction}
+                            onSelectDetail={() => {
+                              setOpen(false);
+                              navigate('/notifications');
+                            }}
                           />
                         ))}
                       </div>
@@ -354,17 +367,17 @@ export function NotificationsMenu() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="flex flex-col items-center justify-center py-16 text-center px-6"
+                      className="flex flex-col items-center justify-center py-14 text-center px-6"
                     >
-                      <div className="w-16 h-16 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 flex items-center justify-center mb-4 shadow-sm">
-                        <Sparkles className="w-7 h-7 text-indigo-500 dark:text-indigo-400" />
+                      <div className="w-12 h-12 rounded-2xl bg-[#8ba32b]/10 dark:bg-[#c8e558]/10 text-[#8ba32b] dark:text-[#c8e558] flex items-center justify-center mb-3 border border-[#8ba32b]/20 dark:border-[#c8e558]/20">
+                        <Sparkles className="w-6 h-6" />
                       </div>
-                      <p className="text-[16px] font-bold text-slate-900 dark:text-white">
+                      <p className="text-[15px] font-bold text-slate-900 dark:text-white">
                         {tab === 'unread' ? "You're all caught up!" : 'No notifications'}
                       </p>
-                      <p className="text-[13px] text-slate-500 dark:text-gray-400 mt-1 max-w-[260px] leading-relaxed">
+                      <p className="text-[12.5px] text-slate-500 dark:text-slate-400 mt-1 max-w-[260px] leading-relaxed">
                         {tab === 'unread' 
-                          ? 'Check back later for new updates, study group invites, and AI tutor solutions.' 
+                          ? 'Check back later for new study circle invites and quiz updates.' 
                           : 'New notifications will appear here as you continue learning.'}
                       </p>
                     </motion.div>
@@ -373,12 +386,26 @@ export function NotificationsMenu() {
 
                 {/* Infinite Scroll Trigger */}
                 {items.length > 0 && (
-                  <div ref={loadMoreRef} className="h-10 flex items-center justify-center">
+                  <div ref={loadMoreRef} className="h-8 flex items-center justify-center">
                     {hasMore && (
-                      <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-[#8ba32b] dark:border-[#c8e558] border-t-transparent rounded-full animate-spin" />
                     )}
                   </div>
                 )}
+              </div>
+
+              {/* Pinned Bottom Footer Action */}
+              <div className="p-3 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02] shrink-0">
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    navigate('/notifications');
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl text-[12px] font-semibold bg-white dark:bg-[#1c1c1f] border border-slate-200/90 dark:border-white/10 text-slate-800 dark:text-gray-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-all shadow-2xs cursor-pointer active:scale-98"
+                >
+                  <span>See all detailed notifications</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558]" />
+                </button>
               </div>
             </motion.div>
           </>

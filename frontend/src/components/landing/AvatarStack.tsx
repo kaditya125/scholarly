@@ -16,7 +16,8 @@ export default function AvatarStack({ className, avatars }: AvatarStackProps) {
           key={i}
           src={src}
           alt={`User ${i + 1}`}
-          className="w-5 h-5 rounded-full border border-slate-50 dark:border-[#141416] object-cover shadow-sm bg-slate-200 dark:bg-slate-800"
+          referrerPolicy="no-referrer"
+          className="w-4 h-4 rounded-full border border-slate-50 dark:border-[#141416] object-cover shadow-sm bg-slate-200 dark:bg-slate-800"
           style={{ zIndex: avatars.length - i }}
           onError={(e) => {
             // If a real profile pic fails to load, fallback to a dynamic initial-based one

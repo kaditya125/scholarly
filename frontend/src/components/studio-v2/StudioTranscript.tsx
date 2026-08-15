@@ -79,28 +79,28 @@ export default function StudioTranscript({
   }, [segments, podcast?.speakers]);
 
   return (
-    <div className="w-full h-full bg-white dark:bg-[#1e2125] flex flex-col">
+    <div className="w-full h-full bg-white dark:bg-[#111113] flex flex-col font-sans border-l border-slate-200/80 dark:border-white/10">
       {/* Scrollable body */}
       <div className="flex-1 overflow-y-auto scrollbar-hide">
         <div className="px-4 pt-4 pb-3">
           {/* Title + description */}
           {hasPodcast ? (
             <>
-              <h3 className="text-[15px] font-bold text-gray-900 dark:text-gray-100 leading-snug tracking-[-0.01em]">
+              <h3 className="text-[15px] font-semibold text-slate-900 dark:text-white leading-snug tracking-[-0.01em]">
                 {podcast!.title || 'Untitled episode'}
               </h3>
               {podcast!.description && (
-                <p className="mt-1.5 text-[12.5px] text-gray-500 dark:text-gray-400 leading-[1.6] line-clamp-2">
+                <p className="mt-1.5 text-[12px] text-slate-500 dark:text-slate-400 leading-[1.6] line-clamp-2">
                   {podcast!.description}
                 </p>
               )}
             </>
           ) : (
             <>
-              <h3 className="text-[15px] font-bold text-gray-700 dark:text-gray-200 leading-snug">
+              <h3 className="text-[15px] font-semibold text-slate-900 dark:text-white leading-snug">
                 Transcript
               </h3>
-              <p className="mt-1.5 text-[12.5px] text-gray-500 dark:text-gray-400 leading-[1.6]">
+              <p className="mt-1 text-[12px] text-slate-500 dark:text-slate-400 leading-[1.6]">
                 Once your podcast is generated, the transcript, speakers, and
                 time-synced segments will appear here.
               </p>
@@ -114,7 +114,7 @@ export default function StudioTranscript({
           <TabStrip
             tab={tab}
             onChange={setTab}
-            chapterCount={podcast?.chapters?.length ?? 0}
+            chapterCount={(podcast as any)?.chapters?.length ?? 0}
           />
 
           {/* Toolbar */}
@@ -266,7 +266,7 @@ function TabStrip({
   chapterCount: number;
 }) {
   return (
-    <div className="mt-3.5 rounded-full bg-gray-100 dark:bg-white/[0.06] p-1 flex items-center">
+    <div className="mt-3.5 rounded-full bg-slate-100/90 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 p-1 flex items-center">
       <TabButton
         active={tab === 'transcript'}
         onClick={() => onChange('transcript')}
@@ -304,14 +304,14 @@ function TabButton({
       className={cn(
         'flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-semibold transition-all',
         active
-          ? 'bg-white dark:bg-[#2f3338] text-gray-900 dark:text-gray-100 shadow-sm'
-          : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+          ? 'bg-white dark:bg-[#18181b] text-slate-900 dark:text-white shadow-xs'
+          : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
       )}
     >
       {icon}
       {label}
       {count != null && (
-        <span className="px-1.5 py-px rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[10px] font-bold tabular-nums">
+        <span className="px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 text-[9.5px] font-bold tabular-nums">
           {count}
         </span>
       )}
@@ -697,7 +697,7 @@ function SegmentRow({
 
 function ChaptersBody({ podcast }: { podcast?: PodcastMetadata | null }) {
   const audio = usePodcastAudio();
-  const chapters = podcast?.chapters ?? [];
+  const chapters = (podcast as any)?.chapters ?? [];
 
   if (!podcast || chapters.length === 0) {
     return (
@@ -969,7 +969,7 @@ const SPEAKER_THEMES: SpeakerTheme[] = [
 
 function fallbackDuration(podcast: PodcastMetadata): number {
   if (podcast.duration && podcast.duration > 0) return podcast.duration;
-  if (podcast.durationMs && podcast.durationMs > 0) return podcast.durationMs / 1000;
+  if ((podcast as any).durationMs && (podcast as any).durationMs > 0) return (podcast as any).durationMs / 1000;
   return 0;
 }
 

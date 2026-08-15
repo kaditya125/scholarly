@@ -10,6 +10,7 @@ const CostAnalytics = lazy(() => import("../pages/CostAnalytics").then((m) => ({
 const ContinuousEval = lazy(() => import("../pages/ContinuousEval").then((m) => ({ default: m.ContinuousEval })));
 const SystemHealth = lazy(() => import("../pages/SystemHealth").then((m) => ({ default: m.SystemHealth })));
 const CurriculumIngestion = lazy(() => import("../pages/CurriculumIngestion").then((m) => ({ default: m.CurriculumIngestion })));
+const ExamRegistry = lazy(() => import("../pages/ExamRegistry").then((m) => ({ default: m.ExamRegistry })));
 const KnowledgeGraphManager = lazy(() => import("../pages/KnowledgeGraphManager").then((m) => ({ default: m.KnowledgeGraphManager })));
 const VectorDB = lazy(() => import("../pages/VectorDB").then((m) => ({ default: m.VectorDB })));
 const PromptStudio = lazy(() => import("../pages/PromptStudio").then((m) => ({ default: m.PromptStudio })));
@@ -36,6 +37,7 @@ export function AdminRoutes() {
         <Route path="costs" element={<CostAnalytics />} />
 
         <Route path="curriculum" element={<CurriculumIngestion />} />
+        <Route path="exams" element={<ExamRegistry />} />
         <Route path="knowledge-graph" element={<KnowledgeGraphManager />} />
         <Route path="vector-db" element={<VectorDB />} />
 

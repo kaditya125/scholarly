@@ -85,7 +85,74 @@ app.get('/health/ready', async (req, res) => {
     }
 });
 // ==========================================
-// 3. API Routes
+// 3. Public Stats (no auth required)
+// ==========================================
+const firebase_1 = require("./config/firebase");
+let cachedStudentCount = null;
+let cacheTimestamp = 0;
+const CACHE_TTL_MS = 30 * 1000; // 30 seconds
+app.get('/api/public/stats', async (_req, res) => {
+    try {
+        const list = await firebase_1.auth.listUsers(1000);
+        const staffRoles = ['super_admin', 'admin', 'moderator', 'content_manager', 'support', 'analytics_viewer'];
+        let studentCount = 0;
+        let teacherCount = 0;
+        const recentStudentAvatars = [];
+        const recentTeacherAvatars = [];
+        const getFallbackAvatar = (name, isTeacher = false) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${isTeacher ? 'c8e558' : 'random'}&color=000&rounded=true&bold=true`;
+        // Sort users by most recently active first, so when someone updates their profile, they appear in the stack
+        const sortedUsers = list.users.sort((a, b) => {
+            const timeA = new Date(a.metadata.lastSignInTime || a.metadata.creationTime || 0).getTime();
+            const timeB = new Date(b.metadata.lastSignInTime || b.metadata.creationTime || 0).getTime();
+            return timeB - timeA;
+        });
+        for (const u of sortedUsers) {
+            if (u.disabled)
+                continue;
+            const claims = u.customClaims || {};
+            const role = claims.role || claims.productRole || '';
+            const email = (u.email || '').toLowerCase();
+            if (staffRoles.includes(role) || email.includes('admin@') || email.includes('test') || email.includes('rk8233321')) {
+                continue; // skip platform admin/staff/test accounts
+            }
+            const name = u.displayName || email.split('@')[0] || (role === 'teacher' ? 'T' : 'S');
+            const avatarUrl = u.photoURL || getFallbackAvatar(name, role === 'teacher');
+            if (claims.productRole === 'teacher' || role === 'teacher') {
+                teacherCount++;
+                if (recentTeacherAvatars.length < 3) {
+                    recentTeacherAvatars.push(avatarUrl);
+                }
+            }
+            else if (claims.productRole === 'student' || role === 'student') {
+                studentCount++;
+                if (recentStudentAvatars.length < 3) {
+                    recentStudentAvatars.push(avatarUrl);
+                }
+            }
+        }
+        studentCount = studentCount || 1;
+        teacherCount = teacherCount || 1;
+        res.json({
+            students: studentCount,
+            teachers: teacherCount,
+            totalUsers: studentCount + teacherCount,
+            recentStudentAvatars,
+            recentTeacherAvatars
+        });
+    }
+    catch (err) {
+        console.error('Failed to fetch public stats:', err);
+        res.json({
+            students: 1,
+            teachers: 1,
+            totalUsers: 2,
+            recentStudentAvatars: [],
+            recentTeacherAvatars: []
+        });
+    }
+});
+// ==========================================
+// 4. API Routes
 // ==========================================
 app.use('/api', routes);
 // ==========================================
@@ -97,6 +164,42 @@ app.use(errorHandler_1.errorHandler);
 // ==========================================
 const server = app.listen(env_1.env.PORT, () => {
     console.log(`🚀 Server running in ${env_1.env.NODE_ENV} mode on port ${env_1.env.PORT}`);
+    // Start the BullMQ background worker so enqueued jobs (podcast.generate,
+    // podcast.postassets, intelligence.*, notifications, etc.) actually get
+    // processed. Without this call, /api/podcasts/generate accepts the request,
+    // enqueues to Redis, and returns 202 — but nothing ever drains the queue,
+    // so podcasts sit at status PENDING forever.
+    //
+    // Wrapped so a startup error in the worker never crashes the HTTP server —
+    // the API stays up and the failure is visible in the logs.
+    const disableWorkers = String(process.env.DISABLE_WORKERS || '').toLowerCase() === 'true';
+    if (disableWorkers) {
+        console.log('⏸️  Background worker skipped (DISABLE_WORKERS=true).');
+    }
+    else {
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const { startBackgroundWorker } = require('./core/workflow/jobs/BackgroundWorker');
+            startBackgroundWorker();
+        }
+        catch (err) {
+            console.error('[server] Failed to start background worker:', err?.message || err);
+        }
+        // The media worker drains the `media-jobs` queue. Podcast generation
+        // enqueues `podcast.stitch` here AFTER synthesizing all voices, and
+        // stitching is where audio mixing / mastering happens. Without this
+        // worker, every podcast job completes SYNTHESIZING and then sits at
+        // status="STITCHING" forever ("Mixing the audio" in the UI) because
+        // nothing is consuming the stitch queue.
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const { startMediaWorker } = require('./core/workflow/jobs/MediaWorker');
+            startMediaWorker();
+        }
+        catch (err) {
+            console.error('[server] Failed to start media worker:', err?.message || err);
+        }
+    }
 });
 // Graceful shutdown handling
 const shutdown = (signal) => {
@@ -125,6 +228,12 @@ process.on('unhandledRejection', (reason) => {
 // shut down gracefully so the orchestrator can restart a clean instance.
 process.on('uncaughtException', (err) => {
     console.error('[uncaughtException]', err.stack || err.message);
+    // Ignore transient network disconnects from remote Redis/TLS connections
+    const msg = (err.message || '').toLowerCase();
+    if (msg.includes('econnreset') || msg.includes('epipe') || msg.includes('etimedout')) {
+        console.warn('⚠️ Transient network disconnect encountered; keeping HTTP server active.');
+        return;
+    }
     shutdown('uncaughtException');
 });
 exports.default = app;
