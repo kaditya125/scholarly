@@ -220,9 +220,19 @@ const server = app.listen(env.PORT, () => {
   //
   // Wrapped so a startup error in the worker never crashes the HTTP server —
   // the API stays up and the failure is visible in the logs.
+  // In PM2 cluster mode each instance is a full copy of this process. BullMQ workers are
+  // safe to run on more than one (jobs are locked in Redis, never processed twice) but
+  // there's no reason to pay for N-times-redundant polling — one instance is enough to
+  // drain the queues at current volume. PM2 sets NODE_APP_INSTANCE per worker ('0', '1', …);
+  // it's unset outside cluster mode (dev, or a plain fork), where workers should always run.
+  const instanceId = process.env.NODE_APP_INSTANCE;
+  const isWorkerInstance = instanceId === undefined || instanceId === '0';
+
   const disableWorkers = String(process.env.DISABLE_WORKERS || '').toLowerCase() === 'true';
   if (disableWorkers) {
     console.log('⏸️  Background worker skipped (DISABLE_WORKERS=true).');
+  } else if (!isWorkerInstance) {
+    console.log(`⏸️  Background worker skipped (cluster instance ${instanceId}; instance 0 owns it).`);
   } else {
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
