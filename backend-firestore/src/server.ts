@@ -29,6 +29,21 @@ const app = express();
 
 import { traceIdMiddleware } from './middlewares/traceId.middleware';
 
+/*
+ * Trust exactly one proxy hop.
+ *
+ * In production Nginx terminates TLS on the same host and forwards to 127.0.0.1:8080, so
+ * without this every request arrives looking like it came from 127.0.0.1. That silently
+ * breaks the rate limiter below in the worst way: instead of a budget per client, ALL
+ * users share a single bucket, so ordinary traffic from a handful of people exhausts the
+ * window and everyone gets 429s. It also makes `req.ip` useless for logging and abuse
+ * handling.
+ *
+ * `1` rather than `true`: trusting every hop would let a client spoof its own address
+ * via X-Forwarded-For and evade the limiter entirely. One hop is exactly what we have.
+ */
+app.set('trust proxy', 1);
+
 // Parse JSON bodies with a larger limit to support base64 file attachments
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -58,12 +73,21 @@ app.use(compression());
 // Request logging
 app.use(morgan(env.NODE_ENV === 'development' ? 'dev' : 'combined'));
 
-// Rate limiting to prevent brute-force and DDoS
+/*
+ * Rate limiting to prevent brute-force and DDoS.
+ *
+ * The production ceiling was 100 per 15 minutes, which sounds generous but is not: this
+ * is a per-IP budget across EVERY `/api` route, and a single page load spends a dozen of
+ * them (stats, capabilities, sessions, profile, notifications...). A user who browses for
+ * a few minutes and then opens the chat would hit the wall before sending a message —
+ * which is exactly what happened on the first real production request. It was never
+ * caught locally because `skip` disables the limiter entirely in development.
+ */
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: env.NODE_ENV === 'development' ? 5000 : 100, // Higher limit for dev
-  standardHeaders: true, 
-  legacyHeaders: false, 
+  max: env.NODE_ENV === 'development' ? 5000 : 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' },
   skip: () => env.NODE_ENV === 'development' // Skip entirely in dev
 });
