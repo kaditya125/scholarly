@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { X, Sparkles, Check, Loader2, Target, BookOpen, Layers, Award } from 'lucide-react';
 import { useProfile } from '../../hooks/api/useProfile';
 import {
