@@ -4,6 +4,7 @@ import { AIProvider, AIProviderResponse } from './ai.provider.interface';
 import { ChatMessage } from '../../types';
 import { Telemetry } from '../../lib/telemetry';
 import { TelemetryService } from '../telemetry.service';
+import { withRetry } from '../../utils/retry';
 
 // Lazily-created cost recorder (only needs Firestore). Shared across GeminiProvider instances.
 let _costRecorder: TelemetryService | null = null;
@@ -80,11 +81,16 @@ export class GeminiProvider implements AIProvider {
       config.systemInstruction = systemPrompt;
     }
 
-    const response = await this.ai.models.generateContent({
-      model: modelToUse,
-      contents: contents,
-      config: config
-    });
+    // A transient RESOURCE_EXHAUSTED/5xx throws before any content exists, so retrying the
+    // whole call is always safe here (unlike the streaming variant below).
+    const response = await withRetry(
+      () => this.ai.models.generateContent({
+        model: modelToUse,
+        contents: contents,
+        config: config
+      }),
+      { retries: 2, baseDelayMs: 800, label: 'gemini.generateResponse' }
+    );
 
     const end = Date.now();
 
@@ -176,16 +182,35 @@ export class GeminiProvider implements AIProvider {
       config.systemInstruction = systemPrompt;
     }
 
-    const responseStream = await this.ai.models.generateContentStream({
-      model: modelToUse,
-      contents: contents,
-      config: config
+    // Acquiring the stream and pulling its first item is where a RESOURCE_EXHAUSTED/5xx
+    // actually surfaces (a request rejection, not a mid-generation failure) — before any
+    // text has reached the caller, so it's safe to retry the whole request from scratch.
+    // Once real content starts flowing we stop retrying entirely: re-attempting after that
+    // would duplicate output the client has already started rendering.
+    const acquireFirstChunk = async () => {
+      const stream = await this.ai.models.generateContentStream({
+        model: modelToUse,
+        contents: contents,
+        config: config
+      });
+      const iterator = stream[Symbol.asyncIterator]();
+      const first = await iterator.next();
+      return { iterator, first };
+    };
+
+    const { iterator, first } = await withRetry(acquireFirstChunk, {
+      retries: 2,
+      baseDelayMs: 800,
+      label: 'gemini.generateStreamResponse',
     });
 
-    for await (const chunk of responseStream) {
+    let result = first;
+    while (!result.done) {
+      const chunk = result.value;
       if (chunk.text) {
         yield chunk.text;
       }
+      result = await iterator.next();
     }
   }
 
