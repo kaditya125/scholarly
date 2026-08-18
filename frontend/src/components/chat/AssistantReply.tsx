@@ -13,6 +13,7 @@ import {
   Eye,
   ChevronsUpDown,
   Quote,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import MarkdownMessage from './MarkdownMessage';
@@ -47,6 +48,10 @@ export interface AssistantReplyProps {
   reasoning?: string;
   /** Sources retrieved for this answer. */
   citations?: ReplySource[];
+  /** Short follow-up questions the student might naturally ask next. */
+  suggestions?: string[];
+  /** Fires when the student clicks a follow-up suggestion chip. */
+  onSuggestionClick?: (text: string) => void;
 
   onCopy?: () => void;
   copied?: boolean;
@@ -58,8 +63,6 @@ export interface AssistantReplyProps {
   rating?: Rating | null;
   /** Called when the reader selects text and clicks Reply. */
   onQuote?: (text: string) => void;
-  /** Called when a student clicks a suggested follow-up query. */
-  onSuggestionClick?: (query: string) => void;
   /**
    * Fires once the smooth reveal has rendered the whole answer AND streaming has ended.
    * Chat uses it to hold this component mounted through the tail of the animation, so the
@@ -130,6 +133,19 @@ const SourceIcon = ({ source, className }: { source: string; className?: string 
 
 /**
  * AssistantReply — the reply template for the AI chat surface.
+ *
+ * Layout, top to bottom:
+ *   Thought ›            collapsible reasoning timeline (backend progress stages)
+ *   Viewed  · chips      distinct sources the retrieval layer actually read
+ *   status line          live "Searching your notebooks…" while streaming
+ *   markdown body        the answer itself
+ *   N results            the full retrieved-source list, collapsed behind "More"
+ *   action bar           copy · rate · listen · regenerate
+ *   follow-ups           clickable "what next" chips, once the reply has settled
+ *
+ * Every section is driven by data the backend genuinely emits. Sections with no
+ * data simply don't render, so a reply with no retrieval degrades to plain markdown
+ * plus an action bar rather than showing empty chrome.
  */
 export default function AssistantReply({
   content,
@@ -138,6 +154,8 @@ export default function AssistantReply({
   statusMessage,
   reasoning,
   citations = [],
+  suggestions = [],
+  onSuggestionClick,
   onCopy,
   copied,
   onSpeak,
@@ -146,7 +164,6 @@ export default function AssistantReply({
   onRate,
   rating,
   onQuote,
-  onSuggestionClick,
   onRevealDone,
 }: AssistantReplyProps) {
   const [showAllSources, setShowAllSources] = useState(false);
@@ -407,10 +424,7 @@ export default function AssistantReply({
                           prose-strong:font-semibold prose-strong:text-slate-900 dark:prose-strong:text-slate-100
                           prose-a:text-indigo-600 dark:prose-a:text-indigo-400 prose-a:font-medium prose-a:no-underline hover:prose-a:underline
                           prose-code:font-mono prose-code:text-[13px] prose-code:font-medium prose-code:bg-slate-100 dark:prose-code:bg-white/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:before:content-none prose-code:after:content-none
-                          prose-pre:bg-[#1e1e1e] prose-pre:p-0 prose-pre:rounded-xl prose-pre:font-mono prose-pre:text-[13px] prose-pre:leading-[1.6]
-                          prose-blockquote:border-l-2 prose-blockquote:border-indigo-400/50 prose-blockquote:not-italic prose-blockquote:font-normal prose-blockquote:text-slate-600 dark:prose-blockquote:text-gray-400
                           prose-hr:border-slate-200 dark:prose-hr:border-white/10 prose-hr:my-7
-                          prose-table:text-[14px] prose-th:font-semibold
                           prose-img:rounded-2xl prose-img:shadow-md prose-img:max-w-[350px] prose-img:object-cover">
             <MarkdownMessage content={revealed} />
             {streaming && <span className="inline-block w-2 h-4 ml-1 bg-indigo-500 animate-pulse align-middle" />}
@@ -549,6 +563,22 @@ export default function AssistantReply({
             <RefreshCw className="w-3.5 h-3.5" strokeWidth={1.75} />
             Regenerate
           </button>
+        </div>
+      )}
+
+      {/* ── Follow-ups ──────────────────────────────────────────────────────── */}
+      {!streaming && content && suggestions.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-3">
+          {suggestions.map((s, i) => (
+            <button
+              key={i}
+              onClick={() => onSuggestionClick?.(s)}
+              className="inline-flex items-center gap-1.5 max-w-full px-2.5 py-1 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-gray-300 text-[12.5px] font-medium hover:bg-slate-200 dark:hover:bg-white/[0.1] hover:text-slate-800 dark:hover:text-gray-100 transition-colors text-left"
+            >
+              <Sparkles className="w-3.5 h-3.5 shrink-0 text-indigo-500" strokeWidth={1.75} />
+              <span className="truncate">{s}</span>
+            </button>
+          ))}
         </div>
       )}
     </div>
