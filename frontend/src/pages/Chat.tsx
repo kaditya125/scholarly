@@ -328,12 +328,26 @@ export default function Chat() {
    * message is never lost if the reveal stalls for any reason.
    */
   const [pendingFinal, setPendingFinal] = useState<any>(null);
+  /** Mirrors pendingFinal for code that must know synchronously whether a reply is still
+   *  uncommitted — see the message-id backfill in sendAIRequest. */
+  const pendingFinalRef = useRef<any>(null);
+  useEffect(() => { pendingFinalRef.current = pendingFinal; }, [pendingFinal]);
+
   const commitPending = React.useCallback(() => {
     setPendingFinal((p: any) => {
       if (p) {
         setMessages((prev) => {
+          /*
+           * Guard against double-commit (onRevealDone AND the 20s fallback timer can
+           * both fire). It must not reject on `undefined === undefined`: when the
+           * id backfill fails, the pending reply has no id, and matching it against
+           * an earlier reply that also has none deleted the answer outright. Ids are
+           * therefore only compared when the pending reply actually has one.
+           */
           const isDuplicate = prev.some(
-            (m) => m.role === 'ai' && (m.id === p.id || (m.content && m.content === p.content))
+            (m) =>
+              m.role === 'ai' &&
+              ((p.id != null && m.id === p.id) || (!!p.content && m.content === p.content))
           );
           if (isDuplicate) return prev;
           return [...prev, p];
@@ -771,14 +785,31 @@ export default function Chat() {
         const rows = Array.isArray(hist.data) ? hist.data : [];
         const lastAiId = [...rows].reverse().find((m: any) => m.role === 'ai')?.id;
         if (lastAiId) {
-          setPendingFinal((p: any) => (p ? { ...p, id: lastAiId } : p));
-          setMessages(prev => {
-            const next = [...prev];
-            for (let k = next.length - 1; k >= 0; k--) {
-              if (next[k].role === 'ai') { next[k] = { ...next[k], id: lastAiId }; break; }
-            }
-            return next;
-          });
+          /*
+           * Exactly ONE of these, never both.
+           *
+           * This previously ran both unconditionally, which stamped the id belonging to
+           * the reply still being revealed onto the PREVIOUS reply in the list. The
+           * duplicate guard in commitPending then saw a message already carrying that
+           * id and dropped the new answer — so from the second turn of a session
+           * onwards, replies disappeared after finishing their reveal.
+           *
+           * Which one is correct depends on whether the reveal has already finished:
+           * if the reply is still pending it is not in `messages` yet and the id
+           * belongs on the pending object; if it has already committed, the last AI
+           * message IS this reply and takes the id.
+           */
+          if (pendingFinalRef.current) {
+            setPendingFinal((p: any) => (p ? { ...p, id: lastAiId } : p));
+          } else {
+            setMessages(prev => {
+              const next = [...prev];
+              for (let k = next.length - 1; k >= 0; k--) {
+                if (next[k].role === 'ai') { next[k] = { ...next[k], id: lastAiId }; break; }
+              }
+              return next;
+            });
+          }
         }
       } catch { /* rating stays unavailable for this turn */ }
 
@@ -1071,9 +1102,24 @@ export default function Chat() {
           <div
             ref={messagesContainerRef}
             onScroll={handleMessagesScroll}
-            className="flex-1 min-h-0 overflow-y-auto pb-32 px-4 md:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex justify-center"
+            /* overflow-x-clip is the fix for the conversation drifting sideways on mobile.
+               `overflow-y-auto` alone makes the x-axis compute to `auto`, so anything wider
+               than the column (a table, an equation, a long token) turned the whole thread
+               into a horizontal scroller. `scrollIntoView` runs the moment an answer
+               finishes streaming and would then set scrollLeft, which is why the drift
+               appeared right at the end of a reply. `clip` — unlike `hidden` — is not a
+               scroll container, so it cannot be scrolled by script either. Wide content is
+               still reachable: tables, code blocks and .katex-display each scroll inside
+               themselves.
+               `safe center` keeps the column centred but degrades to start-alignment rather
+               than overflowing equally into an unreachable left edge. */
+            className="flex-1 min-h-0 overflow-y-auto overflow-x-clip pb-32 px-4 md:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex [justify-content:safe_center]"
           >
-            <div className="flex flex-col gap-6 py-6 border-none w-full max-w-3xl">
+            {/* min-w-0 is load-bearing: as a row-flex item this column would otherwise take
+                min-width:auto and refuse to shrink below its widest descendant, so a wide
+                table or equation widens the column past the viewport instead of letting
+                that descendant's own overflow-x-auto scroll inside it. */}
+            <div className="flex flex-col gap-6 py-6 border-none w-full min-w-0 max-w-3xl">
               {messages.map((msg, i) => (
                 <div key={i} className={cn("flex w-full", msg.role === 'user' ? "justify-end" : "justify-start")}>
                   {msg.role === 'user' ? (

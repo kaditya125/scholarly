@@ -402,7 +402,12 @@ export default function AssistantReply({
       )}
 
       {/* ── Answer body ─────────────────────────────────────────────────────── */}
-      <div ref={bodyRef} className="relative" onMouseUp={handleSelection}>
+      {/* break-words covers long unbroken tokens (base64, identifiers, URLs without
+          hyphens) that offer the line-breaker no opportunity of its own. The structural
+          guard against sideways drift lives on the centred column in Chat.tsx; deliberately
+          no overflow-x here, since this subtree hosts the absolutely-positioned selection
+          popup and clipping would swallow it. */}
+      <div ref={bodyRef} className="relative min-w-0 max-w-full break-words" onMouseUp={handleSelection}>
         {!content && streaming ? (
           /* Deliberately empty. The reasoning timeline above is the single "working"
              signal — spinner, current step name, progress bar. The bouncing dots that
