@@ -806,8 +806,10 @@ export default function Chat() {
   };
 
   if (user === null) {
+    // dvh, not vh: on mobile `100vh` counts the strip behind the collapsing address bar,
+    // so the panel overflows and its lower edge sits under browser chrome.
     return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-140px)] w-full">
+      <div className="flex flex-col items-center justify-center h-[calc(100dvh-140px)] w-full">
         <Bot className="w-16 h-16 text-indigo-500 mb-4" />
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">You are not signed in</h2>
         <p className="text-slate-600 dark:text-gray-400 mb-6 text-center max-w-md">
@@ -1501,7 +1503,7 @@ export default function Chat() {
                     <div className="relative">
                       <button
                         onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
-                        className="flex items-center gap-1.5 max-w-[190px] text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white text-[12.5px] font-medium px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
+                        className="flex items-center gap-1.5 max-w-[112px] sm:max-w-[190px] text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white text-[12.5px] font-medium px-2 sm:px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
                         title="Choose model"
                       >
                         {activeModel.icon}
@@ -1552,8 +1554,11 @@ export default function Chat() {
                                     <ChevronRight className="w-3.5 h-3.5 shrink-0" strokeWidth={2} />
                                   </button>
 
+                                  {/* Submenu flips to the LEFT on phones: its parent is a
+                                      right-aligned 264px dropdown, so opening a further 236px
+                                      to the right put this entirely off-screen on any phone. */}
                                   {showMoreModels && secondaryModels.length > 0 && (
-                                    <div className="absolute left-full top-0 ml-2 w-[236px] bg-white dark:bg-[#2c2c2e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 py-1.5 px-1.5 z-50">
+                                    <div className="absolute top-0 right-full mr-2 sm:right-auto sm:left-full sm:ml-2 w-[236px] bg-white dark:bg-[#2c2c2e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 py-1.5 px-1.5 z-50">
                                       {secondaryModels.map((model) => (
                                         <button
                                           key={model.id}
@@ -1616,10 +1621,12 @@ export default function Chat() {
                         </>
                       )}
                     </div>
-                    {/* Character budget */}
+                    {/* Character budget. Hidden on phones: the toolbar's left icon group plus
+                        the model picker already consume the width, and pushing this in as well
+                        squeezed the send button. Reappears from sm: up. */}
                     <span
                       className={cn(
-                        'text-[11.5px] font-mono tabular-nums transition-colors',
+                        'hidden sm:inline text-[11.5px] font-mono tabular-nums transition-colors',
                         input.length >= MAX_CHARS
                           ? 'text-red-500'
                           : input.length > MAX_CHARS * 0.9
