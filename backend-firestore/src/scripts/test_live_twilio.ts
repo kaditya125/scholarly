@@ -21,7 +21,7 @@ async function main() {
   const { TwilioSmsProvider } = await import('../core/notifications/providers/SmsProvider');
 
   const provider = new TwilioSmsProvider();
-  const report = await provider.sendSms(recipient, 'Hello from Scholarly AI! Your Twilio SMS integration is working perfectly in live mode! 🚀');
+  const report = await provider.sendSms(recipient, 'Hello from Sadhya AI! Your Twilio SMS integration is working perfectly in live mode! 🚀');
 
   console.log('\n=== Twilio Delivery Report ===');
   console.log('Success:', report.success);

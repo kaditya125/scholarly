@@ -57,7 +57,7 @@ export class DmService {
         id: c.id,
         peer: {
           uid: otherId,
-          displayName: entry?.displayName || 'Scholarly learner',
+          displayName: entry?.displayName || 'Sadhya learner',
           photoURL: entry?.photoURL,
         },
         lastMessage: c.lastMessage,
@@ -94,7 +94,7 @@ export class DmService {
       id,
       peer: {
         uid: otherId,
-        displayName: entry?.displayName || 'Scholarly learner',
+        displayName: entry?.displayName || 'Sadhya learner',
         photoURL: entry?.photoURL,
         email: entry?.email,
       },

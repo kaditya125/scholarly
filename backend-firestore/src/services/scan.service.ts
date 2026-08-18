@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { GeminiProvider } from './ai/gemini.provider';
 import { retrievalService } from './rag/retrieval.service';
 import { studentContextService } from './studentContext.service';
-import { buildScholarlySystemPrompt } from '../config/prompts';
+import { buildSadhyaSystemPrompt } from '../config/prompts';
 import { logger } from '../utils/logger';
 
 /**
@@ -89,7 +89,7 @@ export class ScanService {
       let studentContext: any = undefined;
       try { studentContext = await studentContextService.aggregateContext(userId); } catch { /* non-fatal */ }
       const hasCtx = retrievedContext.length > 50;
-      let systemPrompt = buildScholarlySystemPrompt({ mode: 'TEACHER', studentContext, retrievedContext, hasNotebookContext: hasCtx });
+      let systemPrompt = buildSadhyaSystemPrompt({ mode: 'TEACHER', studentContext, retrievedContext, hasNotebookContext: hasCtx });
 
       const locator = [
         input.bookTitle, input.subject,

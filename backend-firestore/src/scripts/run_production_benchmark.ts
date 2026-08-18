@@ -70,7 +70,7 @@ const BENCHMARK_DATASET: BenchmarkTestCase[] = [
 ];
 
 async function runBenchmark() {
-  console.log('🚀 Starting Scholarly AI Permanent Benchmark Suite');
+  console.log('🚀 Starting Sadhya AI Permanent Benchmark Suite');
   
   // Bootstrap the Dependency Injection container first!
   bootstrapDI();

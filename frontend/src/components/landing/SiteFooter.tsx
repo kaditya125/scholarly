@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { SITE, formatAddress, type SocialIcon } from '../../lib/siteConfig';
+import { LogoMark as Mark } from '../brand/Logo';
+import { HandwrittenTagline } from '../brand/HandwrittenTagline';
 
 /**
  * The public site footer.
@@ -65,15 +67,6 @@ const COLUMNS: { title: string; links: { label: string; href: string; external?:
   },
 ];
 
-function Mark({ className = 'w-6 h-6' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#facc15" />
-      <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 export default function SiteFooter() {
   return (
     <footer className="border-t border-slate-100 dark:border-white/[0.07] bg-slate-50/60 dark:bg-white/[0.02]">
@@ -81,10 +74,13 @@ export default function SiteFooter() {
         {/* ── Brand + link columns ─────────────────────────────────────── */}
         <div className="grid gap-10 lg:gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,2.6fr)] pt-14 sm:pt-16 pb-12">
           <div className="max-w-[19rem]">
-            <Link to="/" className="flex items-center gap-2.5" aria-label="Scholarly home">
+            <Link to="/" className="flex items-center gap-2.5" aria-label="Sadhya home">
               <Mark />
-              <span className="text-[17px] font-semibold tracking-[-0.02em]">Scholarly</span>
+              <span className="text-[17px] font-semibold tracking-[-0.02em]">Sadhya</span>
             </Link>
+            {/* Sits under the wordmark, indented to the width of the mark so it hangs off the
+                name rather than the row. */}
+            <HandwrittenTagline className="mt-1 ml-[34px] flex text-[16px] text-[#8ea63a] dark:text-[#c8e558]" />
             <p className="mt-4 text-[14px] leading-relaxed text-slate-500 dark:text-gray-400">
               An AI tutor built around your exam, your subjects and your level — answering from the
               curriculum, with its sources and its reasoning open to inspection.

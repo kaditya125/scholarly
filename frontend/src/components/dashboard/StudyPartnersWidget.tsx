@@ -9,7 +9,7 @@ import { PeerCard } from '../../lib/api/connections';
 function lineFor(peer: PeerCard): string {
   if (peer.matchReasons && peer.matchReasons.length > 0) return peer.matchReasons[0];
   if (peer.goal) return peer.goal;
-  return peer.email || 'Scholarly learner';
+  return peer.email || 'Sadhya learner';
 }
 
 /**

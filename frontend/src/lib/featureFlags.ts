@@ -35,12 +35,12 @@ function getEnvFlags(): Partial<FeatureFlags> {
 
 /**
  * Get feature flags from localStorage (for testing/overrides)
- * Prefix: scholarly_feature_
+ * Prefix: sadhya_feature_
  */
 function getLocalStorageFlags(): Partial<FeatureFlags> {
   try {
     return {
-      aiWorkspace: localStorage.getItem('scholarly_feature_aiWorkspace') === 'true',
+      aiWorkspace: localStorage.getItem('sadhya_feature_aiWorkspace') === 'true',
     };
   } catch {
     return {};
@@ -96,7 +96,7 @@ export function isFeatureEnabled(feature: keyof FeatureFlags): boolean {
  */
 export function enableFeature(feature: keyof FeatureFlags): void {
   try {
-    localStorage.setItem(`scholarly_feature_${feature}`, 'true');
+    localStorage.setItem(`sadhya_feature_${feature}`, 'true');
     refreshFeatureFlags();
     console.log(`[FeatureFlags] Enabled feature: ${feature}`);
   } catch (err) {
@@ -109,7 +109,7 @@ export function enableFeature(feature: keyof FeatureFlags): void {
  */
 export function disableFeature(feature: keyof FeatureFlags): void {
   try {
-    localStorage.setItem(`scholarly_feature_${feature}`, 'false');
+    localStorage.setItem(`sadhya_feature_${feature}`, 'false');
     refreshFeatureFlags();
     console.log(`[FeatureFlags] Disabled feature: ${feature}`);
   } catch (err) {
@@ -122,7 +122,7 @@ export function disableFeature(feature: keyof FeatureFlags): void {
  */
 export function resetFeature(feature: keyof FeatureFlags): void {
   try {
-    localStorage.removeItem(`scholarly_feature_${feature}`);
+    localStorage.removeItem(`sadhya_feature_${feature}`);
     refreshFeatureFlags();
     console.log(`[FeatureFlags] Reset feature: ${feature}`);
   } catch (err) {
@@ -140,7 +140,7 @@ export function useFeatureFlags(): FeatureFlags {
 
 // Export for console debugging
 if (typeof window !== 'undefined') {
-  (window as any).scholarlyFeatureFlags = {
+  (window as any).sadhyaFeatureFlags = {
     get: getFeatureFlags,
     enable: enableFeature,
     disable: disableFeature,

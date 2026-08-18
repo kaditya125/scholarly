@@ -608,7 +608,7 @@ export default function Profile() {
                       Appearance &amp; Theme
                     </div>
                     <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      Customize Scholarly interface for day or nighttime study sessions.
+                      Customize Sadhya interface for day or nighttime study sessions.
                     </p>
                   </div>
 
@@ -799,7 +799,7 @@ export default function Profile() {
 
                 <div>
                   <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                    Sign out of Scholarly?
+                    Sign out of Sadhya?
                   </h3>
                   <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-1">
                     You will need to sign back in with your credentials to access your notes and tests.

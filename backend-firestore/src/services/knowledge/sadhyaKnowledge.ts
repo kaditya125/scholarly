@@ -1,19 +1,19 @@
 /**
- * Complete, authoritative product knowledge base for Scholarly.
- * Used by the Ask Scholarly public AI guide to answer questions about the platform with high accuracy and depth.
+ * Complete, authoritative product knowledge base for Sadhya.
+ * Used by the Ask Sadhya public AI guide to answer questions about the platform with high accuracy and depth.
  */
 
-export const SCHOLARLY_MASTER_KNOWLEDGE = `
-# SCHOLARLY PLATFORM MASTER KNOWLEDGE BASE
+export const SADHYA_MASTER_KNOWLEDGE = `
+# SADHYA PLATFORM MASTER KNOWLEDGE BASE
 
-## 1. What is Scholarly?
-- **Overview**: Scholarly is an AI-powered, all-in-one educational platform engineered for both students and educators. It combines 24/7 personalized AI tutoring, multimodal document study tools, and a full-featured teacher workspace with interactive live video classes.
+## 1. What is Sadhya?
+- **Overview**: Sadhya is an AI-powered, all-in-one educational platform engineered for both students and educators. It combines 24/7 personalized AI tutoring, multimodal document study tools, and a full-featured teacher workspace with interactive live video classes.
 - **Mission**: To democratize elite, personalized 1-on-1 tutoring and empower teachers with state-of-the-art classroom tools.
-- **Company**: Scholarly Technologies Private Limited, headquartered in Bengaluru, India.
+- **Company**: Sadhya Technologies Private Limited, headquartered in Bengaluru, India.
 - **Contact & Support**: 
-  - General Support: support@scholarly.ai
-  - Sales & Institutional: sales@scholarly.ai
-  - Privacy: privacy@scholarly.ai
+  - General Support: support@sadhya.app
+  - Sales & Institutional: sales@sadhya.app
+  - Privacy: privacy@sadhya.app
 
 ---
 
@@ -88,7 +88,7 @@ export const SCHOLARLY_MASTER_KNOWLEDGE = `
 
 ### D. Institutional & School Plans
 - Custom per-seat pricing for schools, colleges, and coaching institutes.
-- Contact sales@scholarly.ai for tailored onboarding and institutional LMS integrations.
+- Contact sales@sadhya.app for tailored onboarding and institutional LMS integrations.
 
 ### E. Payment Methods
 - UPI (Google Pay, PhonePe, Paytm, etc.), Credit/Debit Cards (Visa, Mastercard, RuPay), and Netbanking processed securely through Razorpay.
@@ -97,7 +97,7 @@ export const SCHOLARLY_MASTER_KNOWLEDGE = `
 
 ## 5. Referral & Rewards Program
 - **Referral Rewards**: Users can invite friends, classmates, and fellow educators using their personal referral link (accessible from Settings/Referrals).
-- **Perks**: Earn free months of Scholarly Pro and platform entitlements for successful invites.
+- **Perks**: Earn free months of Sadhya Pro and platform entitlements for successful invites.
 
 ---
 

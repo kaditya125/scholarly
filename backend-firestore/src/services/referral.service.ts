@@ -105,7 +105,7 @@ export class ReferralService {
             ...(data.subscription || {}),
             status: 'active',
             currentPeriodEnd: newEnd,
-            ...(hadSubscription ? {} : { plan: 'pro', planName: 'Scholarly Pro (referral)', provider: 'referral', source: 'referral' }),
+            ...(hadSubscription ? {} : { plan: 'pro', planName: 'Sadhya Pro (referral)', provider: 'referral', source: 'referral' }),
           },
         },
         { merge: true },

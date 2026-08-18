@@ -2,7 +2,7 @@
  * PipelineRealtimeService
  * Phase 6: Real-Time Processing Experience & SSE Streaming
  * 
- * Reuses the existing Express text/event-stream infrastructure in Scholarly.
+ * Reuses the existing Express text/event-stream infrastructure in Sadhya.
  * Provides live stage-by-stage broadcasts, instant snapshot hydration for
  * reconnects and page reloads, and multi-document stream isolation.
  */

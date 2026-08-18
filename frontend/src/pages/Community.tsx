@@ -818,7 +818,7 @@ export default function Community() {
         </div>
 
         <span className="hidden sm:inline text-[11px] font-medium text-slate-400 dark:text-slate-500">
-          Scholarly Community &amp; Chats
+          Sadhya Community &amp; Chats
         </span>
       </div>
 

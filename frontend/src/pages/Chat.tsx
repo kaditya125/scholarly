@@ -1065,7 +1065,7 @@ export default function Chat() {
                       <div className="fixed inset-0 z-40" onClick={() => setIsScopeOpen(false)} />
                       <div className="absolute right-0 top-full mt-2 w-60 max-h-[280px] overflow-y-auto custom-scrollbar bg-white dark:bg-[#1a1a1b] rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 overflow-hidden z-50 py-1.5">
                         {([
-                          { key: 'auto', icon: Sparkles, label: 'Auto', hint: 'Let Scholarly decide' },
+                          { key: 'auto', icon: Sparkles, label: 'Auto', hint: 'Let Sadhya decide' },
                           { key: 'web', icon: Globe, label: 'All Web', hint: 'Search the web (research mode)' },
                         ] as const).map((opt) => (
                           <button
@@ -1468,7 +1468,7 @@ export default function Chat() {
           </div>
 
           <p className="mt-1.5 text-[10.5px] text-slate-400 dark:text-gray-500 text-center">
-            Scholarly AI can make mistakes. Please verify important exam facts.
+            Sadhya AI can make mistakes. Please verify important exam facts.
           </p>
         </div>
       </div>

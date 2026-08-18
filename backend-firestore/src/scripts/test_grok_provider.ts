@@ -16,7 +16,7 @@ async function run() {
   const t = Date.now();
   const res = await provider.generateResponse(
     [{ role: 'user', content: 'In one sentence, explain what inertia is to a class 11 student.' } as any],
-    'You are Scholarly AI, a concise expert physics tutor.',
+    'You are Sadhya AI, a concise expert physics tutor.',
     { traceId: 'grok-smoke' } as any
   );
   console.log(`latency=${Date.now() - t}ms`);

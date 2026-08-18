@@ -8,7 +8,7 @@ import { logger } from '../../utils/logger';
  * PREMIUM + EXPENSIVE (~$4-6 per clip). Async long-running:
  *   submit :predictLongRunning -> poll :fetchPredictOperation -> video written to GCS.
  *
- * Auth: OAuth2 via the scholarly-grok service account (reuses GROK_SA_KEY_FILE /
+ * Auth: OAuth2 via the sadhya-grok service account (reuses GROK_SA_KEY_FILE /
  * GROK_VERTEX_PROJECT). Output goes to VEO_OUTPUT_BUCKET (must be writable by the SA).
  *
  * Cost guardrails (caller's responsibility): on-demand only, cache results, cap usage.

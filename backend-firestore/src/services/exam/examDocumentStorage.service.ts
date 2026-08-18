@@ -112,7 +112,7 @@ export class ExamDocumentStorageService {
       responseType: 'arraybuffer',
       timeout: 30000,
       headers: {
-        'User-Agent': 'Scholarly-Exam-Intelligence-Archiver/1.0',
+        'User-Agent': 'Sadhya-Exam-Intelligence-Archiver/1.0',
       },
     });
 

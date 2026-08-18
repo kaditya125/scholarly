@@ -6,7 +6,7 @@
  *
  * Usage (from backend-firestore/):
  *   npx tsx src/scripts/create_admin.ts <email> <password> [role]
- *   npx tsx src/scripts/create_admin.ts admin@scholarly.ai "StrongPass#123" super_admin
+ *   npx tsx src/scripts/create_admin.ts admin@sadhya.app "StrongPass#123" super_admin
  *
  * You can also set an existing user's role (e.g. your Google account) by
  * passing their email with any password placeholder — an existing account's

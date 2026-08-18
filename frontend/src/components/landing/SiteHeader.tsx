@@ -6,6 +6,7 @@ import { useTheme } from '../../lib/ThemeContext';
 import { cn } from '../../lib/utils';
 import { PRODUCT_GROUPS, TEACHER_PRODUCT_GROUPS, TOP_LINKS, TEACHER_TOP_LINKS } from './navData';
 import { PRO_MONTHLY_INR } from '../../lib/siteConfig';
+import { LogoMark as Mark } from '../brand/Logo';
 
 /**
  * The public site header, shared by the landing page, /pricing, /about and the legal pages.
@@ -13,15 +14,6 @@ import { PRO_MONTHLY_INR } from '../../lib/siteConfig';
 
 const OPEN_DELAY = 90;
 const CLOSE_DELAY = 180;
-
-function Mark({ className = 'w-6 h-6' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#facc15" />
-      <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 export default function SiteHeader() {
   const { theme, toggleTheme } = useTheme();
@@ -87,9 +79,9 @@ export default function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-slate-100 dark:border-white/[0.07] bg-white/85 dark:bg-[#0b0b0c]/85 backdrop-blur-xl">
       <div ref={wrapRef} className="relative">
         <nav className="max-w-[1160px] mx-auto px-5 sm:px-8 h-16 flex items-center gap-6">
-          <Link to="/" className="flex items-center gap-2.5 shrink-0" aria-label="Scholarly home">
+          <Link to="/" className="flex items-center gap-2.5 shrink-0" aria-label="Sadhya home">
             <Mark />
-            <span className="text-[17px] font-semibold tracking-[-0.02em]">Scholarly</span>
+            <span className="text-[17px] font-semibold tracking-[-0.02em]">Sadhya</span>
           </Link>
 
           {/* ── Desktop nav ─────────────────────────────────────────────── */}

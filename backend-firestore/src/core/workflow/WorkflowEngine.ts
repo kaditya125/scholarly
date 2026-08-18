@@ -13,7 +13,7 @@ import { TeacherContextService } from '../../services/teacherContext.service';
 import { UserProfileService } from '../../services/userProfile.service';
 import { ProductRole } from '../../types/roles';
 import { 
-  buildScholarlySystemPrompt, 
+  buildSadhyaSystemPrompt, 
   isGreetingMessage, 
   getGreetingOrOnboardingPrompt 
 } from '../../config/prompts';
@@ -330,7 +330,7 @@ export class WorkflowEngine {
           message: 'Composing the podcast plan you can approve, refine, or hand off to voice generation...'
         };
 
-        const podcastSystemPrompt = buildScholarlySystemPrompt({
+        const podcastSystemPrompt = buildSadhyaSystemPrompt({
           mode: 'PODCAST',
           viewerRole: req.productRole,
           studentContext: {
@@ -625,7 +625,7 @@ export class WorkflowEngine {
       const retrievalCacheHit = retrievalSpans.some((m: any) => m.operation === 'retrieval_cache_hit');
 
       // ── Stage 6: Agent Execution ───────────────────────────────────────
-      yield { type: 'progress', stage: WorkflowStage.AGENT_EXECUTION, message: `Scholarly AI ${mode} mode preparing explanation...` };
+      yield { type: 'progress', stage: WorkflowStage.AGENT_EXECUTION, message: `Sadhya AI ${mode} mode preparing explanation...` };
 
       const generationStartTime = Date.now();
       const teacher = new TeacherAgent();

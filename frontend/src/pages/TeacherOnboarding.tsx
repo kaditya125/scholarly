@@ -190,7 +190,7 @@ export default function TeacherOnboarding() {
             <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
               <GraduationCap className="w-4 h-4 text-white" />
             </div>
-            <span className="font-semibold text-[15px] tracking-tight">Scholarly</span>
+            <span className="font-semibold text-[15px] tracking-tight">Sadhya</span>
             <span className="ml-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300">
               Teacher
             </span>
@@ -282,7 +282,7 @@ function StepBody({
             Welcome, {firstName}
           </h1>
           <p className="max-w-md text-[15px] leading-relaxed text-slate-500 dark:text-gray-400">
-            A few questions about what you teach. This shapes how Scholarly's AI assists you —
+            A few questions about what you teach. This shapes how Sadhya's AI assists you —
             and nothing here is visible to students unless you choose to publish it.
           </p>
         </div>

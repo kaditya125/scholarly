@@ -193,7 +193,7 @@ describe('Phase 7: ContentExplorationService Test Suite', () => {
       version: 1,
       sizeBytes: 1024 * 750,
       checksum: 'a8b3c4d5e6f7890123456789abcdef0123456789abcdef0123456789abcdef01',
-      storagePath: 'gs://scholarly-sources/physics/dual_nature.pdf',
+      storagePath: 'gs://sadhya-sources/physics/dual_nature.pdf',
       chunksExtracted: 3,
       conceptsExtracted: 2,
       metadata: {

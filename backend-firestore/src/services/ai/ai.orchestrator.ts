@@ -2,7 +2,7 @@ import { AIProvider } from './ai.provider.interface';
 import { GeminiProvider } from './gemini.provider';
 import { GroqProvider } from './groq.provider';
 import { ChatMessage } from '../../types';
-import { buildScholarlySystemPrompt } from '../../config/prompts';
+import { buildSadhyaSystemPrompt } from '../../config/prompts';
 import { StudentContext } from '../../types/studentContext.types';
 
 export enum AILearningMode {
@@ -39,8 +39,8 @@ export class AIOrchestrator {
   ): string {
     const hasNotebookContext = contextData.length > 50;
 
-    // Use the centralized Scholarly AI prompt builder
-    return buildScholarlySystemPrompt({
+    // Use the centralized Sadhya AI prompt builder
+    return buildSadhyaSystemPrompt({
       mode,
       studentContext,
       retrievedContext: contextData || undefined,

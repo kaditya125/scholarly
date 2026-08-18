@@ -139,7 +139,7 @@ describe('ContentQualityValidationService', () => {
       originalName: 'optics_ch10.pdf',
       mimeType: 'application/pdf',
       sizeBytes: 2048576,
-      storagePath: `gs://scholarly-bucket/sources/${collectionId}/${documentId}.pdf`,
+      storagePath: `gs://sadhya-bucket/sources/${collectionId}/${documentId}.pdf`,
       status: 'INDEXING',
       chunksExtracted: chunkCount,
       vectorsIndexed: includeVectors ? chunkCount : 0,
@@ -317,7 +317,7 @@ describe('ContentQualityValidationService', () => {
         originalName: 'optics_ch10.pdf',
         contentType: 'application/pdf',
         sizeBytes: sourceOverrides.sizeBytes !== undefined ? sourceOverrides.sizeBytes : 2048576,
-        storagePath: sourceOverrides.storagePath !== undefined ? sourceOverrides.storagePath : `gs://scholarly-bucket/sources/${collectionId}/${documentId}.pdf`,
+        storagePath: sourceOverrides.storagePath !== undefined ? sourceOverrides.storagePath : `gs://sadhya-bucket/sources/${collectionId}/${documentId}.pdf`,
       },
       ...jobStateOverrides,
     };

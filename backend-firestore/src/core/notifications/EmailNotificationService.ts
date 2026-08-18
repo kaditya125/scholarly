@@ -74,10 +74,10 @@ export class EmailNotificationService {
       }
 
       const mailOptions = {
-        from: env.SMTP_FROM || '"Scholarly Alerts" <alerts@scholarly.ai>',
+        from: env.SMTP_FROM || '"Sadhya Alerts" <alerts@sadhya.app>',
         to: user.email,
         subject: `[Critical] ${payload.title}`,
-        text: `${payload.body}\n\nAction required: ${payload.actionUrl || 'Log in to Scholarly.'}`,
+        text: `${payload.body}\n\nAction required: ${payload.actionUrl || 'Log in to Sadhya.'}`,
         html: `
           <div style="font-family: sans-serif; padding: 20px;">
             <h2 style="color: #e11d48;">${payload.title}</h2>
@@ -108,9 +108,9 @@ export class EmailNotificationService {
       if (!user?.email) return;
 
       const mailOptions = {
-        from: '"Scholarly Digest" <digest@scholarly.ai>',
+        from: '"Sadhya Digest" <digest@sadhya.app>',
         to: user.email,
-        subject: `Your Scholarly Activity Digest`,
+        subject: `Your Sadhya Activity Digest`,
         html: `
           <div style="font-family: sans-serif; padding: 20px;">
             <h2>Here's what you missed</h2>

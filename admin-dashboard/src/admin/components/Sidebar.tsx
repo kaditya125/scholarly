@@ -104,13 +104,17 @@ export const AdminSidebar: React.FC<{ isCollapsed: boolean }> = ({ isCollapsed }
       {/* Brand */}
       <div className={cn("flex items-center px-4 mb-5 shrink-0", isCollapsed && "justify-center px-0")}>
         <Link to="/admin/dashboard" className="flex items-center gap-2.5 overflow-hidden">
+          {/* Sadhya mark. Inlined rather than imported: the admin dashboard is a separate
+              Vite app and does not share the frontend's component tree. Keep in sync with
+              frontend/src/components/brand/Logo.tsx. */}
           <svg className="shrink-0" width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#facc15" />
-            <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="17.8" cy="5.4" r="2.5" fill="#c8e558" />
+            <path d="M2.6 20.4l6.2-8.4 3.6 4.6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M12.4 20.4l4.2-5.4 4.8 5.4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" />
           </svg>
           {!isCollapsed && (
             <div className="flex items-center gap-2 min-w-0">
-              <span className="font-bold text-[15px] tracking-tight text-slate-900 dark:text-white uppercase">Scholarly</span>
+              <span className="font-bold text-[15px] tracking-tight text-slate-900 dark:text-white uppercase">Sadhya</span>
               <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">Admin</span>
             </div>
           )}

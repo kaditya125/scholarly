@@ -32,7 +32,7 @@ export function registerEventSubscribers() {
       userId: payload.userId,
       category: 'administrative' as const,
       type: 'user.welcome',
-      title: 'Welcome to Scholarly',
+      title: 'Welcome to Sadhya',
       body: 'Get started by creating your first AI Notebook.',
       priority: 'low' as const
     };

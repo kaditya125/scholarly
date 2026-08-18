@@ -88,7 +88,7 @@ export default function AssessmentReportDashboard() {
               Your Personalized Diagnostic Profile
             </h1>
             <p className="text-sm text-slate-400 mt-1">
-              Scholarly AI has processed your assessment signals to build your single source of truth context.
+              Sadhya AI has processed your assessment signals to build your single source of truth context.
             </p>
           </div>
 

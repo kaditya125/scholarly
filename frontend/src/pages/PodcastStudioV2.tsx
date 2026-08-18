@@ -388,7 +388,7 @@ export default function PodcastStudioV2({ onClose, onOpenEpisode }: PodcastStudi
             className="flex items-center gap-2 text-[13px] min-w-0"
             aria-label="Breadcrumb"
           >
-            <span className="text-slate-500 dark:text-slate-400 shrink-0 font-medium">Scholarly</span>
+            <span className="text-slate-500 dark:text-slate-400 shrink-0 font-medium">Sadhya</span>
             <span className="text-slate-300 dark:text-slate-600 shrink-0">/</span>
             <button
               type="button"

@@ -111,11 +111,11 @@ async function main() {
     targetExam: 'NEET Prep',
     targetYear: 2026,
     isComplete: true,
-    email: 'e2e_val@scholarly.ai'
+    email: 'e2e_val@sadhya.app'
   });
   await db.collection('userDirectory').doc(STUDENT_ID).set({
     uid: STUDENT_ID,
-    email: 'e2e_val@scholarly.ai'
+    email: 'e2e_val@sadhya.app'
   });
 
   // Enable direct email service mock

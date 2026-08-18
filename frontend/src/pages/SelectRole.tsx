@@ -68,8 +68,8 @@ export default function SelectRole() {
       title="One quick thing"
       subtitle={
         user?.displayName
-          ? `Welcome back, ${user.displayName.split(' ')[0]} — tell us how you use Scholarly.`
-          : 'Tell us how you use Scholarly so we can set things up correctly.'
+          ? `Welcome back, ${user.displayName.split(' ')[0]} — tell us how you use Sadhya.`
+          : 'Tell us how you use Sadhya so we can set things up correctly.'
       }
       footer={
         <span className="text-slate-400 dark:text-gray-600">

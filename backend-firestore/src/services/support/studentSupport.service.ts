@@ -5,7 +5,7 @@ import { UserProfileService } from '../userProfile.service';
 import { UserStatsService } from '../userStats.service';
 import { enrollmentService } from '../enrollment.service';
 import { supportTicketRepository } from '../../repositories/supportTicket.repository';
-import { SCHOLARLY_MASTER_KNOWLEDGE } from '../knowledge/scholarlyKnowledge';
+import { SADHYA_MASTER_KNOWLEDGE } from '../knowledge/sadhyaKnowledge';
 import {
   AuthenticatedHelpQueryDTO,
   AuthenticatedHelpResponseDTO,
@@ -254,7 +254,7 @@ export class StudentSupportService {
     }
 
     // Prepare System Prompt for LLM with Grounded Context
-    const systemPrompt = `You are the Scholarly Personal AI Support & Academic Helpdesk Assistant for authenticated students.
+    const systemPrompt = `You are the Sadhya Personal AI Support & Academic Helpdesk Assistant for authenticated students.
 You are assisting ${studentContext.name} (User ID: ${studentContext.userId}).
 
 AUTHENTICATED STUDENT CONTEXT (VERIFIED LIVE FROM FIRESTORE):
@@ -267,7 +267,7 @@ AUTHENTICATED STUDENT CONTEXT (VERIFIED LIVE FROM FIRESTORE):
 - Active Support Requests (${studentContext.activeTickets.length}): ${JSON.stringify(studentContext.activeTickets)}
 
 MASTER PLATFORM POLICIES & GUIDANCE:
-${SCHOLARLY_MASTER_KNOWLEDGE}
+${SADHYA_MASTER_KNOWLEDGE}
 
 CRITICAL OPERATIONAL RULES:
 1. ALWAYS use the student's actual account data above. NEVER guess or hallucinate enrollments or payments.
@@ -336,7 +336,7 @@ RESPONSE STRUCTURE & AESTHETICS:
     } else if (classification.intent.startsWith('PAYMENT') || classification.intent.startsWith('REFUND')) {
       relatedQueries = [
         'How does the 7-day refund policy work?',
-        'What features are included in Scholarly Pro?',
+        'What features are included in Sadhya Pro?',
         'How do I download tax invoices for my orders?',
       ];
     } else if (classification.intent.startsWith('TEST')) {
@@ -410,7 +410,7 @@ RESPONSE STRUCTURE & AESTHETICS:
    * Generates AI summary and auto-triage for support agents
    */
   private async runAiTriage(ticket: SupportTicket, context: VerifiedStudentContext): Promise<void> {
-    const prompt = `You are the Support Triage AI for Scholarly EdTech.
+    const prompt = `You are the Support Triage AI for Sadhya EdTech.
 Analyze this newly created support request:
 - Ticket Code: ${ticket.ticketCode}
 - Student: ${context.name} (${context.userId})

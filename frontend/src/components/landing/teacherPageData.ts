@@ -79,14 +79,14 @@ export const CAPABILITIES: Capability[] = [
   {
     icon: NotebookPen,
     title: 'Your material, indexed',
-    body: 'Put your chapter PDFs, notes and past papers into a notebook. Scholarly extracts the text, maps how the concepts connect, and answers from your material — citing the page it came from.',
+    body: 'Put your chapter PDFs, notes and past papers into a notebook. Sadhya extracts the text, maps how the concepts connect, and answers from your material — citing the page it came from.',
     status: 'available',
     href: '/notebooks',
   },
   {
     icon: Camera,
     title: 'Scan a question',
-    body: 'Photograph a problem from any book or paper. Scholarly reads it, works out which chapter it belongs to, and works through it step by step.',
+    body: 'Photograph a problem from any book or paper. Sadhya reads it, works out which chapter it belongs to, and works through it step by step.',
     status: 'available',
     href: '/chat',
   },
@@ -114,13 +114,13 @@ export const CAPABILITIES: Capability[] = [
   {
     icon: UserRound,
     title: 'A teaching profile',
-    body: 'Tell Scholarly what you teach, which boards and classes, which exams you prepare students for, and how you like to explain. Set up once, kept on your account.',
+    body: 'Tell Sadhya what you teach, which boards and classes, which exams you prepare students for, and how you like to explain. Set up once, kept on your account.',
     status: 'available',
     href: '/teacher/onboarding',
   },
   {
     icon: Users,
-    title: 'Connect with other people on Scholarly',
+    title: 'Connect with other people on Sadhya',
     body: 'Send a connection request, accept or decline one, follow someone, or block them. A real two-sided handshake — nobody is added to your network without agreeing to it.',
     status: 'available',
     href: '/people',
@@ -180,7 +180,7 @@ export const JOURNEY: {
   },
   {
     step: '02',
-    title: 'Tell Scholarly what you teach',
+    title: 'Tell Sadhya what you teach',
     time: 'about 3 minutes',
     body: 'Eight short steps: your subjects, the classes you take, the boards you follow, the exams you prepare students for, the languages you teach in, and how you like to explain. You can edit any of it later. We do not ask for your address, your availability or your certificates.',
     status: 'available',
@@ -200,13 +200,13 @@ export const JOURNEY: {
   {
     step: '05',
     title: 'Teach your own students here',
-    body: 'Creating a class, inviting students, sharing your notes with just that group, setting a class test and seeing how they did. None of this is built yet. The material you make today will still be here when it is — but today you cannot deliver it to a student through Scholarly.',
+    body: 'Creating a class, inviting students, sharing your notes with just that group, setting a class test and seeing how they did. None of this is built yet. The material you make today will still be here when it is — but today you cannot deliver it to a student through Sadhya.',
     status: 'next',
   },
   {
     step: '06',
     title: 'Earning from your teaching',
-    body: 'Not available, and we are not going to imply otherwise. Paying teachers means bank verification, tax handling and payout infrastructure that we have not built. Until that exists, Scholarly is a tool that saves you preparation time — not a source of income.',
+    body: 'Not available, and we are not going to imply otherwise. Paying teachers means bank verification, tax handling and payout infrastructure that we have not built. Until that exists, Sadhya is a tool that saves you preparation time — not a source of income.',
     status: 'next',
   },
 ];
@@ -249,7 +249,7 @@ export const PROFILE_FIELDS: { label: string; value: string }[] = [
   { label: 'Profile visibility', value: 'Private' },
 ];
 
-/* ── Section: a day with Scholarly ────────────────────────────────────────────────────── */
+/* ── Section: a day with Sadhya ────────────────────────────────────────────────────── */
 
 export const DAY = [
   { when: 'Before class', what: 'Draft the explanation you are going to open with, and two examples you can fall back on.', tool: 'AI chat' },
@@ -261,21 +261,21 @@ export const DAY = [
 
 /* ── Section: comparison ──────────────────────────────────────────────────────────────── */
 
-export const COMPARISON: { generic: string; scholarly: string }[] = [
-  { generic: 'A conversation that ends when you close the tab', scholarly: 'Material you keep, in notebooks you build up' },
-  { generic: 'Answers from whatever it was trained on', scholarly: 'Answers retrieved from curriculum and your own uploads, cited' },
-  { generic: 'A paragraph you have to take on trust', scholarly: 'The sources and the reasoning steps shown alongside' },
-  { generic: 'You re-explain your context in every prompt', scholarly: 'A teaching profile you set once' },
-  { generic: 'Separate tools for text, questions, audio', scholarly: 'One place where the same material becomes all three' },
-  { generic: 'Built for anyone, about anything', scholarly: 'Built around Indian boards and competitive exams' },
+export const COMPARISON: { generic: string; sadhya: string }[] = [
+  { generic: 'A conversation that ends when you close the tab', sadhya: 'Material you keep, in notebooks you build up' },
+  { generic: 'Answers from whatever it was trained on', sadhya: 'Answers retrieved from curriculum and your own uploads, cited' },
+  { generic: 'A paragraph you have to take on trust', sadhya: 'The sources and the reasoning steps shown alongside' },
+  { generic: 'You re-explain your context in every prompt', sadhya: 'A teaching profile you set once' },
+  { generic: 'Separate tools for text, questions, audio', sadhya: 'One place where the same material becomes all three' },
+  { generic: 'Built for anyone, about anything', sadhya: 'Built around Indian boards and competitive exams' },
 ];
 
 /* ── Section: FAQ ─────────────────────────────────────────────────────────────────────── */
 
 export const FAQS: { q: string; a: string }[] = [
   {
-    q: 'Is Scholarly only for students?',
-    a: 'No. Scholarly is one platform gated by capability rather than split into a student product and a teacher product. A teacher account gets the whole platform — the AI, notebooks, practice, podcasts — plus a teaching profile, and the teacher-specific surfaces are being added on top of that rather than beside it.',
+    q: 'Is Sadhya only for students?',
+    a: 'No. Sadhya is one platform gated by capability rather than split into a student product and a teacher product. A teacher account gets the whole platform — the AI, notebooks, practice, podcasts — plus a teaching profile, and the teacher-specific surfaces are being added on top of that rather than beside it.',
   },
   {
     q: 'Do I have to be a school teacher?',
@@ -291,7 +291,7 @@ export const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'Can I invite other teachers?',
-    a: 'You can connect with anyone on Scholarly today — send a request, they accept or decline, either side can block. A teacher-specific referral programme with benefits attached is specified but not built, so there is nothing to claim or earn yet.',
+    a: 'You can connect with anyone on Sadhya today — send a request, they accept or decline, either side can block. A teacher-specific referral programme with benefits attached is specified but not built, so there is nothing to claim or earn yet.',
   },
   {
     q: 'Is the AI here to replace teachers?',
@@ -310,8 +310,8 @@ export const FAQS: { q: string; a: string }[] = [
     a: 'There is a review, and your account enters it when you finish your profile. It does not hold you up: you get the full platform straight away, and verification applies only to teaching-specific capabilities — creating classes, taking on students — which are still being built. We are not publishing a turnaround time until we can stand behind one.',
   },
   {
-    q: 'Can I earn money from teaching on Scholarly?',
-    a: 'No, and we would rather be blunt than vague. Paying teachers requires bank verification, tax handling and payout infrastructure that we have not built and have not committed to a date for. Scholarly today is a tool that cuts your preparation time — treat it as that, not as an income stream. If that changes, it will be announced clearly rather than buried in a pricing page.',
+    q: 'Can I earn money from teaching on Sadhya?',
+    a: 'No, and we would rather be blunt than vague. Paying teachers requires bank verification, tax handling and payout infrastructure that we have not built and have not committed to a date for. Sadhya today is a tool that cuts your preparation time — treat it as that, not as an income stream. If that changes, it will be announced clearly rather than buried in a pricing page.',
   },
 ];
 

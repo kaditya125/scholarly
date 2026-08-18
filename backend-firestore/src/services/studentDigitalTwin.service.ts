@@ -67,7 +67,7 @@ export class StudentDigitalTwinService {
     const profile = await this.profileService.getProfile(userId);
     const aiProvider = container.resolve<IAIProvider>(TOKENS.ReasoningProvider);
 
-    const prompt = `You are the lead AI Cognitive Scientist and Psychometric Assessment Engine for Scholarly.
+    const prompt = `You are the lead AI Cognitive Scientist and Psychometric Assessment Engine for Sadhya.
 Analyze this completed baseline assessment to construct a detailed Student Digital Twin model.
 
 STUDENT PROFILE:

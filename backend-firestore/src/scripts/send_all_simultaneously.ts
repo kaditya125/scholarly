@@ -14,7 +14,7 @@ async function main() {
   const waProvider = new MetaWhatsAppProvider();
 
   const recipient = '+919102202267';
-  const emailRecipient = 'adityakumar.study@scholarly.ai';
+  const emailRecipient = 'adityakumar.study@sadhya.app';
 
   console.log(`Sending to SMS: ${recipient}`);
   console.log(`Sending to WhatsApp: ${recipient}`);
@@ -39,7 +39,7 @@ async function main() {
   // 1. Send SMS
   const smsPromise = smsProvider.sendSms(
     recipient,
-    'Scholarly Live SMS: Your customized revision podcast for Atomic Structure is ready! 🎧'
+    'Sadhya Live SMS: Your customized revision podcast for Atomic Structure is ready! 🎧'
   ).then(r => console.log('Twilio SMS result:', r));
 
   // 2. Send WhatsApp

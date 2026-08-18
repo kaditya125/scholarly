@@ -22,7 +22,7 @@ export const logger = winston.createLogger({
     timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     json() // Default to structured JSON for production
   ),
-  defaultMeta: { service: 'scholarly-api' },
+  defaultMeta: { service: 'sadhya-api' },
   transports: [
     new winston.transports.Console({
       format: process.env.NODE_ENV !== 'production'

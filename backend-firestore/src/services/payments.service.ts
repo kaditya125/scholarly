@@ -29,7 +29,7 @@ const fail = (code: string, message: string): never => {
 export interface PlanDef { id: string; name: string; monthlyINR: number; }
 
 const PLANS: Record<string, PlanDef> = {
-  pro: { id: 'pro', name: 'Scholarly Pro', monthlyINR: 499 },
+  pro: { id: 'pro', name: 'Sadhya Pro', monthlyINR: 499 },
 };
 
 const YEARLY_DISCOUNT = 0.85; // 15% off when billed yearly (matches the Pricing page)
@@ -268,7 +268,7 @@ export class PaymentsService {
       subscription: {
         status: 'active',
         plan: data.planId || 'pro',
-        planName: data.planName || 'Scholarly Pro',
+        planName: data.planName || 'Sadhya Pro',
         billing,
         orderId,
         paymentId,
@@ -293,7 +293,7 @@ export class PaymentsService {
       const rows = snap.docs.map((d) => d.data() as any);
       rows.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
       // `orderType` distinguishes a class purchase (Phase 3I) from a subscription order — without
-      // it, a class-purchase row would fall through to `planName || 'Scholarly Pro'` below and
+      // it, a class-purchase row would fall through to `planName || 'Sadhya Pro'` below and
       // render as a fake subscription line item in Settings' billing history and invoice.
       return rows.map((r) =>
         r.orderType === 'class_purchase'
@@ -306,7 +306,7 @@ export class PaymentsService {
             }
           : {
               orderId: r.orderId, orderType: 'subscription', planId: r.planId,
-              planName: r.planName || 'Scholarly Pro', billing: r.billing || 'monthly',
+              planName: r.planName || 'Sadhya Pro', billing: r.billing || 'monthly',
               amountRupees: r.amountRupees ?? null, currency: r.currency || 'INR',
               status: r.status || 'created', method: r.method || null,
               paymentId: r.paymentId || null, createdAt: r.createdAt || null, paidAt: r.paidAt || null,

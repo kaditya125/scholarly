@@ -69,7 +69,7 @@ interface SupportChatMessage {
 
 // --- Mock Data ---
 const SUGGESTED_QUESTIONS = [
-  "What is Scholarly?",
+  "What is Sadhya?",
   "How does AI tutoring work?",
   "What can students do?",
   "Can teachers create a class?"
@@ -80,25 +80,25 @@ const EXPLORE_TOPICS = [
     title: "For Students",
     icon: GraduationCap,
     desc: "Explore learning tools and features",
-    prompt: "What learning features does Scholarly offer for students?"
+    prompt: "What learning features does Sadhya offer for students?"
   },
   {
     title: "For Teachers",
     icon: LayoutGrid,
     desc: "Classes, analytics & earnings",
-    prompt: "How can teachers create classes and earn on Scholarly?"
+    prompt: "How can teachers create classes and earn on Sadhya?"
   },
   {
     title: "AI Features",
     icon: Bot,
     desc: "RAG, OCR & Voice learning",
-    prompt: "Tell me about Scholarly's AI features, OCR, and Podcast Studio."
+    prompt: "Tell me about Sadhya's AI features, OCR, and Podcast Studio."
   },
   {
     title: "Platform",
     icon: Settings,
     desc: "Pricing, Referrals & Account",
-    prompt: "Tell me about Scholarly pricing plans and referral rewards."
+    prompt: "Tell me about Sadhya pricing plans and referral rewards."
   }
 ];
 
@@ -407,7 +407,7 @@ function LiveHelpdeskDrawer({
   const agentInfo = {
     name: 'Sarah Chen',
     title: 'Senior Support Specialist',
-    department: 'Scholarly Helpdesk Tier 2'
+    department: 'Sadhya Helpdesk Tier 2'
   };
 
   // Connect flow
@@ -425,13 +425,13 @@ function LiveHelpdeskDrawer({
         {
           id: 'sys-1',
           sender: 'system',
-          content: 'You are now connected with a live Scholarly support specialist.',
+          content: 'You are now connected with a live Sadhya support specialist.',
           time: welcomeTime
         },
         {
           id: 'agent-1',
           sender: 'agent',
-          content: `Hi there! My name is Sarah from Scholarly Helpdesk. I've reviewed your previous questions on the platform. How can I help resolve your concern today?`,
+          content: `Hi there! My name is Sarah from Sadhya Helpdesk. I've reviewed your previous questions on the platform. How can I help resolve your concern today?`,
           time: welcomeTime
         }
       ]);
@@ -627,7 +627,7 @@ function LiveHelpdeskDrawer({
                   Session Marked Resolved
                 </h4>
                 <p className="text-[12.5px] text-slate-500 dark:text-slate-400 max-w-[260px] leading-relaxed mb-6">
-                  Thank you for chatting with Scholarly Helpdesk Support! Your inquiry has been closed.
+                  Thank you for chatting with Sadhya Helpdesk Support! Your inquiry has been closed.
                 </p>
                 <button
                   onClick={onClose}
@@ -645,7 +645,7 @@ function LiveHelpdeskDrawer({
               <div className="flex items-center justify-between px-1">
                 <span className="text-[10.5px] text-slate-400 dark:text-slate-500 flex items-center gap-1">
                   <ShieldCheck className="w-3 h-3 text-emerald-500" />
-                  Verified Scholarly Helpdesk Session
+                  Verified Sadhya Helpdesk Session
                 </span>
                 <button
                   onClick={handleResolveChat}
@@ -742,7 +742,7 @@ function PublicHelpView() {
         content: '',
         structuredResponse: {
           type: 'error',
-          text: 'Something went wrong connecting to Scholarly. Please try again later.'
+          text: 'Something went wrong connecting to Sadhya. Please try again later.'
         }
       }]);
     } finally {
@@ -823,10 +823,10 @@ function PublicHelpView() {
                   <MessageCircleQuestion className="w-5 h-5 text-slate-700 dark:text-slate-300" />
                 </div>
                 <h1 className="text-[30px] sm:text-[36px] font-semibold tracking-[-0.03em] mb-2 text-center leading-[1.12]">
-                  Ask Scholarly
+                  Ask Sadhya
                 </h1>
                 <p className="text-[14px] sm:text-[14.5px] text-slate-500 dark:text-slate-400 text-center max-w-[420px] mb-6 leading-relaxed">
-                  Curious about how Scholarly works? Ask anything about the platform, learning, teaching, AI, or connect with our support team.
+                  Curious about how Sadhya works? Ask anything about the platform, learning, teaching, AI, or connect with our support team.
                 </p>
 
                 <div className="w-full">
@@ -851,7 +851,7 @@ function PublicHelpView() {
 
                 <div className="w-full">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.13em] text-slate-400 dark:text-slate-500 mb-3 text-center">
-                    Explore Scholarly
+                    Explore Sadhya
                   </p>
                   <Stagger className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-3.5">
                     {EXPLORE_TOPICS.map(topic => (
@@ -921,7 +921,7 @@ function PublicHelpView() {
                   className="self-start flex items-center gap-2.5 text-slate-500 dark:text-slate-400 text-[13px]"
                 >
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-[#c8e558]" />
-                  Scholarly is thinking...
+                  Sadhya is thinking...
                 </motion.div>
               )}
               
@@ -939,7 +939,7 @@ function PublicHelpView() {
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={isTyping}
-                placeholder="Ask anything about Scholarly or ask for live helpdesk..."
+                placeholder="Ask anything about Sadhya or ask for live helpdesk..."
                 className="w-full bg-transparent resize-none outline-none text-[13px] sm:text-[13.5px] p-3 sm:p-3.5 pl-4 sm:pl-4.5 pr-11 sm:pr-12 max-h-[120px] disabled:opacity-50 placeholder:text-slate-400 dark:placeholder:text-slate-500 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] leading-relaxed text-slate-900 dark:text-white"
                 rows={1}
               />
@@ -953,7 +953,7 @@ function PublicHelpView() {
             </div>
             <div className="mt-2 text-center">
               <span className="text-[10px] sm:text-[10.5px] font-medium tracking-[0.06em] text-slate-400/80 dark:text-slate-500 uppercase">
-                Scholarly AI can make mistakes. Verify important information.
+                Sadhya AI can make mistakes. Verify important information.
               </span>
             </div>
           </div>

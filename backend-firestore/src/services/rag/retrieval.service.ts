@@ -343,7 +343,7 @@ Standalone Search Query:`;
       
       return {
         text: this.sanitizeContext(String(meta.text || '')),
-        source: String(meta.sourceTitle || meta.filename || 'Scholarly Public Guide'),
+        source: String(meta.sourceTitle || meta.filename || 'Sadhya Public Guide'),
         score: reranked.relevanceScore,
         metadata: meta,
         weightedScore: reranked.relevanceScore,

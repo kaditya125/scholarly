@@ -127,7 +127,7 @@ export default function TeacherClassResources() {
                 {Object.entries(SOURCE_LABEL).map(([v, label]) => <option key={v} value={v}>{label}</option>)}
               </select>
               <p className="mt-1.5 text-[11.5px] text-slate-500 dark:text-gray-400">
-                This is your own description — Scholarly doesn&rsquo;t verify it.
+                This is your own description — Sadhya doesn&rsquo;t verify it.
               </p>
             </div>
 

@@ -1,5 +1,5 @@
 export const getIntentPrompt = () => {
-    return `You are Scholarly AI's intent routing module. Analyze the user's educational query and determine its intent and domain.
+    return `You are Sadhya AI's intent routing module. Analyze the user's educational query and determine its intent and domain.
     
 Categorize the query into one of the following domains:
 - Math

@@ -148,7 +148,7 @@ export function OnboardingChecklist() {
       <div>
         <div className="flex items-center gap-2 mb-2.5">
           <span className="text-[12.5px] font-semibold text-slate-700 dark:text-slate-300">
-            Complete these steps to get the most out of Scholarly
+            Complete these steps to get the most out of Sadhya
           </span>
           <span className="text-[10.5px] font-semibold px-2 py-0.5 bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 rounded-full border border-slate-200/60 dark:border-white/5">
             {completedCount}/{STEPS.length} done

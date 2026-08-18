@@ -65,6 +65,7 @@ import { AppearanceModal } from "./AppearanceModal";
 import { NotificationsMenu } from "./NotificationsMenu";
 import { CommandPalette } from "./CommandPalette";
 import { TopProfileDropdown } from "./navigation/TopProfileDropdown";
+import { LogoMark } from "./brand/Logo";
 
 /**
  * CREATE NEW formats — Study tools & Content formats.
@@ -351,20 +352,14 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
         )}>
           {!isCollapsed ? (
             <Link to="/" className="flex items-center gap-2.5 overflow-hidden">
-              <svg className="shrink-0" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#facc15"/>
-                <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <LogoMark className="shrink-0 w-[22px] h-[22px]" />
               <span className="font-semibold text-[15.5px] tracking-tight text-slate-900 dark:text-white">
-                Scholarly
+                Sadhya
               </span>
             </Link>
           ) : (
             <Link to="/" className="flex items-center justify-center w-full mb-3 shrink-0">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#facc15"/>
-                <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <LogoMark className="w-[22px] h-[22px]" />
             </Link>
           )}
 

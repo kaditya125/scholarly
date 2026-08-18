@@ -8,6 +8,7 @@ import { useInvitationPreview, useEnrollmentMutations } from '../hooks/api/useEn
 import { useSeo } from '../lib/useSeo';
 import { classesApi } from '../lib/api/classes';
 import { api } from '../lib/api/client';
+import { LogoMark as Mark } from '../components/brand/Logo';
 
 /** Loads the Razorpay Checkout SDK once; resolves false if it fails to load. Mirrors Checkout.tsx's own helper — duplicated rather than shared so neither call site risks the other's checkout flow. */
 function loadRazorpayScript(): Promise<boolean> {
@@ -37,22 +38,13 @@ function loadRazorpayScript(): Promise<boolean> {
  * decides whether the code is usable. Nothing here grants access; it only asks.
  */
 
-function Mark({ className = 'w-7 h-7' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#facc15" />
-      <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#faf9f7] dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased flex flex-col">
       <header className="px-5 sm:px-8 py-5">
-        <Link to="/" className="inline-flex items-center gap-2.5" aria-label="Scholarly home">
+        <Link to="/" className="inline-flex items-center gap-2.5" aria-label="Sadhya home">
           <Mark />
-          <span className="text-[16px] font-semibold tracking-[-0.02em]">Scholarly</span>
+          <span className="text-[16px] font-semibold tracking-[-0.02em]">Sadhya</span>
         </Link>
       </header>
       <main className="flex-1 flex items-start justify-center px-5 sm:px-8 pb-16">
@@ -76,8 +68,8 @@ export default function JoinClass() {
   const [buying, setBuying] = useState(false);
 
   useSeo({
-    title: 'Join a class on Scholarly',
-    description: 'You have been invited to join a class on Scholarly.',
+    title: 'Join a class on Sadhya',
+    description: 'You have been invited to join a class on Sadhya.',
   });
 
   const handleJoin = async () => {
@@ -109,7 +101,7 @@ export default function JoinClass() {
         order_id: order.orderId,
         amount: order.amount,
         currency: order.currency,
-        name: 'Scholarly',
+        name: 'Sadhya',
         description: order.classTitle,
         prefill: { name: user?.displayName || '', email: user?.email || '' },
         theme: { color: '#c8e558', backdrop_color: '#0b0b0c' },
@@ -159,7 +151,7 @@ export default function JoinClass() {
           You&rsquo;ve been invited to a class
         </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-slate-500 dark:text-gray-400">
-          Sign in or create a free Scholarly account to see the class and decide whether to join.
+          Sign in or create a free Sadhya account to see the class and decide whether to join.
           Nothing happens to your account until you choose to.
         </p>
         <div className="mt-7 flex flex-col sm:flex-row gap-3">
@@ -206,7 +198,7 @@ export default function JoinClass() {
             Ask your teacher for a fresh link.
           </p>
           <Link to="/dashboard" className="mt-5 inline-flex items-center gap-1.5 text-[13.5px] font-semibold underline underline-offset-2">
-            Go to Scholarly
+            Go to Sadhya
           </Link>
         </div>
       </Shell>
@@ -230,7 +222,7 @@ export default function JoinClass() {
             you on the class roster.
           </p>
           <Link to="/dashboard" className="mt-5 inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[14px] font-semibold">
-            Go to Scholarly
+            Go to Sadhya
             <ArrowRight className="w-4 h-4" strokeWidth={2.25} aria-hidden />
           </Link>
         </div>

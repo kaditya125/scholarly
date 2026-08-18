@@ -93,7 +93,7 @@ export class UserProfileService {
     try {
       const currentProfile = await this.getProfile(userId);
 
-      const prompt = `Analyze this conversation between a student and Scholarly AI.
+      const prompt = `Analyze this conversation between a student and Sadhya AI.
       
 Student: "${userMessage}"
 AI: "${aiResponse}"

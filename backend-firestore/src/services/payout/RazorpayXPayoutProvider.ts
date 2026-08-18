@@ -42,7 +42,7 @@ export class RazorpayXPayoutProvider implements PayoutProvider {
           purpose: 'payout',
           queue_if_low_balance: true,
           reference_id: request.idempotencyKey,
-          narration: 'Scholarly Teacher Payout',
+          narration: 'Sadhya Teacher Payout',
         },
         {
           headers: {

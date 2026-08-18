@@ -1,5 +1,5 @@
 /**
- * Feedback Types for Scholarly AI
+ * Feedback Types for Sadhya AI
  * 
  * Captures rich, contextual feedback from students on every AI response.
  * This data feeds into the Continuous Evaluation Pipeline and AI Improvement Dashboard.

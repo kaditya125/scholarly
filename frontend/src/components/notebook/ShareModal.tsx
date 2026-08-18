@@ -71,7 +71,7 @@ export function ShareModal({ notebookId, onClose }: ShareModalProps) {
                 <Mail className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                 <input 
                   type="email" 
-                  placeholder="friend@scholarly.ai" 
+                  placeholder="friend@sadhya.app" 
                   className="w-full pl-9 pr-3 py-2 text-[13.5px] rounded-xl border border-slate-200 dark:border-white/10 bg-transparent text-slate-900 dark:text-white focus:outline-none focus:border-[#8ba32b] dark:focus:border-[#c8e558]"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

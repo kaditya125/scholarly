@@ -6,7 +6,7 @@ import { createClient } from 'redis';
 import { NotificationPayload } from '../notifications/NotificationEngine';
 
 /**
- * Global Event Types for the Scholarly platform.
+ * Global Event Types for the Sadhya platform.
  */
 export type EventType =
   | 'notification.created'
@@ -30,7 +30,7 @@ export interface EventPayloads {
 export class EventBus extends EventEmitter {
   private pubClient: ReturnType<typeof createClient> | null = null;
   private subClient: ReturnType<typeof createClient> | null = null;
-  private redisChannel = 'scholarly:events';
+  private redisChannel = 'sadhya:events';
   private handlers = new Map<string, Set<(payload: any) => void | Promise<void>>>();
   private isRedisConnected = false;
 

@@ -70,7 +70,7 @@ export function AdminLogin() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all"
-              placeholder="admin@scholarly.ai"
+              placeholder="admin@sadhya.ai"
             />
           </div>
           

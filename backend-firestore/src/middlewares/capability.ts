@@ -33,7 +33,7 @@ import { teacherProfileService } from '../services/teacherProfile.service';
  */
 
 /** Where the per-request memo lives. Not a public contract — read it through `loadCapabilities`. */
-const MEMO = '__scholarlyCapabilities';
+const MEMO = '__sadhyaCapabilities';
 
 function productRoleOf(req: Request): ProductRole | null {
   const claims = (req.user || {}) as unknown as Record<string, any>;

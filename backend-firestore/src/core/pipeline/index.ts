@@ -1,5 +1,5 @@
 /**
- * Scholarly Content Pipeline Module
+ * Sadhya Content Pipeline Module
  * Phase 1A: Data Foundation Barrel Export
  */
 

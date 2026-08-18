@@ -61,7 +61,7 @@ async function runChaosTest() {
         podcastId: `pod_chaos_${i}`,
         userId: `user_chaos_${i}`,
         durationMs: 60000,
-        fileUrl: 'https://scholarly.ai/chaos.mp3'
+        fileUrl: 'https://sadhya.app/chaos.mp3'
       } as any);
     }
   });

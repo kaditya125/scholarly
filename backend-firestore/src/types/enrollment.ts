@@ -16,7 +16,7 @@
  *
  * An invitation CODE is not an edge. Holding, opening or sharing a code grants nothing; it only
  * lets someone see a class preview and choose to act. That separation is what keeps "a teacher
- * brought their students to Scholarly" (acquisition) distinct from "this student is in my class"
+ * brought their students to Sadhya" (acquisition) distinct from "this student is in my class"
  * (authorization).
  */
 

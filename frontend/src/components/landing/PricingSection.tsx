@@ -82,7 +82,7 @@ const TIERS: Tier[] = [
       'Invoicing, PO and onboarding support',
       'A named point of contact',
     ],
-    cta: { label: 'Talk to us', href: `mailto:${SITE.email.sales}?subject=Scholarly%20for%20institutions` },
+    cta: { label: 'Talk to us', href: `mailto:${SITE.email.sales}?subject=Sadhya%20for%20institutions` },
     footnote: 'Priced per seat, based on cohort size.',
   },
 ];

@@ -93,7 +93,7 @@ export class NotebookSharingService {
     
     await this.repo.updateNotebook(ownerId, notebookId, notebook);
 
-    return `https://scholarly.ai/shared/${notebookId}?token=${token}`;
+    return `https://sadhya.app/shared/${notebookId}?token=${token}`;
   }
 
   /**

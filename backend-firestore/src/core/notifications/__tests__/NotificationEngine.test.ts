@@ -8,14 +8,14 @@ describe('NotificationEngine', () => {
         'user-123',
         'Quiz Ready',
         'Your quiz is ready to take.',
-        'https://app.scholarly.com/quiz/1'
+        'https://app.sadhya.com/quiz/1'
       );
       expect(payload.userId).toBe('user-123');
       expect(payload.category).toBe('learning');
       expect(payload.type).toBe('learning.alert');
       expect(payload.title).toBe('Quiz Ready');
       expect(payload.body).toBe('Your quiz is ready to take.');
-      expect(payload.actionUrl).toBe('https://app.scholarly.com/quiz/1');
+      expect(payload.actionUrl).toBe('https://app.sadhya.com/quiz/1');
     });
 
     it('should create a valid security alert', () => {

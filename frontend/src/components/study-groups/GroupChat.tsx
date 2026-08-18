@@ -134,7 +134,7 @@ export function GroupChat({ groupId, onBack, onExit }: GroupChatProps) {
 
   const resolveSender = (uid: string) =>
     senders[uid] ||
-    group?.memberProfiles.find((m) => m.uid === uid) || { displayName: "Scholarly learner", photoURL: undefined };
+    group?.memberProfiles.find((m) => m.uid === uid) || { displayName: "Sadhya learner", photoURL: undefined };
 
   const startReply = (m: GroupChannelMessage) => {
     setEditing(null);

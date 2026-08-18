@@ -33,7 +33,7 @@ export default function PaymentSuccess() {
         setReceipt({
           paymentId: s.paymentId || s.orderId || "—",
           amountRupees: s.amountRupees ?? null,
-          planName: s.planName || "Scholarly Pro",
+          planName: s.planName || "Sadhya Pro",
           billing: s.billing || "monthly",
           method: s.method || null,
           at: s.activatedAt || Date.now(),
@@ -48,7 +48,7 @@ export default function PaymentSuccess() {
   const printReceipt = () => {
     const w = window.open("", "_blank", "width=460,height=780");
     if (!w) { alert("Allow pop-ups to print the receipt."); return; }
-    const name = user?.displayName || "Scholarly Student";
+    const name = user?.displayName || "Sadhya Student";
     const email = user?.email || "";
     const amountStr = receipt?.amountRupees != null ? `₹${Number(receipt.amountRupees).toLocaleString("en-IN")}` : "—";
     const dateStr = receipt?.at
@@ -78,14 +78,14 @@ export default function PaymentSuccess() {
         .cap{text-align:center;font-size:11px;color:#94a3b8;letter-spacing:.2em;margin-top:8px}
       </style></head><body>
       <div class="t">
-        <div class="h"><div class="emoji">🎉</div><h1>Payment successful</h1><p>Your Scholarly Pro subscription is active</p></div>
+        <div class="h"><div class="emoji">🎉</div><h1>Payment successful</h1><p>Your Sadhya Pro subscription is active</p></div>
         <div class="sep"></div>
         <div class="row"><div><div class="lbl">Payment ID</div><div class="val">${esc(receipt?.paymentId || "—")}</div></div><div><div class="lbl">Amount</div><div class="amt">${esc(amountStr)}</div></div></div>
         <div class="row"><div><div class="lbl">Date &amp; time</div><div class="val" style="font-size:14px">${esc(dateStr)}</div></div><div><div class="lbl">Billing</div><div class="amt" style="text-transform:capitalize">${esc(receipt?.billing || "monthly")}</div></div></div>
-        <div class="pm"><div class="ic">S</div><div><div class="nm">${esc(receipt?.planName || "Scholarly Pro")}</div><div class="sub">Razorpay${receipt?.method ? " · " + esc(String(receipt.method).toUpperCase()) : ""} · ${esc(email)}</div></div></div>
+        <div class="pm"><div class="ic">S</div><div><div class="nm">${esc(receipt?.planName || "Sadhya Pro")}</div><div class="sub">Razorpay${receipt?.method ? " · " + esc(String(receipt.method).toUpperCase()) : ""} · ${esc(email)}</div></div></div>
         <div class="sep"></div>
         <div class="bc">${barsHtml}</div>
-        <div class="cap">SCHOLARLY · ${esc(name.toUpperCase())}</div>
+        <div class="cap">SADHYA · ${esc(name.toUpperCase())}</div>
       </div>
       <script>window.onload=function(){window.print();}</script>
       </body></html>`);
@@ -114,7 +114,7 @@ export default function PaymentSuccess() {
           Payment Successful!
         </h1>
         <p className="text-[14.5px] text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
-          Your payment has been verified and your Scholarly Pro subscription is now active.
+          Your payment has been verified and your Sadhya Pro subscription is now active.
         </p>
 
         {/* Check inbox card */}

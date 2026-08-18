@@ -326,7 +326,7 @@ export default function Notebooks() {
                 <div className="w-6 h-6 rounded-lg bg-slate-900 dark:bg-white flex items-center justify-center shadow-xs">
                   <Brain className="w-3.5 h-3.5 text-[#c8e558] dark:text-slate-900" />
                 </div>
-                <span className="text-[13.5px] font-semibold text-slate-900 dark:text-white">Scholarly AI Studio</span>
+                <span className="text-[13.5px] font-semibold text-slate-900 dark:text-white">Sadhya AI Studio</span>
               </div>
               
               <div className="h-4 w-px bg-slate-200 dark:bg-white/10 mx-1" />

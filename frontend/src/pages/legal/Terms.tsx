@@ -14,7 +14,7 @@ export default function Terms() {
   return (
     <LegalPage
       title="Terms of Service"
-      intro={`The agreement between you and ${SITE.legalEntity} for the use of Scholarly. Please read it before you create an account or subscribe.`}
+      intro={`The agreement between you and ${SITE.legalEntity} for the use of Sadhya. Please read it before you create an account or subscribe.`}
       sections={[
         {
           id: 'about',
@@ -22,15 +22,15 @@ export default function Terms() {
           body: (
             <>
               <P>
-                Scholarly is an AI-assisted learning platform operated by {SITE.legalEntity}
+                Sadhya is an AI-assisted learning platform operated by {SITE.legalEntity}
                 {SITE.cin ? ` (CIN ${SITE.cin})` : ''}, with its registered office at{' '}
                 {SITE.address.line1}, {SITE.address.city}, {SITE.address.state}, {SITE.address.country}.
-                In these terms, &ldquo;we&rdquo;, &ldquo;us&rdquo; and &ldquo;Scholarly&rdquo; mean that company,
+                In these terms, &ldquo;we&rdquo;, &ldquo;us&rdquo; and &ldquo;Sadhya&rdquo; mean that company,
                 and &ldquo;you&rdquo; means the person using the service.
               </P>
               <P>
                 These terms apply to the website, the web application and every feature reachable
-                through them. By creating an account, or by continuing to use Scholarly, you agree
+                through them. By creating an account, or by continuing to use Sadhya, you agree
                 to them. If you do not agree, please do not use the service.
               </P>
             </>
@@ -46,8 +46,8 @@ export default function Terms() {
                 purchase a subscription.
               </P>
               <P>
-                Scholarly is designed for school and competitive-exam preparation, so we expect
-                many learners to be under 18. A person under 18 may use Scholarly only through an
+                Sadhya is designed for school and competitive-exam preparation, so we expect
+                many learners to be under 18. A person under 18 may use Sadhya only through an
                 account created and supervised by a parent or legal guardian, who accepts these
                 terms on their behalf and is responsible for all activity on that account,
                 including any payment. Where the law requires verifiable parental consent before
@@ -82,11 +82,11 @@ export default function Terms() {
         },
         {
           id: 'ai',
-          title: '4. What Scholarly is — and what it is not',
+          title: '4. What Sadhya is — and what it is not',
           body: (
             <>
               <P>
-                Scholarly generates explanations, summaries, practice questions, audio and video
+                Sadhya generates explanations, summaries, practice questions, audio and video
                 using artificial-intelligence models, drawing on curriculum material and on
                 documents you upload. It shows you the sources it retrieved and the steps it took
                 so that you can check its work.
@@ -95,18 +95,18 @@ export default function Terms() {
                 <strong className="font-semibold text-slate-900 dark:text-white">
                   AI output can still be wrong, incomplete or out of date.
                 </strong>{' '}
-                Scholarly is a study aid, not an authority. Before you rely on anything it tells
+                Sadhya is a study aid, not an authority. Before you rely on anything it tells
                 you — and especially before you write it in an examination — verify it against
                 your prescribed textbook, your official syllabus, or your teacher.
               </P>
               <P>
                 We make no promise about examination results, ranks, scores, admissions or
-                selection. Nothing Scholarly produces is professional advice of any kind, including
+                selection. Nothing Sadhya produces is professional advice of any kind, including
                 medical, legal, financial or career advice.
               </P>
               <P>
                 Exam names, patterns and syllabi referred to in the product belong to the
-                respective examination authorities. Scholarly is an independent preparation tool
+                respective examination authorities. Sadhya is an independent preparation tool
                 and is not affiliated with, endorsed by, or certified by any examination board,
                 authority or university.
               </P>
@@ -123,7 +123,7 @@ export default function Terms() {
                 items={[
                   'Upload material you have no right to share, including copyrighted books, question papers or course material you do not own or licence.',
                   'Use the service to cheat in an examination, assessment or interview, or to produce work you present as your own where that is prohibited.',
-                  'Attempt to extract, scrape, resell or redistribute Scholarly’s outputs, question banks or curriculum data as a competing product.',
+                  'Attempt to extract, scrape, resell or redistribute Sadhya’s outputs, question banks or curriculum data as a competing product.',
                   'Probe, scan or interfere with the security or availability of the service, or attempt to bypass rate limits, quotas or access controls.',
                   'Submit content that is unlawful, abusive, harassing, hateful, sexually explicit, or that endangers a minor.',
                   'Use the service to build or train a competing machine-learning model.',
@@ -142,7 +142,7 @@ export default function Terms() {
           body: (
             <>
               <P>
-                Documents, notes, questions and messages you put into Scholarly remain yours. We
+                Documents, notes, questions and messages you put into Sadhya remain yours. We
                 claim no ownership of them.
               </P>
               <P>
@@ -167,7 +167,7 @@ export default function Terms() {
             <>
               <H3>Plans and prices</H3>
               <P>
-                Scholarly has a free tier and a paid <strong className="font-semibold">Pro</strong>{' '}
+                Sadhya has a free tier and a paid <strong className="font-semibold">Pro</strong>{' '}
                 subscription at ₹{PRO_MONTHLY_INR} per month, or ₹
                 {PRO_YEARLY_TOTAL_INR.toLocaleString('en-IN')} when billed once annually. Current
                 prices are always shown on the{' '}
@@ -180,7 +180,7 @@ export default function Terms() {
               <P>
                 Payments are collected by Razorpay, our payment gateway. Your card, UPI or netbanking
                 credentials are entered inside Razorpay&rsquo;s own PCI-DSS compliant window and are
-                never stored on, or transmitted through, Scholarly&rsquo;s servers. We receive only
+                never stored on, or transmitted through, Sadhya&rsquo;s servers. We receive only
                 the outcome of the payment and a reference identifier.
               </P>
 
@@ -219,7 +219,7 @@ export default function Terms() {
           title: '9. Our intellectual property',
           body: (
             <P>
-              The Scholarly name, logo, interface, software, curriculum structuring and question
+              The Sadhya name, logo, interface, software, curriculum structuring and question
               banks are owned by us or our licensors. These terms give you a personal,
               non-exclusive, non-transferable right to use the service — not to copy, modify,
               reverse-engineer, or create derivative works from it.
@@ -232,7 +232,7 @@ export default function Terms() {
           body: (
             <>
               <P>
-                We work to keep Scholarly available, but we do not guarantee uninterrupted service.
+                We work to keep Sadhya available, but we do not guarantee uninterrupted service.
                 Features depend in part on third-party providers, and may be interrupted for
                 maintenance, capacity limits or events outside our control.
               </P>
@@ -250,7 +250,7 @@ export default function Terms() {
           body: (
             <>
               <P>
-                You may stop using Scholarly and delete your account at any time from Settings.
+                You may stop using Sadhya and delete your account at any time from Settings.
               </P>
               <P>
                 We may suspend or terminate an account that breaches these terms, that is used
@@ -305,7 +305,7 @@ export default function Terms() {
             <P>
               We may update these terms. When we make a material change we will update the
               &ldquo;last updated&rdquo; date above and, for significant changes, notify you in the
-              app or by email. Continuing to use Scholarly after a change takes effect means you
+              app or by email. Continuing to use Sadhya after a change takes effect means you
               accept the revised terms.
             </P>
           ),

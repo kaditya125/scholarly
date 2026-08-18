@@ -1,4 +1,4 @@
-import { buildScholarlySystemPrompt } from '../../src/config/prompts';
+import { buildSadhyaSystemPrompt } from '../../src/config/prompts';
 import { TeacherContext } from '../../src/types/teacherContext.types';
 import { StudentContext } from '../../src/types/studentContext.types';
 
@@ -41,16 +41,16 @@ function flat(s: string): string {
   return s.replace(/\s+/g, ' ');
 }
 
-describe('buildScholarlySystemPrompt — viewer role branching', () => {
+describe('buildSadhyaSystemPrompt — viewer role branching', () => {
   it('defaults to the student identity and context when viewerRole is omitted', () => {
-    const prompt = flat(buildScholarlySystemPrompt({ studentContext: studentCtx() }));
+    const prompt = flat(buildSadhyaSystemPrompt({ studentContext: studentCtx() }));
     expect(prompt).toContain('personal teacher, study coach, career guide');
     expect(prompt).toContain('Student Profile (Personalization Data)');
     expect(prompt).not.toContain('assisting a **teacher**');
   });
 
   it('uses the teacher identity + profile block, never the student identity, when viewerRole is teacher', () => {
-    const prompt = flat(buildScholarlySystemPrompt({
+    const prompt = flat(buildSadhyaSystemPrompt({
       viewerRole: 'teacher',
       teacherContext: teacherCtx(),
     }));
@@ -65,7 +65,7 @@ describe('buildScholarlySystemPrompt — viewer role branching', () => {
   });
 
   it('ignores a passed-through studentContext when viewerRole is teacher', () => {
-    const prompt = flat(buildScholarlySystemPrompt({
+    const prompt = flat(buildSadhyaSystemPrompt({
       viewerRole: 'teacher',
       studentContext: studentCtx(),
       teacherContext: teacherCtx(),
@@ -75,7 +75,7 @@ describe('buildScholarlySystemPrompt — viewer role branching', () => {
   });
 
   it('degrades gracefully to the bare teacher identity when no teacherContext is available', () => {
-    const prompt = flat(buildScholarlySystemPrompt({ viewerRole: 'teacher' }));
+    const prompt = flat(buildSadhyaSystemPrompt({ viewerRole: 'teacher' }));
     expect(prompt).toContain('assisting a **teacher**');
     expect(prompt).not.toContain('Teacher Profile (Personalization Data)');
   });

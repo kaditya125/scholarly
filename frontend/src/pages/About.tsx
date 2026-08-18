@@ -23,7 +23,7 @@ const PRINCIPLES = [
   {
     icon: Compass,
     title: 'Built for a specific syllabus',
-    body: 'A general assistant knows a little about everything. Scholarly is tuned to the exams students here actually sit — the pattern, the marking scheme, the prescribed texts — because that specificity is the difference between an interesting answer and a useful one.',
+    body: 'A general assistant knows a little about everything. Sadhya is tuned to the exams students here actually sit — the pattern, the marking scheme, the prescribed texts — because that specificity is the difference between an interesting answer and a useful one.',
   },
   {
     icon: Layers,
@@ -60,7 +60,7 @@ export default function About() {
               the way that finally lands, at the exact level you&rsquo;re at.
             </p>
             <p className="mt-5 text-[16.5px] leading-relaxed text-slate-500 dark:text-gray-400">
-              That is the whole of what Scholarly is trying to be — and the reason it insists on
+              That is the whole of what Sadhya is trying to be — and the reason it insists on
               showing you where every answer came from.
             </p>
           </div>

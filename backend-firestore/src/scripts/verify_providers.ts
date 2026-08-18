@@ -25,7 +25,7 @@ async function main() {
   
   // 3. Test Mock delivery
   console.log('\n--- Testing Mock Deliveries ---');
-  const smsResult = await smsProvider.sendSms('+1234567890', 'Hello from Scholarly DI Verify!');
+  const smsResult = await smsProvider.sendSms('+1234567890', 'Hello from Sadhya DI Verify!');
   console.log('SMS Result:', smsResult);
   
   const waResult = await waProvider.sendTextMessage('+1234567890', 'Hello from WhatsApp DI Verify!');

@@ -22,7 +22,7 @@ export class NotificationIntelligenceService {
     
     // 2. Build structured prompt for Gemini model
     const prompt = `
-You are an AI notification dispatcher for Scholarly AI (an Indian competitive exam prep app).
+You are an AI notification dispatcher for Sadhya AI (an Indian competitive exam prep app).
 We need to determine the optimal delivery channels, timing, priority, and engagement probability for a notification event.
 
 Student Context:

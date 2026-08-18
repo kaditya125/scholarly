@@ -29,7 +29,7 @@ const CHANNELS = [
     title: 'Schools & institutions',
     body: 'Bulk seats, admin dashboards, custom curriculum and invoicing.',
     action: SITE.email.sales,
-    href: `mailto:${SITE.email.sales}?subject=Scholarly%20for%20institutions`,
+    href: `mailto:${SITE.email.sales}?subject=Sadhya%20for%20institutions`,
   },
   {
     icon: ShieldAlert,

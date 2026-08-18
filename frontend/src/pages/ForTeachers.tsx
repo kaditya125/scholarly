@@ -148,7 +148,7 @@ function DraftPreview() {
       <div className="relative rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416] shadow-[0_20px_60px_-24px_rgba(15,23,42,0.28)] dark:shadow-[0_20px_60px_-24px_rgba(0,0,0,0.75)] overflow-hidden">
         <div className="flex items-center gap-2.5 px-4 sm:px-5 py-3 border-b border-slate-100 dark:border-white/[0.07]">
           <span className="w-1.5 h-1.5 rounded-full bg-[#c8e558]" aria-hidden />
-          <span className="text-[12px] font-medium text-slate-500 dark:text-gray-400">Scholarly — AI chat</span>
+          <span className="text-[12px] font-medium text-slate-500 dark:text-gray-400">Sadhya — AI chat</span>
           <span className="ml-auto hidden sm:inline text-[11px] text-slate-500 dark:text-gray-400">Class 9 · CBSE</span>
         </div>
 
@@ -264,7 +264,7 @@ export default function ForTeachers() {
   }, []);
 
   useSeo({
-    title: 'Scholarly for Teachers — AI-assisted preparation, with you in control',
+    title: 'Sadhya for Teachers — AI-assisted preparation, with you in control',
     description:
       'Draft explanations, generate practice, index your own material and turn a chapter into audio — with sources shown and nothing reaching a student unless you decide it should.',
     url: `${SITE.url}/for-teachers`,
@@ -315,7 +315,7 @@ export default function ForTeachers() {
               </h1>
 
               <p className="mt-7 text-[16.5px] sm:text-[17.5px] leading-relaxed text-slate-500 dark:text-gray-400 max-w-[32rem]">
-                Scholarly puts the AI, your own material and the exam context in one place, so the
+                Sadhya puts the AI, your own material and the exam context in one place, so the
                 repetitive half of preparation — the explanations, the practice sets, the revision
                 sheets — stops being rebuilt from scratch every term.
               </p>
@@ -378,7 +378,7 @@ export default function ForTeachers() {
               <Eyebrow>What a teacher account gives you</Eyebrow>
               <SectionHeading>The whole platform, plus a teaching profile.</SectionHeading>
               <Lede>
-                Scholarly is one product gated by capability, not a student app with a teacher app
+                Sadhya is one product gated by capability, not a student app with a teacher app
                 bolted to the side. Everything a student gets, you get — and the teacher-specific
                 surfaces are being built on top of it. Each card below says exactly where it stands.
               </Lede>
@@ -548,7 +548,7 @@ export default function ForTeachers() {
               <SectionHeading>Set it once, instead of in every prompt.</SectionHeading>
               <Lede>
                 A generic assistant makes you re-establish who you teach at the top of every
-                conversation. Scholarly asks once, in an eight-step setup, and keeps it on your
+                conversation. Sadhya asks once, in an eight-step setup, and keeps it on your
                 account.
               </Lede>
               <p className="mt-5 text-[15px] leading-relaxed text-slate-500 dark:text-gray-400">
@@ -725,7 +725,7 @@ export default function ForTeachers() {
                 <Eyebrow>Other teachers</Eyebrow>
                 <SectionHeading>Teaching is less lonely with peers.</SectionHeading>
                 <Lede>
-                  Connections work today, for everyone on Scholarly: send a request, they accept or
+                  Connections work today, for everyone on Sadhya: send a request, they accept or
                   decline, either side can block. It is a genuine two-sided handshake — nobody joins
                   your network without agreeing.
                 </Lede>
@@ -835,7 +835,7 @@ export default function ForTeachers() {
                 <Eyebrow>In practice</Eyebrow>
                 <SectionHeading>Where it actually fits in your day.</SectionHeading>
                 <Lede>
-                  Not a schedule the product tracks — Scholarly does not watch your timetable. Just
+                  Not a schedule the product tracks — Sadhya does not watch your timetable. Just
                   the moments where it takes work off you.
                 </Lede>
               </div>
@@ -926,7 +926,7 @@ export default function ForTeachers() {
                 accepted does.&rdquo;
               </p>
               <footer className="mt-3 text-[13px] text-slate-500 dark:text-gray-400">
-                The governing rule of Scholarly&rsquo;s teacher–student architecture — enforced in the
+                The governing rule of Sadhya&rsquo;s teacher–student architecture — enforced in the
                 data model, not left to be remembered.
               </footer>
             </blockquote>
@@ -954,18 +954,18 @@ export default function ForTeachers() {
                     A general chatbot
                   </p>
                   <p className="px-6 py-4 text-[12px] font-semibold uppercase tracking-[0.11em] text-slate-900 dark:text-white border-l border-slate-100 dark:border-white/[0.07]">
-                    Scholarly
+                    Sadhya
                   </p>
                 </div>
                 {COMPARISON.map((row) => (
-                  <div key={row.scholarly} className="grid sm:grid-cols-2 border-b border-slate-100 dark:border-white/[0.07] last:border-0">
+                  <div key={row.sadhya} className="grid sm:grid-cols-2 border-b border-slate-100 dark:border-white/[0.07] last:border-0">
                     <p className="px-6 py-4 text-[13.5px] leading-relaxed text-slate-500 dark:text-gray-400">
                       <span className="sm:hidden block text-[11px] font-semibold uppercase tracking-[0.1em] mb-1">General chatbot</span>
                       {row.generic}
                     </p>
                     <p className="px-6 pb-4 sm:py-4 text-[13.5px] leading-relaxed text-slate-800 dark:text-gray-100 sm:border-l border-slate-100 dark:border-white/[0.07]">
-                      <span className="sm:hidden block text-[11px] font-semibold uppercase tracking-[0.1em] mb-1 text-slate-500 dark:text-gray-400">Scholarly</span>
-                      {row.scholarly}
+                      <span className="sm:hidden block text-[11px] font-semibold uppercase tracking-[0.1em] mb-1 text-slate-500 dark:text-gray-400">Sadhya</span>
+                      {row.sadhya}
                     </p>
                   </div>
                 ))}
@@ -1068,12 +1068,12 @@ export default function ForTeachers() {
                   to="/"
                   className="text-[14.5px] font-medium text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
-                  Explore Scholarly
+                  Explore Sadhya
                 </Link>
               </div>
               <p className="mt-6 text-[13px] leading-relaxed text-slate-500 dark:text-gray-400">
                 One account holds one role, and it can&rsquo;t be switched later without support —
-                so choose teacher only if that&rsquo;s how you&rsquo;ll mainly use Scholarly.
+                so choose teacher only if that&rsquo;s how you&rsquo;ll mainly use Sadhya.
               </p>
             </div>
           </Reveal>

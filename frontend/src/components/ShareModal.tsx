@@ -54,7 +54,7 @@ export function ShareModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =
             <input 
               type="text" 
               readOnly 
-              value="https://scholarly.so/chat/shared/6a35b4eb68736030807..." 
+              value="https://sadhya.app/chat/shared/6a35b4eb68736030807..." 
               className="flex-1 bg-transparent border-none outline-none text-[13px] text-[#b3b3b3] truncate"
             />
             <button className="px-4 py-2 bg-[#3358d4] hover:bg-[#2c4cb8] text-white text-[13px] font-semibold rounded-lg transition-colors shrink-0">

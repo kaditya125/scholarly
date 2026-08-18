@@ -4,14 +4,14 @@ import { container, TOKENS } from '../di/container';
 import { buildRecommendationsBlock } from '../../config/prompts';
 
 /**
- * ResponseFormatter — Scholarly AI's Presentation Layer
+ * ResponseFormatter — Sadhya AI's Presentation Layer
  * 
  * Formats the TeacherAgent's draft into a polished, well-structured response.
  * Also appends personalized learning recommendations based on student context.
  */
 export class ResponseFormatter implements IAgent {
   name = 'ResponseFormatter';
-  description = 'Formats and streams the final Scholarly AI response with quality enforcement and smart recommendations.';
+  description = 'Formats and streams the final Sadhya AI response with quality enforcement and smart recommendations.';
 
   async execute(context: AgentContext): Promise<void> {
     // Only used if not streaming
@@ -33,7 +33,7 @@ export class ResponseFormatter implements IAgent {
     const isTeacherViewer = context.request.productRole === 'teacher';
     const audience = isTeacherViewer ? 'teacher' : 'student';
 
-    const systemPrompt = `You are Scholarly AI's final presentation layer. Your job is to take the Draft Response and present it beautifully to the ${audience}.
+    const systemPrompt = `You are Sadhya AI's final presentation layer. Your job is to take the Draft Response and present it beautifully to the ${audience}.
 
 ## Preservation Rules (highest priority — these override every style instruction below)
 You are FORMATTING, not rewriting. The draft has already been researched and grounded.

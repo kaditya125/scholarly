@@ -2,7 +2,7 @@
  * Student Context Types
  * 
  * These interfaces define the complete student profile and context
- * that Scholarly AI uses to personalize every interaction.
+ * that Sadhya AI uses to personalize every interaction.
  */
 
 // ─── Supported Examinations ───────────────────────────────────────────────────

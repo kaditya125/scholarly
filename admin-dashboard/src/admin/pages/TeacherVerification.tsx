@@ -228,7 +228,7 @@ export function TeacherVerification() {
       <div className="flex items-start gap-2.5 rounded-xl border border-blue-500/20 bg-blue-500/5 dark:bg-blue-500/10 px-4 py-3 text-xs text-blue-700 dark:text-blue-300">
         <Clock className="w-4 h-4 mt-0.5 shrink-0" />
         <span className="leading-relaxed">
-          Teachers keep full access to Scholarly while they wait here — this queue gates
+          Teachers keep full access to Sadhya while they wait here — this queue gates
           teaching-specific capabilities only, not the platform itself.
         </span>
       </div>

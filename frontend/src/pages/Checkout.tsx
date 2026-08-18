@@ -23,7 +23,7 @@ function loadRazorpayScript(): Promise<boolean> {
 }
 
 const PLANS: Record<string, { name: string; monthly: number; blurb: string }> = {
-  pro: { name: "Scholarly Pro", monthly: 499, blurb: "Full access — unlimited AI tutor, adaptive tests & podcast studio" },
+  pro: { name: "Sadhya Pro", monthly: 499, blurb: "Full access — unlimited AI tutor, adaptive tests & podcast studio" },
   institution: { name: "Institution", monthly: 0, blurb: "Bulk seats, admin dashboard & custom curriculum" },
 };
 
@@ -86,7 +86,7 @@ export default function Checkout() {
         order_id: data.orderId,
         amount: data.amount,
         currency: data.currency,
-        name: "Scholarly",
+        name: "Sadhya",
         description: `${data.planName} — ${isYearly ? "Yearly (billed once)" : "Monthly"}`,
         ...(import.meta.env.VITE_BRAND_LOGO_URL ? { image: import.meta.env.VITE_BRAND_LOGO_URL as string } : {}),
         prefill: { name: user?.displayName || "", email: user?.email || "" },
@@ -249,7 +249,7 @@ export default function Checkout() {
           </div>
 
           <p className="text-[11.5px] text-slate-400 dark:text-slate-500 mt-3 text-right">
-            By checking out you agree to Scholarly terms and our 7-day money-back guarantee.
+            By checking out you agree to Sadhya terms and our 7-day money-back guarantee.
           </p>
         </div>
 

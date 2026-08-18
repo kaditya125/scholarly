@@ -52,11 +52,11 @@ async function main() {
     targetExam: 'NEET Prep',
     targetYear: 2026,
     isComplete: true,
-    email: 'adityakumar.study@scholarly.ai'
+    email: 'adityakumar.study@sadhya.app'
   });
   await db.collection('userDirectory').doc(STUDENT_ID).set({
     uid: STUDENT_ID,
-    email: 'adityakumar.study@scholarly.ai'
+    email: 'adityakumar.study@sadhya.app'
   });
 
   // 3. Configure preferences: enable all channels, set contact info, disable quiet hours

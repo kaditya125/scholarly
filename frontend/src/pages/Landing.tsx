@@ -12,6 +12,7 @@ import SiteFooter from '../components/landing/SiteFooter';
 import PricingSection from '../components/landing/PricingSection';
 import ProcessChain from '../components/landing/ProcessChain';
 import AvatarStack from '../components/landing/AvatarStack';
+import { HandwrittenTagline } from '../components/brand/HandwrittenTagline';
 
 /**
  * The public landing page.
@@ -25,8 +26,8 @@ import AvatarStack from '../components/landing/AvatarStack';
  *   · podcasts                      → /api/podcasts/generate → TTS → ffmpeg → Storage
  *   · study modes                   → config/prompts.ts buildModeInstructions()
  *   · adaptive baseline assessment  → /api/baseline-assessment
- *   · language mirroring            → config/prompts.ts SCHOLARLY_LANGUAGE_RULE
- *   · exam coverage                 → config/prompts.ts SCHOLARLY_EXAM_KNOWLEDGE
+ *   · language mirroring            → config/prompts.ts SADHYA_LANGUAGE_RULE
+ *   · exam coverage                 → config/prompts.ts SADHYA_EXAM_KNOWLEDGE
  *   · profile personalization       → lib/onboardingOptions.ts + buildStudentContextBlock()
  *   · teacher profile               → pages/TeacherOnboarding.tsx + /api/teacher
  *
@@ -64,7 +65,7 @@ const CAPABILITIES = [
   {
     icon: Camera,
     title: 'Photograph the question',
-    body: 'Point your camera at a problem in a textbook or a past paper. Scholarly reads it, works out which chapter it belongs to, pulls that chapter, and solves it with you step by step.',
+    body: 'Point your camera at a problem in a textbook or a past paper. Sadhya reads it, works out which chapter it belongs to, pulls that chapter, and solves it with you step by step.',
   },
   {
     icon: NotebookPen,
@@ -374,6 +375,12 @@ export default function LandingPage() {
                   <br />
                   your <Underline>syllabus</Underline>.
                 </h1>
+                {/* Brand signature, written on as the hero settles. Delayed past the headline's
+                    own entrance so the two don't animate over each other. */}
+                <HandwrittenTagline
+                  className="mt-3 flex text-[19px] sm:text-[21px] text-[#6ca855] dark:text-[#c8e558]"
+                  delay={0.6}
+                />
               </Item>
 
               <Item>
@@ -414,7 +421,7 @@ export default function LandingPage() {
                     <span>
                       Have questions? Ask{' '}
                       <span className="font-semibold text-slate-700 dark:text-gray-200 group-hover:text-[#8ba32b] dark:group-hover:text-[#c8e558] transition-colors">
-                        Scholarly
+                        Sadhya
                       </span>{' '}
                       AI
                     </span>
@@ -460,7 +467,7 @@ export default function LandingPage() {
               <Eyebrow>Behind every answer</Eyebrow>
               <SectionHeading>You can watch it think.</SectionHeading>
               <Lede>
-                A general chatbot hands you a paragraph and asks you to trust it. Scholarly shows
+                A general chatbot hands you a paragraph and asks you to trust it. Sadhya shows
                 the six steps it runs before it writes a word, and the sources each answer rests
                 on — so you can check the reasoning, not just the result.
               </Lede>
@@ -482,7 +489,7 @@ export default function LandingPage() {
                 <SectionHeading>Learning doesn&rsquo;t stay inside a textbook.</SectionHeading>
                 <Lede>
                   A question you photograph. A PDF you upload. Live &amp; paid classes taught by top verified
-                  teachers, complete with their exclusive notes and question banks. Scholarly brings AI and expert educators together in one place.
+                  teachers, complete with their exclusive notes and question banks. Sadhya brings AI and expert educators together in one place.
                 </Lede>
               </div>
             </Reveal>
@@ -538,7 +545,7 @@ export default function LandingPage() {
                       English, Hindi, or both
                     </h3>
                     <p className="mt-1.5 text-[14px] leading-relaxed text-slate-500 dark:text-gray-400">
-                      Write in whichever language you think in — including mixed Hinglish. Scholarly
+                      Write in whichever language you think in — including mixed Hinglish. Sadhya
                       replies in the same one, and keeps formulae and exam terminology in English.
                     </p>
                   </div>
@@ -583,7 +590,7 @@ export default function LandingPage() {
                 <div className="mt-5">
                   <Eyebrow>Instant Answers & Helpdesk</Eyebrow>
                 </div>
-                <SectionHeading>Have questions before starting? Ask Scholarly.</SectionHeading>
+                <SectionHeading>Have questions before starting? Ask Sadhya.</SectionHeading>
                 <Lede>
                   Whether you want to understand how our 24/7 AI tutor reasons, verify syllabus coverage for your exam, or check our 7-day money-back guarantee — get immediate answers with cited explanations.
                 </Lede>
@@ -597,7 +604,7 @@ export default function LandingPage() {
                     className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13.5px] font-semibold hover:opacity-90 transition-opacity"
                   >
                     <Bot className="w-4 h-4" />
-                    Ask Scholarly AI Guide
+                    Ask Sadhya AI Guide
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                   <Link
@@ -733,7 +740,7 @@ export default function LandingPage() {
                 Start with the thing you&rsquo;re stuck on, today
               </h2>
               <p className="mt-5 text-[16.5px] sm:text-[17.5px] leading-relaxed text-slate-500 dark:text-gray-400 max-w-[32rem]">
-                Tell Scholarly what you&rsquo;re preparing for, then ask it one real question and see what comes back.
+                Tell Sadhya what you&rsquo;re preparing for, then ask it one real question and see what comes back.
               </p>
 
               {/* Checkmark perks */}
@@ -781,7 +788,7 @@ export default function LandingPage() {
         <Link
           to="/help"
           className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/85 dark:bg-[#18181c]/85 text-slate-200 hover:text-white backdrop-blur-xl border border-slate-800 dark:border-white/[0.08] hover:border-slate-700 dark:hover:border-white/20 shadow-[0_4px_16px_rgba(0,0,0,0.15)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-200"
-          title="Ask Scholarly AI"
+          title="Ask Sadhya AI"
         >
           <div className="relative flex items-center justify-center">
             <Bot className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558]" />

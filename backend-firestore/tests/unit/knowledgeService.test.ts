@@ -225,7 +225,7 @@ describe('Phase 10: Shared Knowledge Service', () => {
         originalName: 'thermo.pdf',
         collectionId: 'coll_physics',
         contentType: 'application/pdf',
-        storagePath: 'gs://scholarly-sources/coll_physics/doc_thermo_01.pdf',
+        storagePath: 'gs://sadhya-sources/coll_physics/doc_thermo_01.pdf',
         sizeBytes: 1024000,
         uploadedAt: Date.now(),
         checksum: 'srchash123',

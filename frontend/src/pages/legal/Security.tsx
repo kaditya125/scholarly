@@ -58,7 +58,7 @@ export default function Security() {
               <P>
                 Payments run through Razorpay, a PCI-DSS compliant gateway. Card numbers, CVVs, UPI
                 PINs and netbanking credentials are entered inside Razorpay&rsquo;s own window —
-                they never pass through, and are never stored on, Scholarly&rsquo;s servers.
+                they never pass through, and are never stored on, Sadhya&rsquo;s servers.
               </P>
               <P>Two details worth stating plainly, because they are where payment bugs usually live:</P>
               <UL

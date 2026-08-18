@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Chaos toggle for Scholarly staging resilience tests. Injects/clears faults via the Toxiproxy
+# Chaos toggle for Sadhya staging resilience tests. Injects/clears faults via the Toxiproxy
 # control API — NO code change in src/. Corresponds to §3.6 of docs/STAGING_CERTIFICATION_PLAN.md.
 #
 # Usage:

@@ -45,8 +45,8 @@ export function ShareProfileModal({ isOpen, onClose }: ShareProfileModalProps) {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${user?.displayName || 'Scholar'}'s Scholarly Profile`,
-          text: `Check out my academic study profile on Scholarly preparing for ${targetExam}!`,
+          title: `${user?.displayName || 'Scholar'}'s Sadhya Profile`,
+          text: `Check out my academic study profile on Sadhya preparing for ${targetExam}!`,
           url: profileUrl,
         });
       } catch {
@@ -58,7 +58,7 @@ export function ShareProfileModal({ isOpen, onClose }: ShareProfileModalProps) {
   };
 
   const shareText = encodeURIComponent(
-    `Check out my learning profile on Scholarly preparing for ${targetExam}! 🎓🚀 ${profileUrl}`
+    `Check out my learning profile on Sadhya preparing for ${targetExam}! 🎓🚀 ${profileUrl}`
   );
 
   return (

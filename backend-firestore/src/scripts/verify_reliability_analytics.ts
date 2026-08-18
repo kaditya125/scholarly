@@ -62,12 +62,12 @@ async function main() {
     targetExam: 'NEET Prep',
     targetYear: 2026,
     isComplete: true,
-    email: 'reliability_student@scholarly.ai'
+    email: 'reliability_student@sadhya.app'
   });
 
   await db.collection('userDirectory').doc(MOCK_USER).set({
     uid: MOCK_USER,
-    email: 'reliability_student@scholarly.ai'
+    email: 'reliability_student@sadhya.app'
   });
 
   // Enable all preferences
