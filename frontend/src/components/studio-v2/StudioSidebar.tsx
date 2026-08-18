@@ -85,7 +85,11 @@ export default function StudioSidebar({
   }, [projects, searchQuery]);
 
   return (
-    <div className="w-64 bg-white dark:bg-[#111113] border-r border-slate-200/80 dark:border-white/10 flex flex-col font-sans">
+    // Hidden below lg. At a fixed 256px inside a horizontal flex, this left roughly 119px
+    // for the whole studio on a 375px phone — the workspace was unusable. Project
+    // switching therefore lives on desktop only for now; a slide-over drawer is the
+    // proper mobile answer and is not built yet.
+    <div className="hidden lg:flex w-64 bg-white dark:bg-[#111113] border-r border-slate-200/80 dark:border-white/10 flex-col font-sans">
       {/* App Header */}
       <div className="h-12 px-4 flex items-center justify-between border-b border-slate-200/80 dark:border-white/10">
         <div className="flex items-center gap-2">
