@@ -1,17 +1,29 @@
 import { IAgent, AgentContext } from './IAgent';
 import { IAIProvider } from '../interfaces/IAIProvider';
 import { container, TOKENS } from '../di/container';
-import { buildRecommendationsBlock } from '../../config/prompts';
+import {
+  buildRecommendationsBlock,
+  buildSadhyaSystemPrompt,
+  hasNotebookContext as computeHasNotebookContext,
+  isConversationalReasoningMode,
+} from '../../config/prompts';
 
 /**
- * ResponseFormatter — Sadhya AI's Presentation Layer
- * 
- * Formats the TeacherAgent's draft into a polished, well-structured response.
- * Also appends personalized learning recommendations based on student context.
+ * ResponseFormatter — Sadhya AI's Answer-Composition Layer
+ *
+ * On conversational modes (TEACHER/REVISION/RESEARCH/CURRENT_AFFAIRS), this is where
+ * the actual reader-facing answer is written: it inherits the full Sadhya AI
+ * persona via buildSadhyaSystemPrompt() and uses TeacherAgent's reasoning
+ * scratchpad as an internal plan, not literal content to reformat. On other modes it
+ * keeps the original behavior — reformatting TeacherAgent's full draft without
+ * rewriting it. Always appends personalized learning recommendations when available.
+ *
+ * The persona it inherits is viewer-aware, so on a teacher account the composed answer
+ * addresses a colleague preparing to teach rather than a learner being taught.
  */
 export class ResponseFormatter implements IAgent {
   name = 'ResponseFormatter';
-  description = 'Formats and streams the final Sadhya AI response with quality enforcement and smart recommendations.';
+  description = 'Composes/formats and streams the final Sadhya AI response with persona, quality enforcement, and smart recommendations.';
 
   async execute(context: AgentContext): Promise<void> {
     // Only used if not streaming
@@ -19,8 +31,9 @@ export class ResponseFormatter implements IAgent {
 
   async *executeStream(context: AgentContext): AsyncGenerator<string, void, unknown> {
     const aiProvider = container.resolve<IAIProvider>(TOKENS.AIProvider);
-    
-    const draft = context.sharedState['teacherDraft'] || context.sharedState['researchDraft'];
+
+    const mode = context.request.mode || 'TEACHER';
+    const reasoning = context.sharedState['teacherReasoning'] || context.sharedState['researchDraft'] || '';
     const warnings = context.sharedState['verificationWarnings'] as string[] | undefined;
 
     let warningText = '';
@@ -32,7 +45,59 @@ export class ResponseFormatter implements IAgent {
     const recommendations = buildRecommendationsBlock(context.studentContext);
     const isTeacherViewer = context.request.productRole === 'teacher';
     const audience = isTeacherViewer ? 'teacher' : 'student';
+    const recommendationsBlock = recommendations
+      ? `\n\n## Provided Recommendations\n(Append these under an "## Appendix" heading ONLY IF the query was educational. Ignore them if it was a casual greeting.)\n${recommendations}`
+      : '';
 
+    const anyProvider = aiProvider as any;
+
+    if (isConversationalReasoningMode(mode)) {
+      // ── Conversational modes: compose the real answer, persona-voiced ──────
+      // Same call TeacherAgent makes, so identity/exam-knowledge/teaching-standards/
+      // language-rule/fallback/RAG-context are single-sourced instead of the old
+      // separate "formatting only" prompt that never saw the persona at all.
+      const hasNotebookContext = computeHasNotebookContext(context.retrievedContext);
+      const persona = buildSadhyaSystemPrompt({
+        mode,
+        viewerRole: context.request.productRole,
+        studentContext: context.studentContext,
+        teacherContext: context.teacherContext,
+        retrievedContext: context.retrievedContext,
+        hasNotebookContext,
+      });
+
+      const systemPrompt = `${persona}
+
+## Your Private Reasoning (internal plan — do not repeat verbatim, do not mention "reasoning", "scratchpad", or "plan" to the ${audience})
+${reasoning}
+
+Now write your final answer to the ${audience}, following the persona and mode instructions above and using the reasoning above as your plan — do not just restate it, and do not address the reasoning itself.${warningText}${recommendationsBlock}`;
+
+      const messages = [
+        ...context.request.history,
+        { role: 'user' as const, content: context.request.query },
+      ];
+
+      if (typeof anyProvider.generateStreamResponse === 'function') {
+        const stream = anyProvider.generateStreamResponse(messages, systemPrompt, {
+          traceId: context.request.traceId,
+          model: context.request.model,
+        });
+        for await (const chunk of stream) {
+          yield chunk;
+        }
+      } else {
+        const res = await aiProvider.generateResponse(messages, systemPrompt, {
+          traceId: context.request.traceId,
+        });
+        yield res.reply;
+      }
+      return;
+    }
+
+    // ── Non-conversational modes (QUIZ/FLASHCARDS/PODCAST/MIND_MAP/TIMELINE/
+    // INTERVIEW/ESSAY): unchanged from before — reformat the full draft without
+    // rewriting it. These modes' output shapes don't fit the reasoning-first flow.
     const systemPrompt = `You are Sadhya AI's final presentation layer. Your job is to take the Draft Response and present it beautifully to the ${audience}.
 
 ## Preservation Rules (highest priority — these override every style instruction below)
@@ -60,13 +125,11 @@ If the Draft Response is an educational explanation or a complex topic:
 - Include the Appendix at the very end if recommendations are provided below.
 
 ## Draft Response
-${draft}
+${reasoning}
 ${warningText}
-
-${recommendations ? `## Provided Recommendations\n(Append these under an "## Appendix" heading ONLY IF the query was educational. Ignore them if it was a casual greeting.)\n${recommendations}` : ''}`;
+${recommendationsBlock}`;
 
     // Attempt to stream
-    const anyProvider = aiProvider as any;
     if (typeof anyProvider.generateStreamResponse === 'function') {
       const stream = anyProvider.generateStreamResponse([
         { role: 'system', content: systemPrompt },

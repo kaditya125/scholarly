@@ -240,8 +240,8 @@ export default function ReasoningTimeline({
           </>
         ) : (
           <>
-            <span className="text-slate-600 dark:text-gray-300">Thought</span>
-            <span className="text-slate-400">{'\u00b7'} {reachedTotal} step{reachedTotal === 1 ? '' : 's'} {'\u00b7'} {seconds}s</span>
+            <span className="text-slate-600 dark:text-gray-300">Thought for {reachedTotal} step{reachedTotal === 1 ? '' : 's'}</span>
+            <span className="text-slate-400">{'\u00b7'} {seconds}s</span>
           </>
         )}
         {/* Determinate progress across the pipeline while it runs. */}

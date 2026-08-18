@@ -1,6 +1,7 @@
 node_modules/
 .env
 .env.*
+.tools/
 *.log
 
 # Account-reset / recovery manifests. These enumerate real Firebase UIDs and the
