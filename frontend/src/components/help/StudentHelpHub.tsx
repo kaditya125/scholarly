@@ -111,7 +111,7 @@ export function StudentHelpHub() {
         {
           id: 'welcome_msg',
           role: 'assistant',
-          content: `Hi **${firstName}** 👋 I'm your personal Scholarly Support & Learning Assistant.\n\nI have verified access to your courses, payments, test scores, and account settings. How can I help you today?`,
+          content: `Hi **${firstName}** 👋 I'm your personal Sadhya Support & Learning Assistant.\n\nI have verified access to your courses, payments, test scores, and account settings. How can I help you today?`,
           timestamp: Date.now(),
           suggestedActions: [
             { label: 'Check My Courses', action: 'VIEW_COURSE' },
@@ -122,7 +122,7 @@ export function StudentHelpHub() {
           relatedQueries: [
             'Which courses and batches am I enrolled in?',
             'How do I take a chapter-wise adaptive test?',
-            'What features are included in Scholarly Pro?',
+            'What features are included in Sadhya Pro?',
             'How does the 7-day refund policy work?'
           ]
         },
@@ -428,7 +428,7 @@ export function StudentHelpHub() {
                   </div>
                   <div>
                     <h3 className="text-[13px] font-bold text-slate-900 dark:text-white leading-tight">
-                      Scholarly Verified AI Helpdesk
+                      Sadhya Verified AI Helpdesk
                     </h3>
                     <p className="text-[11px] text-slate-400">Live verified connection to {firstName}'s student record</p>
                   </div>

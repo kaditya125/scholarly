@@ -1,7 +1,7 @@
 /**
  * Teacher Context Types
  *
- * Mirrors studentContext.types.ts's role in the pipeline — the shape Scholarly AI uses to
+ * Mirrors studentContext.types.ts's role in the pipeline — the shape Sadhya AI uses to
  * personalize a response for a teacher instead of a student. Deliberately smaller than
  * StudentContext: there is no teacher memory/analytics/planner system yet, only the onboarding
  * profile (`teacherProfiles/{uid}`, see teacher.ts). Add sections here only once a feature

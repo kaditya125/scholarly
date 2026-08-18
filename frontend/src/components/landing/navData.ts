@@ -60,7 +60,7 @@ export const PRODUCT_GROUPS: NavGroup[] = [
       { label: 'Study Groups', href: '/groups', desc: 'Prepare alongside people on your exam' },
       { label: 'Leaderboard', href: '/leaderboard', desc: 'See where you stand' },
       { label: 'Help & Live Support', href: '/help', desc: '24/7 AI guide & real helpdesk agent support' },
-      { label: 'Teach on Scholarly', href: '/for-teachers', desc: 'For teachers and institutions' },
+      { label: 'Teach on Sadhya', href: '/for-teachers', desc: 'For teachers and institutions' },
     ],
   },
 ];

@@ -122,12 +122,12 @@ async function main() {
     targetExam: 'JEE Advanced',
     targetYear: 2027,
     isComplete: true,
-    email: 'cert_student@scholarly.ai'
+    email: 'cert_student@sadhya.app'
   });
   
   await db.collection('userDirectory').doc(USER_ID).set({
     uid: USER_ID,
-    email: 'cert_student@scholarly.ai'
+    email: 'cert_student@sadhya.app'
   });
 
   await notificationService.updatePreferences(USER_ID, {
@@ -296,7 +296,7 @@ async function main() {
   const mediaResult = await waProvider.sendMediaMessage(
     '+15559999',
     'document',
-    'https://scholarly.ai/notes.pdf',
+    'https://sadhya.app/notes.pdf',
     'Here are your chemistry notes!',
     'Chemistry_Notes.pdf'
   );

@@ -31,7 +31,7 @@ function subtitleFor(peer: PeerCard): string {
   if (peer.stream) return peer.stream;
   if (peer.classLevel) return `Class ${peer.classLevel}`;
   if (peer.board) return peer.board;
-  return peer.email || 'Scholarly learner';
+  return peer.email || 'Sadhya learner';
 }
 
 export default function People() {

@@ -16,7 +16,7 @@ export default function Privacy() {
   return (
     <LegalPage
       title="Privacy Policy"
-      intro="What Scholarly collects, why we collect it, who processes it on our behalf, and the control you have over it."
+      intro="What Sadhya collects, why we collect it, who processes it on our behalf, and the control you have over it."
       sections={[
         {
           id: 'scope',
@@ -25,7 +25,7 @@ export default function Privacy() {
             <>
               <P>
                 This policy explains how {SITE.legalEntity} (&ldquo;we&rdquo;) handles personal data
-                when you use Scholarly. We are the data fiduciary for that data.
+                when you use Sadhya. We are the data fiduciary for that data.
               </P>
               <P>
                 It is written to meet our obligations under India&rsquo;s Digital Personal Data
@@ -229,7 +229,7 @@ export default function Privacy() {
           body: (
             <>
               <P>
-                Scholarly is built for exam preparation, so we expect learners under 18 to use it.
+                Sadhya is built for exam preparation, so we expect learners under 18 to use it.
                 An account for a person under 18 must be created and supervised by a parent or legal
                 guardian, who provides consent for the processing described here.
               </P>

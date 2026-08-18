@@ -365,7 +365,7 @@ export default function MyClasses() {
           <h2 className="mt-4 text-[16px] font-semibold tracking-[-0.015em]">You&rsquo;re not in any classes</h2>
           <p className="mt-1.5 mx-auto max-w-sm text-[13.5px] leading-relaxed text-slate-500 dark:text-gray-400">
             If a teacher sends you an invitation link, opening it will bring you here. Everything
-            else in Scholarly works without a class.
+            else in Sadhya works without a class.
           </p>
           <Link to="/dashboard" className="mt-5 inline-flex items-center h-10 px-4 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13.5px] font-semibold">
             Back to learning

@@ -31,7 +31,7 @@ export class WhatsAppConversationRouter {
       // 1. Student Identity Resolution
       const userId = await this.resolveUserId(senderNumber);
       if (!userId) {
-        const onboardingMsg = `Welcome to *Scholarly AI*, ${senderName}! 🎓\n\nYour WhatsApp number is not linked to an active student account yet.\n\n🔗 Please log in to https://scholarly.ai, go to *Account Settings*, and save your mobile number to start chatting with your AI Tutor on WhatsApp!`;
+        const onboardingMsg = `Welcome to *Sadhya AI*, ${senderName}! 🎓\n\nYour WhatsApp number is not linked to an active student account yet.\n\n🔗 Please log in to https://sadhya.app, go to *Account Settings*, and save your mobile number to start chatting with your AI Tutor on WhatsApp!`;
         await provider.sendTextMessage(senderNumber, onboardingMsg);
         return;
       }
@@ -224,7 +224,7 @@ export class WhatsAppConversationRouter {
    * Sends conversational greetings + button selectors.
    */
   private async sendGreetingAndMenu(to: string, name: string, provider: IWhatsAppProvider): Promise<void> {
-    const greeting = `Hi ${name}! 🎓 Welcome to *Scholarly AI*.\n\nI am your AI study companion. How would you like to continue learning today?\n\n*Commands:*\n📝 Type "quiz" to test yourself\n🎧 Type "podcast" to listen to summaries\n📚 Ask me any question (uses GraphRAG notebook search!)`;
+    const greeting = `Hi ${name}! 🎓 Welcome to *Sadhya AI*.\n\nI am your AI study companion. How would you like to continue learning today?\n\n*Commands:*\n📝 Type "quiz" to test yourself\n🎧 Type "podcast" to listen to summaries\n📚 Ask me any question (uses GraphRAG notebook search!)`;
     const buttons = [
       { id: 'start_quiz', title: 'Start Quiz 📝' },
       { id: 'play_podcast', title: 'Play Podcast 🎧' }
@@ -336,7 +336,7 @@ export class WhatsAppConversationRouter {
    * Dispatches a podcast study guide link.
    */
   private async sendPodcastDetails(to: string, name: string, provider: IWhatsAppProvider): Promise<void> {
-    const podcastReply = `Here is your customized study podcast summary, ${name}! 🎧\n\n🔗 https://scholarly.ai/podcasts/latest-revision\n\nPress play and get ready to review your materials!`;
+    const podcastReply = `Here is your customized study podcast summary, ${name}! 🎧\n\n🔗 https://sadhya.app/podcasts/latest-revision\n\nPress play and get ready to review your materials!`;
     await provider.sendTextMessage(to, podcastReply);
   }
 

@@ -123,7 +123,7 @@ describe('recordReferral', () => {
 
   it('extends an EXISTING Pro period rather than resetting it, and preserves real payment attribution', async () => {
     const future = Date.now() + 10 * 24 * 60 * 60 * 1000;
-    store.users[REFERRER] = { plan: 'pro', subscription: { status: 'active', currentPeriodEnd: future, provider: 'razorpay', planName: 'Scholarly Pro', orderId: 'order_real' } };
+    store.users[REFERRER] = { plan: 'pro', subscription: { status: 'active', currentPeriodEnd: future, provider: 'razorpay', planName: 'Sadhya Pro', orderId: 'order_real' } };
     await referralService.recordReferral(REFERRER, REFERRED);
 
     const after = store.users[REFERRER];

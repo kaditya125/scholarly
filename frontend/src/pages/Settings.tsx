@@ -155,7 +155,7 @@ export default function Settings() {
   const historyRows: any[] = payments.length > 0
     ? payments
     : (isPro && subInfo ? [{
-        orderId: subInfo.orderId, planId: subInfo.plan, planName: subInfo.planName || 'Scholarly Pro',
+        orderId: subInfo.orderId, planId: subInfo.plan, planName: subInfo.planName || 'Sadhya Pro',
         billing: subInfo.billing, amountRupees: subInfo.amountRupees, currency: 'INR',
         status: 'paid', method: subInfo.method, paymentId: subInfo.paymentId,
         createdAt: subInfo.activatedAt, paidAt: subInfo.activatedAt,
@@ -169,7 +169,7 @@ export default function Settings() {
     const dateStr = fmtDate(p.paidAt || p.createdAt);
     const billing = p.orderType === 'class_purchase' ? 'One-time' : (p.billing === 'yearly' ? 'Yearly' : 'Monthly');
     const invNo = String(p.paymentId || p.orderId || 'INV').replace(/[^a-zA-Z0-9_]/g, '');
-    const name = user?.displayName || (isTeacher ? 'Scholarly Teacher' : 'Scholarly Student');
+    const name = user?.displayName || (isTeacher ? 'Sadhya Teacher' : 'Sadhya Student');
     const email = user?.email || '';
     const esc = (s: string) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] as string));
     w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${esc(invNo)}</title>
@@ -198,7 +198,7 @@ export default function Settings() {
         .foot{margin-top:48px;padding-top:20px;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;line-height:1.6}
       </style></head><body>
       <div class="top">
-        <div class="brand"><div class="logo">S</div><div><h1>Scholarly</h1><span>Scholarly Education</span></div></div>
+        <div class="brand"><div class="logo">S</div><div><h1>Sadhya</h1><span>Sadhya Education</span></div></div>
         <div class="inv-title"><h2>Invoice</h2><div class="no">#${esc(invNo)}</div><div style="margin-top:8px"><span class="badge">${p.status === 'paid' ? 'PAID' : esc(String(p.status || '').toUpperCase())}</span></div></div>
       </div>
       <div class="meta">
@@ -208,14 +208,14 @@ export default function Settings() {
       </div>
       <table>
         <thead><tr><th>Description</th><th class="right">Billing</th><th class="right">Amount</th></tr></thead>
-        <tbody><tr><td>${esc(p.planName || 'Scholarly Pro')}${p.orderType === 'class_purchase' ? '' : ' subscription'}</td><td class="right">${billing}</td><td class="right">${amount}</td></tr></tbody>
+        <tbody><tr><td>${esc(p.planName || 'Sadhya Pro')}${p.orderType === 'class_purchase' ? '' : ' subscription'}</td><td class="right">${billing}</td><td class="right">${amount}</td></tr></tbody>
       </table>
       <div class="totals">
         <div class="row"><span>Subtotal</span><span>${amount}</span></div>
         <div class="row"><span>Tax</span><span>Inclusive</span></div>
         <div class="row grand"><span>Total paid</span><span>${amount}</span></div>
       </div>
-      <div class="foot">Thank you for subscribing to Scholarly Pro. This is a computer-generated invoice and does not require a signature.<br/>For any billing questions, contact support@scholarly.ai.</div>
+      <div class="foot">Thank you for subscribing to Sadhya Pro. This is a computer-generated invoice and does not require a signature.<br/>For any billing questions, contact support@sadhya.app.</div>
       <script>window.onload=function(){window.print();}</script>
       </body></html>`);
     w.document.close();
@@ -486,7 +486,7 @@ export default function Settings() {
         {tab === 'general' && (
           <div className="space-y-8">
             {/* Profile */}
-            <Section title="Profile" desc="Your public identity across Scholarly.">
+            <Section title="Profile" desc="Your public identity across Sadhya.">
               <div className="flex items-center gap-5 mb-6">
                 <div className="relative group w-20 h-20 rounded-full overflow-hidden bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-2xl font-bold text-indigo-600 dark:text-indigo-300 cursor-pointer shrink-0"
                   onClick={() => fileInputRef.current?.click()}>
@@ -532,7 +532,7 @@ export default function Settings() {
             </Section>
 
             {/* Theme */}
-            <Section title="Theme" desc="Choose how Scholarly looks to you.">
+            <Section title="Theme" desc="Choose how Sadhya looks to you.">
               <div className="grid grid-cols-3 gap-3 max-w-md">
                 {[{ id: 'system', label: 'System', icon: Monitor }, { id: 'light', label: 'Light', icon: Sun }, { id: 'dark', label: 'Dark', icon: Moon }].map((o) => (
                   <button key={o.id} onClick={() => setThemePreference(o.id as any)}
@@ -569,7 +569,7 @@ export default function Settings() {
                   <div className="flex items-center gap-4">
                     <div className={cn('w-14 h-14 rounded-full border-4 -rotate-45', isPro ? 'border-emerald-500/80 border-t-transparent' : 'border-indigo-500/70 border-t-transparent')} />
                     <div>
-                      <div className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">{isPro ? 'Scholarly Pro' : 'Free plan'}</div>
+                      <div className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">{isPro ? 'Sadhya Pro' : 'Free plan'}</div>
                       <div className="text-[13px] text-slate-500 dark:text-gray-400">
                         {isPro ? 'Unlimited GraphRAG tutor, AI studio & adaptive mock tests' : 'Unlimited AI chat & practice within fair use'}
                       </div>
@@ -645,7 +645,7 @@ export default function Settings() {
                   historyRows.map((p) => (
                     <div key={p.orderId || p.paymentId} className="grid grid-cols-6 px-5 py-4 text-[13px] text-slate-700 dark:text-gray-200 items-center border-t border-slate-100 dark:border-white/5">
                       <span className="col-span-2 font-medium truncate pr-2">
-                        {p.planName || 'Scholarly Pro'} · {p.orderType === 'class_purchase' ? 'One-time' : (p.billing === 'yearly' ? 'Yearly' : 'Monthly')}
+                        {p.planName || 'Sadhya Pro'} · {p.orderType === 'class_purchase' ? 'One-time' : (p.billing === 'yearly' ? 'Yearly' : 'Monthly')}
                       </span>
                       <span className="text-slate-500 dark:text-gray-400">{fmtDate(p.paidAt || p.createdAt)}</span>
                       <span className="text-slate-700 dark:text-gray-200">{p.amountRupees != null ? `₹${Number(p.amountRupees).toLocaleString('en-IN')}` : '—'}</span>
@@ -718,7 +718,7 @@ export default function Settings() {
                   <div className="text-[15px] font-bold">Enterprise</div>
                   <p className="text-[13px] text-neutral-300 mt-1 max-w-md leading-snug">Ideal for large institutions & networks. Volume discounts, custom onboarding, SSO and unlimited seats.</p>
                 </div>
-                <a href="mailto:support@scholarly.ai" className="shrink-0 px-4 py-2 rounded-lg bg-white text-neutral-900 text-[11px] font-bold uppercase tracking-wide hover:opacity-90 transition-opacity">Talk to sales</a>
+                <a href="mailto:support@sadhya.app" className="shrink-0 px-4 py-2 rounded-lg bg-white text-neutral-900 text-[11px] font-bold uppercase tracking-wide hover:opacity-90 transition-opacity">Talk to sales</a>
               </div>
             </div>
 
@@ -765,7 +765,7 @@ export default function Settings() {
 
         {tab === 'security' && (
           <div className="space-y-8">
-            <Section title="Sign-in method" desc="How you access your Scholarly account.">
+            <Section title="Sign-in method" desc="How you access your Sadhya account.">
               <div className="flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 px-4 py-3.5">
                 <div className="flex items-center gap-3">
                   <KeyRound className="w-5 h-5 text-slate-500 dark:text-gray-400" />
@@ -791,7 +791,7 @@ export default function Settings() {
               </button>
             </Section>
 
-            <Section title="Sessions" desc="Sign out of Scholarly on this device.">
+            <Section title="Sessions" desc="Sign out of Sadhya on this device.">
               <button onClick={handleSignOut} className="inline-flex items-center gap-2 px-4 py-2 text-[13px] font-semibold rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                 <LogOut className="w-4 h-4" /> Sign out
               </button>

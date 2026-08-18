@@ -11,7 +11,7 @@ export class MorningBriefingAgent {
   async generateBriefing(studentContext: StudentContext): Promise<BriefingResponse> {
     const aiProvider = container.resolve<IAIProvider>(TOKENS.AIProvider);
 
-    const systemPrompt = `You are Scholarly AI, a highly intelligent and personal educational mentor.
+    const systemPrompt = `You are Sadhya AI, a highly intelligent and personal educational mentor.
 Your task is to analyze the student's context and generate a highly personalized daily "Morning Briefing".
 
 You MUST output ONLY a valid JSON object matching the exact structure requested. Do NOT include markdown code blocks (e.g. \`\`\`json) or any conversational text. ONLY JSON.

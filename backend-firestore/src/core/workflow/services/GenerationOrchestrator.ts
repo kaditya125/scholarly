@@ -4,7 +4,7 @@ import { WorkflowEvent, WorkflowStage, WorkflowRequest } from '../types';
 import { AgentContext } from '../../agents/IAgent';
 import { TeacherAgent } from '../../agents/TeacherAgent';
 import { ResponseFormatter } from '../../agents/ResponseFormatter';
-import { buildScholarlySystemPrompt } from '../../../config/prompts';
+import { buildSadhyaSystemPrompt } from '../../../config/prompts';
 import { Telemetry } from '../../../lib/telemetry';
 import { env } from '../../../config/env';
 import { StudentContext } from '../../../types/studentContext.types';
@@ -89,7 +89,7 @@ export class GenerationOrchestrator {
     const hasNotebookContext = agentContext.retrievedContext !== 'No specific context found.'
       && agentContext.retrievedContext !== 'Placeholder RAG Text'
       && agentContext.retrievedContext.length > 50;
-    const baseSystemPrompt = buildScholarlySystemPrompt({
+    const baseSystemPrompt = buildSadhyaSystemPrompt({
       mode, studentContext, retrievedContext: agentContext.retrievedContext, hasNotebookContext,
     });
     const systemPrompt = this.applyDynamicPrompt(baseSystemPrompt, params);
@@ -178,7 +178,7 @@ ABSOLUTELY CRITICAL — this is your reasoning, NOT the answer:
 - Refer to topics by name only; never teach or define them here.
 - No numbered content, no worked examples, no summary of the material.
 - If the student attached a file, its extracted text is ALREADY provided to you inline — plan how you'll analyse that document. NEVER claim you cannot access, open or read files, and never pivot to unrelated material.
-The actual explanation belongs ONLY in the final answer that comes after this. Do NOT introduce yourself or mention being "Scholarly".`;
+The actual explanation belongs ONLY in the final answer that comes after this. Do NOT introduce yourself or mention being "Sadhya".`;
 
         const anyProvider = this.aiProvider as any;
         if (typeof anyProvider.generateStreamResponse === 'function') {
@@ -224,7 +224,7 @@ The actual explanation belongs ONLY in the final answer that comes after this. D
     };
 
     // ── Stage 6-9: Answer generation ───────────────────────────────────
-    yield { type: 'progress', stage: WorkflowStage.AGENT_EXECUTION, message: `Scholarly AI ${mode} mode composing the answer...` };
+    yield { type: 'progress', stage: WorkflowStage.AGENT_EXECUTION, message: `Sadhya AI ${mode} mode composing the answer...` };
 
     if (env.CHAT_FAST_ANSWER !== 'false') {
       // FAST PATH — single streaming pass straight from the reasoning provider (Grok,

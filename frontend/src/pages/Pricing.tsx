@@ -161,7 +161,7 @@ export default function Pricing() {
                     to="/help"
                     className="inline-flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13.5px] font-semibold hover:opacity-90 transition-opacity"
                   >
-                    Ask Scholarly Guide
+                    Ask Sadhya Guide
                   </Link>
                 </div>
               </div>

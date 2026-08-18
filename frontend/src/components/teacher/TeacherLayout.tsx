@@ -9,6 +9,7 @@ import { useAuth } from '../../lib/AuthContext';
 import { useTheme } from '../../lib/ThemeContext';
 import { teacherApi, type TeacherProfile } from '../../lib/api/teacher';
 import { cn } from '../../lib/utils';
+import { LogoMark as Mark } from '../brand/Logo';
 
 /**
  * The teacher workspace shell (Phase 3C).
@@ -88,15 +89,6 @@ const NAV: NavGroup[] = [
   },
 ];
 
-function Mark({ className = 'w-6 h-6' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#facc15" />
-      <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function FullScreenSpinner({ label }: { label: string }) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-[#faf9f7] dark:bg-[#0b0b0c]">
@@ -174,7 +166,7 @@ export default function TeacherLayout() {
     <nav aria-label="Teacher workspace" className="flex flex-col h-full">
       <div className="px-4 py-4 flex items-center gap-2.5">
         <Mark />
-        <span className="text-[15px] font-semibold tracking-[-0.02em]">Scholarly</span>
+        <span className="text-[15px] font-semibold tracking-[-0.02em]">Sadhya</span>
         <span className="ml-0.5 px-1.5 py-0.5 rounded-md text-[10.5px] font-semibold uppercase tracking-[0.06em] bg-[#c8e558] text-slate-900">
           Teach
         </span>

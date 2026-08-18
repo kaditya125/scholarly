@@ -60,7 +60,7 @@ describe('Content Pipeline Phase 9: Document Versioning & Content Lineage', () =
         tokenCount: 4500,
         sizeBytes: 102400,
         hash: 'sha256_v1_00001111222233334444555566667777',
-        storagePath: 'gs://scholarly-bucket/sources/v1/thermodynamics.pdf',
+        storagePath: 'gs://sadhya-bucket/sources/v1/thermodynamics.pdf',
         changeSummary: 'Initial document upload and pipeline processing',
         isActive: true,
       });

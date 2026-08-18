@@ -269,7 +269,7 @@ export default function StudentDashboard() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={handleGlobalChatKeyDown}
-              placeholder="Ask Scholarly AI: Solve homework, generate notes, explain concepts, build practice tests..." 
+              placeholder="Ask Sadhya AI: Solve homework, generate notes, explain concepts, build practice tests..." 
               className={cn(
                 "flex-1 bg-transparent border-none outline-none text-[12.5px] font-normal h-8.5 px-1 min-w-0",
                 isDarkMode ? "text-white placeholder:text-slate-500" : "text-slate-900 placeholder:text-slate-400"

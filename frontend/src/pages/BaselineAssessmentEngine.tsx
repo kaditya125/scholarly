@@ -83,7 +83,7 @@ export default function BaselineAssessmentEngine() {
           </div>
           <h3 className="text-base font-bold text-white">Initializing Adaptive Questions</h3>
           <p className="text-slate-400 text-xs leading-relaxed">
-            Scholarly is building your baseline adaptive question batch.
+            Sadhya is building your baseline adaptive question batch.
           </p>
           <button
             onClick={() => startAssessment()}
@@ -222,7 +222,7 @@ export default function BaselineAssessmentEngine() {
                 <h3 className="text-sm font-bold text-white">How confident are you with this answer?</h3>
               </div>
               <p className="text-xs text-slate-400 mb-4">
-                Scholarly uses your confidence estimation to calculate your Confidence Calibration & Cognitive Profile.
+                Sadhya uses your confidence estimation to calculate your Confidence Calibration & Cognitive Profile.
               </p>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">

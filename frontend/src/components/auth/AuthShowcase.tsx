@@ -7,11 +7,11 @@ import { ArrowLeft, ArrowRight, Star } from "lucide-react";
 const TESTIMONIALS = [
   {
     quote:
-      "Scholarly's AI tutor broke every tough concept down until it finally clicked — and the mock tests felt exactly like the real TRE.",
+      "Sadhya's AI tutor broke every tough concept down until it finally clicked — and the mock tests felt exactly like the real TRE.",
     name: "Priya Kumari",
     role: "TRE PRT Qualifier",
     org: "Patna, Bihar",
-    image: "https://picsum.photos/seed/scholarly-auth-a/1200/1600",
+    image: "https://picsum.photos/seed/sadhya-auth-a/1200/1600",
   },
   {
     quote:
@@ -19,7 +19,7 @@ const TESTIMONIALS = [
     name: "Amit Ranjan",
     role: "TRE TGT Aspirant",
     org: "Gaya, Bihar",
-    image: "https://picsum.photos/seed/scholarly-auth-b/1200/1600",
+    image: "https://picsum.photos/seed/sadhya-auth-b/1200/1600",
   },
   {
     quote:
@@ -27,7 +27,7 @@ const TESTIMONIALS = [
     name: "Sneha Verma",
     role: "TRE PGT Qualifier",
     org: "Muzaffarpur, Bihar",
-    image: "https://picsum.photos/seed/scholarly-auth-c/1200/1600",
+    image: "https://picsum.photos/seed/sadhya-auth-c/1200/1600",
   },
 ];
 

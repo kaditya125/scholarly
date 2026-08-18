@@ -12,7 +12,7 @@ import { db } from '../config/firebase';
  * 
  * Aggregates ALL student data before any AI prompt is generated.
  * This runs ONCE per workflow execution and provides the complete
- * student context that powers Scholarly AI's personalization.
+ * student context that powers Sadhya AI's personalization.
  */
 export class StudentContextService {
   private profileService: UserProfileService;

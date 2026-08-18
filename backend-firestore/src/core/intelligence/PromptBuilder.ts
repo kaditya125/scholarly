@@ -25,7 +25,7 @@ export interface BuiltPrompt {
   signals: string[];
 }
 
-const DIRECTIVE_HEADER = '## Adaptive Teaching Directives (Scholarly Intelligence Layer)';
+const DIRECTIVE_HEADER = '## Adaptive Teaching Directives (Sadhya Intelligence Layer)';
 
 /**
  * PromptBuilder (Task 4) — dynamically composes an adaptive DIRECTIVE BLOCK from the ExecutionPlan

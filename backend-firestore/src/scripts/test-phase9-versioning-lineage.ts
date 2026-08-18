@@ -57,7 +57,7 @@ async function runPhase9Verification() {
     tokenCount: 4500,
     sizeBytes: 102400,
     hash: 'sha256_v1_00001111222233334444555566667777',
-    storagePath: 'gs://scholarly-bucket/sources/v1/thermodynamics.pdf',
+    storagePath: 'gs://sadhya-bucket/sources/v1/thermodynamics.pdf',
     changeSummary: 'Initial document upload and pipeline processing',
     isActive: true,
   });
@@ -81,7 +81,7 @@ async function runPhase9Verification() {
     tokenCount: 5200,
     sizeBytes: 118000,
     hash: 'sha256_v2_88889999aaaabbbbccccddddeeeeffff',
-    storagePath: 'gs://scholarly-bucket/sources/v2/thermodynamics_revised.pdf',
+    storagePath: 'gs://sadhya-bucket/sources/v2/thermodynamics_revised.pdf',
     changeSummary: 'Added Carnot Engine solved numericals and diagrams',
     isActive: true,
   });
@@ -104,7 +104,7 @@ async function runPhase9Verification() {
     tokenCount: 5900,
     sizeBytes: 125000,
     hash: 'sha256_v3_123456789abcdef0123456789abcdef0',
-    storagePath: 'gs://scholarly-bucket/sources/v3/thermodynamics_final.pdf',
+    storagePath: 'gs://sadhya-bucket/sources/v3/thermodynamics_final.pdf',
     changeSummary: 'Integrated NCERT exemplar questions and formulas',
     isActive: true,
   });

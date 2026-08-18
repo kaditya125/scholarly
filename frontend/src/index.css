@@ -1,6 +1,11 @@
 /* One family for everything. The reference UI sets both chrome and generated prose in the
    same grotesque, with weight and size carrying the hierarchy rather than a second face. */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* The one exception to the single-family rule above: a script face used ONLY for the
+   handwritten brand tagline (components/brand/HandwrittenTagline.tsx). Caveat is real pen
+   handwriting rather than a formal calligraphic script, so it reads as a human aside next
+   to Inter instead of as wedding stationery. Nothing else may use it. */
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600&display=swap');
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
@@ -20,6 +25,9 @@
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* Brand tagline only — see the import note above. Falls back to the generic `cursive`
+     keyword, which is why the stack ends there rather than at a grotesque. */
+  --font-script: "Caveat", "Segoe Script", "Bradley Hand", cursive;
   /* Generated prose uses the same family as the UI — see the import note above. */
   --font-answer: "Inter", ui-sans-serif, system-ui, sans-serif;
 }

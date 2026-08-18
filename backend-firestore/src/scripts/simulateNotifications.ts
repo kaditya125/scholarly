@@ -17,7 +17,7 @@ async function simulate() {
     podcastId: 'pod_abc123',
     userId: MOCK_USER_ID,
     durationMs: 1200000,
-    fileUrl: 'https://scholarly.ai/audio.mp3'
+    fileUrl: 'https://sadhya.app/audio.mp3'
   } as any);
 
   // 2. Simulate AI classification of a critical alert

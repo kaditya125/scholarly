@@ -90,7 +90,7 @@ export class StudyCircleService {
       text,
       source,
       addedBy: uid,
-      addedByName: entry?.displayName || 'Scholarly learner',
+      addedByName: entry?.displayName || 'Sadhya learner',
       createdAt: Date.now(),
     };
     await studyCircleRepository.addKnowledge(item);
@@ -167,7 +167,7 @@ export class StudyCircleService {
         id: uuidv4(),
         groupId,
         askedBy: uid,
-        askedByName: asker?.displayName || 'Scholarly learner',
+        askedByName: asker?.displayName || 'Sadhya learner',
         question: q,
         answer: fullAnswer,
         createdAt: Date.now(),
@@ -184,7 +184,7 @@ export class StudyCircleService {
     return Promise.all(
       group.memberIds.map(async (uid) => ({
         uid,
-        displayName: nameByUid.get(uid) || 'Scholarly learner',
+        displayName: nameByUid.get(uid) || 'Sadhya learner',
         profile: await userProfileService.getProfile(uid),
       }))
     );

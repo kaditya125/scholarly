@@ -58,10 +58,10 @@ export function InteractiveDemo() {
              <Sparkles className="w-4 h-4" /> The Reasoning Engine
            </motion.div>
            <h2 className="text-4xl md:text-[52px] font-bold text-slate-900 dark:text-white tracking-tight leading-[1.1] mb-5">
-             Watch Scholarly <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500">Think</span>.
+             Watch Sadhya <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500">Think</span>.
            </h2>
            <p className="text-slate-500 dark:text-gray-400 text-[16px] max-w-xl mx-auto leading-relaxed">
-             Unlike standard AI, Scholarly plans its approach, searches a verified knowledge graph, and tailors the explanation to your mastery level.
+             Unlike standard AI, Sadhya plans its approach, searches a verified knowledge graph, and tailors the explanation to your mastery level.
            </p>
         </div>
 

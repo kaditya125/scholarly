@@ -1,5 +1,5 @@
 /**
- * Pilot Exam Seed Data for Scholarly Exam Intelligence
+ * Pilot Exam Seed Data for Sadhya Exam Intelligence
  * Contains verified official domains, authorities, and canonical syllabus structures.
  */
 

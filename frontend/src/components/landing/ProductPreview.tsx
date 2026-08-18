@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { Check, ChevronDown, BookText, NotebookPen, Camera, Paperclip, ArrowUp } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { LogoMark } from '../brand/Logo';
 
 /**
  * The hero product visual — a faithful recreation of the real /chat surface.
@@ -65,13 +66,10 @@ export default function ProductPreview() {
       <div className="relative rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#141416] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_40px_-12px_rgba(15,23,42,0.18)] dark:shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8)] overflow-hidden">
         {/* ── Window bar ──────────────────────────────────────────────────── */}
         <div className="flex items-center gap-2.5 px-4 sm:px-5 h-11 border-b border-slate-100 dark:border-white/[0.07]">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#facc15" />
-            <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <LogoMark className="w-[15px] h-[15px]" />
           {/* Chrome sits a step darker than the equivalent tokens in the real app: this is a
               marketing surface, and slate-400 on white lands under 3:1. */}
-          <span className="text-[12px] font-medium text-slate-500 dark:text-gray-400">Scholarly — AI chat</span>
+          <span className="text-[12px] font-medium text-slate-500 dark:text-gray-400">Sadhya — AI chat</span>
           <span className="ml-auto hidden sm:inline text-[11px] text-slate-500 dark:text-gray-400 tabular-nums">NEET · Class 12</span>
         </div>
 

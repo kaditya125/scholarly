@@ -66,7 +66,7 @@ async function main() {
   mockProvider.sentMessages = [];
   await whatsAppConversationRouter.routeMessage(testPhone, testName, 'hi');
   
-  if (mockProvider.sentMessages.length > 0 && mockProvider.sentMessages[0].body.includes('Welcome to *Scholarly AI*')) {
+  if (mockProvider.sentMessages.length > 0 && mockProvider.sentMessages[0].body.includes('Welcome to *Sadhya AI*')) {
     console.log('✅ Greeting Menu verification PASSED!');
   } else {
     console.error('❌ Greeting Menu verification FAILED!');

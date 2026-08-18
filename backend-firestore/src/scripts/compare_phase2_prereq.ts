@@ -15,7 +15,7 @@ import { container, TOKENS } from '../core/di/container';
 import { IAIProvider } from '../core/interfaces/IAIProvider';
 import { RetrievalService } from '../services/rag/retrieval.service';
 import { graphRetrievalService } from '../services/rag/graphRetrieval.service';
-import { buildScholarlySystemPrompt } from '../config/prompts';
+import { buildSadhyaSystemPrompt } from '../config/prompts';
 
 const DEFAULT_NOTEBOOK = 'ncert-c11-physics';
 const QUERY = 'What should I study before understanding momentum?';
@@ -46,7 +46,7 @@ async function buildVectorContext(retrieval: RetrievalService, notebookId: strin
 
 async function generate(ai: IAIProvider, retrievedContext: string): Promise<string> {
   const hasNotebookContext = retrievedContext.length > 50;
-  const systemPrompt = buildScholarlySystemPrompt({
+  const systemPrompt = buildSadhyaSystemPrompt({
     mode: 'TEACHER',
     retrievedContext: retrievedContext || 'No specific context found.',
     hasNotebookContext,

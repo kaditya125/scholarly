@@ -82,7 +82,7 @@ const DEFAULT_NOTIFICATIONS = [
     hoursAgo: 30
   },
   {
-    title: 'Welcome to Scholarly!',
+    title: 'Welcome to Sadhya!',
     body: 'Your account has been successfully created. Explore AI tutoring, notebooks, and adaptive learning.',
     category: 'system',
     type: 'welcome',

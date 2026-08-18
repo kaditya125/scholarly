@@ -4,7 +4,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 const DEFAULT_NOTIFICATIONS = [
   {
-    title: 'Welcome to Scholarly',
+    title: 'Welcome to Sadhya',
     body: 'Your account has been created successfully. Welcome to your AI-powered learning journey!',
     category: 'system',
     type: 'success',

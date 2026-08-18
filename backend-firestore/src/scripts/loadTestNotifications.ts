@@ -62,7 +62,7 @@ async function runLoadTest() {
               podcastId: `pod_load_${i+j}`,
               userId: `user_load_${i+j}`,
               durationMs: 1200000,
-              fileUrl: 'https://scholarly.ai/audio.mp3'
+              fileUrl: 'https://sadhya.app/audio.mp3'
             } as any)
           );
         }

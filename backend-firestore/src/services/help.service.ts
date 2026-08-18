@@ -4,7 +4,7 @@ import { RetrievalService } from './rag/retrieval.service';
 import { cacheService } from './cache.service';
 import { ChatMessage } from '../types';
 import { Telemetry } from '../lib/telemetry';
-import { SCHOLARLY_MASTER_KNOWLEDGE } from './knowledge/scholarlyKnowledge';
+import { SADHYA_MASTER_KNOWLEDGE } from './knowledge/sadhyaKnowledge';
 
 export interface HelpQueryRequest {
   sessionId: string;
@@ -108,7 +108,7 @@ export class HelpService {
     }
     
     // 2. Fast LLM Classification
-    const prompt = `You are the intent classifier for the public Ask Scholarly experience.
+    const prompt = `You are the intent classifier for the public Ask Sadhya experience.
 Analyze the query and return a valid JSON object.
 Use exactly this structure:
 {
@@ -340,7 +340,7 @@ Query: "${query}"`;
       links.push({
         title: 'Referral Program Terms',
         url: '/refer',
-        description: 'Guidelines on earning free months of Scholarly Pro through student invites'
+        description: 'Guidelines on earning free months of Sadhya Pro through student invites'
       });
     }
 
@@ -395,7 +395,7 @@ Query: "${query}"`;
         cta: { label: 'Connect to Live Agent', url: '#live-agent', type: 'primary' },
         relatedQuestions: [
           "What are your support hours?",
-          "Can I also email support@scholarly.ai?"
+          "Can I also email support@sadhya.app?"
         ]
       };
       return {
@@ -408,8 +408,8 @@ Query: "${query}"`;
     if (classification.intent === 'OUT_OF_SCOPE' && classification.confidence > 0.8) {
        const oosResponse: StructuredResponse = {
          type: 'text',
-         text: "I'm specifically designed to guide you through Scholarly's learning and teaching tools. Let me know what you'd like to explore!",
-         cta: { label: 'Explore Scholarly Features', url: '/signup', type: 'primary' }
+         text: "I'm specifically designed to guide you through Sadhya's learning and teaching tools. Let me know what you'd like to explore!",
+         cta: { label: 'Explore Sadhya Features', url: '/signup', type: 'primary' }
        };
        return {
          response: oosResponse,
@@ -429,16 +429,16 @@ Query: "${query}"`;
     }
 
     // 5. Response Generation with Strict Conversational Formatting
-    const prompt = `You are "Ask Scholarly", the official, friendly, and expert conversational guide for Scholarly.
+    const prompt = `You are "Ask Sadhya", the official, friendly, and expert conversational guide for Sadhya.
 
 PLATFORM MASTER KNOWLEDGE:
-${SCHOLARLY_MASTER_KNOWLEDGE}
+${SADHYA_MASTER_KNOWLEDGE}
 
 ADDITIONAL VERIFIED CONTEXT:
 ${contextStr || 'No additional custom documents retrieved.'}
 
 CONVERSATION HISTORY (Previous turns in this chat):
-${history.length > 0 ? history.map(m => `${m.role === 'user' ? 'User' : 'Ask Scholarly'}: ${m.content}`).join('\n\n') : 'No previous conversation.'}
+${history.length > 0 ? history.map(m => `${m.role === 'user' ? 'User' : 'Ask Sadhya'}: ${m.content}`).join('\n\n') : 'No previous conversation.'}
 
 USER'S LATEST MESSAGE:
 "${query}"
@@ -532,11 +532,11 @@ JSON SCHEMA:
     contextSummary?: string;
     history?: { role: string; content: string }[];
   }): Promise<{ reply: string }> {
-    const prompt = `You are ${request.agentName}, a senior human customer support specialist at Scholarly.
+    const prompt = `You are ${request.agentName}, a senior human customer support specialist at Sadhya.
 You are chatting live in real-time with a student or educator who requested human helpdesk assistance.
 
-Scholarly Platform Facts:
-${SCHOLARLY_MASTER_KNOWLEDGE}
+Sadhya Platform Facts:
+${SADHYA_MASTER_KNOWLEDGE}
 
 Context of user's previous inquiry:
 ${request.contextSummary || 'User transferred from AI assistant for personalized helpdesk support.'}

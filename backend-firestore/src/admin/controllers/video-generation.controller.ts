@@ -11,7 +11,7 @@ import { veoVideoService } from '../../services/ai/veo-video.service';
  *   GET  /admin/video/stream    -> proxy the finished mp4 from GCS to the browser
  *
  * Async by design so no single request exceeds the client's 30s timeout.
- * The stream proxy reads the GCS object with the scholarly-grok SA (which has
+ * The stream proxy reads the GCS object with the sadhya-grok SA (which has
  * objectAdmin on the Veo bucket) — the app's default Firebase creds can't.
  */
 const auth = new GoogleAuth({

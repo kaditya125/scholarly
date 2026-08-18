@@ -1,5 +1,5 @@
 /**
- * Scholarly AI — role model.
+ * Sadhya AI — role model.
  *
  * ── Why TWO claims rather than one ────────────────────────────────────────────
  * The existing admin RBAC (admin/middleware/rbac.middleware.ts, firestore.rules

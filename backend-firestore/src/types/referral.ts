@@ -9,7 +9,7 @@
  * up counts. `rewardRules` exists so this can be tightened later (e.g. reward only after
  * onboarding completes) without a schema change — the trigger just isn't wired to anything else
  * yet. See enrollment.service.ts's own note: "A referral is neither [invitation nor purchase]" —
- * it grants Scholarly access to nobody; the referrer already had an account, and the referred
+ * it grants Sadhya access to nobody; the referrer already had an account, and the referred
  * person still goes through ordinary signup. It only ever grants a Pro-days reward.
  *
  * ── Reward mechanism: Pro days, not a new currency ─────────────────────────────────────

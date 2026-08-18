@@ -1,5 +1,5 @@
 /**
- * Scholarly — Exam Intelligence Types
+ * Sadhya — Exam Intelligence Types
  * Canonical Data Models for Exam Master Registry, Cycles, Official Sources, and Versioned Syllabi.
  */
 

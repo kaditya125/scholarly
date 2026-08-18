@@ -17,18 +17,27 @@
 
 export const SITE = {
   /** Product name, used in copy and legal text. */
-  name: 'Scholarly',
+  name: 'Sadhya',
 
-  /** Public marketing domain, no protocol. TODO: confirm. */
-  domain: 'scholarly.ai',
-  url: 'https://scholarly.ai',
+  /**
+   * Brand line. Sadhya (साध्य) is Sanskrit for "that which is to be attained", so the
+   * tagline is the word's own definition — the name explains itself.
+   */
+  tagline: 'Every goal, attainable.',
+
+  /** One-line functional descriptor, for meta tags and app-store style listings. */
+  descriptor: 'AI-powered preparation for competitive exams.',
+
+  /** Public marketing domain, no protocol. TODO: confirm once DNS is pointed. */
+  domain: 'sadhya.app',
+  url: 'https://sadhya.app',
 
   /**
    * The registered legal entity that contracts with users and receives payments.
    * This MUST match the name registered with Razorpay or settlements will be held.
    * TODO: replace with the registered company name.
    */
-  legalEntity: 'Scholarly Technologies Private Limited',
+  legalEntity: 'Sadhya Technologies Private Limited',
 
   /** TODO: replace with the CIN / GSTIN you want shown publicly (or set to ''). */
   cin: '',
@@ -39,11 +48,11 @@ export const SITE = {
 
   /** TODO: replace with real, monitored inboxes. */
   email: {
-    support: 'support@scholarly.ai',
-    privacy: 'privacy@scholarly.ai',
-    legal: 'legal@scholarly.ai',
-    sales: 'sales@scholarly.ai',
-    security: 'security@scholarly.ai',
+    support: 'support@sadhya.app',
+    privacy: 'privacy@sadhya.app',
+    legal: 'legal@sadhya.app',
+    sales: 'sales@sadhya.app',
+    security: 'security@sadhya.app',
   },
 
   /** TODO: a reachable number. Razorpay requires one on the Contact page. */
@@ -70,11 +79,11 @@ export const SITE = {
    * icon, so there is never a dead link pointing at a profile that doesn't exist.
    */
   social: [
-    { name: 'X (Twitter)', href: 'https://x.com/scholarlyai', icon: 'x' },
-    { name: 'LinkedIn', href: 'https://www.linkedin.com/company/scholarlyai', icon: 'linkedin' },
-    { name: 'Instagram', href: 'https://www.instagram.com/scholarlyai', icon: 'instagram' },
-    { name: 'YouTube', href: 'https://www.youtube.com/@scholarlyai', icon: 'youtube' },
-    { name: 'GitHub', href: 'https://github.com/scholarlyai', icon: 'github' },
+    { name: 'X (Twitter)', href: 'https://x.com/sadhyalearn', icon: 'x' },
+    { name: 'LinkedIn', href: 'https://www.linkedin.com/company/sadhyalearn', icon: 'linkedin' },
+    { name: 'Instagram', href: 'https://www.instagram.com/sadhyalearn', icon: 'instagram' },
+    { name: 'YouTube', href: 'https://www.youtube.com/@sadhyalearn', icon: 'youtube' },
+    { name: 'GitHub', href: 'https://github.com/sadhyalearn', icon: 'github' },
   ] as const,
 
   /** Shown as "Last updated" on every legal page. Bump when you revise them. */

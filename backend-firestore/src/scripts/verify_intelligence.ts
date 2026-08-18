@@ -18,7 +18,7 @@ async function main() {
     targetExam: 'JEE Advanced',
     targetYear: 2027,
     isComplete: true,
-    email: 'verify_jee_student@scholarly.ai'
+    email: 'verify_jee_student@sadhya.app'
   });
   
   await db.collection('users').doc(MOCK_USER).collection('intelligence').doc('preferences').set({

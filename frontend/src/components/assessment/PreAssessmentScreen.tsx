@@ -51,7 +51,7 @@ export function PreAssessmentScreen({ isOpen, onClose, onStart, isLoading }: Pre
           </div>
 
           <p className="relative mt-3 text-sm md:text-base text-slate-300 leading-relaxed font-normal">
-            Before creating your personalized AI learning journey, Scholarly needs to understand your current strengths, weaknesses, confidence, and problem-solving ability.
+            Before creating your personalized AI learning journey, Sadhya needs to understand your current strengths, weaknesses, confidence, and problem-solving ability.
           </p>
 
           {/* 3 Highlight Cards */}

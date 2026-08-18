@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Sparkles, Target, LineChart, Check } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { LogoMark } from '../brand/Logo';
+import { HandwrittenTagline } from '../brand/HandwrittenTagline';
 
 /**
  * Shared split-screen shell for /signin and /signup.
@@ -17,31 +19,36 @@ import { cn } from '../../lib/utils';
  * product rather than like a separate marketing page.
  */
 /**
- * The app's actual mark — the same layered-stack SVG and amber the sidebar uses.
+ * The app's mark as a link home.
  *
  * Exported because every full-page flow outside the app shell (auth, onboarding) needs it,
  * and each one re-drawing its own is precisely how brands drift: the student onboarding
- * wizard had already invented a separate indigo graduation-cap lockup this way.
+ * wizard had already invented a separate indigo graduation-cap lockup this way. The mark
+ * itself now lives in components/brand/Logo.tsx — this only adds the link and hover.
  */
-export function BrandMark({ size = 26, className }: { size?: number; className?: string }) {
+export function BrandMark({
+  size = 26,
+  className,
+  withTagline = false,
+}: {
+  size?: number;
+  className?: string;
+  /** Adds the handwritten tagline beneath the wordmark. Off by default so tight
+   *  placements (a nav row, a collapsed sidebar) are unaffected. */
+  withTagline?: boolean;
+}) {
   return (
-    <Link to="/" className={cn('inline-flex items-center gap-2.5 w-fit group', className)}>
-      <svg
-        className="shrink-0 group-hover:scale-105 transition-transform"
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden
-      >
-        <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#facc15" />
-        <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-      <span className="text-[17px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">
-        Scholarly
-      </span>
-    </Link>
+    <span className={cn('inline-block w-fit', className)}>
+      <Link to="/" className="inline-flex items-center gap-2.5 w-fit group">
+        <LogoMark className="shrink-0 group-hover:scale-105 transition-transform" style={{ width: size, height: size }} />
+        <span className="text-[17px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">
+          Sadhya
+        </span>
+      </Link>
+      {withTagline && (
+        <HandwrittenTagline className="mt-0.5 flex text-[15px] text-[#8ea63a] dark:text-[#c8e558]" style={{ marginLeft: size + 10 }} />
+      )}
+    </span>
   );
 }
 
@@ -60,7 +67,7 @@ export function AuthShell({
     <div className="min-h-screen w-full flex bg-white dark:bg-[#0e0e0f]">
       {/* ── Form column ─────────────────────────────────────────────────────── */}
       <div className="w-full lg:w-[52%] flex flex-col px-6 sm:px-12 lg:px-16 xl:px-24 py-8">
-        <BrandMark />
+        <BrandMark withTagline />
 
         <div className="flex-1 flex items-center">
           <motion.div
@@ -83,7 +90,7 @@ export function AuthShell({
         </div>
 
         <p className="text-[12px] text-slate-400 dark:text-gray-600">
-          © {new Date().getFullYear()} Scholarly. All rights reserved.
+          © {new Date().getFullYear()} Sadhya. All rights reserved.
         </p>
       </div>
 

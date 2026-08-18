@@ -10,6 +10,7 @@ import { AIMemorySummary } from '../components/welcome/AIMemorySummary';
 import { AIRecommendations } from '../components/welcome/AIRecommendations';
 import { PlannerSnapshot, NotebookSnapshot } from '../components/welcome/PlannerAndNotebookSnapshot';
 import { MotivationBanner } from '../components/welcome/MotivationBanner';
+import { LogoMark } from '../components/brand/Logo';
 import { Bot, Loader2, LogOut } from 'lucide-react';
 import { signOut, auth } from '../lib/firebase';
 
@@ -65,7 +66,7 @@ export default function WelcomeBriefing() {
               <Bot className="w-20 h-20 text-indigo-500 relative z-10 animate-bounce" style={{ animationDuration: '2s' }} />
             </div>
             <h2 className="mt-8 text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-teal-400">
-              Scholarly AI is thinking...
+              Sadhya AI is thinking...
             </h2>
             <p className="mt-3 text-slate-500 dark:text-slate-400 font-medium animate-pulse">
               Preparing your personalized daily briefing
@@ -86,11 +87,8 @@ export default function WelcomeBriefing() {
             {/* Header Actions */}
             <div className="flex justify-between items-center mb-8">
               <div className="flex items-center gap-2">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#facc15"/>
-                  <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span className="font-bold text-lg tracking-tight uppercase">Scholarly AI</span>
+                <LogoMark className="w-6 h-6" />
+                <span className="font-bold text-lg tracking-tight uppercase">Sadhya AI</span>
               </div>
               <div className="flex items-center gap-4">
                 <button onClick={handleSkip} className="text-sm font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">

@@ -109,7 +109,7 @@ export default function Refunds() {
                   'Part-used periods outside the 7-day window — we don’t pro-rate a month or a year you chose to buy, though you keep access to the end of it.',
                   'Renewals you forgot to cancel where we gave notice before charging, beyond the correction window in section 3.',
                   'Accounts terminated for a breach of our terms — for example sharing credentials or misusing the service.',
-                  'Dissatisfaction with an examination result, rank or admission outcome. Scholarly is a study aid and makes no promise about results.',
+                  'Dissatisfaction with an examination result, rank or admission outcome. Sadhya is a study aid and makes no promise about results.',
                 ]}
               />
               <P>

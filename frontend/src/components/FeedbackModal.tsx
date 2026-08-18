@@ -38,7 +38,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
 
           <div className="px-5 pb-5">
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-              Help us make Scholarly better for students like you!
+              Help us make Sadhya better for students like you!
             </p>
 
             {/* Category */}

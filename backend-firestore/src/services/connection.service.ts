@@ -49,7 +49,7 @@ export class ConnectionService {
    * onboarding profile (matching signals), then upserts it. Returns the fresh entry.
    */
   async syncDirectory(uid: string): Promise<UserDirectoryEntry> {
-    let displayName = 'Scholarly learner';
+    let displayName = 'Sadhya learner';
     let photoURL: string | undefined;
     let email: string | undefined;
 
@@ -161,7 +161,7 @@ export class ConnectionService {
     return (
       map.get(id) ?? {
         uid: id,
-        displayName: 'Scholarly learner',
+        displayName: 'Sadhya learner',
         subjects: [],
         weakAreas: [],
         updatedAt: 0,

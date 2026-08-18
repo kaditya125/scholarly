@@ -57,7 +57,7 @@ export class WebhooksController {
       const token = req.query['hub.verify_token'];
       const challenge = req.query['hub.challenge'];
 
-      const expectedToken = env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || 'scholarly_wa_secret';
+      const expectedToken = env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || 'sadhya_wa_secret';
 
       if (mode && token) {
         if (mode === 'subscribe' && token === expectedToken) {

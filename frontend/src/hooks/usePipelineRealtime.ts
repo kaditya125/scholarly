@@ -2,7 +2,7 @@
  * usePipelineRealtime Hook
  * Phase 6: Real-Time Document Processing SSE Consumer
  * 
- * Reuses existing SSE streaming infrastructure in Scholarly.
+ * Reuses existing SSE streaming infrastructure in Sadhya.
  * Provides live stage progression, instant snapshot hydration across page refreshes
  * and reconnects, cancellation, and retry capabilities.
  */

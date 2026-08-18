@@ -56,7 +56,7 @@ function bootstrapErrorMessage(err: any, chosen: ProductRole): string {
     return 'Something went wrong on our side while setting up your account. Please try again in a moment.';
   }
   if (!err?.response) {
-    return 'We could not reach Scholarly. Check your internet connection and try again.';
+    return 'We could not reach Sadhya. Check your internet connection and try again.';
   }
   return 'We could not finish setting up your account. Please try again.';
 }
@@ -164,7 +164,7 @@ export default function Signup() {
     return (
       <AuthShell
         title="Create your account"
-        subtitle="First — tell us how you'll be using Scholarly."
+        subtitle="First — tell us how you'll be using Sadhya."
         footer={
           <>
             Already have an account? <FlourishLink to="/signin">Sign in</FlourishLink>

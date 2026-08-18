@@ -49,7 +49,7 @@ export default function ReferralProgram() {
               </h1>
               <p className="mt-5 text-[16px] sm:text-[17.5px] leading-relaxed text-slate-500 dark:text-gray-400">
                 Whether you're a student looking for free Pro access or a teacher building your
-                network, the Scholarly referral program rewards you every time you bring a friend aboard.
+                network, the Sadhya referral program rewards you every time you bring a friend aboard.
               </p>
             </div>
           </Reveal>
@@ -117,7 +117,7 @@ export default function ReferralProgram() {
                   </span>
                   <h3 className="mt-3 text-[22px] font-semibold">Weekly Payouts</h3>
                   <p className="mt-3 text-[14.5px] leading-relaxed text-slate-500 dark:text-gray-400">
-                    Invite peers to teach on Scholarly. For every successful teacher signup and verification,
+                    Invite peers to teach on Sadhya. For every successful teacher signup and verification,
                     you earn a cash reward. Payouts are automatically processed weekly directly to your bank account via RazorpayX.
                   </p>
                   <ul className="mt-6 space-y-2 text-[13.5px] text-slate-600 dark:text-gray-300">

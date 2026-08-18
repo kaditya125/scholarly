@@ -173,7 +173,7 @@ export class GroupChannelService {
       senders[e.uid] = { uid: e.uid, displayName: e.displayName, photoURL: e.photoURL };
     });
     senderIds.forEach((id) => {
-      if (!senders[id]) senders[id] = { uid: id, displayName: 'Scholarly learner' };
+      if (!senders[id]) senders[id] = { uid: id, displayName: 'Sadhya learner' };
     });
 
     return { messages, hasMore, senders };
@@ -303,7 +303,7 @@ export class GroupChannelService {
       senders[e.uid] = { uid: e.uid, displayName: e.displayName, photoURL: e.photoURL };
     });
     senderIds.forEach((id) => {
-      if (!senders[id]) senders[id] = { uid: id, displayName: 'Scholarly learner' };
+      if (!senders[id]) senders[id] = { uid: id, displayName: 'Sadhya learner' };
     });
     return { messages, senders };
   }

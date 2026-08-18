@@ -1,4 +1,4 @@
-/* k6 load test for the Scholarly chat + read endpoints.
+/* k6 load test for the Sadhya chat + read endpoints.
  *
  * Run against STAGING only (never prod). Requires the k6 binary (https://k6.io) and:
  *   BASE_URL   — e.g. https://staging.example.com

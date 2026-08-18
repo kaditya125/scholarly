@@ -79,7 +79,7 @@ export class TemplateEngine {
         body: 'Listen to the new podcast generated for {{concept}}.'
       },
       sms: {
-        body: 'Scholarly: Your podcast on {{concept}} is ready. Listen here: {{link}}'
+        body: 'Sadhya: Your podcast on {{concept}} is ready. Listen here: {{link}}'
       },
       whatsapp: {
         whatsappTemplateName: 'podcast_ready_v1',
@@ -158,11 +158,11 @@ export class TemplateEngine {
         body: 'Action required: Your payment of {{amount}} failed.'
       },
       email: {
-        title: 'Urgent: Payment Failed for Scholarly AI',
+        title: 'Urgent: Payment Failed for Sadhya AI',
         body: '<p>Your payment of {{amount}} failed. Please update your billing details to maintain premium access.</p>'
       },
       sms: {
-        body: 'Scholarly Alert: Your payment of {{amount}} failed. Please update your billing details immediately.'
+        body: 'Sadhya Alert: Your payment of {{amount}} failed. Please update your billing details immediately.'
       },
       whatsapp: {
         whatsappTemplateName: 'payment_failed_alert',
@@ -183,11 +183,11 @@ export class TemplateEngine {
         body: 'New login detected from {{device}}.'
       },
       email: {
-        title: '[Critical] Security Alert for Scholarly AI',
+        title: '[Critical] Security Alert for Sadhya AI',
         body: '<p>A new login was detected from device <strong>{{device}}</strong> in <strong>{{location}}</strong>. If this was not you, change your password immediately.</p>'
       },
       sms: {
-        body: 'Scholarly: Warning! New login from {{device}} in {{location}}. If this was not you, change your password.'
+        body: 'Sadhya: Warning! New login from {{device}} in {{location}}. If this was not you, change your password.'
       }
     });
   }

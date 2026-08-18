@@ -1,4 +1,4 @@
-// Scholarly Backend Server
+// Sadhya Backend Server
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';

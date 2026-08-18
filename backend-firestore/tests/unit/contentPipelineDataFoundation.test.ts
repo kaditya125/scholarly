@@ -126,7 +126,7 @@ describe('Content Pipeline Phase 1A: Data Foundation', () => {
     });
 
     it('computes SHA-256 hashes accurately', () => {
-      const hash = generateSha256Hash('Scholarly AI Education');
+      const hash = generateSha256Hash('Sadhya AI Education');
       expect(hash).toHaveLength(64);
       expect(isValidSha256(hash)).toBe(true);
     });

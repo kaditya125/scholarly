@@ -114,7 +114,7 @@ export default function AIStudio() {
   const downloadImage = () => {
     if (!imgUrl) return;
     const a = document.createElement("a");
-    a.href = imgUrl; a.download = `scholarly-image-${Date.now()}.png`; a.click();
+    a.href = imgUrl; a.download = `sadhya-image-${Date.now()}.png`; a.click();
   };
 
   const busy = lesson ? !isTerminal(lesson.status) : false;

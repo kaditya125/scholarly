@@ -66,7 +66,7 @@ const STATUS_VIEW: Record<
   },
   rejected: {
     label: 'Not verified',
-    hint: 'Verification was not approved. You keep full access to Scholarly as a learner.',
+    hint: 'Verification was not approved. You keep full access to Sadhya as a learner.',
     icon: ShieldAlert,
     tone: 'warn',
   },
@@ -97,7 +97,7 @@ const CAPABILITY_VIEW: { name: CapabilityName; label: string; built: boolean }[]
   { name: 'useAI', label: 'Use the AI assistant', built: true },
   { name: 'createPrivateContent', label: 'Create notebooks and private material', built: true },
   { name: 'editTeacherProfile', label: 'Edit your teaching profile', built: true },
-  { name: 'connectPeers', label: 'Connect with other people on Scholarly', built: true },
+  { name: 'connectPeers', label: 'Connect with other people on Sadhya', built: true },
   { name: 'publishPublicly', label: 'Publish material publicly', built: false },
   { name: 'createClass', label: 'Create classes and batches', built: false },
   { name: 'inviteStudents', label: 'Invite students', built: false },

@@ -13,7 +13,7 @@ const examSuites = [
 async function runComprehensiveBenchmark() {
   bootstrapDI();
   console.log("==========================================");
-  console.log("🏫 SCHOLARLY AI: COMPREHENSIVE BENCHMARK");
+  console.log("🏫 SADHYA AI: COMPREHENSIVE BENCHMARK");
   console.log("==========================================\n");
 
   const { WorkflowEngine } = await import('../core/workflow/WorkflowEngine');

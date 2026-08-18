@@ -5,7 +5,7 @@
  *
  * TEACHER_ECOSYSTEM_PLAN.md §"Open decisions I need from you" lists three questions this file
  * stands in for until they're actually answered:
- *   1. Principal or agent? Determines whether Scholarly or the teacher is the seller of record —
+ *   1. Principal or agent? Determines whether Sadhya or the teacher is the seller of record —
  *      which in turn determines GST liability, invoicing, and TDS handling. This is a CA
  *      question with real compliance consequences, not something to guess. `CLASS_TAX_RATE` is
  *      set to 0 specifically BECAUSE that decision hasn't been made — deducting a guessed GST

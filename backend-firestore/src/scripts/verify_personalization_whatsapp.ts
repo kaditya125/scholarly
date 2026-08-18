@@ -17,7 +17,7 @@ async function main() {
     targetExam: 'JEE Advanced',
     targetYear: 2027,
     isComplete: true,
-    email: 'persona_student@scholarly.ai'
+    email: 'persona_student@sadhya.app'
   });
   
   await db.collection('users').doc(MOCK_USER).collection('intelligence').doc('preferences').set({
@@ -94,7 +94,7 @@ async function main() {
   const mediaResult = await waProvider.sendMediaMessage(
     '+15550199',
     'document',
-    'https://scholarly.ai/assets/pdf/quantum_mechanics_notes.pdf',
+    'https://sadhya.app/assets/pdf/quantum_mechanics_notes.pdf',
     'Your Quantum Mechanics study notes are ready!',
     'Quantum_Mechanics_Notes.pdf'
   );

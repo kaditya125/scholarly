@@ -236,7 +236,7 @@ export default function HowItWorks() {
             >
               {activeRole === 'student' ? (
                 <>
-                  See how Scholarly <br className="hidden sm:block" />
+                  See how Sadhya <br className="hidden sm:block" />
                   <span className="relative inline-block">
                     transforms
                     <svg
@@ -277,7 +277,7 @@ export default function HowItWorks() {
             >
               {activeRole === 'student'
                 ? 'Watch the interactive platform demo below to see how our curriculum-tuned AI, smart notebooks, verified teacher classrooms, and audio podcasts unite in one seamless flow.'
-                : 'See how the Scholarly Educator OS cuts preparation time by 80%, runs crystal-clear interactive live classes, auto-grades assignments, and delivers automated weekly RazorpayX bank payouts.'}
+                : 'See how the Sadhya Educator OS cuts preparation time by 80%, runs crystal-clear interactive live classes, auto-grades assignments, and delivers automated weekly RazorpayX bank payouts.'}
             </motion.p>
           </div>
         </section>
@@ -296,7 +296,7 @@ export default function HowItWorks() {
                 <span className="w-2 h-2 rounded-full bg-white/20" />
                 <span className="w-2 h-2 rounded-full bg-white/20" />
                 <span className="ml-2 font-mono text-[10.5px] text-slate-500 hidden sm:inline">
-                  scholarly.app · {activeRole === 'teacher' ? 'educator OS' : 'platform tour'}
+                  sadhya.app · {activeRole === 'teacher' ? 'educator OS' : 'platform tour'}
                 </span>
               </div>
               <div className="flex items-center gap-1.5 font-medium text-[11px] text-slate-400">
@@ -840,8 +840,8 @@ export default function HowItWorks() {
               </h2>
               <p className="text-[15px] text-slate-500 dark:text-gray-400 mt-2.5 leading-relaxed">
                 {activeRole === 'teacher'
-                  ? 'Stop juggling Zoom, Google Drive, WhatsApp groups, and manual spreadsheet grading. Scholarly connects your entire teaching business in one unified dashboard.'
-                  : 'Generic chatbots hallucinate and give surface-level answers. Scholarly anchors every response to verified syllabus standards and your actual teachers.'}
+                  ? 'Stop juggling Zoom, Google Drive, WhatsApp groups, and manual spreadsheet grading. Sadhya connects your entire teaching business in one unified dashboard.'
+                  : 'Generic chatbots hallucinate and give surface-level answers. Sadhya anchors every response to verified syllabus standards and your actual teachers.'}
               </p>
             </div>
 
@@ -936,7 +936,7 @@ export default function HowItWorks() {
               The Difference
             </span>
             <h2 className="text-[26px] sm:text-[34px] lg:text-[38px] font-semibold tracking-[-0.03em] text-slate-900 dark:text-white mt-2 leading-[1.15]">
-              {activeRole === 'teacher' ? 'Why educators choose Scholarly.' : 'Why students switch to Scholarly.'}
+              {activeRole === 'teacher' ? 'Why educators choose Sadhya.' : 'Why students switch to Sadhya.'}
             </h2>
           </div>
 
@@ -949,25 +949,25 @@ export default function HowItWorks() {
                     {activeRole === 'teacher' ? 'Fragmented Tools (Zoom + WhatsApp)' : 'Generic AI (ChatGPT)'}
                   </th>
                   <th className="p-4 sm:p-5 font-bold text-slate-900 dark:text-[#c8e558] bg-[#c8e558]/10 dark:bg-[#c8e558]/5">
-                    Scholarly
+                    Sadhya
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/[0.06]">
                 {(activeRole === 'teacher'
                   ? [
-                      { feature: 'Lesson & Slide Preparation', traditional: 'Manual PowerPoint building (3-4 hrs)', scholarly: 'AI Lesson Studio generates decks in 2 mins' },
-                      { feature: 'Live Class & Recordings', traditional: 'Separate Zoom link & manual Drive uploads', scholarly: 'Integrated live lectures with auto-archived cloud HD' },
-                      { feature: 'Homework & Assignment Grading', traditional: 'Manual PDF checking & message replies', scholarly: 'Automated rubric grading with 1-click publishing' },
-                      { feature: 'Revenue Collection & Payouts', traditional: 'Manual UPI screenshots & followups', scholarly: 'Automated weekly bank settlements via RazorpayX' },
-                      { feature: 'Student Doubt Resolution', traditional: 'Overwhelmed WhatsApp chat groups', scholarly: 'Dedicated doubt queue & 24/7 AI tutor copilot' },
+                      { feature: 'Lesson & Slide Preparation', traditional: 'Manual PowerPoint building (3-4 hrs)', sadhya: 'AI Lesson Studio generates decks in 2 mins' },
+                      { feature: 'Live Class & Recordings', traditional: 'Separate Zoom link & manual Drive uploads', sadhya: 'Integrated live lectures with auto-archived cloud HD' },
+                      { feature: 'Homework & Assignment Grading', traditional: 'Manual PDF checking & message replies', sadhya: 'Automated rubric grading with 1-click publishing' },
+                      { feature: 'Revenue Collection & Payouts', traditional: 'Manual UPI screenshots & followups', sadhya: 'Automated weekly bank settlements via RazorpayX' },
+                      { feature: 'Student Doubt Resolution', traditional: 'Overwhelmed WhatsApp chat groups', sadhya: 'Dedicated doubt queue & 24/7 AI tutor copilot' },
                     ]
                   : [
-                      { feature: 'Curriculum-Aligned Reasoning', traditional: 'Generic web summaries', scholarly: 'Strict NCERT, NEET & JEE syllabus alignment' },
-                      { feature: 'Source Citations', traditional: 'Unverified or missing links', scholarly: 'Page-level citations from official textbooks' },
-                      { feature: 'Live Teacher Classrooms', traditional: 'No human educators', scholarly: 'Interactive classes & exclusive teacher notes' },
-                      { feature: 'Audio Explainer Generation', traditional: 'Text-to-speech robot monotone', scholarly: 'Dynamic 2-voice conversational podcasts' },
-                      { feature: 'Adaptive Mock Tests', traditional: 'Static text prompts', scholarly: 'Real pattern timer, ranking & marks breakdown' },
+                      { feature: 'Curriculum-Aligned Reasoning', traditional: 'Generic web summaries', sadhya: 'Strict NCERT, NEET & JEE syllabus alignment' },
+                      { feature: 'Source Citations', traditional: 'Unverified or missing links', sadhya: 'Page-level citations from official textbooks' },
+                      { feature: 'Live Teacher Classrooms', traditional: 'No human educators', sadhya: 'Interactive classes & exclusive teacher notes' },
+                      { feature: 'Audio Explainer Generation', traditional: 'Text-to-speech robot monotone', sadhya: 'Dynamic 2-voice conversational podcasts' },
+                      { feature: 'Adaptive Mock Tests', traditional: 'Static text prompts', sadhya: 'Real pattern timer, ranking & marks breakdown' },
                     ]
                 ).map((row) => (
                   <tr key={row.feature} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.01]">
@@ -977,7 +977,7 @@ export default function HowItWorks() {
                     </td>
                     <td className="p-4 sm:p-5 font-semibold text-slate-900 dark:text-white bg-[#c8e558]/10 dark:bg-[#c8e558]/5 flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-[#8ba32b] dark:text-[#c8e558] shrink-0" />
-                      <span>{row.scholarly}</span>
+                      <span>{row.sadhya}</span>
                     </td>
                   </tr>
                 ))}
@@ -1017,7 +1017,7 @@ export default function HowItWorks() {
                 className="w-full sm:w-auto inline-flex items-center justify-center h-12 px-6 rounded-xl border border-slate-200 dark:border-white/20 bg-white/90 dark:bg-white/[0.04] hover:bg-slate-50 dark:hover:bg-white/10 text-slate-700 dark:text-white font-semibold text-[14px] transition-colors shadow-xs"
               >
                 <Bot className="w-4 h-4 mr-2 text-[#8ba32b] dark:text-[#c8e558]" />
-                {activeRole === 'teacher' ? 'Ask Educator Support' : 'Ask Scholarly AI Guide'}
+                {activeRole === 'teacher' ? 'Ask Educator Support' : 'Ask Sadhya AI Guide'}
               </Link>
             </div>
           </div>
