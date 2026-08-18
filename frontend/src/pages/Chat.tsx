@@ -247,6 +247,29 @@ export default function Chat() {
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const recognitionRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  /*
+   * Grow the composer to fit what has been typed, up to a cap.
+   *
+   * The textarea is `rows={1}` with `resize-none` and nothing ever changed its height,
+   * so it stayed one line tall no matter how much was typed — everything past the first
+   * line was scrolled out of view with no way to see it. The `max-h-[200px]` on the
+   * element was inert for the same reason: nothing grew it far enough to matter.
+   *
+   * Keyed on `input` rather than an onChange handler so programmatic writes resize too —
+   * clicking a follow-up suggestion, quoting a reply, or restoring a draft all set state
+   * directly and would otherwise leave the box the wrong size.
+   *
+   * `height = 'auto'` first is required: scrollHeight only reports the content height
+   * when the element is not already stretched to the previous value.
+   */
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+  }, [input]);
 
   // ─── Empty-state prompt cards ──────────────────────────────────────────────
   const activePromptPool = getPromptPoolForType(typeParam, isTeacher);
@@ -1380,7 +1403,8 @@ export default function Chat() {
               )}
 
               <div className="relative w-full">
-                <textarea 
+                <textarea
+                  ref={textareaRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -1401,7 +1425,7 @@ export default function Chat() {
                     'Ask whatever you want...'
                   }
                   maxLength={MAX_CHARS}
-                  className="w-full bg-transparent text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 px-4 pt-1 pb-2 min-h-[46px] max-h-[200px] outline-none resize-none text-[14.5px] leading-relaxed"
+                  className="w-full bg-transparent text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 px-4 pt-2.5 pb-2 min-h-[46px] max-h-[200px] overflow-y-auto outline-none resize-none text-[14.5px] leading-relaxed break-words"
                   rows={1}
                   disabled={loadingHistory}
                 />
