@@ -43,8 +43,11 @@ export const SITE = {
   cin: '',
   gstin: '',
 
-  /** Where disputes are heard. Used in the Terms' governing-law clause. TODO: confirm. */
-  jurisdiction: 'Bengaluru, Karnataka, India',
+  /**
+   * Where disputes are heard. Used in the Terms' governing-law clause.
+   * Follows the registered office below — moved with it from Bengaluru to Noida.
+   */
+  jurisdiction: 'Noida, Uttar Pradesh, India',
 
   /** TODO: replace with real, monitored inboxes. */
   email: {
@@ -55,19 +58,19 @@ export const SITE = {
     security: 'security@sadhya.app',
   },
 
-  /** TODO: a reachable number. Razorpay requires one on the Contact page. */
-  phone: '+91 80 4718 2200',
+  /** Reachable number, shown on the Contact page (Razorpay requires one). */
+  phone: '+91 91022 02267',
 
   /** Support coverage shown on the Contact page. TODO: confirm your real hours. */
   supportHours: 'Monday–Saturday, 10:00–19:00 IST',
 
-  /** TODO: replace with the registered office address. */
+  /** TODO: confirm the PIN code — it is the one part of this not supplied directly. */
   address: {
-    line1: 'Level 4, Prestige Tech Platina',
-    line2: 'Marathahalli–Sarjapur Outer Ring Road',
-    city: 'Bengaluru',
-    state: 'Karnataka',
-    postalCode: '560103',
+    line1: 'Tech Zone IV',
+    line2: 'Sector 135',
+    city: 'Noida',
+    state: 'Uttar Pradesh',
+    postalCode: '201304',
     country: 'India',
   },
 
