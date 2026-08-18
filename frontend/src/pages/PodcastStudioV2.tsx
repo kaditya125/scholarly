@@ -488,10 +488,17 @@ export default function PodcastStudioV2({ onClose, onOpenEpisode }: PodcastStudi
           </div>
         </div>
 
-        {/* Panes */}
-        <div className="flex-1 flex overflow-hidden min-h-0">
+        {/*
+          Panes. Stacked on phones, side-by-side from lg: up.
+
+          These used to be an unconditional horizontal flex with a 384px `w-96 flex-shrink-0`
+          transcript beside it. On a 375px phone the transcript alone is wider than the
+          viewport and refuses to shrink, so the conversation pane — the actual product —
+          was crushed to roughly zero width.
+        */}
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
           {/* Center — conversation */}
-          <div className="flex-1 flex flex-col overflow-hidden min-h-0 border-r border-slate-200/80 dark:border-white/10">
+          <div className="flex-1 flex flex-col overflow-hidden min-h-0 border-b lg:border-b-0 lg:border-r border-slate-200/80 dark:border-white/10">
             <div className="flex-1 overflow-hidden">
               {activeView === 'tts' ? (
                 <TextToSpeechView />
@@ -521,9 +528,10 @@ export default function PodcastStudioV2({ onClose, onOpenEpisode }: PodcastStudi
             </div>
           </div>
 
-          {/* Right — transcript */}
+          {/* Right — transcript. Full width with a bounded 45% height when stacked, so both
+              panes stay usable; the original fixed 384px column returns from lg: up. */}
           {activeView === 'podcast' && isTranscriptExpanded && (
-            <div className="w-96 flex flex-col flex-shrink-0 bg-white dark:bg-[#23262b]">
+            <div className="w-full h-[45%] lg:w-96 lg:h-auto flex flex-col flex-shrink-0 min-h-0 bg-white dark:bg-[#23262b]">
               <div className="h-12 px-4 flex items-center gap-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <div
                   className={cn(
