@@ -11,6 +11,7 @@ import {
   ProgressTrendPoint,
 } from '../../types/quizAttempt.types';
 import { QuizQuestion } from './quizGenerator.service';
+import type { StoredQuizQuestion } from '../../types/quizAttempt.types';
 import { UserStatsService } from '../userStats.service';
 import { UserStatsRepository } from '../../repositories/userStats.repository';
 import { PlannerService } from '../planner.service';
@@ -50,7 +51,12 @@ export class QuizAttemptsService {
   private planner = new PlannerService();
 
   /** Persist a freshly generated quiz as an in-progress attempt. */
-  async createFromQuestions(userId: string, questions: QuizQuestion[], meta: CreateAttemptMeta): Promise<QuizAttempt> {
+  /**
+   * Accepts the STORED shape rather than only freshly-generated questions, so a class assignment
+   * can replay its fixed question set (already StoredQuizQuestion[]) through the same path.
+   * QuizQuestion is a strict superset, so generator output still satisfies this.
+   */
+  async createFromQuestions(userId: string, questions: StoredQuizQuestion[], meta: CreateAttemptMeta): Promise<QuizAttempt> {
     const now = new Date().toISOString();
     const attempt: QuizAttempt = {
       id: `qa_${uuidv4()}`,
@@ -68,6 +74,12 @@ export class QuizAttemptsService {
         options: q.options,
         correctAnswerIndex: q.correctAnswerIndex,
         explanation: q.explanation,
+        // Canonical identity must survive denormalisation — dropping it here would strip the
+        // evidence of its syllabus location at the exact moment it becomes student history.
+        syllabusNodeId: q.syllabusNodeId,
+        syllabusId: q.syllabusId,
+        cycleId: q.cycleId,
+        identityStatus: q.identityStatus,
       })),
       totalQuestions: questions.length,
       durationMinutes: meta.durationMinutes || DEFAULT_DURATION_MIN,
