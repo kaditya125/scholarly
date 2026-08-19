@@ -84,6 +84,80 @@ export class BaselineAssessmentService {
     return { questions, isComplete };
   }
 
+
+  /**
+   * ── Baseline submission state machine ──────────────────────────────────────────────────────
+   *
+   *   NOT_SUBMITTED → PROCESSING → COMPLETED
+   *                        └──────→ FAILED → (retryable)
+   *
+   * Enforces the invariant: ONE logical baseline submission produces at most one attempt and one
+   * durable graded result, even when requests race or a process dies mid-flight.
+   *
+   * The claim is a Firestore transaction, deliberately NOT get()-then-set(): that pattern is what
+   * silently dropped mastery evidence earlier in this project, and two simultaneous submissions
+   * would both read NOT_SUBMITTED and both proceed to grade.
+   *
+   * RECOVERY RULE (the subtle part): a stale PROCESSING claim is never reclaimed merely because a
+   * timer expired. A crashed worker may already have written a durable graded result, so we check
+   * for that output FIRST and reconcile to COMPLETED if it exists. Only a stale claim with NO
+   * durable result may be reclaimed — otherwise recovery would produce the duplicate the state
+   * machine exists to prevent.
+   */
+  private async claimSubmission(userId: string): Promise<{
+    outcome: 'CLAIMED' | 'ALREADY_PROCESSING' | 'ALREADY_COMPLETED';
+    attemptId: string | null;
+    existingResult?: any;
+  }> {
+    const docRef = db.collection('users').doc(userId).collection('assessments').doc('baselineSession');
+    const STALE_MS = 5 * 60 * 1000;
+
+    return db.runTransaction(async (tx) => {
+      const snap = await tx.get(docRef);
+      const data: any = snap.exists ? snap.data() : null;
+      const now = Date.now();
+
+      // Durable output is the authority, ahead of any state flag: if a graded result exists the
+      // submission is done regardless of what the flag says (e.g. a crash before COMPLETED).
+      if (data?.gradedResult) {
+        if (data.submissionState !== 'COMPLETED') {
+          tx.set(docRef, { submissionState: 'COMPLETED', completedAt: data.completedAt || now }, { merge: true });
+        }
+        return { outcome: 'ALREADY_COMPLETED' as const, attemptId: data.attemptId || null, existingResult: data.gradedResult };
+      }
+
+      if (data?.submissionState === 'PROCESSING') {
+        const startedAt = data.processingStartedAt || 0;
+        const stale = now - startedAt > STALE_MS;
+        if (!stale) {
+          return { outcome: 'ALREADY_PROCESSING' as const, attemptId: data.attemptId || null };
+        }
+        // Stale AND no durable result (checked above) — safe to reclaim, keeping the SAME
+        // attemptId so a retry cannot mint a second identity for one logical submission.
+        tx.set(docRef, { submissionState: 'PROCESSING', processingStartedAt: now }, { merge: true });
+        return { outcome: 'CLAIMED' as const, attemptId: data.attemptId || this.attemptIdFor(userId, data) };
+      }
+
+      // NOT_SUBMITTED / FAILED / absent → claim it.
+      const attemptId = data?.attemptId || this.attemptIdFor(userId, data);
+      tx.set(docRef, {
+        submissionState: 'PROCESSING',
+        processingStartedAt: now,
+        attemptId,
+      }, { merge: true });
+      return { outcome: 'CLAIMED' as const, attemptId };
+    });
+  }
+
+  /**
+   * Stable attempt identity for one logical submission. Derived from the session's own startedAt
+   * so a retry reuses it, while a genuinely new session yields a new id. Persisted at claim time,
+   * so every later read returns the same value.
+   */
+  private attemptIdFor(userId: string, sessionData: any): string {
+    return `baseline_${userId}_${sessionData?.startedAt || 'nosession'}`;
+  }
+
   /**
    * Finalizes assessment submission, generates Student Digital Twin, and returns diagnostic report.
    */
@@ -97,6 +171,19 @@ export class BaselineAssessmentService {
   ): Promise<{ digitalTwin: StudentDigitalTwin }> {
     const responses = payload.responses || [];
     const docRef = db.collection('users').doc(userId).collection('assessments').doc('baselineSession');
+
+    // Atomically establish ownership BEFORE any grading or LLM work. A loser must not grade,
+    // must not write, and must never overwrite the winner's measured result — otherwise a client
+    // could race a second submission and replace the student's real outcome.
+    const claim = await this.claimSubmission(userId);
+    if (claim.outcome === 'ALREADY_PROCESSING') {
+      throw new Error('Baseline submission already in progress');
+    }
+    if (claim.outcome === 'ALREADY_COMPLETED') {
+      const existingTwin = await studentDigitalTwinService.getDigitalTwin(userId);
+      if (existingTwin) return { digitalTwin: existingTwin };
+      throw new Error('Baseline already submitted');
+    }
 
     // ── SERVER-AUTHORITATIVE GRADING ────────────────────────────────────────────────────────
     // Correctness was previously taken from the client: the browser computed `isCorrect` and the
@@ -136,7 +223,13 @@ export class BaselineAssessmentService {
       {
         isSubmitted: true,
         submittedAt: Date.now(),
+        // COMPLETED is set together with the durable result: the state must never claim
+        // completion while the graded result is absent.
+        submissionState: 'COMPLETED',
+        completedAt: Date.now(),
+        attemptId: claim.attemptId,
         gradedResult: {
+          attemptId: claim.attemptId,
           totalQuestions,
           attempted: summary.attempted,
           skipped: summary.skipped,
