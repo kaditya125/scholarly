@@ -19,60 +19,34 @@ export default function AssessmentReportDashboard() {
     );
   }
 
-  const twin = digitalTwin || {
-    overallReadinessScore: 78,
-    subjectMastery: { Physics: 75, Chemistry: 82, Mathematics: 72 },
-    topicMastery: { Mechanics: 70, Thermodynamics: 85, Calculus: 68 },
-    learnerPersona: {
-      learningStyle: 'Visual-Analytical',
-      problemSolvingStyle: 'Methodical',
-      motivationType: 'Goal-Driven',
-      attentionPattern: 'Sustained',
-      revisionPattern: 'Spaced-Repetition',
-      conceptualStrength: 'Moderate',
-      preferredExplanationStyle: 'First-Principles',
-      preferredDifficulty: 'Adaptive',
-    },
-    predictions: {
-      expectedBoardScore: 92,
-      expectedExamRank: 'Top 5%',
-      targetProbabilityPercentage: 84,
-      estimatedCompletionWeeks: 12,
-      recommendedDailyHours: 3,
-      riskOfMissingTarget: 'Low',
-      potentialBoostIfHoursIncrease: 8,
-    },
-    confidenceProfile: {
-      confidenceAccuracyGap: 4,
-      overconfidenceScore: 12,
-      underconfidenceScore: 8,
-      guessAccuracy: 50,
-      confidenceConsistency: 88,
-    },
-    firstWeekRoadmap: [
-      {
-        day: 1,
-        title: 'Core Concept Mastery & Foundations',
-        focusSubject: 'Physics',
-        activities: [
-          { type: 'notebook', title: 'Calculus & Mechanics Interactive Chapter', durationMins: 25, targetConcept: 'Derivatives & Motion' },
-          { type: 'tutor', title: 'Step-by-Step AI Problem Solving', durationMins: 15, targetConcept: 'Kinematics' },
-          { type: 'quiz', title: 'Targeted Concept Check', durationMins: 15, targetConcept: 'Newtonian Laws' },
-        ],
-      },
-      {
-        day: 2,
-        title: 'Chemical Reactions & Thermodynamics',
-        focusSubject: 'Chemistry',
-        activities: [
-          { type: 'notebook', title: 'Thermodynamics & Energy Laws', durationMins: 25, targetConcept: 'Enthalpy & Entropy' },
-          { type: 'flashcard', title: 'High-Yield Formula Flashcards', durationMins: 15, targetConcept: 'Equations & Constants' },
-        ],
-      },
-    ],
-  };
+  // No mock twin. This page previously fell back to a fabricated profile (readiness 78,
+  // Physics 75 / Chemistry 82 / Maths 72, "Top 5%", risk "Low") whenever the real one was
+  // missing — so a student whose assessment had not been processed, or had failed, was shown a
+  // detailed report about a person who does not exist. If there is no twin, say so.
+  if (!digitalTwin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white p-6">
+        <div className="text-center max-w-md">
+          <Brain className="w-10 h-10 text-indigo-400 mx-auto mb-4" />
+          <h1 className="text-lg font-bold mb-2">No assessment profile yet</h1>
+          <p className="text-slate-400 text-sm mb-6">
+            Your learning profile is built from a completed baseline assessment. Once you finish
+            one, your readiness, subject mastery and study plan will appear here.
+          </p>
+          <button
+            onClick={() => navigate('/baseline-assessment')}
+            className="px-5 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-semibold transition-colors"
+          >
+            Take the baseline assessment
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  const score = twin.overallReadinessScore || 78;
+  const twin = digitalTwin;
+  const score = twin.overallReadinessScore;
+  const hasScore = typeof score === 'number';
 
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans p-4 md:p-8">
@@ -117,7 +91,7 @@ export default function AssessmentReportDashboard() {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-extrabold text-white">{score}%</span>
+                <span className="text-3xl font-extrabold text-white">{hasScore ? `${score}%` : "—"}</span>
                 <span className="text-[10px] font-bold uppercase text-emerald-400 tracking-wider">Readiness</span>
               </div>
             </div>
@@ -135,21 +109,21 @@ export default function AssessmentReportDashboard() {
             <div className="space-y-3 pt-1">
               <div className="flex items-center justify-between text-xs py-1 border-b border-white/5">
                 <span className="text-slate-400">Expected Board / Exam Score</span>
-                <span className="font-extrabold text-amber-300 text-sm">{twin.predictions.expectedBoardScore}%</span>
+                <span className="font-extrabold text-amber-300 text-sm">{twin.predictions ? `${twin.predictions.expectedBoardScore}%` : "—"}</span>
               </div>
               <div className="flex items-center justify-between text-xs py-1 border-b border-white/5">
                 <span className="text-slate-400">Target Achievement Probability</span>
-                <span className="font-extrabold text-emerald-400 text-sm">{twin.predictions.targetProbabilityPercentage}%</span>
+                <span className="font-extrabold text-emerald-400 text-sm">{twin.predictions ? `${twin.predictions.targetProbabilityPercentage}%` : "—"}</span>
               </div>
               <div className="flex items-center justify-between text-xs py-1 border-b border-white/5">
                 <span className="text-slate-400">Risk of Missing Target</span>
                 <span className="font-bold text-emerald-300 text-xs px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-                  {twin.predictions.riskOfMissingTarget}
+                  {twin.predictions?.riskOfMissingTarget ?? "Not established"}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs py-1">
                 <span className="text-slate-400">Recommended Daily Study</span>
-                <span className="font-bold text-indigo-300 text-xs">{twin.predictions.recommendedDailyHours} Hours / Day</span>
+                <span className="font-bold text-indigo-300 text-xs">{twin.predictions ? `${twin.predictions.recommendedDailyHours} Hours / Day` : "—"}</span>
               </div>
             </div>
           </div>
@@ -164,15 +138,15 @@ export default function AssessmentReportDashboard() {
             <div className="space-y-2.5 pt-1">
               <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
                 <div className="text-[10px] uppercase font-bold text-indigo-300">Learning Style</div>
-                <div className="text-xs font-bold text-white mt-0.5">{twin.learnerPersona.learningStyle}</div>
+                <div className="text-xs font-bold text-white mt-0.5">{twin.learnerPersona?.learningStyle ?? "—"}</div>
               </div>
               <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
                 <div className="text-[10px] uppercase font-bold text-purple-300">Problem Solving Style</div>
-                <div className="text-xs font-bold text-white mt-0.5">{twin.learnerPersona.problemSolvingStyle}</div>
+                <div className="text-xs font-bold text-white mt-0.5">{twin.learnerPersona?.problemSolvingStyle ?? "—"}</div>
               </div>
               <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
                 <div className="text-[10px] uppercase font-bold text-amber-300">Explanation Style</div>
-                <div className="text-xs font-bold text-white mt-0.5">{twin.learnerPersona.preferredExplanationStyle}</div>
+                <div className="text-xs font-bold text-white mt-0.5">{twin.learnerPersona?.preferredExplanationStyle ?? "—"}</div>
               </div>
             </div>
           </div>
@@ -191,10 +165,10 @@ export default function AssessmentReportDashboard() {
               <div key={sub} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
                 <div className="flex items-center justify-between text-sm font-bold text-white">
                   <span>{sub}</span>
-                  <span className="text-indigo-300">{score}%</span>
+                  <span className="text-indigo-300">{hasScore ? `${score}%` : "—"}</span>
                 </div>
                 <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
-                  <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${score}%` }} />
+                  <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${hasScore ? `${score}%` : "—"}` }} />
                 </div>
               </div>
             ))}

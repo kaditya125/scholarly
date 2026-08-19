@@ -150,7 +150,9 @@ export class StudentContextService {
         retentionScore: metrics.retentionScore,
         learningVelocity: metrics.learningVelocity,
         questionAccuracy: metrics.questionAccuracy,
-        examReadiness: 0, // Computed from UserStats
+        // null, not 0: there is no readiness model yet, and claiming 0% is a false statement
+        // about the student rather than an absence of data. See studentContext.types.ts.
+        examReadiness: null,
         studyConsistencyScore: metrics.studyConsistencyScore,
         timeSpentLearningMinutes: metrics.timeSpentLearningMinutes,
       };

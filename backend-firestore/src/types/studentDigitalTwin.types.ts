@@ -80,15 +80,21 @@ export interface StudentDigitalTwin {
     strongAreas: string[];
   };
 
-  overallReadinessScore: number; // 0 - 100
+  /**
+   * These are nullable because they are inferred, not measured, and inference can fail or be
+   * unavailable. `null` means "not established yet" and MUST be rendered as such — never
+   * defaulted to a plausible-looking number. They previously carried invented fallbacks
+   * (readiness 75, "Top 5%", risk "Low") that presented a failed analysis as a healthy student.
+   */
+  overallReadinessScore: number | null; // 0 - 100, or null if not yet established
   subjectMastery: Record<string, number>; // subject -> mastery %
   topicMastery: Record<string, number>; // topic -> mastery %
-  
+
   knowledgeGraph: Record<string, ConceptNode>; // conceptId -> ConceptNode
-  confidenceProfile: ConfidenceMetrics;
-  behavioralProfile: BehavioralMetrics;
-  learnerPersona: AILearnerPersona;
-  predictions: PerformancePredictions;
+  confidenceProfile: ConfidenceMetrics | null;
+  behavioralProfile: BehavioralMetrics | null;
+  learnerPersona: AILearnerPersona | null;
+  predictions: PerformancePredictions | null;
   firstWeekRoadmap: StudyPlanDay[];
 
   latestAssessmentSummary?: {

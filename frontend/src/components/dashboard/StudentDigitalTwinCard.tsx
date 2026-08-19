@@ -10,8 +10,12 @@ export function StudentDigitalTwinCard() {
 
   if (!digitalTwin || !digitalTwin.version) return null;
 
-  const score = digitalTwin.overallReadinessScore || 78;
-  const persona = digitalTwin.learnerPersona?.learningStyle || 'Visual-Analytical';
+  // Readiness is shown only when it has actually been established. `|| 78` previously did two
+  // wrong things at once: it invented a score for a student who had none, and (because 0 is
+  // falsy) it would also have displayed a genuine 0% readiness as 78%.
+  const score = digitalTwin.overallReadinessScore;
+  const hasScore = typeof score === 'number';
+  const persona = digitalTwin.learnerPersona?.learningStyle ?? null;
 
   return (
     <motion.div
@@ -30,10 +34,12 @@ export function StudentDigitalTwinCard() {
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-[10px] font-bold uppercase tracking-wider text-indigo-300">
                 <Sparkles className="w-3 h-3 text-amber-400" /> Digital Twin v{digitalTwin.version}
               </span>
-              <span className="text-xs text-slate-400">· {persona}</span>
+              {persona && <span className="text-xs text-slate-400">· {persona}</span>}
             </div>
             <h3 className="text-base md:text-lg font-bold text-white mt-1">
-              Active Cognitive Model · {score}% Exam Readiness
+              {hasScore
+                ? `Active Cognitive Model · ${score}% Exam Readiness`
+                : 'Active Cognitive Model · readiness not yet measured'}
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
               Powering AI Tutor, Notebooks, Flashcards & Revision with universal student memory.

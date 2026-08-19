@@ -117,7 +117,13 @@ export interface StudentContext {
     retentionScore: number;
     learningVelocity: number;
     questionAccuracy: number;
-    examReadiness: number;
+    /**
+     * null = not yet computable from real evidence. Previously hardcoded to 0, which meant every
+     * prompt asserted "Exam Readiness: 0%" to the model regardless of how the student was doing.
+     * A genuine readiness model (syllabus coverage + mastery + accuracy + consistency + goal gap)
+     * is Phase B; until it exists this stays null and is simply not stated.
+     */
+    examReadiness: number | null;
     studyConsistencyScore: number;
     timeSpentLearningMinutes: number;
   } | null;
