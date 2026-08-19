@@ -46,15 +46,71 @@ export class ResultAnalysisService {
     attempt.score = score;
     attempt.accuracy = accuracy;
     attempt.totalTimeSpent = totalTimeSpent;
-    attempt.percentile = 85; // Mock percentile for now
+    // Percentile requires a cohort of other attempts at this test to compute against; we do not
+    // have that here. It was previously hardcoded to 85, which showed every student the same
+    // invented rank. Left undefined until a real cohort comparison exists — the UI must render
+    // "not available" rather than a fabricated number.
+    attempt.percentile = undefined;
 
-    // AI Analysis
-    const needsRevision = accuracy < 70;
+    // Per-topic breakdown from the ACTUAL questions and answers, replacing what used to be two
+    // constant strings ('Good overall comprehension' / 'Needs revision on fundamental concepts')
+    // emitted purely off a 70% threshold — identical for every student and every subject, and
+    // naming no topic the student could act on.
+    const byTopic = new Map<string, { correct: number; attempted: number; skipped: number }>();
+    for (const q of questions) {
+      const key = q.topic || q.subject || 'General';
+      const entry = byTopic.get(key) || { correct: 0, attempted: 0, skipped: 0 };
+      const selected = (attempt.answers || {})[q.id];
+      if (selected === undefined) {
+        entry.skipped++;
+      } else {
+        entry.attempted++;
+        if (q.correctAnswerIndex === selected) entry.correct++;
+      }
+      byTopic.set(key, entry);
+    }
+
+    // A topic needs a minimum number of graded attempts before this claims anything about it.
+    // Without this, one lucky or unlucky question would label a topic a strength or a weakness.
+    const MIN_EVIDENCE = 3;
+    const WEAK_BELOW = 0.6;
+    const STRONG_AT_OR_ABOVE = 0.8;
+
+    const strengths: string[] = [];
+    const weaknesses: string[] = [];
+    const conceptGaps: string[] = [];
+
+    for (const [topic, s] of byTopic) {
+      if (s.attempted < MIN_EVIDENCE) continue; // not enough evidence to make a claim
+      const topicAccuracy = s.correct / s.attempted;
+      if (topicAccuracy < WEAK_BELOW) {
+        weaknesses.push(`${topic} — ${s.correct}/${s.attempted} correct (${Math.round(topicAccuracy * 100)}%)`);
+        conceptGaps.push(topic);
+      } else if (topicAccuracy >= STRONG_AT_OR_ABOVE) {
+        strengths.push(`${topic} — ${s.correct}/${s.attempted} correct (${Math.round(topicAccuracy * 100)}%)`);
+      }
+    }
+
+    // Skipping is a distinct signal from answering wrongly (avoidance / time pressure rather
+    // than a knowledge gap), so it is reported separately instead of being folded into accuracy.
+    const heavilySkipped = Array.from(byTopic.entries())
+      .filter(([, s]) => s.skipped >= MIN_EVIDENCE && s.skipped > s.attempted)
+      .map(([topic]) => topic);
+    for (const topic of heavilySkipped) {
+      weaknesses.push(`${topic} — mostly left unattempted (${byTopic.get(topic)!.skipped} skipped)`);
+      if (!conceptGaps.includes(topic)) conceptGaps.push(topic);
+    }
+
+    const needsRevision = accuracy < 70 || weaknesses.length > 0;
+
     attempt.aiAnalysis = {
-        strengths: !needsRevision ? ['Good overall comprehension'] : [],
-        weaknesses: needsRevision ? ['Needs revision on fundamental concepts'] : [],
-        conceptGaps: [],
-        recoveryPlanTasks: needsRevision ? [`Revise ${test.subject || 'concepts'} from missed questions`] : []
+      strengths,
+      weaknesses,
+      conceptGaps,
+      // Recovery tasks now name the specific weak topics rather than the whole subject.
+      recoveryPlanTasks: conceptGaps.length > 0
+        ? conceptGaps.slice(0, 3).map((t) => `Revise ${t} and redo the questions you missed`)
+        : [],
     };
 
     await testsRepository.saveTestAttempt(attempt);

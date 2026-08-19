@@ -723,10 +723,18 @@ function buildStudentContextBlock(ctx: StudentContext | undefined): string {
     block += `- **Learning Speed**: ${ctx.memory.learningSpeed}\n`;
   }
 
-  // Analytics
+  // Analytics. Each figure is stated only when it is actually known — an unknown metric is
+  // omitted rather than sent as 0, so the model never reads "Exam Readiness: 0%" for a student
+  // whose readiness simply has not been measured and then counsels them on a false premise.
   if (ctx.analytics) {
-    block += `- **Mastery**: ${ctx.analytics.masteryPercentage}% | **Retention**: ${ctx.analytics.retentionScore} | **Exam Readiness**: ${ctx.analytics.examReadiness}%\n`;
-    block += `- **Question Accuracy**: ${ctx.analytics.questionAccuracy}% | **Study Consistency**: ${ctx.analytics.studyConsistencyScore}\n`;
+    const a = ctx.analytics;
+    const known: string[] = [];
+    if (a.masteryPercentage != null) known.push(`**Mastery**: ${a.masteryPercentage}%`);
+    if (a.retentionScore != null) known.push(`**Retention**: ${a.retentionScore}`);
+    if (a.examReadiness != null) known.push(`**Exam Readiness**: ${a.examReadiness}%`);
+    if (a.questionAccuracy != null) known.push(`**Question Accuracy**: ${a.questionAccuracy}%`);
+    if (a.studyConsistencyScore != null) known.push(`**Study Consistency**: ${a.studyConsistencyScore}`);
+    if (known.length > 0) block += `- ${known.join(' | ')}\n`;
   }
 
   // Adaptive instruction
@@ -821,8 +829,10 @@ export function buildRecommendationsBlock(ctx: StudentContext | undefined): stri
     }
   }
 
-  // Exam readiness
-  if (ctx.analytics && ctx.analytics.examReadiness > 80) {
+  // Exam readiness — only recommended on when it has actually been measured. With the old
+  // hardcoded 0 this branch was unreachable anyway; guarding on null keeps it that way until a
+  // real readiness model exists, rather than firing on a placeholder.
+  if (ctx.analytics && ctx.analytics.examReadiness != null && ctx.analytics.examReadiness > 80) {
     recommendations.push(`🏆 Your exam readiness is ${ctx.analytics.examReadiness}%! You're ready for a full-length mock test.`);
   }
 

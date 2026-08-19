@@ -182,46 +182,26 @@ Return ONLY valid JSON. No Markdown fencing or preamble.`;
         weakAreas: profile?.weakAreas || [],
         strongAreas: profile?.learningStyles || [],
       },
-      overallReadinessScore: parsed.overallReadinessScore || 75,
+      // ── Fallbacks removed on purpose ──────────────────────────────────────────
+      // These fields previously fell back to invented values when the LLM call failed or
+      // returned unparseable output: readiness 75, expected score 90, "Top 5%", 82% chance of
+      // hitting target, risk "Low", plus a full fabricated behavioural and confidence profile.
+      // That meant a student whose analysis silently failed was told they were in good shape,
+      // on numbers derived from nothing. For a student making real decisions about what to
+      // study, a confidently wrong number is worse than no number.
+      //
+      // Everything here is now either what the model actually returned, or absent. Consumers
+      // must treat absence as "not yet measured" and say so. The real replacements are
+      // deterministic: readiness and mastery come from measured performance (Phase B), not
+      // from a single LLM call over one baseline assessment.
+      overallReadinessScore: typeof parsed.overallReadinessScore === 'number' ? parsed.overallReadinessScore : null,
       subjectMastery: parsed.subjectMastery || {},
       topicMastery: parsed.topicMastery || {},
       knowledgeGraph: parsed.knowledgeGraph || {},
-      confidenceProfile: parsed.confidenceProfile || {
-        confidenceAccuracyGap: 0,
-        overconfidenceScore: 10,
-        underconfidenceScore: 10,
-        guessAccuracy: 50,
-        confidenceConsistency: 85,
-      },
-      behavioralProfile: parsed.behavioralProfile || {
-        avgReadingTimeSeconds: 15,
-        avgThinkingTimeSeconds: 25,
-        optionHoverFrequency: 3,
-        rapidGuessCount: 0,
-        answerSwitchCount: 1,
-        fatigueIndex: 15,
-        revisitCount: 2,
-        idleDurationSeconds: 10,
-      },
-      learnerPersona: parsed.learnerPersona || {
-        learningStyle: 'Visual-Analytical',
-        problemSolvingStyle: 'Methodical',
-        motivationType: 'Goal-Driven',
-        attentionPattern: 'Sustained',
-        revisionPattern: 'Spaced-Repetition',
-        conceptualStrength: 'Moderate',
-        preferredExplanationStyle: 'First-Principles',
-        preferredDifficulty: 'Adaptive',
-      },
-      predictions: parsed.predictions || {
-        expectedBoardScore: 90,
-        expectedExamRank: 'Top 5%',
-        targetProbabilityPercentage: 82,
-        estimatedCompletionWeeks: 12,
-        recommendedDailyHours: 3,
-        riskOfMissingTarget: 'Low',
-        potentialBoostIfHoursIncrease: 8,
-      },
+      confidenceProfile: parsed.confidenceProfile ?? null,
+      behavioralProfile: parsed.behavioralProfile ?? null,
+      learnerPersona: parsed.learnerPersona ?? null,
+      predictions: parsed.predictions ?? null,
       firstWeekRoadmap: parsed.firstWeekRoadmap || [],
       latestAssessmentSummary: {
         totalQuestions: submission.totalQuestions,

@@ -21,7 +21,11 @@ export interface StudentDigitalTwinData {
   userId: string;
   updatedAt: number;
   version: number;
-  overallReadinessScore: number;
+  /**
+   * Nullable: these are inferred, not measured, and the backend now returns null rather than a
+   * fabricated fallback when inference is unavailable or failed. Render absence honestly.
+   */
+  overallReadinessScore: number | null;
   subjectMastery: Record<string, number>;
   topicMastery: Record<string, number>;
   knowledgeGraph: Record<string, {
@@ -39,7 +43,7 @@ export interface StudentDigitalTwinData {
     underconfidenceScore: number;
     guessAccuracy: number;
     confidenceConsistency: number;
-  };
+  } | null;
   behavioralProfile: {
     avgReadingTimeSeconds: number;
     avgThinkingTimeSeconds: number;
@@ -49,7 +53,7 @@ export interface StudentDigitalTwinData {
     fatigueIndex: number;
     revisitCount: number;
     idleDurationSeconds: number;
-  };
+  } | null;
   learnerPersona: {
     learningStyle: string;
     problemSolvingStyle: string;
@@ -59,7 +63,7 @@ export interface StudentDigitalTwinData {
     conceptualStrength: string;
     preferredExplanationStyle: string;
     preferredDifficulty: string;
-  };
+  } | null;
   predictions: {
     expectedBoardScore: number;
     expectedExamRank?: string;
@@ -68,7 +72,7 @@ export interface StudentDigitalTwinData {
     recommendedDailyHours: number;
     riskOfMissingTarget: 'Low' | 'Moderate' | 'High';
     potentialBoostIfHoursIncrease: number;
-  };
+  } | null;
   firstWeekRoadmap: {
     day: number;
     title: string;
@@ -169,72 +173,17 @@ export const baselineAssessmentApi = {
       confidenceSummary?: any;
     }
   ): Promise<{ digitalTwin: StudentDigitalTwinData }> {
-    try {
-      const { data } = await api.post(`/assessment/baseline/submit/${userId}`, payload);
-      if (data && data.digitalTwin) {
-        return data;
-      }
-    } catch (e) {
-      console.warn('baselineAssessmentApi.submitAssessment: using fallback twin payload', e);
+    // No fabricated fallback here, deliberately. This previously caught a failed submission and
+    // returned an invented profile — readiness 78, Physics 75 / Chemistry 82 / Maths 72, "Top 5%",
+    // risk "Low", a first-week roadmap about Kinematics — and the student saw that as the result
+    // of the assessment they had just sat, for subjects they may not even take. A failed
+    // submission must surface as a failure so the caller can retry or show an error; inventing a
+    // plausible profile is the one outcome that is worse than an error message.
+    const { data } = await api.post(`/assessment/baseline/submit/${userId}`, payload);
+    if (!data?.digitalTwin) {
+      throw new Error('Assessment submitted but no profile was returned. Please retry.');
     }
-    return {
-      digitalTwin: {
-        userId,
-        updatedAt: Date.now(),
-        version: 1,
-        overallReadinessScore: 78,
-        subjectMastery: { Physics: 75, Chemistry: 82, Mathematics: 72 },
-        topicMastery: { Kinematics: 80, Reactions: 85, Algebra: 70 },
-        knowledgeGraph: {},
-        confidenceProfile: {
-          confidenceAccuracyGap: 4,
-          overconfidenceScore: 10,
-          underconfidenceScore: 10,
-          guessAccuracy: 50,
-          confidenceConsistency: 85,
-        },
-        behavioralProfile: {
-          avgReadingTimeSeconds: 15,
-          avgThinkingTimeSeconds: 25,
-          optionHoverFrequency: 3,
-          rapidGuessCount: 0,
-          answerSwitchCount: 1,
-          fatigueIndex: 15,
-          revisitCount: 2,
-          idleDurationSeconds: 10,
-        },
-        learnerPersona: {
-          learningStyle: 'Visual-Analytical',
-          problemSolvingStyle: 'Methodical',
-          motivationType: 'Goal-Driven',
-          attentionPattern: 'Sustained',
-          revisionPattern: 'Spaced-Repetition',
-          conceptualStrength: 'Moderate',
-          preferredExplanationStyle: 'First-Principles',
-          preferredDifficulty: 'Adaptive',
-        },
-        predictions: {
-          expectedBoardScore: 92,
-          expectedExamRank: 'Top 5%',
-          targetProbabilityPercentage: 84,
-          estimatedCompletionWeeks: 12,
-          recommendedDailyHours: 3,
-          riskOfMissingTarget: 'Low',
-          potentialBoostIfHoursIncrease: 8,
-        },
-        firstWeekRoadmap: [
-          {
-            day: 1,
-            title: 'Kinematics & Core Motion',
-            focusSubject: 'Physics',
-            activities: [
-              { type: 'notebook', title: 'Vectors & Relative Velocity', durationMins: 25, targetConcept: 'Kinematics' },
-              { type: 'tutor', title: 'AI Problem Solving Session', durationMins: 15, targetConcept: 'Vectors' },
-            ],
-          },
-        ],
-      },
-    };
+    return data;
   },
 
   async getDigitalTwin(userId: string): Promise<StudentDigitalTwinData | null> {
