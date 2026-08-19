@@ -10,6 +10,39 @@ import { auth } from '../../lib/firebase';
 const coverCache = new Map<string, string>();
 const inFlight = new Map<string, Promise<string>>();
 
+// A cover load downloads a full PDF and rasterizes its first page client-side — real work, not
+// a thumbnail fetch. A collection grid can mount dozens of cards at once; without a cap, every
+// one of them fires its own concurrent PDF download + canvas render simultaneously, which is
+// exactly what was hanging the page on mobile (limited memory and a much weaker CPU than
+// desktop make a burst of ~20-50 concurrent PDF rasterizations far more punishing there).
+// Viewport gating in BookCover.tsx is the primary fix — this queue is the safety net for
+// whatever still ends up "visible enough" at once (fast scrolling, larger screens).
+const MAX_CONCURRENT_LOADS = 3;
+let activeLoads = 0;
+const loadQueue: (() => void)[] = [];
+
+function runNext() {
+  if (activeLoads >= MAX_CONCURRENT_LOADS) return;
+  const next = loadQueue.shift();
+  if (next) next();
+}
+
+function acquireSlot(): Promise<void> {
+  return new Promise((resolve) => {
+    const attempt = () => {
+      activeLoads++;
+      resolve();
+    };
+    if (activeLoads < MAX_CONCURRENT_LOADS) attempt();
+    else loadQueue.push(attempt);
+  });
+}
+
+function releaseSlot() {
+  activeLoads--;
+  runNext();
+}
+
 /** Returns an already-available cover (memory → persistent store) without any network work. */
 function readCached(id: string): string | null {
   const mem = coverCache.get(id);
@@ -30,16 +63,21 @@ async function loadCover(notebookId: string): Promise<string> {
   if (existing) return existing;
 
   const promise = (async () => {
-    const token = await auth.currentUser?.getIdToken();
-    const res = await fetch(documentsApi.coverUrl(notebookId), {
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    });
-    if (!res.ok) throw new Error(`Cover fetch failed: ${res.status}`);
-    const buf = await res.arrayBuffer();
-    const dataUrl = await renderFirstPageDataUrl(buf);
-    coverCache.set(notebookId, dataUrl);
-    coverStore.set(notebookId, dataUrl); // persist so it survives reloads
-    return dataUrl;
+    await acquireSlot();
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch(documentsApi.coverUrl(notebookId), {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (!res.ok) throw new Error(`Cover fetch failed: ${res.status}`);
+      const buf = await res.arrayBuffer();
+      const dataUrl = await renderFirstPageDataUrl(buf);
+      coverCache.set(notebookId, dataUrl);
+      coverStore.set(notebookId, dataUrl); // persist so it survives reloads
+      return dataUrl;
+    } finally {
+      releaseSlot();
+    }
   })();
 
   inFlight.set(notebookId, promise);
