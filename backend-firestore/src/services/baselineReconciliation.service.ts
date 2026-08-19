@@ -101,7 +101,7 @@ export class BaselineReconciliationService {
 
       // The authoritative graded trigger. Same event and same deterministic identity the normal
       // path uses — no baseline-specific mastery lifecycle exists.
-      await eventBus.publish('learning.test_completed', {
+      const delivered = await eventBus.publish('learning.test_completed', {
         userId,
         attemptId,
         testId: attemptId,
@@ -117,11 +117,23 @@ export class BaselineReconciliationService {
         occurredAt,
       } as any, { eventId: `learning.test_completed:${attemptId}` });
 
-      // PROJECTED is set only after the publish path completed without throwing. Note the honest
-      // limitation: the EventBus does not acknowledge consumer success, so this records "handed
-      // off without error", not "mastery definitely wrote". A consumer that throws is logged by
-      // its own handler; re-running reconciliation is safe and idempotent, so a stuck submission
-      // can always be retried.
+      // PROJECTED requires the publish to have actually reported success. It previously depended
+      // only on publish() not throwing — but publish() swallows its own errors, so the call
+      // ALWAYS appeared to succeed. Measured against real Redis with the publisher socket closed:
+      // the event reached nobody, mastery was never written, and this line still wrote PROJECTED.
+      // Reconciliation then skipped the submission forever as ALREADY_PROJECTED, permanently
+      // orphaning intact durable evidence. Leaving it PENDING is the honest outcome: it is
+      // recoverable, and PENDING is a valid state meaning "safely graded, projection still owed".
+      if (!delivered) {
+        logger.error('[BaselineReconcile] publish reported failure; leaving PENDING for retry', {
+          userId, attemptId,
+        });
+        return { attemptId, projected: false, reason: 'PUBLISH_FAILED' };
+      }
+
+      // Note the remaining honest limitation: the EventBus does not acknowledge CONSUMER success,
+      // so this records "handed off without error", not "mastery definitely wrote". Re-running
+      // reconciliation is safe and idempotent, so a stuck submission can always be retried.
       await ref.set({ projectionStatus: 'PROJECTED', projectedAt: Date.now() }, { merge: true });
       logger.info('[BaselineReconcile] projected baseline evidence', {
         userId, attemptId, questions: gradedQuestions.length, correctCount,
