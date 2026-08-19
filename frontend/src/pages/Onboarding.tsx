@@ -6,6 +6,7 @@ import {
   BookOpen, Clock, Languages, Palette, Layers, Compass,
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
+import GoalCapture from '../components/onboarding/GoalCapture';
 import { useProfile } from '../hooks/api/useProfile';
 import { BrandMark } from '../components/auth/AuthShell';
 import {
@@ -197,6 +198,7 @@ export default function Onboarding() {
           >
             <StepContent
               step={step}
+              userId={user?.uid}
               profile={profile}
               firstName={firstName}
               patch={patch}
@@ -245,9 +247,10 @@ interface StepContentProps {
   patch: (p: Partial<LearningProfile>) => void;
   choose: (p: Partial<LearningProfile>) => void;
   goNext: (extra?: Partial<LearningProfile>) => void;
+  userId?: string;
 }
 
-function StepContent({ step, profile, firstName, patch, choose, goNext }: StepContentProps) {
+function StepContent({ step, profile, firstName, patch, choose, goNext, userId }: StepContentProps) {
   switch (step.key) {
     case 'welcome':
       return (
@@ -347,18 +350,24 @@ function StepContent({ step, profile, firstName, patch, choose, goNext }: StepCo
 
     case 'target':
       return (
-        <Prompt icon={TargetIcon} eyebrow="Your target" title="What's your target?" subtitle="Your aspiration keeps every session pointed at the goal.">
-          <div className="flex flex-wrap gap-2 mb-4">
-            {TARGET_SUGGESTIONS.map((t) => (
-              <Chip key={t} label={t} selected={profile.target === t} onClick={() => patch({ target: t })} />
-            ))}
-          </div>
-          <input
-            value={profile.target || ''}
-            onChange={(e) => patch({ target: e.target.value })}
-            placeholder="…or type your own target"
-            className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-[14px] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-600 outline-none transition-colors focus:border-[#c8e558] focus:ring-4 focus:ring-[#c8e558]/20"
-          />
+        <Prompt icon={TargetIcon} eyebrow="Your target" title="What's the target?" subtitle="Give us something concrete to chase.">
+          {/* Structured capture replacing the previous free-text field. That field stored strings
+              like "95%" or "AIR under 500" — real intent, but unparseable, which is precisely why
+              the mentor could never say how far the student was from their goal. Persisted through
+              the backend (which owns validation and provenance), never written directly. */}
+          {userId ? (
+            <GoalCapture
+              userId={userId}
+              examId={profile.targetExam || profile.goal}
+              examCycle={profile.targetYear}
+              onSaved={() => goNext()}
+              onSkip={() => goNext()}
+            />
+          ) : (
+            <p className="text-[13px] text-slate-500 dark:text-gray-400">
+              Sign-in is still initialising — one moment.
+            </p>
+          )}
         </Prompt>
       );
 
