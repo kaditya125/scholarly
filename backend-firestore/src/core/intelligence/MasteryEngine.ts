@@ -39,6 +39,24 @@ export interface MasteryStore {
   get(userId: string, conceptId: string): Promise<ConceptMastery | null>;
   set(userId: string, mastery: ConceptMastery): Promise<void>;
   list(userId: string): Promise<ConceptMastery[]>;
+  /**
+   * Atomic read-modify-write for one concept, if the backing store can do it.
+   *
+   * Required for correctness, not just performance: a single test submission emits one event per
+   * graded question, so many events land on the SAME concept concurrently. With a plain
+   * get()-then-set() every one of them reads the same starting state and the last write wins —
+   * verified against the real database, where 4 events (3 wrong, 1 correct) persisted as a
+   * single attempt with a 100% success rate, silently discarding three quarters of the evidence
+   * and inverting the student's actual result.
+   *
+   * Optional so in-memory/test stores (which have no concurrency) can omit it; MasteryEngine
+   * falls back to get/set when it is absent.
+   */
+  transact?(
+    userId: string,
+    conceptId: string,
+    mutate: (prev: ConceptMastery | null) => ConceptMastery,
+  ): Promise<void>;
 }
 
 /** Per-event update profile: target mastery, EMA weight, whether it's a graded attempt/success. */
@@ -83,6 +101,22 @@ class FirestoreMasteryStore implements MasteryStore {
       const snap = await db.collection('users').doc(userId).collection('mastery').get();
       return snap.docs.map((d: any) => d.data() as ConceptMastery);
     } catch { return []; }
+  }
+  /** Atomic read-modify-write. Firestore retries the callback on contention. */
+  async transact(
+    userId: string,
+    conceptId: string,
+    mutate: (prev: ConceptMastery | null) => ConceptMastery,
+  ): Promise<void> {
+    try {
+      const { db } = require('../../config/firebase');
+      const ref = db.collection('users').doc(userId).collection('mastery').doc(conceptId);
+      await db.runTransaction(async (tx: any) => {
+        const snap = await tx.get(ref);
+        const prev = snap.exists ? (snap.data() as ConceptMastery) : null;
+        tx.set(ref, mutate(prev), { merge: true });
+      });
+    } catch { /* non-fatal */ }
   }
 }
 
@@ -156,12 +190,18 @@ export class MasteryEngine {
     event: MasteryEvent,
   ): Promise<void> {
     if (!userId || !concept?.id) return;
-    const prev = await this.store.get(userId, concept.id);
-    const next = this.applyEvent(prev, concept.id, event, concept.title || '', Date.now(), {
-      subject: concept.subject,
-      topic: concept.topic,
-    });
-    await this.store.set(userId, next);
+    const hierarchy = { subject: concept.subject, topic: concept.topic };
+    const mutate = (prev: ConceptMastery | null) =>
+      this.applyEvent(prev, concept.id, event, concept.title || '', Date.now(), hierarchy);
+
+    // Atomic where supported — concurrent events for the same concept are the normal case
+    // (one test submission emits one event per question), and a plain get/set loses all but
+    // the last of them.
+    if (this.store.transact) {
+      await this.store.transact(userId, concept.id, mutate);
+      return;
+    }
+    await this.store.set(userId, mutate(await this.store.get(userId, concept.id)));
   }
 
   /** Record the same event for several concepts (e.g. all concepts matched in a chat turn). */
