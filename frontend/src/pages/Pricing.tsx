@@ -6,6 +6,7 @@ import SiteFooter from '../components/landing/SiteFooter';
 import PricingSection from '../components/landing/PricingSection';
 import { cn } from '../lib/utils';
 import { SITE, PRO_MONTHLY_INR, PRO_YEARLY_TOTAL_INR } from '../lib/siteConfig';
+import { useSeo } from '../lib/useSeo';
 
 /**
  * /pricing — previously a "coming soon" placeholder, which was a dead end for every
@@ -131,6 +132,11 @@ function Faq({ q, a }: { q: string; a: ReactNode }) {
 }
 
 export default function Pricing() {
+  useSeo({
+    title: `Pricing — ${SITE.name}`,
+    description: `${SITE.name} pricing: a free tier to try the AI tutor, and Pro at ₹${PRO_MONTHLY_INR}/month for unlimited use across every exam we cover.`,
+    url: `${SITE.url}/pricing`,
+  });
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   return (

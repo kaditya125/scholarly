@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Eye, Compass, Layers, ShieldCheck } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
 import SiteFooter from '../components/landing/SiteFooter';
+import { useSeo } from '../lib/useSeo';
+import { SITE } from '../lib/siteConfig';
 
 /**
  * About page.
@@ -38,6 +40,11 @@ const PRINCIPLES = [
 ];
 
 export default function About() {
+  useSeo({
+    title: `About — ${SITE.name}`,
+    description: `${SITE.name} (साध्य) is Sanskrit for "that which is to be attained" — an AI-first learning platform built around India's competitive exams, from NEET and JEE to UPSC, SSC and state teaching exams.`,
+    url: `${SITE.url}/about`,
+  });
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   return (

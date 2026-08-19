@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
 import SiteFooter from '../components/landing/SiteFooter';
+import { useSeo } from '../lib/useSeo';
+import { SITE } from '../lib/siteConfig';
 
 /** Video Chapters Definition */
 interface VideoChapter {
@@ -109,6 +111,12 @@ export const DEMO_VIDEOS = {
 };
 
 export default function HowItWorks() {
+  useSeo({
+    title: `How It Works — ${SITE.name}`,
+    description: `See how ${SITE.name}'s AI tutor works: photograph a question, get a step-by-step explanation, generate adaptive practice tests, and track progress against your exam's actual syllabus.`,
+    url: `${SITE.url}/how-it-works`,
+  });
+
   const [searchParams, setSearchParams] = useSearchParams();
   const roleParam = searchParams.get('role');
   const [activeRole, setActiveRole] = useState<'student' | 'teacher'>(
