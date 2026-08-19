@@ -60,9 +60,45 @@ export class BaselineReconciliationService {
       return { attemptId: null, projected: false, reason: 'NO_ATTEMPT_ID' };
     }
     if (gradedQuestions.length === 0) {
-      // A COMPLETED submission should never lack evidence — that combination is written
-      // atomically. Report loudly rather than marking it projected to tidy the state.
-      logger.error('[BaselineReconcile] COMPLETED submission has no gradedQuestions', { userId, attemptId });
+      /**
+       * Two very different situations produce zero per-question rows, and conflating them was a
+       * defect: a student who submitted nothing at all is not the same as a submission whose
+       * evidence went missing.
+       *
+       * LEGITIMATELY EMPTY — the student attempted nothing, so `gradeBaselineSubmission` (which
+       * maps over RESPONSES, not questions) produced no rows. There is genuinely nothing to
+       * project: no attempts, no outcomes, no topics. The projection obligation is discharged the
+       * moment we establish that, so it is marked PROJECTED and never scanned again. Previously
+       * this sat COMPLETED + PENDING forever, re-scanned by every reconciliation pass and logging
+       * an error each time for a perfectly valid submission.
+       *
+       * Critically, nothing is fabricated to achieve that: no event is published, no mastery
+       * document is touched, no attempt is counted and no accuracy is invented. `accuracyPct`
+       * stays null. From a learning standpoint this student remains INSUFFICIENT_DATA — which is
+       * the honest state, and the one an empty submission must keep.
+       *
+       * ANOMALOUS — `gradedResult` claims attempts but the per-question rows are absent, or the
+       * graded result is missing outright. COMPLETED + evidence is written atomically, so this
+       * combination should be impossible; it stays loud and stays PENDING rather than being
+       * tidied away into a state that asserts work was done.
+       */
+      const gradedResult: any = data.gradedResult;
+      const legitimatelyEmpty = !!gradedResult && gradedResult.attempted === 0;
+
+      if (legitimatelyEmpty) {
+        await ref.set(
+          { projectionStatus: 'PROJECTED', projectedAt: Date.now(), projectedEvidenceCount: 0 },
+          { merge: true },
+        );
+        logger.info('[BaselineReconcile] empty submission — nothing to project', {
+          userId, attemptId, totalQuestions: gradedResult.totalQuestions, attempted: 0,
+        });
+        return { attemptId, projected: true, reason: 'EMPTY_SUBMISSION' };
+      }
+
+      logger.error('[BaselineReconcile] COMPLETED submission has no gradedQuestions', {
+        userId, attemptId, attempted: gradedResult?.attempted, hasGradedResult: !!gradedResult,
+      });
       return { attemptId, projected: false, reason: 'NO_EVIDENCE' };
     }
 

@@ -4,7 +4,37 @@ import { logger } from '../../utils/logger';
 import { featureFlags } from '../../config/featureFlags';
 import { masteryEngine, slugifyConcept } from '../intelligence/MasteryEngine';
 
-export function registerEventSubscribers() {
+/**
+ * Guards against double registration.
+ *
+ * `eventBus.subscribe()` stores handlers in a Set, but each call to this function builds FRESH
+ * closures, so two calls would register two distinct functions for the same event and every
+ * handler would run twice — reproducing the exact double-delivery incident that previously
+ * doubled every side effect on the platform (duplicate student notifications, duplicate BullMQ
+ * enqueues) and would now double-count mastery evidence.
+ *
+ * Module-scoped rather than a Set-identity trick, because Set dedupe only works if the handler
+ * references are identical, which closures never are.
+ */
+let subscribersRegistered = false;
+
+/**
+ * Registers every domain event subscriber. Safe to call more than once: subsequent calls are
+ * no-ops and report `registered: false`, so a second bootstrap path (or a stray import) cannot
+ * silently double-deliver.
+ *
+ * WHEN TO CALL: as early in bootstrap as possible, and synchronously. The EventBus subscribes to
+ * the Redis channel asynchronously from its own constructor, and delivery is at-most-once with no
+ * replay — so any message arriving before these handlers exist is lost permanently. Registering
+ * synchronously at startup wins that race deterministically, because the Redis connect is a
+ * network round trip.
+ */
+export function registerEventSubscribers(): { registered: boolean } {
+  if (subscribersRegistered) {
+    logger.warn('[EventBus] Subscribers already registered; ignoring duplicate registration');
+    return { registered: false };
+  }
+  subscribersRegistered = true;
   logger.info('[EventBus] Registering domain event subscribers');
 
   // ── Learning evidence → MasteryEngine ──────────────────────────────────────────────────
@@ -133,4 +163,13 @@ export function registerEventSubscribers() {
   });
 
   // More subscribers can be added here as we wire up gamification, notebooks, etc.
+
+  logger.info('[EventBus] Domain event subscribers registered', {
+    events: ['learning.test_completed', 'podcast.completed', 'podcast.failed',
+             'user.registered', 'notebook.ingested'],
+    // Mastery writes stay inert until the flag is on; logged so startup states which it is
+    // rather than leaving it to be inferred.
+    masteryEnabled: featureFlags.mastery,
+  });
+  return { registered: true };
 }

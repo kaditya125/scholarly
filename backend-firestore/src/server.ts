@@ -13,6 +13,35 @@ import { checkReadiness } from './lib/health';
 // Initialize DI container before routing.
 bootstrapDI();
 
+/*
+ * Register domain event subscribers.
+ *
+ * This was missing entirely: the subscriber implementations existed but nothing called this, so
+ * the running server had an EventBus with NO mastery consumer — learning.test_completed was
+ * published to a channel nobody was listening on for evidence.
+ *
+ * Placed HERE, and deliberately not elsewhere:
+ *   - AFTER bootstrapDI(), so the invariant "DI ready before subscribers" holds even though no
+ *     current subscriber resolves from the container (verified: subscribers.ts uses only module
+ *     singletons — masteryEngine, NotificationFactory, the Firestore handle).
+ *   - BEFORE the routes require() below and long before app.listen(), so no HTTP request can be
+ *     served by a process whose handlers are not yet attached.
+ *   - SYNCHRONOUSLY at module load rather than in the listen callback. EventBus subscribes to the
+ *     Redis channel asynchronously from its own constructor and delivery is at-most-once with no
+ *     replay, so anything arriving before these handlers exist is lost permanently. Registering
+ *     synchronously wins that race deterministically, because the Redis connect is a network
+ *     round trip. Registration itself needs no live Redis connection — subscribe() only populates
+ *     an in-process Map, which is what the delivered message is later dispatched through.
+ *
+ * NOT gated on NODE_APP_INSTANCE the way the BullMQ workers below are. In cluster mode every
+ * instance holds its own Redis subscriber and would receive the same message, so each needs its
+ * own handlers; duplicate application is prevented at the correct layer — deterministic event
+ * identity plus MasteryEngine's processedEventIds transaction — not by electing one listener.
+ */
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { registerEventSubscribers } = require('./core/events/subscribers');
+registerEventSubscribers();
+
 // Load routes AFTER bootstrapDI(). Routes must be required here (not via a top-level
 // `import`) because ES/TS import statements are hoisted above bootstrapDI(); some
 // controllers (e.g. FeatureFlagsController -> FeatureFlagService, ConfigService)
