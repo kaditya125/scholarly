@@ -145,6 +145,11 @@ export class StudentContextService {
     try {
       const memoryProvider = container.resolve<IMemoryProvider>(TOKENS.MemoryProvider);
       const metrics: LearningMetrics = await memoryProvider.getLearningAnalytics(userId);
+      // No analytics document => these are zero-state placeholders, not measurements. Returning
+      // null omits the whole block rather than asserting "Mastery 0%, Accuracy 0%, Consistency 0"
+      // about a student nobody has measured. (Nothing writes this document today, so this is the
+      // normal path until Phase A2's LearningStateService starts producing real values.)
+      if (metrics.hasData === false) return null;
       return {
         masteryPercentage: metrics.masteryPercentage,
         retentionScore: metrics.retentionScore,

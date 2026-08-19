@@ -1,4 +1,12 @@
 export interface LearningMetrics {
+  /**
+   * False when no analytics document exists for this user yet, i.e. every numeric field below is
+   * a zero-state placeholder rather than a measurement. Nothing in production currently WRITES
+   * this document, so in practice this is false for every student — which meant the zeros were
+   * being reported to the model as real figures ("Mastery: 0%, Accuracy: 0%") for everyone.
+   * Consumers must check this before presenting or asserting any of these numbers.
+   */
+  hasData?: boolean;
   masteryPercentage: number;
   revisionFrequency: number;
   averageConfidence: number;

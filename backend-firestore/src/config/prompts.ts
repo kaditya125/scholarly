@@ -338,10 +338,13 @@ The student said "Hi", "Hello", or a similar greeting. Generate a warm, personal
     }
   }
 
+  // Same rule as buildStudentContextBlock: state a metric only when it is actually known.
+  // examReadiness in particular is null until a real readiness model exists — printing it as a
+  // number here would reintroduce the fabricated claim this phase removed.
   if (ctx.analytics) {
-    prompt += `\n- **Mastery**: ${ctx.analytics.masteryPercentage}%`;
-    prompt += `\n- **Exam Readiness**: ${ctx.analytics.examReadiness}%`;
-    prompt += `\n- **Retention Score**: ${ctx.analytics.retentionScore}`;
+    if (ctx.analytics.masteryPercentage != null) prompt += `\n- **Mastery**: ${ctx.analytics.masteryPercentage}%`;
+    if (ctx.analytics.examReadiness != null) prompt += `\n- **Exam Readiness**: ${ctx.analytics.examReadiness}%`;
+    if (ctx.analytics.retentionScore != null) prompt += `\n- **Retention Score**: ${ctx.analytics.retentionScore}`;
   }
 
   if (ctx.stats) {
