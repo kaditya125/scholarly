@@ -23,6 +23,20 @@ export interface ConceptMastery {
    */
   subject?: string;
   topic?: string;
+  /**
+   * Canonical syllabus node this mastery record measures.
+   *
+   * AUDIT (outcome B): `conceptId` could NOT already resolve to a canonical node — it is
+   * slugifyConcept(label) over a free-text, LLM-invented topic string, so "Algebra" collapses to
+   * "algebra" identically for SSC, JEE and banking and identifies no node at all.
+   *
+   * The smallest correct change is this single field rather than a parallel identity system:
+   * when a canonical node is known the record is KEYED by it (conceptId = slugified node id) so
+   * mastery aggregates canonically, and the raw node id is stored here so the relationship is
+   * explicit and auditable instead of being re-derived from the key. Legacy label-keyed records
+   * keep working and are distinguishable by this field's absence.
+   */
+  syllabusNodeId?: string;
   confidence: number;         // 0..1 — how much evidence backs the estimate
   masteryScore: number;       // 0..1 — current mastery
   attempts: number;           // graded attempts (quiz/mistake)
@@ -174,7 +188,7 @@ export class MasteryEngine {
     event: MasteryEvent,
     title = '',
     now = Date.now(),
-    hierarchy?: { subject?: string; topic?: string },
+    hierarchy?: { subject?: string; topic?: string; syllabusNodeId?: string },
   ): ConceptMastery {
     const base = prev || this.fresh(conceptId, title || conceptId, hierarchy?.subject, hierarchy?.topic);
     const cfg = EVENT_CONFIG[event];
@@ -197,6 +211,7 @@ export class MasteryEngine {
       // Newly-supplied hierarchy wins (it backfills older records); otherwise keep what we had.
       subject: hierarchy?.subject ?? base.subject,
       topic: hierarchy?.topic ?? base.topic,
+      syllabusNodeId: hierarchy?.syllabusNodeId ?? base.syllabusNodeId,
       confidence: Math.min(0.95, confidence),
       masteryScore,
       attempts,
@@ -251,7 +266,7 @@ export class MasteryEngine {
    */
   async recordBatch(
     userId: string,
-    concept: { id: string; title?: string; subject?: string; topic?: string },
+    concept: { id: string; title?: string; subject?: string; topic?: string; syllabusNodeId?: string },
     events: MasteryEvent[],
     eventId?: string,
   ): Promise<{ deduplicated: boolean }> {
@@ -259,6 +274,9 @@ export class MasteryEngine {
     const hierarchy = { subject: concept.subject, topic: concept.topic };
     let deduplicated = false;
 
+    const hierarchyForBatch = {
+      subject: concept.subject, topic: concept.topic, syllabusNodeId: concept.syllabusNodeId,
+    };
     const mutate = (prev: ConceptMastery | null) => {
       // The dedup check runs INSIDE the transaction callback, against the state that
       // transaction actually read. Two concurrent deliveries of the same eventId cannot both
@@ -272,7 +290,7 @@ export class MasteryEngine {
 
       let acc = prev;
       for (const ev of events) {
-        acc = this.applyEvent(acc, concept.id, ev, concept.title || '', Date.now(), hierarchy);
+        acc = this.applyEvent(acc, concept.id, ev, concept.title || '', Date.now(), hierarchyForBatch);
       }
       if (eventId) {
         acc!.processedEventIds = [...(prev?.processedEventIds || []), eventId].slice(-PROCESSED_EVENT_HISTORY);

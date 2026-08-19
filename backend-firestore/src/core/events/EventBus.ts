@@ -57,6 +57,15 @@ export interface EventPayloads {
     correct: boolean;
     skipped: boolean;
     timeSpentSeconds?: number;
+    /**
+     * Canonical syllabus identity CARRIED from the question — never reconstructed from `topic`.
+     * Optional because unanchored/legacy questions legitimately have none; identityStatus says
+     * which, so consumers never have to infer meaning from absence.
+     */
+    syllabusNodeId?: string;
+    syllabusId?: string;
+    cycleId?: string;
+    identityStatus?: 'CANONICAL' | 'UNANCHORED';
     /** Where this came from, so a weakness can cite corroboration across sources. */
     source: 'quiz' | 'test' | 'assignment' | 'practice';
     sourceId?: string;
@@ -103,7 +112,20 @@ export interface EventPayloads {
     score?: number;
     totalTimeSeconds?: number;
     /** Per-topic rollup computed at submission, so consumers need not refetch questions. */
-    topicBreakdown?: Array<{ topic: string; attempted: number; correct: number; skipped: number }>;
+    /**
+     * Per-topic rollup. Carries canonical identity per row so the authoritative mastery
+     * aggregation can key on the syllabus node rather than a label.
+     */
+    topicBreakdown?: Array<{
+      topic: string;
+      attempted: number;
+      correct: number;
+      skipped: number;
+      syllabusNodeId?: string;
+      syllabusId?: string;
+      cycleId?: string;
+      identityStatus?: 'CANONICAL' | 'UNANCHORED';
+    }>;
     occurredAt: number;
   };
 }
