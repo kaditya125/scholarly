@@ -56,10 +56,24 @@ export class ResultAnalysisService {
     // constant strings ('Good overall comprehension' / 'Needs revision on fundamental concepts')
     // emitted purely off a 70% threshold — identical for every student and every subject, and
     // naming no topic the student could act on.
-    const byTopic = new Map<string, { correct: number; attempted: number; skipped: number }>();
+    const byTopic = new Map<string, {
+      correct: number; attempted: number; skipped: number;
+      syllabusNodeId?: string; syllabusId?: string; cycleId?: string;
+      identityStatus?: 'CANONICAL' | 'UNANCHORED';
+    }>();
     for (const q of questions) {
+      const anyQ = q as any;
       const key = q.topic || q.subject || 'General';
       const entry = byTopic.get(key) || { correct: 0, attempted: 0, skipped: 0 };
+      // Identity is CARRIED from the question, never looked up from the topic string.
+      if (anyQ.syllabusNodeId && !entry.syllabusNodeId) {
+        entry.syllabusNodeId = anyQ.syllabusNodeId;
+        entry.syllabusId = anyQ.syllabusId;
+        entry.cycleId = anyQ.cycleId;
+      }
+      entry.identityStatus = entry.identityStatus === 'UNANCHORED'
+        ? 'UNANCHORED'
+        : (anyQ.identityStatus || 'UNANCHORED');
       const selected = (attempt.answers || {})[q.id];
       if (selected === undefined) {
         entry.skipped++;
@@ -137,6 +151,11 @@ export class ResultAnalysisService {
           timeSpentSeconds: attempt.timeSpentPerQuestion?.[q.id],
           source: 'test',
           sourceId: attempt.id,
+          // Carried from the question. Absent => genuinely unanchored, not "unknown yet".
+          syllabusNodeId: (q as any).syllabusNodeId,
+          syllabusId: (q as any).syllabusId,
+          cycleId: (q as any).cycleId,
+          identityStatus: (q as any).identityStatus || 'UNANCHORED',
           occurredAt,
         });
       }
@@ -157,6 +176,10 @@ export class ResultAnalysisService {
           attempted: s.attempted,
           correct: s.correct,
           skipped: s.skipped,
+          syllabusNodeId: s.syllabusNodeId,
+          syllabusId: s.syllabusId,
+          cycleId: s.cycleId,
+          identityStatus: s.identityStatus,
         })),
         occurredAt,
       }, {

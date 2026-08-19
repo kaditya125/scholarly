@@ -298,3 +298,58 @@ describe('recordBatch idempotency (event identity)', () => {
     expect(rec!.attempts).toBe(60);
   });
 });
+
+/**
+ * #92 propagation: canonical identity must reach mastery and be keyed by the syllabus node,
+ * not by an LLM-invented label. Audit outcome B — conceptId was slugifyConcept(freeTextLabel),
+ * so "Algebra" collided across every exam and resolved to no canonical node.
+ */
+describe('canonical identity on mastery', () => {
+  it('stores syllabusNodeId and keys the record by it', async () => {
+    const store = new FakeStore();
+    const e = new MasteryEngine(store);
+    await e.recordBatch(
+      'u1',
+      {
+        id: slugifyConcept('topic:ssc_cgl_quant_algebra'),
+        title: 'Algebra', subject: 'Mathematics', topic: 'Algebra',
+        syllabusNodeId: 'topic:ssc_cgl_quant_algebra',
+      },
+      ['quiz_correct', 'quiz_incorrect'] as any,
+      'EVT-1',
+    );
+    const rec = await store.get('u1', slugifyConcept('topic:ssc_cgl_quant_algebra'));
+    expect(rec?.syllabusNodeId).toBe('topic:ssc_cgl_quant_algebra');
+    expect(rec?.attempts).toBe(2);
+  });
+
+  it('two exams sharing a topic LABEL do not collide when canonically keyed', async () => {
+    const store = new FakeStore();
+    const e = new MasteryEngine(store);
+    // Both are labelled "Algebra" — the exact collision the old label-slug keying caused.
+    await e.recordBatch('u1', {
+      id: slugifyConcept('topic:ssc_cgl_quant_algebra'), title: 'Algebra',
+      syllabusNodeId: 'topic:ssc_cgl_quant_algebra',
+    }, ['quiz_correct'] as any, 'A');
+    await e.recordBatch('u1', {
+      id: slugifyConcept('topic:jee_math_algebra'), title: 'Algebra',
+      syllabusNodeId: 'topic:jee_math_algebra',
+    }, ['quiz_incorrect'] as any, 'B');
+
+    const all = await store.list('u1');
+    expect(all.length).toBe(2); // two distinct syllabus locations, two records
+    expect(all.map((r) => r.syllabusNodeId).sort()).toEqual([
+      'topic:jee_math_algebra', 'topic:ssc_cgl_quant_algebra',
+    ]);
+  });
+
+  it('unanchored evidence still records, without inventing a node id', async () => {
+    const store = new FakeStore();
+    const e = new MasteryEngine(store);
+    await e.recordBatch('u1', { id: slugifyConcept('Algebra'), title: 'Algebra' },
+      ['quiz_correct'] as any, 'C');
+    const rec = await store.get('u1', 'algebra');
+    expect(rec?.attempts).toBe(1);
+    expect(rec?.syllabusNodeId).toBeUndefined();
+  });
+});

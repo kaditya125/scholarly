@@ -42,12 +42,23 @@ export function registerEventSubscribers() {
       if (events.length === 0) continue;
 
       try {
-        // Scoped per topic: one submission writes several concept documents, so each needs its
+        // Key on the canonical node when the evidence carries one, so mastery aggregates by
+        // syllabus location rather than by an LLM-invented label ("Algebra" would otherwise
+        // collide across every exam). Falls back to the label slug for unanchored evidence,
+        // which keeps legacy records working and distinguishable.
+        const conceptKey = row.syllabusNodeId ? slugifyConcept(row.syllabusNodeId) : slugifyConcept(label);
+        // Scoped per concept: one submission writes several concept documents, so each needs its
         // own idempotency key or the second topic would look already-processed.
-        const perTopicEventId = meta?.eventId ? `${meta.eventId}#${slugifyConcept(label)}` : undefined;
+        const perTopicEventId = meta?.eventId ? `${meta.eventId}#${conceptKey}` : undefined;
         const { deduplicated } = await masteryEngine.recordBatch(
           payload.userId,
-          { id: slugifyConcept(label), title: label, subject: payload.subject, topic: label },
+          {
+            id: conceptKey,
+            title: label,
+            subject: payload.subject,
+            topic: label,
+            syllabusNodeId: row.syllabusNodeId,
+          },
           events,
           perTopicEventId,
         );
@@ -55,6 +66,9 @@ export function registerEventSubscribers() {
           studentId: payload.userId, submissionId: payload.attemptId,
           topic: label, attempts: row.attempted, correct: row.correct,
           deduplicated, eventId: meta?.eventId,
+          // Lets us answer "what share of new evidence is canonical?" without trawling documents.
+          identityStatus: row.identityStatus || 'UNANCHORED',
+          syllabusNodeId: row.syllabusNodeId,
         });
       } catch (err: any) {
         // Logged loudly (MasteryEngine already logged the underlying failure) but not rethrown:
