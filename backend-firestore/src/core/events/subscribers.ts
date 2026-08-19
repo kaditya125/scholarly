@@ -21,9 +21,13 @@ export function registerEventSubscribers() {
   // same document. Measured: the per-question approach persisted 4 graded answers as 2 attempts,
   // because concurrent transactions on one concept contended and the losers were discarded.
   //
-  // learning.question_answered is still emitted and remains the raw evidence stream — it is what
-  // makes mastery recomputable if this aggregation ever changes — it simply is not what drives
-  // the mastery write.
+  // learning.question_answered is still emitted for realtime consumers, but note carefully:
+  // it is NOT durable and is NOT what makes mastery recomputable. It is a transient message on an
+  // at-most-once bus with no persistence, replay or acknowledgement — if delivery fails it is gone.
+  // (An earlier version of this comment claimed otherwise; that was wrong.)
+  //
+  // The durable source of truth is the persisted attempt/graded-result document in Firestore.
+  // Mastery is a PROJECTION rebuildable from that, which is what makes reconciliation possible.
   eventBus.subscribe('learning.test_completed', async (payload, meta) => {
     if (!featureFlags.mastery) return;
     const breakdown = payload.topicBreakdown || [];
@@ -72,8 +76,8 @@ export function registerEventSubscribers() {
         });
       } catch (err: any) {
         // Logged loudly (MasteryEngine already logged the underlying failure) but not rethrown:
-        // one topic failing to record must not fail the student's submission, and the raw
-        // question_answered events remain available to recompute from.
+        // one topic failing to record must not fail the student's submission. Recovery comes from
+        // the durable Firestore evidence via reconciliation, NOT from the transient events.
         logger.error('[EventBus] mastery batch failed for topic; evidence NOT recorded', {
           userId: payload.userId, topic: label, attemptId: payload.attemptId, error: err?.message,
         });

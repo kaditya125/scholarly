@@ -1,0 +1,165 @@
+import { db } from '../config/firebase';
+import { eventBus } from '../core/events/EventBus';
+import { logger } from '../utils/logger';
+
+/**
+ * Baseline evidence reconciliation.
+ *
+ * The architectural point: the EventBus is at-most-once with no persistence, replay or
+ * acknowledgement, so a publish failure would otherwise mean a student's graded baseline never
+ * reaches mastery — silently. This component makes the EventBus an ACCELERATOR rather than the
+ * only path: durable Firestore evidence is the source of truth, and mastery is a projection that
+ * can always be rebuilt from it.
+ *
+ * The invariant it enforces:
+ *
+ *     If every EventBus message disappeared, mastery could still be reconstructed correctly.
+ *
+ * It NEVER re-grades. Grading is server-authoritative and already durable; reconciliation reads
+ * the persisted per-question verdicts (`gradedQuestions`) and replays events from them. The
+ * original client payload is irrelevant once the submission is COMPLETED — which is exactly the
+ * property that makes replay safe.
+ *
+ * Idempotency is inherited, not reinvented: the completion event keeps the deterministic identity
+ * `learning.test_completed:{attemptId}`, and MasteryEngine already dedupes on processedEventIds
+ * inside its transaction (verified in production: 10 concurrent duplicates → 1 effect). Running
+ * this once, twice or concurrently therefore yields one logical mastery effect.
+ */
+
+export interface ReconcileOutcome {
+  attemptId: string | null;
+  projected: boolean;
+  reason?: string;
+}
+
+export class BaselineReconciliationService {
+  /**
+   * Replays the durable evidence for ONE student's pending baseline submission.
+   *
+   * Returns without projecting when there is nothing owed, so it is safe to call speculatively.
+   */
+  async reconcileUser(userId: string): Promise<ReconcileOutcome> {
+    const ref = db.collection('users').doc(userId).collection('assessments').doc('baselineSession');
+    const snap = await ref.get();
+    const data: any = snap.exists ? snap.data() : null;
+
+    if (!data) return { attemptId: null, projected: false, reason: 'NO_SESSION' };
+    if (data.submissionState !== 'COMPLETED') {
+      return { attemptId: data.attemptId ?? null, projected: false, reason: 'NOT_COMPLETED' };
+    }
+    if (data.projectionStatus === 'PROJECTED') {
+      return { attemptId: data.attemptId ?? null, projected: false, reason: 'ALREADY_PROJECTED' };
+    }
+
+    const gradedQuestions: any[] = data.gradedQuestions || [];
+    const attemptId: string | null = data.attemptId ?? null;
+    if (!attemptId) {
+      // Cannot build a deterministic event identity, so replay could not be made idempotent.
+      // Left PENDING and reported rather than projected under a fabricated id.
+      logger.error('[BaselineReconcile] COMPLETED submission has no attemptId; cannot project', { userId });
+      return { attemptId: null, projected: false, reason: 'NO_ATTEMPT_ID' };
+    }
+    if (gradedQuestions.length === 0) {
+      // A COMPLETED submission should never lack evidence — that combination is written
+      // atomically. Report loudly rather than marking it projected to tidy the state.
+      logger.error('[BaselineReconcile] COMPLETED submission has no gradedQuestions', { userId, attemptId });
+      return { attemptId, projected: false, reason: 'NO_EVIDENCE' };
+    }
+
+    // Rebuild the per-topic rollup from the DURABLE verdicts. Skips are excluded from graded
+    // evidence exactly as elsewhere: not attempting is a time/avoidance signal, not a knowledge gap.
+    const byTopic = new Map<string, { attempted: number; correct: number; skipped: number }>();
+    for (const q of gradedQuestions) {
+      const topic = q.topic || q.subject || 'General';
+      const e = byTopic.get(topic) || { attempted: 0, correct: 0, skipped: 0 };
+      if (q.skipped) e.skipped++;
+      else if (q.graded) { e.attempted++; if (q.correct) e.correct++; }
+      byTopic.set(topic, e);
+    }
+
+    const occurredAt = Date.now();
+    try {
+      // Raw per-question evidence for realtime consumers. Best-effort by design; mastery does
+      // not depend on these, which is why losing them is survivable.
+      for (const q of gradedQuestions) {
+        void eventBus.publish('learning.question_answered', {
+          userId,
+          questionId: q.questionId,
+          subject: q.subject ?? undefined,
+          topic: q.topic ?? undefined,
+          correct: !!q.correct,
+          skipped: !!q.skipped,
+          source: 'assignment',
+          sourceId: attemptId,
+          identityStatus: 'UNANCHORED',
+          occurredAt,
+        } as any, { eventId: `learning.question_answered:${attemptId}:${q.questionId}` });
+      }
+
+      const totalGraded = gradedQuestions.filter((q) => q.graded).length;
+      const correctCount = gradedQuestions.filter((q) => q.graded && q.correct).length;
+
+      // The authoritative graded trigger. Same event and same deterministic identity the normal
+      // path uses — no baseline-specific mastery lifecycle exists.
+      await eventBus.publish('learning.test_completed', {
+        userId,
+        attemptId,
+        testId: attemptId,
+        subject: undefined,
+        totalQuestions: data.gradedResult?.totalQuestions ?? gradedQuestions.length,
+        correctCount,
+        skippedCount: gradedQuestions.filter((q) => q.skipped).length,
+        accuracy: totalGraded > 0 ? Math.round((correctCount / totalGraded) * 100) : 0,
+        topicBreakdown: Array.from(byTopic.entries()).map(([topic, s]) => ({
+          topic, attempted: s.attempted, correct: s.correct, skipped: s.skipped,
+          identityStatus: 'UNANCHORED' as const,
+        })),
+        occurredAt,
+      } as any, { eventId: `learning.test_completed:${attemptId}` });
+
+      // PROJECTED is set only after the publish path completed without throwing. Note the honest
+      // limitation: the EventBus does not acknowledge consumer success, so this records "handed
+      // off without error", not "mastery definitely wrote". A consumer that throws is logged by
+      // its own handler; re-running reconciliation is safe and idempotent, so a stuck submission
+      // can always be retried.
+      await ref.set({ projectionStatus: 'PROJECTED', projectedAt: Date.now() }, { merge: true });
+      logger.info('[BaselineReconcile] projected baseline evidence', {
+        userId, attemptId, questions: gradedQuestions.length, correctCount,
+      });
+      return { attemptId, projected: true };
+    } catch (err: any) {
+      // Durable evidence is never rolled back — it is already authoritative. Only the projection
+      // is owed, and PENDING is preserved so a later run picks it up.
+      logger.error('[BaselineReconcile] projection failed; leaving PENDING for retry', {
+        userId, attemptId, error: err?.message, code: err?.code,
+      });
+      return { attemptId, projected: false, reason: 'PUBLISH_FAILED' };
+    }
+  }
+
+  /**
+   * Finds and replays every submission still owing a projection.
+   *
+   * Uses a collection-group query on the assessments subcollection, filtered on the two
+   * projection fields, so it does not scan whole user documents. Firestore will require a
+   * composite index on (submissionState, projectionStatus) for this collection group.
+   */
+  async reconcilePending(limit = 50): Promise<{ scanned: number; projected: number }> {
+    const snap = await db.collectionGroup('assessments')
+      .where('submissionState', '==', 'COMPLETED')
+      .where('projectionStatus', '==', 'PENDING')
+      .limit(limit)
+      .get();
+
+    let projected = 0;
+    for (const doc of snap.docs) {
+      const userId = (doc.data() as any)?.userId || doc.ref.parent.parent?.id;
+      if (!userId) continue;
+      const r = await this.reconcileUser(userId);
+      if (r.projected) projected++;
+    }
+    return { scanned: snap.size, projected };
+  }
+}
+
+export const baselineReconciliationService = new BaselineReconciliationService();

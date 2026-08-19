@@ -223,11 +223,36 @@ export class BaselineAssessmentService {
       {
         isSubmitted: true,
         submittedAt: Date.now(),
-        // COMPLETED is set together with the durable result: the state must never claim
-        // completion while the graded result is absent.
+        // COMPLETED is written together with the durable result AND the per-question evidence:
+        // the state must never claim completion while either is absent, because mastery is
+        // reconstructed from them and a COMPLETED submission with no evidence would be
+        // permanently unreconcilable.
         submissionState: 'COMPLETED',
         completedAt: Date.now(),
         attemptId: claim.attemptId,
+        // PENDING until the mastery projection actually succeeds. This is operational projection
+        // state ONLY — it never overrides or modifies the authoritative graded result, and
+        // COMPLETED + PENDING is a valid, correct state meaning "safely graded, projection owed".
+        projectionStatus: 'PENDING',
+        /**
+         * Per-question server-derived verdicts — the durable evidence mastery is rebuilt from.
+         * Previously computed and then discarded, which left baseline unreconcilable at topic
+         * level. Deliberately minimal: identity and verdict, not question content.
+         *
+         * `topic` is descriptive metadata for display/grouping and must NEVER be resolved to a
+         * canonical syllabus node. identityStatus stays UNANCHORED because production has no
+         * syllabus graph — see #91/#92.
+         */
+        gradedQuestions: summary.graded.map((g: any) => ({
+          questionId: g.questionId,
+          correct: g.correct,
+          skipped: g.skipped,
+          graded: g.graded,
+          reason: g.reason,
+          subject: g.subject ?? null,
+          topic: g.topic ?? null,
+          identityStatus: 'UNANCHORED',
+        })),
         gradedResult: {
           attemptId: claim.attemptId,
           totalQuestions,
