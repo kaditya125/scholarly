@@ -268,6 +268,26 @@ export class BaselineAssessmentService {
       { merge: true }
     );
 
+    // ── Inline projection attempt (happy path) ──────────────────────────────────────────────
+    // Deliberately AFTER the durable write above and OUTSIDE any transaction: evidence is already
+    // authoritative, so this is pure acceleration. Delegates to the SAME reconcileUser path used
+    // for recovery, so there is exactly one projection implementation rather than two that could
+    // drift. A failure here is expected and safe — projectionStatus simply stays PENDING and a
+    // later reconciliation picks it up. It must never surface as a grading failure.
+    try {
+      const { baselineReconciliationService } = await import('./baselineReconciliation.service');
+      const projection = await baselineReconciliationService.reconcileUser(userId);
+      if (!projection.projected) {
+        logger.warn('[Baseline] inline projection did not complete; left PENDING for reconciliation', {
+          userId, attemptId: claim.attemptId, reason: projection.reason,
+        });
+      }
+    } catch (err: any) {
+      logger.error('[Baseline] inline projection threw; evidence intact, left PENDING', {
+        userId, attemptId: claim.attemptId, error: err?.message,
+      });
+    }
+
     const submissionSummary = {
       totalQuestions,
       correctCount,
