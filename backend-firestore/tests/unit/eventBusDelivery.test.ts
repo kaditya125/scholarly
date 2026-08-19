@@ -96,3 +96,48 @@ describe('EventBus dispatch: exactly one invocation per handler per event', () =
     expect(onCalls).toBe(1);
   });
 });
+
+/**
+ * publish() reports outcome, so a caller cannot record durable state from a failure.
+ *
+ * Found by forcing a real publication failure against production Redis: publish() swallowed the
+ * error and returned normally, so baseline reconciliation wrote `projectionStatus: 'PROJECTED'`
+ * for an event that reached nobody — then skipped it forever as already done.
+ */
+describe('EventBus publish outcome', () => {
+  let bus: EventBus;
+
+  beforeEach(() => { bus = new EventBus(); });
+  afterEach(async () => { await bus.close().catch(() => {}); });
+
+  it('returns true when the publish path completes', async () => {
+    bus.subscribe('user.registered', async () => {});
+    await expect(bus.publish('user.registered', { userId: 'u1', email: 'a@b.c' })).resolves.toBe(true);
+  });
+
+  it('THE REGRESSION: returns false when publication itself fails', async () => {
+    // Reproduces the measured production shape: the connected flag is true but the publisher
+    // socket is gone, so there is no in-process fallback and the send throws.
+    const b = bus as any;
+    b.isRedisConnected = true;
+    b.pubClient = { publish: async () => { throw new Error('The client is closed'); } };
+
+    await expect(bus.publish('user.registered', { userId: 'u1', email: 'a@b.c' })).resolves.toBe(false);
+  });
+
+  it('still does not throw on failure, so fire-and-forget callers are unaffected', async () => {
+    const b = bus as any;
+    b.isRedisConnected = true;
+    b.pubClient = { publish: async () => { throw new Error('The client is closed'); } };
+
+    await expect(bus.publish('user.registered', { userId: 'u1', email: 'a@b.c' })).resolves.not.toThrow();
+  });
+
+  it('a throwing CONSUMER is not reported as a publication failure', async () => {
+    // The bus has no consumer acknowledgement. `true` means "handed off", never "processed" —
+    // claiming otherwise would be the same fabrication in the opposite direction.
+    bus.subscribe('user.registered', async () => { throw new Error('consumer blew up'); });
+
+    await expect(bus.publish('user.registered', { userId: 'u1', email: 'a@b.c' })).resolves.toBe(true);
+  });
+});
