@@ -15,29 +15,46 @@ export function registerEventSubscribers() {
   //
   // Gated on featureFlags.mastery so the write path can be enabled independently of anything
   // reading it, and so this is a no-op until the flag is deliberately turned on.
-  eventBus.subscribe('learning.question_answered', async (payload) => {
+  // Mastery is aggregated ONCE PER SUBMISSION, from test_completed's topicBreakdown — not once
+  // per question. A submission already contains the complete result set, so folding a topic's
+  // outcomes into a single atomic write is both correct and simpler than N writes racing on the
+  // same document. Measured: the per-question approach persisted 4 graded answers as 2 attempts,
+  // because concurrent transactions on one concept contended and the losers were discarded.
+  //
+  // learning.question_answered is still emitted and remains the raw evidence stream — it is what
+  // makes mastery recomputable if this aggregation ever changes — it simply is not what drives
+  // the mastery write.
+  eventBus.subscribe('learning.test_completed', async (payload) => {
     if (!featureFlags.mastery) return;
-    // A skipped question is not evidence about knowledge — see the EventBus payload docs.
-    if (payload.skipped) return;
-    // Mastery is tracked per concept; topic is the finest-grained concept label the question
-    // data actually carries today. Without one there is nothing to attribute the result to.
-    const label = payload.topic || payload.subject;
-    if (!label) return;
+    const breakdown = payload.topicBreakdown || [];
+    if (breakdown.length === 0) return;
 
-    try {
-      await masteryEngine.recordEvent(
-        payload.userId,
-        {
-          id: slugifyConcept(label),
-          title: label,
-          subject: payload.subject,
-          topic: payload.topic,
-        },
-        payload.correct ? 'quiz_correct' : 'quiz_incorrect',
-      );
-    } catch (err: any) {
-      // Never let evidence recording break the request that produced it.
-      logger.warn('[EventBus] mastery update failed', { userId: payload.userId, error: err?.message });
+    for (const row of breakdown) {
+      const label = row.topic;
+      if (!label) continue;
+      // Skipped questions are deliberately excluded: not attempting is an avoidance/time signal,
+      // not evidence about knowledge, and counting them as failures would understate mastery for
+      // a student who simply ran out of time.
+      const events: Array<'quiz_correct' | 'quiz_incorrect'> = [
+        ...Array(row.correct).fill('quiz_correct' as const),
+        ...Array(Math.max(0, row.attempted - row.correct)).fill('quiz_incorrect' as const),
+      ];
+      if (events.length === 0) continue;
+
+      try {
+        await masteryEngine.recordBatch(
+          payload.userId,
+          { id: slugifyConcept(label), title: label, subject: payload.subject, topic: label },
+          events,
+        );
+      } catch (err: any) {
+        // Logged loudly (MasteryEngine already logged the underlying failure) but not rethrown:
+        // one topic failing to record must not fail the student's submission, and the raw
+        // question_answered events remain available to recompute from.
+        logger.error('[EventBus] mastery batch failed for topic; evidence NOT recorded', {
+          userId: payload.userId, topic: label, attemptId: payload.attemptId, error: err?.message,
+        });
+      }
     }
   });
 

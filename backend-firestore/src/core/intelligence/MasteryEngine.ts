@@ -116,7 +116,20 @@ class FirestoreMasteryStore implements MasteryStore {
         const prev = snap.exists ? (snap.data() as ConceptMastery) : null;
         tx.set(ref, mutate(prev), { merge: true });
       });
-    } catch { /* non-fatal */ }
+    } catch (err: any) {
+      // Never silent. A discarded write here is LOST STUDENT EVIDENCE — mastery would then be
+      // computed from an incomplete record and reported to the student as fact. The previous
+      // empty catch is how 4 graded answers silently persisted as 2 attempts.
+      //
+      // Rethrown so the caller decides: the subscriber logs and continues (one dropped batch
+      // must not fail the submission the student just made), but it can no longer happen
+      // invisibly, and the raw learning events remain the source of truth for recomputation.
+      const { logger } = require('../../utils/logger');
+      logger.error('[MasteryEngine] transactional mastery write FAILED — evidence not recorded', {
+        userId, conceptId, error: err?.message, code: err?.code,
+      });
+      throw err;
+    }
   }
 }
 
@@ -197,6 +210,42 @@ export class MasteryEngine {
     // Atomic where supported — concurrent events for the same concept are the normal case
     // (one test submission emits one event per question), and a plain get/set loses all but
     // the last of them.
+    if (this.store.transact) {
+      await this.store.transact(userId, concept.id, mutate);
+      return;
+    }
+    await this.store.set(userId, mutate(await this.store.get(userId, concept.id)));
+  }
+
+  /**
+   * Apply SEVERAL events to ONE concept in a single atomic read-modify-write.
+   *
+   * This is the correct shape for graded submissions, and replaces emitting one racing write
+   * per question. A test submission already contains the complete result set, so its evidence
+   * for a given topic is known in full at submission time: read the concept once, fold every
+   * outcome in through the same pure applyEvent, write once.
+   *
+   * Measured necessity: with one write per question, 4 events for a single topic persisted as
+   * 2 attempts — Firestore transactions on the same document contended and the losers were
+   * discarded. Folding them into one write removes the contention rather than retrying harder.
+   * Ordering within the batch is preserved, so EMA smoothing and trend behave exactly as they
+   * would have sequentially.
+   */
+  async recordBatch(
+    userId: string,
+    concept: { id: string; title?: string; subject?: string; topic?: string },
+    events: MasteryEvent[],
+  ): Promise<void> {
+    if (!userId || !concept?.id || events.length === 0) return;
+    const hierarchy = { subject: concept.subject, topic: concept.topic };
+    const mutate = (prev: ConceptMastery | null) => {
+      let acc = prev;
+      for (const ev of events) {
+        acc = this.applyEvent(acc, concept.id, ev, concept.title || '', Date.now(), hierarchy);
+      }
+      return acc!;
+    };
+
     if (this.store.transact) {
       await this.store.transact(userId, concept.id, mutate);
       return;

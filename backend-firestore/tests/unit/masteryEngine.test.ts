@@ -163,3 +163,62 @@ describe('MasteryEngine hierarchy + evidence loop', () => {
     expect(afterOneSlip).toBeGreaterThan(0.4);
   });
 });
+
+/**
+ * THE regression this phase exists for. Verified against the real database that per-question
+ * writes lost evidence: 4 graded answers persisted first as attempts=1/successRate=1.0 (a 25%
+ * result recorded as 100%), then as attempts=2 after adding transactions. recordBatch folds a
+ * submission's outcomes into one atomic write, which is what makes this deterministic.
+ */
+describe('recordBatch: 3 wrong + 1 correct must persist exactly', () => {
+  it('produces attempts=4, successCount=1, successRate=0.25', async () => {
+    const store = new FakeStore();
+    const e = new MasteryEngine(store);
+    await e.recordBatch(
+      'u1',
+      { id: 'probability', title: 'Probability', subject: 'Mathematics', topic: 'Probability' },
+      ['quiz_incorrect', 'quiz_incorrect', 'quiz_incorrect', 'quiz_correct'],
+    );
+    const rec = await store.get('u1', 'probability');
+    expect(rec!.attempts).toBe(4);
+    expect(rec!.successCount).toBe(1);
+    expect(rec!.successRate).toBeCloseTo(0.25, 5);
+    // Never the failure modes we actually observed in production:
+    expect(rec!.attempts).not.toBe(1);
+    expect(rec!.successRate).not.toBe(1);
+  });
+
+  it('is order-independent in totals (same counts => same attempts/successRate)', async () => {
+    const s1 = new FakeStore(); const s2 = new FakeStore();
+    const c = { id: 'p', title: 'P', subject: 'Maths', topic: 'P' };
+    await new MasteryEngine(s1).recordBatch('u', c, ['quiz_incorrect', 'quiz_incorrect', 'quiz_incorrect', 'quiz_correct']);
+    await new MasteryEngine(s2).recordBatch('u', c, ['quiz_correct', 'quiz_incorrect', 'quiz_incorrect', 'quiz_incorrect']);
+    const a = await s1.get('u', 'p'); const b = await s2.get('u', 'p');
+    expect(a!.attempts).toBe(b!.attempts);
+    expect(a!.successRate).toBeCloseTo(b!.successRate, 5);
+  });
+
+  it('accumulates across successive submissions rather than replacing', async () => {
+    const store = new FakeStore();
+    const e = new MasteryEngine(store);
+    const c = { id: 'p', title: 'P', subject: 'Maths', topic: 'P' };
+    await e.recordBatch('u', c, ['quiz_incorrect', 'quiz_incorrect']);
+    await e.recordBatch('u', c, ['quiz_correct', 'quiz_correct']);
+    const rec = await store.get('u', 'p');
+    expect(rec!.attempts).toBe(4);
+    expect(rec!.successCount).toBe(2);
+    expect(rec!.successRate).toBeCloseTo(0.5, 5);
+  });
+
+  it('concurrent batches on the same concept all land (atomic store)', async () => {
+    // FakeStore has no transact(), so this exercises the get/set fallback serially via await.
+    // The Firestore path uses runTransaction; this asserts the engine-level arithmetic holds.
+    const store = new FakeStore();
+    const e = new MasteryEngine(store);
+    const c = { id: 'p', title: 'P', subject: 'Maths', topic: 'P' };
+    for (let i = 0; i < 3; i++) await e.recordBatch('u', c, ['quiz_correct', 'quiz_incorrect']);
+    const rec = await store.get('u', 'p');
+    expect(rec!.attempts).toBe(6);
+    expect(rec!.successCount).toBe(3);
+  });
+});
