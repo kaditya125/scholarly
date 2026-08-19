@@ -15,7 +15,19 @@ export type EventType =
   | 'notebook.ingested'
   | 'user.registered'
   | 'payment.failed'
-  | 'system.maintenance';
+  | 'system.maintenance'
+  // ── Learning events ────────────────────────────────────────────────────────────────────
+  // The evidence backbone for the AI mentor. Each payload must carry enough DETERMINISTIC
+  // detail for a downstream service to compute learning state without asking an LLM anything —
+  // that is the whole point: measurement is calculated, only the explanation is generated.
+  //
+  // Deliberately a small set. The taxonomy discussed covered ~20 events; these are the ones the
+  // app can actually emit truthfully today from data it already has. Events we cannot populate
+  // honestly (revision.*, session.missed, topic.*) are omitted rather than emitted empty —
+  // an event with invented fields is the same failure as an invented metric.
+  | 'learning.question_answered'
+  | 'learning.quiz_completed'
+  | 'learning.test_completed';
 
 export interface EventPayloads {
   'notification.created': NotificationPayload;
@@ -25,6 +37,60 @@ export interface EventPayloads {
   'user.registered': { userId: string; email: string };
   'payment.failed': { userId: string; amount: number; reason: string };
   'system.maintenance': { scheduledFor: string; durationMinutes: number };
+
+  /**
+   * One graded question outcome. The atom of the evidence loop — everything about topic mastery
+   * is ultimately derived from a stream of these.
+   *
+   * `skipped` is distinct from `correct: false` on purpose: leaving a question unattempted is an
+   * avoidance/time signal, not a knowledge gap, and conflating them would inflate apparent
+   * weakness for a student who simply ran out of time.
+   */
+  'learning.question_answered': {
+    userId: string;
+    questionId: string;
+    subject?: string;
+    topic?: string;
+    difficulty?: string;
+    correct: boolean;
+    skipped: boolean;
+    timeSpentSeconds?: number;
+    /** Where this came from, so a weakness can cite corroboration across sources. */
+    source: 'quiz' | 'test' | 'assignment' | 'practice';
+    sourceId?: string;
+    occurredAt: number;
+  };
+
+  /** Aggregate of one quiz attempt. Per-question detail arrives via question_answered. */
+  'learning.quiz_completed': {
+    userId: string;
+    attemptId: string;
+    subject?: string;
+    topic?: string;
+    totalQuestions: number;
+    correctCount: number;
+    skippedCount: number;
+    accuracy: number; // 0..100
+    totalTimeSeconds?: number;
+    occurredAt: number;
+  };
+
+  /** Aggregate of one test/mock attempt. */
+  'learning.test_completed': {
+    userId: string;
+    attemptId: string;
+    testId: string;
+    subject?: string;
+    totalQuestions: number;
+    correctCount: number;
+    skippedCount: number;
+    accuracy: number; // 0..100
+    score?: number;
+    totalTimeSeconds?: number;
+    /** Per-topic rollup computed at submission, so consumers need not refetch questions. */
+    topicBreakdown?: Array<{ topic: string; attempted: number; correct: number; skipped: number }>;
+    occurredAt: number;
+  };
 }
 
 export class EventBus extends EventEmitter {

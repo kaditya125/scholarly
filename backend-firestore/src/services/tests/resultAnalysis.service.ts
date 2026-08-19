@@ -115,6 +115,55 @@ export class ResultAnalysisService {
 
     await testsRepository.saveTestAttempt(attempt);
 
+    // ── Emit learning evidence ────────────────────────────────────────────────────────────
+    // Fire-and-forget and fully guarded: a failure to record evidence must never fail the
+    // submission the student just made. One event per graded question (the atom mastery is
+    // computed from) plus one aggregate for the attempt.
+    try {
+      const { eventBus } = await import('../../core/events/EventBus');
+      const occurredAt = Date.now();
+
+      for (const q of questions) {
+        const selected = (attempt.answers || {})[q.id];
+        const skipped = selected === undefined;
+        void eventBus.publish('learning.question_answered', {
+          userId: attempt.userId,
+          questionId: q.id,
+          subject: q.subject,
+          topic: q.topic,
+          difficulty: q.difficulty,
+          correct: !skipped && q.correctAnswerIndex === selected,
+          skipped,
+          timeSpentSeconds: attempt.timeSpentPerQuestion?.[q.id],
+          source: 'test',
+          sourceId: attempt.id,
+          occurredAt,
+        });
+      }
+
+      void eventBus.publish('learning.test_completed', {
+        userId: attempt.userId,
+        attemptId: attempt.id,
+        testId: attempt.testId,
+        subject: test.subject,
+        totalQuestions: questions.length,
+        correctCount,
+        skippedCount: questions.length - totalAttempted,
+        accuracy,
+        score,
+        totalTimeSeconds: totalTimeSpent,
+        topicBreakdown: Array.from(byTopic.entries()).map(([topic, s]) => ({
+          topic,
+          attempted: s.attempted,
+          correct: s.correct,
+          skipped: s.skipped,
+        })),
+        occurredAt,
+      });
+    } catch (err) {
+      console.error('[ResultAnalysis] Failed to emit learning events (non-fatal)', err);
+    }
+
     // If needs revision, add a task to the planner
     if (needsRevision) {
       try {

@@ -14,6 +14,15 @@ export type MasteryTrend = 'improving' | 'declining' | 'steady';
 export interface ConceptMastery {
   conceptId: string;          // normalized slug
   title: string;              // human-readable label
+  /**
+   * Hierarchy for rolling concept-level evidence up to topic and subject level, which is what a
+   * student can actually act on ("Probability is costing you marks", not "concept
+   * bayes-theorem-conditional is at 0.41"). Optional and additive: records written before this
+   * existed simply lack them and are still valid — they just cannot be aggregated until the
+   * concept is next touched by an event that knows its subject/topic.
+   */
+  subject?: string;
+  topic?: string;
   confidence: number;         // 0..1 — how much evidence backs the estimate
   masteryScore: number;       // 0..1 — current mastery
   attempts: number;           // graded attempts (quiz/mistake)
@@ -81,9 +90,9 @@ export class MasteryEngine {
   constructor(private readonly store: MasteryStore = new FirestoreMasteryStore()) {}
 
   /** Fresh neutral mastery for a concept not yet seen. */
-  private fresh(conceptId: string, title: string): ConceptMastery {
+  private fresh(conceptId: string, title: string, subject?: string, topic?: string): ConceptMastery {
     return {
-      conceptId, title,
+      conceptId, title, subject, topic,
       confidence: 0.2, masteryScore: 0.5, attempts: 0, successCount: 0, successRate: 0,
       revisionHistory: [], lastPracticed: 0, learningVelocity: 0, masteryTrend: 'steady', updatedAt: 0,
     };
@@ -94,8 +103,15 @@ export class MasteryEngine {
    * state. Uses an exponential-moving-average pull toward the event's target so a single
    * interaction never overreacts.
    */
-  applyEvent(prev: ConceptMastery | null, conceptId: string, event: MasteryEvent, title = '', now = Date.now()): ConceptMastery {
-    const base = prev || this.fresh(conceptId, title || conceptId);
+  applyEvent(
+    prev: ConceptMastery | null,
+    conceptId: string,
+    event: MasteryEvent,
+    title = '',
+    now = Date.now(),
+    hierarchy?: { subject?: string; topic?: string },
+  ): ConceptMastery {
+    const base = prev || this.fresh(conceptId, title || conceptId, hierarchy?.subject, hierarchy?.topic);
     const cfg = EVENT_CONFIG[event];
     const prevMastery = base.masteryScore;
     const masteryScore = clamp01(prevMastery + cfg.alpha * (cfg.target - prevMastery));
@@ -113,6 +129,9 @@ export class MasteryEngine {
     return {
       conceptId,
       title: title || base.title,
+      // Newly-supplied hierarchy wins (it backfills older records); otherwise keep what we had.
+      subject: hierarchy?.subject ?? base.subject,
+      topic: hierarchy?.topic ?? base.topic,
       confidence: Math.min(0.95, confidence),
       masteryScore,
       attempts,
@@ -131,15 +150,26 @@ export class MasteryEngine {
   }
 
   /** Read-modify-write a single concept (guarded). */
-  async recordEvent(userId: string, concept: { id: string; title?: string }, event: MasteryEvent): Promise<void> {
+  async recordEvent(
+    userId: string,
+    concept: { id: string; title?: string; subject?: string; topic?: string },
+    event: MasteryEvent,
+  ): Promise<void> {
     if (!userId || !concept?.id) return;
     const prev = await this.store.get(userId, concept.id);
-    const next = this.applyEvent(prev, concept.id, event, concept.title || '');
+    const next = this.applyEvent(prev, concept.id, event, concept.title || '', Date.now(), {
+      subject: concept.subject,
+      topic: concept.topic,
+    });
     await this.store.set(userId, next);
   }
 
   /** Record the same event for several concepts (e.g. all concepts matched in a chat turn). */
-  async recordConcepts(userId: string, concepts: Array<{ id: string; title?: string }>, event: MasteryEvent): Promise<void> {
+  async recordConcepts(
+    userId: string,
+    concepts: Array<{ id: string; title?: string; subject?: string; topic?: string }>,
+    event: MasteryEvent,
+  ): Promise<void> {
     for (const c of concepts.slice(0, 10)) {
       await this.recordEvent(userId, c, event);
     }

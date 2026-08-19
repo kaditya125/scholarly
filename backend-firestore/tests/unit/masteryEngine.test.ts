@@ -93,3 +93,73 @@ describe('MasteryEngine store ops', () => {
     expect(weak).not.toContain('Neutral'); // chat gave no graded evidence + mastery>0.5
   });
 });
+
+/**
+ * Phase A2: proves that a REAL student action moves mastery, and that the subject/topic
+ * hierarchy survives — this is the guarantee that mastery is measured from evidence rather
+ * than asserted by a model.
+ */
+describe('MasteryEngine hierarchy + evidence loop', () => {
+  it('carries subject/topic onto the stored record', async () => {
+    const store = new FakeStore();
+    const e = new MasteryEngine(store);
+    await e.recordEvent(
+      'u1',
+      { id: 'probability', title: 'Probability', subject: 'Mathematics', topic: 'Probability' },
+      'quiz_incorrect',
+    );
+    const rec = await store.get('u1', 'probability');
+    expect(rec?.subject).toBe('Mathematics');
+    expect(rec?.topic).toBe('Probability');
+  });
+
+  it('backfills hierarchy onto a record created before it was known', async () => {
+    const store = new FakeStore();
+    const e = new MasteryEngine(store);
+    await e.recordEvent('u1', { id: 'probability', title: 'Probability' }, 'quiz_incorrect');
+    expect((await store.get('u1', 'probability'))?.subject).toBeUndefined();
+
+    await e.recordEvent(
+      'u1',
+      { id: 'probability', title: 'Probability', subject: 'Mathematics', topic: 'Probability' },
+      'quiz_correct',
+    );
+    expect((await store.get('u1', 'probability'))?.subject).toBe('Mathematics');
+  });
+
+  it('a run of wrong answers drives the concept weak, and recovery pulls it back up', async () => {
+    const store = new FakeStore();
+    const e = new MasteryEngine(store);
+    const concept = { id: 'probability', title: 'Probability', subject: 'Mathematics', topic: 'Probability' };
+
+    for (let i = 0; i < 4; i++) await e.recordEvent('u1', concept, 'quiz_incorrect');
+    const weakened = await store.get('u1', 'probability');
+    expect(weakened!.masteryScore).toBeLessThan(0.5);
+    expect(weakened!.attempts).toBe(4);
+    expect(weakened!.successRate).toBe(0);
+    expect(await e.getWeakConcepts('u1', 0.5)).toContain('Probability');
+
+    // Sustained correct answers should recover it and flip the trend to improving.
+    for (let i = 0; i < 6; i++) await e.recordEvent('u1', concept, 'quiz_correct');
+    const recovered = await store.get('u1', 'probability');
+    expect(recovered!.masteryScore).toBeGreaterThan(weakened!.masteryScore);
+    expect(recovered!.masteryTrend).toBe('improving');
+    // Evidence accumulates, so confidence in the estimate rises with attempts.
+    expect(recovered!.confidence).toBeGreaterThan(weakened!.confidence);
+    expect(await e.getWeakConcepts('u1', 0.5)).not.toContain('Probability');
+  });
+
+  it('one answer cannot swing a well-evidenced concept (EMA smoothing)', async () => {
+    const store = new FakeStore();
+    const e = new MasteryEngine(store);
+    const concept = { id: 'kinematics', title: 'Kinematics', subject: 'Physics', topic: 'Kinematics' };
+    for (let i = 0; i < 8; i++) await e.recordEvent('u1', concept, 'quiz_correct');
+    const strong = (await store.get('u1', 'kinematics'))!.masteryScore;
+
+    await e.recordEvent('u1', concept, 'quiz_incorrect');
+    const afterOneSlip = (await store.get('u1', 'kinematics'))!.masteryScore;
+    // It dips, but a single wrong answer must not erase established evidence.
+    expect(afterOneSlip).toBeLessThan(strong);
+    expect(afterOneSlip).toBeGreaterThan(0.4);
+  });
+});
