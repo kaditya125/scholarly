@@ -1,4 +1,5 @@
 import EventEmitter from 'events';
+import { randomUUID } from 'crypto';
 import { logger } from '../../utils/logger';
 import { backgroundQueue } from '../workflow/jobs/BackgroundQueue';
 import { env } from '../../config/env';
@@ -127,11 +128,19 @@ export interface EventPayloads {
  * specifically, the mutation must be keyed on event identity so a repeated delivery cannot
  * apply the same evidence twice.
  */
+/** Envelope metadata that travels with an event through Redis to every handler. */
+export interface EventMeta {
+  /** Stable identity of the LOGICAL event. Never regenerated after publish. */
+  eventId: string;
+  correlationId?: string;
+  publishedAt: number;
+}
+
 export class EventBus extends EventEmitter {
   private pubClient: ReturnType<typeof createClient> | null = null;
   private subClient: ReturnType<typeof createClient> | null = null;
   private redisChannel = 'sadhya:events';
-  private handlers = new Map<string, Set<(payload: any) => void | Promise<void>>>();
+  private handlers = new Map<string, Set<(payload: any, meta?: EventMeta) => void | Promise<void>>>();
   private isRedisConnected = false;
 
   constructor() {
@@ -162,8 +171,10 @@ export class EventBus extends EventEmitter {
       // Listen on channel
       await this.subClient.subscribe(this.redisChannel, (message) => {
         try {
-          const { event, payload } = JSON.parse(message);
-          this.executeHandlers(event, payload);
+          // eventId is carried through serialization, never regenerated here — regenerating on
+          // receive would defeat deduplication entirely, since each delivery would look new.
+          const { event, payload, meta } = JSON.parse(message);
+          this.executeHandlers(event, payload, meta);
         } catch (e: any) {
           logger.error(`[EventBus] Failed to parse Redis message: ${e.message}`);
         }
@@ -174,7 +185,7 @@ export class EventBus extends EventEmitter {
     }
   }
 
-  private async executeHandlers(event: string, payload: any) {
+  private async executeHandlers(event: string, payload: any, meta?: EventMeta) {
     // Emit locally as well
     super.emit(event, payload);
 
@@ -183,7 +194,7 @@ export class EventBus extends EventEmitter {
     if (eventHandlers) {
       for (const handler of eventHandlers) {
         try {
-          await handler(payload);
+          await handler(payload, meta);
         } catch (err: any) {
           logger.error(`[EventBus] Error in subscriber handler for event ${event}: ${err.message}`);
         }
@@ -195,14 +206,30 @@ export class EventBus extends EventEmitter {
    * Publishes an event to all internal listeners.
    * If the event should trigger a background job, it enqueues it automatically.
    */
-  async publish<T extends EventType>(event: T, payload: EventPayloads[T]): Promise<void> {
+  async publish<T extends EventType>(
+    event: T,
+    payload: EventPayloads[T],
+    options?: { eventId?: string; correlationId?: string },
+  ): Promise<void> {
     try {
+      // Identity is assigned ONCE here, at the point the logical event is created, and travels
+      // with it for the rest of its life. Publishers supply a DETERMINISTIC id derived from the
+      // domain (e.g. `learning.test_completed:{attemptId}`) so that a republish of the same
+      // logical event — after a retry, redeploy or process restart — carries the same id and is
+      // recognised as a duplicate. A random id would make every republish look novel.
+      // The uuid fallback covers events with no natural key, where at-most-once is acceptable.
+      const meta: EventMeta = {
+        eventId: options?.eventId || `${event}:${randomUUID()}`,
+        correlationId: options?.correlationId,
+        publishedAt: Date.now(),
+      };
+
       if (this.isRedisConnected && this.pubClient) {
         // Publish to distributed Redis channel
-        await this.pubClient.publish(this.redisChannel, JSON.stringify({ event, payload }));
+        await this.pubClient.publish(this.redisChannel, JSON.stringify({ event, payload, meta }));
       } else {
         // Fallback to local execution
-        await this.executeHandlers(event, payload);
+        await this.executeHandlers(event, payload, meta);
       }
       
       // Route specific high-level events to the BullMQ background queue for reliable asynchronous processing.
@@ -218,7 +245,10 @@ export class EventBus extends EventEmitter {
   /**
    * Type-safe listener registration.
    */
-  subscribe<T extends EventType>(event: T, handler: (payload: EventPayloads[T]) => void | Promise<void>): void {
+  subscribe<T extends EventType>(
+    event: T,
+    handler: (payload: EventPayloads[T], meta?: EventMeta) => void | Promise<void>,
+  ): void {
     if (!this.handlers.has(event)) {
       this.handlers.set(event, new Set());
     }

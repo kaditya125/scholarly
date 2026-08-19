@@ -159,6 +159,13 @@ export class ResultAnalysisService {
           skipped: s.skipped,
         })),
         occurredAt,
+      }, {
+        // DETERMINISTIC identity, derived from the domain rather than random: an attempt can be
+        // completed exactly once (processSubmission returns early for a completed attempt), so
+        // the attempt id uniquely names this logical event. Deriving it this way means a
+        // republish after a retry or restart carries the SAME id and is deduplicated, which a
+        // randomly-generated id could never achieve.
+        eventId: `learning.test_completed:${attempt.id}`,
       });
     } catch (err) {
       console.error('[ResultAnalysis] Failed to emit learning events (non-fatal)', err);

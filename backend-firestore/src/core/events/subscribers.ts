@@ -24,7 +24,7 @@ export function registerEventSubscribers() {
   // learning.question_answered is still emitted and remains the raw evidence stream — it is what
   // makes mastery recomputable if this aggregation ever changes — it simply is not what drives
   // the mastery write.
-  eventBus.subscribe('learning.test_completed', async (payload) => {
+  eventBus.subscribe('learning.test_completed', async (payload, meta) => {
     if (!featureFlags.mastery) return;
     const breakdown = payload.topicBreakdown || [];
     if (breakdown.length === 0) return;
@@ -42,11 +42,20 @@ export function registerEventSubscribers() {
       if (events.length === 0) continue;
 
       try {
-        await masteryEngine.recordBatch(
+        // Scoped per topic: one submission writes several concept documents, so each needs its
+        // own idempotency key or the second topic would look already-processed.
+        const perTopicEventId = meta?.eventId ? `${meta.eventId}#${slugifyConcept(label)}` : undefined;
+        const { deduplicated } = await masteryEngine.recordBatch(
           payload.userId,
           { id: slugifyConcept(label), title: label, subject: payload.subject, topic: label },
           events,
+          perTopicEventId,
         );
+        logger.info('[Mastery] submission evidence applied', {
+          studentId: payload.userId, submissionId: payload.attemptId,
+          topic: label, attempts: row.attempted, correct: row.correct,
+          deduplicated, eventId: meta?.eventId,
+        });
       } catch (err: any) {
         // Logged loudly (MasteryEngine already logged the underlying failure) but not rethrown:
         // one topic failing to record must not fail the student's submission, and the raw
