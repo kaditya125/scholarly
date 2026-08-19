@@ -283,6 +283,51 @@ const server = app.listen(env.PORT, () => {
     } catch (err: any) {
       console.error('[server] Failed to start media worker:', err?.message || err);
     }
+
+    /*
+     * The notification worker drains `notification-jobs`. Same omission the mastery subscriber
+     * had: startNotificationWorker() existed but was only ever called from one-off scripts, so
+     * production enqueued notifications and nothing consumed them. Measured on the VM before this
+     * fix: 5 jobs sitting in `wait` with the BullMQ id counter at 2022 — every notification the
+     * platform had queued since deployment was stuck, and no student received any.
+     *
+     * IN-PROCESS rather than a dedicated PM2 worker service, deliberately:
+     *   - BullMQ locks each job in Redis, so N workers never double-process one job. "Competing
+     *     workers" cannot produce duplicate notifications; the instance election below makes it
+     *     one worker anyway.
+     *   - Its two siblings above already run here behind the same two gates, so a third pattern
+     *     would add surface area without adding a guarantee.
+     *   - The worker resolves NotificationIntelligenceService from the DI container, so a
+     *     standalone entrypoint would need its own bootstrapDI() and a duplicate module graph
+     *     (Firebase Admin, Vertex, Pinecone clients) — several hundred MB on a 2 vCPU / 8 GB box
+     *     that is running tsx rather than a compiled build.
+     *   - Redis is Upstash's quota-limited tier, and this worker already carries explicit
+     *     pause-on-quota-exhausted handling. A second process would double idle polling against
+     *     the limit it is written to survive.
+     *   - The last time a second Node process was added to this VM (PM2 cluster, instances: 2) it
+     *     crash-looped ~298 times in under 15 minutes. That is not a reason to never do it, but
+     *     it is a reason not to do it as part of restoring a broken queue consumer.
+     * Revisit when the VM is upgraded or cluster mode is re-enabled: the notification path does
+     * LLM classification, FCM multicast, email and SMS, which is real work to isolate from
+     * request serving.
+     *
+     * ⚠ BEFORE RE-ENABLING CLUSTER MODE: there is a latent duplicate-notification bug that this
+     * election does NOT cover, because it is on the publish side, not the worker side.
+     * EventBus.publish() enqueues to BullMQ inside publish() itself. Redis pub/sub broadcasts a
+     * domain event to EVERY instance, so with N instances each one runs the podcast.completed /
+     * notebook.ingested / user.registered subscriber, each publishes notification.created, and
+     * each enqueues its own job — N distinct jobs, which BullMQ then correctly processes once
+     * each, yielding N notifications. The anti-spam limiter only suppresses the 4th identical
+     * event in 60s, so it would not catch a duplicate pair. Latent today only because
+     * instances is pinned at 1.
+     */
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { startNotificationWorker } = require('./core/workflow/jobs/NotificationWorker');
+      startNotificationWorker();
+    } catch (err: any) {
+      console.error('[server] Failed to start notification worker:', err?.message || err);
+    }
   }
 });
 
