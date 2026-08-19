@@ -3,88 +3,113 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence } from "motion/react";
 import { ThemeProvider } from "./lib/ThemeContext";
 import { AuthProvider } from "./lib/AuthContext";
-import { AppLayout } from "./components/Layout";
-import LandingPage from "./pages/Landing";
-import Dashboard from "./pages/Dashboard";
-import TestCenter from "./pages/TestCenter";
-import StudentDashboard from "./pages/StudentDashboard";
-import Discussions from "./pages/Discussions";
-import Planner from "./pages/Planner";
-import TestEngine from "./pages/TestEngine";
-import Analytics from "./pages/Analytics";
-import Report from "./pages/Report";
-import Signup from "./pages/Signup";
-import Signin from "./pages/Signin";
-import SelectRole from "./pages/SelectRole";
-import ExamCommandCenter from "./pages/ExamCommandCenter";
-import TeacherOnboarding from "./pages/TeacherOnboarding";
-// Teacher workspace (Phase 3C) — replaces the former TeacherLanding placeholder at /teach.
-import TeacherLayout from "./components/teacher/TeacherLayout";
-import TeacherDashboard from "./pages/teacher/TeacherDashboard";
-import TeacherClasses from "./pages/teacher/TeacherClasses";
-import TeacherClassEditor from "./pages/teacher/TeacherClassEditor";
-import TeacherClassStudents from "./pages/teacher/TeacherClassStudents";
-import TeacherClassResources from "./pages/teacher/TeacherClassResources";
-import TeacherClassAssignments from "./pages/teacher/TeacherClassAssignments";
-import TeacherClassDiscussion from "./pages/teacher/TeacherClassDiscussion";
-import TeacherEarnings from "./pages/teacher/TeacherEarnings";
-import TeacherClassLive from "./pages/teacher/TeacherClassLive";
-import TeacherReferrals from "./pages/teacher/TeacherReferrals";
-import TeacherStudents from "./pages/teacher/TeacherStudents";
-import QuizAttemptPage from "./pages/QuizAttempt";
-import ClassSessionJoin from "./pages/ClassSessionJoin";
-import JoinClass from "./pages/JoinClass";
-import MyClasses from "./pages/MyClasses";
-import Refer from "./pages/Refer";
-import RoleLanding from "./components/RoleLanding";
-import Leaderboard from "./pages/Leaderboard";
-import Pricing from "./pages/Pricing";
-import ReferralProgram from "./pages/ReferralProgram";
-import Help from "./pages/Help";
-import { StudentHelpHub } from "./components/help/StudentHelpHub";
-import Chat from "./pages/Chat";
-import Research from "./pages/Research";
-import Flashcards from "./pages/Flashcards";
-import Notebooks from "./pages/Notebooks";
-import StudyGroups from "./pages/StudyGroups";
-import Explore from "./pages/Explore";
-import WelcomeBriefing from "./pages/WelcomeBriefing";
-import Profile from "./pages/Profile";
-import ContentPipeline from "./pages/ContentPipeline";
-import PodcastStudioV2 from "./pages/PodcastStudioV2";
-import Podcasts from "./pages/Podcasts";
-import AIWorkspace from "./pages/AIWorkspace";
-import Community from "./pages/Community";
-import Chats from "./pages/Chats";
-import People from "./pages/People";
-import Documents from "./pages/Documents";
-import VideoLesson from "./pages/VideoLesson";
-import Settings from "./pages/Settings";
-import Notifications from "./pages/Notifications";
-import BaselineAssessmentEngine from "./pages/BaselineAssessmentEngine";
-import AssessmentReportDashboard from "./pages/AssessmentReportDashboard";
-import Onboarding from "./pages/Onboarding";
-import MyDoubts from "./pages/MyDoubts";
-import Trash from "./pages/Trash";
-import Checkout from "./pages/Checkout";
-import PaymentSuccess from "./pages/PaymentSuccess";
-// Public marketing + policy pages. These are intentionally outside ProtectedRoute:
-// a visitor (and Razorpay's merchant review) must be able to read them signed out.
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import ForTeachers from "./pages/ForTeachers";
-import ExamLanding from "./pages/ExamLanding";
-import HowItWorks from "./pages/HowItWorks";
-import Terms from "./pages/legal/Terms";
-import Privacy from "./pages/legal/Privacy";
-import Refunds from "./pages/legal/Refunds";
-import Security from "./pages/legal/Security";
 import { useAuth } from "./lib/AuthContext";
 import { useProfile } from "./hooks/api/useProfile";
+
+/**
+ * Every route-level page is lazy-loaded so a visit to any one route only downloads that
+ * route's code, instead of the whole app's ~6MB bundle shipping on every page view —
+ * including anonymous visits to the new /exams/:slug SEO landing pages, where a heavy
+ * first load directly hurts Core Web Vitals (LCP) and therefore search ranking. Vite/
+ * Rollup automatically gives each dynamic import() its own chunk.
+ *
+ * AppLayout and StudentHelpHub are named exports, so they need the extra .then() step to
+ * resolve to the { default } shape React.lazy() requires; everything else here is a
+ * default export and works directly.
+ */
+const AppLayout = lazy(() => import("./components/Layout").then((m) => ({ default: m.AppLayout })));
+const LandingPage = lazy(() => import("./pages/Landing"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const TestCenter = lazy(() => import("./pages/TestCenter"));
+const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
+const Discussions = lazy(() => import("./pages/Discussions"));
+const Planner = lazy(() => import("./pages/Planner"));
+const TestEngine = lazy(() => import("./pages/TestEngine"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const Report = lazy(() => import("./pages/Report"));
+const Signup = lazy(() => import("./pages/Signup"));
+const Signin = lazy(() => import("./pages/Signin"));
+const SelectRole = lazy(() => import("./pages/SelectRole"));
+const ExamCommandCenter = lazy(() => import("./pages/ExamCommandCenter"));
+const TeacherOnboarding = lazy(() => import("./pages/TeacherOnboarding"));
+// Teacher workspace (Phase 3C) — replaces the former TeacherLanding placeholder at /teach.
+const TeacherLayout = lazy(() => import("./components/teacher/TeacherLayout"));
+const TeacherDashboard = lazy(() => import("./pages/teacher/TeacherDashboard"));
+const TeacherClasses = lazy(() => import("./pages/teacher/TeacherClasses"));
+const TeacherClassEditor = lazy(() => import("./pages/teacher/TeacherClassEditor"));
+const TeacherClassStudents = lazy(() => import("./pages/teacher/TeacherClassStudents"));
+const TeacherClassResources = lazy(() => import("./pages/teacher/TeacherClassResources"));
+const TeacherClassAssignments = lazy(() => import("./pages/teacher/TeacherClassAssignments"));
+const TeacherClassDiscussion = lazy(() => import("./pages/teacher/TeacherClassDiscussion"));
+const TeacherEarnings = lazy(() => import("./pages/teacher/TeacherEarnings"));
+const TeacherClassLive = lazy(() => import("./pages/teacher/TeacherClassLive"));
+const TeacherReferrals = lazy(() => import("./pages/teacher/TeacherReferrals"));
+const TeacherStudents = lazy(() => import("./pages/teacher/TeacherStudents"));
+const QuizAttemptPage = lazy(() => import("./pages/QuizAttempt"));
+const ClassSessionJoin = lazy(() => import("./pages/ClassSessionJoin"));
+const JoinClass = lazy(() => import("./pages/JoinClass"));
+const MyClasses = lazy(() => import("./pages/MyClasses"));
+const Refer = lazy(() => import("./pages/Refer"));
+const RoleLanding = lazy(() => import("./components/RoleLanding"));
+const Leaderboard = lazy(() => import("./pages/Leaderboard"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const ReferralProgram = lazy(() => import("./pages/ReferralProgram"));
+const Help = lazy(() => import("./pages/Help"));
+const StudentHelpHub = lazy(() =>
+  import("./components/help/StudentHelpHub").then((m) => ({ default: m.StudentHelpHub }))
+);
+const Chat = lazy(() => import("./pages/Chat"));
+const Research = lazy(() => import("./pages/Research"));
+const Flashcards = lazy(() => import("./pages/Flashcards"));
+const Notebooks = lazy(() => import("./pages/Notebooks"));
+const StudyGroups = lazy(() => import("./pages/StudyGroups"));
+const Explore = lazy(() => import("./pages/Explore"));
+const WelcomeBriefing = lazy(() => import("./pages/WelcomeBriefing"));
+const Profile = lazy(() => import("./pages/Profile"));
+const ContentPipeline = lazy(() => import("./pages/ContentPipeline"));
+const PodcastStudioV2 = lazy(() => import("./pages/PodcastStudioV2"));
+const Podcasts = lazy(() => import("./pages/Podcasts"));
+const AIWorkspace = lazy(() => import("./pages/AIWorkspace"));
+const Community = lazy(() => import("./pages/Community"));
+const Chats = lazy(() => import("./pages/Chats"));
+const People = lazy(() => import("./pages/People"));
+const Documents = lazy(() => import("./pages/Documents"));
+const VideoLesson = lazy(() => import("./pages/VideoLesson"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const BaselineAssessmentEngine = lazy(() => import("./pages/BaselineAssessmentEngine"));
+const AssessmentReportDashboard = lazy(() => import("./pages/AssessmentReportDashboard"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const MyDoubts = lazy(() => import("./pages/MyDoubts"));
+const Trash = lazy(() => import("./pages/Trash"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+// Public marketing + policy pages. These are intentionally outside ProtectedRoute:
+// a visitor (and Razorpay's merchant review) must be able to read them signed out.
+const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
+const ForTeachers = lazy(() => import("./pages/ForTeachers"));
+const ExamLanding = lazy(() => import("./pages/ExamLanding"));
+const HowItWorks = lazy(() => import("./pages/HowItWorks"));
+const Terms = lazy(() => import("./pages/legal/Terms"));
+const Privacy = lazy(() => import("./pages/legal/Privacy"));
+const Refunds = lazy(() => import("./pages/legal/Refunds"));
+const Security = lazy(() => import("./pages/legal/Security"));
+
+/** Shown only while a route's own chunk is downloading — same spinner ProtectedRoute
+ *  already uses elsewhere, so a lazy-load pause and an auth-check pause look identical. */
+function RouteFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#131314]">
+      <span className="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-white/10 border-t-indigo-500 animate-spin" />
+    </div>
+  );
+}
 
 /**
  * ProtectedRoute — guards all authenticated application routes.
@@ -182,6 +207,7 @@ function AppRoutes() {
   const location = useLocation();
   return (
     <AnimatePresence mode="wait">
+      <Suspense fallback={<RouteFallback />}>
       <Routes location={location} key={location.pathname}>
         {/* Public routes — no auth required */}
         <Route path="/" element={<LandingPage />} />
@@ -314,6 +340,7 @@ function AppRoutes() {
           <Route path="/payment-success" element={<PaymentSuccess />} />
         </Route>
       </Routes>
+      </Suspense>
     </AnimatePresence>
   );
 }
