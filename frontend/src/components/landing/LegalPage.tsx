@@ -1,8 +1,9 @@
 import { useEffect, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import SiteHeader from './SiteHeader';
 import SiteFooter from './SiteFooter';
 import { SITE } from '../../lib/siteConfig';
+import { useSeo } from '../../lib/useSeo';
 
 /**
  * Shared chrome for the policy pages (/terms, /privacy, /refunds, /security).
@@ -65,6 +66,13 @@ export default function LegalPage({
   intro: string;
   sections: LegalSectionDef[];
 }) {
+  const { pathname } = useLocation();
+  useSeo({
+    title: `${title} — ${SITE.name}`,
+    description: intro,
+    url: `${SITE.url}${pathname}`,
+  });
+
   // These pages are reached from the footer of a scrolled page, so without this the
   // visitor lands halfway down a policy they've never read.
   useEffect(() => { window.scrollTo(0, 0); }, [title]);

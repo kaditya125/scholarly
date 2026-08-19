@@ -77,6 +77,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import ForTeachers from "./pages/ForTeachers";
+import ExamLanding from "./pages/ExamLanding";
 import HowItWorks from "./pages/HowItWorks";
 import Terms from "./pages/legal/Terms";
 import Privacy from "./pages/legal/Privacy";
@@ -196,6 +197,10 @@ function AppRoutes() {
             a signed-in student and a signed-in teacher must all see the same page, and none
             of them should be diverted into student onboarding by visiting it. */}
         <Route path="/for-teachers" element={<ForTeachers />} />
+        {/* One dedicated landing page per exam Sadhya covers — see examCatalog.ts.
+            Public and unauthenticated: this is where category-specific search traffic
+            has to land. */}
+        <Route path="/exams/:slug" element={<ExamLanding />} />
         {/* Invitation landing. Public on purpose: a shared link is opened by people who are
             signed out or mid-onboarding, and ProtectedRoute would divert the latter into the
             student wizard and lose the invitation. The page owns its own gate. */}

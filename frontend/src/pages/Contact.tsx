@@ -4,6 +4,7 @@ import { Mail, Phone, MapPin, Clock, ShieldAlert, Building2, ArrowRight, Scale }
 import SiteHeader from '../components/landing/SiteHeader';
 import SiteFooter from '../components/landing/SiteFooter';
 import { SITE } from '../lib/siteConfig';
+import { useSeo } from '../lib/useSeo';
 
 /**
  * Contact page.
@@ -48,6 +49,11 @@ const CHANNELS = [
 ];
 
 export default function Contact() {
+  useSeo({
+    title: `Contact Us — ${SITE.name}`,
+    description: `Get in touch with ${SITE.name} — support, sales and general enquiries.`,
+    url: `${SITE.url}/contact`,
+  });
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   return (

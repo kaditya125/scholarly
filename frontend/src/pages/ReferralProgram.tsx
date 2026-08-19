@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Gift, Users, IndianRupee, ArrowRight, Sparkles } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
 import SiteFooter from '../components/landing/SiteFooter';
+import { useSeo } from '../lib/useSeo';
+import { SITE } from '../lib/siteConfig';
 import ReferralBackground from '../components/landing/ReferralBackground';
 import { cn } from '../lib/utils';
 import { useReducedMotion, motion } from 'motion/react';
@@ -26,6 +28,11 @@ function Reveal({ children, delay = 0, className }: { children: ReactNode; delay
 }
 
 export default function ReferralProgram() {
+  useSeo({
+    title: `Refer a Friend — ${SITE.name}`,
+    description: `Invite friends to ${SITE.name} and earn rewards when they join — refer students preparing for the same exams you are.`,
+    url: `${SITE.url}/referral-program`,
+  });
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);

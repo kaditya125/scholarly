@@ -13,6 +13,9 @@ import PricingSection from '../components/landing/PricingSection';
 import ProcessChain from '../components/landing/ProcessChain';
 import AvatarStack from '../components/landing/AvatarStack';
 import { HandwrittenTagline } from '../components/brand/HandwrittenTagline';
+import { EXAM_CATALOG } from '../lib/examCatalog';
+import { useSeo } from '../lib/useSeo';
+import { SITE } from '../lib/siteConfig';
 
 /**
  * The public landing page.
@@ -44,12 +47,11 @@ const ACCENT = '#c8e558';
 
 // ─── Content ─────────────────────────────────────────────────────────────────
 
-/** Straight from the backend's exam knowledge base. Nothing here is aspirational. */
-const EXAMS = [
-  'NEET', 'JEE Main', 'JEE Advanced', 'UPSC CSE', 'SSC CGL', 'SSC CHSL',
-  'BPSC', 'Bihar TRE', 'CTET & STET', 'CUET', 'IBPS PO', 'SBI PO',
-  'RBI Grade B', 'RRB NTPC', 'UGC NET', 'State PSCs', 'CBSE & ICSE, Class 6–12',
-];
+/**
+ * Sourced from examCatalog.ts, the single source of truth shared with each exam's
+ * dedicated /exams/:slug landing page — nothing here is aspirational, and nothing here
+ * can drift out of sync with what those pages actually say.
+ */
 
 /**
  * The six-step reasoning pipeline lives in components/landing/ProcessChain.tsx, which owns
@@ -303,6 +305,12 @@ function PrimaryCta({ to, children }: { to: string; children: ReactNode }) {
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
+  useSeo({
+    title: `${SITE.name} — ${SITE.tagline}`,
+    description: `${SITE.descriptor} Covers NEET, JEE, UPSC CSE, SSC CGL, banking, teaching and school board exams — photograph a question, get a step-by-step answer, and an adaptive study plan built around your actual syllabus.`,
+    url: SITE.url,
+  });
+
   const [studentCount, setStudentCount] = useState<number>(1);
   const [recentAvatars, setRecentAvatars] = useState<string[]>([]);
 
@@ -447,11 +455,14 @@ export default function LandingPage() {
                   actually sit.
                 </p>
                 <Stagger className="mt-6 lg:mt-0 flex flex-wrap gap-x-2 gap-y-2" gap={0.025}>
-                  {EXAMS.map((e) => (
-                    <Item key={e} y={8}>
-                      <span className="inline-block px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-[13px] font-medium text-slate-600 dark:text-gray-300">
-                        {e}
-                      </span>
+                  {EXAM_CATALOG.map((e) => (
+                    <Item key={e.slug} y={8}>
+                      <Link
+                        to={`/exams/${e.slug}`}
+                        className="inline-block px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-[13px] font-medium text-slate-600 dark:text-gray-300 hover:border-slate-300 dark:hover:border-white/25 hover:text-slate-900 dark:hover:text-white transition-colors"
+                      >
+                        {e.name}
+                      </Link>
                     </Item>
                   ))}
                 </Stagger>
