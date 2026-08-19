@@ -93,6 +93,40 @@ export interface EventPayloads {
   };
 }
 
+/**
+ * ── EventBus delivery contract ────────────────────────────────────────────────────────────
+ *
+ * TRANSPORT (unchanged, and already correct): Redis pub/sub is authoritative when connected.
+ * publish() writes ONLY to the Redis channel; it does not also dispatch locally. Redis echoes
+ * the message back to every subscriber including the publishing process, and that echo is what
+ * invokes handlers. With no REDIS_URL (or NODE_ENV=test) publish() falls back to dispatching
+ * in-process so single-node and test runs behave the same.
+ *
+ * DISPATCH: exactly one invocation per handler per delivered message.
+ *   - subscribe() handlers  → dispatched via the `handlers` Map, and AWAITED.
+ *   - eventBus.on() listeners → dispatched via super.emit(), fire-and-forget.
+ * A handler registered through subscribe() is NOT also registered as an EventEmitter listener;
+ * doing both is what caused every handler to run twice.
+ *
+ * DELIVERY SEMANTICS: **at-most-once**, honestly stated. Redis pub/sub is fire-and-forget with
+ * no acknowledgement, no persistence and no replay: a message published while a subscriber is
+ * disconnected, restarting, or mid-reconnect is lost permanently. We do NOT claim exactly-once
+ * physical delivery, because the infrastructure cannot provide it.
+ *
+ * ORDERING: per-publisher order is preserved by Redis on a single channel, but concurrent
+ * publishers interleave arbitrarily. Consumers must not depend on cross-publisher ordering.
+ *
+ * RETRIES / FAILURE: none at this layer. A throwing handler is logged and swallowed so one bad
+ * subscriber cannot break others; it is NOT retried and the publisher is not informed. Work that
+ * must survive failure belongs on the BullMQ queue (see enqueueNotification), which has
+ * persistence and retries — not on this bus.
+ *
+ * IDEMPOTENCY: required of consumers. Because delivery is at-most-once with no dedupe, and
+ * because a process can legitimately receive a message it also published, any consumer whose
+ * handler is not naturally idempotent must guard its own side effects. For learning evidence
+ * specifically, the mutation must be keyed on event identity so a repeated delivery cannot
+ * apply the same evidence twice.
+ */
 export class EventBus extends EventEmitter {
   private pubClient: ReturnType<typeof createClient> | null = null;
   private subClient: ReturnType<typeof createClient> | null = null;
@@ -189,9 +223,21 @@ export class EventBus extends EventEmitter {
       this.handlers.set(event, new Set());
     }
     this.handlers.get(event)!.add(handler);
-    
-    // Maintain standard listener mapping as fallback
-    this.on(event, handler);
+
+    // NOTE: deliberately NOT also calling `this.on(event, handler)`.
+    //
+    // executeHandlers() dispatches through two paths — super.emit() for raw EventEmitter
+    // listeners, and this handlers Map for subscribe() handlers. Registering here in BOTH
+    // places meant every subscribe() handler ran twice per event: measured as 4 publishes ->
+    // 8 handler invocations against production Redis.
+    //
+    // That silently doubled every side effect on the platform, not just mastery: each
+    // podcast.completed / notebook.ingested / user.registered handler published
+    // notification.created twice, so students received duplicate notifications and each was
+    // enqueued to BullMQ twice.
+    //
+    // The Map is the correct home for these: it is the only path that AWAITS async handlers.
+    // super.emit() is fire-and-forget, so an async subscriber's failure there is unobservable.
   }
 
   async close(): Promise<void> {
