@@ -13,10 +13,26 @@ export type QuizMode = 'exam' | 'study';
 export interface StoredQuizQuestion {
   id: string;
   text: string;
+  /** Display label only — non-authoritative. Never derive syllabus identity from it. */
   topic: string;
   options: string[];
   correctAnswerIndex: number;
   explanation: string;
+  /**
+   * Canonical syllabus identity, captured at generation and frozen into the attempt.
+   *
+   * Denormalised deliberately: once a student has answered, this attempt IS the historical
+   * evidence, and it must stay interpretable even if the syllabus is later revised. Resolving
+   * identity from the topic string after the fact is exactly what this pipeline removes.
+   *
+   * Optional because questions generated before this contract (and any generated without a
+   * canonical node) legitimately have none — identityStatus says which, rather than leaving
+   * downstream code to infer meaning from absence.
+   */
+  syllabusNodeId?: string;
+  syllabusId?: string;
+  cycleId?: string;
+  identityStatus?: 'CANONICAL' | 'UNANCHORED';
 }
 
 /** Per-topic (section) result inside a single attempt. */
