@@ -28,7 +28,8 @@ export type EventType =
   // an event with invented fields is the same failure as an invented metric.
   | 'learning.question_answered'
   | 'learning.quiz_completed'
-  | 'learning.test_completed';
+  | 'learning.test_completed'
+  | 'learning.goal_set';
 
 export interface EventPayloads {
   'notification.created': NotificationPayload;
@@ -73,6 +74,19 @@ export interface EventPayloads {
     skippedCount: number;
     accuracy: number; // 0..100
     totalTimeSeconds?: number;
+    occurredAt: number;
+  };
+
+  /**
+   * The student declared or changed their target. Carries only what downstream needs to
+   * invalidate derived state — never the full goal, and never treated as evidence about
+   * performance. Changing a goal reinterprets history; it does not rewrite it.
+   */
+  'learning.goal_set': {
+    userId: string;
+    created: boolean; // false = updated an existing goal
+    examId?: string;
+    goalKind: 'score' | 'rank' | 'percentile';
     occurredAt: number;
   };
 

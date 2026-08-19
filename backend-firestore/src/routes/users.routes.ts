@@ -1,3 +1,4 @@
+import { studentGoalController } from '../controllers/studentGoal.controller';
 import { Router } from 'express';
 import { UserStatsController } from '../controllers/userStats.controller';
 import { UserProfileController } from '../controllers/userProfile.controller';
@@ -33,6 +34,9 @@ router.get('/referrals', referralController.listMine);
 router.get('/:userId/stats', enforceSelf('userId'), controller.getUserStats);
 router.post('/:userId/xp', enforceSelf('userId'), controller.awardXP);
 
+// Student goal — same enforceSelf ownership guard as the profile it sits beside.
+router.get('/:userId/goal', enforceSelf('userId'), studentGoalController.get);
+router.put('/:userId/goal', enforceSelf('userId'), studentGoalController.put);
 router.get('/:userId/profile', enforceSelf('userId'), profileController.getProfile);
 router.put('/:userId/profile', enforceSelf('userId'), profileController.updateProfile);
 
