@@ -222,3 +222,79 @@ describe('recordBatch: 3 wrong + 1 correct must persist exactly', () => {
     expect(rec!.successCount).toBe(3);
   });
 });
+
+/**
+ * Gate 2: the same logical event must never change measured state more than once, however many
+ * times it is delivered, and whether deliveries are sequential or concurrent.
+ */
+describe('recordBatch idempotency (event identity)', () => {
+  const CONCEPT = { id: 'probability', title: 'Probability', subject: 'Mathematics', topic: 'Probability' };
+  const EVENTS: any[] = ['quiz_incorrect', 'quiz_incorrect', 'quiz_incorrect', 'quiz_correct'];
+  const EVENT_ID = 'TEST-EVENT-001';
+
+  it('delivered ONCE → attempts=4, successCount=1', async () => {
+    const store = new FakeStore();
+    const e = new MasteryEngine(store);
+    const r = await e.recordBatch('u1', CONCEPT, EVENTS, EVENT_ID);
+    const rec = await store.get('u1', 'probability');
+    expect(r.deduplicated).toBe(false);
+    expect(rec!.attempts).toBe(4);
+    expect(rec!.successCount).toBe(1);
+  });
+
+  it('delivered TWICE → still attempts=4, and reports deduplicated', async () => {
+    const store = new FakeStore();
+    const e = new MasteryEngine(store);
+    await e.recordBatch('u1', CONCEPT, EVENTS, EVENT_ID);
+    const second = await e.recordBatch('u1', CONCEPT, EVENTS, EVENT_ID);
+    const rec = await store.get('u1', 'probability');
+    expect(second.deduplicated).toBe(true);
+    expect(rec!.attempts).toBe(4);
+    expect(rec!.successCount).toBe(1);
+    expect(rec!.successRate).toBeCloseTo(0.25, 5);
+  });
+
+  it('delivered TEN times → still exactly one logical effect', async () => {
+    const store = new FakeStore();
+    const e = new MasteryEngine(store);
+    let dedupCount = 0;
+    for (let i = 0; i < 10; i++) {
+      const r = await e.recordBatch('u1', CONCEPT, EVENTS, EVENT_ID);
+      if (r.deduplicated) dedupCount++;
+    }
+    const rec = await store.get('u1', 'probability');
+    expect(dedupCount).toBe(9); // first applied, nine deduplicated
+    expect(rec!.attempts).toBe(4);
+    expect(rec!.successCount).toBe(1);
+    expect(rec!.successRate).toBeCloseTo(0.25, 5);
+  });
+
+  it('a DIFFERENT eventId for the same concept still accumulates', async () => {
+    const store = new FakeStore();
+    const e = new MasteryEngine(store);
+    await e.recordBatch('u1', CONCEPT, EVENTS, 'SUBMISSION-A');
+    await e.recordBatch('u1', CONCEPT, EVENTS, 'SUBMISSION-B');
+    const rec = await store.get('u1', 'probability');
+    expect(rec!.attempts).toBe(8); // two genuinely distinct submissions
+    expect(rec!.successCount).toBe(2);
+  });
+
+  it('without an eventId it still applies (no accidental suppression)', async () => {
+    const store = new FakeStore();
+    const e = new MasteryEngine(store);
+    await e.recordBatch('u1', CONCEPT, EVENTS);
+    await e.recordBatch('u1', CONCEPT, EVENTS);
+    const rec = await store.get('u1', 'probability');
+    expect(rec!.attempts).toBe(8);
+  });
+
+  it('bounds the processed-id history so the document cannot grow without limit', async () => {
+    const store = new FakeStore();
+    const e = new MasteryEngine(store);
+    for (let i = 0; i < 60; i++) await e.recordBatch('u1', CONCEPT, ['quiz_correct'] as any, `EV-${i}`);
+    const rec = await store.get('u1', 'probability');
+    expect(rec!.processedEventIds!.length).toBeLessThanOrEqual(50);
+    expect(rec!.processedEventIds).toContain('EV-59'); // newest retained
+    expect(rec!.attempts).toBe(60);
+  });
+});

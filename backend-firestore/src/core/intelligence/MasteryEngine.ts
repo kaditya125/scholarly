@@ -33,6 +33,22 @@ export interface ConceptMastery {
   learningVelocity: number;   // EMA of per-event mastery delta
   masteryTrend: MasteryTrend;
   updatedAt: number;
+  /**
+   * Ids of the most recent logical events already folded into this record, newest last.
+   *
+   * Deduplication lives HERE, on the mastery document itself, rather than in a global
+   * processedEvents/{eventId} collection. That is deliberate: the transaction already reads and
+   * writes this document, so checking and recording identity inside it is atomic BY
+   * CONSTRUCTION — there is no window between "is it processed?" and "apply it" for a
+   * concurrent duplicate to slip through. It also adds no second collection, no TTL job and no
+   * per-event storage growth.
+   *
+   * Bounded to the most recent PROCESSED_EVENT_HISTORY ids. The trade-off is explicit: a
+   * duplicate arriving after that many DIFFERENT submissions have touched the same concept
+   * would no longer be recognised. At-most-once delivery makes such an extremely delayed
+   * duplicate implausible, and the raw learning events remain available to recompute from.
+   */
+  processedEventIds?: string[];
 }
 
 export interface MasteryStore {
@@ -70,6 +86,8 @@ const EVENT_CONFIG: Record<MasteryEvent, { target: number; alpha: number; attemp
 };
 
 const REVISION_HISTORY_MAX = 20;
+/** How many recent event ids each concept remembers for deduplication. */
+const PROCESSED_EVENT_HISTORY = 50;
 const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
 
 export function slugifyConcept(label: string): string {
@@ -235,22 +253,41 @@ export class MasteryEngine {
     userId: string,
     concept: { id: string; title?: string; subject?: string; topic?: string },
     events: MasteryEvent[],
-  ): Promise<void> {
-    if (!userId || !concept?.id || events.length === 0) return;
+    eventId?: string,
+  ): Promise<{ deduplicated: boolean }> {
+    if (!userId || !concept?.id || events.length === 0) return { deduplicated: false };
     const hierarchy = { subject: concept.subject, topic: concept.topic };
+    let deduplicated = false;
+
     const mutate = (prev: ConceptMastery | null) => {
+      // The dedup check runs INSIDE the transaction callback, against the state that
+      // transaction actually read. Two concurrent deliveries of the same eventId cannot both
+      // pass: Firestore aborts and retries the loser, which then re-runs this closure, sees the
+      // id recorded by the winner, and no-ops.
+      if (eventId && prev?.processedEventIds?.includes(eventId)) {
+        deduplicated = true;
+        return prev;
+      }
+      deduplicated = false; // reset on transaction retry
+
       let acc = prev;
       for (const ev of events) {
         acc = this.applyEvent(acc, concept.id, ev, concept.title || '', Date.now(), hierarchy);
+      }
+      if (eventId) {
+        acc!.processedEventIds = [...(prev?.processedEventIds || []), eventId].slice(-PROCESSED_EVENT_HISTORY);
+      } else {
+        acc!.processedEventIds = prev?.processedEventIds;
       }
       return acc!;
     };
 
     if (this.store.transact) {
       await this.store.transact(userId, concept.id, mutate);
-      return;
+      return { deduplicated };
     }
     await this.store.set(userId, mutate(await this.store.get(userId, concept.id)));
+    return { deduplicated };
   }
 
   /** Record the same event for several concepts (e.g. all concepts matched in a chat turn). */
