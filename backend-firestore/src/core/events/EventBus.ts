@@ -241,12 +241,30 @@ export class EventBus extends EventEmitter {
   /**
    * Publishes an event to all internal listeners.
    * If the event should trigger a background job, it enqueues it automatically.
+   *
+   * RETURNS whether the publish path completed without error — `true` means the message was
+   * handed to Redis (or dispatched locally in the fallback) with no exception; `false` means it
+   * was NOT. It deliberately does NOT mean "a consumer processed it": this bus has no
+   * acknowledgement, so no publisher can honestly claim that.
+   *
+   * Errors are still swallowed rather than thrown, because most callers publish fire-and-forget
+   * (`void eventBus.publish(...)`) and throwing would turn a lost notification into an unhandled
+   * rejection. The boolean is purely additive — every existing caller ignores it and is
+   * unaffected — but it lets a caller that records durable state from the outcome tell success
+   * from failure instead of assuming success.
+   *
+   * This gap was measured, not theorised: with the socket closed under a still-true connected
+   * flag, publish() logged the failure and returned normally, so baseline reconciliation marked
+   * `projectionStatus: 'PROJECTED'` for a submission whose event reached nobody — and then
+   * refused to retry it, because the status said the work was already done. Durable evidence
+   * survived, but it was permanently orphaned: exactly the fabricated-state failure this
+   * programme exists to eliminate, arriving through a path where nothing downstream could tell.
    */
   async publish<T extends EventType>(
     event: T,
     payload: EventPayloads[T],
     options?: { eventId?: string; correlationId?: string },
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       // Identity is assigned ONCE here, at the point the logical event is created, and travels
       // with it for the rest of its life. Publishers supply a DETERMINISTIC id derived from the
@@ -272,9 +290,11 @@ export class EventBus extends EventEmitter {
       if (event === 'notification.created') {
         await backgroundQueue.enqueueNotification(payload as NotificationPayload);
       }
-      
+
+      return true;
     } catch (error) {
       logger.error(`[EventBus] Error publishing event ${event}`, { error, payload });
+      return false;
     }
   }
 
