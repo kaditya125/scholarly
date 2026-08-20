@@ -41,6 +41,25 @@ export function validateGoalInput(body: any): { errors: GoalValidationError[]; k
     if (!Number.isFinite(n) || n < 0) {
       errors.push({ field: 'targetScore', message: 'Target score must be a non-negative number.' });
     }
+    /*
+     * The unit is REQUIRED alongside a score, and this is the reason the ceiling above cannot be
+     * asserted: without it, "180" is indistinguishable from a percentage and a raw mark. A goal
+     * stored without a unit can never be compared to any measurement, so the gap is permanently
+     * unknowable — better to ask once at capture time than to record a number nobody can use.
+     * Rejected rather than defaulted: assuming PERCENT would be putting words in the student's
+     * mouth about their own target.
+     */
+    if (!has(body.targetScoreUnit)) {
+      errors.push({
+        field: 'targetScoreUnit',
+        message: 'Specify whether the target score is in PERCENT or MARKS.',
+      });
+    } else if (body.targetScoreUnit !== 'PERCENT' && body.targetScoreUnit !== 'MARKS') {
+      errors.push({ field: 'targetScoreUnit', message: 'Target score unit must be PERCENT or MARKS.' });
+    } else if (body.targetScoreUnit === 'PERCENT' && Number.isFinite(n) && n > 100) {
+      // The one ceiling that IS universal: a percentage above 100 is invalid for every exam.
+      errors.push({ field: 'targetScore', message: 'A percentage target cannot exceed 100.' });
+    }
   }
   if (has(body.targetRank)) {
     const n = Number(body.targetRank);
@@ -91,6 +110,7 @@ export class StudentGoalController {
         examId: req.body.examId,
         examCycle: req.body.examCycle,
         targetScore: req.body.targetScore != null ? Number(req.body.targetScore) : undefined,
+        targetScoreUnit: req.body.targetScoreUnit || undefined,
         targetRank: req.body.targetRank != null ? Number(req.body.targetRank) : undefined,
         targetPercentile: req.body.targetPercentile != null ? Number(req.body.targetPercentile) : undefined,
         targetDate: req.body.targetDate,

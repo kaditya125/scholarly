@@ -71,7 +71,9 @@ describe('LearningStateService — insufficient data paths', () => {
 
   it('goal set but no performance evidence does not fabricate a gap', async () => {
     setUp({
-      goal: { status: 'ACTIVE', targetScore: 80 },
+      // The unit is now part of a well-formed score goal — without it the target is
+      // uninterpretable and reports TARGET_UNIT_UNDECLARED instead (covered below).
+      goal: { status: 'ACTIVE', targetScore: 80, targetScoreUnit: 'PERCENT' },
       progress: { topicMastery: [], completedCount: 0, averageAccuracy: 0 },
     });
     const s = await svc.getLearningState('u1');
@@ -79,6 +81,20 @@ describe('LearningStateService — insufficient data paths', () => {
     expect(s.decisions.goalGap.status).toBe('INSUFFICIENT_DATA');
     expect(s.decisions.goalGap.gap).toBeNull();
     expect(s.decisions.goalGap.target).toBe(80); // target is known; the GAP is not
+  });
+
+  it('a legacy goal with no declared unit reports why, rather than assuming percent', async () => {
+    // Goals recorded before the unit field existed cannot be retro-classified, and guessing would
+    // reinstate the original defect: subtracting a percentage from a possibly-raw mark.
+    setUp({
+      goal: { status: 'ACTIVE', targetScore: 180 },
+      progress: { topicMastery: [], completedCount: 5, averageAccuracy: 55 },
+    });
+    const s = await svc.getLearningState('u1');
+
+    expect(s.decisions.goalGap.status).toBe('UNAVAILABLE');
+    expect(s.decisions.goalGap.reason).toBe('TARGET_UNIT_UNDECLARED');
+    expect(s.decisions.goalGap.gap).toBeNull();
   });
 
   it('a topic below the evidence threshold produces no claim at all', async () => {

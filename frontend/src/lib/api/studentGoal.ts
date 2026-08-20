@@ -18,6 +18,7 @@ export interface StudentGoal {
   examId?: string;
   examCycle?: string;
   targetScore?: number;
+  targetScoreUnit?: ScoreUnit;
   targetRank?: number;
   targetPercentile?: number;
   targetDate?: string;
@@ -25,10 +26,19 @@ export interface StudentGoal {
   updatedAt: number;
 }
 
+/**
+ * What a score target is denominated in. Required by the backend alongside `targetScore`: "180"
+ * is a pass mark out of 200 and an impossible percentage, and a target whose unit is unknown can
+ * never be compared to any measurement — so the gap would be permanently unknowable.
+ */
+export type ScoreUnit = 'PERCENT' | 'MARKS';
+
 export interface GoalInput {
   kind: GoalKind;
   /** The numeric target, interpreted according to `kind`. */
   value: number;
+  /** Required when `kind` is 'score'. Never defaulted — the student states their own unit. */
+  scoreUnit?: ScoreUnit;
   targetDate?: string;
   examId?: string;
   examCycle?: string;
@@ -53,7 +63,12 @@ export const studentGoalApi = {
       examCycle: input.examCycle,
       targetDate: input.targetDate || undefined,
     };
-    if (input.kind === 'score') body.targetScore = input.value;
+    if (input.kind === 'score') {
+      body.targetScore = input.value;
+      // Sent as-is, including when absent: the backend rejects a unit-less score with a
+      // field-level error the student can act on. Defaulting it here would guess at their target.
+      body.targetScoreUnit = input.scoreUnit;
+    }
     if (input.kind === 'rank') body.targetRank = input.value;
     if (input.kind === 'percentile') body.targetPercentile = input.value;
 
