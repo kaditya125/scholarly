@@ -30,10 +30,21 @@ import { logger } from '../utils/logger';
  * averaged — averaging would launder an unreliable number into a confident-looking one.
  */
 
-const MIN_TOPIC_EVIDENCE = 3;       // below this we make no claim about a topic
-const WEAK_ACCURACY = 60;           // percent
-const STRONG_ACCURACY = 80;         // percent
-const STALE_AFTER_MS = 1000 * 60 * 60 * 24 * 45; // ~6 weeks without evidence reads as stale
+/**
+ * Measurement thresholds. Exported so the Gate 8 decision layer interprets the SAME numbers this
+ * layer measured against — a second copy would drift, and two components disagreeing about what
+ * "weak" means is how a mentor ends up contradicting its own evidence.
+ */
+export const MIN_TOPIC_EVIDENCE = 3;       // below this we make no claim about a topic
+export const WEAK_ACCURACY = 60;           // percent — matches quizAttempts' WEAK_THRESHOLD
+export const STRONG_ACCURACY = 80;         // percent — matches quizAttempts' STRONG_THRESHOLD
+export const STALE_AFTER_MS = 1000 * 60 * 60 * 24 * 45; // ~6 weeks without evidence reads as stale
+/**
+ * The confidence below which a finding cannot be called HIGH severity. Not arbitrary: with
+ * confidenceFromSample's saturating curve this is ~6 graded observations, the point at which a
+ * per-topic accuracy stops being swingable by one or two questions.
+ */
+export const MIN_CONFIDENCE_FOR_HIGH = 0.4;
 
 const unavailable = <T>(reason: string): Metric<T> => ({
   status: 'UNAVAILABLE', value: null, confidence: null, reason,
@@ -75,8 +86,14 @@ export class LearningStateService {
         logger.warn('[LearningState] progress report unavailable', { userId, error: e?.message });
         degraded.push('quizProgress'); return null;
       }),
-      masteryEngine.snapshot(userId).then(() => (masteryEngine as any).store?.list?.(userId) ?? [])
-        .catch(() => { degraded.push('mastery'); return []; }),
+      // Public contract (see MasteryEngine.listConcepts). This previously called snapshot(),
+      // discarded its result, then reached into the private `store` — two full Firestore reads
+      // per request, with a silent `?? []` that made a failed read indistinguishable from a
+      // student who has never been assessed.
+      masteryEngine.listConcepts(userId).catch((e: any) => {
+        logger.warn('[LearningState] mastery unavailable', { userId, error: e?.message });
+        degraded.push('mastery'); return [];
+      }),
       this.statsService.getUserStats(userId).catch(() => { degraded.push('userStats'); return null; }),
     ]);
 
@@ -244,7 +261,7 @@ export class LearningStateService {
   private severityOf(accuracy: number, trend: string | null, confidence: number): Severity {
     let s: Severity = accuracy < 35 ? 'HIGH' : accuracy < 50 ? 'MODERATE' : 'LOW';
     if (trend === 'declining' && s !== 'HIGH') s = s === 'LOW' ? 'MODERATE' : 'HIGH';
-    if (confidence < 0.4 && s === 'HIGH') s = 'MODERATE';
+    if (confidence < MIN_CONFIDENCE_FOR_HIGH && s === 'HIGH') s = 'MODERATE';
     return s;
   }
 
@@ -356,20 +373,42 @@ export class LearningStateService {
    * the failure mode this whole phase removed.
    */
   private buildReadiness(obs: Observations, analysis: Analysis, goalGap: GoalGap, degraded: string[]): Readiness {
-    const weaknessRisk: Metric<number> = analysis.weaknesses.length > 0 || analysis.strengths.length > 0
-      ? available(Math.min(100, analysis.weaknesses.length * 20), null)
-      : insufficient('no topic-level evidence');
+    /*
+     * weaknessRisk was `Math.min(100, weaknesses.length * 20)` — five weak topics being defined as
+     * 100% risk, one as 20%, on no basis whatsoever. Deterministic, but meaningless: the 20 was
+     * invented, and the figure ignored severity, confidence and how much of the syllabus those
+     * topics represent. Worse, it always reported AVAILABLE, so it counted toward the three
+     * measured dimensions required to publish a readiness composite — a fabricated number helping
+     * unlock a score that is supposed to require real ones.
+     *
+     * It is NOT replaced with another formula. The defensible alternative — weak topics as a
+     * proportion of measured topics — still has the wrong denominator: topics the student happened
+     * to practise, not the syllabus they are examined on. A student who practised only their two
+     * weakest topics would read as 100% risk. Until canonical syllabus coverage exists (#89/#91),
+     * there is no honest denominator, so this reports INSUFFICIENT_DATA.
+     */
+    const weaknessRisk: Metric<number> = insufficient(
+      'no honest denominator: weak topics can only be counted against topics the student chose to ' +
+      'practise, not against syllabus coverage (blocked on canonical syllabus identity)',
+    );
+
+    const masteryTopics = obs.topics.filter((t) => t.mastery.status === 'AVAILABLE' && t.mastery.value != null);
+    const masterySample = masteryTopics.reduce((s, t) => s + t.attempts, 0);
 
     const dimensions: ReadinessDimensions = {
       syllabusCoverage: obs.syllabusCoverage,
-      conceptMastery: obs.topics.some((t) => t.mastery.status === 'AVAILABLE')
+      // Mean of per-topic mastery. Unweighted by design — each topic is one concept the student
+      // either knows or does not, so a topic practised 40 times is not four times more of the
+      // syllabus than one practised 10 times. Confidence comes from the TOTAL evidence behind the
+      // mean, so a mean over thin data is visibly thin rather than silently equal to a solid one.
+      conceptMastery: masteryTopics.length > 0
         ? available<number>(
-            Math.round(
-              obs.topics.filter((t) => t.mastery.value != null)
-                .reduce((s, t) => s + (t.mastery.value || 0), 0) /
-              Math.max(1, obs.topics.filter((t) => t.mastery.value != null).length),
-            ), null)
-        : insufficient('no mastery evidence'),
+            Math.round(masteryTopics.reduce((s, t) => s + (t.mastery.value || 0), 0) / masteryTopics.length),
+            confidenceFromSample(masterySample),
+            [{ kind: 'mastery', summary: `${masteryTopics.length} concept(s), ${masterySample} graded attempt(s)`,
+               sampleSize: masterySample }],
+          )
+        : insufficient('no mastery evidence (ENABLE_MASTERY may be off, or nothing assessed yet)'),
       accuracy: obs.overallAccuracy,
       consistency: obs.consistency,
       weaknessRisk,

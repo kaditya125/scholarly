@@ -14,8 +14,11 @@ jest.mock('../../src/services/studentGoal.service', () => ({
 jest.mock('../../src/services/tests/quizAttempts.service', () => ({
   quizAttemptsService: { getProgressReport: jest.fn() },
 }));
+// Mocks the PUBLIC contract. This previously stubbed `store.list` — a private field — because the
+// service reached around encapsulation to read it. That coupling meant the test asserted against
+// an implementation detail; both sides now go through MasteryEngine.listConcepts().
 jest.mock('../../src/core/intelligence/MasteryEngine', () => ({
-  masteryEngine: { snapshot: jest.fn(), store: { list: jest.fn() } },
+  masteryEngine: { listConcepts: jest.fn() },
 }));
 // Plain class, not a jest.fn implementation: clearAllMocks() would wipe a mockImplementation
 // and leave getUserStats returning undefined.
@@ -32,8 +35,7 @@ const svc = new LearningStateService();
 const setUp = (opts: { goal?: any; progress?: any; mastery?: any[] }) => {
   studentGoalService.getGoal.mockResolvedValue(opts.goal ?? null);
   quizAttemptsService.getProgressReport.mockResolvedValue(opts.progress ?? null);
-  masteryEngine.snapshot.mockResolvedValue({});
-  masteryEngine.store.list.mockResolvedValue(opts.mastery ?? []);
+  masteryEngine.listConcepts.mockResolvedValue(opts.mastery ?? []);
 };
 
 beforeEach(() => jest.clearAllMocks());
@@ -110,8 +112,7 @@ describe('LearningStateService — dependency failure must not fabricate', () =>
   it('a failed progress report yields UNAVAILABLE, not accuracy 0', async () => {
     studentGoalService.getGoal.mockResolvedValue(null);
     quizAttemptsService.getProgressReport.mockRejectedValue(new Error('firestore down'));
-    masteryEngine.snapshot.mockResolvedValue({});
-    masteryEngine.store.list.mockResolvedValue([]);
+    masteryEngine.listConcepts.mockResolvedValue([]);
 
     const s = await svc.getLearningState('u1');
 

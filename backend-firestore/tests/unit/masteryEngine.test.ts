@@ -353,3 +353,58 @@ describe('canonical identity on mastery', () => {
     expect(rec?.syllabusNodeId).toBeUndefined();
   });
 });
+
+/**
+ * Public read contract.
+ *
+ * LearningStateService needs full per-concept detail, and every prior accessor discarded it —
+ * snapshot() returns four aggregates, getWeakConcepts() returns bare titles. Lacking a public
+ * route, the composition layer reached around encapsulation with
+ * `(masteryEngine as any).store?.list?.(userId) ?? []`. That bound a caller to a private field,
+ * silently degraded to "no mastery" if the field were renamed, and — worst — turned a read
+ * FAILURE into the same empty array as a student who has never been assessed.
+ */
+describe('MasteryEngine.listConcepts (public contract)', () => {
+  it('returns the full records, not aggregates or titles', async () => {
+    const store = new FakeStore();
+    const engine = new MasteryEngine(store);
+    await engine.recordBatch('u1', { id: 'algebra', title: 'Algebra' }, ['quiz_correct', 'quiz_incorrect'] as any, 'E1');
+
+    const all = await engine.listConcepts('u1');
+    expect(all).toHaveLength(1);
+    expect(all[0].attempts).toBe(2);
+    expect(all[0].successCount).toBe(1);
+    expect(typeof all[0].masteryScore).toBe('number');
+    expect(typeof all[0].confidence).toBe('number');
+  });
+
+  it('a student with no mastery yields an empty list, not an error', () => {
+    return expect(new MasteryEngine(new FakeStore()).listConcepts('nobody')).resolves.toEqual([]);
+  });
+
+  it('THE REGRESSION: a read failure REJECTS, so callers can report UNAVAILABLE not zero', async () => {
+    const failing: any = {
+      list: async () => { throw new Error('firestore down'); },
+      get: async () => null, set: async () => {}, transact: async () => {},
+    };
+    await expect(new MasteryEngine(failing).listConcepts('u1')).rejects.toThrow('firestore down');
+  });
+
+  it('exposes listConcepts publicly so no caller needs the store', () => {
+    expect(new MasteryEngine(new FakeStore()).listConcepts).toBeInstanceOf(Function);
+  });
+
+  it('THE REGRESSION: the composition layer no longer reaches into the private store', () => {
+    // Asserted against source because TypeScript's `private` is erased at runtime — the field is
+    // still reachable via an `as any` cast, so nothing at runtime can prove encapsulation held.
+    // What IS enforceable is that the production caller does not do it, which is the actual
+    // defect: a caller bound to a private field, with `?.` and `?? []` turning a rename or a read
+    // failure into a silent "this student has no mastery".
+    const fs = require('fs');
+    const path = require('path');
+    const src = fs.readFileSync(path.join(__dirname, '../../src/services/learningState.service.ts'), 'utf8');
+    expect(src).not.toMatch(/as any\)\.store/);
+    expect(src).not.toMatch(/store\?\.list/);
+    expect(src).toMatch(/masteryEngine\.listConcepts\(/);
+  });
+});
