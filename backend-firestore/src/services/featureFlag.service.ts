@@ -26,7 +26,30 @@ export class FeatureFlagService {
 
   /**
    * Check if a feature is enabled for a given user.
-   * Resolution order: user-level > beta > global
+   *
+   * SCOPE SEMANTICS — precise, because the previous implementation did not restrict anything:
+   *
+   *   global  `enabled` applies to everyone.
+   *   user    `enabled` applies ONLY to userIds in `targetUserIds`. Everyone else gets false,
+   *           including callers that pass no userId at all.
+   *   beta    identical restriction to `user`; `targetUserIds` is the beta-tester list. The two
+   *           differ only in intent — one is targeting, the other is a cohort — and both gate on
+   *           the same field.
+   *
+   * THE BUG THIS FIXES: every branch ended in `else { result = flag.enabled }`, so a user-scoped
+   * flag with `enabled: true` and `targetUserIds: ['a']` returned TRUE for user 'b' as well —
+   * falling through to the global value. Targeting was decorative: a "user-scoped" flag behaved
+   * exactly like a global one, so any staged rollout built on it would have silently shipped the
+   * feature to every user while appearing to be limited to a test cohort.
+   *
+   * Fails closed throughout: an unknown flag, a missing userId on a targeted scope, an empty
+   * target list, or a Firestore error all yield false. A feature that cannot be confirmed enabled
+   * is treated as disabled.
+   *
+   * CACHING CAVEAT: entries are keyed per user and setFlag() only invalidates the `_global` key,
+   * so a change to `targetUserIds` can take up to CACHE_TTL to reach a user whose result is
+   * already cached. That was harmless while scope was decorative and is now a real (bounded)
+   * staleness window — worth resolving before this gates anything sensitive.
    */
   async isEnabled(flagName: string, userId?: string): Promise<boolean> {
     const cacheKey = `ff_${flagName}_${userId || 'global'}`;
@@ -44,15 +67,15 @@ export class FeatureFlagService {
 
       let result = false;
 
-      if (flag.scope === 'global') {
-        result = flag.enabled;
-      } else if (flag.scope === 'user' && userId && flag.targetUserIds?.includes(userId)) {
-        result = flag.enabled;
-      } else if (flag.scope === 'beta' && userId && flag.targetUserIds?.includes(userId)) {
-        result = flag.enabled;
+      if (flag.scope === 'user' || flag.scope === 'beta') {
+        // Targeted scopes restrict. No userId, an empty list, or a non-member all mean false —
+        // there is no fall-through to the global value, which is what made targeting meaningless.
+        const targeted = !!userId && (flag.targetUserIds?.includes(userId) ?? false);
+        result = targeted && flag.enabled;
       } else {
-        // Fall back to global setting
-        result = flag.enabled;
+        // 'global', and anything unrecognised: an unknown scope must not widen access, so it is
+        // treated as the plain enabled value rather than being granted targeted semantics.
+        result = flag.scope === 'global' ? flag.enabled : false;
       }
 
       try {
