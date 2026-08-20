@@ -53,6 +53,14 @@ describe('notification worker startup', () => {
   it('exposes a close() so shutdown can release the queue connection', () => {
     expect(typeof (NW.notificationWorker as any)?.close).toBe('function');
   });
+
+  it('reports honestly that it is NOT draining when the broker is unavailable', () => {
+    // The boot log is the only way anyone notices a missing queue consumer — which is exactly how
+    // this worker went unnoticed. So "started" must never be claimed when nothing is attached.
+    const result = startNotificationWorker();
+    expect(result).toEqual({ draining: false });
+    expect(NW.notificationWorker!.isDraining).toBe(false);
+  });
 });
 
 /**

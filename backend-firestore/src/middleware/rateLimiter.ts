@@ -9,6 +9,28 @@ let useRedis = false;
 
 if (process.env.REDIS_URL) {
   redisClient = createClient({ url: process.env.REDIS_URL });
+
+  /*
+   * THIS LISTENER IS LOAD-BEARING, not defensive noise.
+   *
+   * node-redis emits 'error' on the client for runtime socket faults, and an EventEmitter with no
+   * 'error' listener THROWS — which becomes an uncaughtException and, before this, took the whole
+   * API down. This was the only one of the four Redis clients in the codebase missing a handler
+   * (EventBus's pub/sub clients and the NotificationWorker's anti-spam client all have one), and
+   * it is the least-used connection, so it sat idle longest and was the first the provider
+   * dropped. That produced the ~6-hourly production restarts.
+   *
+   * The .catch() below does NOT cover this: it only settles the initial connect promise. Faults
+   * after a successful connect had nowhere to go.
+   *
+   * Logged and swallowed on purpose — node-redis reconnects on its own, and getStore() already
+   * degrades to the in-memory limiter, so a dropped connection is a recoverable condition rather
+   * than a reason to stop serving traffic.
+   */
+  redisClient.on('error', (err: any) => {
+    console.warn('[RateLimiter] Redis error (reconnect is handled by the client):', err?.message);
+  });
+
   redisClient.connect().then(() => {
     console.log('Connected to Redis for Rate Limiting');
     useRedis = true;
