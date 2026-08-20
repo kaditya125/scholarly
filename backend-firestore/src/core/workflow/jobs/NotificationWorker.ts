@@ -20,6 +20,11 @@ class NotificationWorker {
   private worker: Worker | null = null;
   private redisClient: ReturnType<typeof createClient> | null = null;
 
+  /** True only when a BullMQ Worker is actually attached and draining the queue. */
+  get isDraining(): boolean {
+    return this.worker !== null;
+  }
+
   constructor() {
     // When the broker is disabled we skip BOTH the BullMQ.Worker (job dispatcher)
     // and the standalone redis client (anti-spam rate limiter is co-located with
@@ -275,9 +280,30 @@ class NotificationWorker {
 // Singleton instance
 export let notificationWorker: NotificationWorker | null = null;
 
-export function startNotificationWorker() {
+/**
+ * Idempotent. Reports whether a Worker is actually attached to the queue, so a caller — and the
+ * boot log — can distinguish "draining" from "constructed but inert".
+ *
+ * The log previously announced "Started processing queue" unconditionally, including when the
+ * constructor had just bailed out because the broker was unavailable. That is exactly the kind of
+ * line that hides a consumer gap: this worker was missing from the server bootstrap entirely, and
+ * reading the boot log for it is how anyone would have noticed. A log claiming the queue is being
+ * processed when it is not makes that check worthless, so it now states which is actually true.
+ */
+export function startNotificationWorker(): { draining: boolean } {
   if (!notificationWorker) {
-    notificationWorker = new NotificationWorker();
-    logger.info(`[NotificationWorker] Started processing queue: ${process.env.NOTIFICATION_QUEUE_NAME || 'notification-jobs'}`);
+    const started = new NotificationWorker();
+    notificationWorker = started;
+    const queueName = process.env.NOTIFICATION_QUEUE_NAME || 'notification-jobs';
+    if (started.isDraining) {
+      logger.info(`[NotificationWorker] Started processing queue: ${queueName}`);
+    } else {
+      logger.warn(
+        `[NotificationWorker] NOT draining ${queueName} (${queueBrokerDisabledReason()}). ` +
+        'Enqueued notifications will accumulate unprocessed until a broker is configured.'
+      );
+    }
+    return { draining: started.isDraining };
   }
+  return { draining: notificationWorker.isDraining };
 }

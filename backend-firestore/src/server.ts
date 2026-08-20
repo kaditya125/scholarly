@@ -9,6 +9,7 @@ import { env } from './config/env';
 import { errorHandler } from './middlewares/errorHandler';
 import { bootstrapDI } from './core/di/registry';
 import { checkReadiness } from './lib/health';
+import { isTransientRedisDisconnect } from './utils/redisErrors';
 
 // Initialize DI container before routing.
 bootstrapDI();
@@ -362,12 +363,31 @@ process.on('unhandledRejection', (reason: any) => {
 // shut down gracefully so the orchestrator can restart a clean instance.
 process.on('uncaughtException', (err: Error) => {
   console.error('[uncaughtException]', err.stack || err.message);
-  // Ignore transient network disconnects from remote Redis/TLS connections
-  const msg = (err.message || '').toLowerCase();
-  if (msg.includes('econnreset') || msg.includes('epipe') || msg.includes('etimedout')) {
-    console.warn('⚠️ Transient network disconnect encountered; keeping HTTP server active.');
+
+  /*
+   * Transient Redis/TLS disconnects are survivable and must not restart the API.
+   *
+   * This check previously matched only ECONNRESET / EPIPE / ETIMEDOUT as substrings, so
+   * node-redis's SocketClosedUnexpectedlyError — an idle managed-Redis connection being dropped —
+   * fell through to shutdown(). Production restarted roughly every six hours as a result. Because
+   * the EventBus is at-most-once with no replay, each of those restarts was a window in which a
+   * published learning event could be lost.
+   *
+   * isTransientRedisDisconnect() identifies the condition by error CLASS rather than by message
+   * text, and is deliberately narrow: it covers connection-lifecycle faults node-redis recovers
+   * from by reconnecting, and nothing else. Anything genuinely unexpected still shuts the process
+   * down — the guarantee here is unchanged for real faults.
+   *
+   * The root cause is fixed at source in middleware/rateLimiter.ts (a client with no 'error'
+   * listener, which is what turned a routine reconnect into an uncaught throw). This remains as
+   * defence in depth for any client added later that forgets one.
+   */
+  if (isTransientRedisDisconnect(err)) {
+    console.warn('⚠️ Transient Redis/network disconnect encountered; keeping HTTP server active. ' +
+                 'The client reconnects on its own.');
     return;
   }
+
   shutdown('uncaughtException');
 });
 
