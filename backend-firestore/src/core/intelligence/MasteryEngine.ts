@@ -329,6 +329,29 @@ export class MasteryEngine {
       .map((m) => m.title || m.conceptId);
   }
 
+  /**
+   * Every persisted concept-mastery record for a student.
+   *
+   * Exists because LearningStateService needs the full per-concept detail — score, confidence,
+   * attempts, trend, last-practised — and every existing accessor throws that away: snapshot()
+   * returns four aggregates, getWeakConcepts() returns bare titles. Lacking a public route to the
+   * detail, the composition layer had been reaching around encapsulation with
+   * `(masteryEngine as any).store?.list?.(userId) ?? []`, which was wrong in three distinct ways:
+   * it bound a caller to a private field, the `?.` made a renamed field degrade silently to "no
+   * mastery" instead of erroring, and the `?? []` turned a genuine read FAILURE into the same
+   * empty result as a student who has simply never been assessed. That last one matters most —
+   * it is the "absence of evidence became zero" failure this whole programme exists to remove.
+   *
+   * Deliberately NOT a getter on `store`: exposing the store would let callers write through it,
+   * bypassing the transactional idempotency in recordBatch.
+   *
+   * Rejects on failure rather than returning []. A caller that cannot read mastery must be able
+   * to report UNAVAILABLE, which is a different statement from "no mastery recorded".
+   */
+  async listConcepts(userId: string): Promise<ConceptMastery[]> {
+    return this.store.list(userId);
+  }
+
   /** Aggregate mastery snapshot for analytics/observability (Increment 8). */
   async snapshot(userId: string): Promise<{ concepts: number; avgMastery: number; weak: number; improving: number }> {
     const all = await this.store.list(userId);
