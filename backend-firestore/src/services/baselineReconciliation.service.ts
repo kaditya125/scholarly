@@ -1,5 +1,6 @@
 import { db } from '../config/firebase';
 import { eventBus } from '../core/events/EventBus';
+import { featureFlags } from '../config/featureFlags';
 import { logger } from '../utils/logger';
 
 /**
@@ -24,6 +25,22 @@ import { logger } from '../utils/logger';
  * `learning.test_completed:{attemptId}`, and MasteryEngine already dedupes on processedEventIds
  * inside its transaction (verified in production: 10 concurrent duplicates → 1 effect). Running
  * this once, twice or concurrently therefore yields one logical mastery effect.
+ *
+ * WHAT projectionStatus MEANS — three distinct states, deliberately not collapsed:
+ *
+ *   PENDING    projection is owed. Either it has not been attempted, the publish failed, or the
+ *              mastery consumer is switched off. In every case the evidence stays eligible and a
+ *              later run will pick it up.
+ *   PROJECTED  the projection obligation is discharged — either the event was handed to a live
+ *              consumer without error, or there was genuinely nothing to project (an empty
+ *              submission). It is NOT a claim that a consumer finished successfully; this bus has
+ *              no acknowledgement, so no publisher could honestly claim that.
+ *
+ * The case that forced this to be spelled out: with ENABLE_MASTERY off, publish() still succeeds
+ * (Redis accepts the message) while the subscriber returns on its first line. Marking that
+ * PROJECTED recorded work that provably never happened AND made it unrecoverable, because
+ * reconciliation skips PROJECTED records. Evidence graded before the flag was turned on would
+ * have been silently orphaned forever.
  */
 
 export interface ReconcileOutcome {
@@ -100,6 +117,33 @@ export class BaselineReconciliationService {
         userId, attemptId, attempted: gradedResult?.attempted, hasGradedResult: !!gradedResult,
       });
       return { attemptId, projected: false, reason: 'NO_EVIDENCE' };
+    }
+
+    /**
+     * The projection CONSUMER is switched off, so nothing can be projected — and unlike a normal
+     * publish, that is not a guess: the mastery subscriber returns on its first line when the flag
+     * is off, so we know with certainty that no mastery will be written.
+     *
+     * Marking this PROJECTED would therefore be a false claim, and a permanently damaging one:
+     * reconciliation skips PROJECTED records as already done, so evidence graded while mastery was
+     * disabled would never produce mastery even after the flag was turned on. Left PENDING and
+     * eligible instead, so enabling mastery makes the backlog reconcilable rather than lost.
+     *
+     * Nothing is published either. With mastery off, learning.test_completed has no consumer at
+     * all and learning.question_answered has none regardless, so a publish would be pure Redis
+     * traffic against a quota-limited tier for zero effect. No write happens here, so the
+     * submission simply keeps the PENDING it was created with — no document churn from repeated
+     * reconciliation passes.
+     *
+     * Deliberately AFTER the empty-submission branch above: a legitimately empty submission has
+     * genuinely nothing to project and is settled as PROJECTED regardless of the flag. Those two
+     * situations must not be conflated — one is "nothing to do", the other is "cannot do it yet".
+     */
+    if (!featureFlags.mastery) {
+      logger.info('[BaselineReconcile] mastery disabled; evidence left PENDING and eligible', {
+        userId, attemptId, questions: gradedQuestions.length,
+      });
+      return { attemptId, projected: false, reason: 'MASTERY_DISABLED' };
     }
 
     // Rebuild the per-topic rollup from the DURABLE verdicts. Skips are excluded from graded
