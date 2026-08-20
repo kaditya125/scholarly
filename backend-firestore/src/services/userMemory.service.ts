@@ -23,44 +23,28 @@ export class UserMemoryService {
     return doc.exists ? doc.data() as UserMemory : null;
   }
 
-  /**
-   * Analyzes a chat interaction to extract memory insights (e.g., struggling with a topic)
+  /*
+   * REMOVED: updateMemoryFromInteraction().
+   *
+   * It asked the LLM, from a SINGLE chat exchange, to "extract a comma-separated list of topics
+   * the student seems to be STRUGGLING with", then persisted that answer to
+   * users/{uid}/memory/global.weakTopics and merged it append-only — no evidence, no sample size,
+   * no decay, and no way for a topic to ever leave the list once the model had guessed it.
+   *
+   * That is generated evidence wearing the costume of measurement. The model's job is to explain
+   * measured facts, never to manufacture them, and this inverted that: the guess was written to
+   * the database and then read back into the system prompt as "Struggling With: ...", where it
+   * was indistinguishable from a real measurement to everything downstream.
+   *
+   * It had no callers, so removing it changes no current behaviour — but leaving an unreferenced
+   * fabrication writer in place is a loaded gun: one future `await userMemoryService.update...`
+   * would silently start writing invented weaknesses about real students again.
+   *
+   * The measured equivalent already exists and is kept: quizAttempts.service derives weak topics
+   * from actual graded quiz results into userStats.weakTopics, and — unlike this — lets a topic
+   * graduate out again once performance improves. Gate 8 consumes the measured signal via
+   * LearningStateService.
    */
-  async updateMemoryFromInteraction(userId: string, userMessage: string, aiResponse: string) {
-    const currentMemory = await this.getUserMemory(userId) || {
-      weakTopics: [],
-      strongTopics: [],
-      learningSpeed: 'medium',
-      comprehensionDepth: 'beginner',
-      lastRevisionDate: new Date().toISOString(),
-      preferredModes: [],
-      conceptGraph: {}
-    };
-
-    // Fast AI extraction of learning insights
-    const prompt = `Analyze this interaction between a student and a teacher AI.
-    Student: "${userMessage}"
-    Teacher: "${aiResponse}"
-    
-    Extract a single comma-separated list of topics the student seems to be STRUGGLING with. If none, output "NONE".`;
-
-    try {
-      const insight = await this.llmProvider.generateResponse([{ role: 'user', content: prompt, timestamp: Date.now() }] as any);
-      const newWeakTopics = insight.reply.split(',').map((t: string) => t.trim().toLowerCase()).filter((t: string) => t !== 'none' && t !== '');
-
-      if (newWeakTopics.length > 0) {
-        const updatedWeakTopics = Array.from(new Set([...currentMemory.weakTopics, ...newWeakTopics]));
-        
-        await adminDb.collection('users').doc(userId).collection('memory').doc('global').set({
-          ...currentMemory,
-          weakTopics: updatedWeakTopics,
-          lastInteractionDate: new Date().toISOString()
-        }, { merge: true });
-      }
-    } catch (e) {
-      console.error('Failed to update user memory:', e);
-    }
-  }
 
   /**
    * Generates a logical learning path based on the user's current topic and concept graph.
@@ -95,9 +79,22 @@ export class UserMemoryService {
       depthModifier = 'The student has advanced comprehension. Skip basic definitions and focus on edge cases, derivations, and complex applications.';
     }
 
+    /*
+     * "Struggles with" / "Excels at" were removed from this block.
+     *
+     * They were rendered from memory.weakTopics / strongTopics — the list the deleted
+     * LLM extractor wrote. Stating them here presents a model's guess back to the model as
+     * established fact about the student, which is precisely how a fabrication becomes
+     * self-reinforcing: the guess is asserted, the next answer is shaped by it, and the student
+     * is told they are weak at something nobody measured.
+     *
+     * Weakness claims now come only from measured evidence via LearningStateService (Gate 8).
+     * Saying nothing here is correct in the meantime: an absent claim is honest, an invented one
+     * is not. The instruction below is a teaching-STYLE preference, not an assertion about what
+     * the student knows, so it stays.
+     */
+    if (!depthModifier) return '';
     return `\nSTUDENT PROFILE:
-- Struggles with: ${memory.weakTopics.join(', ')}
-- Excels at: ${memory.strongTopics.join(', ')}
 - Adaptive Instruction: ${depthModifier}
 Adapt your teaching style to this profile.`;
   }

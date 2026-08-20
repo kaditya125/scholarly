@@ -83,6 +83,15 @@ export type GoalSource = 'STUDENT_DECLARED' | 'IMPORTED' | 'SYSTEM_SUGGESTED';
 export type GoalStatus = 'ACTIVE' | 'NOT_SET' | 'ACHIEVED' | 'ABANDONED';
 
 /**
+ * What a numeric score is denominated in.
+ *
+ * `PERCENT` is a proportion of the maximum; `MARKS` is a raw total whose maximum is exam-specific
+ * and not currently recorded anywhere in this system. Keeping them distinct is what stops "you
+ * are 125 points from your goal" being produced by subtracting a percentage from a raw mark.
+ */
+export type ScoreUnit = 'PERCENT' | 'MARKS';
+
+/**
  * A student-owned target. Stored at users/{uid}/profile/goal, alongside the existing onboarding
  * profile document rather than in a parallel goal system.
  *
@@ -99,8 +108,19 @@ export interface StudentGoal {
   examId?: string;
   /** Exam cycle/year the goal is aimed at (e.g. "2026"). */
   examCycle?: string;
-  /** Student's own target. Units are exam-dependent; interpret with examId. */
+  /**
+   * The student's own target. MEANINGLESS WITHOUT `targetScoreUnit` — "180" is a pass mark in a
+   * 200-mark paper and an impossible figure as a percentage, and the goal validator deliberately
+   * refuses to bound it because scoring models differ per exam. A target whose unit is unknown
+   * cannot be compared to anything, which is why the gap calculation now demands the unit.
+   */
   targetScore?: number;
+  /**
+   * What `targetScore` is denominated in. Optional only because goals recorded before this field
+   * existed cannot be retro-classified — and guessing their unit is exactly the fabrication this
+   * prevents. A goal without it reports TARGET_UNIT_UNDECLARED rather than being assumed PERCENT.
+   */
+  targetScoreUnit?: ScoreUnit;
   targetRank?: number;
   targetPercentile?: number;
   /**
@@ -192,14 +212,48 @@ export interface Analysis {
 
 export type GoalGapStatus = MetricStatus;
 
+/**
+ * Why a goal gap is or is not computable. Machine-readable so the mentor can say precisely what
+ * it does not know — "you haven't told me whether 180 means marks or percent" is a useful,
+ * actionable statement; a silently wrong number is not.
+ */
+export type GoalGapReason =
+  /** No active goal on record. */
+  | 'GOAL_NOT_SET'
+  /** targetScore exists but its unit was never declared, so nothing can be compared to it. */
+  | 'TARGET_UNIT_UNDECLARED'
+  /**
+   * The target is denominated in raw marks. Converting to a comparable figure needs the exam's
+   * maximum, which this system does not record anywhere.
+   */
+  | 'EXAM_MAX_MARKS_UNKNOWN'
+  /**
+   * Unit is known and comparable in principle, but nothing measures the same instrument. Practice
+   * quiz accuracy is not an exam score: different question pool, no negative marking, and
+   * self-selected difficulty. Treating one as the other would misstate how close a student is.
+   */
+  | 'NO_COMPARABLE_MEASUREMENT'
+  /** The student declared a rank target; no rank is measured anywhere in this system. */
+  | 'RANK_NOT_MEASURED'
+  /** The student declared a percentile target; no percentile is measured. */
+  | 'PERCENTILE_NOT_MEASURED'
+  /** Comparable in principle, but not enough performance evidence yet. */
+  | 'INSUFFICIENT_PERFORMANCE_EVIDENCE';
+
 export interface GoalGap {
   status: GoalGapStatus;
   /** Points between current measured position and the student's declared target. */
   gap: number | null;
   current: number | null;
   target: number | null;
-  /** e.g. GOAL_NOT_SET, INSUFFICIENT_DATA */
-  reason?: string;
+  /** Unit of `target`/`current`/`gap`. Null whenever the gap is not computable. */
+  unit?: ScoreUnit | null;
+  reason?: GoalGapReason;
+  /**
+   * Days to the student's declared target date. Computed independently of the score gap — it is
+   * plain date arithmetic on a value the student supplied, so it stays available even when the
+   * gap itself cannot be established.
+   */
   daysRemaining?: number | null;
 }
 

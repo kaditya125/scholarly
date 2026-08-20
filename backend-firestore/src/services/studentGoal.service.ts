@@ -1,5 +1,5 @@
 import { db } from '../config/firebase';
-import { StudentGoal, GoalSource } from '../types/learningState.types';
+import { StudentGoal, GoalSource, ScoreUnit } from '../types/learningState.types';
 
 /**
  * StudentGoal — the student's own declared target.
@@ -54,6 +54,8 @@ export class StudentGoalService {
       examId?: string;
       examCycle?: string;
       targetScore?: number;
+      /** Required by the controller whenever targetScore is supplied — see validateGoalInput. */
+      targetScoreUnit?: ScoreUnit;
       targetRank?: number;
       targetPercentile?: number;
       targetDate?: string;

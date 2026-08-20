@@ -714,14 +714,22 @@ function buildStudentContextBlock(ctx: StudentContext | undefined): string {
     }
   }
 
-  // Memory
+  // Memory.
+  //
+  // "Struggling With" / "Strong In" were removed. They rendered ctx.memory.weakTopics —
+  // a list an LLM extractor wrote by guessing, from a single chat exchange, which topics the
+  // student "seems to be STRUGGLING with", appended forever with no evidence, no sample size and
+  // no way back out. Presenting that to the model as a stated fact about the student is the exact
+  // failure this programme exists to remove: the mentor would counsel a student on a weakness
+  // nobody ever measured, and nothing downstream could tell it from a real one.
+  //
+  // Nothing replaces it here yet, and that is the correct interim state — an absent claim is
+  // honest, an invented one is not. Measured weaknesses reach the prompt through
+  // LearningStateService (Gate 8), where every claim carries its evidence and confidence.
+  //
+  // Comprehension depth and learning speed are retained: they are teaching-STYLE preferences
+  // ("explain step by step"), not assertions about what the student knows.
   if (ctx.memory) {
-    if (ctx.memory.weakTopics.length > 0) {
-      block += `- **Struggling With**: ${ctx.memory.weakTopics.join(', ')}\n`;
-    }
-    if (ctx.memory.strongTopics.length > 0) {
-      block += `- **Strong In**: ${ctx.memory.strongTopics.join(', ')}\n`;
-    }
     block += `- **Comprehension Depth**: ${ctx.memory.comprehensionDepth}\n`;
     block += `- **Learning Speed**: ${ctx.memory.learningSpeed}\n`;
   }

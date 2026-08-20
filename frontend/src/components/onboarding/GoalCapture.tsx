@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Loader2, AlertCircle } from 'lucide-react';
-import { studentGoalApi, validateGoalValue, type GoalKind } from '../../lib/api/studentGoal';
+import { studentGoalApi, validateGoalValue, type GoalKind, type ScoreUnit } from '../../lib/api/studentGoal';
 import { cn } from '../../lib/utils';
 
 /**
@@ -16,9 +16,16 @@ import { cn } from '../../lib/utils';
  */
 
 const KINDS: Array<{ kind: GoalKind; label: string; placeholder: string; hint: string }> = [
-  { kind: 'score', label: 'Score', placeholder: '90', hint: 'Marks or percentage you\'re aiming for' },
+  // The score hint used to read "Marks or percentage" — which is exactly the ambiguity that made
+  // the stored target uncomparable to anything. The unit is now asked for explicitly below.
+  { kind: 'score', label: 'Score', placeholder: '90', hint: 'The score you\'re aiming for' },
   { kind: 'rank', label: 'Rank', placeholder: '500', hint: 'Best rank you want to land' },
   { kind: 'percentile', label: 'Percentile', placeholder: '99', hint: 'Percentile you\'re chasing' },
+];
+
+const SCORE_UNITS: Array<{ unit: ScoreUnit; label: string }> = [
+  { unit: 'PERCENT', label: 'Percent (%)' },
+  { unit: 'MARKS', label: 'Marks' },
 ];
 
 interface Props {
@@ -34,6 +41,10 @@ interface Props {
 export default function GoalCapture({ userId, examId, examCycle, onSaved, onSkip }: Props) {
   const [kind, setKind] = useState<GoalKind>('score');
   const [value, setValue] = useState('');
+  // Deliberately starts unselected. Pre-selecting "Percent" would be the form deciding what the
+  // student meant, and a wrongly-attributed unit is worse than an unanswered question — it makes
+  // every later "how far am I from my goal?" quietly wrong.
+  const [scoreUnit, setScoreUnit] = useState<ScoreUnit | null>(null);
   const [targetDate, setTargetDate] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -43,12 +54,21 @@ export default function GoalCapture({ userId, examId, examCycle, onSaved, onSkip
   const submit = async () => {
     const localError = validateGoalValue(kind, value);
     if (localError) { setError(localError); return; }
+    if (kind === 'score' && !scoreUnit) {
+      setError('Tell us whether that\'s a percentage or a mark out of the paper total.');
+      return;
+    }
+    if (kind === 'score' && scoreUnit === 'PERCENT' && Number(value.trim()) > 100) {
+      setError('A percentage target can\'t be above 100.');
+      return;
+    }
 
     setSaving(true);
     setError(null);
     try {
       await studentGoalApi.saveGoal(userId, {
-        kind, value: Number(value.trim()), targetDate: targetDate || undefined, examId, examCycle,
+        kind, value: Number(value.trim()), scoreUnit: scoreUnit ?? undefined,
+        targetDate: targetDate || undefined, examId, examCycle,
       });
       onSaved();
     } catch (e: any) {
@@ -105,6 +125,34 @@ export default function GoalCapture({ userId, examId, examCycle, onSaved, onSkip
         aria-describedby={error ? 'goal-error' : undefined}
         className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-[14px] text-slate-900 dark:text-white placeholder:text-slate-400 outline-none transition-colors focus:border-[#c8e558] focus:ring-4 focus:ring-[#c8e558]/20"
       />
+
+      {/* Unit — only meaningful for a score. "90" is a fine percentage and a poor mark out of 200,
+          and without knowing which, the target can never be compared to a measurement. */}
+      {kind === 'score' && (
+        <>
+          <span id="goal-unit-label" className="block text-[12.5px] text-slate-500 dark:text-gray-400 mt-3 mb-1.5">
+            Is that a percentage or marks?
+          </span>
+          <div role="radiogroup" aria-labelledby="goal-unit-label" className="flex gap-2">
+            {SCORE_UNITS.map((u) => (
+              <button
+                key={u.unit}
+                type="button"
+                role="radio"
+                aria-checked={scoreUnit === u.unit}
+                onClick={() => { setScoreUnit(u.unit); setError(null); }}
+                className={`h-10 px-4 rounded-xl border text-[13px] transition-colors ${
+                  scoreUnit === u.unit
+                    ? 'border-[#c8e558] bg-[#c8e558]/10 text-slate-900 dark:text-white'
+                    : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-400 hover:border-slate-300'
+                }`}
+              >
+                {u.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       <label htmlFor="goal-date" className="block text-[12.5px] text-slate-500 dark:text-gray-400 mt-4 mb-1.5">
         When are we aiming for it? <span className="text-slate-400">(optional)</span>

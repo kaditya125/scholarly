@@ -250,27 +250,79 @@ export class LearningStateService {
 
   // ── Decisions ────────────────────────────────────────────────────────────────────────────
 
+  /**
+   * How far the student is from their declared target — or, far more often today, an explicit
+   * statement of why that cannot be established.
+   *
+   * WHAT THIS USED TO DO, AND WHY IT WAS WRONG: it returned
+   * `gap = goal.targetScore - observations.overallAccuracy`. Those are not the same quantity.
+   * `overallAccuracy` is an unweighted mean of per-quiz accuracy percentages; `targetScore` is a
+   * bare number whose unit is unknown — the goal validator deliberately asserts no upper bound
+   * because "scoring models differ per exam (percentage vs raw marks vs negative-marked totals)".
+   * A student targeting 180 in a 200-mark paper, currently averaging 55% on practice quizzes, was
+   * told their gap was 125. That number has no meaning in any unit, and it was presented with the
+   * same confidence as a real measurement.
+   *
+   * The rule now: a gap is produced ONLY when the target and the measurement are the same
+   * quantity, measured on the same instrument. Every other case returns a specific reason code
+   * instead of a number. That is not a limitation being worked around — it is the honest state of
+   * the system, and naming it precisely lets the mentor ask the one question that would fix it.
+   *
+   * `daysRemaining` is deliberately computed regardless: it is date arithmetic on a value the
+   * student supplied, so it remains true even when the score gap is unknowable.
+   */
   private buildGoalGap(goal: any, obs: Observations): GoalGap {
-    if (!goal || goal.status !== 'ACTIVE' || goal.targetScore == null) {
-      return { status: 'NOT_SET', gap: null, current: null, target: null, reason: 'GOAL_NOT_SET' };
-    }
-    if (obs.overallAccuracy.status !== 'AVAILABLE' || obs.overallAccuracy.value == null) {
-      return {
-        status: 'INSUFFICIENT_DATA', gap: null, current: null, target: goal.targetScore,
-        reason: 'INSUFFICIENT_PERFORMANCE_EVIDENCE',
-      };
-    }
-    const current = obs.overallAccuracy.value;
-    const daysRemaining = goal.targetDate
+    const daysRemaining = goal?.targetDate
       ? Math.ceil((new Date(goal.targetDate).getTime() - Date.now()) / 86400000)
       : null;
-    return {
-      status: 'AVAILABLE',
-      current,
-      target: goal.targetScore,
-      gap: Math.round((goal.targetScore - current) * 100) / 100,
-      daysRemaining,
-    };
+
+    if (!goal || goal.status !== 'ACTIVE') {
+      return { status: 'NOT_SET', gap: null, current: null, target: null, unit: null, reason: 'GOAL_NOT_SET' };
+    }
+
+    // Rank and percentile targets are legitimate student goals, but nothing in this system
+    // measures either one — resultAnalysis explicitly leaves attempt.percentile undefined, and the
+    // only "rank" is a gamification tier label. Reported as unavailable rather than approximated
+    // from accuracy, which would be a different quantity wearing the same word.
+    if (goal.targetScore == null) {
+      if (goal.targetRank != null) {
+        return { status: 'UNAVAILABLE', gap: null, current: null, target: goal.targetRank, unit: null,
+                 reason: 'RANK_NOT_MEASURED', daysRemaining };
+      }
+      if (goal.targetPercentile != null) {
+        return { status: 'UNAVAILABLE', gap: null, current: null, target: goal.targetPercentile, unit: null,
+                 reason: 'PERCENTILE_NOT_MEASURED', daysRemaining };
+      }
+      return { status: 'NOT_SET', gap: null, current: null, target: null, unit: null,
+               reason: 'GOAL_NOT_SET', daysRemaining };
+    }
+
+    // A number with no unit cannot be compared to anything. Assuming PERCENT here would silently
+    // reinstate the original defect for every goal recorded before the unit field existed.
+    if (goal.targetScoreUnit !== 'PERCENT' && goal.targetScoreUnit !== 'MARKS') {
+      return { status: 'UNAVAILABLE', gap: null, current: null, target: goal.targetScore, unit: null,
+               reason: 'TARGET_UNIT_UNDECLARED', daysRemaining };
+    }
+
+    // Raw marks need the exam's maximum to become comparable, and no exam record in this codebase
+    // carries total marks or a negative-marking model.
+    if (goal.targetScoreUnit === 'MARKS') {
+      return { status: 'UNAVAILABLE', gap: null, current: null, target: goal.targetScore, unit: 'MARKS',
+               reason: 'EXAM_MAX_MARKS_UNKNOWN', daysRemaining };
+    }
+
+    if (obs.overallAccuracy.status !== 'AVAILABLE' || obs.overallAccuracy.value == null) {
+      return { status: 'INSUFFICIENT_DATA', gap: null, current: null, target: goal.targetScore,
+               unit: 'PERCENT', reason: 'INSUFFICIENT_PERFORMANCE_EVIDENCE', daysRemaining };
+    }
+
+    // Both sides are percentages — but they are not the same INSTRUMENT. The target is an exam
+    // score; the measurement is accuracy on self-generated practice quizzes, with a different
+    // question pool, no negative marking and self-selected difficulty. Subtracting them yields a
+    // plausible-looking number that would systematically misstate how close the student is, so it
+    // is withheld until an exam-comparable score exists (mock/full-length scoring).
+    return { status: 'UNAVAILABLE', gap: null, current: null, target: goal.targetScore, unit: 'PERCENT',
+             reason: 'NO_COMPARABLE_MEASUREMENT', daysRemaining };
   }
 
   /** The single most important output: what to work on next, and why — as codes, not a score. */
