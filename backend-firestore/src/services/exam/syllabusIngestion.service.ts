@@ -12,6 +12,12 @@ import { ExamMaster, ExamSyllabus, ExamStage } from '../../types/exam.types';
 import { env } from '../../config/env';
 import { logger } from '../../utils/logger';
 
+/**
+ * Upper bound on text handed to a single extraction call. Above this the ingestion fails
+ * explicitly rather than truncating — see normalizeSyllabusText.
+ */
+export const MAX_EXTRACTION_CHARS = 50_000;
+
 export interface IngestSyllabusParams {
   exam: ExamMaster;
   cycleId: string;
@@ -87,7 +93,29 @@ IMPORTANT:
 2. If subtopics are not explicitly listed in the notice, leave the "subtopics" array empty. Do NOT invent subtopics.
 3. Every ID must be lowercase alphanumeric with underscores.`;
 
-    const prompt = `Official Syllabus Text for ${exam.shortName}:\n\n${rawText.slice(0, 50000)}`;
+    /*
+     * NO SILENT TRUNCATION.
+     *
+     * This previously sent `rawText.slice(0, 50000)`. An official notice longer than that was cut
+     * mid-document with no marker, and whatever survived was extracted, validated and published as
+     * if it were the complete syllabus — a partial syllabus is indistinguishable from a complete
+     * one once it reaches the graph, and every downstream coverage denominator would have silently
+     * inherited the omission.
+     *
+     * Over the limit we now fail loudly instead. Refusing to extract is recoverable; publishing a
+     * silently truncated syllabus as authoritative is not. Chunk-and-merge is the right long-term
+     * answer for genuinely large notices, but it must be a deterministic merge, not a guess about
+     * which half mattered — so until that exists, this stops rather than approximates.
+     */
+    if (rawText.length > MAX_EXTRACTION_CHARS) {
+      throw new Error(
+        `[SyllabusIngestion] document is ${rawText.length} characters, above the ` +
+        `${MAX_EXTRACTION_CHARS} extraction limit. Refusing to truncate: a partially extracted ` +
+        `syllabus would be published as if complete. Chunked extraction is required for this document.`,
+      );
+    }
+
+    const prompt = `Official Syllabus Text for ${exam.shortName}:\n\n${rawText}`;
 
     const result = await callStructuredLLM<{ stages: ExamStage[] }>({
       prompt,
