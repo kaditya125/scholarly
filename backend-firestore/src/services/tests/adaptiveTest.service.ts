@@ -4,6 +4,27 @@ import { testsRepository } from '../../repositories/tests.repository';
 import { MockTest, Question } from '../../types/tests.types';
 import { Subject, Difficulty } from '../../types';
 
+/**
+ * LEGACY / UNANCHORED — classified in J.7.2. Not an exam-specific canonical assessment.
+ *
+ * Everything about its identity model is free-text or hardcoded:
+ *   · the topic is picked from `context.memory.weakTopics[0]`, an LLM-derived label;
+ *   · questions are matched by `subject` + `topic` STRING equality against `question_bank`, so
+ *     "Algebra" would match an SSC, JEE or banking row indiscriminately;
+ *   · `category: 'SSC'` is hardcoded regardless of the student's actual exam, as are
+ *     `positiveMarks: 2` / `negativeMarks: 0.5`, which belong to no particular exam's scheme;
+ *   · nothing it emits carries examId, cycleId, syllabusId, syllabusNodeId or identityStatus.
+ *
+ * It is therefore incapable of satisfying the canonical contract, and must never be presented as
+ * an exam-specific diagnostic. Exam-specific assessment is served exclusively by
+ * CanonicalPreTestService via POST /api/assessment/pretest, which resolves a verified syllabus
+ * first and returns NO_CANONICAL_SYLLABUS when there is none.
+ *
+ * Left in place rather than deleted: it is reachable at POST /tests/adaptive/:userId/generate, and
+ * removing a live route is a product decision. Note that `question_bank` is empty in production
+ * (measured), so today it returns a test with zero questions that is never persisted — the
+ * commented-out write below was never completed. See the J.7.2 report.
+ */
 export class AdaptiveTestService {
   async generateAdaptiveTest(
     userId: string, 

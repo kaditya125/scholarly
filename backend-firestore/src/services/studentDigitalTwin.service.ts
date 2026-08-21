@@ -194,14 +194,40 @@ Return ONLY valid JSON. No Markdown fencing or preamble.`;
       // must treat absence as "not yet measured" and say so. The real replacements are
       // deterministic: readiness and mastery come from measured performance (Phase B), not
       // from a single LLM call over one baseline assessment.
-      overallReadinessScore: typeof parsed.overallReadinessScore === 'number' ? parsed.overallReadinessScore : null,
+      /*
+       * ── EXAM-SPECIFIC CLAIMS REQUIRE CANONICAL EVIDENCE (J.7.2) ────────────────────────────
+       *
+       * `overallReadinessScore` and `predictions` are statements about how this student will
+       * perform in THEIR EXAM: the report screen renders them as "Expected Board / Exam Score",
+       * "Target Achievement Probability" and "Risk of Missing Target", and this record is stamped
+       * with `academicProfile.targetExam`.
+       *
+       * The baseline that produces them is served by the legacy demo bank: twelve hardcoded
+       * Physics/Chemistry/Mathematics templates with no canonical syllabus identity. An SSC CGL
+       * candidate answers questions on kinematics and Ohm's law, and the model is then asked for
+       * their expected exam rank. That number is not a measurement of anything — it is an exam
+       * prediction derived from evidence that has no connection to the exam.
+       *
+       * Earlier work removed the FALLBACK versions of these fields (readiness 75, "Top 5%", 82%
+       * chance) for the case where the model failed. This closes the remaining half: when the model
+       * SUCCEEDS, its output was stored verbatim, so the fabrication simply moved from our defaults
+       * into the model's response.
+       *
+       * Null is already a first-class state here — the report renders "—" and "Not established" —
+       * so withholding is honest and safe. These become real numbers when the assessment is
+       * canonical, which is what `evidenceIsCanonical` tracks.
+       */
+      overallReadinessScore: submission.evidenceIsCanonical
+        && typeof parsed.overallReadinessScore === 'number' ? parsed.overallReadinessScore : null,
+      // Subject/topic mastery are descriptive of the questions actually answered, not claims about
+      // the exam, so they are retained as-is.
       subjectMastery: parsed.subjectMastery || {},
       topicMastery: parsed.topicMastery || {},
       knowledgeGraph: parsed.knowledgeGraph || {},
       confidenceProfile: parsed.confidenceProfile ?? null,
       behavioralProfile: parsed.behavioralProfile ?? null,
       learnerPersona: parsed.learnerPersona ?? null,
-      predictions: parsed.predictions ?? null,
+      predictions: submission.evidenceIsCanonical ? (parsed.predictions ?? null) : null,
       firstWeekRoadmap: parsed.firstWeekRoadmap || [],
       latestAssessmentSummary: {
         totalQuestions: submission.totalQuestions,
