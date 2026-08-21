@@ -7,6 +7,7 @@
 import { logger } from '../../utils/logger';
 import { db } from '../../config/firebase';
 import { ExamSyllabus, ExamTopic } from '../../types/exam.types';
+import { buildCanonicalGraph, validateCanonicalGraph } from './syllabusCanonicalGraph';
 
 export interface SyllabusGraphNode {
   id: string; // e.g. "stage:tier_1", "topic:ssc_cgl_quant_algebra"
@@ -30,144 +31,102 @@ export interface SyllabusGraphEdge {
 
 export class SyllabusGraphService {
   /**
-   * Builds and persists graph nodes and edges in Firestore for a published syllabus version.
+   * Firestore location of ONE syllabus version's graph.
+   *
+   * `exam_syllabi_graphs/{examId}/versions/{syllabusId}/nodes`
+   *
+   * The version is part of the PATH, not a field to be filtered on, so isolation is a property of
+   * where the data lives rather than a rule every caller has to remember. The previous layout put
+   * every version's nodes in one `exam_syllabi_graphs/{examId}/nodes` collection keyed by a node id
+   * that contained no cycle or version — so ingesting SSC CGL 2026 overwrote the 2024 nodes in
+   * place, silently repointing any 2024 evidence at the 2026 definition. Read-time filtering could
+   * never have recovered that: the older rows were already gone.
+   *
+   * Private on purpose. Nothing outside this service composes these paths.
+   */
+  private versionRef(examId: string, syllabusId: string) {
+    return db.collection('exam_syllabi_graphs').doc(examId).collection('versions').doc(syllabusId);
+  }
+  private nodesCol(examId: string, syllabusId: string) {
+    return this.versionRef(examId, syllabusId).collection('nodes');
+  }
+  private edgesCol(examId: string, syllabusId: string) {
+    return this.versionRef(examId, syllabusId).collection('edges');
+  }
+
+  /**
+   * Builds, validates and persists ONE syllabus version's graph.
+   *
+   * Writes are confined to that version's own subtree, so an ingestion can neither mutate nor
+   * delete another version's nodes — a topic dropped from the 2026 syllabus simply never appears
+   * in the 2026 graph, while the 2024 graph that still contains it is untouched.
+   *
+   * Validation runs BEFORE any write. A malformed extraction is rejected whole rather than
+   * partially persisted, and the failure is thrown rather than degraded into an empty graph:
+   * "this syllabus is broken" and "this syllabus has no topics" must stay distinguishable, or
+   * coverage would report a real 0% denominator for an exam whose extraction merely failed.
    */
   async buildSyllabusGraph(syllabus: ExamSyllabus): Promise<{ nodeCount: number; edgeCount: number }> {
-    const nodes: SyllabusGraphNode[] = [];
-    const edges: SyllabusGraphEdge[] = [];
+    const { examId, cycleId, syllabusId } = syllabus;
+    if (!examId || !cycleId || !syllabusId) {
+      throw new Error(
+        `[SyllabusGraph] refusing to build: incomplete version identity ` +
+        `(examId=${examId}, cycleId=${cycleId}, syllabusId=${syllabusId})`,
+      );
+    }
 
-    const graphDocRef = db.collection('exam_syllabi_graphs').doc(syllabus.examId);
-    const nodesCol = graphDocRef.collection('nodes');
-    const edgesCol = graphDocRef.collection('edges');
+    // Identity is minted here, by the application, from the version's authoritative coordinates.
+    // Any *Id slug present on the incoming document (historically produced by the extraction model)
+    // is deliberately ignored — see syllabusCanonicalGraph for why that could orphan evidence.
+    const graph = buildCanonicalGraph(syllabus);
 
-    // 1. Traverse hierarchy
-    for (const stage of syllabus.stages || []) {
-      const stageNodeId = `stage:${stage.stageId}`;
-      nodes.push({
-        id: stageNodeId,
-        label: stage.name,
-        type: 'STAGE',
-        examId: syllabus.examId,
-        cycleId: syllabus.cycleId,
-        syllabusId: syllabus.syllabusId,
-        order: stage.order,
+    const validation = validateCanonicalGraph(graph, { examId, cycleId, syllabusId });
+    if (!validation.valid) {
+      logger.error('[SyllabusGraph] validation failed; graph NOT published', {
+        examId, cycleId, syllabusId, errorCount: validation.errors.length,
+        errors: validation.errors.slice(0, 10),
       });
-
-      for (const paper of stage.papers || []) {
-        const paperNodeId = `paper:${paper.paperId}`;
-        nodes.push({
-          id: paperNodeId,
-          label: paper.name,
-          type: 'PAPER',
-          examId: syllabus.examId,
-          cycleId: syllabus.cycleId,
-          syllabusId: syllabus.syllabusId,
-          parentEntityId: stageNodeId,
-          order: paper.order,
-        });
-
-        edges.push({
-          id: `${paperNodeId}->${stageNodeId}`,
-          sourceId: paperNodeId,
-          targetId: stageNodeId,
-          relationType: 'PART_OF',
-          weight: 1.0,
-        });
-
-        for (const subject of paper.subjects || []) {
-          const subjectNodeId = `subject:${subject.subjectId}`;
-          nodes.push({
-            id: subjectNodeId,
-            label: subject.name,
-            type: 'SUBJECT',
-            examId: syllabus.examId,
-            cycleId: syllabus.cycleId,
-            syllabusId: syllabus.syllabusId,
-            parentEntityId: paperNodeId,
-            marks: subject.marks,
-            order: subject.order,
-          });
-
-          edges.push({
-            id: `${subjectNodeId}->${paperNodeId}`,
-            sourceId: subjectNodeId,
-            targetId: paperNodeId,
-            relationType: 'PART_OF',
-            weight: 1.0,
-          });
-
-          let prevTopicId: string | null = null;
-
-          for (const topic of subject.topics || []) {
-            const topicNodeId = `topic:${topic.topicId}`;
-            nodes.push({
-              id: topicNodeId,
-              label: topic.name,
-              type: 'TOPIC',
-              examId: syllabus.examId,
-              cycleId: syllabus.cycleId,
-              syllabusId: syllabus.syllabusId,
-              parentEntityId: subjectNodeId,
-              order: topic.order,
-            });
-
-            edges.push({
-              id: `${topicNodeId}->${subjectNodeId}`,
-              sourceId: topicNodeId,
-              targetId: subjectNodeId,
-              relationType: 'PART_OF',
-              weight: 1.0,
-            });
-
-            // Sequential / Prerequisite edge between topics in same subject
-            if (prevTopicId) {
-              edges.push({
-                id: `${prevTopicId}->${topicNodeId}`,
-                sourceId: prevTopicId,
-                targetId: topicNodeId,
-                relationType: 'PREREQUISITE_OF',
-                weight: 0.8,
-              });
-            }
-            prevTopicId = topicNodeId;
-
-            for (const subtopic of topic.subtopics || []) {
-              const subtopicNodeId = `subtopic:${subtopic.subtopicId}`;
-              nodes.push({
-                id: subtopicNodeId,
-                label: subtopic.name,
-                type: 'SUBTOPIC',
-                examId: syllabus.examId,
-                cycleId: syllabus.cycleId,
-                syllabusId: syllabus.syllabusId,
-                parentEntityId: topicNodeId,
-                order: subtopic.order,
-              });
-
-              edges.push({
-                id: `${subtopicNodeId}->${topicNodeId}`,
-                sourceId: subtopicNodeId,
-                targetId: topicNodeId,
-                relationType: 'PART_OF',
-                weight: 1.0,
-              });
-            }
-          }
-        }
-      }
+      const summary = validation.errors.slice(0, 5)
+        .map((e) => `${e.code}${e.nodeId ? ` (${e.nodeId})` : ''}: ${e.detail}`).join('; ');
+      throw new Error(
+        `[SyllabusGraph] ${syllabusId} failed validation with ${validation.errors.length} error(s): ${summary}`,
+      );
     }
 
-    // 2. Batch write nodes & edges
+    const nodesCol = this.nodesCol(examId, syllabusId);
+    const edgesCol = this.edgesCol(examId, syllabusId);
+
+    // Replace this version's own contents so a re-ingestion cannot leave nodes that the newer
+    // extraction dropped. Scoped strictly to this version's subtree — other versions are never
+    // read or written here.
+    const [staleNodes, staleEdges] = await Promise.all([nodesCol.get(), edgesCol.get()]);
+
     const batch = db.batch();
-    for (const node of nodes) {
-      batch.set(nodesCol.doc(node.id.replace(/[:/]/g, '_')), node);
-    }
-    for (const edge of edges) {
-      batch.set(edgesCol.doc(edge.id.replace(/[:/->]/g, '_')), edge);
-    }
+    for (const d of staleNodes.docs) batch.delete(d.ref);
+    for (const d of staleEdges.docs) batch.delete(d.ref);
+    for (const node of graph.nodes) batch.set(nodesCol.doc(this.nodeDocId(node.id)), node);
+    for (const edge of graph.edges) batch.set(edgesCol.doc(this.edgeDocId(edge.id)), edge);
+
+    // Version manifest, so a read can enumerate versions without scanning node subcollections.
+    batch.set(this.versionRef(examId, syllabusId), {
+      examId, cycleId, syllabusId,
+      version: syllabus.version ?? null,
+      status: syllabus.status ?? null,
+      sourceDocumentUrl: syllabus.sourceDocumentUrl ?? null,
+      sourceDocumentHash: syllabus.sourceDocumentHash ?? null,
+      nodeCount: graph.nodes.length,
+      edgeCount: graph.edges.length,
+      validated: true,
+      builtAt: Date.now(),
+    }, { merge: true });
+
     await batch.commit();
 
-    return { nodeCount: nodes.length, edgeCount: edges.length };
+    logger.info('[SyllabusGraph] published version graph', {
+      examId, cycleId, syllabusId, nodeCount: graph.nodes.length, edgeCount: graph.edges.length,
+      replacedNodes: staleNodes.size,
+    });
+    return { nodeCount: graph.nodes.length, edgeCount: graph.edges.length };
   }
 
   /**
@@ -207,6 +166,24 @@ export class SyllabusGraphService {
   private nodeDocId(nodeId: string): string {
     return nodeId.replace(/[:/]/g, '_');
   }
+  private edgeDocId(edgeId: string): string {
+    return edgeId.replace(/[:/]|->/g, '_');
+  }
+
+  /**
+   * Version manifests for an exam, newest-built first, optionally narrowed by cycle.
+   *
+   * Reading version metadata from manifest documents rather than scanning node subcollections
+   * keeps an unfiltered read to one query plus one per version, and needs no composite index.
+   */
+  private async listVersions(examId: string, cycleId?: string): Promise<Array<{ syllabusId: string; cycleId: string }>> {
+    const snap = await db.collection('exam_syllabi_graphs').doc(examId).collection('versions').get();
+    return snap.docs
+      .map((d) => d.data() as { syllabusId: string; cycleId: string; builtAt?: number })
+      .filter((v) => (cycleId ? v.cycleId === cycleId : true))
+      .sort((a: any, b: any) => (b.builtAt ?? 0) - (a.builtAt ?? 0))
+      .map((v) => ({ syllabusId: v.syllabusId, cycleId: v.cycleId }));
+  }
 
   /**
    * All canonical nodes for an exam, optionally narrowed by cycle, syllabus version and node type.
@@ -224,9 +201,23 @@ export class SyllabusGraphService {
     const { examId, cycleId, syllabusId, type } = params;
     if (!examId) return [];
     try {
-      const snap = await db.collection('exam_syllabi_graphs').doc(examId).collection('nodes').get();
-      return snap.docs
-        .map((d) => d.data() as SyllabusGraphNode)
+      // Version isolation is structural: with a syllabusId we read exactly that version's subtree,
+      // and without one we read each matching version's own subtree. There is no shared collection
+      // in which two versions could ever be confused for one another.
+      const versions = syllabusId
+        ? [{ syllabusId, cycleId: cycleId ?? '' }]
+        : await this.listVersions(examId, cycleId);
+
+      const collected: SyllabusGraphNode[] = [];
+      for (const v of versions) {
+        const snap = await this.nodesCol(examId, v.syllabusId).get();
+        collected.push(...snap.docs.map((d) => d.data() as SyllabusGraphNode));
+      }
+
+      return collected
+        // Retained as defence in depth. The path already guarantees these, so a mismatch means
+        // corrupt data rather than a filtering miss — and silently returning it would be worse.
+        .filter((n) => n.examId === examId)
         .filter((n) => (cycleId ? n.cycleId === cycleId : true))
         .filter((n) => (syllabusId ? n.syllabusId === syllabusId : true))
         .filter((n) => (type ? n.type === type : true))
@@ -255,13 +246,21 @@ export class SyllabusGraphService {
   }): Promise<SyllabusGraphNode | null> {
     const { examId, nodeId, cycleId, syllabusId } = params;
     if (!examId || !nodeId) return null;
-    const snap = await db
-      .collection('exam_syllabi_graphs').doc(examId)
-      .collection('nodes').doc(this.nodeDocId(nodeId))
-      .get();
-    if (!snap.exists) return null;
 
-    const node = snap.data() as SyllabusGraphNode;
+    // With a syllabusId this is a single direct document read in that version's subtree. Without
+    // one, each version is probed separately — a node can only ever be found inside the version
+    // that actually contains it, so a 2024 id cannot surface from the 2026 graph even if both
+    // versions describe a topic of the same name.
+    const versions = syllabusId
+      ? [{ syllabusId, cycleId: cycleId ?? '' }]
+      : await this.listVersions(examId, cycleId);
+
+    let node: SyllabusGraphNode | null = null;
+    for (const v of versions) {
+      const snap = await this.nodesCol(examId, v.syllabusId).doc(this.nodeDocId(nodeId)).get();
+      if (snap.exists) { node = snap.data() as SyllabusGraphNode; break; }
+    }
+    if (!node) return null;
     // Defence in depth: the document lives under the exam, but the node carries its own examId
     // and a mismatch would mean corrupt data rather than a miss.
     if (node.examId !== examId) return null;
@@ -293,8 +292,16 @@ export class SyllabusGraphService {
   }
 
   /** Human-readable ancestry ("Quantitative Aptitude → Algebra"), for generation context only. */
-  async getNodeParentPath(examId: string, nodeId: string): Promise<string[]> {
-    const nodes = await this.getSyllabusNodes({ examId });
+  /**
+   * Ancestry is resolved WITHIN a single version. Passing the version scope keeps this to one
+   * subtree read; without it every version is read, which is still correct because canonical node
+   * ids now embed the syllabusId — a 2024 id and a 2026 id for the same topic name are different
+   * strings, so the lookup map cannot conflate them the way the old flat ids could.
+   */
+  async getNodeParentPath(
+    examId: string, nodeId: string, scope?: { cycleId?: string; syllabusId?: string },
+  ): Promise<string[]> {
+    const nodes = await this.getSyllabusNodes({ examId, ...scope });
     const byId = new Map(nodes.map((n) => [n.id, n]));
     const path: string[] = [];
     let cursor = byId.get(nodeId);
