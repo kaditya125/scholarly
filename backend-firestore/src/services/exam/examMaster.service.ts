@@ -177,13 +177,27 @@ export class ExamMasterService {
     return filtered;
   }
 
+  /**
+   * Populates registry METADATA for a known exam that is missing from Firestore.
+   *
+   * "The exam document is missing" and "this exam has no syllabus" are different facts, and this
+   * function used to conflate them: it called `createSyllabus(seed.syllabus)` — an unconditional
+   * `.set()` — so a single absent exam document would have rewritten
+   * `exam_syllabi/syl_ssc_cgl_2026_v1` from the quarantined INVALID record back to a fabricated
+   * CURRENT one, silently undoing J.3. It seeded a syllabus nobody had verified as a side effect
+   * of an exam lookup.
+   *
+   * Exam identity, cycle dates and official sources are safe to seed: they are registry facts, and
+   * none of them claims to know what the syllabus contains. A syllabus is not, and can only arrive
+   * through ingestion + the publication gate. There is no longer a seed syllabus to write even if
+   * someone tried.
+   */
   private async seedExamIfMissing(examId: string): Promise<void> {
     const seed = CANONICAL_EXAM_SEEDS[examId];
     if (!seed) return;
     try {
       await this.repository.createExam(seed.exam);
       if (seed.cycle) await this.repository.createCycle(seed.cycle);
-      if (seed.syllabus) await this.repository.createSyllabus(seed.syllabus);
       if (seed.sources) {
         for (const src of seed.sources) {
           await this.repository.createOfficialSource(src);
@@ -426,29 +440,49 @@ export class ExamMasterService {
     await this.repository.publishSyllabusVersion(examId, cycleId, syllabusId, performedBy);
   }
 
+  /**
+   * The authoritative CURRENT syllabus for an exam+cycle, or null when there is none.
+   *
+   * THE CONTRACT, and the three states it deliberately keeps apart:
+   *
+   *   repository holds a CURRENT record  → return it
+   *   repository holds no CURRENT record → return null  (NO_CANONICAL_SYLLABUS)
+   *   repository lookup fails            → THROW        (UNAVAILABLE — never null)
+   *
+   * The third case is why there is no try/catch here. "We could not ask" is not "the answer is no",
+   * and swallowing a Firestore failure into `null` would let a transient outage read as a settled
+   * fact about the exam. The error propagates; `exam.routes.ts` turns null into 404 and a throw
+   * into 500, which is the correct distinction to expose.
+   *
+   * WHAT WAS REMOVED, AND WHY IT CANNOT COME BACK. This method used to fall back to
+   * `CANONICAL_EXAM_SEEDS[examId].syllabus` when the repository had no CURRENT record. That seed
+   * declared `status: 'CURRENT'` with `sourceDocumentHash` = SHA-256("") and a source URL proven to
+   * be a soft-404. The effect was that J.3 could invalidate production's SSC CGL syllabus and clear
+   * both active pointers, and this method would still hand callers a CURRENT syllabus — Firestore
+   * saying "none" while the application said "here it is". The seed data itself is now gone from
+   * canonicalExamSeeds.ts, so this is structural rather than a convention someone can re-break.
+   *
+   * A missing syllabus is a first-class, honest answer. It is never a reason to substitute one.
+   */
   async getCurrentSyllabus(examId: string, cycleId?: string): Promise<ExamSyllabus | null> {
     const normalized = examId.trim().toUpperCase();
     const exam = await this.getExam(normalized);
     if (!exam) return null;
 
     const targetCycle = cycleId || exam.currentCycle || new Date().getFullYear().toString();
-    const found = await this.repository.getCurrentSyllabus(normalized, targetCycle);
-    if (found) return found;
-
-    const seed = CANONICAL_EXAM_SEEDS[normalized];
-    if (seed && seed.syllabus) {
-      return seed.syllabus;
-    }
-    return null;
+    return this.repository.getCurrentSyllabus(normalized, targetCycle);
   }
 
+  /**
+   * Every syllabus VERSION on record for an exam, in whatever lifecycle state each is in.
+   *
+   * Also had a seed fallback, and it was the same defect wearing a list: an empty result meant
+   * "this exam has no versions", and returning the fabricated seed turned that into "there is one,
+   * and it is CURRENT". An empty array is the truthful answer and callers must be able to trust it.
+   */
   async listSyllabi(examId: string, cycleId?: string): Promise<ExamSyllabus[]> {
     const normalized = examId.trim().toUpperCase();
-    const syllabi = await this.repository.listSyllabi(normalized, cycleId);
-    if (syllabi.length > 0) return syllabi;
-
-    const seed = CANONICAL_EXAM_SEEDS[normalized];
-    return seed?.syllabus ? [seed.syllabus] : [];
+    return this.repository.listSyllabi(normalized, cycleId);
   }
 }
 
