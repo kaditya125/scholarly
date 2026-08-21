@@ -21,12 +21,93 @@ export interface ArchivedDocumentResult {
   contentType: string;
 }
 
+/** Why a retrieved payload was refused as an official document. */
+export type DocumentRejectionCode =
+  | 'EMPTY_RESPONSE'
+  | 'HTML_INSTEAD_OF_DOCUMENT'
+  | 'NOT_A_PDF'
+  | 'SUSPICIOUSLY_SMALL';
+
+export class DocumentRetrievalError extends Error {
+  constructor(public readonly code: DocumentRejectionCode, message: string) {
+    super(message);
+    this.name = 'DocumentRetrievalError';
+  }
+}
+
+/**
+ * Minimum plausible size for an official syllabus/notification PDF. Not a content judgement —
+ * purely a floor below which the payload cannot be a real multi-page notice, and is far more
+ * likely an error stub.
+ */
+const MIN_DOCUMENT_BYTES = 2048;
+
 export class ExamDocumentStorageService {
   /**
    * Computes SHA-256 cryptographic hash of a binary buffer.
    */
   public computeHash(buffer: Buffer): string {
     return crypto.createHash('sha256').update(buffer).digest('hex');
+  }
+
+  /**
+   * Proves a retrieved payload is actually a document before it is allowed to become provenance.
+   *
+   * WHY THIS IS NOT OPTIONAL. ssc.gov.in returns HTTP 200 for EVERY path — a request for
+   * `/files/portal/latest/CGL_2026_Notice.pdf` and one for a deliberately invented filename both
+   * return the site's Angular homepage, byte-identical, 80,649 bytes of `text/html`. Measured, not
+   * theorised: both produced SHA-256 16ec671c…
+   *
+   * Without this check the archiver would have downloaded that homepage, hashed it into a real
+   * non-empty digest, stored it under a storagePath, and satisfied every provenance rule J.2
+   * added — because those rules verify a hash EXISTS and is not the empty digest, not that the
+   * bytes are the document anyone asked for. The extractor would then have been handed a homepage
+   * and asked for a syllabus, and whatever it returned would have carried full provenance.
+   *
+   * HTTP status is therefore unusable as an existence signal on this host. Content is the only
+   * evidence, so the magic bytes are checked directly rather than trusting the Content-Type
+   * header, which a soft-404 sets just as confidently.
+   */
+  public assertRetrievedDocument(params: {
+    buffer: Buffer;
+    contentType: string;
+    sourceUrl: string;
+    expectPdf?: boolean;
+  }): void {
+    const { buffer, contentType, sourceUrl } = params;
+    const expectPdf = params.expectPdf ?? true;
+
+    if (!buffer || buffer.length === 0) {
+      throw new DocumentRetrievalError('EMPTY_RESPONSE', `Empty response body from ${sourceUrl}`);
+    }
+
+    const head = buffer.subarray(0, 1024).toString('utf8').trimStart().toLowerCase();
+    const looksHtml = head.startsWith('<!doctype html') || head.startsWith('<html') || head.includes('<head>');
+    if (looksHtml) {
+      throw new DocumentRetrievalError(
+        'HTML_INSTEAD_OF_DOCUMENT',
+        `${sourceUrl} returned an HTML page, not a document (content-type "${contentType}", ` +
+        `${buffer.length} bytes). This host answers 200 for unknown paths, so the document is absent.`,
+      );
+    }
+
+    if (expectPdf) {
+      // %PDF- magic bytes. Checked on the payload itself, since a soft-404 will happily claim
+      // application/pdf in its header.
+      if (buffer.subarray(0, 5).toString('latin1') !== '%PDF-') {
+        throw new DocumentRetrievalError(
+          'NOT_A_PDF',
+          `${sourceUrl} did not return a PDF (content-type "${contentType}", ${buffer.length} bytes)`,
+        );
+      }
+    }
+
+    if (buffer.length < MIN_DOCUMENT_BYTES) {
+      throw new DocumentRetrievalError(
+        'SUSPICIOUSLY_SMALL',
+        `${sourceUrl} returned only ${buffer.length} bytes — too small to be an official notice`,
+      );
+    }
   }
 
   /**
@@ -118,6 +199,10 @@ export class ExamDocumentStorageService {
 
     const buffer = Buffer.from(response.data);
     const contentType = String(response.headers['content-type'] || 'application/pdf');
+
+    // Nothing is hashed or stored until the payload is proven to be a document. A soft-404 that
+    // returns the site homepage with HTTP 200 must never become the provenance of a syllabus.
+    this.assertRetrievedDocument({ buffer, contentType, sourceUrl });
 
     const result = await this.uploadDocumentBuffer({
       examId,
