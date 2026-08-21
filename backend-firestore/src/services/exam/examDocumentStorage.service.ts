@@ -39,6 +39,15 @@ export class DocumentRetrievalError extends Error {
  * Minimum plausible size for an official syllabus/notification PDF. Not a content judgement —
  * purely a floor below which the payload cannot be a real multi-page notice, and is far more
  * likely an error stub.
+ *
+ * MEASURED CAVEAT, worth knowing before anyone trusts this bound: PDF text streams compress hard,
+ * so this floor sits uncomfortably close to real documents. During J.4-S/J.5/J.6-P verification it
+ * rejected three legitimate generated notices — one at 2010 bytes, just 38 under the limit, for a
+ * ~40-line single-page document. A genuinely short, text-only official notice could therefore be
+ * refused as SUSPICIOUSLY_SMALL. The threshold is deliberately left as-is rather than lowered to
+ * suit test fixtures: every case so far has been a fixture that was unrealistically small, not a
+ * real document. If a real one is ever rejected, raise it as a defect rather than quietly
+ * loosening this — the value should move on evidence about real notices, not convenience.
  */
 const MIN_DOCUMENT_BYTES = 2048;
 
