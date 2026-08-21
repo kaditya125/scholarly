@@ -26,6 +26,9 @@ describe('Phase 0 — routes hardened in this phase enforce authentication', () 
     'planning.routes.ts',
     'documents.routes.ts',
     'analytics.routes.ts',
+    // J.7.1 — generates and PERSISTS an assessment onto a student's record, so it is a write
+    // primitive and belongs under the same structural guard as the routes above.
+    'canonicalAssessment.routes.ts',
   ];
 
   it.each(HARDENED)('%s applies requireAuth in live code (not commented out)', (file) => {
