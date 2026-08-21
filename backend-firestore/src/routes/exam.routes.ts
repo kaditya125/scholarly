@@ -240,7 +240,10 @@ router.post('/admin/:examId/syllabi/extract', requireAuth, requireAdminRole, asy
       return res.status(404).json({ error: `Exam '${req.params.examId}' not found` });
     }
     const { syllabusIngestionService } = await import('../services/exam/syllabusIngestion.service');
-    const result = await syllabusIngestionService.normalizeSyllabusText(exam, rawText);
+    // Returns structure WITHOUT canonical ids — a preview has no syllabus version to derive them
+    // from, and emitting plausible-looking ids an admin might reuse would be worse than emitting
+    // none. `canonical: false` says so in the payload rather than only in the docs.
+    const result = await syllabusIngestionService.previewSyllabusStructure(exam, rawText);
     res.json(result);
   } catch (error: any) {
     res.status(400).json({ error: error.message || 'Failed to extract syllabus' });

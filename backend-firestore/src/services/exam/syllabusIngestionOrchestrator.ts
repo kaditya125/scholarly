@@ -189,6 +189,7 @@ export class SyllabusIngestionOrchestrator {
     // ── 3. EXTRACT TEXT, THEN STRUCTURE ──────────────────────────────────────────────────────
     // From here on we HOLD the document, so failures become INVALID rather than UNAVAILABLE.
     let rawText = '';
+    let extractedBlocks: import('../../core/pipeline/types').ExtractedBlock[] = [];
     try {
       // Read back from Storage rather than reusing the in-memory buffer: this proves the archived
       // copy is the one being extracted, so the text, the hash and the stored document all
@@ -204,6 +205,10 @@ export class SyllabusIngestionOrchestrator {
         contentType: 'application/pdf',
       });
       rawText = extracted.rawText ?? '';
+      // Page-aware blocks are what makes deterministic chunking possible: they carry pageNumber and
+      // sequence, so a 100-page notice splits on page boundaries rather than arbitrary characters.
+      // Previously only rawText was kept and all of that structure was discarded.
+      extractedBlocks = extracted.blocks ?? [];
     } catch (err: any) {
       await this.audit({ ...base, operation: 'TEXT_EXTRACTION_FAILED', previousStatus: null,
                          newStatus: 'INVALID', reason: 'PDF_TEXT_EXTRACTION_FAILED',
@@ -222,18 +227,34 @@ export class SyllabusIngestionOrchestrator {
 
     let stages;
     try {
-      // Existing extraction contract, unchanged: it refuses to truncate and instructs the model
-      // not to invent subtopics. The model supplies names and hierarchy only.
-      ({ stages } = await syllabusIngestionService.normalizeSyllabusText(exam, rawText));
+      /*
+       * DETERMINISTIC CHUNKED EXTRACTION (J.9).
+       *
+       * Documents of any size are now page-chunked, extracted per chunk, and merged deterministically
+       * in document order. The model supplies official names, types and nesting only — it is never
+       * asked for identifiers, and the merge refuses to choose between chunks that contradict each
+       * other rather than letting ordering decide.
+       *
+       * This fails WHOLE. A single failed chunk, a merge contradiction, or a structure that does not
+       * fit the canonical hierarchy aborts the ingestion, because "publish the chunks that worked"
+       * yields a syllabus indistinguishable from a complete one and silently missing pages.
+       */
+      ({ stages } = await syllabusIngestionService.normalizeSyllabusDocument({
+        exam, blocks: extractedBlocks, documentHash: archived.hash,
+        scope: { examId, cycleId, syllabusId },
+      }));
     } catch (err: any) {
-      const truncation = /Refusing to truncate/.test(String(err?.message));
+      const message = String(err?.message ?? err);
+      const reason = /contradiction/i.test(message) ? 'CHUNK_MERGE_CONFLICT'
+        : /no syllabus content/i.test(message) ? 'NO_SYLLABUS_CONTENT_IN_DOCUMENT'
+        : /does not fit the canonical hierarchy/i.test(message) ? 'STRUCTURE_NOT_CANONICAL'
+        : /failed extraction/i.test(message) ? 'CHUNK_EXTRACTION_FAILED'
+        : 'EXTRACTION_FAILED';
       await this.audit({ ...base, operation: 'EXTRACTION_FAILED', previousStatus: null,
-                         newStatus: 'INVALID', reason: truncation ? 'DOCUMENT_TOO_LARGE' : 'EXTRACTION_FAILED',
+                         newStatus: 'INVALID', reason,
                          documentHash: archived.hash, performedBy });
       return { ...base, outcome: 'INVALID', status: null, documentHash: archived.hash,
-               storagePath: archived.storagePath,
-               reason: truncation ? 'DOCUMENT_TOO_LARGE_FOR_SINGLE_EXTRACTION' : 'EXTRACTION_FAILED',
-               errors: [String(err?.message ?? err)] };
+               storagePath: archived.storagePath, reason, errors: [message] };
     }
 
     // ── 4. PROVENANCE ────────────────────────────────────────────────────────────────────────
