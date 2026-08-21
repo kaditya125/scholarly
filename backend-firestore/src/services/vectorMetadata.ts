@@ -92,6 +92,20 @@ export interface BuildVectorMetadataParams {
   documentType?: 'OFFICIAL_SYLLABUS' | 'OFFICIAL_NOTIFICATION' | 'CURRICULUM' | 'NOTES' | 'GENERAL';
   authority?: string;
   status?: string;
+  /**
+   * WHAT this vector represents, stated rather than inferred (J.9).
+   *
+   * `CANONICAL_SYLLABUS_NODE` — a validated node of a published syllabus version; its `topicId` is
+   * the application-owned canonical node id.
+   * `RAW_DOCUMENT_CHUNK` — text extracted from a document that has NOT been validated as canonical
+   * syllabus. Useful for retrieval, but it carries no canonical identity and must never be treated
+   * as one.
+   *
+   * Without this the RAG layer cannot distinguish them, and an unvalidated fragment of a notice
+   * could surface as though it were official syllabus. Defaults to RAW_DOCUMENT_CHUNK: a vector
+   * only counts as canonical if its writer explicitly says so.
+   */
+  vectorKind?: 'CANONICAL_SYLLABUS_NODE' | 'RAW_DOCUMENT_CHUNK';
 }
 
 /**
@@ -124,6 +138,8 @@ export function buildVectorMetadata(params: BuildVectorMetadataParams): RecordMe
     documentType: params.documentType || (ctx.board === 'NCERT' ? 'CURRICULUM' : 'GENERAL'),
     authority: params.authority || (ctx.board === 'NCERT' ? 'NCERT' : 'USER_UPLOAD'),
     status: params.status || 'CURRENT',
+    // Defaults to the weaker claim: nothing becomes canonical by omission.
+    vectorKind: params.vectorKind || 'RAW_DOCUMENT_CHUNK',
     // Existing retrieval fields (unchanged shape/semantics).
     sourceTitle: source.title || '',
     chapter: source.title || '',

@@ -95,18 +95,44 @@ describe('hash reproducibility', () => {
 });
 
 /**
- * Silent truncation is removed: an over-long document fails loudly rather than being cut and
- * published as if complete.
+ * Silent truncation is removed.
+ *
+ * The GUARANTEE is unchanged since J.4 — a document is never cut and published as if complete —
+ * but J.9 changed the MECHANISM, so this asserts the current one. J.4 achieved it by REFUSING any
+ * document over 50,000 characters ("Refusing to truncate"), which was correct but made real 60–100
+ * page notices un-ingestable. J.9 achieves it by chunking deterministically and PROVING no text was
+ * lost, which is a strictly stronger claim: the old version guaranteed nothing about documents it
+ * accepted, this one verifies every character of every document it processes.
+ *
+ * The original defect is still asserted against directly: `rawText.slice(0, 50000)` must never
+ * return in any form.
  */
 describe('no silent truncation', () => {
-  it('the extraction path no longer slices the document', () => {
+  const src = () => {
     const fs = require('fs');
     const path = require('path');
-    const src = fs.readFileSync(
+    return fs.readFileSync(
       path.join(__dirname, '../../src/services/exam/syllabusIngestion.service.ts'), 'utf8',
     ).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-    expect(src).not.toMatch(/rawText\.slice\(0,\s*50000\)/);
-    expect(src).toMatch(/MAX_EXTRACTION_CHARS/);
-    expect(src).toMatch(/Refusing to truncate/);
+  };
+
+  it('the extraction path never slices the document', () => {
+    expect(src()).not.toMatch(/rawText\.slice\(0,\s*50000\)/);
+    expect(src()).not.toMatch(/\.slice\(0,\s*MAX_EXTRACTION_CHARS\)/);
+  });
+
+  it('large documents are chunked, and the absence of loss is verified rather than assumed', () => {
+    const s = src();
+    expect(s).toMatch(/chunkExtractedBlocks/);
+    // The loss check must actually run in the extraction path, not merely be importable.
+    expect(s).toMatch(/assertNoTextLost\(blocks, chunks\)/);
+  });
+
+  it('a failed chunk aborts the whole extraction — partial results are never returned', () => {
+    const s = src();
+    // extractChunk throws on failure; normalizeSyllabusDocument awaits each in turn without a
+    // per-chunk catch, so one failure propagates instead of silently dropping those pages.
+    expect(s).toMatch(/failed extraction/);
+    expect(s).not.toMatch(/catch[\s\S]{0,80}continue;/);
   });
 });
