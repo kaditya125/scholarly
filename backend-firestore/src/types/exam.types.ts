@@ -22,7 +22,30 @@ export type ExamStatus = 'ACTIVE' | 'INACTIVE' | 'ARCHIVED';
 
 export type ExamCycleStatus = 'UPCOMING' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED';
 
-export type SyllabusStatus = 'DRAFT' | 'VERIFIED' | 'CURRENT' | 'SUPERSEDED' | 'ARCHIVED';
+/**
+ * Syllabus version lifecycle.
+ *
+ * The forward path mirrors what has to happen in the world — a source is located, the document is
+ * retrieved and hashed, extraction runs, structure is validated, and only then may the version
+ * claim to be the authoritative one. See syllabusLifecycle.ts for the transition allowlist and the
+ * preconditions CURRENT requires.
+ *
+ * DRAFT is retained for records created before this lifecycle existed; new records should enter at
+ * DISCOVERED. UNAVAILABLE and INVALID are deliberately distinct: the first means we could not get
+ * the document (retry the fetch), the second means we have it and extraction or validation failed
+ * (retrying the fetch will not help).
+ */
+export type SyllabusStatus =
+  | 'DRAFT'
+  | 'DISCOVERED'
+  | 'FETCHED'
+  | 'VALIDATING'
+  | 'VERIFIED'
+  | 'CURRENT'
+  | 'SUPERSEDED'
+  | 'UNAVAILABLE'
+  | 'INVALID'
+  | 'ARCHIVED';
 
 export type OfficialSourceType =
   | 'AUTHORITY_HOME'
@@ -166,12 +189,33 @@ export interface ExamSyllabus {
   authority: string;
   status: SyllabusStatus;
   sourceDocumentId?: string;
+  /**
+   * The official PAGE the document was discovered on, when that differs from the document itself
+   * (a notifications index linking to a PDF). Optional and distinct from sourceDocumentUrl — the
+   * document URL is what was actually retrieved and hashed.
+   */
+  sourceUrl?: string;
   sourceDocumentUrl: string;
-  sourceDocumentHash: string; // SHA-256 hash of the official source
+  /** Official title as printed on the document, so a human can confirm the right file was used. */
+  sourceDocumentTitle?: string;
+  sourceDocumentType?: OfficialSourceType;
+  /**
+   * SHA-256 of the retrieved document bytes.
+   *
+   * Must be a real digest of real content. `validateProvenance` rejects the SHA-256 of the empty
+   * string specifically, because production shipped exactly that as the provenance of a CURRENT
+   * syllabus: a syntactically perfect hash of nothing at all.
+   */
+  sourceDocumentHash: string;
   storagePath?: string; // Firebase Storage path e.g. "exam_documents/SSC_CGL/2026/syllabus_v1.pdf"
   storageDownloadUrl?: string; // Firebase Storage download URL
+  /** When the source document was actually fetched. Distinct from when it was parsed. */
+  retrievedAt?: number;
   extractedAt: number;
+  /** When structural validation passed. NOT the moment of publication — see publishedAt. */
   verifiedAt?: number;
+  /** When this version became CURRENT. Kept separate so "verified" never means "published". */
+  publishedAt?: number;
   stages: ExamStage[];
   notes?: string;
   createdAt: number;

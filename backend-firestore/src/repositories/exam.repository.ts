@@ -4,6 +4,7 @@
  */
 
 import { db } from '../config/firebase';
+import { canTransition, assertPublishable } from '../services/exam/syllabusLifecycle';
 import {
   ExamMaster,
   ExamCategory,
@@ -209,7 +210,60 @@ export class ExamRepository {
         throw new Error(`Syllabus '${syllabusId}' does not match exam ${examId} and cycle ${cycleId}`);
       }
 
+      /*
+       * PUBLICATION GATE.
+       *
+       * This transaction previously moved ANY record to CURRENT — no check on its existing status,
+       * its provenance, or whether a canonical graph had ever been built. That is how production
+       * came to hold a CURRENT syllabus whose sourceDocumentHash was the SHA-256 of the empty
+       * string: the record simply existed, and publishing asserted it was authoritative.
+       *
+       * Reachability is checked first so an illegal jump (DRAFT straight to CURRENT) is reported as
+       * exactly that, rather than as a pile of downstream provenance complaints.
+       *
+       * `graphValidated` is taken from the version's graph manifest, which syllabusGraphService
+       * writes only after structural validation passes. Reading that verdict rather than
+       * recomputing it keeps one definition of "this graph is valid"; an absent manifest means no
+       * graph was ever published for this version, which is itself disqualifying.
+       */
+      const transition = canTransition(targetData.status, 'CURRENT');
+      if (!transition.allowed) {
+        throw new Error(
+          `[Syllabus] cannot publish '${syllabusId}': ${transition.reason}. ` +
+          `A version must reach VERIFIED before it can become CURRENT.`,
+        );
+      }
+
+      const manifestSnap = await transaction.get(
+        db.collection('exam_syllabi_graphs').doc(examId).collection('versions').doc(syllabusId),
+      );
+      const manifest = manifestSnap.exists ? (manifestSnap.data() as any) : null;
+
+      const check = assertPublishable(targetData, {
+        graphValidated: !!manifest?.validated,
+        nodeCount: manifest?.nodeCount ?? 0,
+      });
+      if (!check.publishable) {
+        const summary = check.errors.map((e) => `${e.field}:${e.code}`).join(', ');
+        throw new Error(
+          `[Syllabus] refusing to publish '${syllabusId}' — ${check.errors.length} precondition(s) ` +
+          `not met: ${summary}`,
+        );
+      }
+
       // 2. Fetch all existing current syllabi for this exam + cycle
+      /*
+       * ALL READS MUST PRECEDE ALL WRITES.
+       *
+       * The master-exam pointer was previously read at step 6, AFTER the writes below, which
+       * Firestore rejects outright — so this transaction could never commit against a real
+       * backend. It went unnoticed because the only tests covering publication mock the repository
+       * entirely, and production's syllabus was written straight to CURRENT by the seed path
+       * (createSyllabus), never through here. Found by the J.2 persisted verification.
+       */
+      const examDocRef = this.examsCol.doc(examId);
+      const examSnap = await transaction.get(examDocRef);
+
       const existingCurrentSnap = await transaction.get(
         this.syllabiCol
           .where('examId', '==', examId)
@@ -227,10 +281,14 @@ export class ExamRepository {
         }
       }
 
-      // 4. Set target syllabus to CURRENT
+      // 4. Set target syllabus to CURRENT.
+      //
+      // `verifiedAt` is NOT stamped here. It records when structural validation passed, which
+      // happened earlier; overwriting it at publish time was what made "verified" and "published"
+      // indistinguishable, so a record could look verified purely because someone published it.
       transaction.update(targetDocRef, {
         status: 'CURRENT',
-        verifiedAt: now,
+        publishedAt: now,
         updatedAt: now,
       });
 
@@ -238,9 +296,8 @@ export class ExamRepository {
       const cycleDocRef = this.examsCol.doc(examId).collection('cycles').doc(cycleId);
       transaction.set(cycleDocRef, { activeSyllabusVersionId: syllabusId, updatedAt: now }, { merge: true });
 
-      // 6. Update master exam active pointer if this is the current cycle
-      const examDocRef = this.examsCol.doc(examId);
-      const examSnap = await transaction.get(examDocRef);
+      // 6. Update master exam active pointer if this is the current cycle.
+      // (examSnap was read above, with the other reads — see the ordering note.)
       if (examSnap.exists) {
         const examData = examSnap.data() as ExamMaster;
         if (!examData.currentCycle || examData.currentCycle === cycleId) {
