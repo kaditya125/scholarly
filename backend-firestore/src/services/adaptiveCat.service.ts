@@ -1,6 +1,8 @@
-import { container, TOKENS } from '../core/di/container';
-import { IAIProvider } from '../core/interfaces/IAIProvider';
+// The DI container and IAIProvider were imported to resolve a ReasoningProvider that was assigned
+// and then never used — a leftover from an earlier LLM-backed implementation. Removed in J.7.2:
+// this service is a static demo bank and resolving an AI provider implied otherwise.
 import { UserProfileService } from './userProfile.service';
+import { logger } from '../utils/logger';
 
 export interface AdaptiveQuestion {
   id: string;
@@ -183,12 +185,57 @@ export class AdaptiveCatService {
     userId: string,
     batchIndex: number,
     previousResponses: any[]
-  ): Promise<{ questions: AdaptiveQuestion[]; isComplete: boolean }> {
+  ): Promise<{
+    questions: AdaptiveQuestion[];
+    isComplete: boolean;
+    /** Subjects the student asked for that this demo bank has no content for. */
+    unsupportedSubjects: string[];
+    /** True when NONE of the student's subjects are covered — the demo is off-profile entirely. */
+    offProfile: boolean;
+  }> {
     const profile = await this.profileService.getProfile(userId);
-    const aiProvider = container.resolve<IAIProvider>(TOKENS.ReasoningProvider);
 
-    const subjects = profile?.subjects && profile.subjects.length > 0 ? profile.subjects : ['Physics', 'Chemistry', 'Mathematics'];
+    /*
+     * SUBJECT SELECTION — J.7.2.
+     *
+     * This was:
+     *
+     *     const subjects = profile.subjects?.length ? profile.subjects : ['Physics','Chemistry','Mathematics'];
+     *     const subjectBank = INSTANT_QUESTION_BANK[currentSubject] || INSTANT_QUESTION_BANK['Physics'];
+     *     ... rawQuestions.push({ subject: currentSubject, ... })
+     *
+     * Two silent substitutions stacked on top of each other, and the second was the damaging one.
+     * `suggestedSubjects('SSC')` returns [], so an SSC CGL student fell through to the PCM default;
+     * and any subject absent from the bank ('Reasoning', 'General Knowledge', 'Biology') fell back
+     * to the Physics bank while the question was still LABELLED with the requested subject. A
+     * student preparing for SSC CGL was therefore shown a Physics kinematics question tagged
+     * `subject: 'Reasoning'` — content from one place wearing the name of another, which is the
+     * free-text mis-association this programme exists to eliminate.
+     *
+     * Now: rotate only over subjects this bank genuinely contains, and label every question with
+     * the subject it actually came from. Nothing is relabelled and nothing is substituted silently.
+     *
+     * When none of the student's subjects are covered the batch still runs — the onboarding UI
+     * dead-ends on an empty batch, so emptying it would break the flow for exactly the students
+     * this platform targets — but it is reported honestly via `offProfile` and the questions carry
+     * their real subject. The durable fix is routing this flow through the canonical contract,
+     * which is a product decision (see the J.7.2 report), not a silent relabelling.
+     */
+    const DEMO_SUBJECTS = Object.keys(INSTANT_QUESTION_BANK);
+    const requested = profile?.subjects?.length ? profile.subjects : [];
+    const supported = requested.filter((s) => DEMO_SUBJECTS.includes(s));
+    const unsupportedSubjects = requested.filter((s) => !DEMO_SUBJECTS.includes(s));
+    const offProfile = requested.length > 0 && supported.length === 0;
+
+    // Never a mislabelled substitution: this rotation only ever contains real bank keys.
+    const subjects = supported.length > 0 ? supported : DEMO_SUBJECTS;
     const currentSubject = subjects[batchIndex % subjects.length];
+
+    if (offProfile || unsupportedSubjects.length > 0) {
+      logger.warn('[AdaptiveCat] legacy demo bank does not cover this student\'s subjects', {
+        userId, requested, unsupportedSubjects, offProfile, servingInstead: currentSubject,
+      });
+    }
 
     // Compute live performance signals from previous responses
     const totalPrevious = previousResponses.length;
@@ -213,7 +260,9 @@ export class AdaptiveCatService {
 
     // Fast Instant Generation from Subject-Specific Adaptive Question Bank (< 20ms)
     const rawQuestions: any[] = [];
-    const subjectBank = INSTANT_QUESTION_BANK[currentSubject] || INSTANT_QUESTION_BANK['Physics'];
+    // No `|| INSTANT_QUESTION_BANK['Physics']`: `currentSubject` is drawn from the bank's own keys
+    // above, so this lookup cannot miss, and a miss can no longer be papered over with Physics.
+    const subjectBank = INSTANT_QUESTION_BANK[currentSubject];
     const pool = [
       ...(subjectBank[currentDifficulty] || []),
       ...(subjectBank['Medium'] || []),
@@ -278,7 +327,7 @@ export class AdaptiveCatService {
     // Assessment completes when total questions reached 20 (5 batches of 4)
     const isComplete = startQNum + questionCount - 1 >= 20;
 
-    return { questions, isComplete };
+    return { questions, isComplete, unsupportedSubjects, offProfile };
   }
 }
 

@@ -300,6 +300,20 @@ export class BaselineAssessmentService {
       confidenceSummary: payload.confidenceSummary || {},
       // Server-graded verdicts, not the client's claims.
       responses: summary.graded,
+      /**
+       * Whether this evidence can support EXAM-SPECIFIC claims.
+       *
+       * Read from the QUESTIONS the student was actually served, not from the graded rows: the
+       * graded rows describe verdicts and carry no identity, so testing them would return false
+       * for the right outcome by accident rather than by measurement.
+       *
+       * Today this is always false — the baseline is served by the legacy demo bank and every
+       * question it emits is stamped UNANCHORED at source. It is computed rather than hardcoded so
+       * that it becomes true on its own the moment this flow is routed through the canonical
+       * contract, instead of needing someone to remember to flip it.
+       */
+      evidenceIsCanonical: sessionQuestions.length > 0
+        && sessionQuestions.every((q: any) => q?.identityStatus === 'CANONICAL'),
     };
 
     // Personalization artifact, downstream of the measured result and non-blocking.
