@@ -32,6 +32,15 @@ export interface StoredQuizQuestion {
   syllabusNodeId?: string;
   syllabusId?: string;
   cycleId?: string;
+  /**
+   * The exam this question was authored for.
+   *
+   * Added in J.7.1. Without it a stored question carried a node id and a version but no exam, so
+   * answering "which exam was this asked for?" required resolving the node — and a node from a
+   * deleted or superseded graph would have made the question permanently unattributable. The full
+   * coordinate set is denormalised here precisely so historical evidence stays self-describing.
+   */
+  examId?: string;
   identityStatus?: 'CANONICAL' | 'UNANCHORED';
 }
 

@@ -17,8 +17,45 @@ export interface AdaptiveQuestion {
   explanation: string;
   estimatedTimeSeconds: number;
   knowledgeGraphTag: string;
+  /**
+   * Always 'UNANCHORED', stamped at the source rather than inferred downstream.
+   *
+   * These questions have no canonical syllabus identity and cannot acquire one: see
+   * LEGACY_DEMO_BANK below. Saying so on the object itself means no consumer has to deduce it
+   * from a missing field.
+   */
+  identityStatus: 'UNANCHORED';
+  /** Marks this question as coming from the non-canonical legacy bank. */
+  isLegacyDemo: true;
 }
 
+/**
+ * LEGACY / DEMO / UNANCHORED — classified in J.7.1, deliberately NOT deleted.
+ *
+ * WHAT THIS IS: twelve hardcoded Physics/Chemistry/Mathematics templates, written against a
+ * general school-science curriculum. It is the entire question corpus of the onboarding baseline
+ * assessment (`/api/baseline-assessment/*` → BaselineAssessmentService, its only consumer).
+ *
+ * WHAT IT IS NOT: an exam syllabus. It carries no examId, cycleId, syllabusId or syllabusNodeId,
+ * and none can be derived — `knowledgeGraphTag` ("Physics > Kinematics > Vectors") is free text,
+ * and "Algebra" maps equally well to SSC CGL, JEE and banking nodes. Guessing that mapping is the
+ * fuzzy matching this pipeline exists to eliminate.
+ *
+ * WHY IT STAYS: it is the live onboarding experience and deleting it would break that flow. It is
+ * classified rather than removed, and every question it produces is stamped UNANCHORED at source.
+ *
+ * THE RULE IT MUST OBEY: this bank can NEVER answer "give me a pre-test for SSC CGL". That request
+ * is served exclusively by CanonicalPreTestService, which resolves a verified syllabus first and
+ * returns NO_CANONICAL_SYLLABUS when there isn't one. There is no code path from this file into
+ * that service, and none may be added — a hardcoded question presented as exam-specific is the
+ * precise failure J.7 exists to prevent.
+ *
+ * The J.7 audit measured what it currently does: because `suggestedSubjects('SSC')` returns [] and
+ * `INSTANT_QUESTION_BANK[subject] || INSTANT_QUESTION_BANK['Physics']` falls back, an SSC CGL
+ * student's baseline is Physics/Chemistry/Maths today. Fixing that is J.7.2 — it requires the
+ * baseline flow to consume the canonical contract built here, which is a behaviour change to a
+ * live student-facing flow and out of scope for this gate.
+ */
 const INSTANT_QUESTION_BANK: Record<string, Record<string, Partial<AdaptiveQuestion>[]>> = {
   Physics: {
     Easy: [
@@ -232,6 +269,10 @@ export class AdaptiveCatService {
       explanation: q.explanation || 'Refer to fundamental principles.',
       estimatedTimeSeconds: q.estimatedTimeSeconds || 60,
       knowledgeGraphTag: q.knowledgeGraphTag || `${currentSubject} > ${q.topic || 'General'}`,
+      // Stamped at source, not inferred later. These have no canonical identity and cannot gain
+      // one — see LEGACY_DEMO_BANK. A consumer that needs CANONICAL must use CanonicalPreTestService.
+      identityStatus: 'UNANCHORED' as const,
+      isLegacyDemo: true as const,
     }));
 
     // Assessment completes when total questions reached 20 (5 batches of 4)

@@ -79,6 +79,7 @@ export class QuizAttemptsService {
         syllabusNodeId: q.syllabusNodeId,
         syllabusId: q.syllabusId,
         cycleId: q.cycleId,
+        examId: q.examId,
         identityStatus: q.identityStatus,
       })),
       totalQuestions: questions.length,
