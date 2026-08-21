@@ -368,10 +368,20 @@ export class ExamMasterService {
       throw new Error(`Syllabus version '${version}' already exists for ${examId} ${cycleId}`);
     }
 
-    // Generate content hash if not provided
-    const contentHash =
-      dto.sourceDocumentHash ||
-      crypto.createHash('sha256').update(JSON.stringify(dto.stages) + dto.sourceDocumentUrl).digest('hex');
+    /*
+     * PROVENANCE HASH — of the SOURCE DOCUMENT, never of our own output.
+     *
+     * This previously fell back to sha256(JSON.stringify(stages) + sourceDocumentUrl) when no hash
+     * was supplied. That is a provenance forgery generator: it produces a syntactically perfect
+     * SHA-256 that hashes the EXTRACTION RESULT rather than the official document, so it passes
+     * every format check while proving nothing about any source. It is more dangerous than the
+     * empty-string hash already found in production, because nothing about it looks wrong.
+     *
+     * A version created without a real document hash is left explicitly unhashed. It stays a DRAFT
+     * that validateProvenance will refuse to publish, which is the honest outcome — rather than
+     * being handed a manufactured digest that would let it through the gate.
+     */
+    const contentHash = dto.sourceDocumentHash ?? '';
 
     const now = Date.now();
     const syllabus: ExamSyllabus = {
