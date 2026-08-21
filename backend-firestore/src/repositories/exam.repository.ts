@@ -13,6 +13,8 @@ import {
   ExamOfficialSource,
   ExamSyllabus,
   ExamAuditRecord,
+  SyllabusStatus,
+  SyllabusInvalidationReason,
 } from '../types/exam.types';
 
 export class ExamRepository {
@@ -324,6 +326,89 @@ export class ExamRepository {
   }
 
   // ─── 5. Audit Logging ──────────────────────────────────────────────────────
+
+  /**
+   * Withdraws a syllabus version from authoritative use.
+   *
+   * Deliberately NOT a delete and NOT an edit of provenance. The record, its hash, its URL and its
+   * extracted structure all stay exactly as they were — invalidating is a statement about whether
+   * we may RELY on a version, not a licence to rewrite its history. Anything that referenced it
+   * keeps resolving to the same document, now visibly marked untrustworthy.
+   *
+   * `clearActivePointers` exists because leaving a cycle's or exam's activeSyllabusVersionId aimed
+   * at an INVALID record is worse than either state alone: getCurrentSyllabus would return nothing
+   * while the AI context block still announced "Active Canonical Syllabus Version: <id>" —
+   * advertising as authoritative a version the system has just declared it cannot trust. The
+   * caller must decide explicitly rather than inherit a default.
+   */
+  async invalidateSyllabus(params: {
+    syllabusId: string;
+    reason: SyllabusInvalidationReason;
+    detail?: string;
+    performedBy: string;
+    clearActivePointers: boolean;
+  }): Promise<{ previousStatus: SyllabusStatus; pointersCleared: string[] }> {
+    const { syllabusId, reason, detail, performedBy, clearActivePointers } = params;
+    const now = Date.now();
+
+    const result = await db.runTransaction(async (transaction) => {
+      const ref = this.syllabiCol.doc(syllabusId);
+      const snap = await transaction.get(ref);
+      if (!snap.exists) throw new Error(`Syllabus '${syllabusId}' not found`);
+      const data = snap.data() as ExamSyllabus;
+
+      const transition = canTransition(data.status, 'INVALID');
+      if (!transition.allowed) {
+        throw new Error(`[Syllabus] cannot invalidate '${syllabusId}': ${transition.reason}`);
+      }
+
+      // Reads before writes, as Firestore requires.
+      const cycleRef = this.examsCol.doc(data.examId).collection('cycles').doc(data.cycleId);
+      const examRef = this.examsCol.doc(data.examId);
+      const [cycleSnap, examSnap] = clearActivePointers
+        ? await Promise.all([transaction.get(cycleRef), transaction.get(examRef)])
+        : [null, null];
+
+      transaction.update(ref, {
+        status: 'INVALID',
+        invalidatedAt: now,
+        invalidationReason: reason,
+        ...(detail ? { invalidationDetail: detail } : {}),
+        updatedAt: now,
+      });
+
+      const pointersCleared: string[] = [];
+      if (clearActivePointers) {
+        if (cycleSnap?.exists && (cycleSnap.data() as any)?.activeSyllabusVersionId === syllabusId) {
+          transaction.update(cycleRef, { activeSyllabusVersionId: null, updatedAt: now });
+          pointersCleared.push(`cycles/${data.cycleId}`);
+        }
+        if (examSnap?.exists && (examSnap.data() as any)?.activeSyllabusVersionId === syllabusId) {
+          transaction.update(examRef, { activeSyllabusVersionId: null, updatedAt: now });
+          pointersCleared.push(`exams/${data.examId}`);
+        }
+      }
+
+      return { previousStatus: data.status, pointersCleared, examId: data.examId, cycleId: data.cycleId };
+    });
+
+    await this.logAudit({
+      id: `audit_${now}_invalidate_${syllabusId}`,
+      eventType: 'SYLLABUS_INVALIDATED',
+      examId: result.examId,
+      cycleId: result.cycleId,
+      entityId: syllabusId,
+      performedBy,
+      details: {
+        reason, detail: detail ?? null,
+        previousStatus: result.previousStatus,
+        pointersCleared: result.pointersCleared,
+      },
+      timestamp: now,
+    });
+
+    return { previousStatus: result.previousStatus, pointersCleared: result.pointersCleared };
+  }
 
   async logAudit(audit: ExamAuditRecord): Promise<void> {
     await this.auditCol.doc(audit.id).set(audit);

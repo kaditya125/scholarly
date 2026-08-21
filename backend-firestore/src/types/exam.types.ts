@@ -216,6 +216,10 @@ export interface ExamSyllabus {
   verifiedAt?: number;
   /** When this version became CURRENT. Kept separate so "verified" never means "published". */
   publishedAt?: number;
+  /** Set when the version is withdrawn from authoritative use. Never cleared — this is history. */
+  invalidatedAt?: number;
+  invalidationReason?: SyllabusInvalidationReason;
+  invalidationDetail?: string;
   stages: ExamStage[];
   notes?: string;
   createdAt: number;
@@ -237,7 +241,25 @@ export type ExamAuditEventType =
   | 'SYLLABUS_CREATED'
   | 'SYLLABUS_APPROVED'
   | 'SYLLABUS_PUBLISHED'
-  | 'SYLLABUS_SUPERSEDED';
+  | 'SYLLABUS_SUPERSEDED'
+  /** A version was withdrawn from authoritative use because its provenance cannot be established. */
+  | 'SYLLABUS_INVALIDATED';
+
+/**
+ * Why a syllabus version was invalidated. Machine-readable so the reason survives as data rather
+ * than as prose in a log line nobody can query.
+ */
+export type SyllabusInvalidationReason =
+  /** Provenance fields are absent or internally inconsistent. */
+  | 'INVALID_PROVENANCE'
+  /** sourceDocumentHash is the SHA-256 of an empty document — nothing was ever retrieved. */
+  | 'EMPTY_DOCUMENT_HASH'
+  /** Created by the pre-provenance seed path and never verified against an official source. */
+  | 'LEGACY_SEED_UNVERIFIED'
+  /** The retrieved document no longer matches the recorded hash. */
+  | 'SOURCE_DOCUMENT_MISMATCH'
+  /** Extraction produced a structurally invalid canonical graph. */
+  | 'GRAPH_VALIDATION_FAILED';
 
 export interface ExamAuditRecord {
   id: string;
