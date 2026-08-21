@@ -156,8 +156,40 @@ export class ExamRepository {
 
   // ─── 4. Versioned Syllabus Operations ──────────────────────────────────────
 
+  /**
+   * Writes a NEW syllabus version. Refuses to touch one that already exists.
+   *
+   * This was `.set()`, which overwrites unconditionally, and that made every syllabus version
+   * silently replaceable by anything holding the same id. The concrete danger found in the J.7.0
+   * audit: a seed path called this with a fabricated record whose status was CURRENT, so one call
+   * would have replaced production's quarantined `syl_ssc_cgl_2026_v1` — INVALID,
+   * LEGACY_SEED_UNVERIFIED, with its invalidation history intact — with a CURRENT record hashing
+   * the empty string. The J.3 quarantine would have vanished with no error and no audit entry.
+   *
+   * `.create()` rejects with ALREADY_EXISTS instead, which turns all four of these into loud
+   * failures rather than silent data loss:
+   *   · an INVALID record being overwritten by a seed or a retry
+   *   · a CURRENT record being replaced by an unverified object
+   *   · a SUPERSEDED record — permanent history that evidence still points at — being rewritten
+   *   · a version id being reused for different content, breaking identity immutability
+   *
+   * Every legitimate caller already checks `getSyllabusById` first and returns ALREADY_EXISTS, so
+   * reaching this error means a caller intended to overwrite. Status changes have their own paths:
+   * `updateSyllabusStatus` (lifecycle-validated, cannot reach CURRENT) and `publishSyllabusVersion`
+   * (provenance + graph gated). Creation deliberately confers no status of its own.
+   */
   async createSyllabus(syllabus: ExamSyllabus): Promise<void> {
-    await this.syllabiCol.doc(syllabus.syllabusId).set(syllabus);
+    try {
+      await this.syllabiCol.doc(syllabus.syllabusId).create(syllabus);
+    } catch (err: any) {
+      if (err?.code === 6 || /ALREADY_EXISTS/i.test(err?.message ?? '')) {
+        throw new Error(
+          `[Syllabus] refusing to overwrite existing version '${syllabus.syllabusId}'. ` +
+          `A syllabus version is immutable once created; publish or transition it instead.`,
+        );
+      }
+      throw err;
+    }
   }
 
   async getSyllabusById(syllabusId: string): Promise<ExamSyllabus | null> {

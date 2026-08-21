@@ -405,11 +405,26 @@ export const PILOT_SSC_CGL_SYLLABUS: ExamSyllabus = {
 };
 
 /**
- * Seeds pilot exams and canonical syllabus into Firestore if not already present.
+ * Seeds pilot exam REGISTRY METADATA into Firestore if not already present.
+ *
+ * It used to seed a syllabus too — `createSyllabus(PILOT_SSC_CGL_SYLLABUS)` followed by
+ * `publishSyllabusVersion(...)`, which would have written `syl_ssc_cgl_2026_v1` as CURRENT with
+ * `sourceDocumentHash` = SHA-256("") and stamped the active pointers on both the exam and the
+ * cycle. That is precisely the record J.3 quarantined in production, recreated from a constant.
+ *
+ * The function has no callers today, so this was dormant rather than firing — but "dormant" is a
+ * property of the current call graph, not of the code, and a single future `await seedPilotExams()`
+ * in a bootstrap path would have resurrected the quarantine. Two independent gates added since
+ * would now reject it (createSyllabus refuses to overwrite; publishSyllabusVersion requires
+ * VERIFIED + real provenance + a validated graph), which means it would fail loudly instead of
+ * corrupting data — but the honest fix is not to attempt it at all.
+ *
+ * `seededSyllabi` is retained in the return shape and is now always 0: this function does not
+ * create syllabi, and callers reading that field should see zero rather than lose the field.
  */
 export async function seedPilotExams(): Promise<{ seededExams: number; seededSyllabi: number }> {
   let seededExams = 0;
-  let seededSyllabi = 0;
+  const seededSyllabi = 0;
 
   for (const exam of PILOT_EXAMS) {
     const existing = await examRepository.getExamById(exam.examId);
@@ -431,18 +446,9 @@ export async function seedPilotExams(): Promise<{ seededExams: number; seededSyl
     }
   }
 
-  // Seed canonical syllabus for SSC CGL
-  const existingSyllabus = await examRepository.getSyllabusById(PILOT_SSC_CGL_SYLLABUS.syllabusId);
-  if (!existingSyllabus) {
-    await examRepository.createSyllabus(PILOT_SSC_CGL_SYLLABUS);
-    await examRepository.publishSyllabusVersion(
-      PILOT_SSC_CGL_SYLLABUS.examId,
-      PILOT_SSC_CGL_SYLLABUS.cycleId,
-      PILOT_SSC_CGL_SYLLABUS.syllabusId,
-      'system_seed'
-    );
-    seededSyllabi++;
-  }
+  // NO SYLLABUS IS SEEDED. A syllabus becomes authoritative only by being discovered, retrieved,
+  // hashed, extracted, structurally validated and published through the lifecycle gate — never by
+  // a constant being copied into Firestore. When none exists, NO_CANONICAL_SYLLABUS is correct.
 
   return { seededExams, seededSyllabi };
 }
