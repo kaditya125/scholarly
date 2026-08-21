@@ -10,19 +10,46 @@
 const nodes: any[] = [];
 const makeSnap = () => ({ docs: nodes.map((n) => ({ data: () => n })) });
 
-// Minimal Firestore double: exam_syllabi_graphs/{examId}/nodes[/{docId}]
+/*
+ * Firestore double for the VERSION-ISOLATED layout:
+ *
+ *   exam_syllabi_graphs/{examId}/versions/{syllabusId}/nodes[/{docId}]
+ *
+ * It previously modelled `exam_syllabi_graphs/{examId}/nodes` — one shared collection per exam.
+ * That was the defect: two syllabus versions minted the same node ids and the newer ingestion
+ * overwrote the older in place. Partitioning the double by syllabusId is what makes these tests
+ * able to prove isolation rather than assume it.
+ */
 jest.mock('../../src/config/firebase', () => ({
   db: {
     collection: () => ({
-      doc: (examId: string) => ({
+      doc: () => ({
         collection: () => ({
-          get: async () => makeSnap(),
-          doc: (docId: string) => ({
-            get: async () => {
-              // Mirrors the write path's id escaping.
-              const found = nodes.find((n) => n.id.replace(/[:/]/g, '_') === docId);
-              return { exists: !!found, data: () => found };
-            },
+          // listVersions(): one manifest per distinct syllabusId present in the fixture.
+          get: async () => ({
+            docs: Array.from(new Set(nodes.map((n) => n.syllabusId))).map((sid) => ({
+              data: () => ({
+                syllabusId: sid,
+                cycleId: nodes.find((n) => n.syllabusId === sid)!.cycleId,
+                builtAt: 1,
+              }),
+            })),
+          }),
+          doc: (syllabusId: string) => ({
+            collection: () => ({
+              get: async () => ({
+                docs: nodes.filter((n) => n.syllabusId === syllabusId).map((n) => ({ data: () => n })),
+              }),
+              doc: (docId: string) => ({
+                get: async () => {
+                  // Scoped to this version's subtree, mirroring the write path's id escaping.
+                  const found = nodes.find(
+                    (n) => n.syllabusId === syllabusId && n.id.replace(/[:/]/g, '_') === docId,
+                  );
+                  return { exists: !!found, data: () => found };
+                },
+              }),
+            }),
           }),
         }),
       }),

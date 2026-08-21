@@ -7,17 +7,37 @@
  */
 
 const nodes: any[] = [];
+// Firestore double for the version-isolated layout:
+//   exam_syllabi_graphs/{examId}/versions/{syllabusId}/nodes[/{docId}]
+// Partitioned by syllabusId so a node can only ever be found inside the version that holds it.
 jest.mock('../../src/config/firebase', () => ({
   db: {
     collection: () => ({
       doc: () => ({
         collection: () => ({
-          get: async () => ({ docs: nodes.map((n) => ({ data: () => n })) }),
-          doc: (docId: string) => ({
-            get: async () => {
-              const f = nodes.find((n) => n.id.replace(/[:/]/g, '_') === docId);
-              return { exists: !!f, data: () => f };
-            },
+          get: async () => ({
+            docs: Array.from(new Set(nodes.map((n) => n.syllabusId))).map((sid) => ({
+              data: () => ({
+                syllabusId: sid,
+                cycleId: nodes.find((n) => n.syllabusId === sid)!.cycleId,
+                builtAt: 1,
+              }),
+            })),
+          }),
+          doc: (syllabusId: string) => ({
+            collection: () => ({
+              get: async () => ({
+                docs: nodes.filter((n) => n.syllabusId === syllabusId).map((n) => ({ data: () => n })),
+              }),
+              doc: (docId: string) => ({
+                get: async () => {
+                  const f = nodes.find(
+                    (n) => n.syllabusId === syllabusId && n.id.replace(/[:/]/g, '_') === docId,
+                  );
+                  return { exists: !!f, data: () => f };
+                },
+              }),
+            }),
           }),
         }),
       }),
