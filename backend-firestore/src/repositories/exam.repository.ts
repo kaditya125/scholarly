@@ -328,6 +328,39 @@ export class ExamRepository {
   // ─── 5. Audit Logging ──────────────────────────────────────────────────────
 
   /**
+   * Moves a syllabus version to a new lifecycle status.
+   *
+   * The transition is validated INSIDE the read-modify-write transaction against the status
+   * actually on disk, not against whatever the caller last read. Checking it in the caller would
+   * leave a window in which two concurrent operations both believe they are moving from VERIFIED,
+   * and one of them would be wrong.
+   *
+   * Deliberately cannot reach CURRENT: publication has its own gate (provenance, extraction and a
+   * validated graph manifest), and allowing a plain status write to bypass it would reopen exactly
+   * the hole that let an unverified syllabus become authoritative.
+   */
+  async updateSyllabusStatus(
+    syllabusId: string,
+    next: Exclude<SyllabusStatus, 'CURRENT'>,
+    extra: Partial<ExamSyllabus> = {},
+  ): Promise<{ previousStatus: SyllabusStatus }> {
+    return db.runTransaction(async (transaction) => {
+      const ref = this.syllabiCol.doc(syllabusId);
+      const snap = await transaction.get(ref);
+      if (!snap.exists) throw new Error(`Syllabus '${syllabusId}' not found`);
+      const data = snap.data() as ExamSyllabus;
+
+      const t = canTransition(data.status, next);
+      if (!t.allowed) {
+        throw new Error(`[Syllabus] cannot move '${syllabusId}' to ${next}: ${t.reason}`);
+      }
+
+      transaction.update(ref, { ...extra, status: next, updatedAt: Date.now() });
+      return { previousStatus: data.status };
+    });
+  }
+
+  /**
    * Withdraws a syllabus version from authoritative use.
    *
    * Deliberately NOT a delete and NOT an edit of provenance. The record, its hash, its URL and its
