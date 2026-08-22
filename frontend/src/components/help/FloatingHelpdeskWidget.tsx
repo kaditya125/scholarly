@@ -554,7 +554,37 @@ export function FloatingHelpdeskWidget({
             aria-label="Open Sadhya Helpdesk Assistant"
             className="relative w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-[0_10px_35px_rgba(0,0,0,0.25)] hover:shadow-[0_14px_40px_rgba(0,0,0,0.35)] border border-slate-700/50 dark:border-slate-200/60 flex items-center justify-center transition-all group"
           >
-            <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-[#c8e558] dark:text-slate-900 transition-transform group-hover:scale-110" />
+            {/* Custom dual-bubble checkmark icon */}
+            <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 sm:w-7 sm:h-7 transition-transform group-hover:scale-110">
+              {/* Back bubble (top-right, outline only) */}
+              <path
+                d="M22 6h8a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4h-1l-1.5 3L26 22h-4a4 4 0 0 1-4-4v-1"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              {/* Front bubble */}
+              <rect x="4" y="13" width="20" height="17" rx="4" stroke="currentColor" strokeWidth="2.2" />
+              {/* Front bubble tail */}
+              <path
+                d="M12 30l-2 4 5-4"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              {/* Teal circle */}
+              <circle cx="14" cy="21.5" r="5" stroke="#5bc8c0" strokeWidth="2" fill="none" />
+              {/* Teal checkmark */}
+              <path
+                d="M11.5 21.5l2 2 3-3"
+                stroke="#5bc8c0"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
             <span className="absolute top-1 right-1 w-3 h-3 rounded-full bg-emerald-500 border-2 border-slate-900 dark:border-white animate-pulse" />
           </motion.button>
         )}
