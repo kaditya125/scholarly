@@ -11,6 +11,7 @@ import {
   sendPasswordResetEmail,
   authErrorMessage,
 } from '../lib/firebase';
+import { api } from '../lib/api/client';
 import {
   AuthShell,
   Field,
@@ -92,8 +93,13 @@ export default function Signin() {
     setError(null);
     setBusy('reset');
     try {
-      await sendPasswordResetEmail(auth, email.trim());
-      setNotice(`Password reset link sent to ${email.trim()}.`);
+      try {
+        const { data } = await api.post('/auth/send-password-reset', { email: email.trim() });
+        setNotice(data.message || `Password reset link sent to ${email.trim()}.`);
+      } catch {
+        await sendPasswordResetEmail(auth, email.trim());
+        setNotice(`Password reset link sent to ${email.trim()}.`);
+      }
     } catch (err: any) {
       setError(authErrorMessage(err));
     } finally {

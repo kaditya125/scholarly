@@ -113,6 +113,18 @@ const envSchema = z.object({
   // Reasoning model toggles
   CHAT_REASONING_ENABLED: z.string().optional(),
   CHAT_REASONING_MODEL: z.string().optional(),
+
+  // ZeptoMail & Transactional Email Configuration
+  ZEPTO_API_KEY: z.string().optional(),
+  ZEPTO_FROM_EMAIL: z.string().default('noreply@sadhya.app'),
+  ZEPTO_FROM_NAME: z.string().default('Sadhya'),
+  ZEPTO_API_URL: z.string().default('https://api.zeptomail.in/v1.1/email'),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.string().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_FROM: z.string().optional(),
+  SMTP_SECURE: z.string().optional(),
 }).refine(
   (data) => {
     // Either GOOGLE_APPLICATION_CREDENTIALS must be provided, OR all three manual FIREBASE vars must be provided.

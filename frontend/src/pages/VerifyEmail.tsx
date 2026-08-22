@@ -9,6 +9,7 @@ import {
   authErrorMessage,
 } from '../lib/firebase';
 import { useAuth } from '../lib/AuthContext';
+import { api } from '../lib/api/client';
 import { identityApi, type ProductRole } from '../lib/api/identity';
 import {
   AuthShell,
@@ -106,7 +107,7 @@ export default function VerifyEmail() {
     }
   };
 
-  // Secondary Action: Resend verification email
+  // Secondary Action: Resend verification email via ZeptoMail
   const handleResend = async () => {
     if (!auth.currentUser || cooldown > 0 || resending) return;
     setError(null);
@@ -114,8 +115,18 @@ export default function VerifyEmail() {
     setResending(true);
 
     try {
-      await sendEmailVerification(auth.currentUser);
-      setNotice(`Verification link sent again to ${auth.currentUser.email}. Please check your inbox and spam folder.`);
+      // First try Sadhya backend ZeptoMail delivery
+      try {
+        const token = await auth.currentUser.getIdToken();
+        const { data } = await api.post('/auth/send-verification-email', {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setNotice(data.message || `Verification link sent again to ${auth.currentUser.email}. Please check your inbox.`);
+      } catch (backendErr) {
+        // Fallback to client SDK if backend is unreachable
+        await sendEmailVerification(auth.currentUser);
+        setNotice(`Verification link sent again to ${auth.currentUser.email}. Please check your inbox and spam folder.`);
+      }
       setCooldown(60);
     } catch (err: any) {
       setError(authErrorMessage(err));
