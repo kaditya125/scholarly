@@ -97,6 +97,20 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "workflowExecutions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "workflowId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startedAt",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []

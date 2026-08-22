@@ -100,6 +100,9 @@ const Terms = lazy(() => import("./pages/legal/Terms"));
 const Privacy = lazy(() => import("./pages/legal/Privacy"));
 const Refunds = lazy(() => import("./pages/legal/Refunds"));
 const Security = lazy(() => import("./pages/legal/Security"));
+const AutomationDashboard = lazy(() => import("./pages/admin/AutomationDashboard"));
+const AutomationStudio = lazy(() => import("./pages/admin/AutomationStudio"));
+const ExecutionDetail = lazy(() => import("./pages/admin/ExecutionDetail"));
 
 /** Shown only while a route's own chunk is downloading — same spinner ProtectedRoute
  *  already uses elsewhere, so a lazy-load pause and an auth-check pause look identical. */
@@ -287,6 +290,10 @@ function AppRoutes() {
         <Route path="/baseline-assessment" element={<ProtectedRoute><BaselineAssessmentEngine /></ProtectedRoute>} />
         <Route path="/baseline-assessment/report" element={<ProtectedRoute><AssessmentReportDashboard /></ProtectedRoute>} />
         <Route path="/welcome" element={<ProtectedRoute><WelcomeBriefing /></ProtectedRoute>} />
+        <Route path="/admin/automations" element={<ProtectedRoute><AutomationDashboard /></ProtectedRoute>} />
+        <Route path="/admin/automations/:id" element={<ProtectedRoute><AutomationStudio /></ProtectedRoute>} />
+        <Route path="/admin/automations/:workflowId/executions" element={<ProtectedRoute><ExecutionDetail /></ProtectedRoute>} />
+        <Route path="/admin/automations/:workflowId/executions/:execId" element={<ProtectedRoute><ExecutionDetail /></ProtectedRoute>} />
 
         {/* Layout wrapped routes — all protected */}
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>

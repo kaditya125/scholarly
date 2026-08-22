@@ -74,6 +74,10 @@ export class BackgroundWorker {
         case 'intelligence.analytics':
           await analyticsService.record(payload.analyticsInput);
           break;
+        case 'automation.resume_execution':
+          const { automationEngine } = await import('../../automation/engine/AutomationEngine');
+          await automationEngine.resumeExecution(payload.executionId, payload.nodeId);
+          break;
         case 'intelligence.mastery':
           await masteryEngine.recordConcepts(payload.userId, payload.concepts, payload.type);
           break;
