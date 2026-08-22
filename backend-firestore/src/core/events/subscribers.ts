@@ -162,11 +162,19 @@ export function registerEventSubscribers(): { registered: boolean } {
     await eventBus.publish('notification.created', notification);
   });
 
-  // More subscribers can be added here as we wire up gamification, notebooks, etc.
+  // ── Automation Studio Trigger Dispatcher ────────────────────────────────────────────────
+  // Listens on EventBus for domain events (quiz_completed, test_completed, user.registered, etc.)
+  // and dispatches matching active DAG workflows with atomic deduplication.
+  try {
+    const { automationTriggerDispatcher } = require('../automation/engine/AutomationTriggerDispatcher');
+    automationTriggerDispatcher.initialize();
+  } catch (err: any) {
+    logger.error('[EventBus] Failed to initialize automation trigger dispatcher:', err?.message || err);
+  }
 
   logger.info('[EventBus] Domain event subscribers registered', {
     events: ['learning.test_completed', 'podcast.completed', 'podcast.failed',
-             'user.registered', 'notebook.ingested'],
+             'user.registered', 'notebook.ingested', 'learning.quiz_completed', 'automations.active'],
     // Mastery writes stay inert until the flag is on; logged so startup states which it is
     // rather than leaving it to be inferred.
     masteryEnabled: featureFlags.mastery,
