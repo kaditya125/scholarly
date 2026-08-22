@@ -81,8 +81,11 @@ echo "── build gates ──────────────────�
 # and still be dead on arrival if this is undefined.
 grep -rqE 'apiKey:"AIzaSy[A-Za-z0-9_-]{20,}"' "$DIST/assets/" \
   || die "GATE 1: no populated Firebase apiKey in bundle (this is the blank-page failure)"
-EMPTY=$(grep -rEc 'apiKey:""|apiKey:void 0|apiKey:undefined' "$DIST/assets/" | awk -F: '{s+=$2} END{print s+0}')
-[ "$EMPTY" -eq 0 ] || die "GATE 1: $EMPTY empty/undefined apiKey occurrence(s) in bundle"
+# `|| EMPTY=0` is load-bearing, not defensive noise: grep exits 1 when it matches NOTHING, which
+# here is the PASSING outcome, and under `set -euo pipefail` that non-zero status aborted the
+# whole script. The first run of this gate failed precisely because it succeeded.
+EMPTY=$(grep -rE 'apiKey:""|apiKey:void 0|apiKey:undefined' "$DIST/assets/" 2>/dev/null | wc -l) || EMPTY=0
+[ "${EMPTY:-0}" -eq 0 ] || die "GATE 1: $EMPTY empty/undefined apiKey occurrence(s) in bundle"
 # The key must match what the currently-serving bundle uses; a different project is a misconfigure.
 NEWK=$(grep -rhoE 'apiKey:"[^"]+"' "$DIST/assets/" | head -1 | sha256sum | cut -c1-16)
 OLDK=$(grep -rhoE 'apiKey:"[^"]+"' "$FRONTEND/dist/assets/" | head -1 | sha256sum | cut -c1-16)
@@ -92,7 +95,11 @@ echo "  gate 1  : Firebase config populated and matches live ($NEWK)"
 # GATE 2 — no BACKEND secret may reach a client bundle. Vite only inlines VITE_*, but a mistaken
 # VITE_ prefix on a server credential would ship it to every visitor.
 for LEAK in FIREBASE_PRIVATE_KEY REDIS_URL GEMINI_API_KEY GROQ_API_KEY ANTHROPIC_API_KEY CRON_SECRET HMS_SECRET; do
-  grep -rqs "$LEAK" "$DIST/assets/" && die "GATE 2: backend secret name '$LEAK' present in client bundle"
+  # `if` rather than `grep && die`: inside an if-condition a non-zero grep (the clean outcome) is
+  # explicitly exempt from `set -e`, so the passing case cannot abort the deploy.
+  if grep -rqs "$LEAK" "$DIST/assets/"; then
+    die "GATE 2: backend secret name '$LEAK' present in client bundle"
+  fi
 done
 echo "  gate 2  : no backend secret names in client bundle"
 
