@@ -40,9 +40,7 @@ const FAQS: { q: string; a: ReactNode }[] = [
     q: 'How does yearly billing work?',
     a: (
       <>
-        Yearly is charged once, up front, at ₹{PRO_YEARLY_TOTAL_INR.toLocaleString('en-IN')} — a 15%
-        saving against paying ₹{PRO_MONTHLY_INR} twelve times. It covers twelve months from the day
-        you pay. The same 7-day refund window applies as on monthly.
+        Yearly is charged once up front at ₹{PRO_YEARLY_TOTAL_INR.toLocaleString('en-IN')} (just ₹149/mo) — a <strong>70% saving</strong> against the regular price of ₹5,088/yr. It covers twelve months of unlimited access from the day you pay, with a full 7-day refund guarantee.
       </>
     ),
   },
@@ -50,10 +48,16 @@ const FAQS: { q: string; a: ReactNode }[] = [
     q: 'Can I cancel whenever I want?',
     a: (
       <>
-        Yes, from Settings → Billing, without emailing anyone. Cancelling stops the next renewal and
-        you keep Pro until the end of the period you already paid for. Your notebooks, history and
-        progress stay with you on the free plan. The full detail is in our{' '}
+        Yes, directly from Settings → Billing, with zero hassle or emails. Cancelling stops the next renewal and you keep Pro until the end of the paid billing cycle. Your notes, notebooks, and test analytics remain safely saved on your Free account. The full detail is in our{' '}
         <Link to="/refunds" className="underline underline-offset-2">refunds &amp; cancellation policy</Link>.
+      </>
+    ),
+  },
+  {
+    q: 'What is the Launch Event Grandfathered Rate Guarantee?',
+    a: (
+      <>
+        When you subscribe during the Sadhya 1.0 Launch Event, you lock in the promotional launch price (₹199/mo or ₹1,788/yr) for as long as your subscription remains active. Even when public prices revert to standard rates (₹499/mo), your renewal price will never increase.
       </>
     ),
   },
@@ -61,9 +65,7 @@ const FAQS: { q: string; a: ReactNode }[] = [
     q: 'What if I subscribe and don’t get on with it?',
     a: (
       <>
-        Ask us within 7 days of your first Pro payment and we&rsquo;ll refund it in full, no
-        explanation needed. Duplicate charges and charges taken after a cancellation are always
-        refunded, whenever you spot them.
+        Ask us within 7 days of your payment and we&rsquo;ll refund it in full — no questions asked. Duplicate charges or accidental renewals are also refunded promptly upon request.
       </>
     ),
   },
