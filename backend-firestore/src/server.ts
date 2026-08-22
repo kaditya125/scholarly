@@ -258,6 +258,54 @@ app.get('/api/public/stats', async (_req, res) => {
 });
 
 // ==========================================
+// 3b. Presence Heartbeat (auth-required, Admin SDK write bypasses client rules)
+// ==========================================
+
+// Middleware to verify Firebase ID token
+const verifyToken = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!token) return res.status(401).json({ error: 'Missing auth token' });
+  try {
+    const decoded = await auth.verifyIdToken(token);
+    (req as any).uid = decoded.uid;
+    next();
+  } catch {
+    return res.status(401).json({ error: 'Invalid auth token' });
+  }
+};
+
+app.post('/api/presence/heartbeat', verifyToken, async (req: express.Request, res: express.Response) => {
+  const uid = (req as any).uid as string;
+  try {
+    await db.collection('presence').doc(uid).set(
+      { uid, state: 'online', lastActive: Date.now() },
+      { merge: true }
+    );
+    // Bust the stats cache so next poll reflects the new presence immediately
+    cacheTimestamp = 0;
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('Presence heartbeat error:', err);
+    return res.status(500).json({ error: 'Failed to write presence' });
+  }
+});
+
+app.post('/api/presence/offline', verifyToken, async (req: express.Request, res: express.Response) => {
+  const uid = (req as any).uid as string;
+  try {
+    await db.collection('presence').doc(uid).set(
+      { uid, state: 'offline', lastActive: Date.now() },
+      { merge: true }
+    );
+    cacheTimestamp = 0;
+    return res.json({ ok: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to write presence' });
+  }
+});
+
+// ==========================================
 // 4. API Routes
 // ==========================================
 app.use('/api', routes);
