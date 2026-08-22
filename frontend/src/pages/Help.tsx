@@ -70,13 +70,19 @@ interface SupportChatMessage {
 
 // --- Mock Data ---
 const SUGGESTED_QUESTIONS = [
-  "What is Sadhya?",
+  "What is the Launch Celebration offer on Pro?",
   "How does AI tutoring work?",
-  "What can students do?",
-  "Can teachers create a class?"
+  "What is included in the Free plan vs Pro?",
+  "How do I use the Podcast Studio & OCR?"
 ];
 
 const EXPLORE_TOPICS = [
+  {
+    title: "Launch Offer & Pricing",
+    icon: Sparkles,
+    desc: "60% Off Pro & lifetime rate lock",
+    prompt: "Tell me about the Sadhya 1.0 Launch Celebration offer, pricing plans, and Pro features."
+  },
   {
     title: "For Students",
     icon: GraduationCap,
@@ -84,22 +90,16 @@ const EXPLORE_TOPICS = [
     prompt: "What learning features does Sadhya offer for students?"
   },
   {
+    title: "AI Features & Studios",
+    icon: Bot,
+    desc: "RAG, OCR & Podcast Studio",
+    prompt: "Tell me about Sadhya's AI features, OCR, and Podcast Studio."
+  },
+  {
     title: "For Teachers",
     icon: LayoutGrid,
     desc: "Classes, analytics & earnings",
     prompt: "How can teachers create classes and earn on Sadhya?"
-  },
-  {
-    title: "AI Features",
-    icon: Bot,
-    desc: "RAG, OCR & Voice learning",
-    prompt: "Tell me about Sadhya's AI features, OCR, and Podcast Studio."
-  },
-  {
-    title: "Platform",
-    icon: Settings,
-    desc: "Pricing, Referrals & Account",
-    prompt: "Tell me about Sadhya pricing plans and referral rewards."
   }
 ];
 

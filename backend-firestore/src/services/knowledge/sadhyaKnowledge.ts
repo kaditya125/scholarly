@@ -72,26 +72,54 @@ export const SADHYA_MASTER_KNOWLEDGE = `
 
 ---
 
-## 4. Plans & Pricing
-### A. Free Plan (₹0 / forever)
-- **Cost**: 100% Free, no credit card required.
-- **Included**: 24/7 AI tutor access, scan-and-solve OCR, personal notebooks, practice quizzes, and adaptive baseline assessments (within fair-use limits).
+## 4. Plans, Pricing & Launch Event Offer
+### A. Sadhya 1.0 Launch Celebration Offer (Limited Time)
+- **Special Early-Adopter Pricing**: Flat 60% discount on Sadhya Pro during the launch celebration.
+- **Grandfathered Lifetime Rate**: Early adopters who subscribe during the launch event lock in their promotional rate (₹199/month or ₹1,788/year = ₹149/month) for as long as their subscription remains active, even after public prices revert to regular rates.
+- **7-Day Money-Back Guarantee**: 100% full refund within 7 days, no questions asked.
 
-### B. Pro Monthly (₹499 / month)
-- **Cost**: ₹499 per month.
-- **Included**: Lifted fair-use limits, AI Podcast Studio, generated video lessons, full-length adaptive mock tests with deep analytics, priority queue processing, and human support.
-- **Refund Policy**: 7-day no-questions-asked full money-back guarantee.
+### B. Free Plan (Student Starter — ₹0 / forever)
+- **Cost**: 100% Free forever, no credit card required.
+- **Included Features**:
+  - 25 AI tutoring queries per day with transparent multi-stage reasoning traces.
+  - Official syllabus grounding (SSC CGL/CHSL, UPSC CSE, JEE Main/Advanced, NEET-UG, IBPS/SBI, State PSCs).
+  - 10 Camera Snap & Solve OCR questions per day with LaTeX mathematical derivations.
+  - 3 Smart Notebooks (upload up to 25MB per document with exact source citations).
+  - Topic-wise PYQ practice quizzes & adaptive baseline assessments.
+  - Community study groups, discussion boards, and national leaderboards.
+  - Multilingual support: English, Hindi, and natural Hinglish.
 
-### C. Pro Yearly (₹5,088 / year — ₹424 / month)
-- **Cost**: ₹5,088 billed upfront annually (15% discount compared to monthly billing).
-- **Included**: All Pro features for a full 12 months with the 7-day refund window.
+### C. Pro Plan (Launch Event: ₹199/mo or ₹1,788/yr = ₹149/mo)
+- **Regular Price**: ₹499/month or ₹5,088/year.
+- **Launch Offer Price**:
+  - **Monthly**: ₹199 / month (Billed monthly, cancel anytime).
+  - **Yearly**: ₹1,788 / year (**₹149 / month**, Save 70% against regular annual price).
+- **Included Pro Capabilities**:
+  - **Unlimited AI Tutoring & Reasoning**: No daily caps across all covered competitive exams.
+  - **Multi-Voice AI Podcast Studio**: Convert any topic, syllabus module, or uploaded PDF into a cinematic 2-speaker conversational podcast with MP3 export for offline listening.
+  - **Unlimited Camera Snap & Solve**: Instant OCR and step-by-step solutions for printed and handwritten questions.
+  - **Unlimited Smart Notebooks**: Upload documents up to 200MB per file with high-accuracy OCR and page-jump citations.
+  - **Full-Length Adaptive Mock Tests**: Timed exam-simulated mocks with real-time National Percentile ranking, accuracy velocity metrics, and diagnostic weak-topic heatmaps.
+  - **Generative Media Studio**: AI Video Lesson generator, interactive concept Mind Maps, and presentation slide deck exports.
+  - **Automation Studio**: Scheduled daily spaced-repetition revision sets delivered automatically.
+  - **Priority Processing**: Fast-lane GPU compute queue with access to flagship Gemini 2.5 Pro and high-throughput Groq models.
+  - **Priority Support**: 24/7 dedicated assistance from human specialists.
 
-### D. Institutional & School Plans
-- Custom per-seat pricing for schools, colleges, and coaching institutes.
-- Contact sales@sadhya.app for tailored onboarding and institutional LMS integrations.
+### D. Institutional & Academy Tier
+- **Target Audience**: Coaching institutes, schools, colleges, and batch educators.
+- **Cost**: Custom per-seat pricing based on cohort size. Contact sales@sadhya.app.
+- **Included Capabilities**:
+  - Full Teacher LMS Workspace with live WebRTC video classes (powered by 100ms) and student tracking.
+  - Central student seat licensing and administrative dashboard.
+  - Custom question banks and canonical institutional syllabus upload.
+  - Automated assignment grading and cohort performance matrix.
+  - Custom institutional branding on podcasts, notes, and video lessons.
+  - Dedicated Account Manager, custom SLAs, invoicing, and PO support.
 
-### E. Payment Methods
-- UPI (Google Pay, PhonePe, Paytm, etc.), Credit/Debit Cards (Visa, Mastercard, RuPay), and Netbanking processed securely through Razorpay.
+### E. Payment Methods & Security
+- 256-Bit SSL encrypted payments processed securely via Razorpay.
+- Supports UPI (Google Pay, PhonePe, Paytm, BHIM), Credit/Debit Cards (Visa, Mastercard, RuPay), and Netbanking.
+- Card details never touch Sadhya servers.
 
 ---
 
