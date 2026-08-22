@@ -423,7 +423,7 @@ function AssistantMessageView({
                 <button
                   key={idx}
                   onClick={() => onSend(chip)}
-                  className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-slate-100 dark:bg-white/5 hover:bg-[#c8e558]/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all flex items-center gap-1"
+                  className="px-3 py-1.5 rounded-full text-[12px] font-medium border border-slate-300/80 dark:border-white/15 text-slate-700 dark:text-slate-300 hover:border-[#c8e558] hover:text-slate-900 dark:hover:text-[#c8e558] transition-all flex items-center gap-1 bg-transparent"
                 >
                   <span>{chip}</span>
                   <ArrowRight className="w-3 h-3 opacity-60" />
