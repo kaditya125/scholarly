@@ -125,7 +125,31 @@ html, body {
    column. KaTeX doesn't wrap math, so without this a long $$...$$ block pushes the whole
    message bubble wider than the viewport instead of scrolling within itself. */
 .katex-display {
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 2px;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  max-width: 100% !important;
+  padding: 4px 0 !important;
+  margin: 0.8em 0 !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.katex-display > .katex {
+  max-width: 100% !important;
+  text-align: left;
+}
+
+.katex {
+  max-width: 100%;
+}
+
+/* Ensure math and prose never overflow mobile screen width */
+.prose {
+  max-width: 100% !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+
+.prose :where(p, li, span, h1, h2, h3, h4, blockquote) {
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
 }
