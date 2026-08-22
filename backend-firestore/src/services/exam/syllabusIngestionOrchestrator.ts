@@ -169,6 +169,9 @@ export class SyllabusIngestionOrchestrator {
     try {
       archived = await examDocumentStorageService.archiveFromUrl({
         examId, cycleId, docType: 'syllabus', sourceUrl: verification.normalizedUrl,
+        // Passing the exam enables redirect re-validation (J.11): authority is re-established at
+        // every hop, so a 302 off the official domain cannot smuggle bytes into provenance.
+        exam,
       });
     } catch (err: any) {
       const retrievalRejection = err instanceof DocumentRetrievalError;

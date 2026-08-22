@@ -12,6 +12,7 @@ import crypto from 'crypto';
 import axios from 'axios';
 import { logger } from '../../utils/logger';
 import { examRepository } from '../../repositories/exam.repository';
+import { fetchOfficialDocument } from './officialFetch';
 
 export interface ArchivedDocumentResult {
   storagePath: string;
@@ -193,21 +194,55 @@ export class ExamDocumentStorageService {
     cycleId: string;
     docType: 'syllabus' | 'notification';
     sourceUrl: string;
+    /**
+     * The exam whose official domains authorise this fetch.
+     *
+     * Required for redirect re-validation (J.11): without the exam we cannot re-check authority at
+     * each hop, and a redirect off the official domain is exactly the case this guards.
+     */
+    exam?: import('../../types/exam.types').ExamMaster;
   }): Promise<ArchivedDocumentResult> {
-    const { examId, cycleId, docType, sourceUrl } = params;
+    const { examId, cycleId, docType, sourceUrl, exam } = params;
 
     logger.info(`[ExamDocumentStorage] Fetching official document from verified source: ${sourceUrl}`);
 
-    const response = await axios.get(sourceUrl, {
-      responseType: 'arraybuffer',
-      timeout: 30000,
-      headers: {
-        'User-Agent': 'Sadhya-Exam-Intelligence-Archiver/1.0',
-      },
-    });
+    /*
+     * REDIRECT AND SSRF DEFENCE (J.11).
+     *
+     * This was a plain `axios.get` with no `maxRedirects`, so axios followed up to five hops while
+     * domain authority had been checked on the ORIGINAL url only. An official URL answering 302 to
+     * a hostile host would have had that host's bytes hashed and archived as official provenance —
+     * the URL that served the bytes is the only one that matters, and it was never checked.
+     *
+     * `fetchOfficialDocument` re-verifies authority AND resolves DNS to reject private, loopback,
+     * link-local and cloud-metadata addresses at every hop. When no exam is supplied the old
+     * single-hop behaviour is used with redirects disabled, so a caller that cannot provide the
+     * exam still cannot be redirected off-domain.
+     */
+    let buffer: Buffer;
+    let contentType: string;
 
-    const buffer = Buffer.from(response.data);
-    const contentType = String(response.headers['content-type'] || 'application/pdf');
+    if (exam) {
+      const fetched = await fetchOfficialDocument({ url: sourceUrl, exam });
+      buffer = fetched.buffer;
+      contentType = fetched.contentType;
+      if (fetched.redirectChain.length > 0) {
+        logger.info('[ExamDocumentStorage] followed official redirects', {
+          from: sourceUrl, to: fetched.finalUrl, hops: fetched.redirectChain.length,
+        });
+      }
+    } else {
+      const response = await axios.get(sourceUrl, {
+        responseType: 'arraybuffer',
+        timeout: 30000,
+        maxRedirects: 0, // never follow a redirect we cannot re-authorise
+        headers: {
+          'User-Agent': 'Sadhya-Exam-Intelligence-Archiver/1.0',
+        },
+      });
+      buffer = Buffer.from(response.data);
+      contentType = String(response.headers['content-type'] || 'application/pdf');
+    }
 
     // Nothing is hashed or stored until the payload is proven to be a document. A soft-404 that
     // returns the site homepage with HTTP 200 must never become the provenance of a syllabus.
