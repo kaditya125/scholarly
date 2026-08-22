@@ -830,13 +830,19 @@ export default function LandingPage() {
                   <div key={idx} className="text-center">
                     {stat.isLive ? (
                       <div className="flex items-center justify-center gap-2">
-                        <span className="relative flex h-2.5 w-2.5">
+                        <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c8e558] opacity-75" />
                           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#8ba32b] dark:bg-[#c8e558]" />
                         </span>
-                        <p className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">
-                          {stat.value !== null ? stat.value : 'Active'}
-                        </p>
+                        {stat.value !== null ? (
+                          <p className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">
+                            {stat.value}
+                          </p>
+                        ) : (
+                          <p className="text-[14px] sm:text-[15px] font-semibold tracking-wide text-slate-500 dark:text-slate-400">
+                            Active
+                          </p>
+                        )}
                       </div>
                     ) : (
                       <p className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">
