@@ -216,6 +216,13 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
     setIsNewMenuOpen(false);
     setIsMoreFlyoutOpen(false);
   }, [location.pathname]);
+
+  // Listen to open-mobile-sidebar event dispatched from embedded page header bars
+  useEffect(() => {
+    const handleOpen = () => setIsMobileMenuOpen(true);
+    window.addEventListener('open-mobile-sidebar', handleOpen);
+    return () => window.removeEventListener('open-mobile-sidebar', handleOpen);
+  }, []);
   const moreFlyoutRef = useRef<HTMLDivElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const [moreFlyoutStyle, setMoreFlyoutStyle] = useState<React.CSSProperties>({});
@@ -861,10 +868,9 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
-        {/* Floating hamburger on mobile for full-bleed immersive routes */}
+        {/* Floating hamburger on mobile for full-bleed immersive routes without header bar */}
         {(location.pathname.startsWith('/podcasts') ||
-          location.pathname.startsWith('/community') ||
-          location.pathname.startsWith('/chat')) && (
+          location.pathname.startsWith('/community')) && (
           <button
             onClick={() => setIsMobileMenuOpen(true)}
             className="fixed top-3.5 left-3.5 z-30 md:hidden w-9 h-9 rounded-xl bg-white/90 dark:bg-[#1c1c1f]/90 backdrop-blur-md shadow-md border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-gray-200 active:scale-95 transition-all"
@@ -991,7 +997,7 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                    : "p-4 md:p-8 pt-4 md:pt-6"
                )}
              >
-               {children || <Outlet />}
+               {children || <Outlet context={{ openMobileMenu: () => setIsMobileMenuOpen(true) }} />}
              </motion.div>
            </AnimatePresence>
         </main>

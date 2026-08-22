@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Plus,
   Loader2,
+  Menu,
   Clock,
   Trash2,
   Settings,
@@ -925,23 +926,27 @@ export default function Chat() {
           </div>
         )}
 
-        {/* Header — only actions that are actually backed by an API: the session title
-            (generated server-side after the first exchange), New Chat, and Delete.
-            No Share/Private here: there is no chat-session sharing endpoint. */}
-        <div className="flex items-center gap-2 px-6 h-12 sm:h-14 shrink-0 border-b border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-[#141416]/90 backdrop-blur-md">
-          <span className="text-[13.5px] font-semibold text-slate-900 dark:text-white truncate">
+        {/* Header — with mobile menu button integrated directly into the heading bar */}
+        <div className="flex items-center gap-2 px-3 sm:px-6 h-12 sm:h-14 shrink-0 border-b border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-[#141416]/90 backdrop-blur-md z-10">
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-mobile-sidebar'))}
+            className="md:hidden p-2 -ml-1 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.08] rounded-lg transition-colors shrink-0"
+            title="Open Menu"
+            aria-label="Open navigation menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
+          <span className="text-[13.5px] font-semibold text-slate-900 dark:text-white truncate max-w-[150px] sm:max-w-[280px] md:max-w-none">
             {sessions.find((s) => s.sessionId === currentSessionId)?.title || 'New AI chat'}
           </span>
 
-          {/* Every chat session is owner-scoped server-side (chat.service.getSessionHistory
-              rejects a requesterId that doesn't own the session), so "Private" is an
-              accurate description of the current state rather than decoration. */}
-          <span className="inline-flex items-center gap-1 shrink-0 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] border border-slate-200/60 dark:border-white/10 text-slate-500 dark:text-slate-400 text-[11px] font-medium">
+          <span className="hidden sm:inline-flex items-center gap-1 shrink-0 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] border border-slate-200/60 dark:border-white/10 text-slate-500 dark:text-slate-400 text-[11px] font-medium">
             <Lock className="w-3 h-3 text-slate-400 dark:text-slate-500" strokeWidth={2} />
             Private
           </span>
 
-          <div className="ml-auto flex items-center gap-1">
+          <div className="ml-auto flex items-center gap-1 shrink-0">
             <button
               onClick={() => setIsShareOpen(true)}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12.5px] font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
@@ -1315,8 +1320,8 @@ export default function Chat() {
         )}
 
         {/* Input Box - absolute positioned at bottom */}
-        <div className="absolute bottom-3 left-0 right-0 flex flex-col items-center px-4 md:px-8">
-          <div className="w-full max-w-3xl bg-white dark:bg-[#141416] border border-slate-200/90 dark:border-white/10 rounded-2xl sm:rounded-3xl flex flex-col shadow-xs focus-within:border-slate-400 dark:focus-within:border-white/25 focus-within:shadow-sm transition-all">
+        <div className="absolute bottom-2.5 sm:bottom-3 left-0 right-0 flex flex-col items-center px-3 sm:px-4 md:px-8 pointer-events-none z-20">
+          <div className="w-full max-w-3xl bg-white dark:bg-[#141416] border border-slate-200/90 dark:border-white/10 rounded-2xl sm:rounded-3xl flex flex-col shadow-xs focus-within:border-slate-400 dark:focus-within:border-white/25 focus-within:shadow-sm transition-all pointer-events-auto">
 
               {/* Scope pill — top-right */}
               <div className="flex items-start justify-end px-3 pt-3 -mb-1">
