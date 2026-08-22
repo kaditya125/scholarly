@@ -1,7 +1,7 @@
-import React, { useState, Fragment } from 'react';
+import { useState, Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
-import { Check, X, ArrowRight, Sparkles, Zap, Flame, Shield, HelpCircle, ChevronDown } from 'lucide-react';
+import { Check, ArrowRight, Sparkles, ChevronDown } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import {
   SITE,
@@ -34,43 +34,43 @@ const TIERS: Tier[] = [
     tagline: 'Essential AI study companion for every student.',
     priceMonthly: 0,
     features: [
-      '25 AI tutoring queries per day with full reasoning trace',
+      '25 AI tutoring queries / day with step-by-step reasoning',
       'Official syllabus grounding (SSC, UPSC, JEE, NEET, State PSCs)',
-      '10 Camera Snap & Solve OCR questions per day',
+      '10 Camera Snap & Solve questions / day',
       '3 Smart Notebooks (up to 25MB per document)',
       'Topic-wise PYQ practice quizzes & baseline assessment',
-      'Community study groups, discussions & leaderboards',
-      'Full support for English, Hindi & Hinglish',
+      'Discussions, study groups and the leaderboard',
+      'English, Hindi and Hinglish',
     ],
-    cta: { label: 'Get started free', to: '/signup' },
-    footnote: '100% free forever. No credit card required.',
+    cta: { label: 'Start free', to: '/signup' },
+    footnote: 'No card required.',
   },
   {
     id: 'pro',
     name: 'Sadhya Pro',
-    badge: '🚀 Launch Special — 60% Off',
+    badge: 'Launch Special · 60% Off',
     tagline: 'Uncapped intelligence & creative studios for serious aspirants.',
     priceMonthly: PRO_MONTHLY_INR,
     regularPriceMonthly: PRO_REGULAR_MONTHLY_INR,
     features: [
       'Unlimited AI tutoring & reasoning queries across all exams',
-      'Dual-Voice AI Podcast Studio — turn notes/PDFs into 2-speaker audio',
-      'Unlimited Camera Snap & Solve with step-by-step LaTeX working',
+      'Dual-Voice AI Podcast Studio — turn notes/PDFs into audio',
+      'Unlimited Camera Snap & Solve with LaTeX math derivations',
       'Unlimited Smart Notebooks (up to 200MB per file with full OCR)',
-      'Full-length adaptive mock tests with National Percentile ranking',
+      'Full-length adaptive mock tests with National Percentile',
       'AI Video Lesson generator & visual Mind Map / Slide creator',
-      'Automation Studio — daily automated spaced-repetition revision',
-      'Priority Fast-Lane processing with flagship LLM routing',
-      'Priority 1-on-1 human support',
+      'Automation Studio — daily scheduled revision workflows',
+      'Priority fast-lane processing with flagship AI routing',
+      'Priority support from a human',
     ],
-    cta: { label: 'Claim Launch Offer', to: '/checkout?plan=pro' },
+    cta: { label: 'Get Pro (Launch Offer)', to: '/checkout?plan=pro' },
     featured: true,
-    footnote: 'Lock in this launch rate for life. 7-day money-back guarantee.',
+    footnote: 'Lock in this launch rate for life. 7-day refund guarantee.',
   },
   {
     id: 'institution',
-    name: 'Academy & Institution',
-    tagline: 'For coaching centres, schools, colleges, and batch educators.',
+    name: 'Institution',
+    tagline: 'For schools, coaching centres and batch educators.',
     priceMonthly: null,
     features: [
       'Bulk student seats with central license management',
@@ -80,8 +80,8 @@ const TIERS: Tier[] = [
       'Custom institutional branding on podcasts, notes & video lessons',
       'Dedicated Account Manager, invoicing & PO support',
     ],
-    cta: { label: 'Talk to Enterprise', href: `mailto:${SITE.email.sales}?subject=Sadhya%20for%20Institutions%20%E2%80%94%20Launch%20Inquiry` },
-    footnote: 'Priced per seat based on batch size. Custom SLAs available.',
+    cta: { label: 'Talk to us', href: `mailto:${SITE.email.sales}?subject=Sadhya%20for%20Institutions%20%E2%80%94%20Launch%20Inquiry` },
+    footnote: 'Priced per seat, based on cohort size.',
   },
 ];
 
@@ -95,14 +95,12 @@ interface ComparisonRow {
 
 interface ComparisonCategory {
   title: string;
-  icon: any;
   rows: ComparisonRow[];
 }
 
 const COMPARISON_CATEGORIES: ComparisonCategory[] = [
   {
     title: 'AI Tutoring & Core Intelligence',
-    icon: Sparkles,
     rows: [
       {
         feature: 'Daily AI Tutoring Queries',
@@ -127,7 +125,7 @@ const COMPARISON_CATEGORIES: ComparisonCategory[] = [
       },
       {
         feature: 'Camera Snap & Solve OCR',
-        hint: 'Photo-to-solution for complex printed or handwritten questions with LaTeX math',
+        hint: 'Photo-to-solution for printed or handwritten questions with LaTeX math',
         free: '10 / day',
         pro: 'Unlimited',
         institution: 'Unlimited',
@@ -150,11 +148,10 @@ const COMPARISON_CATEGORIES: ComparisonCategory[] = [
   },
   {
     title: 'Audio, Video & Creative Studios',
-    icon: Zap,
     rows: [
       {
         feature: 'Dual-Voice AI Podcast Studio',
-        hint: 'Turns any topic, syllabus module, or uploaded PDF into engaging 2-speaker audio conversations',
+        hint: 'Turns any topic, syllabus module, or uploaded PDF into 2-speaker audio conversations',
         free: '3 preview / mo',
         pro: 'Unlimited Studio',
         institution: 'Unlimited + Voice Cloning',
@@ -190,8 +187,7 @@ const COMPARISON_CATEGORIES: ComparisonCategory[] = [
     ],
   },
   {
-    title: 'Adaptive Mock Tests & Assessment Engine',
-    icon: Flame,
+    title: 'Adaptive Mock Tests & Assessment',
     rows: [
       {
         feature: 'Topic-wise PYQ Practice Sets',
@@ -225,7 +221,6 @@ const COMPARISON_CATEGORIES: ComparisonCategory[] = [
   },
   {
     title: 'Smart Notebooks & Document Hub',
-    icon: HelpCircle,
     rows: [
       {
         feature: 'Smart Document Notebooks',
@@ -259,7 +254,6 @@ const COMPARISON_CATEGORIES: ComparisonCategory[] = [
   },
   {
     title: 'Automation & Productivity Workflows',
-    icon: Sparkles,
     rows: [
       {
         feature: 'Automation Studio Revision Workflows',
@@ -286,7 +280,6 @@ const COMPARISON_CATEGORIES: ComparisonCategory[] = [
   },
   {
     title: 'Performance, Security & Support',
-    icon: Shield,
     rows: [
       {
         feature: 'GPU Processing Queue Priority',
@@ -299,7 +292,7 @@ const COMPARISON_CATEGORIES: ComparisonCategory[] = [
         feature: 'Customer Support',
         hint: 'Direct assistance for questions, study guidance, and platform help',
         free: 'Community & Guide',
-        pro: '24/7 Priority Human',
+        pro: 'Priority Human Support',
         institution: 'Dedicated Account Lead',
       },
       {
@@ -317,14 +310,14 @@ function Price({ tier, billing }: { tier: Tier; billing: Billing }) {
   if (tier.priceMonthly === null) {
     return (
       <div className="flex items-baseline gap-1.5">
-        <span className="text-[34px] sm:text-[38px] leading-none font-bold tracking-[-0.03em]">Custom</span>
+        <span className="text-[34px] sm:text-[38px] leading-none font-semibold tracking-[-0.03em]">Custom</span>
       </div>
     );
   }
   if (tier.priceMonthly === 0) {
     return (
       <div className="flex items-baseline gap-1.5">
-        <span className="text-[34px] sm:text-[38px] leading-none font-bold tracking-[-0.03em]">₹0</span>
+        <span className="text-[34px] sm:text-[38px] leading-none font-semibold tracking-[-0.03em]">₹0</span>
         <span className="text-[13.5px] text-slate-500 dark:text-gray-400">forever</span>
       </div>
     );
@@ -332,27 +325,25 @@ function Price({ tier, billing }: { tier: Tier; billing: Billing }) {
   const perMonth = billing === 'yearly' ? PRO_YEARLY_PER_MONTH_INR : PRO_MONTHLY_INR;
   const regularPerMonth = PRO_REGULAR_MONTHLY_INR;
   const yearlyTotal = PRO_YEARLY_TOTAL_INR;
-  const regularYearlyTotal = PRO_REGULAR_YEARLY_TOTAL_INR;
 
   return (
     <div>
       <div className="flex items-baseline gap-2 flex-wrap">
-        <span className="text-[34px] sm:text-[38px] leading-none font-bold tracking-[-0.03em] text-slate-900 dark:text-white">
+        <span className="text-[34px] sm:text-[38px] leading-none font-semibold tracking-[-0.03em] text-slate-900 dark:text-white">
           ₹{perMonth}
         </span>
         <span className="text-[13.5px] text-slate-500 dark:text-gray-400">/month</span>
-        <span className="text-[14px] line-through text-slate-400 dark:text-gray-500 font-normal">
+        <span className="text-[13.5px] line-through text-slate-400 dark:text-gray-500 font-normal">
           ₹{regularPerMonth}/mo
         </span>
       </div>
       <p className="mt-1.5 text-[12.5px] text-slate-500 dark:text-gray-400 min-h-[1.25rem]">
         {billing === 'yearly' ? (
           <span>
-            <strong className="text-slate-700 dark:text-gray-200">₹{yearlyTotal.toLocaleString('en-IN')}</strong> billed annually{' '}
-            <span className="line-through text-slate-400 dark:text-gray-500">(₹{regularYearlyTotal.toLocaleString('en-IN')})</span>
+            ₹{yearlyTotal.toLocaleString('en-IN')} billed once a year <span className="text-[#7d9a1f] dark:text-[#c8e558] font-medium">(Save 70%)</span>
           </span>
         ) : (
-          'Billed monthly • Cancel anytime'
+          'Billed monthly · Cancel anytime'
         )}
       </p>
     </div>
@@ -362,17 +353,15 @@ function Price({ tier, billing }: { tier: Tier; billing: Billing }) {
 function ValueCell({ val }: { val: string | boolean }) {
   if (typeof val === 'boolean') {
     return val ? (
-      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#c8e558]/20 text-[#728c1c] dark:text-[#c8e558]">
+      <span className="inline-flex items-center justify-center text-[#728c1c] dark:text-[#c8e558]">
         <Check className="w-4 h-4" strokeWidth={2.5} />
       </span>
     ) : (
-      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-gray-500">
-        <X className="w-3.5 h-3.5" strokeWidth={2} />
-      </span>
+      <span className="text-slate-300 dark:text-gray-600 font-light">—</span>
     );
   }
   return (
-    <span className="text-[13px] font-medium text-slate-700 dark:text-gray-200">
+    <span className="text-[13px] text-slate-700 dark:text-gray-200">
       {val}
     </span>
   );
@@ -390,115 +379,97 @@ export default function PricingSection({
   const reduced = useReducedMotion();
 
   return (
-    <section id={id} className="scroll-mt-16 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-      {/* ── Launch Event Announcement Banner ── */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="mb-8 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-[#c8e558]/20 to-emerald-500/10 border border-[#c8e558]/40 dark:border-[#c8e558]/30 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left"
-      >
+    <section id={id} className="scroll-mt-16 max-w-[1160px] mx-auto px-5 sm:px-8 py-20 sm:py-28">
+      {/* ── Launch Callout (Minimalist & Sleek) ── */}
+      <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.02]">
         <div className="flex items-center gap-3">
-          <span className="w-8 h-8 rounded-xl bg-[#c8e558] text-slate-900 flex items-center justify-center shrink-0 shadow-sm font-bold text-sm">
-            🚀
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#c8e558] text-slate-900 shrink-0">
+            Launch Special
           </span>
-          <div>
-            <div className="text-[13px] sm:text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2 justify-center sm:justify-start">
-              <span>Sadhya 1.0 Launch Celebration Offer</span>
-              <span className="hidden md:inline-flex px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-[#c8e558] text-slate-900">
-                LIMITED TIME
-              </span>
-            </div>
-            <p className="text-[12px] sm:text-[12.5px] text-slate-600 dark:text-gray-300">
-              Get <strong>60% off</strong> on Sadhya Pro. Lock in grandfathered pricing for your entire preparation journey.
-            </p>
-          </div>
+          <p className="text-[13px] text-slate-600 dark:text-gray-300">
+            Flat <strong>60% off</strong> on Pro for early adopters. Grandfathered rate locked in for life.
+          </p>
         </div>
 
         <Link
           to="/checkout?plan=pro&billing=yearly"
-          className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12.5px] font-semibold hover:opacity-90 transition-opacity shadow-xs"
+          className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-slate-900 dark:text-white underline underline-offset-4 hover:opacity-80 transition-opacity shrink-0"
         >
-          Claim Launch Pass (₹149/mo) →
+          Claim ₹149/mo pass <ArrowRight className="w-3.5 h-3.5" />
         </Link>
-      </motion.div>
+      </div>
 
       {/* ── Heading Block ── */}
-      <div className="max-w-[42rem]">
-        <p className="text-[12px] font-semibold uppercase tracking-[0.13em] text-[#8ba32b] dark:text-[#c8e558]">
-          Transparent Plans &amp; Launch Pricing
+      <div className="max-w-[36rem]">
+        <p className="text-[12px] font-semibold uppercase tracking-[0.13em] text-slate-500 dark:text-gray-400">
+          Plans
         </p>
-        <Heading className="mt-2.5 text-[28px] sm:text-[36px] lg:text-[42px] leading-[1.12] font-bold tracking-[-0.03em]">
-          Prepare without limits. Built for qualifiers.
+        <Heading className="mt-3 text-[28px] sm:text-[34px] lg:text-[40px] leading-[1.12] font-semibold tracking-[-0.03em]">
+          Start free. Upgrade when it&rsquo;s carrying real weight.
         </Heading>
-        <p className="mt-3.5 text-[15px] sm:text-[16.5px] leading-relaxed text-slate-500 dark:text-gray-400">
-          Start free with core reasoning and official syllabus practice. Upgrade to Pro for unlimited audio podcasts, full-length adaptive mocks, video lessons, and priority fast-lane computing.
+        <p className="mt-4 text-[15.5px] sm:text-[16.5px] leading-relaxed text-slate-500 dark:text-gray-400">
+          The tutor, your notebooks and the practice engine are free to use. Pro lifts the limits
+          and adds the studio — for the months when preparation stops being casual.
         </p>
       </div>
 
       {/* ── Billing toggle ── */}
-      <div className="mt-8 flex items-center gap-4 flex-wrap">
-        <div className="inline-flex items-center p-1 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03]">
-          {(['monthly', 'yearly'] as Billing[]).map((b) => (
-            <button
-              key={b}
-              type="button"
-              onClick={() => setBilling(b)}
-              aria-pressed={billing === b}
-              className={cn(
-                'relative h-9 px-4 rounded-lg text-[13.5px] font-medium transition-colors cursor-pointer',
-                billing === b
-                  ? 'text-slate-900 dark:text-white font-semibold'
-                  : 'text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200',
-              )}
-            >
-              {billing === b && (
-                <motion.span
-                  layoutId="billing-pill"
-                  className="absolute inset-0 rounded-lg bg-white dark:bg-white/[0.09] shadow-sm"
-                  transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 400, damping: 32 }}
-                />
-              )}
-              <span className="relative capitalize">{b}</span>
-              {b === 'yearly' && (
-                <span className="relative ml-2 text-[11px] font-bold text-[#7d9a1f] dark:text-[#c8e558] bg-[#c8e558]/20 px-1.5 py-0.5 rounded-full">
-                  SAVE 70%
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        <span className="text-[12.5px] text-slate-500 dark:text-gray-400">
-          💡 Annual billing includes an additional <strong>25% discount</strong> on top of launch rates.
-        </span>
+      <div className="mt-9 inline-flex items-center p-1 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03]">
+        {(['monthly', 'yearly'] as Billing[]).map((b) => (
+          <button
+            key={b}
+            type="button"
+            onClick={() => setBilling(b)}
+            aria-pressed={billing === b}
+            className={cn(
+              'relative h-9 px-4 rounded-lg text-[13.5px] font-medium transition-colors cursor-pointer',
+              billing === b
+                ? 'text-slate-900 dark:text-white'
+                : 'text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200',
+            )}
+          >
+            {billing === b && (
+              <motion.span
+                layoutId="billing-pill"
+                className="absolute inset-0 rounded-lg bg-white dark:bg-white/[0.09] shadow-sm"
+                transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 400, damping: 32 }}
+              />
+            )}
+            <span className="relative capitalize">{b}</span>
+            {b === 'yearly' && (
+              <span className="relative ml-2 text-[11.5px] font-semibold text-[#7d9a1f] dark:text-[#c8e558]">
+                −70% Launch
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
       {/* ── Tiers Grid ── */}
-      <div className="mt-8 grid gap-5 sm:gap-6 lg:grid-cols-3 items-stretch">
+      <div className="mt-8 grid gap-4 sm:gap-5 lg:grid-cols-3 items-start">
         {TIERS.map((tier) => {
           const to = tier.cta.to && tier.id === 'pro' ? `${tier.cta.to}&billing=${billing}` : tier.cta.to;
           return (
             <div
               key={tier.id}
               className={cn(
-                'relative flex flex-col rounded-3xl border p-6 sm:p-7 transition-all',
+                'relative h-full flex flex-col rounded-2xl border p-6 sm:p-7',
                 tier.featured
-                  ? 'border-[#c8e558] dark:border-[#c8e558]/70 bg-white dark:bg-[#141416] shadow-[0_20px_60px_-20px_rgba(140,170,40,0.45)] lg:-mt-2 lg:pb-8 ring-1 ring-[#c8e558]/50'
+                  ? 'border-[#c8e558] dark:border-[#c8e558]/60 bg-white dark:bg-[#141416] shadow-[0_18px_50px_-24px_rgba(140,170,40,0.4)] lg:-mt-3 lg:pb-9'
                   : 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416]',
               )}
             >
               {tier.featured && (
-                <span className="absolute -top-3.5 left-6 sm:left-7 inline-flex items-center gap-1.5 h-7 px-3 rounded-full bg-[#c8e558] text-slate-950 text-[11.5px] font-bold shadow-xs">
-                  <Sparkles className="w-3.5 h-3.5" strokeWidth={2.5} />
+                <span className="absolute -top-3 left-6 sm:left-7 inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full bg-[#c8e558] text-slate-900 text-[11.5px] font-semibold">
+                  <Sparkles className="w-3 h-3" strokeWidth={2.5} />
                   {tier.badge || 'Launch Special'}
                 </span>
               )}
 
-              <h3 className="text-[18px] font-bold tracking-[-0.015em] text-slate-900 dark:text-white">
+              <h3 className="text-[17px] font-semibold tracking-[-0.015em] text-slate-900 dark:text-white">
                 {tier.name}
               </h3>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-slate-500 dark:text-gray-400 min-h-[2.4rem]">
+              <p className="mt-1.5 text-[13.5px] leading-relaxed text-slate-500 dark:text-gray-400 min-h-[2.6rem]">
                 {tier.tagline}
               </p>
 
@@ -510,9 +481,9 @@ export default function PricingSection({
                 <Link
                   to={to}
                   className={cn(
-                    'mt-6 inline-flex items-center justify-center gap-2 h-11 rounded-xl text-[14px] font-bold transition-all shadow-xs active:scale-[0.98]',
+                    'mt-6 inline-flex items-center justify-center gap-2 h-11 rounded-xl text-[14px] font-semibold transition-colors',
                     tier.featured
-                      ? 'bg-[#c8e558] hover:bg-[#bcd94c] text-slate-950 shadow-md shadow-[#c8e558]/20'
+                      ? 'bg-[#c8e558] hover:bg-[#bcd94c] active:bg-[#b0cd40] text-slate-900'
                       : 'border border-slate-200 dark:border-white/12 text-slate-800 dark:text-gray-100 hover:bg-slate-50 dark:hover:bg-white/[0.05]',
                   )}
                 >
@@ -522,7 +493,7 @@ export default function PricingSection({
               ) : (
                 <a
                   href={tier.cta.href}
-                  className="mt-6 inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-slate-200 dark:border-white/12 text-[14px] font-bold text-slate-800 dark:text-gray-100 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors"
+                  className="mt-6 inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-slate-200 dark:border-white/12 text-[14px] font-semibold text-slate-800 dark:text-gray-100 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors"
                 >
                   {tier.cta.label}
                   <ArrowRight className="w-4 h-4" strokeWidth={2.25} />
@@ -531,7 +502,7 @@ export default function PricingSection({
 
               <ul className="mt-7 space-y-3 flex-1">
                 {tier.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5">
+                  <li key={f} className="flex gap-2.5">
                     <Check
                       className={cn(
                         'w-4 h-4 mt-0.5 shrink-0',
@@ -539,7 +510,7 @@ export default function PricingSection({
                       )}
                       strokeWidth={2.5}
                     />
-                    <span className="text-[13px] leading-relaxed text-slate-600 dark:text-gray-300">
+                    <span className="text-[13.5px] leading-relaxed text-slate-600 dark:text-gray-300">
                       {f}
                     </span>
                   </li>
@@ -547,7 +518,7 @@ export default function PricingSection({
               </ul>
 
               {tier.footnote && (
-                <p className="mt-6 pt-4 border-t border-slate-100 dark:border-white/[0.07] text-[12px] leading-relaxed text-slate-500 dark:text-gray-400">
+                <p className="mt-6 pt-5 border-t border-slate-100 dark:border-white/[0.07] text-[12px] leading-relaxed text-slate-500 dark:text-gray-400">
                   {tier.footnote}
                 </p>
               )}
@@ -556,74 +527,72 @@ export default function PricingSection({
         })}
       </div>
 
-      {/* ── Interactive Side-by-Side Feature Comparison Matrix ── */}
-      <div className="mt-20 pt-10 border-t border-slate-200 dark:border-white/10">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+      {/* ── Sleek Side-by-Side Feature Comparison Matrix ── */}
+      <div className="mt-20 pt-10 border-t border-slate-100 dark:border-white/[0.07]">
+        <div className="flex items-center justify-between gap-4 mb-6">
           <div>
-            <h3 className="text-[22px] sm:text-[26px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">
-              Full Plan Comparison Matrix
+            <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">
+              Compare features across plans
             </h3>
-            <p className="mt-1 text-[14px] text-slate-500 dark:text-gray-400">
-              Detailed breakdown of every feature, quota limit, and entitlement across all plans.
+            <p className="mt-1 text-[13.5px] text-slate-500 dark:text-gray-400">
+              A detailed overview of capabilities, quotas, and limits.
             </p>
           </div>
 
           <button
+            type="button"
             onClick={() => setShowComparison(!showComparison)}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] text-[12.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
+            className="inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
           >
-            {showComparison ? 'Collapse Matrix' : 'Expand Matrix'}
+            {showComparison ? 'Hide table' : 'Show table'}
             <ChevronDown className={cn('w-4 h-4 transition-transform duration-200', showComparison && 'rotate-180')} />
           </button>
         </div>
 
         {showComparison && (
-          <div className="overflow-x-auto custom-scrollbar rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416] shadow-sm">
-            <table className="w-full text-left border-collapse min-w-[680px]">
+          <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416]">
+            <table className="w-full text-left border-collapse min-w-[640px]">
               {/* Header */}
               <thead>
-                <tr className="border-b border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.03]">
-                  <th className="py-4 px-5 text-[14px] font-bold text-slate-900 dark:text-white w-[40%]">
-                    Feature &amp; Capability
+                <tr className="border-b border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02]">
+                  <th className="py-3.5 px-5 text-[13.5px] font-semibold text-slate-900 dark:text-white w-[42%]">
+                    Feature
                   </th>
-                  <th className="py-4 px-4 text-[13.5px] font-bold text-slate-900 dark:text-white w-[20%] text-center">
-                    Free Starter
+                  <th className="py-3.5 px-4 text-[13px] font-semibold text-slate-900 dark:text-white w-[19%] text-center">
+                    Free
                   </th>
-                  <th className="py-4 px-4 text-[13.5px] font-bold text-[#728c1c] dark:text-[#c8e558] w-[20%] text-center bg-[#c8e558]/10">
-                    Sadhya Pro (Launch Offer)
+                  <th className="py-3.5 px-4 text-[13px] font-semibold text-[#728c1c] dark:text-[#c8e558] w-[20%] text-center bg-[#c8e558]/[0.06]">
+                    Pro (Launch)
                   </th>
-                  <th className="py-4 px-4 text-[13.5px] font-bold text-slate-900 dark:text-white w-[20%] text-center">
+                  <th className="py-3.5 px-4 text-[13px] font-semibold text-slate-900 dark:text-white w-[19%] text-center">
                     Institution
                   </th>
                 </tr>
               </thead>
 
               {/* Body */}
-              <tbody className="divide-y divide-slate-100 dark:divide-white/[0.06]">
+              <tbody className="divide-y divide-slate-100 dark:divide-white/[0.05]">
                 {COMPARISON_CATEGORIES.map((category) => (
-                  <React.Fragment key={category.title}>
-                    {/* Category Title Row */}
-                    <tr className="bg-slate-100/60 dark:bg-white/[0.04]">
-                      <td colSpan={4} className="py-3 px-5">
-                        <div className="flex items-center gap-2 text-[13px] font-bold tracking-wide uppercase text-slate-700 dark:text-gray-200">
-                          <category.icon className="w-4 h-4 text-[#8ba32b] dark:text-[#c8e558]" strokeWidth={2} />
-                          <span>{category.title}</span>
-                        </div>
+                  <Fragment key={category.title}>
+                    {/* Category Header */}
+                    <tr className="bg-slate-50/40 dark:bg-white/[0.015]">
+                      <td colSpan={4} className="py-2.5 px-5 text-[11.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-gray-400">
+                        {category.title}
                       </td>
                     </tr>
 
-                    {/* Category Item Rows */}
+                    {/* Category Items */}
                     {category.rows.map((row) => (
                       <tr
                         key={row.feature}
-                        className="hover:bg-slate-50/60 dark:hover:bg-white/[0.02] transition-colors"
+                        className="hover:bg-slate-50/40 dark:hover:bg-white/[0.015] transition-colors"
                       >
                         <td className="py-3 px-5">
-                          <div className="text-[13.5px] font-medium text-slate-800 dark:text-gray-100">
+                          <div className="text-[13.5px] text-slate-800 dark:text-gray-200">
                             {row.feature}
                           </div>
                           {row.hint && (
-                            <div className="text-[11.5px] text-slate-400 dark:text-gray-500 mt-0.5 leading-snug">
+                            <div className="text-[11.5px] text-slate-400 dark:text-gray-500 mt-0.5">
                               {row.hint}
                             </div>
                           )}
@@ -631,7 +600,7 @@ export default function PricingSection({
                         <td className="py-3 px-4 text-center">
                           <ValueCell val={row.free} />
                         </td>
-                        <td className="py-3 px-4 text-center bg-[#c8e558]/[0.04]">
+                        <td className="py-3 px-4 text-center bg-[#c8e558]/[0.03]">
                           <ValueCell val={row.pro} />
                         </td>
                         <td className="py-3 px-4 text-center">
@@ -639,7 +608,7 @@ export default function PricingSection({
                         </td>
                       </tr>
                     ))}
-                  </React.Fragment>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -647,28 +616,18 @@ export default function PricingSection({
         )}
       </div>
 
-      {/* ── Footer notes & security ── */}
-      <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[12.5px] text-slate-500 dark:text-gray-400 border-t border-slate-100 dark:border-white/[0.06] pt-6">
-        <div className="flex items-center gap-4 flex-wrap">
-          <span className="flex items-center gap-1.5">
-            <Shield className="w-4 h-4 text-emerald-500" />
-            256-Bit SSL Encrypted via Razorpay
-          </span>
-          <span>•</span>
-          <span>7-Day No-Questions Refund Window</span>
-          <span>•</span>
-          <span>Grandfathered Rate Guarantee</span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Link to="/refunds" className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white">
-            Refunds Policy
-          </Link>
-          <Link to="/terms" className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white">
-            Terms of Service
-          </Link>
-        </div>
-      </div>
+      {/* ── Footer notes ── */}
+      <p className="mt-8 text-[12.5px] leading-relaxed text-slate-500 dark:text-gray-400">
+        Payments are processed by Razorpay — card details never touch our servers. Includes 7-day money back guarantee. See our{' '}
+        <Link to="/refunds" className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white">
+          refunds &amp; cancellation policy
+        </Link>{' '}
+        and{' '}
+        <Link to="/terms" className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white">
+          terms
+        </Link>
+        .
+      </p>
     </section>
   );
 }
