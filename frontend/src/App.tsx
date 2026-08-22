@@ -35,6 +35,7 @@ const Analytics = lazy(() => import("./pages/Analytics"));
 const Report = lazy(() => import("./pages/Report"));
 const Signup = lazy(() => import("./pages/Signup"));
 const Signin = lazy(() => import("./pages/Signin"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const SelectRole = lazy(() => import("./pages/SelectRole"));
 const ExamCommandCenter = lazy(() => import("./pages/ExamCommandCenter"));
 const TeacherOnboarding = lazy(() => import("./pages/TeacherOnboarding"));
@@ -152,6 +153,19 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
+  // ── Mandatory Email Verification Gate for Email/Password accounts ───────────
+  // Google accounts have emailVerified: true automatically. Email/Password accounts
+  // must verify their email before accessing onboarding or any protected surface.
+  const isGoogleAccount = user.providerData?.some((p) => p.providerId === 'google.com');
+  const isPasswordAccount = user.providerData?.some((p) => p.providerId === 'password') || (!user.providerData?.length && !!user.email);
+  const isUnverifiedEmail = !user.emailVerified && isPasswordAccount && !isGoogleAccount;
+
+  if (isUnverifiedEmail) {
+    if (location.pathname !== '/verify-email') {
+      return <Navigate to="/verify-email" replace />;
+    }
+  }
+
   // Authenticated but no product role → resolve it before anything else.
   //
   // Gated on claimsLoading: custom claims arrive with the ID token a beat after `user`
@@ -161,7 +175,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   // Deliberately placed before the bypass-route check so a legacy account landing on
   // /onboarding still establishes a role first — a missing role means "not yet
   // established", never "assume student".
-  if (location.pathname !== '/select-role') {
+  if (location.pathname !== '/select-role' && location.pathname !== '/verify-email') {
     if (claimsLoading) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#131314]">
@@ -176,7 +190,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   // Routes that are part of the onboarding/assessment flow — always allow through
   // even when the profile is incomplete, to avoid redirect loops.
-  const bypassRoutes = ['/onboarding', '/baseline-assessment', '/welcome', '/assessment', '/assessment/report', '/select-role', '/teacher/onboarding'];
+  const bypassRoutes = ['/onboarding', '/baseline-assessment', '/welcome', '/assessment', '/assessment/report', '/select-role', '/teacher/onboarding', '/verify-email'];
   const isBypassRoute = bypassRoutes.some((r) => location.pathname.startsWith(r));
 
   // Student-profile completeness is a STUDENT-ONLY gate.
@@ -217,6 +231,7 @@ function AppRoutes() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/signin" element={<Signin />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/how-it-works" element={<HowItWorks />} />
         <Route path="/demo" element={<HowItWorks />} />

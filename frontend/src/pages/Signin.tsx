@@ -49,7 +49,11 @@ export default function Signin() {
     setError(null);
     setBusy('email');
     try {
-      await signInWithEmailAndPassword(auth, email.trim(), password);
+      const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
+      if (!cred.user.emailVerified) {
+        navigate('/verify-email', { replace: true, state: { email: email.trim() } });
+        return;
+      }
       navigate(from, { replace: true });
     } catch (err: any) {
       setError(authErrorMessage(err));
