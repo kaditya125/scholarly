@@ -19,11 +19,30 @@ export interface IntentClassification {
   requiresKnowledge: boolean;
 }
 
+export interface FeatureCardItem {
+  title: string;
+  description: string;
+  badge?: string;
+  icon?: string;
+  actionUrl?: string;
+  actionLabel?: string;
+}
+
+export interface DeepLinkItem {
+  label: string;
+  url: string;
+  icon?: string;
+}
+
 export interface StructuredResponse {
   type: 'text' | 'feature_list' | 'feature_cards' | 'cta' | 'error';
   text?: string;
+  keyHighlight?: string;
   features?: string[];
   cards?: { title: string; description: string; icon?: string }[];
+  featureCards?: FeatureCardItem[];
+  actionChips?: string[];
+  deepLinks?: DeepLinkItem[];
   cta?: { label: string; url: string; type: 'primary' | 'secondary' };
   policyLinks?: { title: string; url: string; description?: string }[];
   relatedQuestions?: string[];
@@ -167,6 +186,7 @@ Query: "${query}"`;
     }
 
     const q = query.toLowerCase();
+    const safeIntent = (intent || 'UNKNOWN').toUpperCase();
 
     // 1. Referrals & Rewards (Checked first to avoid 'pro' in 'program')
     if (q.includes('refer') || q.includes('invite') || q.includes('reward') || q.includes('affiliate') || /\bearn\b/i.test(q)) {
@@ -184,17 +204,17 @@ Query: "${query}"`;
     }
 
     // 4. Teacher Ecosystem & Classroom tools
-    if (q.includes('teacher') || q.includes('class') || q.includes('curriculum') || q.includes('syllabus') || q.includes('teach') || q.includes('assignment') || intent.includes('TEACHER')) {
+    if (q.includes('teacher') || q.includes('class') || q.includes('curriculum') || q.includes('syllabus') || q.includes('teach') || q.includes('assignment') || safeIntent.includes('TEACHER')) {
       return { label: 'Create Teacher Workspace', url: '/for-teachers', type: 'primary' };
     }
 
     // 5. Pricing, Cost & Subscriptions (Using regex for word boundaries so 'program' does not match 'pro')
-    if (q.includes('price') || q.includes('cost') || q.includes('subscription') || q.includes('refund') || /\b(plan|plans|pro|pricing|billing|discount|free)\b/i.test(q) || intent.includes('PRICING')) {
+    if (q.includes('price') || q.includes('cost') || q.includes('subscription') || q.includes('refund') || /\b(plan|plans|pro|pricing|billing|discount|free)\b/i.test(q) || safeIntent.includes('PRICING')) {
       return { label: 'View Pricing & Plans', url: '/pricing', type: 'primary' };
     }
 
     // 6. Flashcards, Mindmaps & Notebooks
-    if (q.includes('flashcard') || q.includes('mindmap') || q.includes('mind map') || q.includes('note') || q.includes('ocr') || q.includes('pdf') || q.includes('tutor') || intent.includes('AI_TUTOR')) {
+    if (q.includes('flashcard') || q.includes('mindmap') || q.includes('mind map') || q.includes('note') || q.includes('ocr') || q.includes('pdf') || q.includes('tutor') || safeIntent.includes('AI_TUTOR')) {
       return { label: 'Try AI Tutor for Free', url: '/signup', type: 'primary' };
     }
 
@@ -213,6 +233,7 @@ Query: "${query}"`;
     proposed?: string[]
   ): string[] {
     const q = query.toLowerCase();
+    const safeIntent = (intent || 'UNKNOWN').toUpperCase();
 
     // If model provided 2 or more distinct questions, use them (cleaned up)
     if (proposed && Array.isArray(proposed) && proposed.length >= 2) {
@@ -223,7 +244,7 @@ Query: "${query}"`;
     }
 
     // Dynamic contextual topic matching
-    if (q.includes('teacher') || q.includes('class') || q.includes('teach') || intent.includes('TEACHER')) {
+    if (q.includes('teacher') || q.includes('class') || q.includes('teach') || safeIntent.includes('TEACHER')) {
       return [
         "How do payouts and the Earnings Ledger work?",
         "Can I host live video classes with real-time screen sharing?",
@@ -283,6 +304,7 @@ Query: "${query}"`;
     proposed?: { title: string; url: string; description?: string }[]
   ): { title: string; url: string; description?: string }[] | undefined {
     const q = query.toLowerCase();
+    const safeIntent = (intent || 'UNKNOWN').toUpperCase();
     const links: { title: string; url: string; description?: string }[] = [];
 
     // 1. Refunds, Money-Back, Cancellation
@@ -318,7 +340,7 @@ Query: "${query}"`;
     }
 
     // 4. Pricing & Plans
-    if (q.includes('price') || q.includes('cost') || q.includes('tier') || q.includes('subscription') || intent.includes('PRICING')) {
+    if (q.includes('price') || q.includes('cost') || q.includes('tier') || q.includes('subscription') || safeIntent.includes('PRICING')) {
       links.push({
         title: 'Pricing & Plan Details',
         url: '/pricing',
@@ -327,7 +349,7 @@ Query: "${query}"`;
     }
 
     // 5. Teacher Guidelines & Earnings
-    if (q.includes('teacher') || q.includes('payout') || q.includes('ledger') || q.includes('razorpay') || intent.includes('TEACHER')) {
+    if (q.includes('teacher') || q.includes('payout') || q.includes('ledger') || q.includes('razorpay') || safeIntent.includes('TEACHER')) {
       links.push({
         title: 'Teacher Guidelines & Classroom Terms',
         url: '/for-teachers',
@@ -354,6 +376,159 @@ Query: "${query}"`;
     }
 
     return links.length > 0 ? links.slice(0, 3) : undefined;
+  }
+
+  private resolveSmartKeyHighlight(
+    text: string,
+    query: string,
+    proposed?: string
+  ): string | undefined {
+    if (proposed && proposed.trim().length > 10 && proposed.trim().length < 250) {
+      return proposed.trim();
+    }
+    if (!text || text.length < 80) return undefined;
+    const firstSentence = text.split(/[.!?]\s+/)[0]?.trim();
+    if (firstSentence && firstSentence.length > 20 && firstSentence.length < 180) {
+      return firstSentence + '.';
+    }
+    return undefined;
+  }
+
+  private resolveSmartActionChips(
+    query: string,
+    intent: string,
+    proposed?: string[]
+  ): string[] {
+    const q = query.toLowerCase();
+    const safeIntent = (intent || 'UNKNOWN').toUpperCase();
+    if (proposed && Array.isArray(proposed) && proposed.length >= 2) {
+      const valid = proposed.map(p => String(p).trim()).filter(p => p.length > 3 && p.length < 60);
+      if (valid.length >= 2) return valid.slice(0, 4);
+    }
+
+    if (q.includes('teacher') || q.includes('class') || safeIntent.includes('TEACHER')) {
+      return [
+        "How do teacher payouts work?",
+        "Can I host live video classes?",
+        "How to create a private class?",
+        "Explore teacher tools"
+      ];
+    }
+
+    if (q.includes('price') || q.includes('cost') || q.includes('plan') || q.includes('subscription') || q.includes('refund') || safeIntent.includes('PRICING')) {
+      return [
+        "What's included in Pro (₹499/mo)?",
+        "7-day money-back guarantee details",
+        "Is there a free student plan?",
+        "View all pricing plans"
+      ];
+    }
+
+    if (q.includes('podcast') || q.includes('audio') || q.includes('voice')) {
+      return [
+        "Generate podcast from textbook PDF",
+        "How two-host dialogue works",
+        "Listen to sample episode",
+        "Download for offline study"
+      ];
+    }
+
+    if (q.includes('ocr') || q.includes('scan') || q.includes('solve') || q.includes('photo')) {
+      return [
+        "How does handwriting OCR work?",
+        "Can I upload PDF problem sets?",
+        "Try scanning a math question",
+        "Which exams are supported?"
+      ];
+    }
+
+    if (q.includes('test') || q.includes('exam') || q.includes('jee') || q.includes('neet') || q.includes('cbse')) {
+      return [
+        "How does Baseline Assessment work?",
+        "Take a free diagnostic test",
+        "CBSE/JEE/NEET syllabus coverage",
+        "Weak area error analysis"
+      ];
+    }
+
+    return [
+      "How does 24/7 AI tutoring work?",
+      "View pricing & 7-day guarantee",
+      "Can I upload PDF textbooks?",
+      "Talk to live support specialist"
+    ];
+  }
+
+  private resolveSmartFeatureCards(
+    query: string,
+    intent: string,
+    proposed?: FeatureCardItem[]
+  ): FeatureCardItem[] | undefined {
+    const q = query.toLowerCase();
+    const safeIntent = (intent || 'UNKNOWN').toUpperCase();
+    const cards: FeatureCardItem[] = [];
+
+    if (proposed && Array.isArray(proposed) && proposed.length > 0) {
+      for (const card of proposed) {
+        if (card?.title && card?.description) {
+          cards.push({
+            title: card.title,
+            description: card.description,
+            badge: card.badge,
+            icon: card.icon || 'Sparkles',
+            actionUrl: card.actionUrl && card.actionUrl.startsWith('/') ? card.actionUrl : '/signup',
+            actionLabel: card.actionLabel || 'Explore'
+          });
+        }
+      }
+      if (cards.length > 0) return cards.slice(0, 3);
+    }
+
+    if (q.includes('ocr') || q.includes('scan') || q.includes('photo') || q.includes('solve')) {
+      cards.push({
+        title: 'OCR Visual Problem Solver',
+        description: 'Upload camera photos of handwritten math or textbook problems for step-by-step verified solutions.',
+        badge: 'AI Vision',
+        icon: 'Camera',
+        actionUrl: '/signup',
+        actionLabel: 'Try OCR Scanner'
+      });
+    }
+
+    if (q.includes('podcast') || q.includes('audio') || q.includes('voice')) {
+      cards.push({
+        title: 'AI Podcast Studio',
+        description: 'Convert heavy chapter PDFs into engaging, two-host audio discussions for on-the-go revision.',
+        badge: 'Audio AI',
+        icon: 'Headphones',
+        actionUrl: '/signup',
+        actionLabel: 'Listen to Sample'
+      });
+    }
+
+    if (q.includes('teacher') || q.includes('class') || safeIntent.includes('TEACHER')) {
+      cards.push({
+        title: 'Educator Live Studio',
+        description: 'Create interactive classes, live video streaming, AI auto-grading, and automated RazorpayX payouts.',
+        badge: 'For Teachers',
+        icon: 'LayoutGrid',
+        actionUrl: '/for-teachers',
+        actionLabel: 'Explore Educator Hub'
+      });
+    }
+
+    if (q.includes('test') || q.includes('exam') || q.includes('quiz') || q.includes('jee') || q.includes('neet')) {
+      cards.push({
+        title: 'Adaptive Test Engine',
+        description: 'Diagnostic baseline assessments and tailored practice quizzes anchored to official syllabi.',
+        badge: 'Diagnostics',
+        icon: 'Brain',
+        actionUrl: '/signup',
+        actionLabel: 'Start Free Assessment'
+      });
+    }
+
+    return cards.length > 0 ? cards.slice(0, 2) : undefined;
   }
 
   public async handleQuery(request: HelpQueryRequest): Promise<HelpResponse> {
@@ -494,6 +669,27 @@ JSON SCHEMA:
         query,
         classification.intent,
         structuredRes.policyLinks
+      );
+
+      // Attach key highlight / TL;DR
+      structuredRes.keyHighlight = this.resolveSmartKeyHighlight(
+        structuredRes.text || '',
+        query,
+        structuredRes.keyHighlight
+      );
+
+      // Attach dynamic contextual action chips
+      structuredRes.actionChips = this.resolveSmartActionChips(
+        query,
+        classification.intent,
+        structuredRes.actionChips
+      );
+
+      // Attach rich feature cards
+      structuredRes.featureCards = this.resolveSmartFeatureCards(
+        query,
+        classification.intent,
+        structuredRes.featureCards
       );
       
       // Save to memory

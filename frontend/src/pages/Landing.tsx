@@ -16,6 +16,7 @@ import { HandwrittenTagline } from '../components/brand/HandwrittenTagline';
 import { EXAM_CATALOG } from '../lib/examCatalog';
 import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
+import { FloatingHelpdeskWidget } from '../components/help/FloatingHelpdeskWidget';
 
 /**
  * The public landing page.
@@ -313,6 +314,13 @@ export default function LandingPage() {
 
   const [studentCount, setStudentCount] = useState<number>(1);
   const [recentAvatars, setRecentAvatars] = useState<string[]>([]);
+  const [helpWidgetOpen, setHelpWidgetOpen] = useState<boolean>(false);
+  const [helpWidgetQuestion, setHelpWidgetQuestion] = useState<string | null>(null);
+
+  const handleOpenHelpWithQuestion = (q: string) => {
+    setHelpWidgetQuestion(q);
+    setHelpWidgetOpen(true);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -610,21 +618,21 @@ export default function LandingPage() {
                 </p>
 
                 <div className="mt-8 flex flex-wrap items-center gap-3">
-                  <Link
-                    to="/help"
+                  <button
+                    onClick={() => setHelpWidgetOpen(true)}
                     className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13.5px] font-semibold hover:opacity-90 transition-opacity"
                   >
                     <Bot className="w-4 h-4" />
                     Ask Sadhya AI Guide
                     <ArrowRight className="w-4 h-4" />
-                  </Link>
-                  <Link
-                    to="/help?q=I%20want%20to%20talk%20to%20a%20live%20helpdesk%20agent"
+                  </button>
+                  <button
+                    onClick={() => handleOpenHelpWithQuestion("I would like to talk with a live support specialist about Sadhya platform features.")}
                     className="inline-flex items-center gap-2 h-11 px-5 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/5 text-slate-900 dark:text-white text-[13.5px] font-semibold hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
                   >
                     <Headphones className="w-4 h-4 text-emerald-500" />
                     Talk to Live Specialist
-                  </Link>
+                  </button>
                 </div>
               </Reveal>
 
@@ -637,7 +645,7 @@ export default function LandingPage() {
                         Common Student Queries
                       </span>
                     </div>
-                    <span className="text-[11px] font-medium text-slate-400">Click to explore answers</span>
+                    <span className="text-[11px] font-medium text-slate-400">Click to ask instantly</span>
                   </div>
 
                   <div className="space-y-2">
@@ -663,10 +671,10 @@ export default function LandingPage() {
                         tag: "Privacy & Security"
                       }
                     ].map((item, idx) => (
-                      <Link
+                      <button
                         key={idx}
-                        to={`/help?q=${encodeURIComponent(item.q)}`}
-                        className="group p-3 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/60 dark:bg-white/[0.02] hover:bg-slate-100/80 dark:hover:bg-white/[0.06] hover:border-slate-300 dark:hover:border-white/20 transition-all flex items-center justify-between"
+                        onClick={() => handleOpenHelpWithQuestion(item.q)}
+                        className="w-full text-left group p-3 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/60 dark:bg-white/[0.02] hover:bg-slate-100/80 dark:hover:bg-white/[0.06] hover:border-slate-300 dark:hover:border-white/20 transition-all flex items-center justify-between"
                       >
                         <div className="flex flex-col pr-2">
                           <span className="text-[13px] font-medium text-slate-800 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white leading-snug">
@@ -677,7 +685,7 @@ export default function LandingPage() {
                         <div className="w-6 h-6 rounded-full bg-white dark:bg-white/5 flex items-center justify-center flex-shrink-0 group-hover:bg-[#c8e558]/20 transition-colors">
                           <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-slate-900 dark:group-hover:text-[#c8e558] transition-colors" />
                         </div>
-                      </Link>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -794,22 +802,15 @@ export default function LandingPage() {
         </section>
       </main>
 
-      {/* Floating Help Widget */}
-      <div className="fixed bottom-6 right-6 sm:bottom-7 sm:right-7 z-50">
-        <Link
-          to="/help"
-          className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/85 dark:bg-[#18181c]/85 text-slate-200 hover:text-white backdrop-blur-xl border border-slate-800 dark:border-white/[0.08] hover:border-slate-700 dark:hover:border-white/20 shadow-[0_4px_16px_rgba(0,0,0,0.15)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-200"
-          title="Ask Sadhya AI"
-        >
-          <div className="relative flex items-center justify-center">
-            <Bot className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558]" />
-            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400" />
-          </div>
-          <span className="text-[12px] font-medium tracking-normal text-slate-200 group-hover:text-white transition-colors">
-            Ask AI
-          </span>
-        </Link>
-      </div>
+      {/* In-Situ Floating Helpdesk Widget */}
+      <FloatingHelpdeskWidget
+        initialOpen={helpWidgetOpen}
+        prefilledQuestion={helpWidgetQuestion}
+        onCloseExternal={() => {
+          setHelpWidgetOpen(false);
+          setHelpWidgetQuestion(null);
+        }}
+      />
 
       <SiteFooter />
     </div>
