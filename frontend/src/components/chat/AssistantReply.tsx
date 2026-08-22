@@ -419,18 +419,20 @@ export default function AssistantReply({
           // weight and size carrying the hierarchy rather than a second face. `tracking-wide`
           // used to be applied here, which is wrong for body prose — wide tracking loosens
           // word shapes and makes long passages harder to scan.
-          <div className="font-answer text-[15px] leading-[1.65] mb-3 text-slate-700 dark:text-slate-300/95 prose prose-slate dark:prose-invert max-w-none
+          <div className="font-answer text-[14.5px] sm:text-[15px] leading-[1.65] mb-3 text-slate-700 dark:text-slate-300/95 prose prose-slate dark:prose-invert max-w-none w-full min-w-0 break-words
                           prose-headings:font-semibold prose-headings:tracking-[-0.018em] prose-headings:text-slate-900 dark:prose-headings:text-slate-100
-                          prose-h1:text-[19px] prose-h1:mt-6 prose-h1:mb-2.5
-                          prose-h2:text-[16.5px] prose-h2:mt-6 prose-h2:mb-2
-                          prose-h3:text-[15px] prose-h3:mt-5 prose-h3:mb-1.5
-                          prose-p:my-3 prose-p:leading-[1.65]
-                          prose-ul:my-3 prose-ol:my-3 prose-li:my-1 prose-li:leading-[1.6] prose-li:marker:text-slate-400
+                          prose-h1:text-[18px] sm:text-[19px] prose-h1:mt-6 prose-h1:mb-2.5
+                          prose-h2:text-[16px] sm:text-[16.5px] prose-h2:mt-6 prose-h2:mb-2
+                          prose-h3:text-[14.5px] sm:text-[15px] prose-h3:mt-5 prose-h3:mb-1.5
+                          prose-p:my-3 prose-p:leading-[1.65] prose-p:break-words
+                          prose-ul:my-3 prose-ol:my-3 prose-li:my-1 prose-li:leading-[1.6] prose-li:marker:text-slate-400 prose-li:break-words
                           prose-strong:font-semibold prose-strong:text-slate-900 dark:prose-strong:text-slate-100
                           prose-a:text-indigo-600 dark:prose-a:text-indigo-400 prose-a:font-medium prose-a:no-underline hover:prose-a:underline
                           prose-code:font-mono prose-code:text-[13px] prose-code:font-medium prose-code:bg-slate-100 dark:prose-code:bg-white/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:before:content-none prose-code:after:content-none
                           prose-hr:border-slate-200 dark:prose-hr:border-white/10 prose-hr:my-7
-                          prose-img:rounded-2xl prose-img:shadow-md prose-img:max-w-[350px] prose-img:object-cover">
+                          prose-img:rounded-2xl prose-img:shadow-md prose-img:max-w-full prose-img:object-cover
+                          [&_.katex-display]:overflow-x-auto [&_.katex-display]:overflow-y-hidden [&_.katex-display]:max-w-full [&_.katex-display]:py-1
+                          [&_pre]:max-w-full [&_table]:max-w-full">
             <MarkdownMessage content={revealed} />
             {streaming && <span className="inline-block w-2 h-4 ml-1 bg-indigo-500 animate-pulse align-middle" />}
           </div>

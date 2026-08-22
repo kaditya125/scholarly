@@ -89,16 +89,16 @@ export const OfficialSourceCarousel: React.FC<OfficialSourceCarouselProps> = ({
           3 verified results
         </div>
 
-        <div className="space-y-1">
+        <div className="space-y-1 w-full min-w-0">
           {/* Row 1: Official Portal */}
           <a
             href={portalUrl}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-2 text-[13px] text-slate-600 dark:text-gray-300 py-1 px-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group cursor-pointer"
+            className="flex items-center gap-2 text-[13px] text-slate-600 dark:text-gray-300 py-1 px-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group cursor-pointer w-full min-w-0"
           >
             <Building2 className="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-gray-500 group-hover:text-emerald-500 transition-colors" />
-            <span className="truncate underline decoration-slate-200 dark:decoration-white/15 underline-offset-[3px] group-hover:decoration-slate-400 dark:group-hover:decoration-white/40">
+            <span className="truncate flex-1 min-w-0 underline decoration-slate-200 dark:decoration-white/15 underline-offset-[3px] group-hover:decoration-slate-400 dark:group-hover:decoration-white/40">
               {authority} Official Portal — {portalDomain}
             </span>
             <ExternalLink className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity ml-auto shrink-0" />
@@ -107,13 +107,13 @@ export const OfficialSourceCarousel: React.FC<OfficialSourceCarouselProps> = ({
           {/* Row 2: Official Notice & Syllabus Viewer */}
           <div
             onClick={() => setShowDocModal(true)}
-            className="flex items-center gap-2 text-[13px] text-slate-600 dark:text-gray-300 py-1 px-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group cursor-pointer"
+            className="flex items-center gap-2 text-[13px] text-slate-600 dark:text-gray-300 py-1 px-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group cursor-pointer w-full min-w-0"
           >
             <FileText className="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-gray-500 group-hover:text-indigo-500 transition-colors" />
-            <span className="truncate underline decoration-slate-200 dark:decoration-white/15 underline-offset-[3px] group-hover:decoration-slate-400 dark:group-hover:decoration-white/40">
+            <span className="truncate flex-1 min-w-0 underline decoration-slate-200 dark:decoration-white/15 underline-offset-[3px] group-hover:decoration-slate-400 dark:group-hover:decoration-white/40">
               {examShort} 2026 Official Gazette Notice & Canonical Syllabus
             </span>
-            <span className="text-[10px] font-mono text-indigo-500 dark:text-indigo-400 font-semibold shrink-0 ml-auto">
+            <span className="text-[10px] font-mono text-indigo-500 dark:text-indigo-400 font-semibold shrink-0 ml-auto pl-1">
               View Document →
             </span>
           </div>
@@ -123,13 +123,13 @@ export const OfficialSourceCarousel: React.FC<OfficialSourceCarouselProps> = ({
             onClick={() =>
               navigate(`/tests?exam=${encodeURIComponent(examId)}&topic=${encodeURIComponent(activeTopic)}`)
             }
-            className="flex items-center gap-2 text-[13px] text-slate-600 dark:text-gray-300 py-1 px-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group cursor-pointer"
+            className="flex items-center gap-2 text-[13px] text-slate-600 dark:text-gray-300 py-1 px-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group cursor-pointer w-full min-w-0"
           >
             <BookOpen className="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-gray-500 group-hover:text-violet-500 transition-colors" />
-            <span className="truncate underline decoration-slate-200 dark:decoration-white/15 underline-offset-[3px] group-hover:decoration-slate-400 dark:group-hover:decoration-white/40">
+            <span className="truncate flex-1 min-w-0 underline decoration-slate-200 dark:decoration-white/15 underline-offset-[3px] group-hover:decoration-slate-400 dark:group-hover:decoration-white/40">
               Practice {activeTopic} — Adaptive Quiz
             </span>
-            <span className="text-[11px] text-violet-500 dark:text-violet-400 font-semibold shrink-0 ml-auto group-hover:translate-x-0.5 transition-transform">
+            <span className="text-[11px] text-violet-500 dark:text-violet-400 font-semibold shrink-0 ml-auto group-hover:translate-x-0.5 transition-transform pl-1">
               Practice →
             </span>
           </div>
