@@ -313,6 +313,7 @@ export default function LandingPage() {
   });
 
   const [studentCount, setStudentCount] = useState<number>(1);
+  const [activeStudents, setActiveStudents] = useState<number | null>(null);
   const [recentAvatars, setRecentAvatars] = useState<string[]>([]);
   const [helpWidgetOpen, setHelpWidgetOpen] = useState<boolean>(false);
   const [helpWidgetQuestion, setHelpWidgetQuestion] = useState<string | null>(null);
@@ -337,8 +338,13 @@ export default function LandingPage() {
           const res = await fetch(endpoint);
           if (res.ok) {
             const data = await res.json();
-            if (typeof data.students === 'number' && isMounted) {
-              setStudentCount(data.students);
+            if (isMounted) {
+              if (typeof data.students === 'number') {
+                setStudentCount(data.students);
+              }
+              if (typeof data.activeStudents === 'number') {
+                setActiveStudents(data.activeStudents);
+              }
               if (data.recentStudentAvatars && Array.isArray(data.recentStudentAvatars)) {
                 setRecentAvatars(data.recentStudentAvatars);
               }
@@ -350,8 +356,28 @@ export default function LandingPage() {
         }
       }
     };
+
     fetchStats();
-    return () => { isMounted = false; };
+
+    // Refresh active student presence every 30s when tab is visible
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchStats();
+      }
+    }, 30000);
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchStats();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, []);
 
   return (
@@ -781,17 +807,43 @@ export default function LandingPage() {
               <div className="mt-14 w-full border-t border-slate-200 dark:border-white/[0.08]" />
 
               {/* Stats row */}
-              <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-12 w-full max-w-[38rem]">
+              <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 w-full max-w-[48rem]">
                 {[
-                  { value: `${studentCount.toLocaleString()}`, label: 'Students registered' },
-                  { value: '17+', label: 'Exams covered' },
-                  { value: '6-step', label: 'Reasoning every answer' },
-                ].map((stat) => (
-                  <div key={stat.label} className="text-center">
-                    <p className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">
-                      {stat.value}
-                    </p>
-                    <p className="mt-1 text-[13px] text-slate-500 dark:text-gray-400">
+                  { 
+                    value: `${studentCount.toLocaleString()}`, 
+                    label: 'Students registered' 
+                  },
+                  { 
+                    value: '17+', 
+                    label: 'Exams covered' 
+                  },
+                  { 
+                    isLive: true,
+                    value: activeStudents !== null && activeStudents > 0 ? `${activeStudents}` : null,
+                    label: activeStudents === 1 ? 'Student learning now' : 'Students learning now' 
+                  },
+                  { 
+                    value: '6-step', 
+                    label: 'Reasoning every answer' 
+                  },
+                ].map((stat, idx) => (
+                  <div key={idx} className="text-center">
+                    {stat.isLive ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="relative flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c8e558] opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#8ba32b] dark:bg-[#c8e558]" />
+                        </span>
+                        <p className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">
+                          {stat.value !== null ? stat.value : 'Active'}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">
+                        {stat.value}
+                      </p>
+                    )}
+                    <p className="mt-1 text-[12.5px] sm:text-[13px] text-slate-500 dark:text-gray-400">
                       {stat.label}
                     </p>
                   </div>

@@ -50,6 +50,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ---- Presence: signed-in users can read; users can write only their own doc ----
+    match /presence/{uid} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == uid;
+    }
+
     // ---- Teacher profiles: owner (or admin) read; ALL writes via backend ----
     //
     // Collection id matches the code exactly: teacherProfiles (camelCase), as written by

@@ -154,13 +154,35 @@ app.get('/health/ready', async (req, res) => {
 // ==========================================
 import { db, auth } from './config/firebase';
 
-let cachedStudentCount: number | null = null;
+interface PublicStatsResponse {
+  students: number;
+  activeStudents: number;
+  teachers: number;
+  totalUsers: number;
+  recentStudentAvatars: string[];
+  recentTeacherAvatars: string[];
+}
+
+let cachedStatsPayload: PublicStatsResponse | null = null;
 let cacheTimestamp = 0;
 const CACHE_TTL_MS = 30 * 1000; // 30 seconds
+const ACTIVE_PRESENCE_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
 app.get('/api/public/stats', async (_req, res) => {
   try {
-    const list = await auth.listUsers(1000);
+    if (cachedStatsPayload && Date.now() - cacheTimestamp < CACHE_TTL_MS) {
+      return res.json(cachedStatsPayload);
+    }
+
+    const [list, presenceSnap] = await Promise.all([
+      auth.listUsers(1000),
+      db.collection('presence')
+        .where('state', '==', 'online')
+        .where('lastActive', '>=', Date.now() - ACTIVE_PRESENCE_WINDOW_MS)
+        .get()
+        .catch(() => null)
+    ]);
+
     const staffRoles = ['super_admin', 'admin', 'moderator', 'content_manager', 'support', 'analytics_viewer'];
 
     let studentCount = 0;
@@ -206,18 +228,26 @@ app.get('/api/public/stats', async (_req, res) => {
 
     studentCount = studentCount || 1;
     teacherCount = teacherCount || 1;
+    const activeStudents = presenceSnap ? presenceSnap.docs.length : 0;
 
-    res.json({ 
+    const payload: PublicStatsResponse = { 
       students: studentCount,
+      activeStudents,
       teachers: teacherCount,
       totalUsers: studentCount + teacherCount,
       recentStudentAvatars,
       recentTeacherAvatars
-    });
+    };
+
+    cachedStatsPayload = payload;
+    cacheTimestamp = Date.now();
+
+    res.json(payload);
   } catch (err) {
     console.error('Failed to fetch public stats:', err);
     res.json({ 
-      students: 1, 
+      students: 1,
+      activeStudents: 0,
       teachers: 1, 
       totalUsers: 2, 
       recentStudentAvatars: [], 
