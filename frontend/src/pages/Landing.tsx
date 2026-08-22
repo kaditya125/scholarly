@@ -1,4 +1,4 @@
-import { type ReactNode, useState, useEffect } from 'react';
+import { type ReactNode, useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import {
@@ -314,6 +314,8 @@ export default function LandingPage() {
 
   const [studentCount, setStudentCount] = useState<number>(1);
   const [activeStudents, setActiveStudents] = useState<number | null>(null);
+  const prevActiveRef = useRef<number | null>(null);
+  const [activeAnimKey, setActiveAnimKey] = useState(0); // bumped on every change to trigger animation
   const [recentAvatars, setRecentAvatars] = useState<string[]>([]);
   const [helpWidgetOpen, setHelpWidgetOpen] = useState<boolean>(false);
   const [helpWidgetQuestion, setHelpWidgetQuestion] = useState<string | null>(null);
@@ -343,6 +345,10 @@ export default function LandingPage() {
                 setStudentCount(data.students);
               }
               if (typeof data.activeStudents === 'number') {
+                if (data.activeStudents !== prevActiveRef.current) {
+                  prevActiveRef.current = data.activeStudents;
+                  setActiveAnimKey(k => k + 1);
+                }
                 setActiveStudents(data.activeStudents);
               }
               if (data.recentStudentAvatars && Array.isArray(data.recentStudentAvatars)) {
@@ -834,15 +840,24 @@ export default function LandingPage() {
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c8e558] opacity-75" />
                           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#8ba32b] dark:bg-[#c8e558]" />
                         </span>
-                        {stat.value !== null ? (
-                          <p className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">
-                            {stat.value}
-                          </p>
-                        ) : (
-                          <p className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-400 dark:text-slate-500">
-                            —
-                          </p>
-                        )}
+                        {/* Animated rolling counter — flips up/down like YouTube subscriber count */}
+                        <div className="relative h-[34px] sm:h-[38px] overflow-hidden flex items-center">
+                          {stat.value !== null ? (
+                            <motion.p
+                              key={activeAnimKey}
+                              initial={{ y: prevActiveRef.current !== null && stat.value > (prevActiveRef.current ?? 0) ? 28 : -28, opacity: 0 }}
+                              animate={{ y: 0, opacity: 1 }}
+                              transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                              className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white"
+                            >
+                              {stat.value}
+                            </motion.p>
+                          ) : (
+                            <p className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-400 dark:text-slate-500">
+                              —
+                            </p>
+                          )}
+                        </div>
                       </div>
                     ) : (
                       <p className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">

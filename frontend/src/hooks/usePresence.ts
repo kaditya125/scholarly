@@ -74,6 +74,8 @@ export function usePresenceHeartbeat() {
       }
     };
 
+    // Only fire offline on actual tab/browser close — NOT on React effect cleanup
+    // (cleanup runs on remount/route change, which would create a race with the new online write)
     const onHide = () => write('offline', true);
 
     document.addEventListener('visibilitychange', onVisibility);
@@ -87,7 +89,8 @@ export function usePresenceHeartbeat() {
       window.removeEventListener('pagehide', onHide);
       window.removeEventListener('click', onUserActivity);
       window.removeEventListener('keydown', onUserActivity);
-      write('offline', true);
+      // DO NOT call write('offline') here — React cleanup fires on every remount/route change,
+      // which would race against the next mount's online write and drop the counter to 0.
     };
   }, [user?.uid]);
 }
