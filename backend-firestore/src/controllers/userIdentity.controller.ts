@@ -61,7 +61,20 @@ export class UserIdentityController {
     // Mandatory Email Verification gate: email/password accounts must be verified before activation
     const signInProvider = (req.user as any)?.firebase?.sign_in_provider;
     const isPasswordAccount = signInProvider === 'password';
-    const isEmailVerified = (req.user as any)?.email_verified === true;
+    let isEmailVerified = (req.user as any)?.email_verified === true;
+
+    // If token claims don't reflect verification yet (e.g. user just clicked email link in another tab),
+    // query Firebase Auth server directly for authoritative real-time state.
+    if (isPasswordAccount && !isEmailVerified) {
+      try {
+        const liveUser = await auth.getUser(uid);
+        if (liveUser.emailVerified) {
+          isEmailVerified = true;
+        }
+      } catch (err) {
+        logger.warn('[UserIdentity] Failed to fetch live user record for verification check', { uid });
+      }
+    }
 
     if (isPasswordAccount && !isEmailVerified) {
       logger.warn('[UserIdentity] Bootstrap rejected: email is not verified', { uid });

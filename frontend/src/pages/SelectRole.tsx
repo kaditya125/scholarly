@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, Presentation } from 'lucide-react';
+import { auth, reload } from '../lib/firebase';
 import { useAuth } from '../lib/AuthContext';
 import { identityApi, type ProductRole } from '../lib/api/identity';
 import { AuthShell, SubmitButton, AuthError, RoleCard } from '../components/auth/AuthShell';
@@ -43,17 +44,26 @@ export default function SelectRole() {
     setError(null);
     setBusy(true);
     try {
+      if (auth.currentUser) {
+        await reload(auth.currentUser).catch(() => {});
+        await auth.currentUser.getIdToken(true).catch(() => {});
+      }
       await identityApi.bootstrap(selected);
       // Custom claims only exist in a newly minted token — without this the app keeps
       // seeing the account as role-less and would bounce straight back here.
       await refreshClaims();
-      navigate('/onboarding', { replace: true });
+      navigate(selected === 'teacher' ? '/teacher/onboarding' : '/onboarding', { replace: true });
     } catch (err: any) {
       const status = err?.response?.status;
+      const code = err?.response?.data?.code;
       if (status === 409) {
         // The account already has a role; the local token is simply stale.
         await refreshClaims();
         navigate('/dashboard', { replace: true });
+        return;
+      }
+      if (status === 403 && code === 'auth/unverified-email') {
+        navigate('/verify-email', { replace: true });
         return;
       }
       setError(
