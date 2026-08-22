@@ -165,7 +165,7 @@ interface PublicStatsResponse {
 
 let cachedStatsPayload: PublicStatsResponse | null = null;
 let cacheTimestamp = 0;
-const CACHE_TTL_MS = 30 * 1000; // 30 seconds
+const CACHE_TTL_MS = 5 * 1000; // 5 seconds — matches frontend poll for near-real-time count
 const ACTIVE_PRESENCE_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
 app.get('/api/public/stats', async (_req, res) => {
