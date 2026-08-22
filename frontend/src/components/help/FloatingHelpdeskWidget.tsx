@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import {
   Bot,
   MessageCircleQuestion,
+  MessageSquare,
   Headphones,
   X,
   Send,
@@ -139,6 +140,249 @@ export interface FloatingHelpdeskWidgetProps {
   onCloseExternal?: () => void;
 }
 
+function AssistantWidgetMessage({
+  msg,
+  isLatest,
+  onSend,
+  onCopy,
+  copiedMsgId,
+  onFeedback,
+  onEscalate
+}: {
+  msg: HelpMessage;
+  isLatest: boolean;
+  onSend: (prompt: string) => void;
+  onCopy: (id: string, text: string) => void;
+  copiedMsgId: string | null;
+  onFeedback: (id: string, fb: 'helpful' | 'not_helpful') => void;
+  onEscalate: (summary?: string) => void;
+}) {
+  const res = msg.structuredResponse;
+  const fullText = res?.text || msg.content || '';
+  const [typedLength, setTypedLength] = useState(() => (isLatest ? 0 : fullText.length));
+  const [isTypingDone, setIsTypingDone] = useState(() => !isLatest);
+
+  useEffect(() => {
+    if (!isLatest || isTypingDone || !fullText) {
+      setTypedLength(fullText.length);
+      setIsTypingDone(true);
+      return;
+    }
+
+    let current = 0;
+    const interval = setInterval(() => {
+      current += 4;
+      if (current >= fullText.length) {
+        setTypedLength(fullText.length);
+        setIsTypingDone(true);
+        clearInterval(interval);
+      } else {
+        setTypedLength(current);
+      }
+    }, 12);
+
+    return () => clearInterval(interval);
+  }, [isLatest, fullText, isTypingDone]);
+
+  const displayedText = fullText.slice(0, typedLength);
+
+  return (
+    <div className="self-start w-full flex flex-col gap-2.5 text-[13px] text-slate-800 dark:text-slate-200">
+      {/* TL;DR / Key Takeaway Callout */}
+      {res?.keyHighlight && (
+        <div className="p-2.5 rounded-xl bg-[#c8e558]/10 border border-[#c8e558]/20 flex flex-col gap-1">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#8ba32b] dark:text-[#c8e558] flex items-center gap-1">
+            <Sparkles className="w-3 h-3" /> Key Takeaway
+          </span>
+          <p className="text-[12.5px] font-medium text-slate-900 dark:text-white leading-snug">
+            {res.keyHighlight}
+          </p>
+        </div>
+      )}
+
+      {/* Main Text - Smooth continuous flow directly on canvas */}
+      <div className="leading-relaxed">
+        <FormattedText text={displayedText} />
+        {!isTypingDone && (
+          <span className="inline-block w-1.5 h-3.5 ml-1 align-middle bg-[#c8e558] animate-pulse rounded-full" />
+        )}
+      </div>
+
+      {isTypingDone && (
+        <>
+          {/* Feature Bullet List */}
+          {res?.features && res.features.length > 0 && (
+            <ul className="space-y-1.5 pt-0.5">
+              {res.features.map((feat, fIdx) => (
+                <li key={fIdx} className="flex items-start gap-2 text-[12.5px] text-slate-700 dark:text-slate-300">
+                  <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#8ba32b] dark:bg-[#c8e558] flex-shrink-0" />
+                  <span>{parseInlineMarkdown(feat)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Rich Feature Cards */}
+          {res?.featureCards && res.featureCards.length > 0 && (
+            <div className="pt-1 flex flex-col gap-2">
+              {res.featureCards.map((card, cIdx) => (
+                <div
+                  key={cIdx}
+                  className="p-2.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] flex flex-col gap-1.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      {getFeatureIcon(card.icon)}
+                      <span className="font-semibold text-[12.5px] text-slate-900 dark:text-white">
+                        {card.title}
+                      </span>
+                    </div>
+                    {card.badge && (
+                      <span className="px-1.5 py-0.5 rounded text-[9.5px] font-semibold bg-[#c8e558]/20 text-[#8ba32b] dark:text-[#c8e558]">
+                        {card.badge}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11.5px] text-slate-600 dark:text-slate-400 leading-snug">
+                    {card.description}
+                  </p>
+                  {card.actionUrl && (
+                    <Link
+                      to={card.actionUrl}
+                      className="self-start text-[11.5px] font-semibold text-[#8ba32b] dark:text-[#c8e558] hover:underline flex items-center gap-1 mt-0.5"
+                    >
+                      {card.actionLabel || 'Explore'}
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Official Policy Links */}
+          {res?.policyLinks && res.policyLinks.length > 0 && (
+            <div className="pt-1 flex flex-col gap-1.5 border-t border-slate-200/60 dark:border-white/5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Official Documentation
+              </span>
+              {res.policyLinks.map((p, pIdx) => (
+                <Link
+                  key={pIdx}
+                  to={p.url}
+                  className="p-2 rounded-lg border border-slate-200/50 dark:border-white/5 hover:border-[#c8e558]/50 transition-colors flex items-center justify-between text-[11.5px] text-slate-800 dark:text-slate-200"
+                >
+                  <span className="font-medium">{p.title}</span>
+                  <ArrowUpRight className="w-3 h-3 opacity-60" />
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {/* Primary CTA */}
+          {res?.cta && (
+            <div className="pt-1">
+              {res.cta.url === '#live-agent' ? (
+                <button
+                  onClick={() => onEscalate(res?.keyHighlight || msg.content)}
+                  className="px-3.5 py-1.5 rounded-xl bg-[#c8e558] text-slate-900 text-[12px] font-semibold hover:bg-[#b8d44e] transition-colors flex items-center gap-1.5"
+                >
+                  <Headphones className="w-3.5 h-3.5" />
+                  {res.cta.label}
+                </button>
+              ) : (
+                <Link
+                  to={res.cta.url}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12px] font-semibold hover:opacity-90 transition-opacity"
+                >
+                  {res.cta.label}
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              )}
+            </div>
+          )}
+
+          {/* Action Toolbar (Copy, Helpful, Live Agent) */}
+          <div className="mt-1 pt-2 border-t border-slate-200/60 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-400">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onCopy(msg.id, res?.text || msg.content)}
+                className="hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1"
+                title="Copy answer"
+              >
+                {copiedMsgId === msg.id ? (
+                  <>
+                    <Check className="w-3 h-3 text-emerald-500" />
+                    <span className="text-emerald-500 font-medium">Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    <span>Copy</span>
+                  </>
+                )}
+              </button>
+
+              <span>•</span>
+
+              {msg.feedback === 'helpful' ? (
+                <span className="text-emerald-500 font-medium flex items-center gap-1">
+                  <ThumbsUp className="w-3 h-3" /> Helpful
+                </span>
+              ) : msg.feedback === 'not_helpful' ? (
+                <span className="text-rose-500 font-medium flex items-center gap-1">
+                  <ThumbsDown className="w-3 h-3" /> Feedback sent
+                </span>
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => onFeedback(msg.id, 'helpful')}
+                    className="hover:text-emerald-500 transition-colors p-0.5"
+                    title="Helpful"
+                  >
+                    <ThumbsUp className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={() => onFeedback(msg.id, 'not_helpful')}
+                    className="hover:text-rose-500 transition-colors p-0.5"
+                    title="Not Helpful"
+                  >
+                    <ThumbsDown className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => onEscalate(res?.keyHighlight || msg.content)}
+              className="hover:text-[#8ba32b] dark:hover:text-[#c8e558] transition-colors flex items-center gap-1 font-medium"
+            >
+              <Headphones className="w-3 h-3" />
+              Live help
+            </button>
+          </div>
+
+          {/* Dynamic Contextual Action Chips - transparent without background container */}
+          {res?.actionChips && res.actionChips.length > 0 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1">
+              {res.actionChips.map((chip, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => onSend(chip)}
+                  className="whitespace-nowrap px-3 py-1 rounded-full text-[11px] font-medium border border-slate-300/80 dark:border-white/15 text-slate-700 dark:text-slate-300 hover:border-[#c8e558] hover:text-slate-900 dark:hover:text-[#c8e558] transition-all flex-shrink-0 flex items-center gap-1 bg-transparent"
+                >
+                  <span>{chip}</span>
+                  <ArrowRight className="w-2.5 h-2.5 opacity-60" />
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 export function FloatingHelpdeskWidget({
   initialOpen = false,
   prefilledQuestion = null,
@@ -203,31 +447,29 @@ export function FloatingHelpdeskWidget({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onCloseExternal]);
 
-  // Copy Answer Helper
-  const handleCopyAnswer = (msgId: string, text: string) => {
+  const handleCopyAnswer = (id: string, text: string) => {
     navigator.clipboard.writeText(text);
-    setCopiedMsgId(msgId);
+    setCopiedMsgId(id);
     setTimeout(() => setCopiedMsgId(null), 2000);
   };
 
-  // Switch to Live Specialist with context
-  const handleEscalateToSpecialist = (topicHint?: string) => {
+  const handleEscalateToSpecialist = (contextSummary?: string) => {
     setViewMode('specialist');
-    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const topic = topicHint || latestTopicSummary || 'Sadhya platform features & support';
+    const summary = contextSummary || latestTopicSummary || 'General inquiry regarding platform features';
 
     if (specialistMessages.length === 0) {
+      const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       setSpecialistMessages([
         {
-          id: 'sys_connect',
+          id: `spec_sys_${Date.now()}`,
           sender: 'system',
-          text: 'Connected with Sadhya Helpdesk Tier 2 Specialist',
+          text: `Connected with Sarah Chen (Tier 2 Specialist) • Context: "${summary}"`,
           time: now
         },
         {
-          id: 'agent_welcome',
+          id: `spec_init_${Date.now()}`,
           sender: 'agent',
-          text: `Hi! I'm Sarah from Sadhya Helpdesk. I see you were asking about "${topic}". How can I assist you with this right now?`,
+          text: `Hi there! I'm Sarah from the Sadhya team. I see you were asking about "${summary}". How can I assist you with this directly?`,
           time: now
         }
       ]);
@@ -299,24 +541,21 @@ export function FloatingHelpdeskWidget({
 
   return (
     <aside aria-label="Helpdesk Assistant" className="fixed bottom-5 right-5 z-40 font-sans">
-      {/* Floating Action Button */}
+      {/* Floating Action Button - Minimalist Circular Design */}
       <AnimatePresence>
         {!isOpen && (
           <motion.button
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.96 }}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.94 }}
             onClick={() => setIsOpen(true)}
             aria-label="Open Sadhya Helpdesk Assistant"
-            className="flex items-center gap-2.5 px-4 py-3 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-[0_8px_30px_rgb(0,0,0,0.18)] hover:shadow-[0_12px_35px_rgb(0,0,0,0.25)] border border-slate-700/40 dark:border-slate-200/50 transition-all group"
+            className="relative w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-[0_10px_35px_rgba(0,0,0,0.25)] hover:shadow-[0_14px_40px_rgba(0,0,0,0.35)] border border-slate-700/50 dark:border-slate-200/60 flex items-center justify-center transition-all group"
           >
-            <div className="relative flex items-center justify-center w-7 h-7 rounded-full bg-[#c8e558] text-slate-900">
-              <Bot className="w-4 h-4" />
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 border border-slate-900 dark:border-white animate-pulse" />
-            </div>
-            <span className="text-[13.5px] font-semibold tracking-tight">Ask Sadhya AI</span>
+            <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-[#c8e558] dark:text-slate-900 transition-transform group-hover:scale-110" />
+            <span className="absolute top-1 right-1 w-3 h-3 rounded-full bg-emerald-500 border-2 border-slate-900 dark:border-white animate-pulse" />
           </motion.button>
         )}
       </AnimatePresence>
@@ -387,14 +626,14 @@ export function FloatingHelpdeskWidget({
               </div>
             </header>
 
-            {/* Quick Topic Chips (AI View Only) */}
+            {/* Quick Topic Chips (AI View Only) - Clean Minimalist Pills without Background Container */}
             {viewMode === 'ai' && (
-              <div className="px-3.5 py-2 border-b border-slate-100 dark:border-white/5 bg-slate-50/40 dark:bg-white/[0.01] flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              <div className="px-3.5 py-2 border-b border-slate-100 dark:border-white/5 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                 {TOPIC_CHIPS.map((chip, i) => (
                   <button
                     key={i}
                     onClick={() => sendMessage(chip.prompt)}
-                    className="whitespace-nowrap px-2.5 py-1 rounded-full text-[11.5px] font-medium bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-[#c8e558]/20 hover:border-[#c8e558]/40 hover:text-slate-900 dark:hover:text-white transition-all flex-shrink-0"
+                    className="whitespace-nowrap px-3 py-1 rounded-full text-[11.5px] font-medium border border-slate-300/80 dark:border-white/15 text-slate-600 dark:text-slate-300 hover:border-[#c8e558] hover:text-slate-900 dark:hover:text-[#c8e558] transition-all flex-shrink-0 bg-transparent"
                   >
                     {chip.label}
                   </button>
@@ -426,7 +665,7 @@ export function FloatingHelpdeskWidget({
                         <button
                           key={idx}
                           onClick={() => sendMessage(prompt)}
-                          className="p-2.5 rounded-xl border border-slate-200/70 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02] hover:bg-slate-100/80 dark:hover:bg-white/[0.06] text-left text-[12px] text-slate-700 dark:text-slate-300 transition-all flex items-center justify-between group"
+                          className="p-2.5 rounded-xl border border-slate-200/70 dark:border-white/10 bg-transparent hover:border-[#c8e558]/50 text-left text-[12px] text-slate-700 dark:text-slate-300 transition-all flex items-center justify-between group"
                         >
                           <span className="line-clamp-1">{prompt}</span>
                           <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-slate-900 dark:group-hover:text-[#c8e558] transition-colors flex-shrink-0 ml-2" />
@@ -436,9 +675,9 @@ export function FloatingHelpdeskWidget({
                   </div>
                 )}
 
-                {messages.map(msg => {
+                {messages.map((msg, mIdx) => {
                   const isUser = msg.role === 'user';
-                  const res = msg.structuredResponse;
+                  const isLatest = mIdx === messages.length - 1;
 
                   if (isUser) {
                     return (
@@ -451,197 +690,21 @@ export function FloatingHelpdeskWidget({
                   }
 
                   return (
-                    <div key={msg.id} className="self-start w-full max-w-[95%] flex flex-col gap-2.5">
-                      <div className="p-3.5 rounded-2xl rounded-tl-sm bg-slate-100/90 dark:bg-[#1b1b20] border border-slate-200/60 dark:border-white/5 text-[13px] text-slate-800 dark:text-slate-200 flex flex-col gap-3">
-                        {/* TL;DR / Key Takeaway Callout */}
-                        {res?.keyHighlight && (
-                          <div className="p-2.5 rounded-xl bg-[#c8e558]/15 border border-[#c8e558]/30 flex flex-col gap-1">
-                            <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#8ba32b] dark:text-[#c8e558] flex items-center gap-1">
-                              <Sparkles className="w-3 h-3" /> Key Takeaway
-                            </span>
-                            <p className="text-[12.5px] font-medium text-slate-900 dark:text-white leading-snug">
-                              {res.keyHighlight}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Main Text */}
-                        {res?.text && <FormattedText text={res.text} />}
-
-                        {/* Feature Bullet List */}
-                        {res?.features && res.features.length > 0 && (
-                          <ul className="space-y-1.5 pt-1">
-                            {res.features.map((feat, fIdx) => (
-                              <li key={fIdx} className="flex items-start gap-2 text-[12.5px] text-slate-700 dark:text-slate-300">
-                                <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#8ba32b] dark:bg-[#c8e558] flex-shrink-0" />
-                                <span>{parseInlineMarkdown(feat)}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-
-                        {/* Rich Feature Cards */}
-                        {res?.featureCards && res.featureCards.length > 0 && (
-                          <div className="pt-1 flex flex-col gap-2">
-                            {res.featureCards.map((card, cIdx) => (
-                              <div
-                                key={cIdx}
-                                className="p-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-white/[0.03] flex flex-col gap-1.5"
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-1.5">
-                                    {getFeatureIcon(card.icon)}
-                                    <span className="font-semibold text-[12.5px] text-slate-900 dark:text-white">
-                                      {card.title}
-                                    </span>
-                                  </div>
-                                  {card.badge && (
-                                    <span className="px-1.5 py-0.5 rounded text-[9.5px] font-semibold bg-[#c8e558]/20 text-[#8ba32b] dark:text-[#c8e558]">
-                                      {card.badge}
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-[11.5px] text-slate-600 dark:text-slate-400 leading-snug">
-                                  {card.description}
-                                </p>
-                                {card.actionUrl && (
-                                  <Link
-                                    to={card.actionUrl}
-                                    className="self-start text-[11.5px] font-semibold text-[#8ba32b] dark:text-[#c8e558] hover:underline flex items-center gap-1 mt-0.5"
-                                  >
-                                    {card.actionLabel || 'Explore'}
-                                    <ArrowRight className="w-3 h-3" />
-                                  </Link>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Official Policy Links */}
-                        {res?.policyLinks && res.policyLinks.length > 0 && (
-                          <div className="pt-1 flex flex-col gap-1.5 border-t border-slate-200/60 dark:border-white/5">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                              Official Documentation
-                            </span>
-                            {res.policyLinks.map((p, pIdx) => (
-                              <Link
-                                key={pIdx}
-                                to={p.url}
-                                className="p-2 rounded-lg border border-slate-200/50 dark:border-white/5 bg-white/50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.05] transition-colors flex items-center justify-between text-[11.5px] text-slate-800 dark:text-slate-200"
-                              >
-                                <span className="font-medium">{p.title}</span>
-                                <ArrowUpRight className="w-3 h-3 opacity-60" />
-                              </Link>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Primary CTA */}
-                        {res?.cta && (
-                          <div className="pt-1">
-                            {res.cta.url === '#live-agent' ? (
-                              <button
-                                onClick={() => handleEscalateToSpecialist()}
-                                className="px-3.5 py-1.5 rounded-xl bg-[#c8e558] text-slate-900 text-[12px] font-semibold hover:bg-[#b8d44e] transition-colors flex items-center gap-1.5"
-                              >
-                                <Headphones className="w-3.5 h-3.5" />
-                                {res.cta.label}
-                              </button>
-                            ) : (
-                              <Link
-                                to={res.cta.url}
-                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12px] font-semibold hover:opacity-90 transition-opacity"
-                              >
-                                {res.cta.label}
-                                <ArrowRight className="w-3.5 h-3.5" />
-                              </Link>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Action Toolbar (Copy, Helpful, Live Agent) */}
-                        <div className="mt-1 pt-2 border-t border-slate-200/60 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-400">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleCopyAnswer(msg.id, res?.text || msg.content)}
-                              className="hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1"
-                              title="Copy answer"
-                            >
-                              {copiedMsgId === msg.id ? (
-                                <>
-                                  <Check className="w-3 h-3 text-emerald-500" />
-                                  <span className="text-emerald-500 font-medium">Copied</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-3 h-3" />
-                                  <span>Copy</span>
-                                </>
-                              )}
-                            </button>
-
-                            <span>•</span>
-
-                            {msg.feedback === 'helpful' ? (
-                              <span className="text-emerald-500 font-medium flex items-center gap-1">
-                                <ThumbsUp className="w-3 h-3" /> Helpful
-                              </span>
-                            ) : msg.feedback === 'not_helpful' ? (
-                              <span className="text-rose-500 font-medium flex items-center gap-1">
-                                <ThumbsDown className="w-3 h-3" /> Feedback sent
-                              </span>
-                            ) : (
-                              <div className="flex items-center gap-1.5">
-                                <button
-                                  onClick={() => sendFeedback(msg.id, 'helpful')}
-                                  className="hover:text-emerald-500 transition-colors p-0.5"
-                                  title="Helpful"
-                                >
-                                  <ThumbsUp className="w-3 h-3" />
-                                </button>
-                                <button
-                                  onClick={() => sendFeedback(msg.id, 'not_helpful')}
-                                  className="hover:text-rose-500 transition-colors p-0.5"
-                                  title="Not Helpful"
-                                >
-                                  <ThumbsDown className="w-3 h-3" />
-                                </button>
-                              </div>
-                            )}
-                          </div>
-
-                          <button
-                            onClick={() => handleEscalateToSpecialist(res?.keyHighlight || msg.content)}
-                            className="hover:text-[#8ba32b] dark:hover:text-[#c8e558] transition-colors flex items-center gap-1 font-medium"
-                          >
-                            <Headphones className="w-3 h-3" />
-                            Live help
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Dynamic Contextual Action Chips */}
-                      {res?.actionChips && res.actionChips.length > 0 && (
-                        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-                          {res.actionChips.map((chip, idx) => (
-                            <button
-                              key={idx}
-                              onClick={() => sendMessage(chip)}
-                              className="whitespace-nowrap px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-[#c8e558]/20 hover:border-[#c8e558]/40 hover:text-slate-900 dark:hover:text-white transition-all flex-shrink-0 flex items-center gap-1"
-                            >
-                              <span>{chip}</span>
-                              <ArrowRight className="w-2.5 h-2.5 opacity-60" />
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    <AssistantWidgetMessage
+                      key={msg.id}
+                      msg={msg}
+                      isLatest={isLatest}
+                      onSend={sendMessage}
+                      onCopy={handleCopyAnswer}
+                      copiedMsgId={copiedMsgId}
+                      onFeedback={sendFeedback}
+                      onEscalate={handleEscalateToSpecialist}
+                    />
                   );
                 })}
 
                 {isLoading && (
-                  <div className="self-start p-3.5 rounded-2xl rounded-tl-sm bg-slate-100/90 dark:bg-[#1b1b20] border border-slate-200/60 dark:border-white/5 text-[12.5px] text-slate-500 flex items-center gap-2">
+                  <div className="self-start py-2 text-[12.5px] text-slate-500 flex items-center gap-2">
                     <Sparkles className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558] animate-spin" />
                     <span>Sadhya is reasoning...</span>
                   </div>
