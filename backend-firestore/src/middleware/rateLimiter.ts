@@ -78,3 +78,13 @@ export const strictLimiter = rateLimit({
 // clearly and so we can tune it independently later without touching every
 // call site.
 export const podcastGenerateLimiter = strictLimiter;
+
+export const helpdeskLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  store: getStore(),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many helpdesk inquiries from this IP. Please wait a few minutes before asking again.' },
+});
+

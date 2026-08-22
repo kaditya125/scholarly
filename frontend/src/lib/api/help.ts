@@ -6,11 +6,30 @@ export interface PolicyLink {
   description?: string;
 }
 
+export interface FeatureCardItem {
+  title: string;
+  description: string;
+  badge?: string;
+  icon?: string;
+  actionUrl?: string;
+  actionLabel?: string;
+}
+
+export interface DeepLinkItem {
+  label: string;
+  url: string;
+  icon?: string;
+}
+
 export interface StructuredResponse {
   type: 'text' | 'feature_list' | 'feature_cards' | 'cta' | 'error';
   text?: string;
+  keyHighlight?: string;
   features?: string[];
   cards?: { title: string; description: string; icon?: string }[];
+  featureCards?: FeatureCardItem[];
+  actionChips?: string[];
+  deepLinks?: DeepLinkItem[];
   cta?: { label: string; url: string; type: 'primary' | 'secondary' };
   policyLinks?: PolicyLink[];
   relatedQuestions?: string[];

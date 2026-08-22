@@ -3,8 +3,9 @@ import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { 
   ArrowRight, MessageCircleQuestion, GraduationCap, 
   Bot, LayoutGrid, Settings, ArrowUp, Loader2, RotateCcw,
-  Headphones, CheckCircle2, ThumbsUp, X, Send,
-  ShieldCheck, CircleDot, Sparkles, FileText, ArrowUpRight
+  Headphones, CheckCircle2, ThumbsUp, ThumbsDown, X, Send,
+  ShieldCheck, CircleDot, Sparkles, FileText, ArrowUpRight,
+  Copy, Check, Camera, Brain
 } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
 import { cn } from '../lib/utils';
@@ -229,6 +230,16 @@ function AssistantMessageView({
     <div className="flex flex-col gap-4 w-full">
       {fullText && (
         <div className="text-[13.5px] sm:text-[14px] text-slate-700 dark:text-slate-300">
+          {msg.structuredResponse?.keyHighlight && (
+            <div className="mb-3 p-3 rounded-xl bg-[#c8e558]/15 border border-[#c8e558]/30 flex flex-col gap-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#8ba32b] dark:text-[#c8e558] flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" /> Key Takeaway
+              </span>
+              <p className="text-[13px] font-medium text-slate-900 dark:text-white leading-snug">
+                {msg.structuredResponse.keyHighlight}
+              </p>
+            </div>
+          )}
           <FormattedText text={displayedText} />
           {!isTypingDone && (
             <span className="inline-block w-1.5 h-3.5 ml-1 align-middle bg-[#c8e558] animate-pulse rounded-full" />
@@ -256,6 +267,42 @@ function AssistantMessageView({
                 </li>
               ))}
             </ul>
+          )}
+
+          {msg.structuredResponse?.featureCards && msg.structuredResponse.featureCards.length > 0 && (
+            <div className="pt-2 grid sm:grid-cols-2 gap-2.5">
+              {msg.structuredResponse.featureCards.map((card, i) => (
+                <div
+                  key={i}
+                  className="p-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.03] flex flex-col justify-between gap-2"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="font-semibold text-[13px] text-slate-900 dark:text-white">
+                        {card.title}
+                      </span>
+                      {card.badge && (
+                        <span className="px-1.5 py-0.5 rounded text-[9.5px] font-semibold bg-[#c8e558]/20 text-[#8ba32b] dark:text-[#c8e558]">
+                          {card.badge}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[12px] text-slate-600 dark:text-slate-400 leading-snug">
+                      {card.description}
+                    </p>
+                  </div>
+                  {card.actionUrl && (
+                    <Link
+                      to={card.actionUrl}
+                      className="self-start text-[12px] font-semibold text-[#8ba32b] dark:text-[#c8e558] hover:underline flex items-center gap-1 mt-1"
+                    >
+                      {card.actionLabel || 'Explore Feature'}
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
 
           {msg.structuredResponse?.cta && (
@@ -319,7 +366,7 @@ function AssistantMessageView({
             </div>
           )}
 
-          {/* Interactive Resolution / Live Helpdesk Suggestion Prompt */}
+          {/* Interactive Resolution & Action Toolbar */}
           <div className="mt-1 pt-3 border-t border-slate-100 dark:border-white/10 flex flex-wrap items-center justify-between gap-2.5">
             {msg.feedback === 'resolved' ? (
               <div className="flex items-center gap-1.5 text-[12px] text-emerald-600 dark:text-emerald-400 font-medium">
@@ -337,6 +384,17 @@ function AssistantMessageView({
                   Did this resolve your query?
                 </span>
                 <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(msg.structuredResponse?.text || msg.content);
+                      onFeedback(msg.id, 'resolved');
+                    }}
+                    className="px-2.5 py-1 rounded-lg text-[11.5px] font-medium bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-600 dark:text-slate-300 transition-colors flex items-center gap-1"
+                    title="Copy Answer"
+                  >
+                    <Copy className="w-3 h-3" />
+                    Copy
+                  </button>
                   <button
                     onClick={() => onFeedback(msg.id, 'resolved')}
                     className="px-2.5 py-1 rounded-lg text-[11.5px] font-medium bg-slate-100 dark:bg-white/5 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 text-slate-600 dark:text-slate-300 transition-colors flex items-center gap-1"
@@ -358,6 +416,21 @@ function AssistantMessageView({
               </>
             )}
           </div>
+
+          {msg.structuredResponse?.actionChips && msg.structuredResponse.actionChips.length > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              {msg.structuredResponse.actionChips.map((chip, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => onSend(chip)}
+                  className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-slate-100 dark:bg-white/5 hover:bg-[#c8e558]/20 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all flex items-center gap-1"
+                >
+                  <span>{chip}</span>
+                  <ArrowRight className="w-3 h-3 opacity-60" />
+                </button>
+              ))}
+            </div>
+          )}
 
           {msg.structuredResponse?.relatedQuestions && msg.structuredResponse.relatedQuestions.length > 0 && (
             <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/10">
