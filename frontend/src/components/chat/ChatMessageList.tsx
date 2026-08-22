@@ -32,9 +32,9 @@ export function ChatMessageList({ messages, isStreaming, onCitationClick }: Chat
   return (
     <div className="space-y-6">
       {messages.map((msg, idx) => (
-        <div key={msg.id || idx} className={cn("flex gap-3.5", msg.role === 'user' ? "flex-row-reverse" : "flex-row")}>
+        <div key={msg.id || idx} className={cn("flex flex-col sm:flex-row gap-2 sm:gap-3.5", msg.role === 'user' ? "items-end sm:flex-row-reverse" : "items-start sm:flex-row")}>
           <div className={cn(
-            "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-1 shadow-2xs",
+            "hidden sm:flex w-8 h-8 rounded-xl items-center justify-center shrink-0 mt-1 shadow-2xs",
             msg.role === 'user' 
               ? "bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900" 
               : "bg-slate-900 text-[#c8e558] dark:bg-white dark:text-slate-900"
@@ -43,9 +43,9 @@ export function ChatMessageList({ messages, isStreaming, onCitationClick }: Chat
           </div>
           
           <div className={cn(
-            "max-w-[85%] rounded-2xl px-5 py-3.5 shadow-xs",
+            "w-full sm:max-w-[85%] rounded-2xl px-4 sm:px-5 py-3.5 shadow-xs min-w-0 break-words",
             msg.role === 'user' 
-              ? "bg-slate-900 text-white dark:bg-[#18181b] dark:text-slate-100 rounded-tr-xs border border-transparent dark:border-white/10" 
+              ? "bg-slate-900 text-white dark:bg-[#18181b] dark:text-slate-100 rounded-tr-xs border border-transparent dark:border-white/10 self-end sm:self-auto max-w-[88%]" 
               : "bg-white dark:bg-[#141416] text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-white/10 rounded-tl-xs"
           )}>
             <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:text-slate-50">

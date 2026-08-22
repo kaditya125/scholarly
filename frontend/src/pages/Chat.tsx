@@ -1233,10 +1233,20 @@ export default function Chat() {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex gap-4 w-full min-w-0">
-                      <div className="w-8 h-8 rounded-xl bg-slate-900 text-[#c8e558] dark:bg-white dark:text-slate-900 flex items-center justify-center shrink-0 mt-1 shadow-2xs">
+                    <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-4 w-full min-w-0">
+                      {/* Mobile top AI identity badge */}
+                      <div className="flex items-center gap-2 sm:hidden mb-0.5">
+                        <div className="w-6 h-6 rounded-lg bg-slate-900 text-[#c8e558] dark:bg-white dark:text-slate-900 flex items-center justify-center shadow-2xs shrink-0">
+                          <Sparkles className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-[12.5px] font-semibold text-slate-800 dark:text-slate-200">Sadhya AI</span>
+                      </div>
+
+                      {/* Desktop Avatar beside message */}
+                      <div className="hidden sm:flex w-8 h-8 rounded-xl bg-slate-900 text-[#c8e558] dark:bg-white dark:text-slate-900 items-center justify-center shrink-0 mt-1 shadow-2xs">
                         <Sparkles className="w-4 h-4" />
                       </div>
+
                       <div className="flex flex-col text-slate-800 dark:text-slate-100 w-full min-w-0">
                         {/* Reasoning timeline, sources, answer body and action bar all
                             live in AssistantReply — see components/chat/AssistantReply.tsx. */}
@@ -1266,9 +1276,20 @@ export default function Chat() {
               {/* LIVE STREAMING BLOCK */}
               {(stream.isStreaming || pendingFinal) && (
                 <div className="flex w-full justify-start">
-                  <div className="flex gap-4 w-full min-w-0">
-                    {/* Thinking-mode avatar: a slow breathing ring while the pipeline runs */}
-                    <div className="relative w-8 h-8 shrink-0 mt-1">
+                  <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-4 w-full min-w-0">
+                    {/* Mobile top AI streaming identity badge */}
+                    <div className="flex items-center gap-2 sm:hidden mb-0.5">
+                      <div className="relative w-6 h-6 shrink-0">
+                        <span className="absolute inset-0 rounded-lg bg-[#8ba32b]/25 dark:bg-[#c8e558]/25 animate-ping [animation-duration:2s]" aria-hidden />
+                        <span className="relative w-6 h-6 rounded-lg bg-slate-900 text-[#c8e558] dark:bg-white dark:text-slate-900 ring-1 ring-[#8ba32b]/40 dark:ring-[#c8e558]/40 flex items-center justify-center shadow-2xs">
+                          <Sparkles className="w-3.5 h-3.5" />
+                        </span>
+                      </div>
+                      <span className="text-[12.5px] font-semibold text-slate-800 dark:text-slate-200">Sadhya AI</span>
+                    </div>
+
+                    {/* Thinking-mode avatar on desktop */}
+                    <div className="hidden sm:block relative w-8 h-8 shrink-0 mt-1">
                       <span className="absolute inset-0 rounded-xl bg-[#8ba32b]/25 dark:bg-[#c8e558]/25 animate-ping [animation-duration:2s]" aria-hidden />
                       <span className="relative w-8 h-8 rounded-xl bg-slate-900 text-[#c8e558] dark:bg-white dark:text-slate-900 ring-1 ring-[#8ba32b]/40 dark:ring-[#c8e558]/40 flex items-center justify-center shadow-2xs">
                         <Sparkles className="w-4 h-4" />
