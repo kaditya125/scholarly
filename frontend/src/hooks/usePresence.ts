@@ -1,23 +1,43 @@
 import { useEffect, useState } from 'react';
-import { collection, doc, onSnapshot, query as fsQuery, setDoc, where } from 'firebase/firestore';
+import { collection, onSnapshot, query as fsQuery, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../lib/AuthContext';
+import { getAuth } from 'firebase/auth';
 
 const HEARTBEAT_MS = 60_000;
 const ACTIVITY_THROTTLE_MS = 60_000;
 const FRESH_MS = 300_000; // 5 minutes
 
+// Resolve the backend base URL the same way the rest of the app does
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+
+async function postPresence(state: 'online' | 'offline') {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) return;
+  try {
+    const token = await user.getIdToken();
+    const endpoint = state === 'online'
+      ? `${API_BASE}/presence/heartbeat`
+      : `${API_BASE}/presence/offline`;
+    await fetch(endpoint, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    // silent – presence is best-effort
+  }
+}
+
 /**
- * Publishes the current user's presence: writes `online` immediately, then heartbeats every 60s
- * while the tab is visible, plus throttled updates on user interaction.
- * Mount once app-wide.
+ * Publishes the current user's presence via the backend API (Admin SDK bypass).
+ * Mount once app-wide via GlobalPresencePublisher in App.tsx.
  */
 export function usePresenceHeartbeat() {
   const { user } = useAuth();
 
   useEffect(() => {
     if (!user?.uid) return;
-    const ref = doc(db, 'presence', user.uid);
     let lastWriteTime = 0;
 
     const write = (state: 'online' | 'offline', force = false) => {
@@ -26,7 +46,7 @@ export function usePresenceHeartbeat() {
         return;
       }
       lastWriteTime = now;
-      setDoc(ref, { uid: user.uid, state, lastActive: now }, { merge: true }).catch(() => {});
+      postPresence(state);
     };
 
     // Initial write
@@ -72,7 +92,7 @@ export function usePresenceHeartbeat() {
   }, [user?.uid]);
 }
 
-/** Reactive set of the given uids that are currently online (fresh heartbeat within 60s). */
+/** Reactive set of the given uids that are currently online (fresh heartbeat within 5min). */
 export function useOnlineStatuses(uids: string[]): Set<string> {
   const [online, setOnline] = useState<Set<string>>(new Set());
   const key = [...new Set(uids.filter(Boolean))].sort().join(',');
