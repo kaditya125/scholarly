@@ -552,15 +552,15 @@ export function FloatingHelpdeskWidget({
             whileTap={{ scale: 0.94 }}
             onClick={() => setIsOpen(true)}
             aria-label="Open Sadhya Helpdesk Assistant"
-            className="relative w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-white dark:bg-[#151518] text-white hover:border-[#c8e558]/60 shadow-[0_8px_30px_rgba(0,0,0,0.25)] hover:shadow-[0_0_24px_rgba(200,229,88,0.3)] border border-slate-200 dark:border-white/15 flex items-center justify-center transition-all group p-2"
+            className="relative w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-white dark:bg-white hover:border-[#c8e558] shadow-[0_10px_35px_rgba(0,0,0,0.3)] hover:shadow-[0_0_25px_rgba(200,229,88,0.4)] border border-slate-200/90 dark:border-white/30 flex items-center justify-center transition-all group overflow-hidden"
           >
             {/* Animated Chat GIF Asset */}
             <img
               src="/chat-help.gif"
               alt="Help Chat"
-              className="w-8 h-8 sm:w-9 sm:h-9 object-contain transition-transform duration-300 group-hover:scale-110"
+              className="w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 object-contain mix-blend-multiply transition-transform duration-300 group-hover:scale-110"
             />
-            <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-[#c8e558] border-2 border-white dark:border-[#151518] shadow-[0_0_8px_#c8e558] animate-pulse" />
+            <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-[#c8e558] border-2 border-white shadow-[0_0_8px_#c8e558] animate-pulse" />
           </motion.button>
         )}
       </AnimatePresence>
