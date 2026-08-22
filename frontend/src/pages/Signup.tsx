@@ -12,6 +12,7 @@ import {
   authErrorMessage,
 } from '../lib/firebase';
 import { useAuth } from '../lib/AuthContext';
+import { api } from '../lib/api/client';
 import { identityApi, type ProductRole } from '../lib/api/identity';
 import {
   AuthShell,
@@ -137,8 +138,15 @@ export default function Signup() {
       // before the first render of the app shell.
       await updateProfile(cred.user, { displayName: fullName.trim() });
 
-      // Trigger mandatory email verification
-      await sendEmailVerification(cred.user);
+      // Trigger mandatory email verification via ZeptoMail
+      try {
+        const token = await cred.user.getIdToken();
+        await api.post('/auth/send-verification-email', { name: fullName.trim() }, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch {
+        await sendEmailVerification(cred.user);
+      }
 
       // Stash pending role and referral in sessionStorage for post-verification bootstrap
       sessionStorage.setItem('pending_role', role);
