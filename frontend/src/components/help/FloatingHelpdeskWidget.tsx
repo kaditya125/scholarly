@@ -552,51 +552,15 @@ export function FloatingHelpdeskWidget({
             whileTap={{ scale: 0.94 }}
             onClick={() => setIsOpen(true)}
             aria-label="Open Sadhya Helpdesk Assistant"
-            className="relative w-12.5 h-12.5 sm:w-13.5 sm:h-13.5 rounded-full bg-slate-900 dark:bg-[#151518] text-white hover:border-[#c8e558]/60 shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:shadow-[0_0_24px_rgba(200,229,88,0.22)] border border-slate-700/60 dark:border-white/15 flex items-center justify-center transition-all group"
+            className="relative w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-white dark:bg-[#151518] text-white hover:border-[#c8e558]/60 shadow-[0_8px_30px_rgba(0,0,0,0.25)] hover:shadow-[0_0_24px_rgba(200,229,88,0.3)] border border-slate-200 dark:border-white/15 flex items-center justify-center transition-all group p-2"
           >
-            {/* Sadhya Themed Assistant Icon */}
-            <svg
-              viewBox="0 0 28 28"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-5.5 h-5.5 sm:w-6 sm:h-6 transition-transform duration-200 group-hover:scale-105"
-            >
-              {/* Back dialogue layer - depth stroke */}
-              <path
-                d="M17 5.5h4a3 3 0 0 1 3 3v5.5a3 3 0 0 1-3 3h-1.2l-1.8 2.5V17h-1a3 3 0 0 1-3-3v-1"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                opacity="0.45"
-              />
-              {/* Main front chat bubble */}
-              <path
-                d="M4.5 9a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v6.5a3 3 0 0 1-3 3h-3.8l-3.2 2.8v-2.8H7.5a3 3 0 0 1-3-3V9z"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              {/* Sadhya Signature Accent: Brand Lime Glow / Checkmark */}
-              <circle
-                cx="11.5"
-                cy="12.2"
-                r="3"
-                stroke="#c8e558"
-                strokeWidth="1.5"
-                fill="#c8e558"
-                fillOpacity="0.18"
-              />
-              <path
-                d="M10.2 12.2l1 1 1.8-1.8"
-                stroke="#c8e558"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-[#c8e558] border-2 border-slate-900 dark:border-[#151518] shadow-[0_0_8px_#c8e558] animate-pulse" />
+            {/* Animated Chat GIF Asset */}
+            <img
+              src="/chat-help.gif"
+              alt="Help Chat"
+              className="w-8 h-8 sm:w-9 sm:h-9 object-contain transition-transform duration-300 group-hover:scale-110"
+            />
+            <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-[#c8e558] border-2 border-white dark:border-[#151518] shadow-[0_0_8px_#c8e558] animate-pulse" />
           </motion.button>
         )}
       </AnimatePresence>
