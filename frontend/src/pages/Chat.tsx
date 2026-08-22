@@ -1113,13 +1113,13 @@ export default function Chat() {
                themselves.
                `safe center` keeps the column centred but degrades to start-alignment rather
                than overflowing equally into an unreachable left edge. */
-            className="flex-1 min-h-0 overflow-y-auto overflow-x-clip pb-32 px-4 md:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex [justify-content:safe_center]"
+            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-32 px-3 sm:px-4 md:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex justify-center w-full"
           >
             {/* min-w-0 is load-bearing: as a row-flex item this column would otherwise take
                 min-width:auto and refuse to shrink below its widest descendant, so a wide
                 table or equation widens the column past the viewport instead of letting
                 that descendant's own overflow-x-auto scroll inside it. */}
-            <div className="flex flex-col gap-6 py-6 border-none w-full min-w-0 max-w-3xl">
+            <div className="flex flex-col gap-6 py-6 border-none w-full min-w-0 max-w-3xl overflow-hidden sm:overflow-visible">
               {messages.map((msg, i) => (
                 <div key={i} className={cn("flex w-full", msg.role === 'user' ? "justify-end" : "justify-start")}>
                   {msg.role === 'user' ? (
