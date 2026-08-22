@@ -370,12 +370,14 @@ function ValueCell({ val }: { val: string | boolean }) {
 export default function PricingSection({
   id = 'pricing',
   headingAs: Heading = 'h2',
+  showComparison = true,
 }: {
   id?: string;
   headingAs?: 'h1' | 'h2';
+  showComparison?: boolean;
 }) {
   const [billing, setBilling] = useState<Billing>('yearly');
-  const [showComparison, setShowComparison] = useState(true);
+  const [isTableExpanded, setIsTableExpanded] = useState(true);
   const reduced = useReducedMotion();
 
   return (
@@ -527,94 +529,101 @@ export default function PricingSection({
         })}
       </div>
 
-      {/* ── Sleek Side-by-Side Feature Comparison Matrix ── */}
-      <div className="mt-20 pt-10 border-t border-slate-100 dark:border-white/[0.07]">
-        <div className="flex items-center justify-between gap-4 mb-6">
-          <div>
-            <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">
-              Compare features across plans
-            </h3>
-            <p className="mt-1 text-[13.5px] text-slate-500 dark:text-gray-400">
-              A detailed overview of capabilities, quotas, and limits.
-            </p>
+      {/* ── Sleek Side-by-Side Feature Comparison Matrix (Only on /pricing page) ── */}
+      {showComparison && (
+        <div className="mt-20 pt-10 border-t border-slate-100 dark:border-white/[0.07]">
+          <div className="flex items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">
+                Compare features across plans
+              </h3>
+              <p className="mt-1 text-[13.5px] text-slate-500 dark:text-gray-400">
+                A detailed overview of capabilities, quotas, and limits.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsTableExpanded(!isTableExpanded)}
+              className="inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer shrink-0"
+            >
+              {isTableExpanded ? 'Hide table' : 'Show table'}
+              <ChevronDown className={cn('w-4 h-4 transition-transform duration-200', isTableExpanded && 'rotate-180')} />
+            </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setShowComparison(!showComparison)}
-            className="inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
-          >
-            {showComparison ? 'Hide table' : 'Show table'}
-            <ChevronDown className={cn('w-4 h-4 transition-transform duration-200', showComparison && 'rotate-180')} />
-          </button>
-        </div>
-
-        {showComparison && (
-          <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416]">
-            <table className="w-full text-left border-collapse min-w-[640px]">
-              {/* Header */}
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02]">
-                  <th className="py-3.5 px-5 text-[13.5px] font-semibold text-slate-900 dark:text-white w-[42%]">
-                    Feature
-                  </th>
-                  <th className="py-3.5 px-4 text-[13px] font-semibold text-slate-900 dark:text-white w-[19%] text-center">
-                    Free
-                  </th>
-                  <th className="py-3.5 px-4 text-[13px] font-semibold text-[#728c1c] dark:text-[#c8e558] w-[20%] text-center bg-[#c8e558]/[0.06]">
-                    Pro (Launch)
-                  </th>
-                  <th className="py-3.5 px-4 text-[13px] font-semibold text-slate-900 dark:text-white w-[19%] text-center">
-                    Institution
-                  </th>
-                </tr>
-              </thead>
-
-              {/* Body */}
-              <tbody className="divide-y divide-slate-100 dark:divide-white/[0.05]">
-                {COMPARISON_CATEGORIES.map((category) => (
-                  <Fragment key={category.title}>
-                    {/* Category Header */}
-                    <tr className="bg-slate-50/40 dark:bg-white/[0.015]">
-                      <td colSpan={4} className="py-2.5 px-5 text-[11.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-gray-400">
-                        {category.title}
-                      </td>
+          {isTableExpanded && (
+            <div className="w-full overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416]">
+              <div className="overflow-x-auto touch-pan-x overscroll-x-contain custom-scrollbar">
+                <table className="w-full text-left border-collapse min-w-[580px] sm:min-w-[640px]">
+                  {/* Header */}
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.03]">
+                      <th className="py-3.5 px-4 sm:px-5 text-[13.5px] font-semibold text-slate-900 dark:text-white sticky left-0 z-20 bg-slate-50 dark:bg-[#18181b] min-w-[170px] sm:min-w-[240px] shadow-[1px_0_0_0_rgba(0,0,0,0.06)] dark:shadow-[1px_0_0_0_rgba(255,255,255,0.08)]">
+                        Feature
+                      </th>
+                      <th className="py-3.5 px-3 sm:px-4 text-[13px] font-semibold text-slate-900 dark:text-white text-center min-w-[100px] sm:min-w-[120px]">
+                        Free
+                      </th>
+                      <th className="py-3.5 px-3 sm:px-4 text-[13px] font-semibold text-[#728c1c] dark:text-[#c8e558] text-center bg-[#c8e558]/[0.08] min-w-[110px] sm:min-w-[130px]">
+                        Pro (Launch)
+                      </th>
+                      <th className="py-3.5 px-3 sm:px-4 text-[13px] font-semibold text-slate-900 dark:text-white text-center min-w-[100px] sm:min-w-[120px]">
+                        Institution
+                      </th>
                     </tr>
+                  </thead>
 
-                    {/* Category Items */}
-                    {category.rows.map((row) => (
-                      <tr
-                        key={row.feature}
-                        className="hover:bg-slate-50/40 dark:hover:bg-white/[0.015] transition-colors"
-                      >
-                        <td className="py-3 px-5">
-                          <div className="text-[13.5px] text-slate-800 dark:text-gray-200">
-                            {row.feature}
-                          </div>
-                          {row.hint && (
-                            <div className="text-[11.5px] text-slate-400 dark:text-gray-500 mt-0.5">
-                              {row.hint}
-                            </div>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          <ValueCell val={row.free} />
-                        </td>
-                        <td className="py-3 px-4 text-center bg-[#c8e558]/[0.03]">
-                          <ValueCell val={row.pro} />
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          <ValueCell val={row.institution} />
-                        </td>
-                      </tr>
+                  {/* Body */}
+                  <tbody className="divide-y divide-slate-100 dark:divide-white/[0.05]">
+                    {COMPARISON_CATEGORIES.map((category) => (
+                      <Fragment key={category.title}>
+                        {/* Category Header */}
+                        <tr className="bg-slate-50/50 dark:bg-white/[0.02]">
+                          <td
+                            colSpan={4}
+                            className="py-2.5 px-4 sm:px-5 text-[11.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-gray-400 sticky left-0 z-10 bg-slate-50/90 dark:bg-[#18181b]/90"
+                          >
+                            {category.title}
+                          </td>
+                        </tr>
+
+                        {/* Category Items */}
+                        {category.rows.map((row) => (
+                          <tr
+                            key={row.feature}
+                            className="hover:bg-slate-50/50 dark:hover:bg-white/[0.015] transition-colors"
+                          >
+                            <td className="py-3 px-4 sm:px-5 sticky left-0 z-10 bg-white dark:bg-[#141416] shadow-[1px_0_0_0_rgba(0,0,0,0.06)] dark:shadow-[1px_0_0_0_rgba(255,255,255,0.08)]">
+                              <div className="text-[13px] sm:text-[13.5px] font-medium text-slate-800 dark:text-gray-200">
+                                {row.feature}
+                              </div>
+                              {row.hint && (
+                                <div className="text-[11px] sm:text-[11.5px] text-slate-400 dark:text-gray-500 mt-0.5 leading-snug">
+                                  {row.hint}
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-3 px-3 sm:px-4 text-center">
+                              <ValueCell val={row.free} />
+                            </td>
+                            <td className="py-3 px-3 sm:px-4 text-center bg-[#c8e558]/[0.03]">
+                              <ValueCell val={row.pro} />
+                            </td>
+                            <td className="py-3 px-3 sm:px-4 text-center">
+                              <ValueCell val={row.institution} />
+                            </td>
+                          </tr>
+                        ))}
+                      </Fragment>
                     ))}
-                  </Fragment>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Footer notes ── */}
       <p className="mt-8 text-[12.5px] leading-relaxed text-slate-500 dark:text-gray-400">

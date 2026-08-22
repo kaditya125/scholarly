@@ -780,7 +780,7 @@ export default function LandingPage() {
 
         {/* ══ Plans ══════════════════════════════════════════════════════════ */}
         <div className="border-t border-slate-100 dark:border-white/[0.07]">
-          <PricingSection />
+          <PricingSection showComparison={false} />
         </div>
 
         {/* ══ Final CTA ══════════════════════════════════════════════════════ */}
