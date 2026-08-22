@@ -3,7 +3,7 @@ import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-d
 import {
   LayoutDashboard, BotMessageSquare, NotebookPen, FileText, Headphones,
   GraduationCap, Users, Video, BarChart3, Wallet, UserRound, Settings,
-  Lock, Menu, X, Loader2, LogOut, Sun, Moon,
+  Lock, Menu, X, Loader2, LogOut, Sun, Moon, GitFork,
 } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
 import { useTheme } from '../../lib/ThemeContext';
@@ -69,6 +69,7 @@ const NAV: NavGroup[] = [
     items: [
       { label: 'Classes', icon: GraduationCap, to: '/teach/classes', matchPrefix: '/teach/classes' },
       { label: 'Students', icon: Users, to: '/teach/students', matchPrefix: '/teach/students' },
+      { label: 'Automations', icon: GitFork, to: '/admin/automations', matchPrefix: '/admin/automations' },
       { label: 'Live Classes', icon: Video, note: 'Being prepared' },
       { label: 'Analytics', icon: BarChart3, note: 'Needs classes first' },
     ],

@@ -82,6 +82,7 @@ export const TEACHER_PRODUCT_GROUPS: NavGroup[] = [
     icon: Sparkles,
     links: [
       { label: 'Content Pipeline', href: '/content-pipeline', desc: 'Instant slides, worksheets & revision notes' },
+      { label: 'Automation Studio', href: '/admin/automations', desc: 'Build closed-loop remedial DAG workflows' },
       { label: 'Test & Quiz Builder', href: '/tests', desc: 'Create custom exams with automated grading' },
       { label: 'Class Podcasts', href: '/podcasts', desc: 'Generate 2-voice audio review explainers' },
       { label: 'Curriculum Documents', href: '/documents', desc: 'Index and share verified study materials' },

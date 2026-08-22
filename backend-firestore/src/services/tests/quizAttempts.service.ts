@@ -15,6 +15,7 @@ import type { StoredQuizQuestion } from '../../types/quizAttempt.types';
 import { UserStatsService } from '../userStats.service';
 import { UserStatsRepository } from '../../repositories/userStats.repository';
 import { PlannerService } from '../planner.service';
+import { eventBus } from '../../core/events/EventBus';
 
 const POSITIVE_MARK = 1;
 const NEGATIVE_MARK = 0.25;
@@ -188,6 +189,20 @@ export class QuizAttemptsService {
     if (weakTopics.length > 0) {
       this.addRevisionTask(userId, attempt, weakTopics).catch(e => console.error('[QuizAttempts] planner task failed', e));
     }
+
+    // Publish domain event for Closed-Loop Automation Engine
+    void eventBus.publish('learning.quiz_completed', {
+      userId,
+      attemptId: id,
+      subject: attempt.notebookTitle || 'General',
+      topic: attempt.topic || 'General Practice',
+      totalQuestions: total,
+      correctCount: correct,
+      skippedCount: unattempted,
+      accuracy,
+      totalTimeSeconds: patch.timeSpentSeconds,
+      occurredAt: Date.now(),
+    });
 
     return { ...attempt, ...patch };
   }
