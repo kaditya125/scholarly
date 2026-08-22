@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import { Check, X, ArrowRight, Sparkles, Zap, Flame, Shield, HelpCircle, ChevronDown } from 'lucide-react';
