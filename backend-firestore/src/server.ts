@@ -177,7 +177,6 @@ app.get('/api/public/stats', async (_req, res) => {
     const [list, presenceSnap] = await Promise.all([
       auth.listUsers(1000),
       db.collection('presence')
-        .where('state', '==', 'online')
         .where('lastActive', '>=', Date.now() - ACTIVE_PRESENCE_WINDOW_MS)
         .get()
         .catch(() => null)
@@ -228,7 +227,9 @@ app.get('/api/public/stats', async (_req, res) => {
 
     studentCount = studentCount || 1;
     teacherCount = teacherCount || 1;
-    const activeStudents = presenceSnap ? presenceSnap.docs.length : 0;
+    const activeStudents = presenceSnap
+      ? presenceSnap.docs.filter(d => (d.data().state ?? 'online') !== 'offline').length
+      : 0;
 
     const payload: PublicStatsResponse = { 
       students: studentCount,

@@ -839,8 +839,8 @@ export default function LandingPage() {
                             {stat.value}
                           </p>
                         ) : (
-                          <p className="text-[14px] sm:text-[15px] font-semibold tracking-wide text-slate-500 dark:text-slate-400">
-                            Active
+                          <p className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-400 dark:text-slate-500">
+                            —
                           </p>
                         )}
                       </div>
