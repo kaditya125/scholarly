@@ -56,11 +56,15 @@ export default function VerifyEmail() {
   const handleFinishVerification = useCallback(
     async (roleToAssign: ProductRole) => {
       try {
+        if (auth.currentUser) {
+          await reload(auth.currentUser).catch(() => {});
+          await auth.currentUser.getIdToken(true).catch(() => {});
+        }
         await identityApi.bootstrap(roleToAssign, savedRef);
         await refreshClaims();
       } catch (err: any) {
-        // If already bootstrapped, we can continue safely
-        console.warn('[VerifyEmail] Bootstrap warning:', err);
+        // If already bootstrapped (409) or warning, continue
+        console.warn('[VerifyEmail] Bootstrap status:', err);
       }
       sessionStorage.removeItem('pending_role');
       sessionStorage.removeItem('pending_ref');
@@ -69,7 +73,7 @@ export default function VerifyEmail() {
     [navigate, refreshClaims, savedRef]
   );
 
-  // If user is already verified when arriving or if Google user lands here, immediately continue
+  // If user is already verified when arriving, automatically continue to onboarding
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
@@ -206,11 +210,11 @@ export default function VerifyEmail() {
 
       <div className="mt-6 space-y-3">
         <SubmitButton
-          busy={checking}
-          label="I've verified my email"
-          busyLabel="Checking verification status..."
+          loading={checking}
           onClick={handleCheckVerified}
-        />
+        >
+          {checking ? 'Checking verification status...' : "I've verified my email"}
+        </SubmitButton>
 
         <button
           type="button"
