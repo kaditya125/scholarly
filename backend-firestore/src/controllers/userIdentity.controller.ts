@@ -58,6 +58,19 @@ export class UserIdentityController {
       });
     }
 
+    // Mandatory Email Verification gate: email/password accounts must be verified before activation
+    const signInProvider = (req.user as any)?.firebase?.sign_in_provider;
+    const isPasswordAccount = signInProvider === 'password';
+    const isEmailVerified = (req.user as any)?.email_verified === true;
+
+    if (isPasswordAccount && !isEmailVerified) {
+      logger.warn('[UserIdentity] Bootstrap rejected: email is not verified', { uid });
+      return res.status(403).json({
+        error: 'Email verification required before activating your account. Please verify your email.',
+        code: 'auth/unverified-email',
+      });
+    }
+
     try {
       const result = await userIdentityService.bootstrapProductRole(uid, requested);
 

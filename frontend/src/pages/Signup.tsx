@@ -7,6 +7,7 @@ import {
   githubProvider,
   signInWithPopup,
   createUserWithEmailAndPassword,
+  sendEmailVerification,
   updateProfile,
   authErrorMessage,
 } from '../lib/firebase';
@@ -135,7 +136,18 @@ export default function Signup() {
       // displayName is what the chat greeting and the sidebar avatar read, so set it
       // before the first render of the app shell.
       await updateProfile(cred.user, { displayName: fullName.trim() });
-      await assignRoleAndContinue(role);
+
+      // Trigger mandatory email verification
+      await sendEmailVerification(cred.user);
+
+      // Stash pending role and referral in sessionStorage for post-verification bootstrap
+      sessionStorage.setItem('pending_role', role);
+      if (referredBy) {
+        sessionStorage.setItem('pending_ref', referredBy);
+      }
+
+      // Navigate to dedicated verification screen
+      navigate('/verify-email', { replace: true, state: { email: email.trim() } });
     } catch (err: any) {
       setError(authErrorMessage(err));
       setBusy(null);
