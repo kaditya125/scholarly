@@ -149,18 +149,19 @@ const MORE_NAV = [
 /**
  * Single sidebar row — primary nav style.
  */
-const NavItem: React.FC<{ item: any, currentPath: string, collapsed?: boolean }> = ({ item, currentPath, collapsed }) => {
+const NavItem: React.FC<{ item: any, currentPath: string, collapsed?: boolean, onClick?: () => void }> = ({ item, currentPath, collapsed, onClick }) => {
   const isActive = currentPath === item.path || (currentPath.startsWith(item.path) && item.path !== "/");
   const Icon = item.icon;
 
   return (
     <Link
       to={item.path}
+      onClick={onClick}
       className={cn(
         "flex items-center transition-colors duration-150 group antialiased",
         collapsed
           ? "justify-center w-8 h-8 mx-auto rounded-lg"
-          : "gap-2.5 h-[30px] px-2.5 rounded-lg mx-2.5 text-[12.5px] tracking-[-0.006em]",
+          : "gap-2.5 h-[34px] md:h-[30px] px-2.5 rounded-lg mx-2.5 text-[13px] md:text-[12.5px] tracking-[-0.006em]",
         isActive
           ? "bg-slate-100 text-slate-900 font-medium dark:bg-white/[0.07] dark:text-white"
           : "text-slate-500 font-normal hover:bg-slate-100/70 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-white/[0.04] dark:hover:text-gray-100"
@@ -208,6 +209,13 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   // More flyout — portal-based so sidebar overflow never clips it
   const [isMoreFlyoutOpen, setIsMoreFlyoutOpen] = useState(false);
+
+  // Auto-close mobile drawer on route change (for mobile screens like OnePlus 10R)
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    setIsNewMenuOpen(false);
+    setIsMoreFlyoutOpen(false);
+  }, [location.pathname]);
   const moreFlyoutRef = useRef<HTMLDivElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const [moreFlyoutStyle, setMoreFlyoutStyle] = useState<React.CSSProperties>({});
@@ -342,16 +350,16 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
       <aside className={cn(
         "bg-white dark:bg-[#161619] border-r border-slate-200 dark:border-white/[0.08] flex flex-col h-full shrink-0 overflow-y-auto custom-scrollbar transition-all duration-300", 
         "fixed md:relative z-50",
-        isMobileMenuOpen ? "translate-x-0 w-[260px]" : "-translate-x-full md:translate-x-0",
+        isMobileMenuOpen ? "translate-x-0 w-[280px] max-w-[85vw] shadow-2xl" : "-translate-x-full md:translate-x-0",
         !isMobileMenuOpen && isCollapsed ? "md:w-[52px]" : "md:w-[260px]"
       )}>
-        {/* Brand + collapse control */}
+        {/* Brand + collapse control / mobile close */}
         <div className={cn(
           "h-[60px] flex items-center shrink-0 transition-colors duration-300",
-          isCollapsed ? "justify-center px-0 flex-col py-2" : "px-4 justify-between"
+          isCollapsed && !isMobileMenuOpen ? "justify-center px-0 flex-col py-2" : "px-4 justify-between"
         )}>
-          {!isCollapsed ? (
-            <Link to="/" className="flex items-center gap-2.5 overflow-hidden">
+          {!isCollapsed || isMobileMenuOpen ? (
+            <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2.5 overflow-hidden">
               <LogoMark className="shrink-0 w-[22px] h-[22px]" />
               <span className="font-semibold text-[15.5px] tracking-tight text-slate-900 dark:text-white">
                 Sadhya
@@ -363,6 +371,7 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
             </Link>
           )}
 
+          {/* Desktop collapse toggle */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className={cn(
@@ -375,15 +384,24 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
           >
             {isCollapsed ? <PanelLeft className="w-[16px] h-[16px]" strokeWidth={1.75} /> : <PanelLeftClose className="w-[16px] h-[16px]" strokeWidth={1.75} />}
           </button>
+
+          {/* Mobile close button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="md:hidden w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+            aria-label="Close mobile navigation"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
         
-        <div className={cn("flex-1 w-full max-w-full", isCollapsed ? "pt-1 pb-3" : "pt-3 pb-6")}>
+        <div className={cn("flex-1 w-full max-w-full", isCollapsed && !isMobileMenuOpen ? "pt-1 pb-3" : "pt-3 pb-6")}>
            <nav className="relative" role="navigation" aria-label="Main navigation">
                {/* ── New button ──────────────────────────────────────────────
                     EXPANDED  → inline accordion directly inside sidebar.
                     COLLAPSED → attached flyout anchored to the right of rail.
                  ─────────────────────────────────────────────────────────── */}
-               {!isCollapsed && (
+               {(!isCollapsed || isMobileMenuOpen) && (
                  <div ref={newMenuExpandedRef} className="px-2.5 mb-3">
                    <button
                      onClick={() => setIsNewMenuOpen(v => !v)}
@@ -428,9 +446,10 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                                      onClick={() => {
                                        navigate(`${item.path}${item.type ? `?type=${item.type}` : ''}`);
                                        window.dispatchEvent(new CustomEvent('new-chat', { detail: item.type }));
+                                       setIsMobileMenuOpen(false);
                                      }}
                                      className={cn(
-                                       "w-full flex items-center gap-2.5 px-2.5 h-[30px] rounded-lg text-[12.5px] transition-colors duration-150 text-left group antialiased",
+                                       "w-full flex items-center gap-2.5 px-2.5 h-[32px] md:h-[30px] rounded-lg text-[13px] md:text-[12.5px] transition-colors duration-150 text-left group antialiased",
                                        isActive
                                          ? "bg-white dark:bg-white/[0.1] text-slate-900 dark:text-white font-medium shadow-2xs"
                                          : "font-normal text-slate-600 dark:text-gray-300 hover:bg-white/80 dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white"
@@ -461,7 +480,7 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                  </div>
                )}
 
-               {isCollapsed && (
+               {isCollapsed && !isMobileMenuOpen && (
                  <div className="flex justify-center px-2.5 mb-3">
                    <button
                      ref={newMenuButtonRef}
@@ -499,7 +518,12 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
               <div className="space-y-0.5">
                 {PRIMARY_NAV.map((item) => (
                   <div key={item.path} className="mb-0.5">
-                    <NavItem item={item} currentPath={location.pathname} collapsed={isCollapsed} />
+                    <NavItem
+                      item={item}
+                      currentPath={location.pathname}
+                      collapsed={isCollapsed && !isMobileMenuOpen}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    />
                   </div>
                 ))}
               </div>
@@ -829,7 +853,19 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
-        
+        {/* Floating hamburger on mobile for full-bleed immersive routes */}
+        {(location.pathname.startsWith('/podcasts') ||
+          location.pathname.startsWith('/community') ||
+          location.pathname.startsWith('/chat')) && (
+          <button
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="fixed top-3.5 left-3.5 z-30 md:hidden w-9 h-9 rounded-xl bg-white/90 dark:bg-[#1c1c1f]/90 backdrop-blur-md shadow-md border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-gray-200 active:scale-95 transition-all"
+            aria-label="Open navigation menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
+
         {/* Top Header — hidden on immersive routes that render their own chrome.
             /podcasts has its studio sidebar + inline header; /community has its
             own tab bar + three-panel workspace; /chat is a full-bleed conversation
