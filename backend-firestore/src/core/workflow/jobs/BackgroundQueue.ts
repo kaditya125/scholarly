@@ -92,13 +92,14 @@ export class BackgroundQueue {
     });
   }
 
-  async enqueueGeneric(jobName: string, payload: GenericJobPayload, retries = 3, backoffMs = 5000): Promise<void> {
+  async enqueueGeneric(jobName: string, payload: GenericJobPayload, retries = 3, backoffMs = 5000, delayMs = 0): Promise<void> {
     if (!this.queue) return;
     await this.queue.add(jobName, payload, {
       attempts: retries,
       backoff: { type: 'exponential', delay: backoffMs },
       removeOnComplete: true,
-      removeOnFail: 100
+      removeOnFail: 100,
+      delay: delayMs
     });
   }
 
