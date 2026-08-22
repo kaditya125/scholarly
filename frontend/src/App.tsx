@@ -10,6 +10,7 @@ import { ThemeProvider } from "./lib/ThemeContext";
 import { AuthProvider } from "./lib/AuthContext";
 import { useAuth } from "./lib/AuthContext";
 import { useProfile } from "./hooks/api/useProfile";
+import { usePresenceHeartbeat } from "./hooks/usePresence";
 
 /**
  * Every route-level page is lazy-loaded so a visit to any one route only downloads that
@@ -352,10 +353,16 @@ function AppRoutes() {
   );
 }
 
+function GlobalPresencePublisher() {
+  usePresenceHeartbeat();
+  return null;
+}
+
 export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <GlobalPresencePublisher />
         <BrowserRouter>
           <AppRoutes />
         </BrowserRouter>

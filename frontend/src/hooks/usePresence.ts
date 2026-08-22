@@ -3,13 +3,14 @@ import { collection, doc, onSnapshot, query as fsQuery, setDoc, where } from 'fi
 import { db } from '../lib/firebase';
 import { useAuth } from '../lib/AuthContext';
 
-const HEARTBEAT_MS = 30_000;
-const FRESH_MS = 60_000;
+const HEARTBEAT_MS = 60_000;
+const ACTIVITY_THROTTLE_MS = 60_000;
+const FRESH_MS = 300_000; // 5 minutes
 
 /**
- * Publishes the current user's presence: writes `online` immediately, then heartbeats every 30s
- * while the tab is visible, and best-effort `offline` on unmount / page hide. Mount once app-wide.
- * Staleness (a closed tab that can't write offline) is handled by readers via the freshness window.
+ * Publishes the current user's presence: writes `online` immediately, then heartbeats every 60s
+ * while the tab is visible, plus throttled updates on user interaction.
+ * Mount once app-wide.
  */
 export function usePresenceHeartbeat() {
   const { user } = useAuth();
@@ -17,24 +18,56 @@ export function usePresenceHeartbeat() {
   useEffect(() => {
     if (!user?.uid) return;
     const ref = doc(db, 'presence', user.uid);
-    const write = (state: 'online' | 'offline') =>
-      setDoc(ref, { uid: user.uid, state, lastActive: Date.now() }, { merge: true }).catch(() => {});
+    let lastWriteTime = 0;
 
-    write('online');
+    const write = (state: 'online' | 'offline', force = false) => {
+      const now = Date.now();
+      if (!force && state === 'online' && now - lastWriteTime < ACTIVITY_THROTTLE_MS) {
+        return;
+      }
+      lastWriteTime = now;
+      setDoc(ref, { uid: user.uid, state, lastActive: now }, { merge: true }).catch(() => {});
+    };
+
+    // Initial write
+    write('online', true);
+
+    // Periodic heartbeat
     const interval = window.setInterval(() => {
-      if (document.visibilityState === 'visible') write('online');
+      if (document.visibilityState === 'visible') {
+        write('online', true);
+      }
     }, HEARTBEAT_MS);
 
-    const onVisibility = () => write(document.visibilityState === 'visible' ? 'online' : 'offline');
-    const onHide = () => write('offline');
+    // User activity listeners (throttled)
+    const onUserActivity = () => {
+      if (document.visibilityState === 'visible') {
+        write('online', false);
+      }
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        write('online', true);
+      } else {
+        write('offline', true);
+      }
+    };
+
+    const onHide = () => write('offline', true);
+
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('pagehide', onHide);
+    window.addEventListener('click', onUserActivity, { passive: true });
+    window.addEventListener('keydown', onUserActivity, { passive: true });
 
     return () => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('pagehide', onHide);
-      write('offline');
+      window.removeEventListener('click', onUserActivity);
+      window.removeEventListener('keydown', onUserActivity);
+      write('offline', true);
     };
   }, [user?.uid]);
 }
