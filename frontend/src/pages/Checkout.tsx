@@ -22,9 +22,27 @@ function loadRazorpayScript(): Promise<boolean> {
   });
 }
 
-const PLANS: Record<string, { name: string; monthly: number; blurb: string }> = {
-  pro: { name: "Sadhya Pro", monthly: 499, blurb: "Full access — unlimited AI tutor, adaptive tests & podcast studio" },
-  institution: { name: "Institution", monthly: 0, blurb: "Bulk seats, admin dashboard & custom curriculum" },
+import {
+  PRO_MONTHLY_INR,
+  PRO_YEARLY_PER_MONTH_INR,
+  PRO_YEARLY_TOTAL_INR,
+  PRO_REGULAR_MONTHLY_INR,
+  PRO_REGULAR_YEARLY_TOTAL_INR,
+} from "../lib/siteConfig";
+
+const PLANS: Record<string, { name: string; monthly: number; yearlyTotal: number; blurb: string }> = {
+  pro: {
+    name: "Sadhya Pro (Launch Special)",
+    monthly: PRO_MONTHLY_INR,
+    yearlyTotal: PRO_YEARLY_TOTAL_INR,
+    blurb: "Full access — unlimited AI tutor, adaptive tests, podcast studio & video lessons",
+  },
+  institution: {
+    name: "Institution",
+    monthly: 0,
+    yearlyTotal: 0,
+    blurb: "Bulk seats, admin dashboard & custom curriculum",
+  },
 };
 
 const STEPS = [
@@ -45,8 +63,8 @@ export default function Checkout() {
   const plan = PLANS[planId] || PLANS.pro;
 
   const monthly = plan.monthly;
-  const perMonth = isYearly ? Math.round(monthly * 0.85) : monthly;
-  const total = isYearly ? perMonth * 12 : perMonth;
+  const perMonth = isYearly ? PRO_YEARLY_PER_MONTH_INR : monthly;
+  const total = isYearly ? plan.yearlyTotal : perMonth;
 
   const [method, setMethod] = useState<Method>("card");
   const [discount, setDiscount] = useState("");

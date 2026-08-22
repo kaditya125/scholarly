@@ -26,13 +26,11 @@ const fail = (code: string, message: string): never => {
  *  Both paths are idempotent.
  */
 
-export interface PlanDef { id: string; name: string; monthlyINR: number; }
+export interface PlanDef { id: string; name: string; monthlyINR: number; yearlyINR?: number; }
 
 const PLANS: Record<string, PlanDef> = {
-  pro: { id: 'pro', name: 'Sadhya Pro', monthlyINR: 499 },
+  pro: { id: 'pro', name: 'Sadhya Pro (Launch Offer)', monthlyINR: 199, yearlyINR: 1788 },
 };
-
-const YEARLY_DISCOUNT = 0.85; // 15% off when billed yearly (matches the Pricing page)
 
 export class PaymentsService {
   private _client: Razorpay | null = null;
@@ -58,8 +56,7 @@ export class PaymentsService {
   private priceFor(planId: string, yearly: boolean): { plan: PlanDef; rupees: number; paise: number } {
     const plan = PLANS[planId];
     if (!plan) throw new Error(`Unknown plan: ${planId}`);
-    const perMonth = yearly ? Math.round(plan.monthlyINR * YEARLY_DISCOUNT) : plan.monthlyINR;
-    const rupees = yearly ? perMonth * 12 : perMonth;
+    const rupees = yearly ? (plan.yearlyINR ?? plan.monthlyINR * 12) : plan.monthlyINR;
     return { plan, rupees, paise: rupees * 100 };
   }
 

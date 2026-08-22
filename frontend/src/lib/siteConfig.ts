@@ -110,15 +110,16 @@ export const formatAddress = (join = ', ') =>
  * Subscription plans shown on the marketing pages.
  *
  * The Pro price is mirrored from the server, which is the only authority on what a
- * user is actually charged — see backend-firestore/src/services/payments.service.ts
- * (`PLANS.pro.monthlyINR = 499`, `YEARLY_DISCOUNT = 0.85`). Keep these in sync; the
- * server recomputes the amount on every order, so a mismatch here would only ever
- * mislead the visitor, never overcharge them.
+ * user is actually charged — see backend-firestore/src/services/payments.service.ts.
  *
- * `institution` has no server-side plan definition on purpose — it is a sales
- * conversation, not a self-serve checkout, so its CTA opens email rather than /checkout.
+ * Launch Event Promotion:
+ * Regular: ₹499/mo (₹5,088/yr)
+ * Launch Special: ₹199/mo (₹1,788/yr = ₹149/mo) — 60% Launch Discount!
  */
-export const PRO_MONTHLY_INR = 499;
-export const YEARLY_DISCOUNT = 0.85; // 15% off
-export const PRO_YEARLY_PER_MONTH_INR = Math.round(PRO_MONTHLY_INR * YEARLY_DISCOUNT); // 424
-export const PRO_YEARLY_TOTAL_INR = PRO_YEARLY_PER_MONTH_INR * 12; // 5088
+export const PRO_REGULAR_MONTHLY_INR = 499;
+export const PRO_REGULAR_YEARLY_TOTAL_INR = 5088;
+
+export const PRO_MONTHLY_INR = 199;
+export const PRO_YEARLY_PER_MONTH_INR = 149;
+export const PRO_YEARLY_TOTAL_INR = 1788; // 149 * 12
+export const YEARLY_DISCOUNT = 0.75; // 25% extra saving on annual launch plan
