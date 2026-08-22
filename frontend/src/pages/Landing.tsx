@@ -359,12 +359,12 @@ export default function LandingPage() {
 
     fetchStats();
 
-    // Refresh active student presence every 30s when tab is visible
+    // Refresh active student presence every 5s when tab is visible (near-real-time like YouTube)
     const interval = window.setInterval(() => {
       if (document.visibilityState === 'visible') {
         fetchStats();
       }
-    }, 30000);
+    }, 5000);
 
     const onVisibility = () => {
       if (document.visibilityState === 'visible') {
