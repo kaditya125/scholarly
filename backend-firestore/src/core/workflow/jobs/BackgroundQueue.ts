@@ -1,4 +1,5 @@
 import { Queue } from 'bullmq';
+import { redactUrlCredentials } from '../../../utils/redactUrl';
 import { env } from '../../../config/env';
 import { logger } from '../../../utils/logger';
 import { NotificationPayload } from '../../notifications/NotificationEngine';
@@ -68,7 +69,7 @@ export class BackgroundQueue {
     this.mediaQueue = new Queue('media-jobs', { connection });
     this.notificationQueue = new Queue(process.env.NOTIFICATION_QUEUE_NAME || 'notification-jobs', { connection });
     this.scheduledNotificationQueue = new Queue('scheduled-notifications', { connection });
-    logger.info(`[BackgroundQueue] Initialized. Queue name: ${process.env.NOTIFICATION_QUEUE_NAME || 'notification-jobs'}. Connecting to ${env.REDIS_URL}`);
+    logger.info(`[BackgroundQueue] Initialized. Queue name: ${process.env.NOTIFICATION_QUEUE_NAME || 'notification-jobs'}. Connecting to ${redactUrlCredentials(env.REDIS_URL)}`);
   }
 
   async enqueueWorkflowPostExecution(payload: WorkflowPostExecutionPayload, retries = 3, backoffMs = 1000): Promise<void> {

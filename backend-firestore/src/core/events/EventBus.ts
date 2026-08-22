@@ -1,4 +1,5 @@
 import EventEmitter from 'events';
+import { redactUrlCredentials } from '../../utils/redactUrl';
 import { randomUUID } from 'crypto';
 import { logger } from '../../utils/logger';
 import { backgroundQueue } from '../workflow/jobs/BackgroundQueue';
@@ -202,7 +203,8 @@ export class EventBus extends EventEmitter {
       ]);
 
       this.isRedisConnected = true;
-      logger.info(`[EventBus] Redis Pub/Sub connected successfully to ${redisUrl}`);
+      // Redacted: this logged the full connection string, password included, on every boot.
+      logger.info(`[EventBus] Redis Pub/Sub connected successfully to ${redactUrlCredentials(redisUrl)}`);
 
       // Listen on channel
       await this.subClient.subscribe(this.redisChannel, (message) => {
