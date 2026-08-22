@@ -330,6 +330,9 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
     item => location.pathname === item.path || (location.pathname.startsWith(item.path) && item.path !== "/")
   );
 
+  // The desktop collapsed rail mode is ONLY active on desktop when not in mobile drawer
+  const isRail = isCollapsed && !isMobileMenuOpen;
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -342,23 +345,23 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
       {/* Overlay for mobile */}
       {isMobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 md:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
       {/* Sidebar */}
       <aside className={cn(
-        "bg-white dark:bg-[#161619] border-r border-slate-200 dark:border-white/[0.08] flex flex-col h-full shrink-0 overflow-y-auto custom-scrollbar transition-all duration-300", 
-        "fixed md:relative z-50",
-        isMobileMenuOpen ? "translate-x-0 w-[280px] max-w-[85vw] shadow-2xl" : "-translate-x-full md:translate-x-0",
-        !isMobileMenuOpen && isCollapsed ? "md:w-[52px]" : "md:w-[260px]"
+        "bg-white dark:bg-[#161619] border-r border-slate-200 dark:border-white/[0.08] flex flex-col shrink-0 overflow-y-auto overscroll-contain custom-scrollbar transition-all duration-300", 
+        "fixed inset-y-0 left-0 md:relative z-50 h-[100dvh] md:h-full",
+        isMobileMenuOpen ? "translate-x-0 w-[290px] max-w-[86vw] shadow-2xl" : "-translate-x-full md:translate-x-0",
+        isRail ? "md:w-[52px]" : "md:w-[260px]"
       )}>
         {/* Brand + collapse control / mobile close */}
         <div className={cn(
           "h-[60px] flex items-center shrink-0 transition-colors duration-300",
-          isCollapsed && !isMobileMenuOpen ? "justify-center px-0 flex-col py-2" : "px-4 justify-between"
+          isRail ? "justify-center px-0 flex-col py-2" : "px-4 justify-between"
         )}>
-          {!isCollapsed || isMobileMenuOpen ? (
+          {!isRail ? (
             <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2.5 overflow-hidden">
               <LogoMark className="shrink-0 w-[22px] h-[22px]" />
               <span className="font-semibold text-[15.5px] tracking-tight text-slate-900 dark:text-white">
@@ -376,7 +379,7 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
             onClick={() => setIsCollapsed(!isCollapsed)}
             className={cn(
               "rounded-lg text-slate-500 dark:text-gray-500 hover:text-slate-800 dark:hover:text-gray-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.05] focus:outline-none transition-colors hidden md:flex items-center justify-center",
-              isCollapsed ? "mt-1 w-8 h-8" : "w-7 h-7"
+              isRail ? "mt-1 w-8 h-8" : "w-7 h-7"
             )}
             title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -395,13 +398,13 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
           </button>
         </div>
         
-        <div className={cn("flex-1 w-full max-w-full", isCollapsed && !isMobileMenuOpen ? "pt-1 pb-3" : "pt-3 pb-6")}>
+        <div className={cn("flex-1 w-full max-w-full", isRail ? "pt-1 pb-3" : "pt-3 pb-6")}>
            <nav className="relative" role="navigation" aria-label="Main navigation">
                {/* ── New button ──────────────────────────────────────────────
                     EXPANDED  → inline accordion directly inside sidebar.
                     COLLAPSED → attached flyout anchored to the right of rail.
                  ─────────────────────────────────────────────────────────── */}
-               {(!isCollapsed || isMobileMenuOpen) && (
+               {!isRail && (
                  <div ref={newMenuExpandedRef} className="px-2.5 mb-3">
                    <button
                      onClick={() => setIsNewMenuOpen(v => !v)}
@@ -449,7 +452,7 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                                        setIsMobileMenuOpen(false);
                                      }}
                                      className={cn(
-                                       "w-full flex items-center gap-2.5 px-2.5 h-[32px] md:h-[30px] rounded-lg text-[13px] md:text-[12.5px] transition-colors duration-150 text-left group antialiased",
+                                       "w-full flex items-center gap-2.5 px-2.5 h-[34px] md:h-[30px] rounded-lg text-[13px] md:text-[12.5px] transition-colors duration-150 text-left group antialiased",
                                        isActive
                                          ? "bg-white dark:bg-white/[0.1] text-slate-900 dark:text-white font-medium shadow-2xs"
                                          : "font-normal text-slate-600 dark:text-gray-300 hover:bg-white/80 dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white"
@@ -480,7 +483,7 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                  </div>
                )}
 
-               {isCollapsed && !isMobileMenuOpen && (
+               {isRail && (
                  <div className="flex justify-center px-2.5 mb-3">
                    <button
                      ref={newMenuButtonRef}
@@ -521,7 +524,7 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                     <NavItem
                       item={item}
                       currentPath={location.pathname}
-                      collapsed={isCollapsed && !isMobileMenuOpen}
+                      collapsed={isRail}
                       onClick={() => setIsMobileMenuOpen(false)}
                     />
                   </div>
@@ -534,12 +537,12 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                 ─────────────────────────────────────────────────────────── */}
 
               {/* EXPANDED: accordion */}
-              {!isCollapsed && (
+              {!isRail && (
                 <div className="mt-0.5 mb-0.5">
                   <button
                     onClick={() => setIsMoreFlyoutOpen(v => !v)}
                     className={cn(
-                      "flex items-center gap-2.5 h-[30px] px-2.5 rounded-lg mx-2.5 text-[12.5px] tracking-[-0.006em] transition-colors duration-150 group antialiased",
+                      "flex items-center gap-2.5 h-[34px] md:h-[30px] px-2.5 rounded-lg mx-2.5 text-[13px] md:text-[12.5px] tracking-[-0.006em] transition-colors duration-150 group antialiased",
                       isMoreFlyoutOpen || isAnyMoreItemActive
                         ? "bg-slate-100 text-slate-900 font-medium dark:bg-white/[0.07] dark:text-white"
                         : "text-slate-500 font-normal hover:bg-slate-100/70 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-white/[0.04] dark:hover:text-gray-100"
@@ -589,9 +592,12 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                                   <Link
                                     key={item.path}
                                     to={item.path}
-                                    onClick={() => setIsMoreFlyoutOpen(false)}
+                                    onClick={() => {
+                                      setIsMoreFlyoutOpen(false);
+                                      setIsMobileMenuOpen(false);
+                                    }}
                                     className={cn(
-                                      "flex items-center gap-2.5 h-[28px] px-2.5 rounded-lg mx-2.5 text-[12px] transition-colors duration-100",
+                                      "flex items-center gap-2.5 h-[32px] md:h-[28px] px-2.5 rounded-lg mx-2.5 text-[13px] md:text-[12px] transition-colors duration-100",
                                       isActive
                                         ? "bg-slate-100 dark:bg-white/[0.07] text-slate-900 dark:text-white font-medium"
                                         : "text-slate-500 dark:text-gray-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-gray-100"
@@ -618,15 +624,13 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
               )}
 
               {/* COLLAPSED: icon button */}
-              {isCollapsed && (
+              {isRail && (
                 <div className="flex justify-center mt-0.5 mb-0.5">
                   <button
                     ref={moreButtonRef}
                     onClick={() => {
                       if (!isMoreFlyoutOpen && moreButtonRef.current) {
                         const rect = moreButtonRef.current.getBoundingClientRect();
-                        // Estimated flyout height (~480px for 4 groups + 12 items).
-                        // Clamp top so the panel never overflows below the viewport.
                         const estimatedH = 480;
                         const clampedTop = Math.max(8, Math.min(rect.top, window.innerHeight - estimatedH - 8));
                         setMoreFlyoutStyle({
@@ -664,10 +668,10 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                 </div>
               )}
 
-              {/* Portal flyout — only shown when collapsed */}
+              {/* Portal flyout — only shown when collapsed on desktop */}
               {createPortal(
                 <AnimatePresence>
-                  {isMoreFlyoutOpen && isCollapsed && (
+                  {isMoreFlyoutOpen && isRail && (
                     <motion.div
                       ref={moreFlyoutRef}
                       key="more-flyout"
@@ -725,7 +729,7 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
            </nav>
 
            {/* Recent — collapsible list of recent chat sessions */}
-           {!isCollapsed && (
+           {!isRail && (
              <div className="mt-5 px-2.5">
                <button
                  onClick={() => setIsRecentOpen(!isRecentOpen)}
@@ -748,8 +752,9 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                        <Link
                          key={s.sessionId}
                          to={`/chat?session=${s.sessionId}`}
+                         onClick={() => setIsMobileMenuOpen(false)}
                          title={s.title || 'Study Assistant'}
-                         className="flex items-center gap-1.5 px-2 h-[25px] rounded-md text-[11.5px] text-slate-500 dark:text-gray-400 hover:bg-slate-100/70 hover:text-slate-900 dark:hover:bg-white/[0.04] dark:hover:text-gray-100 transition-colors group"
+                         className="flex items-center gap-1.5 px-2 h-[28px] md:h-[25px] rounded-md text-[12px] md:text-[11.5px] text-slate-500 dark:text-gray-400 hover:bg-slate-100/70 hover:text-slate-900 dark:hover:bg-white/[0.04] dark:hover:text-gray-100 transition-colors group"
                        >
                          <MessageSquare className="w-3 h-3 shrink-0 text-slate-400 dark:text-gray-500 group-hover:text-slate-700 dark:group-hover:text-gray-300" strokeWidth={1.5} />
                          <span className="truncate leading-none">
@@ -764,7 +769,7 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
            )}
 
            {/* Upgrade card */}
-           {!isCollapsed && (
+           {!isRail && (
              <div className="px-2.5 mt-8 mb-2">
                <div className="relative overflow-hidden rounded-2xl border border-slate-200/70 dark:border-white/[0.06] bg-gradient-to-br from-indigo-50 via-white to-white dark:from-indigo-500/[0.08] dark:via-transparent dark:to-transparent p-4">
                  <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-indigo-500/10 dark:bg-indigo-400/10 blur-2xl pointer-events-none" aria-hidden="true" />
@@ -780,7 +785,10 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                      Higher chat, uploads, and study-tool limits.
                    </p>
                    <button
-                     onClick={() => navigate('/checkout')}
+                     onClick={() => {
+                       navigate('/checkout');
+                       setIsMobileMenuOpen(false);
+                     }}
                      className="w-full h-8 flex items-center justify-center gap-1.5 rounded-lg text-[13px] font-semibold text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 transition-colors"
                    >
                      Upgrade
@@ -792,22 +800,22 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
            )}
         </div>
 
-        <div className={cn("pb-3 pt-2 shrink-0 border-t border-slate-200 dark:border-white/5 transition-colors", isCollapsed ? "px-1 pt-1.5 pb-2 flex flex-col items-center" : "px-3")}>
-          <Link to="#" className={cn("flex items-center transition-colors duration-200 font-medium text-[14px] text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200 hover:bg-slate-100 dark:hover:bg-[#1a1a1a] cursor-pointer", isCollapsed ? "justify-center w-8 h-8 mx-auto rounded-lg" : "gap-3 px-3 py-2 rounded-lg mb-0.5")} title={isCollapsed ? "Changelog" : undefined}>
-            <Package className={cn("shrink-0", isCollapsed ? "w-4 h-4" : "w-[18px] h-[18px]")} strokeWidth={1.6} />
-            {!isCollapsed && <span className="truncate flex-1">Changelog</span>}
+        <div className={cn("pb-safe pt-2 shrink-0 border-t border-slate-200 dark:border-white/5 transition-colors", isRail ? "px-1 pt-1.5 pb-2 flex flex-col items-center" : "px-3 pb-4")}>
+          <Link to="#" onClick={() => setIsMobileMenuOpen(false)} className={cn("flex items-center transition-colors duration-200 font-medium text-[13.5px] text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200 hover:bg-slate-100 dark:hover:bg-[#1a1a1a] cursor-pointer", isRail ? "justify-center w-8 h-8 mx-auto rounded-lg" : "gap-3 px-3 py-2 rounded-lg mb-0.5")} title={isRail ? "Changelog" : undefined}>
+            <Package className={cn("shrink-0", isRail ? "w-4 h-4" : "w-[18px] h-[18px]")} strokeWidth={1.6} />
+            {!isRail && <span className="truncate flex-1">Changelog</span>}
           </Link>
-          <button onClick={() => setIsFeedbackModalOpen(true)} className={cn("flex items-center transition-colors duration-200 font-medium text-[14px] text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200 hover:bg-slate-100 dark:hover:bg-[#1a1a1a] cursor-pointer", isCollapsed ? "justify-center w-8 h-8 mx-auto rounded-lg" : "gap-3 px-3 py-2 rounded-lg mb-2")} title={isCollapsed ? "Share Feedback" : undefined}>
-            <MessageSquareShare className={cn("shrink-0", isCollapsed ? "w-4 h-4" : "w-[18px] h-[18px]")} strokeWidth={1.6} />
-            {!isCollapsed && <span className="truncate flex-1">Share Feedback</span>}
+          <button onClick={() => { setIsFeedbackModalOpen(true); setIsMobileMenuOpen(false); }} className={cn("flex items-center transition-colors duration-200 font-medium text-[13.5px] text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200 hover:bg-slate-100 dark:hover:bg-[#1a1a1a] cursor-pointer", isRail ? "justify-center w-8 h-8 mx-auto rounded-lg" : "gap-3 px-3 py-2 rounded-lg mb-2")} title={isRail ? "Share Feedback" : undefined}>
+            <MessageSquareShare className={cn("shrink-0", isRail ? "w-4 h-4" : "w-[18px] h-[18px]")} strokeWidth={1.6} />
+            {!isRail && <span className="truncate flex-1">Share Feedback</span>}
           </button>
           
           <div className="relative" ref={profileMenuRef}>
             <div 
               onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-              className={cn("flex justify-between items-center transition-colors duration-200 cursor-pointer pt-2 border-t border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-[#1a1a1a]", isCollapsed ? "justify-center w-8 h-8 rounded-full mt-1 mx-auto" : "px-3 py-2 rounded-lg")}
+              className={cn("flex justify-between items-center transition-colors duration-200 cursor-pointer pt-2 border-t border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-[#1a1a1a]", isRail ? "justify-center w-8 h-8 rounded-full mt-1 mx-auto" : "px-3 py-2 rounded-lg")}
             >
-               {isCollapsed ? (
+               {isRail ? (
                  <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-sm shrink-0 uppercase overflow-hidden">
                    {user?.photoURL ? <img src={user.photoURL} alt="User" className="w-full h-full object-cover" /> : (user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U')}
                  </div>
@@ -817,7 +825,7 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                      <div className="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-sm shrink-0 uppercase overflow-hidden">
                        {user?.photoURL ? <img src={user.photoURL} alt="User" className="w-full h-full object-cover" /> : (user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U')}
                      </div>
-                     <div className="text-[14px] font-medium text-slate-700 dark:text-gray-200 truncate pr-2">
+                     <div className="text-[13.5px] font-medium text-slate-700 dark:text-gray-200 truncate pr-2">
                        {user?.displayName || user?.email || 'User'}
                      </div>
                    </div>
@@ -829,7 +837,7 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
             {/* Profile Dropdown Menu */}
             {isProfileMenuOpen && (
               <div className="absolute bottom-full left-0 mb-2 w-full min-w-[200px] bg-white dark:bg-[#1f1f1f] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg p-1 z-50 overflow-hidden">
-                {!isCollapsed && (
+                {!isRail && (
                   <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1">
                     <div className="text-sm font-medium text-slate-900 dark:text-gray-100 truncate">{user?.displayName || 'User'}</div>
                     <div className="text-xs text-slate-500 dark:text-gray-400 truncate">{user?.email}</div>
@@ -843,7 +851,7 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                   className="w-full flex items-center justify-start gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors font-medium"
                 >
                   <LogOut className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && "Sign out"}
+                  {!isRail && "Sign out"}
                 </button>
               </div>
             )}
@@ -995,10 +1003,10 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
       <CommandPalette open={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
       <HighlightAction />
 
-      {/* Create New Flyout — only used in collapsed mode to anchor directly right of the rail */}
+      {/* Create New Flyout — only used in collapsed mode to anchor directly right of the rail on desktop */}
       {createPortal(
         <AnimatePresence>
-          {isNewMenuOpen && isCollapsed && (
+          {isNewMenuOpen && isRail && (
             <motion.div
               ref={newMenuRef}
               key="new-menu-collapsed-flyout"
