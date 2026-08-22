@@ -29,14 +29,26 @@ export function LogoMark({
   style?: React.CSSProperties;
 }) {
   return (
-    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      {/* The goal — always the brand accent, never theme-dependent. */}
-      <circle cx="17.8" cy="5.4" r="2.5" fill={ACCENT} />
+    <svg className={cn('overflow-visible group/mark', className)} style={style} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      {/* Glowing pulsing beacon aura behind the goal dot — matching the live help beacon */}
+      <circle
+        cx="17.8"
+        cy="5.4"
+        r="4.2"
+        fill={ACCENT}
+        className="animate-ping opacity-30 origin-[17.8px_5.4px]"
+      />
+      {/* The goal — brand accent with glowing aura and subtle breathing pulse */}
+      <circle
+        cx="17.8"
+        cy="5.4"
+        r="2.5"
+        fill={ACCENT}
+        className="drop-shadow-[0_0_5px_rgba(200,229,88,0.9)] animate-pulse"
+      />
       {/*
         A ridge line rather than a single peak: the near ridge at full strength, the far
         one held back to 50% so the mark reads with depth instead of as a flat chevron.
-        Strokes are 2.5 (a touch heavier than they look like they need) so the two ridges
-        stay distinguishable rather than merging at favicon size.
       */}
       <path
         d="M2.6 20.4l6.2-8.4 3.6 4.6"
@@ -44,6 +56,7 @@ export function LogoMark({
         strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
+        className="transition-transform duration-300 group-hover/mark:-translate-y-0.5"
       />
       <path
         d="M12.4 20.4l4.2-5.4 4.8 5.4"
@@ -52,6 +65,7 @@ export function LogoMark({
         strokeLinecap="round"
         strokeLinejoin="round"
         opacity="0.5"
+        className="transition-transform duration-300 group-hover/mark:-translate-y-0.5"
       />
     </svg>
   );
