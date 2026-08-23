@@ -120,7 +120,11 @@ export function ChatMessageList({
   onDelete,
   onReact,
   onPin,
+  onSave,
+  isSaved,
   lastSeenMessageId,
+  isPeerOnline,
+  peerLastReadAt,
 }: ChatMessageListProps) {
   const endRef = useRef<HTMLDivElement>(null);
   const { chatColor } = useTheme();
