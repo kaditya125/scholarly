@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { cn } from '../../lib/utils';
 
 const AVATAR_COLORS = [
@@ -29,7 +30,9 @@ function colorFor(seed: string): string {
   return AVATAR_COLORS[h % AVATAR_COLORS.length];
 }
 
-/** Avatar that shows the photo when available, otherwise a coloured initials circle. */
+/**
+ * PeerAvatar that renders custom 3D avatar photoURL or falls back to a deterministic 3D character avatar
+ */
 export function PeerAvatar({
   name,
   photoURL,
@@ -43,12 +46,21 @@ export function PeerAvatar({
   className?: string;
   online?: boolean;
 }) {
-  const avatar = photoURL ? (
+  const [imgError, setImgError] = useState(false);
+
+  // If user provided a photoURL, use that.
+  // Otherwise use deterministic 3D character avatar seeded by their name/uid
+  const default3DUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(seed || name || 'student')}`;
+  const effectiveSrc = photoURL || default3DUrl;
+
+  const avatar = !imgError ? (
     <img
-      src={photoURL}
+      src={effectiveSrc}
       alt={name || 'User'}
       referrerPolicy="no-referrer"
-      className={cn('rounded-full object-cover shrink-0 bg-slate-100 dark:bg-white/10', className)}
+      onError={() => setImgError(true)}
+      className={cn('rounded-full object-cover shrink-0 bg-slate-100 dark:bg-white/10 shadow-2xs', className)}
+      loading="lazy"
     />
   ) : (
     <div
@@ -63,13 +75,12 @@ export function PeerAvatar({
     </div>
   );
 
-  // Only decorate when explicitly online, to keep the UI quiet otherwise.
   if (!online) return avatar;
   return (
     <span className="relative inline-flex shrink-0">
       {avatar}
       <span
-        className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#131314]"
+        className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#131314]"
         title="Online"
       />
     </span>

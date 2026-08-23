@@ -265,7 +265,7 @@ export function ChatMessageList({
                   name={sender.displayName}
                   photoURL={sender.photoURL}
                   seed={msg.senderId}
-                  className="w-9 h-9 text-[12px] font-bold shadow-xs ring-2 ring-white dark:ring-[#141417] ring-offset-1 ring-offset-emerald-400/40"
+                  className="w-8 h-8 text-[11px] font-bold shadow-2xs ring-2 ring-white dark:ring-[#141417]"
                 />
               </div>
             )}
@@ -389,7 +389,7 @@ export function ChatMessageList({
                   name={mySender.displayName}
                   photoURL={mySender.photoURL}
                   seed={currentUid}
-                  className="w-9 h-9 text-[12px] font-bold shadow-xs ring-2 ring-white dark:ring-[#141417] ring-offset-1 ring-offset-emerald-600/40"
+                  className="w-8 h-8 text-[11px] font-bold shadow-2xs ring-2 ring-white dark:ring-[#141417]"
                 />
               </div>
             )}

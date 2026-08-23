@@ -36,6 +36,7 @@ import { useProfile } from '../hooks/api/useProfile';
 import { useTheme } from '../lib/ThemeContext';
 import { uploadAvatar, UploadProgress } from '../lib/api/avatar';
 import { ShareProfileModal } from '../components/profile/ShareProfileModal';
+import { AvatarPickerModal } from '../components/profile/AvatarPickerModal';
 import { cn } from '../lib/utils';
 import {
   GOAL_GROUPS,
@@ -58,6 +59,7 @@ export default function Profile() {
 
   const [activeTab, setActiveTab] = useState<ProfileTab>('profile');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
   const [toast, setToast] = useState<{ type: 'ok' | 'err'; msg: string } | null>(null);
 
   const showToast = (type: 'ok' | 'err', msg: string) => {
@@ -347,6 +349,16 @@ export default function Profile() {
               <Target className="w-3 h-3" />
               <span>{targetExam || 'Competitive Exams'}</span>
             </div>
+
+            {/* Choose / Generate 3D Avatar Button */}
+            <button
+              type="button"
+              onClick={() => setIsAvatarPickerOpen(true)}
+              className="mt-3.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-bold bg-[#186a52]/10 text-[#186a52] dark:bg-[#c8e558]/15 dark:text-[#c8e558] hover:bg-[#186a52]/20 dark:hover:bg-[#c8e558]/25 border border-[#186a52]/20 dark:border-[#c8e558]/30 transition-all cursor-pointer shadow-2xs hover:scale-102 active:scale-98"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Choose / Generate 3D Avatar</span>
+            </button>
 
             {/* ── Navigation Tab Buttons ────────────────────────────── */}
             <div className="w-full mt-6 space-y-2 pt-6 border-t border-slate-100 dark:border-white/[0.06]">
@@ -830,6 +842,15 @@ export default function Profile() {
       <ShareProfileModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
+      />
+
+      {/* ── 3D Avatar Picker & Generator Modal ────────────────────── */}
+      <AvatarPickerModal
+        isOpen={isAvatarPickerOpen}
+        onClose={() => setIsAvatarPickerOpen(false)}
+        onSelectAvatar={() => {
+          showToast('ok', '3D Avatar updated successfully!');
+        }}
       />
 
     </div>
