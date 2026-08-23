@@ -78,40 +78,50 @@ export function MessageAttachments({ attachments, mine }: { attachments?: Attach
         </>
       )}
 
-      {/* File Downloads */}
-      {files.map((a) => (
-        <a
-          key={a.id}
-          href={a.url}
-          target="_blank"
-          rel="noreferrer"
-          download={a.name}
-          className={cn(
-            'flex items-center gap-2.5 p-2 rounded-xl transition-colors group',
-            mine
-              ? 'bg-white/15 hover:bg-white/25 text-white'
-              : 'bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/15 text-slate-700 dark:text-gray-200'
-          )}
-        >
-          <div
+      {/* File / PDF Downloads as Sleek Minimalist Strip */}
+      {files.map((a) => {
+        const isPdf = a.name.toLowerCase().endsWith('.pdf') || a.contentType?.includes('pdf');
+        return (
+          <a
+            key={a.id}
+            href={a.url}
+            target="_blank"
+            rel="noreferrer"
+            download={a.name}
             className={cn(
-              'w-9 h-9 rounded-lg flex items-center justify-center shrink-0',
-              mine ? 'bg-white/20' : 'bg-white dark:bg-white/10'
+              'flex items-center gap-3 px-3 py-2 rounded-xl transition-all group my-1 max-w-full',
+              mine
+                ? 'bg-white/15 hover:bg-white/20 text-white border border-white/20'
+                : 'bg-slate-50 dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] text-slate-800 dark:text-gray-100 border border-slate-200/80 dark:border-white/10'
             )}
           >
-            <FileText className="w-4 h-4" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[12.5px] font-semibold truncate">{a.name}</p>
-            {a.size > 0 && (
-              <p className={cn('text-[11px]', mine ? 'text-white/70' : 'text-slate-400 dark:text-gray-500')}>
-                {formatSize(a.size)}
+            <div
+              className={cn(
+                'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 font-bold text-[10px]',
+                isPdf
+                  ? 'bg-rose-500 text-white shadow-xs'
+                  : mine
+                  ? 'bg-white/20 text-white'
+                  : 'bg-emerald-500 text-white shadow-xs'
+              )}
+            >
+              {isPdf ? 'PDF' : <FileText className="w-4 h-4" />}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[12.5px] font-semibold truncate leading-tight">{a.name}</p>
+              <p className={cn('text-[10.5px] mt-0.5', mine ? 'text-emerald-100/80' : 'text-slate-400 dark:text-gray-500')}>
+                {formatSize(a.size) || 'Document'}
               </p>
-            )}
-          </div>
-          <Download className="w-4 h-4 opacity-60 group-hover:opacity-100" />
-        </a>
-      ))}
+            </div>
+            <div className={cn(
+              'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105',
+              mine ? 'bg-white/15 text-white' : 'bg-slate-200/70 dark:bg-white/10 text-slate-600 dark:text-gray-300'
+            )}>
+              <Download className="w-3.5 h-3.5" />
+            </div>
+          </a>
+        );
+      })}
     </div>
   );
 }
