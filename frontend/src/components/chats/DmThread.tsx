@@ -223,8 +223,8 @@ export function DmThread({ otherId, onBack, onOpenInfo }: DmThreadProps) {
 
       <PinnedBar items={pinnedItems} onJump={jumpTo} onUnpin={(id) => pinMessage({ messageId: id, pinned: false })} />
 
-      {/* Message Feed Container */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
+      {/* Message Feed Container with Watermark Wallpaper */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar chat-doodle-wallpaper">
         {isError ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-6">
             <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-3">
