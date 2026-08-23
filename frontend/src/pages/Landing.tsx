@@ -16,6 +16,7 @@ import { HandwrittenTagline } from '../components/brand/HandwrittenTagline';
 import { EXAM_CATALOG } from '../lib/examCatalog';
 import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
+import { cn } from '../lib/utils';
 
 /**
  * The public landing page.
@@ -808,8 +809,8 @@ export default function LandingPage() {
               <div className="mt-14 w-full border-t border-slate-200 dark:border-white/[0.08]" />
 
               {/* Stats row */}
-              <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 w-full max-w-[48rem]">
-                {[
+              {(() => {
+                const stats = [
                   { 
                     value: `${studentCount.toLocaleString()}`, 
                     label: 'Students registered' 
@@ -818,47 +819,56 @@ export default function LandingPage() {
                     value: '17+', 
                     label: 'Exams covered' 
                   },
-                  { 
+                  ...(activeStudents && activeStudents > 0 ? [{ 
                     isLive: true,
-                    value: `${activeStudents ?? 0}`, 
+                    value: `${activeStudents}`, 
                     label: activeStudents === 1 ? 'Student learning now' : 'Students learning now' 
-                  },
+                  }] : []),
                   { 
                     value: '6-step', 
                     label: 'Reasoning every answer' 
                   },
-                ].map((stat, idx) => (
-                  <div key={idx} className="text-center">
-                    {stat.isLive ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c8e558] opacity-75" />
-                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#8ba32b] dark:bg-[#c8e558]" />
-                        </span>
-                        {/* Animated rolling counter — flips up/down like YouTube subscriber count */}
-                        <div className="relative h-[34px] sm:h-[38px] overflow-hidden flex items-center">
-                          <motion.p
-                            key={activeAnimKey}
-                            initial={{ y: prevActiveRef.current !== null && (activeStudents ?? 0) > (prevActiveRef.current ?? 0) ? 28 : -28, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-                            className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white"
-                          >
+                ];
+
+                return (
+                  <div className={cn(
+                    "mt-10 grid gap-6 sm:gap-8 w-full max-w-[48rem]",
+                    stats.length === 4 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3 sm:grid-cols-3"
+                  )}>
+                    {stats.map((stat, idx) => (
+                      <div key={idx} className="text-center">
+                        {stat.isLive ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c8e558] opacity-75" />
+                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#8ba32b] dark:bg-[#c8e558]" />
+                            </span>
+                            {/* Animated rolling counter — flips up/down like YouTube subscriber count */}
+                            <div className="relative h-[34px] sm:h-[38px] overflow-hidden flex items-center">
+                              <motion.p
+                                key={activeAnimKey}
+                                initial={{ y: prevActiveRef.current !== null && (activeStudents ?? 0) > (prevActiveRef.current ?? 0) ? 28 : -28, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                                className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white"
+                              >
+                                {stat.value}
+                              </motion.p>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">
                             {stat.value}
-                          </motion.p>
-                        </div>
+                          </p>
+                        )}
+                        <p className="mt-1 text-[12.5px] sm:text-[13px] text-slate-500 dark:text-gray-400">
+                          {stat.label}
+                        </p>
                       </div>
-                    ) : (
-                      <p className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">
-                        {stat.value}
-                      </p>
-                    )}
-                    <p className="mt-1 text-[12.5px] sm:text-[13px] text-slate-500 dark:text-gray-400">
-                      {stat.label}
-                    </p>
+                    ))}
                   </div>
-                ))}
-              </div>
+                );
+              })()}
             </div>
           </Reveal>
         </section>
