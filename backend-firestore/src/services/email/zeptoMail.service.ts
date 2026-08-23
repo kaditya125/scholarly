@@ -133,6 +133,64 @@ export class ZeptoMailService {
   }
 
   /**
+   * Generates a comprehensive, authentic, legally compliant transactional email footer.
+   */
+  private getStandardEmailFooter(options: {
+    recipientEmail?: string;
+    reason: string;
+    showSecurityNotice?: boolean;
+  }): string {
+    const { recipientEmail, reason, showSecurityNotice = true } = options;
+    const recipientText = recipientEmail ? ` (${recipientEmail})` : '';
+
+    return `
+      <!-- Standardized Legal & Compliance Footer -->
+      <tr>
+        <td style="padding: 32px 0 0; border-top: 1px solid #e2e8f0; text-align: left;">
+          <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+            ${showSecurityNotice ? `
+            <tr>
+              <td style="padding-bottom: 14px;">
+                <p style="margin: 0; font-size: 11.5px; line-height: 1.5; color: #94a3b8;">
+                  🔒 <strong>Security Notice:</strong> Sadhya will never ask for your password, PIN, or payment OTP via email. If you receive a suspicious request, please report it immediately to <a href="mailto:security@sadhya.app" style="color: #64748b; text-decoration: underline;">security@sadhya.app</a>.
+                </p>
+              </td>
+            </tr>` : ''}
+            <tr>
+              <td style="padding-bottom: 12px;">
+                <p style="margin: 0; font-size: 11.5px; line-height: 1.5; color: #64748b;">
+                  <strong>Why did I receive this email?</strong><br>
+                  ${reason}${recipientText}. This is a mandatory transactional service message regarding your account or security on the Sadhya learning platform.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-bottom: 14px; font-size: 12px; line-height: 1.6; color: #475569;">
+                <strong style="color: #0f172a;">Sadhya Technologies Pvt. Ltd.</strong><br>
+                Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-bottom: 14px; font-size: 12px; color: #64748b;">
+                <a href="https://sadhya.app/terms" target="_blank" style="color: #0284c7; text-decoration: underline; margin-right: 12px;">Terms of Service</a>
+                <a href="https://sadhya.app/privacy" target="_blank" style="color: #0284c7; text-decoration: underline; margin-right: 12px;">Privacy Policy</a>
+                <a href="https://sadhya.app/refunds" target="_blank" style="color: #0284c7; text-decoration: underline; margin-right: 12px;">Refund Policy</a>
+                <a href="https://sadhya.app/contact" target="_blank" style="color: #0284c7; text-decoration: underline; margin-right: 12px;">Help Center</a>
+                <a href="https://sadhya.app/contact" target="_blank" style="color: #0284c7; text-decoration: underline;">Grievance Officer</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="font-size: 11px; color: #94a3b8; line-height: 1.4;">
+                © 2026 Sadhya Technologies Pvt. Ltd. All rights reserved. • Sadhya is a registered trademark of Sadhya Technologies Pvt. Ltd.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    `;
+  }
+
+  /**
    * Generates and dispatches a clean, high-end Verification Email.
    */
   async sendVerificationEmail(email: string, displayName: string, verificationLink: string): Promise<boolean> {
@@ -218,24 +276,11 @@ export class ZeptoMailService {
             </td>
           </tr>
 
-          <!-- Footer -->
-          <tr>
-            <td style="padding: 32px 0 0; border-top: 1px solid #f1f5f9; text-align: left;">
-              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td style="font-size: 12.5px; color: #64748b; line-height: 1.6;">
-                    <strong>Sadhya Technologies Pvt. Ltd.</strong><br>
-                    Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
-                  </td>
-                  <td align="right" style="font-size: 12px; color: #94a3b8;">
-                    <a href="https://sadhya.app/privacy" style="color: #64748b; text-decoration: none; margin-left: 12px;">Privacy</a>
-                    <a href="https://sadhya.app/terms" style="color: #64748b; text-decoration: none; margin-left: 12px;">Terms</a>
-                    <a href="https://sadhya.app/help" style="color: #64748b; text-decoration: none; margin-left: 12px;">Help Center</a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+          ${this.getStandardEmailFooter({
+            recipientEmail: email,
+            reason: 'You received this email because an account registration was initiated on sadhya.app',
+            showSecurityNotice: true,
+          })}
 
         </table>
       </td>
@@ -353,24 +398,11 @@ https://sadhya.app
             </td>
           </tr>
 
-          <!-- Footer -->
-          <tr>
-            <td style="padding: 32px 0 0; border-top: 1px solid #f1f5f9; text-align: left;">
-              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td style="font-size: 12.5px; color: #64748b; line-height: 1.6;">
-                    <strong>Sadhya Security Team</strong><br>
-                    Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
-                  </td>
-                  <td align="right" style="font-size: 12px; color: #94a3b8;">
-                    <a href="https://sadhya.app/privacy" style="color: #64748b; text-decoration: none; margin-left: 12px;">Privacy</a>
-                    <a href="https://sadhya.app/terms" style="color: #64748b; text-decoration: none; margin-left: 12px;">Terms</a>
-                    <a href="https://sadhya.app/help" style="color: #64748b; text-decoration: none; margin-left: 12px;">Help Center</a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+          ${this.getStandardEmailFooter({
+            recipientEmail: email,
+            reason: 'You received this security email because a password reset was requested for your account on sadhya.app',
+            showSecurityNotice: true,
+          })}
 
         </table>
       </td>
@@ -513,24 +545,11 @@ https://sadhya.app
             </td>
           </tr>
 
-          <!-- Footer -->
-          <tr>
-            <td style="padding: 28px 0 0; border-top: 1px solid #f1f5f9; text-align: left;">
-              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td style="font-size: 12.5px; color: #64748b; line-height: 1.6;">
-                    <strong>Sadhya Technologies Pvt. Ltd.</strong><br>
-                    Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
-                  </td>
-                  <td align="right" style="font-size: 12px; color: #94a3b8;">
-                    <a href="https://sadhya.app/privacy" style="color: #64748b; text-decoration: none; margin-left: 12px;">Privacy</a>
-                    <a href="https://sadhya.app/terms" style="color: #64748b; text-decoration: none; margin-left: 12px;">Terms</a>
-                    <a href="https://sadhya.app/help" style="color: #64748b; text-decoration: none; margin-left: 12px;">Help Center</a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+          ${this.getStandardEmailFooter({
+            recipientEmail: email,
+            reason: `You received this welcome notification because you created and verified your ${isTeacher ? 'educator' : 'student'} account on sadhya.app`,
+            showSecurityNotice: true,
+          })}
 
         </table>
       </td>
@@ -711,14 +730,13 @@ ${inquiry.message}
               </p>
             </td>
           </tr>
-          <tr>
-            <td style="padding: 24px 0 0; border-top: 1px solid #f1f5f9;">
-              <p style="font-size: 12.5px; color: #64748b; line-height: 1.6; margin: 0;">
-                <strong>Sadhya Technologies Pvt. Ltd.</strong><br>
-                Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
-              </p>
-            </td>
-          </tr>
+
+          ${this.getStandardEmailFooter({
+            recipientEmail: inquiry.email,
+            reason: `You received this confirmation receipt because you contacted Sadhya ${inquiry.channel} support via our website contact form`,
+            showSecurityNotice: false,
+          })}
+
         </table>
       </td>
     </tr>
