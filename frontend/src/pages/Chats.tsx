@@ -54,11 +54,15 @@ export default function Chats() {
       activeGroup.members.find((m) => m.userId === user?.uid)?.role === "admin");
 
   const [mobilePane, setMobilePane] = useState<"list" | "thread">("list");
-  const [infoOpen, setInfoOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth >= 1024 : false
+  );
 
-  // Reset transient view state whenever the active conversation changes.
+  // Reset transient view state on mobile whenever the active conversation changes.
   useEffect(() => {
-    setInfoOpen(false);
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      setInfoOpen(false);
+    }
   }, [dm, g, c, ai]);
 
   // Default selection: prefer the most recent DM, else the first group (its default channel is
@@ -120,8 +124,9 @@ export default function Chats() {
           groupName={activeGroup?.name || "Group"}
           isAdmin={isAdmin}
           onBack={() => setMobilePane("list")}
-          onOpenInfo={() => setInfoOpen(true)}
+          onOpenInfo={() => setInfoOpen((prev) => !prev)}
           onOpenAI={() => openAssistant(activeGroupId as string)}
+          isInfoOpen={infoOpen}
         />
       );
     }
@@ -131,7 +136,8 @@ export default function Chats() {
           key={dm}
           otherId={dm}
           onBack={() => setMobilePane("list")}
-          onOpenInfo={() => setInfoOpen(true)}
+          onOpenInfo={() => setInfoOpen((prev) => !prev)}
+          isInfoOpen={infoOpen}
         />
       );
     }
@@ -216,13 +222,17 @@ export default function Chats() {
         {center}
       </div>
 
-      {/* Right info panel (desktop) */}
-      {hasInfo && (
-        <div className="hidden lg:flex w-[340px] shrink-0">
+      {/* Right info panel (desktop collapsible) */}
+      {hasInfo && infoOpen && (
+        <div className="hidden lg:flex w-[340px] shrink-0 transition-all duration-300">
           {selection.kind === "channel" && activeChannel ? (
-            <ChannelInfoPanel groupId={activeGroupId as string} channelId={activeChannel.id} />
+            <ChannelInfoPanel
+              groupId={activeGroupId as string}
+              channelId={activeChannel.id}
+              onClose={() => setInfoOpen(false)}
+            />
           ) : selection.kind === "dm" && dm ? (
-            <DmInfoPanel otherId={dm} />
+            <DmInfoPanel otherId={dm} onClose={() => setInfoOpen(false)} />
           ) : null}
         </div>
       )}
@@ -230,8 +240,8 @@ export default function Chats() {
       {/* Right info panel (mobile / tablet drawer) */}
       {hasInfo && infoOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setInfoOpen(false)} />
-          <div className="ml-auto relative w-[340px] max-w-[85%] h-full">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-xs" onClick={() => setInfoOpen(false)} />
+          <div className="ml-auto relative w-[340px] max-w-[85%] h-full shadow-2xl">
             {selection.kind === "channel" && activeChannel ? (
               <ChannelInfoPanel
                 groupId={activeGroupId as string}

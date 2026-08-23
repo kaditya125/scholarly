@@ -29,10 +29,11 @@ interface ChannelThreadProps {
   channelId: string;
   channelName: string;
   groupName: string;
-  isAdmin: boolean;
+  isAdmin?: boolean;
   onBack?: () => void;
   onOpenInfo?: () => void;
   onOpenAI?: () => void;
+  isInfoOpen?: boolean;
 }
 
 export function ChannelThread({
@@ -44,6 +45,7 @@ export function ChannelThread({
   onBack,
   onOpenInfo,
   onOpenAI,
+  isInfoOpen,
 }: ChannelThreadProps) {
   const { user } = useAuth();
   const { toggleSave, isSaved } = useSavedMessages();
@@ -186,11 +188,16 @@ export function ChannelThread({
         </div>
 
         {/* Action icons bar */}
-        <div className="flex items-center gap-1 text-slate-600 dark:text-gray-300">
+        <div className="flex items-center gap-1.5 text-slate-600 dark:text-gray-300">
           <button
             onClick={() => onOpenInfo?.()}
-            className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
-            title="Shared Media"
+            className={cn(
+              "w-9 h-9 rounded-xl flex items-center justify-center transition-colors cursor-pointer",
+              isInfoOpen
+                ? "bg-[#186a52]/10 dark:bg-[#c8e558]/15 text-[#186a52] dark:text-[#c8e558]"
+                : "hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
+            )}
+            title="Shared Media & Documents"
           >
             <ImageIcon className="w-4 h-4" />
           </button>
@@ -214,7 +221,7 @@ export function ChannelThread({
           {onOpenAI && (
             <button
               onClick={onOpenAI}
-              className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/10 hover:text-[#8ba32b] dark:hover:text-[#c8e558] transition-colors cursor-pointer"
+              className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/10 hover:text-[#186a52] dark:hover:text-[#c8e558] transition-colors cursor-pointer"
               title="Ask AI in this circle"
             >
               <Sparkles className="w-4 h-4" />
@@ -224,8 +231,13 @@ export function ChannelThread({
           {onOpenInfo && (
             <button
               onClick={onOpenInfo}
-              className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
-              title="Group info"
+              className={cn(
+                "w-9 h-9 rounded-xl flex items-center justify-center transition-colors cursor-pointer",
+                isInfoOpen
+                  ? "bg-[#186a52] text-white dark:bg-[#c8e558] dark:text-slate-900 shadow-xs"
+                  : "hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
+              )}
+              title={isInfoOpen ? "Collapse detail panel" : "Show group info"}
               aria-label="Group info"
             >
               <MoreVertical className="w-4 h-4" />

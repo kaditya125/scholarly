@@ -27,9 +27,10 @@ interface DmThreadProps {
   otherId: string;
   onBack?: () => void;
   onOpenInfo?: () => void;
+  isInfoOpen?: boolean;
 }
 
-export function DmThread({ otherId, onBack, onOpenInfo }: DmThreadProps) {
+export function DmThread({ otherId, onBack, onOpenInfo, isInfoOpen }: DmThreadProps) {
   const { user } = useAuth();
   const { toggleSave, isSaved } = useSavedMessages();
   const {
@@ -183,11 +184,16 @@ export function DmThread({ otherId, onBack, onOpenInfo }: DmThreadProps) {
         </div>
 
         {/* Action icons bar */}
-        <div className="flex items-center gap-1 text-slate-600 dark:text-gray-300">
+        <div className="flex items-center gap-1.5 text-slate-600 dark:text-gray-300">
           <button
             onClick={() => onOpenInfo?.()}
-            className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
-            title="Shared Media"
+            className={cn(
+              "w-9 h-9 rounded-xl flex items-center justify-center transition-colors cursor-pointer",
+              isInfoOpen
+                ? "bg-[#186a52]/10 dark:bg-[#c8e558]/15 text-[#186a52] dark:text-[#c8e558]"
+                : "hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
+            )}
+            title="Shared Media & Documents"
           >
             <ImageIcon className="w-4 h-4" />
           </button>
@@ -211,8 +217,13 @@ export function DmThread({ otherId, onBack, onOpenInfo }: DmThreadProps) {
           {onOpenInfo && (
             <button
               onClick={onOpenInfo}
-              className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
-              title="More info"
+              className={cn(
+                "w-9 h-9 rounded-xl flex items-center justify-center transition-colors cursor-pointer",
+                isInfoOpen
+                  ? "bg-[#186a52] text-white dark:bg-[#c8e558] dark:text-slate-900 shadow-xs"
+                  : "hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
+              )}
+              title={isInfoOpen ? "Collapse detail panel" : "Show detail panel"}
               aria-label="Conversation info"
             >
               <MoreVertical className="w-4 h-4" />
