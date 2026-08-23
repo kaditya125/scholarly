@@ -110,12 +110,7 @@ export function MessageAttachments({ attachments, mine }: { attachments?: Attach
             target="_blank"
             rel="noreferrer"
             download={a.name}
-            className={cn(
-              'flex items-center gap-3.5 p-2.5 sm:p-3 rounded-2xl transition-all group my-1.5 max-w-full shadow-2xs hover:shadow-xs cursor-pointer',
-              mine
-                ? 'bg-white/95 dark:bg-[#1f1f23]/95 text-slate-900 dark:text-white border border-white/30 backdrop-blur-xs'
-                : 'bg-white dark:bg-[#1a1a1e] text-slate-900 dark:text-white border border-slate-200/80 dark:border-white/10'
-            )}
+            className="flex items-center gap-3.5 p-3 rounded-2xl transition-all group my-1 max-w-[360px] w-full bg-white dark:bg-[#1a1a1e] text-slate-900 dark:text-white border border-slate-200/90 dark:border-white/10 shadow-2xs hover:shadow-xs cursor-pointer"
           >
             {/* Squircle App-Like File Icon Box */}
             <div
