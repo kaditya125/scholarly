@@ -8,8 +8,8 @@ import {
 import { useAuth } from '../lib/AuthContext';
 import GoalCapture from '../components/onboarding/GoalCapture';
 import { useProfile } from '../hooks/api/useProfile';
-import { BrandMark } from '../components/common/BrandMark';
-import { baselineAssessmentApi } from '../lib/api/baselineAssessment';
+import { BrandMark } from '../components/auth/AuthShell';
+import { baselineAssessmentApi } from '../lib/api/studentDigitalTwin';
 import { sendRealNotification } from '../lib/api/realtimeNotifications';
 import {
   LearningProfile, GOAL_GROUPS, BOARDS, STREAMS, SUBJECTS, LEVELS, TARGET_SUGGESTIONS,

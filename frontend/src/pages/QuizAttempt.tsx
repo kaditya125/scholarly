@@ -70,7 +70,7 @@ export default function QuizAttemptPage() {
           userId: user.uid,
           type: 'quiz_completed',
           category: 'learning',
-          title: `🎯 Quiz Completed: "${attempt.quizTitle || 'Practice Test'}"`,
+          title: `🎯 Quiz Completed: "${(attempt as any)?.quizTitle || (attempt as any)?.title || 'Practice Test'}"`,
           body: `Your answers have been scored. View your detailed breakdown, accuracy stats, and next recommendations.`,
           actionUrl: `/quiz/attempts/${attemptId}`,
           actions: ['View Results'],
