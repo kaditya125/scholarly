@@ -382,9 +382,17 @@ function GlobalPresencePublisher() {
 }
 
 function GlobalHelpdeskWidget() {
+  const { user } = useAuth();
   const location = useLocation();
-  // Hide only on full-screen timed exam engines to avoid blocking student answers
-  const isExamEngine = location.pathname.startsWith('/test-engine') || location.pathname.startsWith('/baseline-assessment') || location.pathname.startsWith('/quiz-attempt');
+
+  // Hide chatbot completely when user is logged in
+  if (user) return null;
+
+  // Hide on full-screen timed exam engines to avoid blocking student answers
+  const isExamEngine =
+    location.pathname.startsWith('/test-engine') ||
+    location.pathname.startsWith('/baseline-assessment') ||
+    location.pathname.startsWith('/quiz-attempt');
 
   if (isExamEngine) return null;
   return (
