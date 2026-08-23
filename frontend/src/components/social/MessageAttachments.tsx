@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Download, Maximize2 } from 'lucide-react';
+import { FileText, Download, Maximize2, FileCode, Video, Music, Archive } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Attachment } from '../../lib/api/uploads';
 import { ImageLightbox } from './ImageLightbox';
@@ -12,7 +12,29 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/** Renders a message's attachments: images as interactive gallery cards, audio as voice notes, and files as downloadable cards. */
+function getFileCategory(name: string, contentType?: string) {
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  const ct = (contentType || '').toLowerCase();
+
+  if (ext === 'pdf' || ct.includes('pdf')) {
+    return { type: 'pdf', label: 'PDF Document', color: 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-500/20' };
+  }
+  if (['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(ext) || ct.startsWith('video/')) {
+    return { type: 'video', label: 'Video File', color: 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-500/20' };
+  }
+  if (['mp3', 'wav', 'ogg', 'm4a', 'aac'].includes(ext) || ct.startsWith('audio/')) {
+    return { type: 'audio', label: 'Audio File', color: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20' };
+  }
+  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
+    return { type: 'archive', label: 'Archive', color: 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20' };
+  }
+  if (['js', 'ts', 'tsx', 'jsx', 'py', 'java', 'cpp', 'html', 'css', 'json'].includes(ext)) {
+    return { type: 'code', label: 'Source Code', color: 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-100 dark:border-purple-500/20' };
+  }
+  return { type: 'doc', label: 'Document', color: 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20' };
+}
+
+/** Renders a message's attachments with exact reference UI file strip cards */
 export function MessageAttachments({ attachments, mine }: { attachments?: Attachment[]; mine?: boolean }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
@@ -23,7 +45,7 @@ export function MessageAttachments({ attachments, mine }: { attachments?: Attach
   const files = attachments.filter((a) => a.kind !== 'image' && a.kind !== 'audio');
 
   return (
-    <div className="space-y-2 mb-1.5 font-sans">
+    <div className="space-y-2 mb-2 font-sans">
       {/* Voice Notes */}
       {audio.map((a) => (
         <VoiceNotePlayer key={a.id} attachment={a} mine={mine} />
@@ -34,7 +56,7 @@ export function MessageAttachments({ attachments, mine }: { attachments?: Attach
         <>
           <div
             className={cn(
-              'grid gap-1.5 overflow-hidden rounded-xl',
+              'grid gap-1.5 overflow-hidden rounded-2xl',
               images.length === 1
                 ? 'grid-cols-1 max-w-sm'
                 : images.length === 2
@@ -78,9 +100,9 @@ export function MessageAttachments({ attachments, mine }: { attachments?: Attach
         </>
       )}
 
-      {/* File / PDF Downloads as Sleek Minimalist Strip */}
+      {/* File / PDF Downloads — Exact Floating Card Strip matching Reference Image */}
       {files.map((a) => {
-        const isPdf = a.name.toLowerCase().endsWith('.pdf') || a.contentType?.includes('pdf');
+        const cat = getFileCategory(a.name, a.contentType);
         return (
           <a
             key={a.id}
@@ -89,35 +111,53 @@ export function MessageAttachments({ attachments, mine }: { attachments?: Attach
             rel="noreferrer"
             download={a.name}
             className={cn(
-              'flex items-center gap-3 px-3 py-2 rounded-xl transition-all group my-1 max-w-full',
+              'flex items-center gap-3.5 p-2.5 sm:p-3 rounded-2xl transition-all group my-1.5 max-w-full shadow-2xs hover:shadow-xs cursor-pointer',
               mine
-                ? 'bg-white/15 hover:bg-white/20 text-white border border-white/20'
-                : 'bg-slate-50 dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] text-slate-800 dark:text-gray-100 border border-slate-200/80 dark:border-white/10'
+                ? 'bg-white/95 dark:bg-[#1f1f23]/95 text-slate-900 dark:text-white border border-white/30 backdrop-blur-xs'
+                : 'bg-white dark:bg-[#1a1a1e] text-slate-900 dark:text-white border border-slate-200/80 dark:border-white/10'
             )}
           >
+            {/* Squircle App-Like File Icon Box */}
             <div
               className={cn(
-                'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 font-bold text-[10px]',
-                isPdf
-                  ? 'bg-rose-500 text-white shadow-xs'
-                  : mine
-                  ? 'bg-white/20 text-white'
-                  : 'bg-emerald-500 text-white shadow-xs'
+                'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border shadow-2xs transition-transform group-hover:scale-105',
+                cat.color
               )}
             >
-              {isPdf ? 'PDF' : <FileText className="w-4 h-4" />}
+              {cat.type === 'pdf' ? (
+                <span className="font-extrabold text-[11px] tracking-tight">PDF</span>
+              ) : cat.type === 'video' ? (
+                <Video className="w-5 h-5 fill-current" />
+              ) : cat.type === 'audio' ? (
+                <Music className="w-5 h-5" />
+              ) : cat.type === 'archive' ? (
+                <Archive className="w-5 h-5" />
+              ) : cat.type === 'code' ? (
+                <FileCode className="w-5 h-5" />
+              ) : (
+                <FileText className="w-5 h-5" />
+              )}
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[12.5px] font-semibold truncate leading-tight">{a.name}</p>
-              <p className={cn('text-[10.5px] mt-0.5', mine ? 'text-emerald-100/80' : 'text-slate-400 dark:text-gray-500')}>
-                {formatSize(a.size) || 'Document'}
+
+            {/* Title & Metadata */}
+            <div className="min-w-0 flex-1 pr-1">
+              <p className="text-[13px] font-bold text-slate-900 dark:text-gray-100 truncate leading-snug">
+                {a.name}
+              </p>
+              <p className="text-[11px] text-slate-400 dark:text-gray-400 font-medium mt-0.5 flex items-center gap-1.5">
+                <span>{cat.label}</span>
+                {a.size > 0 && (
+                  <>
+                    <span>•</span>
+                    <span>{formatSize(a.size)}</span>
+                  </>
+                )}
               </p>
             </div>
-            <div className={cn(
-              'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105',
-              mine ? 'bg-white/15 text-white' : 'bg-slate-200/70 dark:bg-white/10 text-slate-600 dark:text-gray-300'
-            )}>
-              <Download className="w-3.5 h-3.5" />
+
+            {/* Download Icon Button */}
+            <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-gray-300 flex items-center justify-center shrink-0 group-hover:bg-[#186a52] group-hover:text-white dark:group-hover:bg-[#c8e558] dark:group-hover:text-slate-900 transition-colors">
+              <Download className="w-4 h-4" />
             </div>
           </a>
         );
