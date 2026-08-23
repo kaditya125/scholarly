@@ -5,6 +5,7 @@ const genai_1 = require("@google/genai");
 const env_1 = require("../../config/env");
 const telemetry_1 = require("../../lib/telemetry");
 const telemetry_service_1 = require("../telemetry.service");
+const retry_1 = require("../../utils/retry");
 // Lazily-created cost recorder (only needs Firestore). Shared across GeminiProvider instances.
 let _costRecorder = null;
 const getCostRecorder = () => {
@@ -62,11 +63,13 @@ class GeminiProvider {
         if (systemPrompt && systemPrompt.trim().length > 0) {
             config.systemInstruction = systemPrompt;
         }
-        const response = await this.ai.models.generateContent({
+        // A transient RESOURCE_EXHAUSTED/5xx throws before any content exists, so retrying the
+        // whole call is always safe here (unlike the streaming variant below).
+        const response = await (0, retry_1.withRetry)(() => this.ai.models.generateContent({
             model: modelToUse,
             contents: contents,
             config: config
-        });
+        }), { retries: 2, baseDelayMs: 800, label: 'gemini.generateResponse' });
         const end = Date.now();
         const inTok = response.usageMetadata?.promptTokenCount || 0;
         const outTok = response.usageMetadata?.candidatesTokenCount || 0;
@@ -150,15 +153,33 @@ class GeminiProvider {
         if (systemPrompt && systemPrompt.trim().length > 0) {
             config.systemInstruction = systemPrompt;
         }
-        const responseStream = await this.ai.models.generateContentStream({
-            model: modelToUse,
-            contents: contents,
-            config: config
+        // Acquiring the stream and pulling its first item is where a RESOURCE_EXHAUSTED/5xx
+        // actually surfaces (a request rejection, not a mid-generation failure) — before any
+        // text has reached the caller, so it's safe to retry the whole request from scratch.
+        // Once real content starts flowing we stop retrying entirely: re-attempting after that
+        // would duplicate output the client has already started rendering.
+        const acquireFirstChunk = async () => {
+            const stream = await this.ai.models.generateContentStream({
+                model: modelToUse,
+                contents: contents,
+                config: config
+            });
+            const iterator = stream[Symbol.asyncIterator]();
+            const first = await iterator.next();
+            return { iterator, first };
+        };
+        const { iterator, first } = await (0, retry_1.withRetry)(acquireFirstChunk, {
+            retries: 2,
+            baseDelayMs: 800,
+            label: 'gemini.generateStreamResponse',
         });
-        for await (const chunk of responseStream) {
+        let result = first;
+        while (!result.done) {
+            const chunk = result.value;
             if (chunk.text) {
                 yield chunk.text;
             }
+            result = await iterator.next();
         }
     }
     async extractQuestionFromImage(...args) { throw new Error('Not implemented'); }

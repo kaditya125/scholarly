@@ -765,21 +765,22 @@ function DiscussionsForum() {
   );
 }
 
-type CommunityTab = "discussions" | "chats" | "people";
+import { SavedMessagesView } from "../components/social/SavedMessagesView";
+import { Bookmark } from "lucide-react";
+
+type CommunityTab = "discussions" | "chats" | "people" | "saved";
 
 /**
- * The Community hub: one page hosting the Discussions forum, the Chats messaging experience, and
- * the People directory as tabs. The tab is kept in local state (not the URL) so the embedded Chats
- * view is free to own the query string for its own selection (?dm=, ?g=&c=, ?ai=); we still open on
- * the Chats tab when the URL already carries a conversation, so deep links keep working.
+ * The Community hub: one page hosting the Discussions forum, the Chats messaging experience,
+ * the People directory, and the Saved Notes revision vault.
  */
 export default function Community() {
   const [params, setParams] = useSearchParams();
   const tabParam = params.get("tab");
   const tab: CommunityTab =
-    tabParam === "chats" || tabParam === "people" || tabParam === "discussions"
+    tabParam === "chats" || tabParam === "people" || tabParam === "discussions" || tabParam === "saved"
       ? tabParam
-      : "chats"; // default to the chat workspace (the provided template)
+      : "chats"; // default to the chat workspace
   const setTab = (id: CommunityTab) =>
     setParams((prev) => {
       const n = new URLSearchParams(prev);
@@ -791,6 +792,7 @@ export default function Community() {
     { id: "chats", label: "Chats", icon: MessagesSquare },
     { id: "discussions", label: "Discussions", icon: MessageSquare },
     { id: "people", label: "People", icon: Users },
+    { id: "saved", label: "Saved Notes", icon: Bookmark },
   ];
 
   return (
@@ -827,6 +829,10 @@ export default function Community() {
           <Chats />
         ) : tab === "people" ? (
           <People />
+        ) : tab === "saved" ? (
+          <div className="h-full overflow-y-auto custom-scrollbar">
+            <SavedMessagesView />
+          </div>
         ) : (
           <div className="h-full overflow-y-auto custom-scrollbar">
             <div className="px-4 md:px-6 lg:px-8 py-6">

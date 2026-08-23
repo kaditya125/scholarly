@@ -4,6 +4,7 @@ import { useAuth } from "../../lib/AuthContext";
 import { useChannelMessages } from "../../hooks/api/useGroupChannels";
 import { useTyping } from "../../hooks/useTyping";
 import { useAttachments } from "../../hooks/useAttachments";
+import { useSavedMessages } from "../../hooks/api/useSavedMessages";
 import { PinnedBar } from "../social/PinnedBar";
 import { ChatMessageList, ThreadMessage } from "./ChatMessageList";
 import { ChatComposer } from "./ChatComposer";
@@ -31,6 +32,7 @@ export function ChannelThread({
   onOpenAI,
 }: ChannelThreadProps) {
   const { user } = useAuth();
+  const { toggleSave, isSaved } = useSavedMessages();
   const {
     messages,
     senders,
@@ -71,6 +73,23 @@ export function ChannelThread({
 
   const jumpTo = (id: string) => {
     document.getElementById(`m-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const handleSaveMessage = (m: ThreadMessage) => {
+    const sender = resolveSender(m.senderId);
+    toggleSave({
+      messageId: m.id,
+      sourceType: "channel",
+      groupId,
+      channelId,
+      groupName,
+      channelName,
+      senderId: m.senderId,
+      senderName: sender.displayName,
+      text: m.text || "",
+      attachments: m.attachments,
+      messageCreatedAt: m.createdAt,
+    });
   };
 
   const handleSend = async () => {
@@ -187,6 +206,8 @@ export function ChannelThread({
             onDelete={(m) => deleteMessage(m.id).catch(() => {})}
             onReact={(id, emoji) => react({ messageId: id, emoji }).catch(() => {})}
             onPin={(m) => pinMessage({ messageId: m.id, pinned: !m.pinned }).catch(() => {})}
+            onSave={handleSaveMessage}
+            isSaved={isSaved}
           />
         )}
       </div>

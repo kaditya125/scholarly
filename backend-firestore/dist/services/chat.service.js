@@ -153,6 +153,9 @@ class ChatService {
                 else if (event.type === 'warning') {
                     res.write(`data: ${JSON.stringify({ type: 'warning', message: event.warning })}\n\n`);
                 }
+                else if (event.type === 'suggestions') {
+                    res.write(`data: ${JSON.stringify({ type: 'suggestions', suggestions: event.suggestions })}\n\n`);
+                }
                 else if (event.type === 'done') {
                     res.write(`data: ${JSON.stringify({ type: 'done', data: event.data })}\n\n`);
                 }

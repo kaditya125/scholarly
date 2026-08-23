@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef } from "react";
+import { Check, CheckCheck, Clock } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useTheme } from "../../lib/ThemeContext";
 import { PeerAvatar } from "../social/PeerAvatar";
@@ -40,7 +41,66 @@ interface ChatMessageListProps {
   onDelete: (m: ThreadMessage) => void;
   onReact: (messageId: string, emoji: string) => void;
   onPin: (m: ThreadMessage) => void;
+  onSave?: (m: ThreadMessage) => void;
+  isSaved?: (messageId: string) => boolean;
   lastSeenMessageId?: string | null;
+  isPeerOnline?: boolean;
+  peerLastReadAt?: number;
+}
+
+function MessageDeliveryCheck({
+  msg,
+  isPeerOnline,
+  peerLastReadAt,
+}: {
+  msg: ThreadMessage;
+  isPeerOnline?: boolean;
+  peerLastReadAt?: number;
+}) {
+  const isPending = msg.id.startsWith("tmp-");
+  if (isPending) {
+    return (
+      <span title="Sending..." aria-label="Sending message" className="inline-flex items-center ml-1 opacity-60">
+        <Clock className="w-2.5 h-2.5 animate-pulse" />
+      </span>
+    );
+  }
+
+  const isRead = typeof peerLastReadAt === "number" && msg.createdAt <= peerLastReadAt;
+  if (isRead) {
+    return (
+      <span
+        title="Read"
+        aria-label="Message read"
+        className="inline-flex items-center ml-1 text-[#c8e558] dark:text-[#c8e558]"
+      >
+        <CheckCheck className="w-3 h-3" strokeWidth={2.4} />
+      </span>
+    );
+  }
+
+  const isDelivered = isPeerOnline || (typeof peerLastReadAt === "number" && peerLastReadAt > 0);
+  if (isDelivered) {
+    return (
+      <span
+        title="Delivered"
+        aria-label="Message delivered"
+        className="inline-flex items-center ml-1 opacity-70"
+      >
+        <CheckCheck className="w-3 h-3" strokeWidth={1.9} />
+      </span>
+    );
+  }
+
+  return (
+    <span
+      title="Sent"
+      aria-label="Message sent"
+      className="inline-flex items-center ml-1 opacity-60"
+    >
+      <Check className="w-3 h-3" strokeWidth={1.9} />
+    </span>
+  );
 }
 
 /**
@@ -170,15 +230,19 @@ export function ChatMessageList({
                       )}
                       <MessageAttachments attachments={msg.attachments} mine={mine} />
                       {msg.text && <span className="whitespace-pre-wrap">{msg.text}</span>}
-                      <span
-                        className={cn(
-                          "block text-[10px] mt-1 text-right",
-                          mine ? "text-white/60" : "text-slate-400 dark:text-gray-500"
+                      <div className="flex items-center justify-end gap-1 text-[10px] mt-1 text-right">
+                        <span className={cn(mine ? "text-white/70" : "text-slate-400 dark:text-gray-500")}>
+                          {msg.editedAt ? "edited · " : ""}
+                          {clockTime(msg.createdAt)}
+                        </span>
+                        {variant === "dm" && mine && (
+                          <MessageDeliveryCheck
+                            msg={msg}
+                            isPeerOnline={isPeerOnline}
+                            peerLastReadAt={peerLastReadAt}
+                          />
                         )}
-                      >
-                        {msg.editedAt ? "edited · " : ""}
-                        {clockTime(msg.createdAt)}
-                      </span>
+                      </div>
                     </div>
                     <MessageActionsMenu
                       canEdit={canEdit(msg)}
@@ -187,6 +251,8 @@ export function ChatMessageList({
                       onEdit={() => onEdit(msg)}
                       onDelete={() => onDelete(msg)}
                       onPin={() => onPin(msg)}
+                      onSave={onSave ? () => onSave(msg) : undefined}
+                      isSaved={isSaved ? isSaved(msg.id) : false}
                       isPinned={msg.pinned}
                       align={mine ? "right" : "left"}
                     />
@@ -197,11 +263,6 @@ export function ChatMessageList({
                     onToggle={(e) => onReact(msg.id, e)}
                     align={mine ? "right" : "left"}
                   />
-                  {variant === "dm" && mine && msg.id === lastSeenMessageId && (
-                    <span className="text-[10px] font-medium text-slate-400 dark:text-gray-500 mt-0.5 mr-1">
-                      Seen
-                    </span>
-                  )}
                 </div>
               </div>
             );

@@ -40,10 +40,13 @@ class FirestoreMemoryProvider {
     async getLearningAnalytics(userId) {
         const doc = await firebase_1.db.collection('users').doc(userId).collection('analytics').doc('learning_metrics').get();
         if (doc.exists) {
-            return doc.data();
+            return { hasData: true, ...doc.data() };
         }
-        // Default zero-state metrics
+        // Zero-state placeholders, explicitly flagged as NOT measurements. Callers must check
+        // `hasData` before reporting any of these; a zero here means "never measured", not
+        // "measured as zero", and the two must not be conflated when talking to a student.
         return {
+            hasData: false,
             masteryPercentage: 0,
             revisionFrequency: 0,
             averageConfidence: 0.5,

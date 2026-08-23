@@ -111,6 +111,13 @@ Standalone Search Query:`;
             // at the index level so the reranker never sees off-scope chunks.
             filter.sourceId = { $in: scopeSourceIds };
         }
+        // Exam Intelligence scoping (Phase 2)
+        if (examContext?.examId) {
+            filter.examId = examContext.examId;
+        }
+        if (examContext?.scopeOfficialSyllabusOnly) {
+            filter.documentType = 'OFFICIAL_SYLLABUS';
+        }
         const namespace = env_1.env.PINECONE_NAMESPACE;
         const tPinecone = performance.now();
         // Fetch topK * 4 to ensure a wide net for the Reranker
@@ -141,14 +148,17 @@ Standalone Search Query:`;
             const authorityLevel = meta.authority || 'USER_UPLOAD';
             const authorityMultiplier = AUTHORITY_WEIGHTS[authorityLevel] || 1.0;
             weightedScore *= authorityMultiplier;
-            // Exam Relevance
+            // Exam Relevance & Official Syllabus Priority
             if (examContext) {
-                if (meta.exam === examContext.exam)
-                    weightedScore *= 1.1;
-                if (meta.subject === examContext.subject)
+                if (meta.examId === examContext.examId || meta.exam === examContext.exam)
+                    weightedScore *= 1.15;
+                if (examContext.subject && meta.subject === examContext.subject)
                     weightedScore *= 1.1;
                 if (examContext.syllabusTopic && meta.tags?.includes(examContext.syllabusTopic)) {
                     weightedScore *= 1.15;
+                }
+                if (meta.documentType === 'OFFICIAL_SYLLABUS') {
+                    weightedScore *= 1.25;
                 }
             }
             // Freshness decay
@@ -201,6 +211,18 @@ Standalone Search Query:`;
         return combinedResults;
     }
     /**
+     * Specifically retrieves context strictly from official syllabus vectors for an examination.
+     * Enforces { examId, documentType: 'OFFICIAL_SYLLABUS' } at the Pinecone filter layer.
+     */
+    async retrieveOfficialSyllabusContext(examId, query, topK = 5) {
+        return this.retrieveContext(query, '', // global search across exam namespace
+        {
+            exam: examId,
+            examId,
+            scopeOfficialSyllabusOnly: true,
+        }, topK);
+    }
+    /**
      * Specifically retrieves context from the public knowledge base.
      * EXPLICITLY enforces { public: true } at the Pinecone filter layer to isolate
      * public documentation from private user notebooks or credentials.
@@ -245,7 +267,7 @@ Standalone Search Query:`;
             const meta = match.metadata || {};
             return {
                 text: this.sanitizeContext(String(meta.text || '')),
-                source: String(meta.sourceTitle || meta.filename || 'Scholarly Public Guide'),
+                source: String(meta.sourceTitle || meta.filename || 'Sadhya Public Guide'),
                 score: reranked.relevanceScore,
                 metadata: meta,
                 weightedScore: reranked.relevanceScore,

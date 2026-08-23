@@ -1,13 +1,14 @@
 import { api } from './client';
 
-/** A file attached to a message (mirrors the backend Attachment). */
 export interface Attachment {
   id: string;
   name: string;
   url: string;
   contentType: string;
   size: number;
-  kind: 'image' | 'file';
+  kind: 'image' | 'file' | 'audio';
+  duration?: number;
+  waveform?: number[];
 }
 
 export const uploadsApi = {

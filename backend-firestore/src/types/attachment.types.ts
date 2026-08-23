@@ -8,5 +8,7 @@ export interface Attachment {
   url: string;
   contentType: string;
   size: number;              // bytes
-  kind: 'image' | 'file';    // drives rendering (thumbnail vs. file card)
+  kind: 'image' | 'file' | 'audio';    // drives rendering (thumbnail vs. file card vs. voice note)
+  duration?: number;         // seconds for audio
+  waveform?: number[];       // normalized visual audio waveform amplitude points [0..1]
 }
