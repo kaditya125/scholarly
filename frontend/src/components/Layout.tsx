@@ -210,6 +210,14 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
   // More flyout — portal-based for collapsed rail, inline accordion for expanded
   const [isMoreFlyoutOpen, setIsMoreFlyoutOpen] = useState(false);
 
+  // Check if any "more" item is currently active
+  const isAnyMoreItemActive = MORE_NAV.flatMap(g => g.items).some(
+    item => location.pathname === item.path || (location.pathname.startsWith(item.path) && item.path !== "/")
+  );
+
+  // The desktop collapsed rail mode is ONLY active on desktop when not in mobile drawer
+  const isRail = isCollapsed && !isMobileMenuOpen;
+
   // Auto-close mobile drawer and flyouts on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -332,14 +340,6 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
       default: return 'Application';
     }
   };
-
-  // Check if any "more" item is currently active
-  const isAnyMoreItemActive = MORE_NAV.flatMap(g => g.items).some(
-    item => location.pathname === item.path || (location.pathname.startsWith(item.path) && item.path !== "/")
-  );
-
-  // The desktop collapsed rail mode is ONLY active on desktop when not in mobile drawer
-  const isRail = isCollapsed && !isMobileMenuOpen;
 
   return (
     <motion.div 

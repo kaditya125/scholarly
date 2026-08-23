@@ -63,12 +63,13 @@ function useSharedContent(messages: ThreadMessage[], resolveSender: (uid: string
         if (a.kind === "image") {
           media.push({ id: a.id, url: a.url, name: a.name });
         } else {
+          const rawSize = (a as any).sizeBytes || (a as any).size;
           files.push({
             id: a.id,
             url: a.url,
             name: a.name,
             by,
-            size: a.sizeBytes ? `${(a.sizeBytes / (1024 * 1024)).toFixed(2)} MB` : "5.21 MB",
+            size: rawSize ? `${(rawSize / (1024 * 1024)).toFixed(2)} MB` : "5.21 MB",
           });
         }
       }
@@ -341,7 +342,7 @@ export function ChannelInfoPanel({
   onClose?: () => void;
 }) {
   const { user } = useAuth();
-  const { group, inviteMember, removeMember } = useStudyGroup(groupId);
+  const { group, invite, removeMember } = useStudyGroup(groupId);
   const { channels } = useGroupChannels(groupId);
   const { messages, senders } = useChannelMessages(groupId, channelId);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -454,11 +455,11 @@ export function ChannelInfoPanel({
           isOpen={isInviteModalOpen}
           onClose={() => setIsInviteModalOpen(false)}
           groupName={group.name}
-          members={group.members || []}
+          members={members}
           isAdmin={isAdmin}
           currentUserId={user?.uid}
           onInvite={async (email) => {
-            if (inviteMember) await inviteMember(email);
+            if (invite) await invite([email]);
           }}
           onRemoveMember={async (uid) => {
             if (removeMember) await removeMember(uid);

@@ -647,7 +647,7 @@ export default function LandingPage() {
 
                 <div className="mt-8 flex flex-wrap items-center gap-3">
                   <button
-                    onClick={() => setHelpWidgetOpen(true)}
+                    onClick={() => handleOpenHelpWithQuestion("Tell me about Sadhya AI tutor features.")}
                     className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13.5px] font-semibold hover:opacity-90 transition-opacity"
                   >
                     <Bot className="w-4 h-4" />

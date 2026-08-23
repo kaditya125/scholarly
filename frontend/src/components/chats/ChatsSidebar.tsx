@@ -311,8 +311,7 @@ export function ChatsSidebar({
                 <button
                   key={group.id}
                   onClick={() => {
-                    const defaultCh = group.channels?.[0]?.id || "general";
-                    onSelectChannel(group.id, defaultCh);
+                    onSelectChannel(group.id, "general");
                   }}
                   className={cn(
                     "w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all cursor-pointer border",
@@ -492,7 +491,7 @@ export function ChatsSidebar({
         isOpen={createOpen}
         onClose={() => setCreateOpen(false)}
         onCreated={(g) => {
-          onSelectChannel(g.id, g.channels?.[0]?.id || "general");
+          onSelectChannel(g.id, "general");
         }}
       />
     </div>
