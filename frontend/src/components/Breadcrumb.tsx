@@ -1,10 +1,13 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
+import { useAuth } from '../lib/AuthContext';
 import { cn } from '../lib/utils';
 
 export function Breadcrumb() {
   const location = useLocation();
+  const { user, role } = useAuth();
+  const homePath = user ? (role === 'teacher' ? '/teach' : '/dashboard') : '/';
   const pathnames = location.pathname.split('/').filter((x) => x);
 
   const getPageTitle = (path: string) => {
@@ -21,7 +24,7 @@ export function Breadcrumb() {
 
   return (
     <nav className="flex items-center gap-1.5 text-[13px] font-medium text-slate-500 dark:text-gray-500 mb-0.5">
-      <Link to="/" className="hover:text-slate-800 dark:hover:text-white transition-colors">
+      <Link to={homePath} className="hover:text-slate-800 dark:hover:text-white transition-colors">
         Home
       </Link>
       

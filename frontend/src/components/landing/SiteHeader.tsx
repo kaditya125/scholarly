@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { ChevronDown, Menu, X, Sun, Moon, ArrowRight, Sparkles } from 'lucide-react';
 import { useTheme } from '../../lib/ThemeContext';
+import { useAuth } from '../../lib/AuthContext';
 import { cn } from '../../lib/utils';
 import { PRODUCT_GROUPS, TEACHER_PRODUCT_GROUPS, TOP_LINKS, TEACHER_TOP_LINKS } from './navData';
 import { PRO_MONTHLY_INR } from '../../lib/siteConfig';
@@ -17,9 +18,11 @@ const CLOSE_DELAY = 180;
 
 export default function SiteHeader() {
   const { theme, toggleTheme } = useTheme();
+  const { user, role } = useAuth();
   const location = useLocation();
   const reduced = useReducedMotion();
 
+  const brandHome = user ? (role === 'teacher' ? '/teach' : '/dashboard') : '/';
   const isTeacherContext = location.pathname.startsWith('/for-teachers');
   const currentProductGroups = isTeacherContext ? TEACHER_PRODUCT_GROUPS : PRODUCT_GROUPS;
   const currentTopLinks = isTeacherContext ? TEACHER_TOP_LINKS : TOP_LINKS;
@@ -59,13 +62,15 @@ export default function SiteHeader() {
       if (e.key !== 'Escape') return;
       if (megaOpen) {
         setMegaOpen(false);
-        wrapRef.current?.querySelector<HTMLButtonElement>('[data-mega-trigger]')?.focus();
+        const trigger = wrapRef.current?.querySelector<HTMLButtonElement>('[data-mega-trigger]');
+        trigger?.focus();
+      } else if (mobileOpen) {
+        setMobileOpen(false);
       }
-      setMobileOpen(false);
     };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [megaOpen]);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [megaOpen, mobileOpen]);
 
   // Mobile scroll lock
   useEffect(() => {
@@ -79,8 +84,8 @@ export default function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-slate-100 dark:border-white/[0.07] bg-white/85 dark:bg-[#0b0b0c]/85 backdrop-blur-xl">
       <div ref={wrapRef} className="relative">
         <nav className="max-w-[1160px] mx-auto px-5 sm:px-8 h-16 flex items-center gap-6">
-          <Link to="/" className="flex items-center gap-2.5 shrink-0" aria-label="Sadhya home">
-            <Mark />
+          <Link to={brandHome} className="flex items-center gap-2.5 shrink-0 group" aria-label="Sadhya home">
+            <Mark className="group-hover:scale-105 transition-transform" />
             <span className="text-[17px] font-semibold tracking-[-0.02em]">Sadhya</span>
           </Link>
 
@@ -108,7 +113,7 @@ export default function SiteHeader() {
                     : 'text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white',
                 )}
               >
-                Product
+                {isTeacherContext ? 'Teacher Suite' : 'Product'}
                 <ChevronDown
                   className={cn('w-3.5 h-3.5 transition-transform duration-200', megaOpen && 'rotate-180')}
                   strokeWidth={2.25}
@@ -123,7 +128,7 @@ export default function SiteHeader() {
                 className={cn(
                   "h-9 px-3 flex items-center rounded-lg text-[14px] font-medium transition-colors",
                   location.pathname === l.href
-                    ? "text-slate-900 dark:text-white font-semibold"
+                    ? "text-slate-900 dark:text-white bg-slate-100/70 dark:bg-white/[0.04]"
                     : "text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white"
                 )}
               >
@@ -144,20 +149,31 @@ export default function SiteHeader() {
                 : <Moon className="w-[18px] h-[18px]" strokeWidth={1.9} />}
             </button>
 
-            <Link
-              to="/signin"
-              className="hidden sm:inline-flex h-9 items-center px-3 rounded-lg text-[14px] font-medium text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white transition-colors"
-            >
-              Sign in
-            </Link>
+            {user ? (
+              <Link
+                to={brandHome}
+                className="inline-flex items-center h-9 px-4 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13.5px] font-semibold hover:opacity-90 transition-opacity whitespace-nowrap"
+              >
+                {role === 'teacher' ? 'Teacher Dashboard' : 'Dashboard'}
+              </Link>
+            ) : (
+              <>
+                <Link
+                  to="/signin"
+                  className="hidden sm:inline-flex h-9 items-center px-3 rounded-lg text-[14px] font-medium text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+                >
+                  Sign in
+                </Link>
 
-            <Link
-              to="/signup"
-              state={isTeacherContext ? { role: 'teacher' } : undefined}
-              className="inline-flex items-center h-9 px-4 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13.5px] font-semibold hover:opacity-90 transition-opacity whitespace-nowrap"
-            >
-              {isTeacherContext ? 'Start teaching' : 'Get started'}
-            </Link>
+                <Link
+                  to="/signup"
+                  state={isTeacherContext ? { role: 'teacher' } : undefined}
+                  className="inline-flex items-center h-9 px-4 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13.5px] font-semibold hover:opacity-90 transition-opacity whitespace-nowrap"
+                >
+                  {isTeacherContext ? 'Start teaching' : 'Get started'}
+                </Link>
+              </>
+            )}
 
             <button
               onClick={() => setMobileOpen((v) => !v)}

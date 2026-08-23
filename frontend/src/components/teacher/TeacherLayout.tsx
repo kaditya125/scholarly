@@ -165,13 +165,13 @@ export default function TeacherLayout() {
 
   const sidebar = (
     <nav aria-label="Teacher workspace" className="flex flex-col h-full">
-      <div className="px-4 py-4 flex items-center gap-2.5">
-        <Mark />
+      <Link to="/teach" className="px-4 py-4 flex items-center gap-2.5 group">
+        <Mark className="group-hover:scale-105 transition-transform" />
         <span className="text-[15px] font-semibold tracking-[-0.02em]">Sadhya</span>
         <span className="ml-0.5 px-1.5 py-0.5 rounded-md text-[10.5px] font-semibold uppercase tracking-[0.06em] bg-[#c8e558] text-slate-900">
           Teach
         </span>
-      </div>
+      </Link>
 
       <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-5">
         {NAV.map((group) => (

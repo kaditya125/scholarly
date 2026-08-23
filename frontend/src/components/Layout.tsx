@@ -232,7 +232,8 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
   const newMenuExpandedRef = useRef<HTMLDivElement>(null);
   const [newMenuStyle, setNewMenuStyle] = useState<React.CSSProperties>({});
   const profileMenuRef = useRef<HTMLDivElement>(null);
-  const { user, logout } = useAuth();
+  const { user, role, logout } = useAuth();
+  const brandHome = role === 'teacher' ? '/teach' : '/dashboard';
 
   /**
    * Recent chats for the sidebar's "Recent" section.
@@ -369,15 +370,15 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
           isRail ? "justify-center px-0 flex-col py-2" : "px-4 justify-between"
         )}>
           {!isRail ? (
-            <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2.5 overflow-hidden">
-              <LogoMark className="shrink-0 w-[22px] h-[22px]" />
+            <Link to={brandHome} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2.5 overflow-hidden group">
+              <LogoMark className="shrink-0 w-[22px] h-[22px] group-hover:scale-105 transition-transform" />
               <span className="font-semibold text-[15.5px] tracking-tight text-slate-900 dark:text-white">
                 Sadhya
               </span>
             </Link>
           ) : (
-            <Link to="/" className="flex items-center justify-center w-full mb-3 shrink-0">
-              <LogoMark className="w-[22px] h-[22px]" />
+            <Link to={brandHome} className="flex items-center justify-center w-full mb-3 shrink-0 group">
+              <LogoMark className="w-[22px] h-[22px] group-hover:scale-105 transition-transform" />
             </Link>
           )}
 
