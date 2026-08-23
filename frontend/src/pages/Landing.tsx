@@ -16,7 +16,6 @@ import { HandwrittenTagline } from '../components/brand/HandwrittenTagline';
 import { EXAM_CATALOG } from '../lib/examCatalog';
 import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
-import { FloatingHelpdeskWidget } from '../components/help/FloatingHelpdeskWidget';
 
 /**
  * The public landing page.
@@ -317,12 +316,8 @@ export default function LandingPage() {
   const prevActiveRef = useRef<number | null>(null);
   const [activeAnimKey, setActiveAnimKey] = useState(0); // bumped on every change to trigger animation
   const [recentAvatars, setRecentAvatars] = useState<string[]>([]);
-  const [helpWidgetOpen, setHelpWidgetOpen] = useState<boolean>(false);
-  const [helpWidgetQuestion, setHelpWidgetQuestion] = useState<string | null>(null);
-
   const handleOpenHelpWithQuestion = (q: string) => {
-    setHelpWidgetQuestion(q);
-    setHelpWidgetOpen(true);
+    window.dispatchEvent(new CustomEvent('sadhya-open-helpdesk', { detail: { question: q } }));
   };
 
   useEffect(() => {
@@ -868,16 +863,6 @@ export default function LandingPage() {
           </Reveal>
         </section>
       </main>
-
-      {/* In-Situ Floating Helpdesk Widget */}
-      <FloatingHelpdeskWidget
-        initialOpen={helpWidgetOpen}
-        prefilledQuestion={helpWidgetQuestion}
-        onCloseExternal={() => {
-          setHelpWidgetOpen(false);
-          setHelpWidgetQuestion(null);
-        }}
-      />
 
       <SiteFooter />
     </div>
