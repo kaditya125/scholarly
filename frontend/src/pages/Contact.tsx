@@ -295,29 +295,29 @@ export default function Contact() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased selection:bg-[#c8e558]/30">
+    <div className="min-h-screen w-full overflow-x-hidden bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased selection:bg-[#c8e558]/30">
       <SiteHeader />
 
-      <main className="max-w-[1160px] mx-auto px-5 sm:px-8">
-        <header className="pt-16 sm:pt-24 pb-8">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 mb-4">
+      <main className="w-full max-w-[1160px] mx-auto px-4 sm:px-6 lg:px-8">
+        <header className="pt-12 sm:pt-20 pb-6 sm:pb-8">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 mb-3 sm:mb-4">
             <Sparkles className="w-3 h-3 text-[#8ba32b] dark:text-[#c8e558]" />
             Direct Support Channels
           </div>
-          <h1 className="text-[34px] sm:text-[46px] leading-[1.08] font-semibold tracking-[-0.035em]">
+          <h1 className="text-[28px] sm:text-[42px] leading-[1.1] font-semibold tracking-[-0.035em]">
             Talk to us
           </h1>
-          <p className="mt-3.5 max-w-[34rem] text-[15.5px] leading-relaxed text-slate-500 dark:text-gray-400">
+          <p className="mt-3 max-w-[34rem] text-[14.5px] sm:text-[15.5px] leading-relaxed text-slate-500 dark:text-gray-400">
             A real person reads every one of these. Select a department to view details, or send a message directly below.
           </p>
         </header>
 
         {/* ── Shifted Container with Clean Spacing ───────────────────────── */}
-        <div className="grid lg:grid-cols-12 gap-8 sm:gap-10 pt-4 pb-24">
+        <div className="grid lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10 pt-2 sm:pt-4 pb-16 sm:pb-24">
           
           {/* Left Column: 4 Channels */}
           <div className="lg:col-span-5 flex flex-col gap-3">
-            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500 mb-1">
+            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500 mb-0.5">
               Department
             </h2>
             {CHANNELS.map((c) => {
@@ -326,26 +326,26 @@ export default function Contact() {
                 <div
                   key={c.id}
                   onClick={() => handleChannelSelect(c.id)}
-                  className={`cursor-pointer rounded-2xl border p-5 transition-all text-left group relative ${
+                  className={`cursor-pointer rounded-2xl border p-4 sm:p-5 transition-all text-left group relative ${
                     isSelected
                       ? 'border-slate-900 dark:border-white bg-slate-50/70 dark:bg-white/[0.03]'
                       : 'border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141416] hover:border-slate-300 dark:hover:border-white/20'
                   }`}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className={`inline-flex w-8 h-8 rounded-xl items-center justify-center ${
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                      <span className={`inline-flex w-8 h-8 rounded-xl items-center justify-center shrink-0 ${
                         isSelected 
                           ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' 
                           : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200'
                       }`}>
                         <c.icon className="w-3.5 h-3.5" strokeWidth={2} />
                       </span>
-                      <div>
-                        <h3 className="text-[15px] font-semibold tracking-tight text-slate-900 dark:text-white">
+                      <div className="min-w-0">
+                        <h3 className="text-[14.5px] sm:text-[15px] font-semibold tracking-tight text-slate-900 dark:text-white truncate">
                           {c.title}
                         </h3>
-                        <span className="text-[11px] text-slate-400 dark:text-gray-400">
+                        <span className="text-[11px] text-slate-400 dark:text-gray-400 block truncate">
                           {c.badge}
                         </span>
                       </div>
@@ -354,7 +354,7 @@ export default function Contact() {
                     <button
                       type="button"
                       onClick={(e) => handleCopy(e, c.email)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-white/10 transition-colors"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-white/10 transition-colors shrink-0"
                       title="Copy email address"
                       aria-label={`Copy ${c.email}`}
                     >
@@ -366,15 +366,15 @@ export default function Contact() {
                     </button>
                   </div>
 
-                  <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500 dark:text-gray-400">
+                  <p className="mt-2 text-[12px] sm:text-[12.5px] leading-relaxed text-slate-500 dark:text-gray-400">
                     {c.body}
                   </p>
 
-                  <div className="mt-3 flex items-center justify-between pt-2.5 border-t border-slate-100 dark:border-white/5 text-[12px]">
-                    <span className="font-mono text-slate-500 dark:text-gray-400">
+                  <div className="mt-3 flex items-center justify-between pt-2.5 border-t border-slate-100 dark:border-white/5 text-[11.5px] sm:text-[12px]">
+                    <span className="font-mono text-slate-500 dark:text-gray-400 truncate mr-2">
                       {c.email}
                     </span>
-                    <span className="inline-flex items-center gap-1 text-[11.5px] font-medium text-slate-900 dark:text-white group-hover:translate-x-0.5 transition-transform">
+                    <span className="inline-flex items-center gap-1 text-[11px] sm:text-[11.5px] font-medium text-slate-900 dark:text-white group-hover:translate-x-0.5 transition-transform shrink-0">
                       {isSelected ? 'Selected' : 'Select'} <ArrowRight className="w-3 h-3" />
                     </span>
                   </div>
@@ -385,28 +385,28 @@ export default function Contact() {
 
           {/* Right Column: Direct Messaging Form */}
           <div className="lg:col-span-7">
-            <div className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141416] p-6 sm:p-9">
+            <div className="rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141416] p-4.5 sm:p-8">
               
               {/* Card Header */}
-              <div className="flex items-center justify-between pb-6 border-b border-slate-100 dark:border-white/5">
-                <div className="flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center">
+              <div className="flex items-center justify-between pb-5 border-b border-slate-100 dark:border-white/5 gap-2">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                  <span className="w-8 h-8 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shrink-0">
                     <MessageSquare className="w-4 h-4" />
                   </span>
-                  <div>
-                    <h2 className="text-[16px] font-semibold tracking-tight">Direct Message</h2>
-                    <p className="text-[12px] text-slate-400 dark:text-gray-400">
+                  <div className="min-w-0">
+                    <h2 className="text-[15px] sm:text-[16px] font-semibold tracking-tight truncate">Direct Message</h2>
+                    <p className="text-[11.5px] sm:text-[12px] text-slate-400 dark:text-gray-400 truncate">
                       To: <strong className="text-slate-900 dark:text-white font-mono">{selectedChannel}@sadhya.app</strong>
                     </p>
                   </div>
                 </div>
-                <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40">
+                <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-[10.5px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 shrink-0">
                   Online
                 </span>
               </div>
 
               {successMsg ? (
-                <div className="py-14 text-center">
+                <div className="py-12 sm:py-14 text-center">
                   <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-3">
                     <Check className="w-6 h-6" strokeWidth={2.5} />
                   </div>
@@ -426,7 +426,7 @@ export default function Contact() {
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="mt-6 space-y-4.5">
+                <form onSubmit={handleSubmit} className="mt-5 space-y-4">
                   {errorMsg && (
                     <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 text-xs">
                       {errorMsg}
@@ -434,7 +434,7 @@ export default function Contact() {
                   )}
 
                   {/* Name and Email Grid */}
-                  <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="grid sm:grid-cols-2 gap-3.5 sm:gap-4">
                     <div>
                       <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500 mb-1.5">
                         Your Name <span className="text-red-500">*</span>
@@ -479,11 +479,11 @@ export default function Contact() {
                   </div>
 
                   {/* Sleek Message Area & Toolbar */}
-                  <div>
+                  <div className="min-w-0">
                     {/* Micro-Toolbar with Preset Chips & AI Toggle */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                        <span className="text-[10.5px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500 mr-0.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2 min-w-0">
+                      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-full min-w-0 py-0.5">
+                        <span className="text-[10.5px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500 shrink-0">
                           Preset:
                         </span>
                         {TEMPLATES[selectedChannel]?.map((tmpl, idx) => (
@@ -491,7 +491,7 @@ export default function Contact() {
                             key={idx}
                             type="button"
                             onClick={() => applyTemplate(selectedChannel, idx)}
-                            className={`whitespace-nowrap px-2.5 py-0.5 rounded-md text-[11.5px] font-medium transition-all ${
+                            className={`whitespace-nowrap px-2.5 py-0.5 rounded-md text-[11px] sm:text-[11.5px] font-medium transition-all shrink-0 ${
                               selectedTemplateIndex === idx
                                 ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
                                 : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10'
@@ -505,25 +505,25 @@ export default function Contact() {
                       <button
                         type="button"
                         onClick={() => setShowAiBar(!showAiBar)}
-                        className="inline-flex items-center gap-1 text-[11px] font-medium text-[#8ba32b] dark:text-[#c8e558] hover:underline"
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-[#8ba32b] dark:text-[#c8e558] hover:underline shrink-0"
                       >
                         <Sparkles className="w-3 h-3" />
-                        {showAiBar ? 'Close AI Assistant' : 'Write with AI'}
+                        {showAiBar ? 'Hide AI' : 'Draft with AI'}
                       </button>
                     </div>
 
                     {/* Minimalist 1-Line AI Bar */}
                     {showAiBar && (
-                      <div className="mb-2.5 p-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/70 dark:border-white/10 flex items-center gap-2">
-                        <Sparkles className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558] shrink-0 ml-1.5" />
+                      <div className="mb-2.5 p-1.5 sm:p-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/70 dark:border-white/10 flex items-center gap-2 min-w-0">
+                        <Sparkles className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558] shrink-0 ml-1" />
                         <input
                           type="text"
                           value={aiPrompt}
                           onChange={(e) => setAiPrompt(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAiGenerate())}
-                          placeholder="Type quick rough notes and press Enter to draft with AI..."
+                          placeholder="Type rough notes & press Draft..."
                           disabled={aiGenerating}
-                          className="flex-1 bg-transparent text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none"
+                          className="flex-1 min-w-0 bg-transparent text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none"
                         />
                         <button
                           type="button"
@@ -531,7 +531,7 @@ export default function Contact() {
                           disabled={!aiPrompt.trim() || aiGenerating}
                           className="px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[11px] font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity shrink-0"
                         >
-                          {aiGenerating ? 'Drafting...' : 'Draft'}
+                          {aiGenerating ? '...' : 'Draft'}
                         </button>
                       </div>
                     )}
@@ -539,23 +539,23 @@ export default function Contact() {
 
                     <textarea
                       required
-                      rows={8}
+                      rows={7}
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       placeholder="How can we help you?"
-                      className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/40 dark:bg-white/[0.02] text-[13px] font-sans leading-relaxed text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1.5 focus:ring-slate-900 dark:focus:ring-white/40 resize-y"
+                      className="w-full p-3 sm:p-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/40 dark:bg-white/[0.02] text-[13px] font-sans leading-relaxed text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1.5 focus:ring-slate-900 dark:focus:ring-white/40 resize-y"
                     />
                   </div>
 
                   {/* Footer & Submit */}
-                  <div className="pt-2 flex items-center justify-between">
-                    <span className="text-[11px] text-slate-400 dark:text-gray-500">
+                  <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    <span className="text-[11px] text-slate-400 dark:text-gray-500 text-center sm:text-left">
                       Response SLA: 2–4 hours
                     </span>
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold hover:opacity-90 disabled:opacity-50 transition-all"
+                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold hover:opacity-90 disabled:opacity-50 transition-all w-full sm:w-auto"
                     >
                       {submitting ? (
                         <>
