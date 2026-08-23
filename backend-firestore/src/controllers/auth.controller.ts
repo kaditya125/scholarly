@@ -109,6 +109,31 @@ export class AuthController {
       });
     }
   };
+
+  /**
+   * POST /api/auth/send-welcome-email
+   * Authenticated endpoint to trigger the rich welcome onboarding email.
+   */
+  sendWelcomeEmail = async (req: Request, res: Response) => {
+    const uid = req.user?.uid;
+    const email = req.user?.email;
+
+    if (!uid || !email) {
+      return res.status(401).json({ error: 'Unauthorized or missing email address.' });
+    }
+
+    try {
+      const userRecord = await auth.getUser(uid);
+      const displayName = userRecord.displayName || req.body?.name || 'Learner';
+      const role = req.body?.role || 'student';
+
+      const sent = await zeptoMailService.sendWelcomeEmail(email, displayName, role);
+      return res.status(200).json({ success: sent });
+    } catch (err: any) {
+      logger.error('[AuthController] Error sending welcome email', { uid, error: err?.message });
+      return res.status(500).json({ error: 'Failed to send welcome email.' });
+    }
+  };
 }
 
 export const authController = new AuthController();
