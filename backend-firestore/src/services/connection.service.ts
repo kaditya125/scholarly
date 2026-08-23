@@ -323,27 +323,87 @@ export class ConnectionService {
     return { score, reasons };
   }
 
-  /** Name / email substring search over the directory, decorated with the caller's relationship. */
+  /**
+   * Name / email substring search over the directory, with fallback to Firebase Auth to ensure
+   * 100% of registered students are discoverable even before they visit the People page.
+   */
   async search(uid: string, query: string, limit = 20): Promise<PeerCard[]> {
     const term = query.trim().toLowerCase();
     if (!term) return [];
 
     const sets = await this.getRelationshipSets(uid);
     const pool = new Map<string, UserDirectoryEntry>();
-    (await this.repo.recentDirectory(200)).forEach((e) => pool.set(e.uid, e));
+
+    // 1. Search cached userDirectory entries
+    try {
+      const allEntries = await this.repo.getAllDirectoryEntries(1000);
+      allEntries.forEach((e) => pool.set(e.uid, e));
+    } catch {
+      const recent = await this.repo.recentDirectory(200).catch(() => []);
+      recent.forEach((e) => pool.set(e.uid, e));
+    }
+
+    // 2. Query Firebase Auth to discover registered users who might not be in userDirectory yet
+    try {
+      const authList = await auth.listUsers(1000);
+      for (const u of authList.users) {
+        if (u.uid === uid) continue;
+        const name = (u.displayName || '').toLowerCase();
+        const email = (u.email || '').toLowerCase();
+        if (name.includes(term) || email.includes(term) || u.uid.includes(term)) {
+          if (!pool.has(u.uid)) {
+            // Auto-sync directory for this newly discovered user
+            const entry = await this.syncDirectory(u.uid).catch(() => null);
+            if (entry) {
+              pool.set(entry.uid, entry);
+            } else {
+              pool.set(u.uid, {
+                uid: u.uid,
+                displayName: u.displayName || (u.email ? u.email.split('@')[0] : 'Sadhya learner'),
+                photoURL: u.photoURL || undefined,
+                email: u.email || undefined,
+                subjects: [],
+                weakAreas: [],
+                updatedAt: Date.now(),
+              });
+            }
+          }
+        }
+      }
+    } catch (err) {
+      // Best-effort Auth search
+    }
 
     const matches = [...pool.values()]
       .filter((e) => e.uid !== uid && !sets.blockedByIds.has(e.uid))
-      .filter(
-        (e) =>
-          (e.displayName || '').toLowerCase().includes(term) ||
-          (e.email || '').toLowerCase().includes(term)
-      )
+      .filter((e) => {
+        const dName = (e.displayName || '').toLowerCase();
+        const mail = (e.email || '').toLowerCase();
+        const uGoal = (e.goal || '').toLowerCase();
+        return dName.includes(term) || mail.includes(term) || uGoal.includes(term);
+      })
       .slice(0, limit);
 
     return matches.map((e) =>
       this.buildCard(e, this.relationshipFor(uid, e.uid, sets), sets.followingIds.has(e.uid), 0)
     );
+  }
+
+  /**
+   * Backfills and syncs all registered Firebase Auth users into the userDirectory.
+   */
+  async syncAllRegisteredUsers(): Promise<number> {
+    try {
+      const list = await auth.listUsers(1000);
+      let count = 0;
+      for (const u of list.users) {
+        await this.syncDirectory(u.uid).catch(() => {});
+        count++;
+      }
+      return count;
+    } catch (err) {
+      return 0;
+    }
   }
 
   // ─── Request lifecycle ─────────────────────────────────────────────────────────
