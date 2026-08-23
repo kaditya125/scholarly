@@ -75,8 +75,10 @@ export default function SiteFooter() {
         <div className="grid gap-10 lg:gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,2.6fr)] pt-14 sm:pt-16 pb-12">
           <div className="max-w-[19rem]">
             <Link to="/" className="flex items-center gap-2.5" aria-label="Sadhya home">
-              <Mark />
-              <span className="text-[17px] font-semibold tracking-[-0.02em]">Sadhya</span>
+              <Mark className="w-[22px] h-[22px]" />
+              <span className="text-[17px] font-semibold tracking-[-0.02em]">
+                Sadhya<span className="text-[#c8e558]">.</span>
+              </span>
             </Link>
             {/* Sits under the wordmark, indented to the width of the mark so it hangs off the
                 name rather than the row. */}

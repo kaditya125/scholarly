@@ -72,7 +72,9 @@ export function Logo({
     <span className={cn('inline-flex items-center gap-2', className)}>
       <LogoMark className={markClassName} />
       {showWordmark && (
-        <span className={cn('font-semibold tracking-[-0.01em]', wordClassName)}>Sadhya</span>
+        <span className={cn('font-semibold tracking-[-0.01em]', wordClassName)}>
+          Sadhya<span className="text-[#c8e558]">.</span>
+        </span>
       )}
     </span>
   );

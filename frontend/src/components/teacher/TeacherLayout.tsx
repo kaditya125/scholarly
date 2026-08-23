@@ -167,7 +167,9 @@ export default function TeacherLayout() {
     <nav aria-label="Teacher workspace" className="flex flex-col h-full">
       <Link to="/teach" className="px-4 py-4 flex items-center gap-2.5 group">
         <Mark className="w-[22px] h-[22px] group-hover:scale-105 transition-transform" />
-        <span className="text-[15px] font-semibold tracking-[-0.02em]">Sadhya</span>
+        <span className="text-[15px] font-semibold tracking-[-0.02em]">
+          Sadhya<span className="text-[#c8e558]">.</span>
+        </span>
         <span className="ml-0.5 px-1.5 py-0.5 rounded-md text-[10.5px] font-semibold uppercase tracking-[0.06em] bg-[#c8e558] text-slate-900">
           Teach
         </span>

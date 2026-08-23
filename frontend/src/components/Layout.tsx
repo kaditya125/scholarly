@@ -373,7 +373,7 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
             <Link to={brandHome} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2.5 overflow-hidden group">
               <LogoMark className="shrink-0 w-[22px] h-[22px] group-hover:scale-105 transition-transform" />
               <span className="font-semibold text-[15.5px] tracking-tight text-slate-900 dark:text-white">
-                Sadhya
+                Sadhya<span className="text-[#c8e558]">.</span>
               </span>
             </Link>
           ) : (
