@@ -17,7 +17,7 @@ import { cn } from '../../lib/utils';
 const ACCENT = '#c8e558';
 
 export function LogoMark({
-  className = 'w-6 h-6',
+  className,
   style,
 }: {
   className?: string;
@@ -25,7 +25,7 @@ export function LogoMark({
   style?: React.CSSProperties;
 }) {
   return (
-    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg className={cn('w-6 h-6 shrink-0 inline-block', className)} style={style} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       {/* The goal — always the brand accent, never theme-dependent. */}
       <circle cx="17.8" cy="5.4" r="2.5" fill={ACCENT} />
       {/*

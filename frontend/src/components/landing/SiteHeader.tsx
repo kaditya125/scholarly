@@ -85,7 +85,7 @@ export default function SiteHeader() {
       <div ref={wrapRef} className="relative">
         <nav className="max-w-[1160px] mx-auto px-5 sm:px-8 h-16 flex items-center gap-6">
           <Link to={brandHome} className="flex items-center gap-2.5 shrink-0 group" aria-label="Sadhya home">
-            <Mark className="group-hover:scale-105 transition-transform" />
+            <Mark className="w-[22px] h-[22px] group-hover:scale-105 transition-transform" />
             <span className="text-[17px] font-semibold tracking-[-0.02em]">Sadhya</span>
           </Link>
 
