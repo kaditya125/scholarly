@@ -208,6 +208,7 @@ export default function Contact() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // AI Drafter State
+  const [showAiBar, setShowAiBar] = useState(true);
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -298,26 +299,26 @@ export default function Contact() {
       <SiteHeader />
 
       <main className="max-w-[1160px] mx-auto px-5 sm:px-8">
-        <header className="pt-14 sm:pt-20 pb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558]" />
+        <header className="pt-16 sm:pt-24 pb-8">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 mb-4">
+            <Sparkles className="w-3 h-3 text-[#8ba32b] dark:text-[#c8e558]" />
             Direct Support Channels
           </div>
           <h1 className="text-[34px] sm:text-[46px] leading-[1.08] font-semibold tracking-[-0.035em]">
             Talk to us
           </h1>
-          <p className="mt-4 max-w-[36rem] text-[16px] leading-relaxed text-slate-500 dark:text-gray-400">
-            A real person reads every one of these. Send a direct message below or click any channel to copy its dedicated address.
+          <p className="mt-3.5 max-w-[34rem] text-[15.5px] leading-relaxed text-slate-500 dark:text-gray-400">
+            A real person reads every one of these. Select a department to view details, or send a message directly below.
           </p>
         </header>
 
-        {/* ── Interactive Contact Grid & Live Form ──────────────────────── */}
-        <div className="grid lg:grid-cols-12 gap-8 pb-16">
+        {/* ── Shifted Container with Clean Spacing ───────────────────────── */}
+        <div className="grid lg:grid-cols-12 gap-8 sm:gap-10 pt-4 pb-24">
           
           {/* Left Column: 4 Channels */}
-          <div className="lg:col-span-5 flex flex-col gap-3.5">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500 mb-1">
-              Select Department
+          <div className="lg:col-span-5 flex flex-col gap-3">
+            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500 mb-1">
+              Department
             </h2>
             {CHANNELS.map((c) => {
               const isSelected = selectedChannel === c.id;
@@ -327,24 +328,24 @@ export default function Contact() {
                   onClick={() => handleChannelSelect(c.id)}
                   className={`cursor-pointer rounded-2xl border p-5 transition-all text-left group relative ${
                     isSelected
-                      ? 'border-slate-900 dark:border-[#c8e558] bg-slate-50 dark:bg-white/[0.04] shadow-sm'
-                      : 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416] hover:border-slate-300 dark:hover:border-white/20'
+                      ? 'border-slate-900 dark:border-white bg-slate-50/70 dark:bg-white/[0.03]'
+                      : 'border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141416] hover:border-slate-300 dark:hover:border-white/20'
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <span className={`inline-flex w-9 h-9 rounded-xl items-center justify-center ${
+                      <span className={`inline-flex w-8 h-8 rounded-xl items-center justify-center ${
                         isSelected 
-                          ? 'bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-900' 
+                          ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' 
                           : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200'
                       }`}>
-                        <c.icon className="w-4 h-4" strokeWidth={2} />
+                        <c.icon className="w-3.5 h-3.5" strokeWidth={2} />
                       </span>
                       <div>
-                        <h3 className="text-[15.5px] font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">
+                        <h3 className="text-[15px] font-semibold tracking-tight text-slate-900 dark:text-white">
                           {c.title}
                         </h3>
-                        <span className="text-[11.5px] font-medium text-slate-400 dark:text-gray-400">
+                        <span className="text-[11px] text-slate-400 dark:text-gray-400">
                           {c.badge}
                         </span>
                       </div>
@@ -358,22 +359,22 @@ export default function Contact() {
                       aria-label={`Copy ${c.email}`}
                     >
                       {copiedEmail === c.email ? (
-                        <Check className="w-4 h-4 text-emerald-500" />
+                        <Check className="w-3.5 h-3.5 text-emerald-500" />
                       ) : (
-                        <Copy className="w-4 h-4" />
+                        <Copy className="w-3.5 h-3.5" />
                       )}
                     </button>
                   </div>
 
-                  <p className="mt-2.5 text-[13px] leading-relaxed text-slate-500 dark:text-gray-400">
+                  <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500 dark:text-gray-400">
                     {c.body}
                   </p>
 
-                  <div className="mt-3 flex items-center justify-between pt-2.5 border-t border-slate-200/60 dark:border-white/5 text-[12.5px]">
-                    <span className="font-mono text-slate-600 dark:text-gray-300">
+                  <div className="mt-3 flex items-center justify-between pt-2.5 border-t border-slate-100 dark:border-white/5 text-[12px]">
+                    <span className="font-mono text-slate-500 dark:text-gray-400">
                       {c.email}
                     </span>
-                    <span className="inline-flex items-center gap-1 text-[12px] font-medium text-slate-900 dark:text-[#c8e558] group-hover:translate-x-0.5 transition-transform">
+                    <span className="inline-flex items-center gap-1 text-[11.5px] font-medium text-slate-900 dark:text-white group-hover:translate-x-0.5 transition-transform">
                       {isSelected ? 'Selected' : 'Select'} <ArrowRight className="w-3 h-3" />
                     </span>
                   </div>
@@ -384,31 +385,33 @@ export default function Contact() {
 
           {/* Right Column: Direct Messaging Form */}
           <div className="lg:col-span-7">
-            <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416] p-6 sm:p-8 shadow-sm">
+            <div className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141416] p-6 sm:p-9">
+              
+              {/* Card Header */}
               <div className="flex items-center justify-between pb-6 border-b border-slate-100 dark:border-white/5">
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-3">
                   <span className="w-8 h-8 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center">
                     <MessageSquare className="w-4 h-4" />
                   </span>
                   <div>
-                    <h2 className="text-[17px] font-semibold tracking-tight">Send a Direct Message</h2>
-                    <p className="text-[12.5px] text-slate-500 dark:text-gray-400">
+                    <h2 className="text-[16px] font-semibold tracking-tight">Direct Message</h2>
+                    <p className="text-[12px] text-slate-400 dark:text-gray-400">
                       To: <strong className="text-slate-900 dark:text-white font-mono">{selectedChannel}@sadhya.app</strong>
                     </p>
                   </div>
                 </div>
-                <span className="hidden sm:inline-flex px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40">
+                <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40">
                   Online
                 </span>
               </div>
 
               {successMsg ? (
-                <div className="py-12 text-center">
-                  <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-4">
-                    <Check className="w-7 h-7" strokeWidth={2.5} />
+                <div className="py-14 text-center">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-3">
+                    <Check className="w-6 h-6" strokeWidth={2.5} />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white">Message Delivered!</h3>
-                  <p className="mt-2 text-sm text-slate-600 dark:text-gray-300 max-w-md mx-auto">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Message Delivered</h3>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-gray-400 max-w-sm mx-auto leading-relaxed">
                     {successMsg}
                   </p>
                   <button
@@ -417,22 +420,23 @@ export default function Contact() {
                       setSuccessMsg(null);
                       handleChannelSelect(selectedChannel);
                     }}
-                    className="mt-6 px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-semibold hover:opacity-90 transition-opacity"
+                    className="mt-6 px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold hover:opacity-90 transition-opacity"
                   >
                     Send another message
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                <form onSubmit={handleSubmit} className="mt-6 space-y-4.5">
                   {errorMsg && (
-                    <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 text-xs font-medium">
+                    <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 text-xs">
                       {errorMsg}
                     </div>
                   )}
 
+                  {/* Name and Email Grid */}
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[12.5px] font-medium text-slate-700 dark:text-gray-300 mb-1.5">
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500 mb-1.5">
                         Your Name <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -441,13 +445,13 @@ export default function Contact() {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Aditya Kumar"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white/30"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/40 dark:bg-white/[0.02] text-[13px] text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1.5 focus:ring-slate-900 dark:focus:ring-white/40"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[12.5px] font-medium text-slate-700 dark:text-gray-300 mb-1.5">
-                        Your Email Address <span className="text-red-500">*</span>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500 mb-1.5">
+                        Your Email <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="email"
@@ -455,141 +459,112 @@ export default function Contact() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="you@example.com"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white/30"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/40 dark:bg-white/[0.02] text-[13px] text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1.5 focus:ring-slate-900 dark:focus:ring-white/40"
                       />
                     </div>
                   </div>
 
-                  {/* ✨ AI Drafting Section */}
-                  <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#c8e558]/10 via-emerald-500/5 to-transparent border border-[#c8e558]/30 dark:border-[#c8e558]/20">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-white">
-                        <Sparkles className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558] animate-pulse" />
-                        AI Draft Assistant
-                      </div>
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                        Type rough notes & let AI draft it
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={aiPrompt}
-                        onChange={(e) => setAiPrompt(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleAiGenerate();
-                          }
-                        }}
-                        placeholder="e.g. money deducted but course locked, reset test score, bulk pricing for 300 students..."
-                        disabled={aiGenerating}
-                        className="flex-1 px-3 py-2 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#c8e558]/50"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAiGenerate}
-                        disabled={!aiPrompt.trim() || aiGenerating}
-                        className="px-3.5 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold hover:opacity-90 disabled:opacity-40 transition-all flex items-center gap-1.5 shrink-0 shadow-xs"
-                      >
-                        {aiGenerating ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            Drafting...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="w-3.5 h-3.5 text-[#c8e558] dark:text-slate-900" />
-                            Draft with AI
-                          </>
-                        )}
-                      </button>
-                    </div>
-                    {aiError && (
-                      <p className="mt-1.5 text-xs text-red-500">{aiError}</p>
-                    )}
-                  </div>
-
+                  {/* Subject Input */}
                   <div>
-                    <label className="block text-[12.5px] font-medium text-slate-700 dark:text-gray-300 mb-1.5">
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500 mb-1.5">
                       Subject
                     </label>
                     <input
                       type="text"
                       value={subject}
                       onChange={(e) => setSubject(e.target.value)}
-                      placeholder="Brief summary of your inquiry"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white/30"
+                      placeholder="Brief summary of inquiry"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/40 dark:bg-white/[0.02] text-[13px] text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1.5 focus:ring-slate-900 dark:focus:ring-white/40"
                     />
                   </div>
 
+                  {/* Sleek Message Area & Toolbar */}
                   <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="block text-[12.5px] font-medium text-slate-700 dark:text-gray-300">
-                        Message & Details <span className="text-red-500">*</span>
-                      </label>
+                    {/* Micro-Toolbar with Preset Chips & AI Toggle */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                        <span className="text-[10.5px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500 mr-0.5">
+                          Preset:
+                        </span>
+                        {TEMPLATES[selectedChannel]?.map((tmpl, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => applyTemplate(selectedChannel, idx)}
+                            className={`whitespace-nowrap px-2.5 py-0.5 rounded-md text-[11.5px] font-medium transition-all ${
+                              selectedTemplateIndex === idx
+                                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                                : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10'
+                            }`}
+                          >
+                            {tmpl.label}
+                          </button>
+                        ))}
+                      </div>
+
                       <button
                         type="button"
-                        onClick={() => applyTemplate(selectedChannel, selectedTemplateIndex)}
-                        className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                        onClick={() => setShowAiBar(!showAiBar)}
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-[#8ba32b] dark:text-[#c8e558] hover:underline"
                       >
-                        <Sparkles className="w-3 h-3 text-[#8ba32b] dark:text-[#c8e558]" />
-                        Reset Auto-Draft
+                        <Sparkles className="w-3 h-3" />
+                        {showAiBar ? 'Close AI Assistant' : 'Write with AI'}
                       </button>
                     </div>
 
-                    {/* Quick Topic Chips for the selected channel */}
-                    <div className="flex items-center gap-1.5 mb-2.5 overflow-x-auto no-scrollbar pb-1">
-                      <span className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0 mr-1">
-                        Topic Preset:
-                      </span>
-                      {TEMPLATES[selectedChannel]?.map((tmpl, idx) => (
+                    {/* Minimalist 1-Line AI Bar */}
+                    {showAiBar && (
+                      <div className="mb-2.5 p-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/70 dark:border-white/10 flex items-center gap-2">
+                        <Sparkles className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558] shrink-0 ml-1.5" />
+                        <input
+                          type="text"
+                          value={aiPrompt}
+                          onChange={(e) => setAiPrompt(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAiGenerate())}
+                          placeholder="Type quick rough notes and press Enter to draft with AI..."
+                          disabled={aiGenerating}
+                          className="flex-1 bg-transparent text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none"
+                        />
                         <button
-                          key={idx}
                           type="button"
-                          onClick={() => applyTemplate(selectedChannel, idx)}
-                          className={`whitespace-nowrap px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
-                            selectedTemplateIndex === idx
-                              ? 'border-slate-900 dark:border-[#c8e558] bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-900 shadow-xs'
-                              : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] text-slate-600 dark:text-slate-300 hover:border-slate-300'
-                          }`}
+                          onClick={handleAiGenerate}
+                          disabled={!aiPrompt.trim() || aiGenerating}
+                          className="px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[11px] font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity shrink-0"
                         >
-                          {tmpl.label}
+                          {aiGenerating ? 'Drafting...' : 'Draft'}
                         </button>
-                      ))}
-                    </div>
+                      </div>
+                    )}
+                    {aiError && <p className="mb-2 text-[11px] text-red-500">{aiError}</p>}
 
                     <textarea
                       required
-                      rows={9}
+                      rows={8}
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       placeholder="How can we help you?"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] text-[13px] font-sans leading-relaxed text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white/30 resize-y"
+                      className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/40 dark:bg-white/[0.02] text-[13px] font-sans leading-relaxed text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1.5 focus:ring-slate-900 dark:focus:ring-white/40 resize-y"
                     />
-                    <p className="mt-1.5 text-[11.5px] text-slate-400 dark:text-slate-500">
-                      💡 Auto-draft formatted for swift resolution. You can freely edit or customize any text above.
-                    </p>
                   </div>
 
+                  {/* Footer & Submit */}
                   <div className="pt-2 flex items-center justify-between">
-                    <p className="text-[11.5px] text-slate-400 dark:text-gray-500">
-                      SLA: Replies arrive within 2–4 hours.
-                    </p>
+                    <span className="text-[11px] text-slate-400 dark:text-gray-500">
+                      Response SLA: 2–4 hours
+                    </span>
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-all shadow-sm"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold hover:opacity-90 disabled:opacity-50 transition-all"
                     >
                       {submitting ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Delivering...
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          Sending...
                         </>
                       ) : (
                         <>
-                          <Send className="w-4 h-4" />
+                          <Send className="w-3.5 h-3.5" />
                           Send Message
                         </>
                       )}
@@ -603,12 +578,12 @@ export default function Contact() {
 
         {/* ── Registered details ─────────────────────────────────────────── */}
         <div className="grid lg:grid-cols-2 gap-4 sm:gap-5 pb-20 sm:pb-28">
-          <div className="rounded-2xl border border-slate-200 dark:border-white/10 p-6 sm:p-7 bg-white dark:bg-[#141416]">
-            <h2 className="text-[16px] font-semibold tracking-[-0.015em]">Registered Office</h2>
-            <div className="mt-5 space-y-4">
+          <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 p-6 sm:p-7 bg-white dark:bg-[#141416]">
+            <h2 className="text-[15px] font-semibold tracking-tight">Registered Office</h2>
+            <div className="mt-4 space-y-3.5">
               <div className="flex gap-3">
                 <MapPin className="w-4 h-4 mt-1 shrink-0 text-slate-400 dark:text-gray-500" strokeWidth={1.9} />
-                <div className="text-[14px] leading-relaxed text-slate-600 dark:text-gray-300">
+                <div className="text-[13.5px] leading-relaxed text-slate-600 dark:text-gray-300">
                   <p className="font-medium text-slate-900 dark:text-white">{SITE.legalEntity}</p>
                   <p>{SITE.address.line1}</p>
                   <p>{SITE.address.line2}</p>
@@ -619,18 +594,18 @@ export default function Contact() {
 
               <div className="flex gap-3">
                 <Phone className="w-4 h-4 mt-0.5 shrink-0 text-slate-400 dark:text-gray-500" strokeWidth={1.9} />
-                <a href={`tel:${SITE.phone.replace(/\s/g, '')}`} className="text-[14px] text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                <a href={`tel:${SITE.phone.replace(/\s/g, '')}`} className="text-[13.5px] text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white transition-colors">
                   {SITE.phone}
                 </a>
               </div>
 
               <div className="flex gap-3">
                 <Clock className="w-4 h-4 mt-0.5 shrink-0 text-slate-400 dark:text-gray-500" strokeWidth={1.9} />
-                <p className="text-[14px] text-slate-600 dark:text-gray-300">{SITE.supportHours}</p>
+                <p className="text-[13.5px] text-slate-600 dark:text-gray-300">{SITE.supportHours}</p>
               </div>
 
               {(SITE.cin || SITE.gstin) && (
-                <div className="pt-2 space-y-1 text-[13px] text-slate-500 dark:text-gray-400">
+                <div className="pt-1 space-y-1 text-[12.5px] text-slate-500 dark:text-gray-400">
                   {SITE.cin && <p>CIN: {SITE.cin}</p>}
                   {SITE.gstin && <p>GSTIN: {SITE.gstin}</p>}
                 </div>
@@ -638,9 +613,9 @@ export default function Contact() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.02] p-6 sm:p-7">
-            <h2 className="text-[16px] font-semibold tracking-[-0.015em]">Grievance Officer</h2>
-            <p className="mt-3 text-[14px] leading-relaxed text-slate-600 dark:text-gray-300">
+          <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] p-6 sm:p-7">
+            <h2 className="text-[15px] font-semibold tracking-tight">Grievance Officer</h2>
+            <p className="mt-3 text-[13.5px] leading-relaxed text-slate-600 dark:text-gray-300">
               As required by the Digital Personal Data Protection Act, 2023 and the Information
               Technology Act, 2000, you can escalate any complaint about your personal data to our
               Grievance Officer at{' '}
@@ -649,17 +624,17 @@ export default function Contact() {
               </a>
               .
             </p>
-            <p className="mt-3 text-[14px] leading-relaxed text-slate-600 dark:text-gray-300">
+            <p className="mt-2 text-[13.5px] leading-relaxed text-slate-600 dark:text-gray-300">
               We acknowledge complaints within 48 hours and aim to resolve them within 30 days.
             </p>
-            <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2">
-              <Link to="/privacy" className="text-[13.5px] font-medium text-slate-900 dark:text-white underline underline-offset-2">
+            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2">
+              <Link to="/privacy" className="text-[13px] font-medium text-slate-900 dark:text-white underline underline-offset-2">
                 Privacy policy
               </Link>
-              <Link to="/terms" className="text-[13.5px] font-medium text-slate-900 dark:text-white underline underline-offset-2">
+              <Link to="/terms" className="text-[13px] font-medium text-slate-900 dark:text-white underline underline-offset-2">
                 Terms of service
               </Link>
-              <Link to="/refunds" className="text-[13.5px] font-medium text-slate-900 dark:text-white underline underline-offset-2">
+              <Link to="/refunds" className="text-[13px] font-medium text-slate-900 dark:text-white underline underline-offset-2">
                 Refunds
               </Link>
             </div>
