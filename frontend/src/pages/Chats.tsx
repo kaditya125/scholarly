@@ -65,10 +65,12 @@ export default function Chats() {
     }
   }, [dm, g, c, ai]);
 
-  // Default selection: prefer the most recent DM, else the first group (its default channel is
-  // picked up by the effect below once channels load).
+  // Default selection: prefer the most recent DM on desktop, else the first group.
+  // On mobile screens (< 768px), keep list open by default (just like WhatsApp).
   useEffect(() => {
     if (selection.kind !== null) return;
+    if (typeof window !== "undefined" && window.innerWidth < 768) return;
+
     if (conversations.length > 0) {
       setParams(withTab({ dm: conversations[0].peer.uid }), { replace: true });
     } else if (groups.length > 0) {
@@ -104,6 +106,11 @@ export default function Chats() {
     else setParams(withTab({}));
   };
 
+  const handleBack = () => {
+    setMobilePane("list");
+    setParams(withTab({}));
+  };
+
   const hasInfo = selection.kind === "channel" || selection.kind === "dm";
 
   const center = (() => {
@@ -123,7 +130,7 @@ export default function Chats() {
           channelName={activeChannel.name}
           groupName={activeGroup?.name || "Group"}
           isAdmin={isAdmin}
-          onBack={() => setMobilePane("list")}
+          onBack={handleBack}
           onOpenInfo={() => setInfoOpen((prev) => !prev)}
           onOpenAI={() => openAssistant(activeGroupId as string)}
           isInfoOpen={infoOpen}
@@ -135,7 +142,7 @@ export default function Chats() {
         <DmThread
           key={dm}
           otherId={dm}
-          onBack={() => setMobilePane("list")}
+          onBack={handleBack}
           onOpenInfo={() => setInfoOpen((prev) => !prev)}
           isInfoOpen={infoOpen}
         />

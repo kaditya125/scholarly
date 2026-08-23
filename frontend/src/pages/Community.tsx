@@ -795,10 +795,17 @@ export default function Community() {
     { id: "saved", label: "Saved Notes", icon: Bookmark },
   ];
 
+  const hasActiveChat = !!(params.get("dm") || (params.get("g") && params.get("c")) || params.get("ai"));
+
   return (
     <div className="h-full w-full flex flex-col min-h-0 bg-[#fafbfc] dark:bg-[#0b0b0c] font-sans">
-      <div className="shrink-0 flex items-center justify-between px-4 md:px-6 h-13 border-b border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141416] transition-colors">
-        <div className="flex items-center gap-2">
+      <div
+        className={cn(
+          "shrink-0 items-center justify-between px-4 md:px-6 h-13 border-b border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141416] transition-colors",
+          tab === "chats" && hasActiveChat ? "hidden md:flex" : "flex"
+        )}
+      >
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = tab === t.id;
