@@ -1,9 +1,11 @@
 import { Request, Response } from 'express';
+import { auth } from '../config/firebase';
 import {
   userIdentityService,
   RoleConflictError,
 } from '../services/userIdentity.service';
 import { referralService } from '../services/referral.service';
+import { zeptoMailService } from '../services/email/zeptoMail.service';
 import { PRODUCT_ROLES, isProductRole, isAdminRole } from '../types/roles';
 import { logger } from '../utils/logger';
 
@@ -87,12 +89,27 @@ export class UserIdentityController {
     try {
       const result = await userIdentityService.bootstrapProductRole(uid, requested);
 
-      if (result.profileCreated && referredBy) {
-        // Best-effort: a referral is a growth nicety, never something that should fail account
-        // creation. Errors are logged, not surfaced — the account bootstrap already succeeded.
-        await referralService.recordReferral(referredBy, uid).catch((err) => {
-          logger.warn('[UserIdentity] Referral crediting failed', { uid, referredBy, error: err?.message });
-        });
+      if (result.profileCreated) {
+        if (referredBy) {
+          // Best-effort: a referral is a growth nicety, never something that should fail account
+          // creation. Errors are logged, not surfaced — the account bootstrap already succeeded.
+          await referralService.recordReferral(referredBy, uid).catch((err) => {
+            logger.warn('[UserIdentity] Referral crediting failed', { uid, referredBy, error: err?.message });
+          });
+        }
+
+        // Send rich, professional Welcome Email for first-time account initialization
+        try {
+          const userRec = await auth.getUser(uid);
+          if (userRec.email) {
+            const displayName = userRec.displayName || (req.user as any)?.name || 'Learner';
+            zeptoMailService.sendWelcomeEmail(userRec.email, displayName, requested).catch((err) => {
+              logger.warn('[UserIdentity] Welcome email failed to dispatch', { uid, email: userRec.email, error: err?.message });
+            });
+          }
+        } catch (err: any) {
+          logger.warn('[UserIdentity] Could not retrieve user record for welcome email', { uid, error: err?.message });
+        }
       }
 
       return res.status(result.assigned ? 201 : 200).json(result);
