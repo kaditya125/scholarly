@@ -100,6 +100,8 @@ export class ContentStorageService {
     const safeContentType = contentType || 'application/octet-stream';
     const uploadedAt = Date.now();
 
+    const downloadToken = uuidv4();
+
     try {
       await withRetry(
         async () => {
@@ -107,6 +109,7 @@ export class ContentStorageService {
             contentType: safeContentType,
             metadata: {
               metadata: {
+                firebaseStorageDownloadTokens: downloadToken,
                 uploadedBy: userId,
                 collectionId,
                 sourceId,
@@ -135,7 +138,7 @@ export class ContentStorageService {
 
     const bucketName = bucket.name || env.FIREBASE_STORAGE_BUCKET || 'default-bucket';
     const gcsPath = `gs://${bucketName}/${storagePath}`;
-    const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(storagePath)}?alt=media`;
+    const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(storagePath)}?alt=media&token=${downloadToken}`;
 
     return {
       storagePath,

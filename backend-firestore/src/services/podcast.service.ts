@@ -98,21 +98,28 @@ export class PodcastService {
       const storageBasePath = `public/podcasts/${userId}/${notebookId}/${podcastId}`;
       
       const audioDestination = `${storageBasePath}/audio.mp3`;
+      const audioToken = uuidv4();
+      const transcriptToken = uuidv4();
+
       await bucket.upload(outputPath, {
         destination: audioDestination,
-        metadata: { contentType: 'audio/mp3' }
+        metadata: {
+          contentType: 'audio/mp3',
+          metadata: { firebaseStorageDownloadTokens: audioToken }
+        }
       });
       
-      const transcriptDestination = `${storageBasePath}/transcript.json`;
       await bucket.upload(transcriptPath, {
         destination: transcriptDestination,
-        metadata: { contentType: 'application/json' }
+        metadata: {
+          contentType: 'application/json',
+          metadata: { firebaseStorageDownloadTokens: transcriptToken }
+        }
       });
 
-      // Get public URLs (or signed URLs, but since it's in public/ we can construct the direct URL)
-      // bucket.name is like 'schaolarly.firebasestorage.app' or similar
-      const audioUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(audioDestination)}?alt=media`;
-      const transcriptUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(transcriptDestination)}?alt=media`;
+      // Get public download URLs with tokens
+      const audioUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(audioDestination)}?alt=media&token=${audioToken}`;
+      const transcriptUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(transcriptDestination)}?alt=media&token=${transcriptToken}`;
 
       // 6. Ready
       await podcastRef.update({
