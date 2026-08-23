@@ -210,12 +210,21 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
   // More flyout — portal-based for collapsed rail, inline accordion for expanded
   const [isMoreFlyoutOpen, setIsMoreFlyoutOpen] = useState(false);
 
-  // Auto-close menus and mobile drawer on route change
+  // Auto-close mobile drawer and flyouts on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setIsNewMenuOpen(false);
-    setIsMoreFlyoutOpen(false);
-  }, [location.pathname]);
+    if (isRail) {
+      setIsMoreFlyoutOpen(false);
+    }
+  }, [location.pathname, isRail]);
+
+  // Keep More expanded if currently navigating within a More section
+  useEffect(() => {
+    if (!isRail && isAnyMoreItemActive) {
+      setIsMoreFlyoutOpen(true);
+    }
+  }, [location.pathname, isAnyMoreItemActive, isRail]);
 
   // Listen to open-mobile-sidebar event dispatched from embedded page header bars
   useEffect(() => {
@@ -260,7 +269,7 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
         setIsProfileMenuOpen(false);
       }
       const target = event.target as Node;
-      // Close More flyout when clicking outside
+      // Close More flyout when clicking outside (ONLY in collapsed rail portal mode)
       if (isRail) {
         if (
           !moreButtonRef.current?.contains(target) &&
@@ -268,26 +277,12 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
         ) {
           setIsMoreFlyoutOpen(false);
         }
-      } else {
-        if (
-          moreExpandedRef.current &&
-          !moreExpandedRef.current.contains(target)
-        ) {
-          setIsMoreFlyoutOpen(false);
-        }
       }
-      // Close New menu when clicking outside
+      // Close New menu when clicking outside (ONLY in collapsed rail portal mode)
       if (isRail) {
         if (
           !newMenuButtonRef.current?.contains(target) &&
           !newMenuRef.current?.contains(target)
-        ) {
-          setIsNewMenuOpen(false);
-        }
-      } else {
-        if (
-          newMenuExpandedRef.current &&
-          !newMenuExpandedRef.current.contains(target)
         ) {
           setIsNewMenuOpen(false);
         }
@@ -607,14 +602,14 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                                 const isActive = location.pathname === item.path || (location.pathname.startsWith(item.path) && item.path !== "/");
                                 const Icon = item.icon;
                                 return (
-                                  <Link
+                                  <button
                                     key={item.path}
-                                    to={item.path}
                                     onClick={() => {
+                                      navigate(item.path);
                                       setIsMobileMenuOpen(false);
                                     }}
                                     className={cn(
-                                      "flex items-center gap-2.5 h-[32px] md:h-[28px] px-2.5 rounded-lg mx-2.5 text-[13px] md:text-[12px] transition-colors duration-100",
+                                      "w-[calc(100%-20px)] flex items-center gap-2.5 h-[32px] md:h-[28px] px-2.5 rounded-lg mx-2.5 text-[13px] md:text-[12px] transition-colors duration-100 text-left",
                                       isActive
                                         ? "bg-slate-100 dark:bg-white/[0.07] text-slate-900 dark:text-white font-medium"
                                         : "text-slate-500 dark:text-gray-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-gray-100"
@@ -627,8 +622,11 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                                       )}
                                       strokeWidth={isActive ? 2 : 1.6}
                                     />
-                                    <span className="truncate leading-none">{item.label}</span>
-                                  </Link>
+                                    <span className="truncate leading-none flex-1">{item.label}</span>
+                                    {isActive && (
+                                      <span className="w-1.5 h-1.5 rounded-full bg-[#8ba32b] dark:bg-[#c8e558] shrink-0" />
+                                    )}
+                                  </button>
                                 );
                               })}
                             </div>
@@ -718,12 +716,15 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                               const isActive = location.pathname === item.path || (location.pathname.startsWith(item.path) && item.path !== "/");
                               const Icon = item.icon;
                               return (
-                                <Link
+                                <button
                                   key={item.path}
-                                  to={item.path}
-                                  onClick={() => setIsMoreFlyoutOpen(false)}
+                                  onClick={() => {
+                                    navigate(item.path);
+                                    setIsMoreFlyoutOpen(false);
+                                    setIsMobileMenuOpen(false);
+                                  }}
                                   className={cn(
-                                    "flex items-center gap-2.5 px-2.5 h-8 rounded-lg text-[12.5px] transition-colors duration-100",
+                                    "w-full flex items-center gap-2.5 px-2.5 h-8 rounded-lg text-[12.5px] transition-colors duration-100 text-left",
                                     isActive
                                       ? "bg-slate-100 dark:bg-white/[0.07] text-slate-900 dark:text-white font-medium"
                                       : "text-slate-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-gray-100"
@@ -736,8 +737,11 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                                     )}
                                     strokeWidth={isActive ? 2 : 1.6}
                                   />
-                                  <span className="truncate leading-none">{item.label}</span>
-                                </Link>
+                                  <span className="truncate leading-none flex-1">{item.label}</span>
+                                  {isActive && (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#8ba32b] dark:bg-[#c8e558] shrink-0" />
+                                  )}
+                                </button>
                               );
                             })}
                           </div>
