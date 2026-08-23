@@ -105,6 +105,9 @@ const Security = lazy(() => import("./pages/legal/Security"));
 const AutomationDashboard = lazy(() => import("./pages/admin/AutomationDashboard"));
 const AutomationStudio = lazy(() => import("./pages/admin/AutomationStudio"));
 const ExecutionDetail = lazy(() => import("./pages/admin/ExecutionDetail"));
+const FloatingHelpdeskWidget = lazy(() =>
+  import("./components/help/FloatingHelpdeskWidget").then((m) => ({ default: m.FloatingHelpdeskWidget }))
+);
 
 /** Shown only while a route's own chunk is downloading — same spinner ProtectedRoute
  *  already uses elsewhere, so a lazy-load pause and an auth-check pause look identical. */
@@ -378,6 +381,19 @@ function GlobalPresencePublisher() {
   return null;
 }
 
+function GlobalHelpdeskWidget() {
+  const location = useLocation();
+  // Hide only on full-screen timed exam engines to avoid blocking student answers
+  const isExamEngine = location.pathname.startsWith('/test-engine') || location.pathname.startsWith('/baseline-assessment') || location.pathname.startsWith('/quiz-attempt');
+
+  if (isExamEngine) return null;
+  return (
+    <Suspense fallback={null}>
+      <FloatingHelpdeskWidget />
+    </Suspense>
+  );
+}
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -385,6 +401,7 @@ export default function App() {
         <GlobalPresencePublisher />
         <BrowserRouter>
           <AppRoutes />
+          <GlobalHelpdeskWidget />
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>

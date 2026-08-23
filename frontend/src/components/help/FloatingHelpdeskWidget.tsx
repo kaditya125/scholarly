@@ -435,6 +435,21 @@ export function FloatingHelpdeskWidget({
     }
   }, [prefilledQuestion, sendMessage]);
 
+  // Global event listener for opening the helpdesk widget from any page
+  useEffect(() => {
+    const handleGlobalOpen = (e: any) => {
+      setIsOpen(true);
+      if (e.detail?.question) {
+        setViewMode('ai');
+        sendMessage(e.detail.question);
+      } else if (e.detail?.mode) {
+        setViewMode(e.detail.mode);
+      }
+    };
+    window.addEventListener('sadhya-open-helpdesk', handleGlobalOpen);
+    return () => window.removeEventListener('sadhya-open-helpdesk', handleGlobalOpen);
+  }, [sendMessage]);
+
   // Auto-scroll chat
   useEffect(() => {
     if (isOpen) {
