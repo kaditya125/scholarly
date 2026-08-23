@@ -44,14 +44,28 @@ export class AttachmentService {
     const storagePath = `public/attachments/${uid}/${id}/${safeName}`;
     const contentType = file.mimetype || 'application/octet-stream';
 
-    await bucket.file(storagePath).save(file.buffer, {
+    const downloadToken = uuidv4();
+    const fileRef = bucket.file(storagePath);
+
+    await fileRef.save(file.buffer, {
       contentType,
-      metadata: { metadata: { uploadedBy: uid } },
+      metadata: {
+        metadata: {
+          firebaseStorageDownloadTokens: downloadToken,
+          uploadedBy: uid,
+        },
+      },
     });
+
+    try {
+      await fileRef.makePublic();
+    } catch {
+      // Ignored if uniform bucket-level access is enabled
+    }
 
     const url = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(
       storagePath
-    )}?alt=media`;
+    )}?alt=media&token=${downloadToken}`;
 
     return {
       id,
