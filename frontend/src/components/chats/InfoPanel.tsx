@@ -430,18 +430,18 @@ export function ChannelInfoPanel({
         about={
           <div className="space-y-4">
             {/* Group Profile Hero Card */}
-            <div className="flex flex-col items-center text-center p-6 rounded-3xl bg-gradient-to-b from-slate-50 to-white dark:from-white/[0.04] dark:to-[#161619] border border-slate-200/80 dark:border-white/10 shadow-2xs">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white font-extrabold text-2xl flex items-center justify-center mb-3.5 shadow-md ring-4 ring-white dark:ring-[#141417]">
+            <div className="flex flex-col items-center text-center p-5 rounded-3xl bg-gradient-to-b from-slate-50 to-white dark:from-white/[0.04] dark:to-[#161619] border border-slate-200/80 dark:border-white/10 shadow-2xs">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white font-extrabold text-xl flex items-center justify-center mb-3 shadow-md ring-3 ring-white dark:ring-[#141417]">
                 {group?.name?.charAt(0) || "G"}
               </div>
-              <h3 className="text-[17px] font-extrabold text-slate-900 dark:text-white tracking-tight">
+              <h3 className="text-[15.5px] font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {group?.name || "Study Group"}
               </h3>
-              <p className="text-[12px] text-slate-500 dark:text-gray-400 mt-1 max-w-[220px] line-clamp-2">
+              <p className="text-[11.5px] text-slate-500 dark:text-gray-400 mt-1 max-w-[200px] line-clamp-2">
                 {group?.description || "Collaborative study circle for focused revision and doubts."}
               </p>
 
-              <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-500/20 text-[11px] font-bold">
+              <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-500/20 text-[10.5px] font-bold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span>{memberProfiles.length || 1} Members</span>
               </div>
@@ -539,31 +539,31 @@ export function DmInfoPanel({ otherId, onClose }: { otherId: string; onClose?: (
       resolveSender={resolveSender}
       onClose={onClose}
       about={
-        <div className="flex flex-col items-center text-center p-6 rounded-3xl bg-gradient-to-b from-slate-50 to-white dark:from-white/[0.04] dark:to-[#161619] border border-slate-200/80 dark:border-white/10 shadow-2xs">
-          <div className="relative mb-3.5">
+        <div className="flex flex-col items-center text-center p-5 rounded-3xl bg-gradient-to-b from-slate-50 to-white dark:from-white/[0.04] dark:to-[#161619] border border-slate-200/80 dark:border-white/10 shadow-2xs">
+          <div className="relative mb-3">
             <PeerAvatar
               name={peerName}
               photoURL={peer?.photoURL}
               seed={otherId}
-              className="w-20 h-20 text-2xl font-extrabold shadow-md ring-4 ring-white dark:ring-[#141417]"
+              className="w-14 h-14 text-lg font-extrabold shadow-md ring-3 ring-white dark:ring-[#141417]"
             />
             <span
               className={cn(
-                "absolute bottom-1 right-1 w-4 h-4 rounded-full ring-3 ring-white dark:ring-[#141417]",
+                "absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full ring-2 ring-white dark:ring-[#141417]",
                 isOnline ? "bg-emerald-500" : "bg-slate-400"
               )}
             />
           </div>
-          <h3 className="text-[17px] font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <h3 className="text-[15.5px] font-extrabold text-slate-900 dark:text-white tracking-tight">
             {peerName}
           </h3>
-          <p className="text-[12px] text-slate-500 dark:text-gray-400 mt-1">
+          <p className="text-[11.5px] text-slate-500 dark:text-gray-400 mt-0.5">
             {peer?.email || "Peer Connection"}
           </p>
 
           <div
             className={cn(
-              "mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border",
+              "mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold border",
               isOnline
                 ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200/60 dark:border-emerald-500/20"
                 : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-gray-400 border-slate-200/60 dark:border-white/10"
