@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#1c1c22"/>
+      <stop offset="100%" stop-color="#0c0c0e"/>
+    </radialGradient>
+    <filter id="limeGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background Squircle / Rounded Container -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGlow)" stroke="rgba(255, 255, 255, 0.1)" stroke-width="3"/>
+
+  <!-- Centered Logo Group scaled 14x from 24x24 viewBox -->
+  <!-- 24 * 14 = 336px wide/tall. Center offset = (512 - 336)/2 = 88 -->
+  <g transform="translate(88, 88) scale(14)">
+    <!-- Goal Dot (Vibrant Electric Lime with Subtle Neon Glow) -->
+    <circle cx="17.8" cy="5.4" r="2.5" fill="#c8e558" filter="url(#limeGlow)"/>
+
+    <!-- Foreground Mountain Ridge -->
+    <path
+      d="M2.6 20.4l6.2-8.4 3.6 4.6"
+      stroke="#ffffff"
+      stroke-width="2.4"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+
+    <!-- Background Mountain Ridge (Depth Layer) -->
+    <path
+      d="M12.4 20.4l4.2-5.4 4.8 5.4"
+      stroke="#ffffff"
+      stroke-width="2.4"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      opacity="0.45"
+    />
+  </g>
+</svg>

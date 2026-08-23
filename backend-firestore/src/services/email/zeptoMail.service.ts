@@ -13,6 +13,8 @@ export interface EmailOptions {
 
 export class ZeptoMailService {
   private smtpTransporter: nodemailer.Transporter | null = null;
+  private readonly logoUrl = 'https://sadhya.app/sadhya-logo-with-name-512x512.png';
+  private readonly iconUrl = 'https://sadhya.app/sadhya-logo-512x512.png';
 
   constructor() {
     this.initSmtp();
@@ -128,95 +130,102 @@ export class ZeptoMailService {
 
     const html = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; padding: 40px 15px;">
+<body style="margin: 0; padding: 0; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0f172a; -webkit-font-smoothing: antialiased;">
+  <!-- Seamless Container -->
+  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff; width: 100%;">
     <tr>
-      <td align="center">
-        <!-- Main Card -->
-        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 580px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
-          <!-- Header -->
+      <td align="center" style="padding: 24px 16px 48px;">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 640px; text-align: left;">
+          
+          <!-- Header with Sadhya Logo -->
           <tr>
-            <td style="padding: 36px 40px 24px; border-bottom: 1px solid #f1f5f9; text-align: left;">
+            <td style="padding: 24px 0 28px; border-bottom: 1px solid #f1f5f9;">
               <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td>
-                    <span style="font-size: 24px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; text-decoration: none;">
-                      Sadhya<span style="color: #65a30d;">.</span>
-                    </span>
+                    <a href="https://sadhya.app" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 10px;">
+                      <img src="${this.iconUrl}" alt="Sadhya" width="38" height="38" style="border-radius: 8px; vertical-align: middle; border: 0;" />
+                      <span style="font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; margin-left: 10px; vertical-align: middle;">Sadhya<span style="color: #65a30d;">.</span></span>
+                    </a>
                   </td>
                   <td align="right">
-                    <span style="font-size: 12px; font-weight: 600; color: #64748b; background-color: #f1f5f9; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">Account Verification</span>
+                    <span style="font-size: 11.5px; font-weight: 700; color: #475569; background-color: #f1f5f9; padding: 6px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.6px;">Verification</span>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- Body Content -->
+          <!-- Main Content -->
           <tr>
-            <td style="padding: 36px 40px 40px;">
-              <h1 style="margin: 0 0 16px; font-size: 20px; font-weight: 700; color: #0f172a; line-height: 1.3;">
-                Confirm your email address
+            <td style="padding: 36px 0 24px;">
+              <h1 style="margin: 0 0 16px; font-size: 24px; font-weight: 700; color: #0f172a; letter-spacing: -0.5px; line-height: 1.25;">
+                Verify your email address
               </h1>
-              <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #475569;">
+              
+              <p style="margin: 0 0 18px; font-size: 15.5px; line-height: 1.6; color: #334155;">
                 Hello <strong>${name}</strong>,
               </p>
-              <p style="margin: 0 0 28px; font-size: 15px; line-height: 1.6; color: #475569;">
-                Thank you for joining Sadhya. Please verify your email address to activate your account and access your AI tutor, smart notebooks, and practice engine.
+              <p style="margin: 0 0 24px; font-size: 15.5px; line-height: 1.6; color: #334155;">
+                Thank you for joining Sadhya. Please confirm your email address to complete your account setup and activate your AI tutor, smart notebooks, and study planner.
               </p>
 
-              <!-- CTA Button -->
-              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 32px 0;">
+              <!-- Primary CTA Button -->
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 32px 0;">
                 <tr>
-                  <td align="left">
-                    <a href="${verificationLink}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 10px; text-align: center;">
-                      Verify Email Address
+                  <td>
+                    <a href="${verificationLink}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; padding: 15px 36px; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                      Verify Email Address →
                     </a>
                   </td>
                 </tr>
               </table>
 
-              <!-- Notice Box -->
-              <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-top: 28px;">
-                <p style="margin: 0 0 8px; font-size: 13px; font-weight: 600; color: #334155;">
-                  Button not working?
+              <!-- Expiry & Fallback Box -->
+              <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin: 32px 0 24px;">
+                <p style="margin: 0 0 6px; font-size: 13px; font-weight: 600; color: #1e293b;">
+                  Link not clickable?
                 </p>
-                <p style="margin: 0; font-size: 12.5px; line-height: 1.5; color: #64748b; word-break: break-all;">
-                  Copy and paste this link into your browser:<br>
+                <p style="margin: 0 0 12px; font-size: 12.5px; line-height: 1.5; color: #64748b; word-break: break-all;">
+                  Copy and paste the URL below directly into your web browser:<br>
                   <a href="${verificationLink}" style="color: #2563eb; text-decoration: underline;">${verificationLink}</a>
+                </p>
+                <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+                  ⏱️ This link is securely generated and valid for <strong>24 hours</strong>.
                 </p>
               </div>
 
-              <p style="margin: 28px 0 0; font-size: 13.5px; color: #64748b; line-height: 1.5;">
-                This verification link is valid for <strong>24 hours</strong>. If you did not create a Sadhya account, you can safely ignore this email.
+              <p style="margin: 24px 0 0; font-size: 13.5px; line-height: 1.5; color: #64748b;">
+                If you did not register for an account on Sadhya, you can safely disregard this email.
               </p>
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
-            <td style="padding: 24px 40px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: left;">
+            <td style="padding: 32px 0 0; border-top: 1px solid #f1f5f9; text-align: left;">
               <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td style="font-size: 12.5px; color: #64748b; line-height: 1.6;">
                     <strong>Sadhya Technologies Pvt. Ltd.</strong><br>
-                    Bengaluru, Karnataka, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
+                    Bengaluru, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
                   </td>
                   <td align="right" style="font-size: 12px; color: #94a3b8;">
-                    <a href="https://sadhya.app/privacy" style="color: #64748b; text-decoration: none; margin-left: 10px;">Privacy</a>
-                    <a href="https://sadhya.app/terms" style="color: #64748b; text-decoration: none; margin-left: 10px;">Terms</a>
-                    <a href="https://sadhya.app/help" style="color: #64748b; text-decoration: none; margin-left: 10px;">Help</a>
+                    <a href="https://sadhya.app/privacy" style="color: #64748b; text-decoration: none; margin-left: 12px;">Privacy</a>
+                    <a href="https://sadhya.app/terms" style="color: #64748b; text-decoration: none; margin-left: 12px;">Terms</a>
+                    <a href="https://sadhya.app/help" style="color: #64748b; text-decoration: none; margin-left: 12px;">Help Center</a>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
+
         </table>
       </td>
     </tr>
@@ -254,99 +263,104 @@ https://sadhya.app
    */
   async sendPasswordResetEmail(email: string, displayName: string, resetLink: string): Promise<boolean> {
     const name = displayName?.trim() || 'Learner';
-    const subject = 'Reset your Sadhya password';
+    const subject = 'Reset your Sadhya account password';
 
     const html = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; padding: 40px 15px;">
+<body style="margin: 0; padding: 0; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0f172a; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff; width: 100%;">
     <tr>
-      <td align="center">
-        <!-- Main Card -->
-        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 580px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
-          <!-- Header -->
+      <td align="center" style="padding: 24px 16px 48px;">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 640px; text-align: left;">
+          
+          <!-- Header with Logo -->
           <tr>
-            <td style="padding: 36px 40px 24px; border-bottom: 1px solid #f1f5f9; text-align: left;">
+            <td style="padding: 24px 0 28px; border-bottom: 1px solid #f1f5f9;">
               <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td>
-                    <span style="font-size: 24px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; text-decoration: none;">
-                      Sadhya<span style="color: #65a30d;">.</span>
-                    </span>
+                    <a href="https://sadhya.app" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 10px;">
+                      <img src="${this.iconUrl}" alt="Sadhya" width="38" height="38" style="border-radius: 8px; vertical-align: middle; border: 0;" />
+                      <span style="font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; margin-left: 10px; vertical-align: middle;">Sadhya<span style="color: #65a30d;">.</span></span>
+                    </a>
                   </td>
                   <td align="right">
-                    <span style="font-size: 12px; font-weight: 600; color: #b91c1c; background-color: #fef2f2; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">Security Alert</span>
+                    <span style="font-size: 11.5px; font-weight: 700; color: #b91c1c; background-color: #fef2f2; padding: 6px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.6px;">Security</span>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- Body Content -->
+          <!-- Main Content -->
           <tr>
-            <td style="padding: 36px 40px 40px;">
-              <h1 style="margin: 0 0 16px; font-size: 20px; font-weight: 700; color: #0f172a; line-height: 1.3;">
+            <td style="padding: 36px 0 24px;">
+              <h1 style="margin: 0 0 16px; font-size: 24px; font-weight: 700; color: #0f172a; letter-spacing: -0.5px; line-height: 1.25;">
                 Password Reset Request
               </h1>
-              <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #475569;">
+              <p style="margin: 0 0 18px; font-size: 15.5px; line-height: 1.6; color: #334155;">
                 Hello <strong>${name}</strong>,
               </p>
-              <p style="margin: 0 0 28px; font-size: 15px; line-height: 1.6; color: #475569;">
-                We received a request to reset the password for your Sadhya account (<strong>${email}</strong>). Click the button below to choose a new password.
+              <p style="margin: 0 0 24px; font-size: 15.5px; line-height: 1.6; color: #334155;">
+                We received a request to reset the password for your Sadhya account (<strong>${email}</strong>). Click the button below to choose a new secure password.
               </p>
 
               <!-- CTA Button -->
-              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 32px 0;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 32px 0;">
                 <tr>
-                  <td align="left">
-                    <a href="${resetLink}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 10px; text-align: center;">
-                      Reset Your Password
+                  <td>
+                    <a href="${resetLink}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; padding: 15px 36px; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                      Reset Password →
                     </a>
                   </td>
                 </tr>
               </table>
 
               <!-- Notice Box -->
-              <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-top: 28px;">
-                <p style="margin: 0 0 8px; font-size: 13px; font-weight: 600; color: #334155;">
+              <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin: 32px 0 24px;">
+                <p style="margin: 0 0 6px; font-size: 13px; font-weight: 600; color: #1e293b;">
                   Button not working?
                 </p>
-                <p style="margin: 0; font-size: 12.5px; line-height: 1.5; color: #64748b; word-break: break-all;">
+                <p style="margin: 0 0 12px; font-size: 12.5px; line-height: 1.5; color: #64748b; word-break: break-all;">
                   Copy and paste this link into your browser:<br>
                   <a href="${resetLink}" style="color: #2563eb; text-decoration: underline;">${resetLink}</a>
                 </p>
+                <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+                  ⏱️ This reset link is valid for <strong>1 hour</strong>.
+                </p>
               </div>
 
-              <p style="margin: 28px 0 0; font-size: 13.5px; color: #64748b; line-height: 1.5;">
-                This password reset link is valid for <strong>1 hour</strong>. If you did not request a password reset, your account is safe and you can disregard this email.
+              <p style="margin: 24px 0 0; font-size: 13.5px; line-height: 1.5; color: #64748b;">
+                If you did not request a password reset, your account is secure and you can safely disregard this message.
               </p>
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
-            <td style="padding: 24px 40px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: left;">
+            <td style="padding: 32px 0 0; border-top: 1px solid #f1f5f9; text-align: left;">
               <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td style="font-size: 12.5px; color: #64748b; line-height: 1.6;">
                     <strong>Sadhya Security Team</strong><br>
-                    Bengaluru, Karnataka, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
+                    Bengaluru, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
                   </td>
                   <td align="right" style="font-size: 12px; color: #94a3b8;">
-                    <a href="https://sadhya.app/privacy" style="color: #64748b; text-decoration: none; margin-left: 10px;">Privacy</a>
-                    <a href="https://sadhya.app/terms" style="color: #64748b; text-decoration: none; margin-left: 10px;">Terms</a>
-                    <a href="https://sadhya.app/help" style="color: #64748b; text-decoration: none; margin-left: 10px;">Help</a>
+                    <a href="https://sadhya.app/privacy" style="color: #64748b; text-decoration: none; margin-left: 12px;">Privacy</a>
+                    <a href="https://sadhya.app/terms" style="color: #64748b; text-decoration: none; margin-left: 12px;">Terms</a>
+                    <a href="https://sadhya.app/help" style="color: #64748b; text-decoration: none; margin-left: 12px;">Help Center</a>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
+
         </table>
       </td>
     </tr>
@@ -393,67 +407,72 @@ https://sadhya.app
 
     const html = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; padding: 40px 15px;">
+<body style="margin: 0; padding: 0; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0f172a; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff; width: 100%;">
     <tr>
-      <td align="center">
-        <!-- Main Card -->
-        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+      <td align="center" style="padding: 24px 16px 48px;">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 640px; text-align: left;">
           
-          <!-- Header Hero -->
+          <!-- Top Brand Header -->
           <tr>
-            <td style="padding: 40px 40px 30px; background-color: #0f172a; text-align: left;">
+            <td style="padding: 24px 0 28px; border-bottom: 1px solid #f1f5f9;">
               <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td>
-                    <span style="font-size: 26px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">
-                      Sadhya<span style="color: #c8e558;">.</span>
-                    </span>
+                    <a href="https://sadhya.app" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 10px;">
+                      <img src="${this.iconUrl}" alt="Sadhya" width="38" height="38" style="border-radius: 8px; vertical-align: middle; border: 0;" />
+                      <span style="font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; margin-left: 10px; vertical-align: middle;">Sadhya<span style="color: #65a30d;">.</span></span>
+                    </a>
                   </td>
                   <td align="right">
-                    <span style="font-size: 11.5px; font-weight: 700; color: #0f172a; background-color: #c8e558; padding: 5px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <span style="font-size: 11.5px; font-weight: 700; color: #0f172a; background-color: #c8e558; padding: 6px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.6px;">
                       ${isTeacher ? 'Teacher Suite' : 'AI Learning Platform'}
                     </span>
                   </td>
                 </tr>
               </table>
+            </td>
+          </tr>
 
-              <h1 style="margin: 28px 0 10px; font-size: 22px; font-weight: 700; color: #ffffff; line-height: 1.3;">
-                Welcome to the future of learning, ${name}! 🚀
+          <!-- Hero Greeting -->
+          <tr>
+            <td style="padding: 36px 0 28px;">
+              <h1 style="margin: 0 0 16px; font-size: 26px; font-weight: 800; color: #0f172a; letter-spacing: -0.6px; line-height: 1.25;">
+                Welcome to Sadhya, ${name}! 🚀
               </h1>
-              <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: #94a3b8;">
-                Your account is active. Explore what you can achieve with Sadhya starting today:
+              <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #475569;">
+                Your workspace is ready. Sadhya gives you personalized, syllabus-aligned AI preparation designed to help you achieve your goals faster.
               </p>
             </td>
           </tr>
 
-          <!-- Feature Cards Grid -->
+          <!-- Feature Cards List -->
           <tr>
-            <td style="padding: 32px 40px 24px;">
-              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+            <td style="padding: 0 0 32px;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden;">
                 
                 <!-- Feature 1 -->
                 <tr>
-                  <td style="padding: 16px 0; border-bottom: 1px solid #f1f5f9;">
+                  <td style="padding: 22px 24px; border-bottom: 1px solid #f1f5f9; background-color: #ffffff;">
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                       <tr>
-                        <td width="42" valign="top" style="padding-top: 2px;">
-                          <div style="width: 32px; height: 32px; border-radius: 8px; background-color: #f1f5f9; text-align: center; line-height: 32px; font-size: 16px;">
+                        <td width="40" valign="top">
+                          <div style="width: 34px; height: 34px; border-radius: 8px; background-color: #f1f5f9; text-align: center; line-height: 34px; font-size: 18px;">
                             🎯
                           </div>
                         </td>
-                        <td style="padding-left: 12px;">
-                          <h3 style="margin: 0 0 4px; font-size: 15px; font-weight: 600; color: #0f172a;">
-                            ${isTeacher ? 'Classroom Cohorts & Assignments' : 'Exam-Specific AI Tutor'}
+                        <td style="padding-left: 14px;">
+                          <h3 style="margin: 0 0 4px; font-size: 15.5px; font-weight: 700; color: #0f172a;">
+                            ${isTeacher ? 'Classroom Cohorts & Live Sessions' : 'Exam-Specific AI Tutor'}
                           </h3>
-                          <p style="margin: 0; font-size: 13.5px; line-height: 1.5; color: #64748b;">
-                            ${isTeacher ? 'Create structured batches, share interactive resources, and track student mastery in real time.' : 'Syllabus-aligned preparation covering NEET, JEE, UPSC CSE, SSC CGL, Banking, and State Board exams.'}
+                          <p style="margin: 0; font-size: 13.5px; line-height: 1.55; color: #64748b;">
+                            ${isTeacher ? 'Manage student batches, share interactive resources, and conduct live audio/video class sessions seamlessly.' : 'Targeted prep covering NEET, JEE, UPSC CSE, SSC CGL, Banking, and Board exams.'}
                           </p>
                         </td>
                       </tr>
@@ -463,20 +482,20 @@ https://sadhya.app
 
                 <!-- Feature 2 -->
                 <tr>
-                  <td style="padding: 16px 0; border-bottom: 1px solid #f1f5f9;">
+                  <td style="padding: 22px 24px; border-bottom: 1px solid #f1f5f9; background-color: #ffffff;">
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                       <tr>
-                        <td width="42" valign="top" style="padding-top: 2px;">
-                          <div style="width: 32px; height: 32px; border-radius: 8px; background-color: #f1f5f9; text-align: center; line-height: 32px; font-size: 16px;">
+                        <td width="40" valign="top">
+                          <div style="width: 34px; height: 34px; border-radius: 8px; background-color: #f1f5f9; text-align: center; line-height: 34px; font-size: 18px;">
                             ⚡
                           </div>
                         </td>
-                        <td style="padding-left: 12px;">
-                          <h3 style="margin: 0 0 4px; font-size: 15px; font-weight: 600; color: #0f172a;">
+                        <td style="padding-left: 14px;">
+                          <h3 style="margin: 0 0 4px; font-size: 15.5px; font-weight: 700; color: #0f172a;">
                             6-Step Deep Reasoning Engine
                           </h3>
-                          <p style="margin: 0; font-size: 13.5px; line-height: 1.5; color: #64748b;">
-                            Never settle for just the final answer. Understand every problem through first-principles breakdown, formula recall, and mistake prevention.
+                          <p style="margin: 0; font-size: 13.5px; line-height: 1.55; color: #64748b;">
+                            Get step-by-step conceptual breakdowns, formula derivations, and common pitfall warnings for every complex question.
                           </p>
                         </td>
                       </tr>
@@ -486,20 +505,20 @@ https://sadhya.app
 
                 <!-- Feature 3 -->
                 <tr>
-                  <td style="padding: 16px 0; border-bottom: 1px solid #f1f5f9;">
+                  <td style="padding: 22px 24px; border-bottom: 1px solid #f1f5f9; background-color: #ffffff;">
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                       <tr>
-                        <td width="42" valign="top" style="padding-top: 2px;">
-                          <div style="width: 32px; height: 32px; border-radius: 8px; background-color: #f1f5f9; text-align: center; line-height: 32px; font-size: 16px;">
+                        <td width="40" valign="top">
+                          <div style="width: 34px; height: 34px; border-radius: 8px; background-color: #f1f5f9; text-align: center; line-height: 34px; font-size: 18px;">
                             🎙️
                           </div>
                         </td>
-                        <td style="padding-left: 12px;">
-                          <h3 style="margin: 0 0 4px; font-size: 15px; font-weight: 600; color: #0f172a;">
+                        <td style="padding-left: 14px;">
+                          <h3 style="margin: 0 0 4px; font-size: 15.5px; font-weight: 700; color: #0f172a;">
                             Audio Lessons & Podcast Studio
                           </h3>
-                          <p style="margin: 0; font-size: 13.5px; line-height: 1.5; color: #64748b;">
-                            Convert textbook chapters, PDF notes, or lecture concepts into cinematic 2-host audio podcasts you can listen to on the go.
+                          <p style="margin: 0; font-size: 13.5px; line-height: 1.55; color: #64748b;">
+                            Turn study notes, chapters, and difficult concepts into cinematic, 2-host audio podcasts to learn on the go.
                           </p>
                         </td>
                       </tr>
@@ -509,20 +528,20 @@ https://sadhya.app
 
                 <!-- Feature 4 -->
                 <tr>
-                  <td style="padding: 16px 0;">
+                  <td style="padding: 22px 24px; background-color: #ffffff;">
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                       <tr>
-                        <td width="42" valign="top" style="padding-top: 2px;">
-                          <div style="width: 32px; height: 32px; border-radius: 8px; background-color: #f1f5f9; text-align: center; line-height: 32px; font-size: 16px;">
+                        <td width="40" valign="top">
+                          <div style="width: 34px; height: 34px; border-radius: 8px; background-color: #f1f5f9; text-align: center; line-height: 34px; font-size: 18px;">
                             📝
                           </div>
                         </td>
-                        <td style="padding-left: 12px;">
-                          <h3 style="margin: 0 0 4px; font-size: 15px; font-weight: 600; color: #0f172a;">
-                            Smart Notebooks & Diagnostic Tests
+                        <td style="padding-left: 14px;">
+                          <h3 style="margin: 0 0 4px; font-size: 15.5px; font-weight: 700; color: #0f172a;">
+                            Smart Notebooks & Adaptive Diagnostics
                           </h3>
-                          <p style="margin: 0; font-size: 13.5px; line-height: 1.5; color: #64748b;">
-                            Generate mindmaps, flashcards, and adaptive diagnostic tests that pinpoint and reinforce your weak areas.
+                          <p style="margin: 0; font-size: 13.5px; line-height: 1.55; color: #64748b;">
+                            Automatically generate flashcards, mindmaps, and baseline assessment quizzes to master weak subjects rapidly.
                           </p>
                         </td>
                       </tr>
@@ -531,13 +550,17 @@ https://sadhya.app
                 </tr>
 
               </table>
+            </td>
+          </tr>
 
-              <!-- Main Action Button -->
-              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 32px 0 16px;">
+          <!-- Primary Action CTA -->
+          <tr>
+            <td align="center" style="padding: 8px 0 36px;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td align="center">
-                    <a href="${dashboardUrl}" target="_blank" rel="noopener noreferrer" style="display: block; background-color: #0f172a; color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; padding: 15px 32px; border-radius: 10px; text-align: center;">
-                      ${isTeacher ? 'Open Teacher Workspace' : 'Open My Dashboard & Start Learning'} →
+                    <a href="${dashboardUrl}" target="_blank" rel="noopener noreferrer" style="display: block; width: 100%; max-width: 340px; background-color: #0f172a; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 16px 28px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                      ${isTeacher ? 'Open Teacher Workspace' : 'Open My Dashboard'} →
                     </a>
                   </td>
                 </tr>
@@ -547,17 +570,17 @@ https://sadhya.app
 
           <!-- Footer -->
           <tr>
-            <td style="padding: 24px 40px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: left;">
+            <td style="padding: 32px 0 0; border-top: 1px solid #f1f5f9; text-align: left;">
               <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td style="font-size: 12.5px; color: #64748b; line-height: 1.6;">
                     <strong>Sadhya Technologies Pvt. Ltd.</strong><br>
-                    Bengaluru, Karnataka, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
+                    Bengaluru, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
                   </td>
                   <td align="right" style="font-size: 12px; color: #94a3b8;">
-                    <a href="https://sadhya.app/privacy" style="color: #64748b; text-decoration: none; margin-left: 10px;">Privacy</a>
-                    <a href="https://sadhya.app/terms" style="color: #64748b; text-decoration: none; margin-left: 10px;">Terms</a>
-                    <a href="https://sadhya.app/help" style="color: #64748b; text-decoration: none; margin-left: 10px;">Help</a>
+                    <a href="https://sadhya.app/privacy" style="color: #64748b; text-decoration: none; margin-left: 12px;">Privacy</a>
+                    <a href="https://sadhya.app/terms" style="color: #64748b; text-decoration: none; margin-left: 12px;">Terms</a>
+                    <a href="https://sadhya.app/help" style="color: #64748b; text-decoration: none; margin-left: 12px;">Help Center</a>
                   </td>
                 </tr>
               </table>
