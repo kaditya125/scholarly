@@ -268,7 +268,7 @@ export function ChannelThread({
               setDraft(m.text);
             }}
             onDelete={(m) => deleteMessage(m.id)}
-            onReact={react}
+            onReact={(messageId, emoji) => react({ messageId, emoji })}
             onPin={(m) => pinMessage({ messageId: m.id, pinned: !m.pinned })}
             onSave={handleSaveMessage}
             isSaved={isSaved}

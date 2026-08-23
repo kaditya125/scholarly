@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { X, Link2, QrCode, Shield, Mail, Check } from "lucide-react";
 import { PeerAvatar } from "../social/PeerAvatar";
-import type { StudyGroupMember } from "../../lib/api/studyGroups";
+import type { StudyGroupMemberProfile } from "../../lib/api/studyGroups";
 
 interface GroupParticipantsModalProps {
   isOpen: boolean;
   onClose: () => void;
   groupName: string;
-  members: StudyGroupMember[];
+  members: StudyGroupMemberProfile[];
   isAdmin: boolean;
   currentUserId?: string;
   onInvite?: (email: string) => Promise<void>;
@@ -112,19 +112,19 @@ export function GroupParticipantsModal({
           </div>
 
           {members.map((member) => {
-            const isSelf = member.userId === currentUserId;
-            const isMemberAdmin = member.role === "admin";
+            const isSelf = member.uid === currentUserId;
+            const isMemberAdmin = member.role === "admin" || member.isOwner;
 
             return (
               <div
-                key={member.userId}
+                key={member.uid}
                 className="flex items-center justify-between p-2.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors group"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <PeerAvatar
                     name={member.displayName || "Student"}
                     photoURL={member.photoURL}
-                    seed={member.userId}
+                    seed={member.uid}
                     className="w-10 h-10 text-[13px] font-bold"
                   />
                   <div className="min-w-0">
@@ -152,7 +152,7 @@ export function GroupParticipantsModal({
                     </span>
                   ) : isAdmin && !isSelf ? (
                     <button
-                      onClick={() => onRemoveMember && onRemoveMember(member.userId)}
+                      onClick={() => onRemoveMember && onRemoveMember(member.uid)}
                       className="text-[11.5px] font-medium text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 px-2 py-1 rounded-lg transition-colors cursor-pointer"
                     >
                       Remove
