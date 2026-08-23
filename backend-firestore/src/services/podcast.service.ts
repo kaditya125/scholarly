@@ -6,6 +6,7 @@ import ffmpegStatic from 'ffmpeg-static';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
+import { v4 as uuidv4 } from 'uuid';
 import { getStorage } from 'firebase-admin/storage';
 
 // Set ffmpeg path
