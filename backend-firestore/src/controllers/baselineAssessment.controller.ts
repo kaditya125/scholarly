@@ -48,6 +48,20 @@ export class BaselineAssessmentController {
   };
 
   /**
+   * POST /api/assessment/baseline/reset/:userId
+   * Resets the baseline assessment session.
+   */
+  public resetAssessment = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.params;
+      const result = await baselineAssessmentService.resetAssessment(userId);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
    * GET /api/assessment/baseline/digital-twin/:userId
    * Retrieves the current Student Digital Twin for a user.
    */

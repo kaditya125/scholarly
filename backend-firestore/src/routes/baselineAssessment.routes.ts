@@ -26,6 +26,9 @@ router.post('/next-batch/:userId', enforceSelf('userId'), baselineAssessmentCont
 // POST /api/baseline-assessment/submit/:userId
 router.post('/submit/:userId', enforceSelf('userId'), baselineAssessmentController.submitAssessment);
 
+// POST /api/baseline-assessment/reset/:userId
+router.post('/reset/:userId', enforceSelf('userId'), baselineAssessmentController.resetAssessment);
+
 // GET /api/baseline-assessment/digital-twin/:userId
 router.get('/digital-twin/:userId', enforceSelf('userId'), baselineAssessmentController.getDigitalTwin);
 
