@@ -44,6 +44,7 @@ import helpRoutes from './help.routes';
 import examRoutes from './exam.routes';
 import canonicalAssessmentRoutes from './canonicalAssessment.routes';
 import automationRoutes from './automation.routes';
+import contactRoutes from './contact.routes';
 
 const router = Router();
 
@@ -94,5 +95,6 @@ router.use('/exams', examRoutes);
 // J.7.1 — the only syllabus-backed assessment surface. See canonicalAssessment.routes.
 router.use('/assessment', canonicalAssessmentRoutes);
 router.use('/automations', automationRoutes);
+router.use('/contact', contactRoutes);
 
 export default router;
