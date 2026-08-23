@@ -9,6 +9,7 @@ export interface EmailOptions {
   subject: string;
   html: string;
   text?: string;
+  replyTo?: string;
 }
 
 export class ZeptoMailService {
@@ -48,7 +49,7 @@ export class ZeptoMailService {
     // 1. Try ZeptoMail REST API
     if (env.ZEPTO_API_KEY) {
       try {
-        const payload = {
+        const payload: any = {
           from: {
             address: fromAddress,
             name: fromName,
@@ -65,6 +66,15 @@ export class ZeptoMailService {
           htmlbody: options.html,
           textbody: options.text || options.subject,
         };
+
+        if (options.replyTo) {
+          payload.reply_to = [
+            {
+              address: options.replyTo,
+              name: options.replyTo.split('@')[0],
+            },
+          ];
+        }
 
         const authHeader = env.ZEPTO_API_KEY.startsWith('Zoho-enczapikey ')
           ? env.ZEPTO_API_KEY
@@ -101,6 +111,7 @@ export class ZeptoMailService {
           subject: options.subject,
           text: options.text || options.subject,
           html: options.html,
+          replyTo: options.replyTo,
         });
 
         logger.info('[ZeptoMail] Email sent via SMTP', {
@@ -548,6 +559,187 @@ https://sadhya.app
     const result = await this.sendEmail({
       to: email,
       toName: displayName,
+      subject,
+      html,
+      text,
+    });
+
+    return result.success;
+  }
+
+  /**
+   * Forwards a contact form inquiry directly to the relevant internal alias (support, sales, etc.)
+   */
+  async sendContactInquiryEmail(inquiry: {
+    name: string;
+    email: string;
+    channel: 'support' | 'sales' | 'security' | 'privacy';
+    subject: string;
+    message: string;
+  }): Promise<boolean> {
+    const targetEmail = `${inquiry.channel}@sadhya.app`;
+    const channelLabel = {
+      support: 'Support Inquiry',
+      sales: 'Institutional / Sales Inquiry',
+      security: 'Security Report',
+      privacy: 'Privacy & Legal Grievance',
+    }[inquiry.channel] || 'General Inquiry';
+
+    const emailSubject = `[${channelLabel}] ${inquiry.subject || 'New Contact Form Submission'}`;
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${emailSubject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0f172a;">
+  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff;">
+    <tr>
+      <td align="center" style="padding: 24px 16px 48px;">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; text-align: left;">
+          <tr>
+            <td style="padding: 20px 0; border-bottom: 1px solid #f1f5f9;">
+              <span style="font-size: 18px; font-weight: 700; color: #0f172a;">Sadhya Contact Notification</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 24px 0;">
+              <p style="margin: 0 0 12px; font-size: 14px; color: #64748b;">A user submitted an inquiry via the website contact form:</p>
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;">
+                <tr>
+                  <td style="font-size: 13.5px; line-height: 1.8; color: #334155;">
+                    <strong>Sender Name:</strong> ${inquiry.name}<br>
+                    <strong>Sender Email:</strong> <a href="mailto:${inquiry.email}" style="color: #0284c7;">${inquiry.email}</a><br>
+                    <strong>Channel:</strong> ${channelLabel} (${targetEmail})<br>
+                    <strong>Subject:</strong> ${inquiry.subject || '(No Subject)'}
+                  </td>
+                </tr>
+              </table>
+              <div style="margin-top: 20px; padding: 16px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <p style="margin: 0 0 8px; font-size: 13px; font-weight: 700; color: #0f172a;">Message:</p>
+                <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #334155; white-space: pre-wrap;">${inquiry.message}</p>
+              </div>
+              <p style="margin-top: 24px; font-size: 13px; color: #64748b;">
+                You can reply directly to this email to contact the user at <strong>${inquiry.email}</strong>.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
+    const text = `
+New inquiry via Sadhya Contact Form:
+From: ${inquiry.name} <${inquiry.email}>
+Channel: ${channelLabel} (${targetEmail})
+Subject: ${inquiry.subject}
+
+Message:
+${inquiry.message}
+`;
+
+    const result = await this.sendEmail({
+      to: targetEmail,
+      toName: 'Sadhya Team',
+      subject: emailSubject,
+      html,
+      text,
+      replyTo: inquiry.email,
+    });
+
+    return result.success;
+  }
+
+  /**
+   * Sends an automated acknowledgment receipt to the user who submitted an inquiry.
+   */
+  async sendInquiryReceiptEmail(inquiry: {
+    name: string;
+    email: string;
+    channel: string;
+  }): Promise<boolean> {
+    const subject = 'We received your message — Sadhya Support';
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0f172a;">
+  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff;">
+    <tr>
+      <td align="center" style="padding: 24px 16px 48px;">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; text-align: left;">
+          <tr>
+            <td style="padding: 24px 0 24px; border-bottom: 1px solid #f1f5f9;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td>
+                    <a href="https://sadhya.app" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                      <img src="${this.iconUrl}" alt="" width="32" height="32" style="border-radius: 6px; vertical-align: middle; border: 0;" />
+                      <span style="font-size: 20px; font-weight: 700; color: #0f172a; letter-spacing: -0.4px; margin-left: 8px; vertical-align: middle;">Sadhya<span style="color: #65a30d;">.</span></span>
+                    </a>
+                  </td>
+                  <td align="right">
+                    <span style="font-size: 11px; font-weight: 700; color: #475569; background-color: #f1f5f9; padding: 5px 12px; border-radius: 100px; text-transform: uppercase;">
+                      CONFIRMATION
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 0 0;">
+              <h1 style="margin: 0 0 16px; font-size: 22px; font-weight: 700; color: #0f172a;">
+                We received your message
+              </h1>
+              <p style="margin: 0 0 16px; font-size: 15px; line-height: 1.6; color: #334155;">
+                Hello <strong>${inquiry.name}</strong>,
+              </p>
+              <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #475569;">
+                Thank you for contacting Sadhya. A member of our team has received your message and will review it promptly. We usually respond within 2 to 4 hours during business hours (Monday–Saturday, 10:00–19:00 IST).
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 24px 0 0; border-top: 1px solid #f1f5f9;">
+              <p style="font-size: 12.5px; color: #64748b; line-height: 1.6; margin: 0;">
+                <strong>Sadhya Technologies Pvt. Ltd.</strong><br>
+                Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+    const text = `
+Hello ${inquiry.name},
+
+Thank you for reaching out to Sadhya. We have received your message and will get back to you shortly.
+
+Warm regards,
+Sadhya Support Team
+Tech Zone, Sector 135, Noida
+https://sadhya.app
+`;
+
+    const result = await this.sendEmail({
+      to: inquiry.email,
+      toName: inquiry.name,
       subject,
       html,
       text,
