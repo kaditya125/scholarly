@@ -9,6 +9,7 @@ import { useAuth } from '../lib/AuthContext';
 import GoalCapture from '../components/onboarding/GoalCapture';
 import { useProfile } from '../hooks/api/useProfile';
 import { BrandMark } from '../components/auth/AuthShell';
+import { baselineAssessmentApi } from '../lib/api/studentDigitalTwin';
 import {
   LearningProfile, GOAL_GROUPS, BOARDS, STREAMS, SUBJECTS, LEVELS, TARGET_SUGGESTIONS,
   STUDY_TIMES, LEARNING_STYLES, LANGUAGES, autoStream, showStreamStep, suggestedSubjects,
@@ -132,6 +133,9 @@ export default function Onboarding() {
     // Real backend profile creation happens here (not fake loading) — mark onboarding complete.
     try {
       await updateProfile({ ...profile, ...extra, markComplete: true });
+      if (user?.uid) {
+        await baselineAssessmentApi.resetAssessment(user.uid).catch(() => {});
+      }
     } catch { /* non-fatal — the partial autosaves already persisted their data */ }
     // Keep the generation animation on screen for a minimum beat so it doesn't flash by.
     const elapsed = Date.now() - startedAt;

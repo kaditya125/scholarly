@@ -186,6 +186,16 @@ export const baselineAssessmentApi = {
     return data;
   },
 
+  async resetAssessment(userId: string): Promise<{ success: boolean }> {
+    try {
+      const { data } = await api.post(`/assessment/baseline/reset/${userId}`);
+      return data;
+    } catch (e) {
+      console.warn('baselineAssessmentApi.resetAssessment error', e);
+      return { success: false };
+    }
+  },
+
   async getDigitalTwin(userId: string): Promise<StudentDigitalTwinData | null> {
     try {
       const { data } = await api.get(`/assessment/baseline/digital-twin/${userId}`);

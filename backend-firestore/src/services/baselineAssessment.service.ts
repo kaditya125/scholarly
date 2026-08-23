@@ -47,6 +47,15 @@ export class BaselineAssessmentService {
   }
 
   /**
+   * Resets an active baseline assessment session.
+   */
+  async resetAssessment(userId: string): Promise<{ success: boolean }> {
+    const docRef = db.collection('users').doc(userId).collection('assessments').doc('baselineSession');
+    await docRef.delete().catch(() => {});
+    return { success: true };
+  }
+
+  /**
    * Evaluates responses from current batch and fetches next dynamic CAT batch.
    */
   async getNextBatch(

@@ -50,6 +50,19 @@ export class UserProfileService {
         merged,
         { merge: true }
       );
+
+      // Invalidate any existing unsubmitted baseline assessment session so the student
+      // receives fresh, exam-accurate questions matching their newly saved profile.
+      if (markComplete || patch.targetExam || patch.goal || patch.subjects) {
+        await db
+          .collection('users')
+          .doc(userId)
+          .collection('assessments')
+          .doc('baselineSession')
+          .delete()
+          .catch(() => {});
+      }
+
       return merged as StudentProfile;
     } catch (e) {
       console.error('Failed to update user profile:', e);
