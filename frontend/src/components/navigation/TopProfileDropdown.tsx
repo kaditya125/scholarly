@@ -53,7 +53,7 @@ export function TopProfileDropdown() {
   const handleLogout = async () => {
     setIsOpen(false);
     await logout();
-    navigate('/login');
+    navigate('/signin');
   };
 
   return (

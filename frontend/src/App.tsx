@@ -230,7 +230,9 @@ function AppRoutes() {
         {/* Public routes — no auth required */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/register" element={<Navigate to="/signup" replace />} />
         <Route path="/signin" element={<Signin />} />
+        <Route path="/login" element={<Navigate to="/signin" replace />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/how-it-works" element={<HowItWorks />} />
@@ -362,6 +364,9 @@ function AppRoutes() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
         </Route>
+
+        {/* Catch-all fallback for any undefined routes */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </Suspense>
     </AnimatePresence>
