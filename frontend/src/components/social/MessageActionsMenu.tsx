@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { MoreVertical, Reply, Pencil, Trash2, Pin } from 'lucide-react';
+import { MoreVertical, Reply, Pencil, Trash2, Pin, Bookmark } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 /**
  * Hover kebab menu for a message: Reply (always), Edit (own text messages), Delete (own, or a
- * moderator). The trigger is revealed on message hover — the parent row must have `group`.
+ * moderator), Pin/Unpin, Save/Unsave. The trigger is revealed on message hover — the parent row must have `group`.
  */
 export function MessageActionsMenu({
   canEdit,
@@ -14,6 +14,8 @@ export function MessageActionsMenu({
   onDelete,
   onPin,
   isPinned,
+  onSave,
+  isSaved,
   align = 'left',
 }: {
   canEdit: boolean;
@@ -23,6 +25,8 @@ export function MessageActionsMenu({
   onDelete: () => void;
   onPin?: () => void;
   isPinned?: boolean;
+  onSave?: () => void;
+  isSaved?: boolean;
   align?: 'left' | 'right';
 }) {
   const [open, setOpen] = useState(false);
@@ -42,7 +46,7 @@ export function MessageActionsMenu({
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
           <div
             className={cn(
-              'absolute z-20 top-7 w-36 rounded-xl bg-white dark:bg-[#1e1e1f] border border-slate-200 dark:border-white/10 shadow-xl py-1 text-[13px]',
+              'absolute z-20 top-7 w-40 rounded-xl bg-white dark:bg-[#1e1e1f] border border-slate-200 dark:border-white/10 shadow-xl py-1 text-[13px]',
               align === 'right' ? 'right-0' : 'left-0'
             )}
           >
@@ -55,6 +59,18 @@ export function MessageActionsMenu({
             >
               <Reply className="w-3.5 h-3.5" /> Reply
             </button>
+            {onSave && (
+              <button
+                onClick={() => {
+                  onSave();
+                  setOpen(false);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5"
+              >
+                <Bookmark className={cn("w-3.5 h-3.5", isSaved && "text-amber-500 fill-amber-500")} />
+                {isSaved ? 'Saved in Notes' : 'Save to Notes'}
+              </button>
+            )}
             {onPin && (
               <button
                 onClick={() => {

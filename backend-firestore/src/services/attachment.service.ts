@@ -18,8 +18,11 @@ function sanitizeFilename(name: string): string {
   return base.replace(/[^\w.\-]+/g, '_').slice(0, 200) || 'file';
 }
 
-function kindFor(contentType: string): 'image' | 'file' {
-  return (contentType || '').startsWith('image/') ? 'image' : 'file';
+function kindFor(contentType: string): 'image' | 'file' | 'audio' {
+  const ct = (contentType || '').toLowerCase();
+  if (ct.startsWith('image/')) return 'image';
+  if (ct.startsWith('audio/') || ct.includes('webm') && ct.includes('audio') || ct.includes('audio/ogg') || ct.includes('audio/mp4') || ct.includes('audio/wav') || ct.includes('audio/aac')) return 'audio';
+  return 'file';
 }
 
 /**
@@ -77,13 +80,19 @@ export class AttachmentService {
         throw new AttachmentError(400, 'Invalid attachment');
       }
       const contentType = typeof a.contentType === 'string' ? a.contentType : 'application/octet-stream';
+      const kind = a.kind === 'audio' || kindFor(contentType) === 'audio' ? 'audio' : kindFor(contentType);
+      const duration = typeof a.duration === 'number' && a.duration >= 0 ? a.duration : undefined;
+      const waveform = Array.isArray(a.waveform) && a.waveform.every((n: any) => typeof n === 'number') ? a.waveform.slice(0, 100) : undefined;
+
       return {
         id: typeof a.id === 'string' ? a.id : uuidv4(),
         name: typeof a.name === 'string' && a.name.trim() ? a.name.trim().slice(0, 300) : 'file',
         url: a.url,
         contentType,
         size: typeof a.size === 'number' && a.size >= 0 ? a.size : 0,
-        kind: kindFor(contentType),
+        kind,
+        ...(duration !== undefined ? { duration } : {}),
+        ...(waveform !== undefined ? { waveform } : {}),
       };
     });
   }

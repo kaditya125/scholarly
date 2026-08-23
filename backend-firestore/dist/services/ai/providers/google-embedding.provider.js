@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GoogleEmbeddingProvider = void 0;
-const genai_1 = require("@google/genai");
 const env_1 = require("../../../config/env");
 const retry_1 = require("../../../utils/retry");
 // The Pinecone index 'edtech-ai-rag' has dimension 768. `text-embedding-004` (which
@@ -17,7 +16,8 @@ class GoogleEmbeddingProvider {
         if (!env_1.env.GEMINI_API_KEY) {
             throw new Error('GEMINI_API_KEY is not defined in environment.');
         }
-        this.ai = new genai_1.GoogleGenAI({ apiKey: env_1.env.GEMINI_API_KEY });
+        const { createGoogleGenAIClient } = require('../googleGenAIClient');
+        this.ai = createGoogleGenAIClient();
     }
     async generateEmbedding(text, userId) {
         (0, env_1.assertAIEnabled)('embedding');

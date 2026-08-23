@@ -31,8 +31,8 @@ class AIOrchestrator {
     }
     getSystemPromptForMode(mode, contextData = '', studentContext) {
         const hasNotebookContext = contextData.length > 50;
-        // Use the centralized Scholarly AI prompt builder
-        return (0, prompts_1.buildScholarlySystemPrompt)({
+        // Use the centralized Sadhya AI prompt builder
+        return (0, prompts_1.buildSadhyaSystemPrompt)({
             mode,
             studentContext,
             retrievedContext: contextData || undefined,

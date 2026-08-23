@@ -101,6 +101,20 @@ const envSchema = zod_1.z.object({
     // Chat fast-path toggle read by GenerationOrchestrator; keep declared so it
     // can be set from .env without a schema failure.
     CHAT_FAST_ANSWER: zod_1.z.string().optional(),
+    // Reasoning model toggles
+    CHAT_REASONING_ENABLED: zod_1.z.string().optional(),
+    CHAT_REASONING_MODEL: zod_1.z.string().optional(),
+    // ZeptoMail & Transactional Email Configuration
+    ZEPTO_API_KEY: zod_1.z.string().optional(),
+    ZEPTO_FROM_EMAIL: zod_1.z.string().default('noreply@sadhya.app'),
+    ZEPTO_FROM_NAME: zod_1.z.string().default('Sadhya'),
+    ZEPTO_API_URL: zod_1.z.string().default('https://api.zeptomail.in/v1.1/email'),
+    SMTP_HOST: zod_1.z.string().optional(),
+    SMTP_PORT: zod_1.z.string().optional(),
+    SMTP_USER: zod_1.z.string().optional(),
+    SMTP_PASS: zod_1.z.string().optional(),
+    SMTP_FROM: zod_1.z.string().optional(),
+    SMTP_SECURE: zod_1.z.string().optional(),
 }).refine((data) => {
     // Either GOOGLE_APPLICATION_CREDENTIALS must be provided, OR all three manual FIREBASE vars must be provided.
     // If none are provided, firebase-admin will attempt to use default credentials (e.g. on GCP/Firebase hosting).

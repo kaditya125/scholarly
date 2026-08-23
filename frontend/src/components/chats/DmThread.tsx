@@ -6,6 +6,7 @@ import { useConversation } from "../../hooks/api/useDirectMessages";
 import { useOnlineStatuses } from "../../hooks/usePresence";
 import { useTyping } from "../../hooks/useTyping";
 import { useAttachments } from "../../hooks/useAttachments";
+import { useSavedMessages } from "../../hooks/api/useSavedMessages";
 import { PeerAvatar } from "../social/PeerAvatar";
 import { PinnedBar } from "../social/PinnedBar";
 import { ChatMessageList, ThreadMessage } from "./ChatMessageList";
@@ -20,6 +21,7 @@ interface DmThreadProps {
 /** The center pane for a direct message: header, pinned bar, message list, and composer. */
 export function DmThread({ otherId, onBack, onOpenInfo }: DmThreadProps) {
   const { user } = useAuth();
+  const { toggleSave, isSaved } = useSavedMessages();
   const {
     messages,
     peer,
@@ -74,6 +76,21 @@ export function DmThread({ otherId, onBack, onOpenInfo }: DmThreadProps) {
 
   const jumpTo = (id: string) => {
     document.getElementById(`m-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const handleSaveMessage = (m: ThreadMessage) => {
+    const sender = resolveSender(m.senderId);
+    toggleSave({
+      messageId: m.id,
+      sourceType: "dm",
+      conversationId: convId || undefined,
+      peerUid: otherId,
+      senderId: m.senderId,
+      senderName: sender.displayName,
+      text: m.text || "",
+      attachments: m.attachments,
+      messageCreatedAt: m.createdAt,
+    });
   };
 
   const handleSend = async () => {
@@ -197,6 +214,10 @@ export function DmThread({ otherId, onBack, onOpenInfo }: DmThreadProps) {
             onDelete={(m) => deleteMessage(m.id).catch(() => {})}
             onReact={(id, emoji) => react({ messageId: id, emoji }).catch(() => {})}
             onPin={(m) => pinMessage({ messageId: m.id, pinned: !m.pinned }).catch(() => {})}
+            onSave={handleSaveMessage}
+            isSaved={isSaved}
+            isPeerOnline={isOnline}
+            peerLastReadAt={peerLastReadAt}
             lastSeenMessageId={lastSeenMessageId}
           />
         )}

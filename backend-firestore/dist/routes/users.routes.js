@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const studentGoal_controller_1 = require("../controllers/studentGoal.controller");
 const express_1 = require("express");
 const userStats_controller_1 = require("../controllers/userStats.controller");
 const userProfile_controller_1 = require("../controllers/userProfile.controller");
@@ -28,6 +29,9 @@ router.get('/capabilities', capabilities_controller_1.capabilitiesController.get
 router.get('/referrals', referral_controller_1.referralController.listMine);
 router.get('/:userId/stats', (0, auth_1.enforceSelf)('userId'), controller.getUserStats);
 router.post('/:userId/xp', (0, auth_1.enforceSelf)('userId'), controller.awardXP);
+// Student goal — same enforceSelf ownership guard as the profile it sits beside.
+router.get('/:userId/goal', (0, auth_1.enforceSelf)('userId'), studentGoal_controller_1.studentGoalController.get);
+router.put('/:userId/goal', (0, auth_1.enforceSelf)('userId'), studentGoal_controller_1.studentGoalController.put);
 router.get('/:userId/profile', (0, auth_1.enforceSelf)('userId'), profileController.getProfile);
 router.put('/:userId/profile', (0, auth_1.enforceSelf)('userId'), profileController.updateProfile);
 exports.default = router;

@@ -46,9 +46,29 @@ export function useAttachments() {
   const remove = (tempId: string) => setPending((p) => p.filter((x) => x.tempId !== tempId));
   const clear = () => setPending([]);
 
+  const addAudioFile = async (file: File, duration: number, waveform: number[]): Promise<Attachment> => {
+    const tempId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    setPending((p) => [...p, { tempId, name: file.name, size: file.size, uploading: true }]);
+    try {
+      const raw = await uploadsApi.attachment(file);
+      const attachment: Attachment = {
+        ...raw,
+        kind: 'audio',
+        duration,
+        waveform,
+      };
+      setPending((p) => p.map((x) => (x.tempId === tempId ? { ...x, uploading: false, attachment } : x)));
+      return attachment;
+    } catch (e) {
+      setPending((p) => p.map((x) => (x.tempId === tempId ? { ...x, uploading: false, error: true } : x)));
+      throw e;
+    }
+  };
+
   return {
     pending,
     addFiles,
+    addAudioFile,
     remove,
     clear,
     ready: pending.filter((x) => x.attachment).map((x) => x.attachment as Attachment),

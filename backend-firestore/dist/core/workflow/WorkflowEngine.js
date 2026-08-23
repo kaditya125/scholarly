@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.workflowEngine = exports.WorkflowEngine = exports.WorkflowStage = void 0;
 const container_1 = require("../di/container");
@@ -10,6 +43,8 @@ const studentContext_service_1 = require("../../services/studentContext.service"
 const teacherContext_service_1 = require("../../services/teacherContext.service");
 const userProfile_service_1 = require("../../services/userProfile.service");
 const prompts_1 = require("../../config/prompts");
+const types_1 = require("./types");
+Object.defineProperty(exports, "WorkflowStage", { enumerable: true, get: function () { return types_1.WorkflowStage; } });
 const teacher_prompt_1 = require("../../prompts/teacher.prompt");
 const verification_prompt_1 = require("../../prompts/verification.prompt");
 const intent_prompt_1 = require("../../prompts/intent.prompt");
@@ -24,20 +59,6 @@ const getTelemetryService = () => {
         _telemetryService = new telemetry_service_1.TelemetryService();
     return _telemetryService;
 };
-var WorkflowStage;
-(function (WorkflowStage) {
-    WorkflowStage["INTENT_DETECTION"] = "INTENT_DETECTION";
-    WorkflowStage["CONTEXT_ENRICHMENT"] = "CONTEXT_ENRICHMENT";
-    WorkflowStage["MEMORY_RETRIEVAL"] = "MEMORY_RETRIEVAL";
-    WorkflowStage["GRAPH_RETRIEVAL"] = "GRAPH_RETRIEVAL";
-    WorkflowStage["RAG_RETRIEVAL"] = "RAG_RETRIEVAL";
-    WorkflowStage["RERANKING"] = "RERANKING";
-    WorkflowStage["AGENT_EXECUTION"] = "AGENT_EXECUTION";
-    WorkflowStage["VERIFICATION"] = "VERIFICATION";
-    WorkflowStage["ASSET_GENERATION"] = "ASSET_GENERATION";
-    WorkflowStage["ANALYTICS"] = "ANALYTICS";
-    WorkflowStage["MEMORY_UPDATE"] = "MEMORY_UPDATE";
-})(WorkflowStage || (exports.WorkflowStage = WorkflowStage = {}));
 class WorkflowEngine {
     get aiProvider() {
         return container_1.container.resolve(container_1.TOKENS.AIProvider);
@@ -182,6 +203,33 @@ class WorkflowEngine {
         }
     }
     /**
+     * Generates 2-3 short, first-person follow-up questions the student might
+     * naturally ask next, given the exchange that just happened. Cheap, non-streaming,
+     * independent of the main answer — any failure here (bad JSON, provider error)
+     * silently yields no suggestions rather than affecting the visible reply. Mirrors
+     * the ad-hoc-provider pattern already used by ChatService.generateAndSaveTitle().
+     */
+    async generateFollowUpSuggestions(query, answer, mode) {
+        try {
+            const { GeminiProvider } = await Promise.resolve().then(() => __importStar(require('../../services/ai/gemini.provider')));
+            const llm = new GeminiProvider('gemini-2.5-flash-lite');
+            const truncatedAnswer = answer.length > 2000 ? answer.slice(0, 2000) + '…' : answer;
+            const prompt = `A student in "${mode}" mode just asked Scholarly AI:\n"${query}"\n\nAnd received this answer:\n"${truncatedAnswer}"\n\nSuggest 3 short follow-up questions this student might naturally want to ask next, phrased in first person exactly as the student would type them (max ~12 words each). Return ONLY a JSON array of 3 strings — no markdown, no commentary, no numbering.`;
+            const response = await llm.generateResponse([
+                { role: 'user', content: prompt, timestamp: Date.now() },
+            ]);
+            const raw = response.reply.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed))
+                return [];
+            return parsed.filter((s) => typeof s === 'string' && s.trim().length > 0).slice(0, 3);
+        }
+        catch (e) {
+            console.warn('Follow-up suggestion generation failed (non-fatal):', e.message);
+            return [];
+        }
+    }
+    /**
      * Executes the AI workflow as a streaming generator.
      * Yields WorkflowEvents that can be pushed to the client via SSE.
      */
@@ -194,7 +242,7 @@ class WorkflowEngine {
         let firstChunkAt = 0;
         try {
             // ── Stage 1: Intent Detection ──────────────────────────────────────
-            yield { type: 'progress', stage: WorkflowStage.INTENT_DETECTION, message: 'Understanding your question...' };
+            yield { type: 'progress', stage: types_1.WorkflowStage.INTENT_DETECTION, message: 'Understanding your question...' };
             const mode = req.mode || 'TEACHER';
             // ── Podcast planner fast path ──────────────────────────────────────
             // The Podcast Studio sends `mode: 'podcast'` with a "Plan a podcast
@@ -214,34 +262,34 @@ class WorkflowEngine {
                 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
                 yield {
                     type: 'progress',
-                    stage: WorkflowStage.CONTEXT_ENRICHMENT,
+                    stage: types_1.WorkflowStage.CONTEXT_ENRICHMENT,
                     message: 'Reading your request and identifying the educational objective...'
                 };
                 await pause(450);
                 yield {
                     type: 'progress',
-                    stage: WorkflowStage.MEMORY_RETRIEVAL,
+                    stage: types_1.WorkflowStage.MEMORY_RETRIEVAL,
                     message: 'Loading your learning profile so the podcast is tailored to your background...'
                 };
                 await pause(500);
                 yield {
                     type: 'progress',
-                    stage: WorkflowStage.GRAPH_RETRIEVAL,
+                    stage: types_1.WorkflowStage.GRAPH_RETRIEVAL,
                     message: 'Traversing related concepts, prerequisites, and dependencies...'
                 };
                 await pause(500);
                 yield {
                     type: 'progress',
-                    stage: WorkflowStage.RAG_RETRIEVAL,
+                    stage: types_1.WorkflowStage.RAG_RETRIEVAL,
                     message: 'Searching your notebooks and curriculum for relevant passages...'
                 };
                 await pause(500);
                 yield {
                     type: 'progress',
-                    stage: WorkflowStage.AGENT_EXECUTION,
+                    stage: types_1.WorkflowStage.AGENT_EXECUTION,
                     message: 'Composing the podcast plan you can approve, refine, or hand off to voice generation...'
                 };
-                const podcastSystemPrompt = (0, prompts_1.buildScholarlySystemPrompt)({
+                const podcastSystemPrompt = (0, prompts_1.buildSadhyaSystemPrompt)({
                     mode: 'PODCAST',
                     viewerRole: req.productRole,
                     studentContext: {
@@ -301,7 +349,7 @@ class WorkflowEngine {
             const isTeacherRole = req.productRole === 'teacher';
             yield {
                 type: 'progress',
-                stage: WorkflowStage.CONTEXT_ENRICHMENT,
+                stage: types_1.WorkflowStage.CONTEXT_ENRICHMENT,
                 message: isTeacherRole ? 'Loading your teaching profile...' : 'Loading your learning profile...',
             };
             let studentContext;
@@ -354,7 +402,7 @@ class WorkflowEngine {
             const isGreeting = (0, prompts_1.isGreetingMessage)(req.query);
             const isShortHistory = req.history.filter(m => m.role !== 'system').length <= 2;
             if (isGreeting && isShortHistory && !isTeacherRole) {
-                yield { type: 'progress', stage: WorkflowStage.AGENT_EXECUTION, message: 'Preparing your personalized welcome...' };
+                yield { type: 'progress', stage: types_1.WorkflowStage.AGENT_EXECUTION, message: 'Preparing your personalized welcome...' };
                 // Generate greeting or onboarding response
                 const greetingPrompt = (0, prompts_1.getGreetingOrOnboardingPrompt)(studentContext);
                 const anyProvider = this.aiProvider;
@@ -385,7 +433,7 @@ class WorkflowEngine {
                     }
                 }
                 // Update memory and finish
-                yield { type: 'progress', stage: WorkflowStage.MEMORY_UPDATE, message: 'Updating student memory...' };
+                yield { type: 'progress', stage: types_1.WorkflowStage.MEMORY_UPDATE, message: 'Updating student memory...' };
                 const memoryProvider = container_1.container.resolve(container_1.TOKENS.MemoryProvider);
                 await memoryProvider.updateSessionMemory(req.userId, req.sessionId || 'default', {
                     contextWindow: [req.query]
@@ -418,12 +466,12 @@ class WorkflowEngine {
                 }
             }
             // ── Stage 3: Memory Retrieval ──────────────────────────────────────
-            yield { type: 'progress', stage: WorkflowStage.MEMORY_RETRIEVAL, message: 'Loading learning memory...' };
+            yield { type: 'progress', stage: types_1.WorkflowStage.MEMORY_RETRIEVAL, message: 'Loading learning memory...' };
             const memoryProvider = container_1.container.resolve(container_1.TOKENS.MemoryProvider);
             const sessionMemory = await memoryProvider.getSessionMemory(req.userId, req.sessionId || 'default');
             const learningMetrics = await memoryProvider.getLearningAnalytics(req.userId);
             // ── Stage 4: Graph Retrieval ───────────────────────────────────────
-            yield { type: 'progress', stage: WorkflowStage.GRAPH_RETRIEVAL, message: 'Mapping concept relationships...' };
+            yield { type: 'progress', stage: types_1.WorkflowStage.GRAPH_RETRIEVAL, message: 'Mapping concept relationships...' };
             const agentContext = {
                 request: req,
                 retrievedContext: 'Placeholder RAG Text', // Will be populated by RAG phase
@@ -435,7 +483,7 @@ class WorkflowEngine {
             const graphAgent = new KnowledgeGraphAgent_1.KnowledgeGraphAgent();
             await graphAgent.execute(agentContext);
             // ── Stage 5: Vector Retrieval (RAG) ────────────────────────────────
-            yield { type: 'progress', stage: WorkflowStage.RAG_RETRIEVAL, message: 'Searching memory and the web...' };
+            yield { type: 'progress', stage: types_1.WorkflowStage.RAG_RETRIEVAL, message: 'Searching memory and the web...' };
             const retrievalStartTime = Date.now();
             const retrievalService = new retrieval_service_1.RetrievalService();
             let contextStr = '';
@@ -504,7 +552,7 @@ class WorkflowEngine {
             const rerankingLatencyMs = sumSpan('cohere_rerank');
             const retrievalCacheHit = retrievalSpans.some((m) => m.operation === 'retrieval_cache_hit');
             // ── Stage 6: Agent Execution ───────────────────────────────────────
-            yield { type: 'progress', stage: WorkflowStage.AGENT_EXECUTION, message: `Scholarly AI ${mode} mode preparing explanation...` };
+            yield { type: 'progress', stage: types_1.WorkflowStage.AGENT_EXECUTION, message: `Sadhya AI ${mode} mode preparing explanation...` };
             const generationStartTime = Date.now();
             const teacher = new TeacherAgent_1.TeacherAgent();
             // Stream the teacher's draft out as `reasoning` events so the client can render
@@ -537,9 +585,9 @@ class WorkflowEngine {
                 if (next.value)
                     yield { type: 'reasoning', text: next.value };
             }
-            const generatedResponse = agentContext.sharedState['teacherDraft'] || '';
+            const generatedResponse = agentContext.sharedState['teacherReasoning'] || '';
             // ── Stage 7: Verification ──────────────────────────────────────────
-            yield { type: 'progress', stage: WorkflowStage.VERIFICATION, message: 'Verifying retrieved information...' };
+            yield { type: 'progress', stage: types_1.WorkflowStage.VERIFICATION, message: 'Verifying retrieved information...' };
             // Real quality metrics derived from the verification report (when a notebook + citations exist).
             let measuredHallucinationRate = 0;
             let measuredCitationCoverage = citationsList.length > 0 ? 1 : 0;
@@ -559,7 +607,7 @@ class WorkflowEngine {
                 }
             }
             // ── Stage 8: Asset Generation ──────────────────────────────────────
-            yield { type: 'progress', stage: WorkflowStage.ASSET_GENERATION, message: 'Creating learning assets...' };
+            yield { type: 'progress', stage: types_1.WorkflowStage.ASSET_GENERATION, message: 'Creating learning assets...' };
             // ── Stage 9: Format & Stream Response ──────────────────────────────
             const formatter = new ResponseFormatter_1.ResponseFormatter();
             let fullReply = '';
@@ -575,8 +623,15 @@ class WorkflowEngine {
                 }
             }
             const generationLatencyMs = Date.now() - generationStartTime;
+            // Kick off follow-up suggestions concurrently with the analytics/telemetry/
+            // memory-update work below — no data dependency on those, so overlapping
+            // avoids adding latency on the critical path. Only for conversational modes;
+            // other modes' output shapes don't fit generic "what's next" chips.
+            const suggestionsPromise = (0, prompts_1.isConversationalReasoningMode)(mode) && fullReply
+                ? this.generateFollowUpSuggestions(req.query, fullReply, mode)
+                : Promise.resolve([]);
             // ── Stage 10: Analytics ────────────────────────────────────────────
-            yield { type: 'progress', stage: WorkflowStage.ANALYTICS, message: 'Logging retrieval analytics...' };
+            yield { type: 'progress', stage: types_1.WorkflowStage.ANALYTICS, message: 'Logging retrieval analytics...' };
             const analyticsProvider = container_1.container.resolve(container_1.TOKENS.AnalyticsProvider);
             // Real cost attribution from token-usage cost events recorded during this request.
             const costSpans = telemetry_1.Telemetry.costs.slice(costMark);
@@ -626,7 +681,7 @@ class WorkflowEngine {
                 citationCount: citationsList.length,
             });
             // ── Stage 11: Memory Update ────────────────────────────────────────
-            yield { type: 'progress', stage: WorkflowStage.MEMORY_UPDATE, message: 'Updating student memory...' };
+            yield { type: 'progress', stage: types_1.WorkflowStage.MEMORY_UPDATE, message: 'Updating student memory...' };
             await memoryProvider.updateSessionMemory(req.userId, req.sessionId || 'default', {
                 contextWindow: [...sessionMemory.contextWindow, req.query]
             });
@@ -634,6 +689,10 @@ class WorkflowEngine {
             if (!studentContext.isOnboarded && fullReply) {
                 const profileService = new userProfile_service_1.UserProfileService();
                 profileService.extractProfileFromConversation(req.userId, req.query, fullReply).catch(console.error);
+            }
+            const followUpSuggestions = await suggestionsPromise;
+            if (followUpSuggestions.length > 0) {
+                yield { type: 'suggestions', suggestions: followUpSuggestions };
             }
             yield { type: 'done', data: { citations: citationsList, assets: [], confidenceScore: measuredConfidence } };
         }

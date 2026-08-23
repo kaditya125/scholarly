@@ -4,58 +4,78 @@ exports.DiscussionsService = void 0;
 const discussions_repository_1 = require("../repositories/discussions.repository");
 class DiscussionsService {
     repository = new discussions_repository_1.DiscussionsRepository();
-    async getDiscussions(roomId, limit) {
-        return this.repository.findByRoom(roomId, limit);
+    async getDiscussions(params) {
+        return this.repository.findFiltered(params);
+    }
+    async getDiscussionById(id, currentUid) {
+        return this.repository.getById(id, currentUid);
     }
     async createDiscussion(data) {
-        // Simulate AI Moderation
+        // Basic AI Moderation check
         const isAppropriate = this.simulateAIModeration(data.title, data.description);
         if (!isAppropriate) {
-            throw new Error("Content violates community guidelines.");
+            throw new Error('Content violates community guidelines.');
         }
-        // Duplicate Detection (Similarity Search Mock)
-        const similarThreads = await this.findSimilarThreads(data.title, data.roomId);
-        if (similarThreads.length > 0) {
-            // In a real app we might return a 409 or a warning. 
-            // For now, we'll just link them.
-        }
-        // Simulate AI Summarization / Title generation if title is empty
         let finalTitle = data.title;
         if (!finalTitle || finalTitle.trim() === '') {
             finalTitle = this.simulateAITitleGeneration(data.description);
         }
         const aiSummary = this.simulateAISummarization(data.description);
         const newDiscussion = {
-            chapter: 'General',
-            topic: data.topic,
+            chapter: data.topic || 'General',
+            topic: data.topic || 'General',
             title: finalTitle,
-            description: data.description,
-            roomId: data.roomId,
+            description: data.description || '',
+            roomId: data.roomId || 'general',
+            authorId: data.participantId,
+            tags: Array.isArray(data.tags) ? data.tags : [],
+            status: 'active',
             replies: 0,
-            views: 0,
+            views: 1,
+            likes: [],
+            likeCount: 0,
+            liked: false,
             participants: [data.participantId],
-            aiAssisted: true, // We processed it via AI
+            aiAssisted: true,
             aiSummary: aiSummary,
-            similarThreadIds: similarThreads,
-            createdAt: Date.now()
+            similarThreadIds: [],
+            createdAt: Date.now(),
         };
         return this.repository.create(newDiscussion);
     }
+    async toggleVote(id, currentUid) {
+        return this.repository.toggleVote(id, currentUid);
+    }
+    async addResponse(discussionId, currentUid, text) {
+        if (!text || !text.trim()) {
+            throw new Error('Response text cannot be empty');
+        }
+        return this.repository.addResponse(discussionId, currentUid, text.trim());
+    }
+    async setBestResponse(discussionId, responseId, currentUid) {
+        return this.repository.setBestResponse(discussionId, responseId, currentUid);
+    }
+    async setStatus(discussionId, status, currentUid) {
+        return this.repository.setStatus(discussionId, status, currentUid);
+    }
+    async getTrending(limit = 6) {
+        return this.repository.getTrending(limit);
+    }
+    async getContributors(limit = 5) {
+        return this.repository.getContributors(limit);
+    }
     simulateAIModeration(title, description) {
-        const toxicWords = ['spam', 'abuse', 'hate'];
+        const toxicWords = ['hate speech', 'illegal activity', 'phishing scam'];
         const content = (title + ' ' + description).toLowerCase();
-        return !toxicWords.some(w => content.includes(w));
+        return !toxicWords.some((w) => content.includes(w));
     }
     simulateAITitleGeneration(description) {
-        return description.substring(0, 30) + "...";
+        return description.substring(0, 40) + '...';
     }
     simulateAISummarization(description) {
-        return `AI Summary: This discussion revolves around key concepts mentioned in the description. Exploring the nuances of ${description.split(' ').slice(0, 3).join(' ')}...`;
-    }
-    async findSimilarThreads(title, roomId) {
-        // In production, this would use vector search (Pinecone) to find semantic duplicates
-        // For now, return empty or mock
-        return [];
+        if (!description || description.length < 50)
+            return '';
+        return `AI Summary: ${description.substring(0, 100)}...`;
     }
 }
 exports.DiscussionsService = DiscussionsService;

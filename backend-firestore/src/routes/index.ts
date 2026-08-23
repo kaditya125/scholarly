@@ -45,6 +45,7 @@ import examRoutes from './exam.routes';
 import canonicalAssessmentRoutes from './canonicalAssessment.routes';
 import automationRoutes from './automation.routes';
 import contactRoutes from './contact.routes';
+import savedMessageRoutes from './savedMessage.routes';
 
 const router = Router();
 
@@ -85,6 +86,7 @@ router.use('/payments', paymentsRoutes);
 router.use('/planning', planningRoutes);
 router.use('/podcasts', podcastsRoutes);
 router.use('/quiz', quizRoutes);
+router.use('/saved-messages', savedMessageRoutes);
 router.use('/scan', scanRoutes);
 router.use('/trash', trashRoutes);
 router.use('/uploads', uploadsRoutes);
