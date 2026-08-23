@@ -207,10 +207,10 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isAppearanceOpen, setIsAppearanceOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-  // More flyout — portal-based so sidebar overflow never clips it
+  // More flyout — portal-based for collapsed rail, inline accordion for expanded
   const [isMoreFlyoutOpen, setIsMoreFlyoutOpen] = useState(false);
 
-  // Auto-close mobile drawer on route change (for mobile screens like OnePlus 10R)
+  // Auto-close menus and mobile drawer on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setIsNewMenuOpen(false);
@@ -225,6 +225,7 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
   }, []);
   const moreFlyoutRef = useRef<HTMLDivElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
+  const moreExpandedRef = useRef<HTMLDivElement>(null);
   const [moreFlyoutStyle, setMoreFlyoutStyle] = useState<React.CSSProperties>({});
 
   const newMenuRef = useRef<HTMLDivElement>(null);
@@ -254,25 +255,29 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
   }, [user?.uid, location.pathname]);
 
   useEffect(() => {
-    setIsMobileMenuOpen(false);
-    setIsMoreFlyoutOpen(false);
-  }, [location.pathname]);
-
-  useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
         setIsProfileMenuOpen(false);
       }
       const target = event.target as Node;
-      // Close More flyout when clicking outside both the button and the portal flyout panel
-      if (
-        !moreButtonRef.current?.contains(target) &&
-        !moreFlyoutRef.current?.contains(target)
-      ) {
-        setIsMoreFlyoutOpen(false);
+      // Close More flyout when clicking outside
+      if (isRail) {
+        if (
+          !moreButtonRef.current?.contains(target) &&
+          !moreFlyoutRef.current?.contains(target)
+        ) {
+          setIsMoreFlyoutOpen(false);
+        }
+      } else {
+        if (
+          moreExpandedRef.current &&
+          !moreExpandedRef.current.contains(target)
+        ) {
+          setIsMoreFlyoutOpen(false);
+        }
       }
       // Close New menu when clicking outside
-      if (isCollapsed) {
+      if (isRail) {
         if (
           !newMenuButtonRef.current?.contains(target) &&
           !newMenuRef.current?.contains(target)
@@ -546,7 +551,7 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
 
               {/* EXPANDED: accordion */}
               {!isRail && (
-                <div className="mt-0.5 mb-0.5">
+                <div ref={moreExpandedRef} className="mt-0.5 mb-0.5">
                   <button
                     onClick={() => setIsMoreFlyoutOpen(v => !v)}
                     className={cn(
@@ -601,7 +606,6 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                                     key={item.path}
                                     to={item.path}
                                     onClick={() => {
-                                      setIsMoreFlyoutOpen(false);
                                       setIsMobileMenuOpen(false);
                                     }}
                                     className={cn(
