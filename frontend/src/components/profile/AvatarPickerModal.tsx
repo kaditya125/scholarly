@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { X, Sparkles, Check, RefreshCw, Wand2, User, Upload, ArrowRight } from "lucide-react";
+import { X, Sparkles, Check, RefreshCw, Wand2, User, Upload, ArrowRight, Flame, Smile } from "lucide-react";
 import { updateProfile } from "firebase/auth";
 import { auth } from "../../lib/firebase";
 import { useAuth } from "../../lib/AuthContext";
 import { cn } from "../../lib/utils";
+import { CINEMATIC_3D_AVATARS } from "../social/PeerAvatar";
 
 interface AvatarPickerModalProps {
   isOpen: boolean;
@@ -11,24 +12,17 @@ interface AvatarPickerModalProps {
   onSelectAvatar?: (url: string) => void;
 }
 
-const PRESET_3D_AVATARS = [
-  { id: "alex", name: "Alex (Headset)", url: "https://api.dicebear.com/7.x/adventurer/svg?seed=Alex&glasses=variant02&skinColor=f2d3b1" },
-  { id: "maya", name: "Maya (Beanie)", url: "https://api.dicebear.com/7.x/adventurer/svg?seed=Maya&hair=short01&skinColor=ecad80" },
-  { id: "jordan", name: "Jordan (Tech)", url: "https://api.dicebear.com/7.x/adventurer/svg?seed=Jordan&glasses=variant05&skinColor=9e5622" },
-  { id: "sophia", name: "Sophia (Creative)", url: "https://api.dicebear.com/7.x/adventurer/svg?seed=Sophia&hair=long02&skinColor=f2d3b1" },
-  { id: "leo", name: "Leo (Gamer)", url: "https://api.dicebear.com/7.x/adventurer/svg?seed=Leo&hair=short05&skinColor=d08b5b" },
-  { id: "kiara", name: "Kiara (Scholar)", url: "https://api.dicebear.com/7.x/adventurer/svg?seed=Kiara&hair=long05&skinColor=ecad80" },
-  { id: "thomas", name: "Thomas (Thinker)", url: "https://api.dicebear.com/7.x/adventurer/svg?seed=Thomas&hair=short02&skinColor=f2d3b1" },
-  { id: "jasmine", name: "Jasmine (Artist)", url: "https://api.dicebear.com/7.x/adventurer/svg?seed=Jasmine&hair=long03&skinColor=763900" },
-  { id: "cameron", name: "Cameron (Books)", url: "https://api.dicebear.com/7.x/adventurer/svg?seed=Cameron&glasses=variant01&skinColor=f2d3b1" },
-  { id: "elena", name: "Elena (Coder)", url: "https://api.dicebear.com/7.x/adventurer/svg?seed=Elena&glasses=variant03&skinColor=ecad80" },
-  { id: "aryan", name: "Aryan (Engineer)", url: "https://api.dicebear.com/7.x/adventurer/svg?seed=Aryan&hair=short03&skinColor=9e5622" },
-  { id: "zoe", name: "Zoe (Explorer)", url: "https://api.dicebear.com/7.x/adventurer/svg?seed=Zoe&hair=long06&skinColor=f2d3b1" },
-  { id: "bot1", name: "Cyber Student", url: "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Nova" },
-  { id: "bot2", name: "AI Assistant", url: "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Quantum" },
-  { id: "lore1", name: "Aria (Anime 3D)", url: "https://api.dicebear.com/7.x/lorelei/svg?seed=Aria" },
-  { id: "lore2", name: "Kai (Anime 3D)", url: "https://api.dicebear.com/7.x/lorelei/svg?seed=Kai" },
-];
+const MEMOJI_3D_LIST = Array.from({ length: 30 }, (_, i) => ({
+  id: `memo_${i + 1}`,
+  name: `3D Student #${i + 1}`,
+  url: `https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_${i + 1}.png`,
+}));
+
+const PIXAR_3D_LIST = Array.from({ length: 27 }, (_, i) => ({
+  id: `vibrent_${i + 1}`,
+  name: `3D Pixar #${i + 1}`,
+  url: `https://cdn.jsdelivr.net/gh/alohe/avatars/png/vibrent_${i + 1}.png`,
+}));
 
 const AVATAR_STYLES = [
   { id: "adventurer", label: "3D Adventurer" },
@@ -40,8 +34,8 @@ const AVATAR_STYLES = [
 
 export function AvatarPickerModal({ isOpen, onClose, onSelectAvatar }: AvatarPickerModalProps) {
   const { user, refreshUser } = useAuth();
-  const [tab, setTab] = useState<"preset" | "generate">("preset");
-  const [selectedUrl, setSelectedUrl] = useState<string>(user?.photoURL || PRESET_3D_AVATARS[0].url);
+  const [activeCategory, setActiveCategory] = useState<"memoji" | "pixar" | "generate">("memoji");
+  const [selectedUrl, setSelectedUrl] = useState<string>(user?.photoURL || MEMOJI_3D_LIST[0].url);
   const [prompt, setPrompt] = useState(user?.displayName || "Student");
   const [style, setStyle] = useState("adventurer");
   const [isSaving, setIsSaving] = useState(false);
@@ -49,6 +43,8 @@ export function AvatarPickerModal({ isOpen, onClose, onSelectAvatar }: AvatarPic
   if (!isOpen) return null;
 
   const generatedUrl = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(prompt.trim() || "student")}`;
+
+  const currentList = activeCategory === "memoji" ? MEMOJI_3D_LIST : PIXAR_3D_LIST;
 
   const handleSaveAvatar = async (avatarUrl: string) => {
     setIsSaving(true);
@@ -76,19 +72,19 @@ export function AvatarPickerModal({ isOpen, onClose, onSelectAvatar }: AvatarPic
       <div className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity" onClick={onClose} />
 
       {/* Modal Container */}
-      <div className="relative w-full max-w-lg bg-white dark:bg-[#161619] rounded-3xl shadow-2xl border border-slate-200/80 dark:border-white/10 overflow-hidden font-sans flex flex-col max-h-[85vh]">
+      <div className="relative w-full max-w-xl bg-white dark:bg-[#161619] rounded-3xl shadow-2xl border border-slate-200/80 dark:border-white/10 overflow-hidden font-sans flex flex-col max-h-[88vh] animate-in fade-in zoom-in-95 duration-150">
         {/* Modal Header */}
         <div className="shrink-0 flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-white/5">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-[#186a52] dark:text-[#c8e558] flex items-center justify-center">
-              <Sparkles className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-purple-500 via-rose-500 to-amber-400 text-white flex items-center justify-center shadow-xs">
+              <Sparkles className="w-4.5 h-4.5" />
             </div>
             <div>
-              <h3 className="text-[16px] font-bold text-slate-900 dark:text-white">
-                Choose Your 3D Profile Avatar
+              <h3 className="text-[16px] font-bold text-slate-900 dark:text-white tracking-tight">
+                Cinematic 3D Profile Avatars
               </h3>
               <p className="text-[11.5px] text-slate-400 dark:text-gray-400">
-                Select from our 3D character collection or create your own
+                Ultra-realistic 3D characters for your student profile
               </p>
             </div>
           </div>
@@ -102,46 +98,60 @@ export function AvatarPickerModal({ isOpen, onClose, onSelectAvatar }: AvatarPic
           </button>
         </div>
 
-        {/* Tab Toggle */}
-        <div className="px-6 pt-4 pb-2">
-          <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 text-[12.5px] font-semibold">
+        {/* Category Switcher Tabs */}
+        <div className="px-6 pt-4 pb-2 shrink-0">
+          <div className="grid grid-cols-3 p-1 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 text-[12px] font-semibold">
             <button
               type="button"
-              onClick={() => setTab("preset")}
+              onClick={() => setActiveCategory("memoji")}
               className={cn(
-                "py-2 rounded-xl transition-all cursor-pointer",
-                tab === "preset"
-                  ? "bg-white dark:bg-[#202024] text-slate-900 dark:text-white shadow-xs"
+                "py-2 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5",
+                activeCategory === "memoji"
+                  ? "bg-white dark:bg-[#202024] text-slate-900 dark:text-white shadow-xs font-bold"
                   : "text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white"
               )}
             >
-              3D Character Gallery
+              <Smile className="w-3.5 h-3.5" />
+              <span>3D Memojis ({MEMOJI_3D_LIST.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveCategory("pixar")}
+              className={cn(
+                "py-2 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5",
+                activeCategory === "pixar"
+                  ? "bg-white dark:bg-[#202024] text-slate-900 dark:text-white shadow-xs font-bold"
+                  : "text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white"
+              )}
+            >
+              <Flame className="w-3.5 h-3.5 text-amber-500" />
+              <span>3D Pixar ({PIXAR_3D_LIST.length})</span>
             </button>
             <button
               type="button"
               onClick={() => {
-                setTab("generate");
+                setActiveCategory("generate");
                 setSelectedUrl(generatedUrl);
               }}
               className={cn(
                 "py-2 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5",
-                tab === "generate"
-                  ? "bg-white dark:bg-[#202024] text-slate-900 dark:text-white shadow-xs"
+                activeCategory === "generate"
+                  ? "bg-white dark:bg-[#202024] text-slate-900 dark:text-white shadow-xs font-bold"
                   : "text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white"
               )}
             >
-              <Wand2 className="w-3.5 h-3.5" />
-              Generate 3D Avatar
+              <Wand2 className="w-3.5 h-3.5 text-[#186a52] dark:text-[#c8e558]" />
+              <span>AI Generator</span>
             </button>
           </div>
         </div>
 
         {/* Body Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 pt-2">
-          {tab === "preset" ? (
+          {activeCategory !== "generate" ? (
             <div className="space-y-4">
-              <div className="grid grid-cols-4 sm:grid-cols-4 gap-3">
-                {PRESET_3D_AVATARS.map((avatar) => {
+              <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
+                {currentList.map((avatar) => {
                   const isSelected = selectedUrl === avatar.url;
                   return (
                     <button
@@ -149,29 +159,29 @@ export function AvatarPickerModal({ isOpen, onClose, onSelectAvatar }: AvatarPic
                       type="button"
                       onClick={() => setSelectedUrl(avatar.url)}
                       className={cn(
-                        "relative flex flex-col items-center gap-2 p-2.5 rounded-2xl border transition-all cursor-pointer group",
+                        "relative flex flex-col items-center gap-2 p-2 rounded-2xl border transition-all cursor-pointer group",
                         isSelected
                           ? "bg-emerald-50/50 dark:bg-[#186a52]/15 border-[#186a52] dark:border-[#c8e558] ring-2 ring-[#186a52]/20 shadow-sm"
                           : "bg-slate-50/70 dark:bg-white/[0.02] border-slate-200/70 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20"
                       )}
                     >
-                      <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-white dark:bg-white/10 p-1 shadow-2xs group-hover:scale-105 transition-transform">
+                      <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-slate-100/60 dark:bg-white/5 p-1 shadow-2xs group-hover:scale-105 transition-transform flex items-center justify-center">
                         <img
                           src={avatar.url}
                           alt={avatar.name}
-                          className="w-full h-full object-contain"
+                          className="w-full h-full object-contain drop-shadow-md"
                           loading="lazy"
                         />
                         {isSelected && (
-                          <div className="absolute inset-0 bg-[#186a52]/20 flex items-center justify-center">
-                            <div className="w-5 h-5 rounded-full bg-[#186a52] text-white flex items-center justify-center shadow-xs">
-                              <Check className="w-3 h-3 stroke-[3]" />
+                          <div className="absolute inset-0 bg-[#186a52]/20 backdrop-blur-2xs flex items-center justify-center rounded-2xl">
+                            <div className="w-6 h-6 rounded-full bg-[#186a52] text-white flex items-center justify-center shadow-xs">
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
                             </div>
                           </div>
                         )}
                       </div>
-                      <span className="text-[10.5px] font-bold text-slate-700 dark:text-gray-300 truncate w-full text-center">
-                        {avatar.name.split(" ")[0]}
+                      <span className="text-[10px] font-bold text-slate-600 dark:text-gray-400 truncate w-full text-center">
+                        #{avatar.id.split("_")[1]}
                       </span>
                     </button>
                   );
@@ -200,7 +210,7 @@ export function AvatarPickerModal({ isOpen, onClose, onSelectAvatar }: AvatarPic
               {/* Custom Prompt / Seed Input */}
               <div className="space-y-1.5">
                 <label className="text-[12px] font-bold text-slate-700 dark:text-gray-300">
-                  Avatar Name or Prompt
+                  Avatar Seed or Name
                 </label>
                 <div className="flex items-center gap-2">
                   <input
@@ -272,7 +282,7 @@ export function AvatarPickerModal({ isOpen, onClose, onSelectAvatar }: AvatarPic
           <button
             type="button"
             disabled={isSaving}
-            onClick={() => handleSaveAvatar(tab === "generate" ? generatedUrl : selectedUrl)}
+            onClick={() => handleSaveAvatar(activeCategory === "generate" ? generatedUrl : selectedUrl)}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[12.5px] font-bold bg-[#186a52] text-white hover:bg-[#125340] dark:bg-[#c8e558] dark:text-slate-900 dark:hover:bg-[#b5d342] shadow-sm transition-transform active:scale-95 cursor-pointer disabled:opacity-50"
           >
             <span>{isSaving ? "Saving..." : "Set as 3D Profile Avatar"}</span>
