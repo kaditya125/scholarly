@@ -825,7 +825,7 @@ export default function LandingPage() {
                   },
                   { 
                     isLive: true,
-                    value: activeStudents !== null && activeStudents > 0 ? `${activeStudents}` : null,
+                    value: `${activeStudents ?? 0}`, 
                     label: activeStudents === 1 ? 'Student learning now' : 'Students learning now' 
                   },
                   { 
@@ -842,21 +842,15 @@ export default function LandingPage() {
                         </span>
                         {/* Animated rolling counter — flips up/down like YouTube subscriber count */}
                         <div className="relative h-[34px] sm:h-[38px] overflow-hidden flex items-center">
-                          {stat.value !== null ? (
-                            <motion.p
-                              key={activeAnimKey}
-                              initial={{ y: prevActiveRef.current !== null && stat.value > (prevActiveRef.current ?? 0) ? 28 : -28, opacity: 0 }}
-                              animate={{ y: 0, opacity: 1 }}
-                              transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-                              className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white"
-                            >
-                              {stat.value}
-                            </motion.p>
-                          ) : (
-                            <p className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-400 dark:text-slate-500">
-                              —
-                            </p>
-                          )}
+                          <motion.p
+                            key={activeAnimKey}
+                            initial={{ y: prevActiveRef.current !== null && (activeStudents ?? 0) > (prevActiveRef.current ?? 0) ? 28 : -28, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                            className="text-[22px] sm:text-[24px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white"
+                          >
+                            {stat.value}
+                          </motion.p>
                         </div>
                       </div>
                     ) : (
