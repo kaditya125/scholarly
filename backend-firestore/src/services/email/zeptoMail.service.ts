@@ -417,22 +417,22 @@ https://sadhya.app
   <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff; width: 100%;">
     <tr>
       <td align="center" style="padding: 24px 16px 48px;">
-        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 640px; text-align: left;">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; text-align: left;">
           
           <!-- Top Brand Header -->
           <tr>
-            <td style="padding: 24px 0 28px; border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 24px 0 24px; border-bottom: 1px solid #f1f5f9;">
               <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td>
-                    <a href="https://sadhya.app" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 10px;">
-                      <img src="${this.iconUrl}" alt="Sadhya" width="38" height="38" style="border-radius: 8px; vertical-align: middle; border: 0;" />
-                      <span style="font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; margin-left: 10px; vertical-align: middle;">Sadhya<span style="color: #65a30d;">.</span></span>
+                    <a href="https://sadhya.app" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                      <img src="${this.iconUrl}" alt="" width="32" height="32" style="border-radius: 6px; vertical-align: middle; border: 0; display: inline-block;" />
+                      <span style="font-size: 20px; font-weight: 700; color: #0f172a; letter-spacing: -0.4px; margin-left: 8px; vertical-align: middle;">Sadhya<span style="color: #65a30d;">.</span></span>
                     </a>
                   </td>
                   <td align="right">
-                    <span style="font-size: 11.5px; font-weight: 700; color: #0f172a; background-color: #c8e558; padding: 6px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.6px;">
-                      ${isTeacher ? 'Teacher Suite' : 'AI Learning Platform'}
+                    <span style="font-size: 11px; font-weight: 700; color: #475569; background-color: #f1f5f9; padding: 5px 12px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.8px;">
+                      ${isTeacher ? 'TEACHER SUITE' : 'WELCOME'}
                     </span>
                   </td>
                 </tr>
@@ -440,128 +440,62 @@ https://sadhya.app
             </td>
           </tr>
 
-          <!-- Hero Greeting -->
+          <!-- Main Title -->
           <tr>
-            <td style="padding: 36px 0 28px;">
-              <h1 style="margin: 0 0 16px; font-size: 26px; font-weight: 800; color: #0f172a; letter-spacing: -0.6px; line-height: 1.25;">
-                Welcome to Sadhya, ${name}! 🚀
+            <td style="padding: 32px 0 0;">
+              <h1 style="margin: 0 0 20px; font-size: 24px; font-weight: 700; color: #0f172a; letter-spacing: -0.5px; line-height: 1.3;">
+                Welcome to Sadhya
               </h1>
-              <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #475569;">
-                Your workspace is ready. Sadhya gives you personalized, syllabus-aligned AI preparation designed to help you achieve your goals faster.
+              <p style="margin: 0 0 16px; font-size: 15px; line-height: 1.6; color: #334155;">
+                Hello <strong>${name}</strong>,
+              </p>
+              <p style="margin: 0 0 28px; font-size: 15px; line-height: 1.6; color: #475569;">
+                Thank you for joining Sadhya. Your personalized workspace is ready, giving you syllabus-aligned AI preparation designed to help you achieve your goals faster.
               </p>
             </td>
           </tr>
 
-          <!-- Feature Cards List -->
+          <!-- Primary CTA Button -->
           <tr>
             <td style="padding: 0 0 32px;">
-              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden;">
-                
-                <!-- Feature 1 -->
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="padding: 22px 24px; border-bottom: 1px solid #f1f5f9; background-color: #ffffff;">
-                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td width="40" valign="top">
-                          <div style="width: 34px; height: 34px; border-radius: 8px; background-color: #f1f5f9; text-align: center; line-height: 34px; font-size: 18px;">
-                            🎯
-                          </div>
-                        </td>
-                        <td style="padding-left: 14px;">
-                          <h3 style="margin: 0 0 4px; font-size: 15.5px; font-weight: 700; color: #0f172a;">
-                            ${isTeacher ? 'Classroom Cohorts & Live Sessions' : 'Exam-Specific AI Tutor'}
-                          </h3>
-                          <p style="margin: 0; font-size: 13.5px; line-height: 1.55; color: #64748b;">
-                            ${isTeacher ? 'Manage student batches, share interactive resources, and conduct live audio/video class sessions seamlessly.' : 'Targeted prep covering NEET, JEE, UPSC CSE, SSC CGL, Banking, and Board exams.'}
-                          </p>
-                        </td>
-                      </tr>
-                    </table>
+                  <td>
+                    <a href="${dashboardUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 14.5px; font-weight: 600; text-decoration: none; padding: 13px 28px; border-radius: 8px; text-align: center;">
+                      ${isTeacher ? 'Open Teacher Workspace' : 'Open Workspace'} &rarr;
+                    </a>
                   </td>
                 </tr>
-
-                <!-- Feature 2 -->
-                <tr>
-                  <td style="padding: 22px 24px; border-bottom: 1px solid #f1f5f9; background-color: #ffffff;">
-                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td width="40" valign="top">
-                          <div style="width: 34px; height: 34px; border-radius: 8px; background-color: #f1f5f9; text-align: center; line-height: 34px; font-size: 18px;">
-                            ⚡
-                          </div>
-                        </td>
-                        <td style="padding-left: 14px;">
-                          <h3 style="margin: 0 0 4px; font-size: 15.5px; font-weight: 700; color: #0f172a;">
-                            6-Step Deep Reasoning Engine
-                          </h3>
-                          <p style="margin: 0; font-size: 13.5px; line-height: 1.55; color: #64748b;">
-                            Get step-by-step conceptual breakdowns, formula derivations, and common pitfall warnings for every complex question.
-                          </p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-
-                <!-- Feature 3 -->
-                <tr>
-                  <td style="padding: 22px 24px; border-bottom: 1px solid #f1f5f9; background-color: #ffffff;">
-                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td width="40" valign="top">
-                          <div style="width: 34px; height: 34px; border-radius: 8px; background-color: #f1f5f9; text-align: center; line-height: 34px; font-size: 18px;">
-                            🎙️
-                          </div>
-                        </td>
-                        <td style="padding-left: 14px;">
-                          <h3 style="margin: 0 0 4px; font-size: 15.5px; font-weight: 700; color: #0f172a;">
-                            Audio Lessons & Podcast Studio
-                          </h3>
-                          <p style="margin: 0; font-size: 13.5px; line-height: 1.55; color: #64748b;">
-                            Turn study notes, chapters, and difficult concepts into cinematic, 2-host audio podcasts to learn on the go.
-                          </p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-
-                <!-- Feature 4 -->
-                <tr>
-                  <td style="padding: 22px 24px; background-color: #ffffff;">
-                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td width="40" valign="top">
-                          <div style="width: 34px; height: 34px; border-radius: 8px; background-color: #f1f5f9; text-align: center; line-height: 34px; font-size: 18px;">
-                            📝
-                          </div>
-                        </td>
-                        <td style="padding-left: 14px;">
-                          <h3 style="margin: 0 0 4px; font-size: 15.5px; font-weight: 700; color: #0f172a;">
-                            Smart Notebooks & Adaptive Diagnostics
-                          </h3>
-                          <p style="margin: 0; font-size: 13.5px; line-height: 1.55; color: #64748b;">
-                            Automatically generate flashcards, mindmaps, and baseline assessment quizzes to master weak subjects rapidly.
-                          </p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-
               </table>
             </td>
           </tr>
 
-          <!-- Primary Action CTA -->
+          <!-- Minimalist Feature Box -->
           <tr>
-            <td align="center" style="padding: 8px 0 36px;">
-              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+            <td style="padding: 0 0 32px;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; border: 1px solid #f1f5f9; border-radius: 12px; padding: 20px 24px;">
                 <tr>
-                  <td align="center">
-                    <a href="${dashboardUrl}" target="_blank" rel="noopener noreferrer" style="display: block; width: 100%; max-width: 340px; background-color: #0f172a; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 16px 28px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-                      ${isTeacher ? 'Open Teacher Workspace' : 'Open My Dashboard'} →
-                    </a>
+                  <td>
+                    <p style="margin: 0 0 12px; font-size: 13.5px; font-weight: 700; color: #0f172a; letter-spacing: -0.2px;">
+                      What you can do right now:
+                    </p>
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td style="font-size: 13px; color: #475569; line-height: 1.7; padding-bottom: 8px;">
+                          &bull; <strong>${isTeacher ? 'Create Classes' : 'Exam AI Tutor'}</strong>: ${isTeacher ? 'Organize batches and assign syllabus resources.' : 'Ask anything from your syllabus with 6-step deep reasoning.'}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="font-size: 13px; color: #475569; line-height: 1.7; padding-bottom: 8px;">
+                          &bull; <strong>Smart Notebooks</strong>: Instant flashcards, mindmaps, and diagnostic quizzes.
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="font-size: 13px; color: #475569; line-height: 1.7;">
+                          &bull; <strong>Podcast Studio</strong>: Convert study notes into 2-host audio lessons.
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
               </table>
@@ -570,7 +504,7 @@ https://sadhya.app
 
           <!-- Footer -->
           <tr>
-            <td style="padding: 32px 0 0; border-top: 1px solid #f1f5f9; text-align: left;">
+            <td style="padding: 28px 0 0; border-top: 1px solid #f1f5f9; text-align: left;">
               <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td style="font-size: 12.5px; color: #64748b; line-height: 1.6;">
@@ -578,6 +512,22 @@ https://sadhya.app
                     Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
                   </td>
                   <td align="right" style="font-size: 12px; color: #94a3b8;">
+                    <a href="https://sadhya.app/privacy" style="color: #64748b; text-decoration: none; margin-left: 12px;">Privacy</a>
+                    <a href="https://sadhya.app/terms" style="color: #64748b; text-decoration: none; margin-left: 12px;">Terms</a>
+                    <a href="https://sadhya.app/help" style="color: #64748b; text-decoration: none; margin-left: 12px;">Help Center</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
                     <a href="https://sadhya.app/privacy" style="color: #64748b; text-decoration: none; margin-left: 12px;">Privacy</a>
                     <a href="https://sadhya.app/terms" style="color: #64748b; text-decoration: none; margin-left: 12px;">Terms</a>
                     <a href="https://sadhya.app/help" style="color: #64748b; text-decoration: none; margin-left: 12px;">Help Center</a>
