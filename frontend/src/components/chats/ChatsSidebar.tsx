@@ -84,7 +84,7 @@ function DmConversationRow({
   const typing = useTyping(convId ? ["dmConversations", convId] : null);
 
   const mine = conv.lastMessage?.senderId === currentUid;
-  const isTyping = typing.isTyping && typing.typingUsers.some((u) => u.uid === conv.peer.uid);
+  const isTyping = typing.typingUsers.some((u) => u.uid === conv.peer.uid);
   const peerFirstName = conv.peer.displayName?.split(" ")[0] || "Peer";
 
   const preview = conv.lastMessage
