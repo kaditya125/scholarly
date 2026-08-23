@@ -93,7 +93,7 @@ Do not include any extra text outside the JSON.`;
         { temperature: 0.4 }
       );
 
-      let cleanText = response.text.trim();
+      let cleanText = (response.reply || '').trim();
       if (cleanText.startsWith('```json')) {
         cleanText = cleanText.replace(/^```json/, '').replace(/```$/, '').trim();
       } else if (cleanText.startsWith('```')) {
