@@ -207,6 +207,31 @@ export default function Contact() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // AI Drafter State
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  const handleAiGenerate = async () => {
+    if (!aiPrompt.trim() || aiGenerating) return;
+    setAiError(null);
+    try {
+      setAiGenerating(true);
+      const res = await api.post('/api/contact/ai-draft', {
+        channel: selectedChannel,
+        prompt: aiPrompt.trim(),
+        senderName: name.trim() || undefined,
+      });
+      if (res.data?.subject) setSubject(res.data.subject);
+      if (res.data?.body) setMessage(res.data.body);
+      setAiPrompt('');
+    } catch (err: any) {
+      setAiError(err?.response?.data?.error || 'AI generation failed. Please try again.');
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   const applyTemplate = (channel: 'support' | 'sales' | 'security' | 'privacy', index: number) => {
     setSelectedChannel(channel);
     setSelectedTemplateIndex(index);
@@ -433,6 +458,57 @@ export default function Contact() {
                         className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white/30"
                       />
                     </div>
+                  </div>
+
+                  {/* ✨ AI Drafting Section */}
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#c8e558]/10 via-emerald-500/5 to-transparent border border-[#c8e558]/30 dark:border-[#c8e558]/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-white">
+                        <Sparkles className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558] animate-pulse" />
+                        AI Draft Assistant
+                      </div>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Type rough notes & let AI draft it
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={aiPrompt}
+                        onChange={(e) => setAiPrompt(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAiGenerate();
+                          }
+                        }}
+                        placeholder="e.g. money deducted but course locked, reset test score, bulk pricing for 300 students..."
+                        disabled={aiGenerating}
+                        className="flex-1 px-3 py-2 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#c8e558]/50"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAiGenerate}
+                        disabled={!aiPrompt.trim() || aiGenerating}
+                        className="px-3.5 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold hover:opacity-90 disabled:opacity-40 transition-all flex items-center gap-1.5 shrink-0 shadow-xs"
+                      >
+                        {aiGenerating ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            Drafting...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-3.5 h-3.5 text-[#c8e558] dark:text-slate-900" />
+                            Draft with AI
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    {aiError && (
+                      <p className="mt-1.5 text-xs text-red-500">{aiError}</p>
+                    )}
                   </div>
 
                   <div>
