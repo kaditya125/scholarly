@@ -528,22 +528,6 @@ https://sadhya.app
 </body>
 </html>
 `;
-                    <a href="https://sadhya.app/privacy" style="color: #64748b; text-decoration: none; margin-left: 12px;">Privacy</a>
-                    <a href="https://sadhya.app/terms" style="color: #64748b; text-decoration: none; margin-left: 12px;">Terms</a>
-                    <a href="https://sadhya.app/help" style="color: #64748b; text-decoration: none; margin-left: 12px;">Help Center</a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-`;
 
     const text = `
 Welcome to Sadhya, ${name}!
