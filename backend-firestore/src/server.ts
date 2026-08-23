@@ -408,6 +408,19 @@ const server = app.listen(env.PORT, () => {
     } catch (err: any) {
       console.error('[server] Failed to start notification worker:', err?.message || err);
     }
+
+    // Background sync of registered users into the social discovery directory
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { connectionService } = require('./services/connection.service');
+      connectionService.syncAllRegisteredUsers().then((count: number) => {
+        console.log(`[DirectorySync] Synced ${count} registered users into social discovery directory`);
+      }).catch((err: any) => {
+        console.warn('[DirectorySync] Background directory sync warning:', err?.message || err);
+      });
+    } catch (err: any) {
+      console.warn('[DirectorySync] Failed to initiate directory sync:', err?.message || err);
+    }
   }
 });
 

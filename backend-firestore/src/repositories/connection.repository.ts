@@ -51,6 +51,11 @@ export class ConnectionRepository {
     return snap.docs.map((d) => d.data() as UserDirectoryEntry);
   }
 
+  async getAllDirectoryEntries(limit = 1000): Promise<UserDirectoryEntry[]> {
+    const snap = await this.directory.limit(limit).get();
+    return snap.docs.map((d) => d.data() as UserDirectoryEntry);
+  }
+
   async recentDirectory(limit = 60): Promise<UserDirectoryEntry[]> {
     const snap = await this.directory.orderBy('updatedAt', 'desc').limit(limit).get();
     return snap.docs.map((d) => d.data() as UserDirectoryEntry);

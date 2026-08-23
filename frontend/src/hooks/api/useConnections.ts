@@ -105,7 +105,7 @@ export function useStudyPartnerSuggestions(limit = 4) {
 export function usePeopleSearch(term: string) {
   const { user } = useAuth();
   const trimmed = term.trim();
-  const enabled = !!user?.uid && trimmed.length >= 2;
+  const enabled = !!user?.uid && trimmed.length >= 1;
 
   const query = useQuery<PeerCard[]>({
     queryKey: ['connections', user?.uid, 'search', trimmed],

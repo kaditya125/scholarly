@@ -17,23 +17,11 @@ import { logger } from '../utils/logger';
  * derived from a verified Firebase ID token, so a client cannot bootstrap a profile for
  * another account by passing someone else's uid.
  */
+import { connectionService } from '../services/connection.service';
+
 export class UserIdentityController {
   /**
    * POST /api/users/bootstrap   body: { role: 'student' | 'teacher', referredBy?: string }
-   *
-   *   201 — role assigned (client MUST then call getIdToken(true))
-   *   200 — already had this role; idempotent no-op
-   *   400 — missing/unknown role
-   *   401 — no or invalid token (requireAuth)
-   *   403 — an administrative role was requested through the public endpoint
-   *   409 — account already holds a DIFFERENT product role (no self-escalation)
-   *
-   * `referredBy` (Phase 3L) is the referring account's uid, captured client-side from a
-   * `?ref=` signup link. Referral crediting only fires when `profileCreated` comes back true —
-   * a SERVER-COMPUTED fact (see userIdentity.service.ts), never a client assertion — so this
-   * cannot be replayed to re-credit a referral, and a pre-existing account gaining a role for
-   * the first time (profileCreated: false, an edge case for legacy accounts) is correctly never
-   * treated as a fresh referral either.
    */
   bootstrap = async (req: Request, res: Response) => {
     const uid = req.user?.uid;
@@ -42,8 +30,7 @@ export class UserIdentityController {
     const requested = (req.body || {}).role;
     const referredBy = typeof (req.body || {}).referredBy === 'string' ? (req.body.referredBy as string).trim() : null;
 
-    // Administrative roles are never grantable here. Called out separately from the
-    // generic invalid-role case so an attempt is unambiguous in the logs.
+    // Administrative roles are never grantable here.
     if (isAdminRole(requested)) {
       logger.warn('[UserIdentity] Administrative role requested via public bootstrap', {
         uid,
@@ -65,8 +52,6 @@ export class UserIdentityController {
     const isPasswordAccount = signInProvider === 'password';
     let isEmailVerified = (req.user as any)?.email_verified === true;
 
-    // If token claims don't reflect verification yet (e.g. user just clicked email link in another tab),
-    // query Firebase Auth server directly for authoritative real-time state.
     if (isPasswordAccount && !isEmailVerified) {
       try {
         const liveUser = await auth.getUser(uid);
@@ -89,10 +74,11 @@ export class UserIdentityController {
     try {
       const result = await userIdentityService.bootstrapProductRole(uid, requested);
 
+      // Auto-sync directory for instant peer discovery
+      connectionService.syncDirectory(uid).catch(() => {});
+
       if (result.profileCreated) {
         if (referredBy) {
-          // Best-effort: a referral is a growth nicety, never something that should fail account
-          // creation. Errors are logged, not surfaced — the account bootstrap already succeeded.
           await referralService.recordReferral(referredBy, uid).catch((err) => {
             logger.warn('[UserIdentity] Referral crediting failed', { uid, referredBy, error: err?.message });
           });
@@ -137,10 +123,10 @@ export class UserIdentityController {
     try {
       const profile = await userIdentityService.getCanonicalProfile(uid);
       if (!profile) {
-        // Pre-existing accounts have no canonical document yet — that is expected, not an
-        // error. The client treats this as "needs bootstrap".
         return res.status(200).json({ exists: false, uid, role: null });
       }
+      // Keep directory entry synced
+      connectionService.syncDirectory(uid).catch(() => {});
       return res.status(200).json({ exists: true, ...profile });
     } catch (err: any) {
       logger.error('[UserIdentity] Profile read failed', { uid, error: err?.message });
