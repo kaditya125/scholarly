@@ -585,7 +585,7 @@ export function FloatingHelpdeskWidget({
   };
 
   return (
-    <aside aria-label="Helpdesk Assistant" className="fixed bottom-5 right-5 z-40 font-sans">
+    <aside aria-label="Helpdesk Assistant" className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-40 font-sans max-w-[calc(100vw-2rem)]">
       {/* Floating Action Button - Minimalist Circular Design */}
       <AnimatePresence>
         {!isOpen && (
@@ -597,13 +597,13 @@ export function FloatingHelpdeskWidget({
             whileTap={{ scale: 0.94 }}
             onClick={() => setIsOpen(true)}
             aria-label="Open Sadhya Helpdesk Assistant"
-            className="relative w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-white dark:bg-white hover:border-[#c8e558] shadow-[0_10px_35px_rgba(0,0,0,0.3)] hover:shadow-[0_0_25px_rgba(200,229,88,0.4)] border border-slate-200/90 dark:border-white/30 flex items-center justify-center transition-all group overflow-hidden"
+            className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white dark:bg-white hover:border-[#c8e558] shadow-[0_10px_35px_rgba(0,0,0,0.3)] hover:shadow-[0_0_25px_rgba(200,229,88,0.4)] border border-slate-200/90 dark:border-white/30 flex items-center justify-center transition-all group overflow-hidden"
           >
             {/* Animated Chat GIF Asset */}
             <img
               src="/chat-help.gif"
               alt="Help Chat"
-              className="w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 object-contain mix-blend-multiply transition-transform duration-300 group-hover:scale-110"
+              className="w-7.5 h-7.5 sm:w-9.5 sm:h-9.5 object-contain mix-blend-multiply transition-transform duration-300 group-hover:scale-110"
             />
             <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-[#c8e558] border-2 border-white shadow-[0_0_8px_#c8e558] animate-pulse" />
           </motion.button>
@@ -619,7 +619,7 @@ export function FloatingHelpdeskWidget({
             animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.3, ease: EASE }}
-            className="w-[calc(100vw-2.5rem)] sm:w-[430px] h-[590px] max-h-[85vh] bg-white/95 dark:bg-[#131316]/95 backdrop-blur-2xl border border-slate-200/90 dark:border-white/10 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] flex flex-col overflow-hidden"
+            className="w-[calc(100vw-2rem)] sm:w-[420px] max-w-[calc(100vw-2rem)] h-[560px] sm:h-[590px] max-h-[82vh] bg-white/95 dark:bg-[#131316]/95 backdrop-blur-2xl border border-slate-200/90 dark:border-white/10 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] flex flex-col overflow-hidden"
           >
             {/* Header */}
             <header className="px-4 py-3 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/70 dark:bg-white/[0.03]">

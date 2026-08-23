@@ -384,11 +384,11 @@ export default function Contact() {
           </div>
 
           {/* Right Column: Direct Messaging Form */}
-          <div className="lg:col-span-7">
-            <div className="rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141416] p-4.5 sm:p-8">
+          <div className="lg:col-span-7 min-w-0 w-full">
+            <div className="rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#141416] p-4 sm:p-7 box-border w-full min-w-0">
               
               {/* Card Header */}
-              <div className="flex items-center justify-between pb-5 border-b border-slate-100 dark:border-white/5 gap-2">
+              <div className="flex items-center justify-between pb-4 sm:pb-5 border-b border-slate-100 dark:border-white/5 gap-2">
                 <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                   <span className="w-8 h-8 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shrink-0">
                     <MessageSquare className="w-4 h-4" />
