@@ -20,7 +20,11 @@ import {
   Brain,
   MessageCircle,
   X,
-  ExternalLink
+  ExternalLink,
+  Headphones,
+  Calendar,
+  CheckCircle2,
+  FileText
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { formatDistanceToNow } from 'date-fns';
@@ -40,6 +44,10 @@ const TYPE_CONFIG: Record<string, { icon: React.ElementType; bg: string; text: s
   profile: { icon: GraduationCap, bg: 'bg-indigo-500/10 dark:bg-indigo-500/20', text: 'text-indigo-600 dark:text-indigo-400' },
   assessment: { icon: Brain, bg: 'bg-blue-500/10 dark:bg-blue-500/20', text: 'text-blue-600 dark:text-blue-400' },
   friend_request: { icon: UserPlus, bg: 'bg-[#8ba32b]/10 dark:bg-[#c8e558]/10', text: 'text-[#8ba32b] dark:text-[#c8e558]' },
+  friend_accepted: { icon: UserCheck, bg: 'bg-emerald-500/10 dark:bg-emerald-500/20', text: 'text-emerald-600 dark:text-emerald-400' },
+  podcast_ready: { icon: Headphones, bg: 'bg-purple-500/10 dark:bg-purple-500/20', text: 'text-purple-600 dark:text-purple-400' },
+  test_scheduled: { icon: Calendar, bg: 'bg-amber-500/10 dark:bg-amber-500/20', text: 'text-amber-600 dark:text-amber-400' },
+  quiz_completed: { icon: CheckCircle2, bg: 'bg-emerald-500/10 dark:bg-emerald-500/20', text: 'text-emerald-600 dark:text-emerald-400' },
   study_group_invitation: { icon: Users, bg: 'bg-indigo-500/10 dark:bg-indigo-500/20', text: 'text-indigo-600 dark:text-indigo-400' },
   team_invitation: { icon: Briefcase, bg: 'bg-amber-500/10 dark:bg-amber-500/20', text: 'text-amber-600 dark:text-amber-400' },
   ai_message: { icon: Bot, bg: 'bg-[#8ba32b]/10 dark:bg-[#c8e558]/10', text: 'text-[#8ba32b] dark:text-[#c8e558]' },

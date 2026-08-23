@@ -20,6 +20,7 @@ import {
 import { cn } from '../lib/utils';
 import { useConnections, usePeopleSearch } from '../hooks/api/useConnections';
 import { useOnlineStatuses } from '../hooks/usePresence';
+import { sendRealNotification } from '../lib/api/realtimeNotifications';
 import { connectionsApi, PeerCard } from '../lib/api/connections';
 import { PeerAvatar } from '../components/social/PeerAvatar';
 
@@ -230,7 +231,27 @@ export default function People() {
           {rel === 'none' && (
             <button
               disabled={busy}
-              onClick={() => run(peer.uid, () => sendRequest(peer.uid), 'Request sent')}
+              onClick={() => run(peer.uid, async () => {
+                await sendRequest(peer.uid);
+                sendRealNotification({
+                  userId: peer.uid,
+                  type: 'friend_request',
+                  category: 'social',
+                  title: `${user?.displayName || 'A scholar'} sent you a connection request! 🤝`,
+                  body: 'Accept to start direct messaging, study together, and share notes.',
+                  avatar: user?.photoURL || undefined,
+                  actions: ['Accept', 'Decline'],
+                  actionUrl: '/community?tab=people',
+                  metadata: {
+                    requesterId: user?.uid,
+                    requesterName: user?.displayName || 'Scholar',
+                    requesterAvatar: user?.photoURL,
+                    responderName: peer.displayName,
+                    responderAvatar: peer.photoURL,
+                  },
+                  priority: 'high',
+                }).catch(() => {});
+              }, 'Request sent')}
               className="flex-1 flex items-center justify-center gap-1.5 h-8.5 rounded-full bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-900 text-[12px] font-semibold hover:opacity-90 transition-all cursor-pointer shadow-xs disabled:opacity-50"
             >
               {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5" />}
@@ -254,7 +275,19 @@ export default function People() {
             <>
               <button
                 disabled={busy}
-                onClick={() => run(peer.uid, () => accept(peer.uid), 'Connected')}
+                onClick={() => run(peer.uid, async () => {
+                  await accept(peer.uid);
+                  sendRealNotification({
+                    userId: peer.uid,
+                    type: 'friend_accepted',
+                    category: 'social',
+                    title: `${user?.displayName || 'A scholar'} accepted your connection request! 🎉`,
+                    body: 'You are now connected. You can start direct messaging in Community Chats.',
+                    avatar: user?.photoURL || undefined,
+                    actionUrl: `/community?tab=chats&dm=${user?.uid}`,
+                    priority: 'high',
+                  }).catch(() => {});
+                }, 'Connected')}
                 className="flex-1 flex items-center justify-center gap-1.5 h-8.5 rounded-full bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-900 text-[12px] font-semibold hover:opacity-90 transition-all cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}

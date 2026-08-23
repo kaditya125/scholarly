@@ -9,12 +9,15 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { usePlanner } from "../hooks/api/usePlanner";
 import { useLaunchTest } from "../hooks/ai/useLaunchTest";
+import { useAuth } from "../lib/AuthContext";
+import { sendRealNotification } from "../lib/api/realtimeNotifications";
 import { useTheme } from "../lib/ThemeContext";
 import { cn } from "../lib/utils";
 
 export default function Planner() {
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
+  const { user } = useAuth();
   const navigate = useNavigate();
   const launch = useLaunchTest();
 
@@ -96,6 +99,18 @@ export default function Planner() {
       preferredStudyHours: preferredStudyHours as any
     });
     setShowWizard(false);
+    if (user?.uid) {
+      sendRealNotification({
+        userId: user.uid,
+        type: 'test_scheduled',
+        category: 'learning',
+        title: `📅 Study Schedule Generated: ${targetExam}`,
+        body: `Your daily revision timetable and milestone roadmaps for ${targetExam} have been prepared.`,
+        actionUrl: '/planner',
+        actions: ['View Schedule'],
+        priority: 'medium',
+      }).catch(() => {});
+    }
   };
 
   // Launch task action based on task type

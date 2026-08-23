@@ -30,6 +30,8 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useTheme } from '../lib/ThemeContext';
+import { useAuth } from '../lib/AuthContext';
+import { sendRealNotification } from '../lib/api/realtimeNotifications';
 import StudioSidebar, { StudioView } from '../components/studio-v2/StudioSidebar';
 import StudioContent from '../components/studio-v2/StudioContent';
 import StudioTranscript from '../components/studio-v2/StudioTranscript';
@@ -133,6 +135,7 @@ export default function PodcastStudioV2({ onClose, onOpenEpisode }: PodcastStudi
   }, [podcasts]);
 
   // --- View / panes ------------------------------------------------------
+  const { user } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isTranscriptExpanded, setIsTranscriptExpanded] = useState(true);
   const [activeView, setActiveView] = useState<StudioView>('podcast');
@@ -511,6 +514,18 @@ export default function PodcastStudioV2({ onClose, onOpenEpisode }: PodcastStudi
                   onPodcastReady={(p) => {
                     setReadyPodcast(p);
                     setLiveProducingId(null);
+                    if (user?.uid && p) {
+                      sendRealNotification({
+                        userId: user.uid,
+                        type: 'podcast_ready',
+                        category: 'learning',
+                        title: `🎙️ Podcast Ready: "${p.title || 'New Episode'}"`,
+                        body: `Your AI podcast episode is ready to stream with studio audio & full transcript.`,
+                        actionUrl: `/podcasts?id=${p.id}`,
+                        actions: ['Listen Now'],
+                        priority: 'high',
+                      }).catch(() => {});
+                    }
                   }}
                   loadProject={loadProject}
                   newProjectSignal={newProjectSignal}

@@ -8,8 +8,9 @@ import {
 import { useAuth } from '../lib/AuthContext';
 import GoalCapture from '../components/onboarding/GoalCapture';
 import { useProfile } from '../hooks/api/useProfile';
-import { BrandMark } from '../components/auth/AuthShell';
-import { baselineAssessmentApi } from '../lib/api/studentDigitalTwin';
+import { BrandMark } from '../components/common/BrandMark';
+import { baselineAssessmentApi } from '../lib/api/baselineAssessment';
+import { sendRealNotification } from '../lib/api/realtimeNotifications';
 import {
   LearningProfile, GOAL_GROUPS, BOARDS, STREAMS, SUBJECTS, LEVELS, TARGET_SUGGESTIONS,
   STUDY_TIMES, LEARNING_STYLES, LANGUAGES, autoStream, showStreamStep, suggestedSubjects,
@@ -135,6 +136,16 @@ export default function Onboarding() {
       await updateProfile({ ...profile, ...extra, markComplete: true });
       if (user?.uid) {
         await baselineAssessmentApi.resetAssessment(user.uid).catch(() => {});
+        // Send real welcome notification with target goal
+        sendRealNotification({
+          userId: user.uid,
+          type: 'welcome',
+          category: 'system',
+          title: `Welcome to Sadhya, ${firstName}! 🎉`,
+          body: `Your academic profile is ready for ${profile.goal || 'your target exam'}. Take the AI Baseline Assessment to calibrate your Digital Twin.`,
+          actionUrl: '/baseline-assessment',
+          priority: 'high',
+        }).catch(() => {});
       }
     } catch { /* non-fatal — the partial autosaves already persisted their data */ }
     // Keep the generation animation on screen for a minimum beat so it doesn't flash by.
