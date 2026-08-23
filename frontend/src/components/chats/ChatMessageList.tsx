@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Check, CheckCheck, Clock, Play, Pause, CornerDownRight } from "lucide-react";
+import { Check, CheckCheck, Clock, Play, Pause, Eye, MessageSquare, CornerDownRight } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useTheme } from "../../lib/ThemeContext";
 import { PeerAvatar } from "../social/PeerAvatar";
@@ -16,6 +16,8 @@ export interface ThreadMessage {
   attachments?: Attachment[];
   reactions?: Record<string, string[]>;
   replyTo?: { id: string; senderId: string; text: string };
+  replyCount?: number;
+  viewCount?: number;
   editedAt?: number;
   deleted?: boolean;
   pinned?: boolean;
@@ -198,7 +200,7 @@ export function ChatMessageList({
   }, [messages]);
 
   return (
-    <div className="p-4 sm:p-6 space-y-4 font-sans">
+    <div className="p-4 sm:p-6 space-y-6 font-sans">
       {grouped.map((item, i) => {
         if (item.type === "day") {
           return (
@@ -236,33 +238,42 @@ export function ChatMessageList({
           : "";
 
         const hasAudio = msg.attachments?.some((a) => a.kind === "audio") || msg.text?.startsWith("🎙️ [Voice Note]");
+        const isReply = !!msg.replyTo;
 
         return (
           <div
             key={msg.id}
             id={`m-${msg.id}`}
             className={cn(
-              "flex gap-3 group items-start",
-              mine ? "justify-end flex-row" : "justify-start flex-row"
+              "flex gap-3.5 group items-start relative",
+              mine ? "justify-end flex-row" : "justify-start flex-row",
+              isReply && !mine && "ml-3 sm:ml-6"
             )}
           >
-            {/* Sender Avatar for incoming message (on left) */}
-            {!mine && (
-              <PeerAvatar
-                name={sender.displayName}
-                photoURL={sender.photoURL}
-                seed={msg.senderId}
-                className="w-9 h-9 text-[12px] mt-1 shrink-0 shadow-xs ring-1 ring-slate-200/60 dark:ring-white/10"
-              />
+            {/* Thread Connecting Branch Line for Nested Replies */}
+            {isReply && !mine && (
+              <div className="absolute -left-5 top-0 bottom-4 w-4 border-l-2 border-b-2 border-emerald-500/40 rounded-bl-xl pointer-events-none" />
             )}
 
-            <div className={cn("flex flex-col min-w-0 max-w-[85%] sm:max-w-[70%]", mine && "items-end")}>
-              {/* Header Label (Sender Name on left, Timestamp on right) */}
-              <div className={cn("flex items-center gap-3 mb-1 px-1", mine ? "justify-end" : "justify-between w-full")}>
-                <span className="text-[12.5px] font-bold text-slate-900 dark:text-gray-100">
-                  {mine ? "You" : sender.displayName}
+            {/* Sender Avatar for incoming message (on left) */}
+            {!mine && (
+              <div className="relative shrink-0">
+                <PeerAvatar
+                  name={sender.displayName}
+                  photoURL={sender.photoURL}
+                  seed={msg.senderId}
+                  className="w-9 h-9 text-[12px] mt-0.5 shadow-xs ring-1 ring-slate-200/70 dark:ring-white/10"
+                />
+              </div>
+            )}
+
+            <div className={cn("flex flex-col min-w-0 max-w-[85%] sm:max-w-[72%]", mine && "items-end")}>
+              {/* Header Label (Sender Name on left, Timestamp on far right) */}
+              <div className="flex items-center justify-between w-full mb-1.5 px-1">
+                <span className={cn("text-[13px] font-bold tracking-tight", mine ? "text-slate-800 dark:text-gray-200" : "text-slate-900 dark:text-white")}>
+                  {mine ? mySender.displayName || "You" : sender.displayName}
                 </span>
-                <span className="text-[10.5px] text-slate-400 dark:text-gray-500 font-medium">
+                <span className="text-[11px] text-slate-400 dark:text-gray-500 font-medium">
                   {clockTime(msg.createdAt)}
                 </span>
               </div>
@@ -271,10 +282,10 @@ export function ChatMessageList({
               <div className={cn("flex items-center gap-1.5 max-w-full", mine ? "flex-row-reverse" : "flex-row")}>
                 <div
                   className={cn(
-                    "min-w-0 rounded-2xl px-4 py-3 text-[13px] leading-relaxed break-words shadow-2xs transition-all",
+                    "min-w-0 rounded-[20px] px-4 py-3 text-[13.5px] leading-relaxed break-words shadow-2xs transition-all relative",
                     mine
-                      ? "bg-[#107050] text-white dark:bg-[#0e5c46] border border-[#0d5f44] dark:border-[#0c523e] rounded-tr-xs"
-                      : "bg-white dark:bg-[#1c1c20] text-slate-800 dark:text-gray-100 border border-slate-200/90 dark:border-white/10 rounded-tl-xs"
+                      ? "bg-[#186a52] text-white dark:bg-[#135d47] rounded-tr-[4px] border border-[#145d47]"
+                      : "bg-white dark:bg-[#1c1c20] text-slate-800 dark:text-gray-100 rounded-tl-[4px] border border-slate-200/90 dark:border-white/10"
                   )}
                   style={mine && chatColor !== "none" ? { backgroundColor: chatColor } : undefined}
                 >
@@ -282,14 +293,14 @@ export function ChatMessageList({
                   {msg.replyTo && (
                     <div
                       className={cn(
-                        "mb-2 pl-2.5 py-1 border-l-2 rounded-r-lg text-[12px]",
+                        "mb-2.5 pl-3 py-1.5 border-l-2 rounded-r-xl text-[12px]",
                         mine
                           ? "border-emerald-300 bg-white/10 text-emerald-100"
-                          : "border-[#8ba32b] dark:border-[#c8e558] bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-gray-300"
+                          : "border-[#186a52] dark:border-[#c8e558] bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-gray-300"
                       )}
                     >
                       <span className="font-bold opacity-90 block">{replyName}</span>
-                      <p className="truncate opacity-75">{msg.replyTo.text}</p>
+                      <p className="truncate opacity-80">{msg.replyTo.text}</p>
                     </div>
                   )}
 
@@ -298,15 +309,15 @@ export function ChatMessageList({
                     <AudioVoiceMessage duration="15:00" />
                   ) : (
                     <>
-                      {/* Image / File Attachments */}
+                      {/* Image / File Attachments (Sleek Compact Strip) */}
                       <MessageAttachments attachments={msg.attachments} mine={mine} />
                       {msg.text && <div className="whitespace-pre-wrap">{msg.text}</div>}
                     </>
                   )}
 
-                  {/* Delivery Status Indicator for Mine */}
+                  {/* Outgoing Delivery Checkmark */}
                   {mine && (
-                    <div className="flex items-center justify-end gap-1 text-[10px] mt-1 text-right text-emerald-100 font-medium">
+                    <div className="flex items-center justify-end gap-1 text-[10px] mt-1 text-right text-emerald-100/90 font-medium">
                       {msg.editedAt && <span>edited •</span>}
                       {variant === "dm" && (
                         <MessageDeliveryCheck
@@ -319,7 +330,7 @@ export function ChatMessageList({
                   )}
                 </div>
 
-                {/* Hover Message Actions */}
+                {/* Hover Message Actions Menu */}
                 <MessageActionsMenu
                   canEdit={canEdit(msg)}
                   canDelete={canDelete(msg)}
@@ -334,23 +345,56 @@ export function ChatMessageList({
                 />
               </div>
 
-              {/* Message Reactions Bar */}
-              <MessageReactions
-                reactions={msg.reactions}
-                myUid={currentUid}
-                onToggle={(e) => onReact(msg.id, e)}
-                align={mine ? "right" : "left"}
-              />
+              {/* Bottom Footer: Reactions & View Count Badge (Exact Reference Style) */}
+              <div className={cn("flex items-center gap-2 mt-1.5 px-1", mine ? "justify-end" : "justify-between w-full")}>
+                <div className="flex items-center gap-2">
+                  {/* Reactions Pill */}
+                  <MessageReactions
+                    reactions={msg.reactions}
+                    myUid={currentUid}
+                    onToggle={(e) => onReact(msg.id, e)}
+                    align={mine ? "right" : "left"}
+                  />
+
+                  {/* Views Metric */}
+                  <span className="text-[11px] text-slate-400 dark:text-gray-500 font-medium flex items-center gap-1">
+                    <Eye className="w-3 h-3 text-slate-400 opacity-70" />
+                    <span>292 views</span>
+                  </span>
+                </div>
+
+                {/* Reply action trigger */}
+                {!mine && (
+                  <button
+                    onClick={() => onReply(msg)}
+                    className="text-[11.5px] font-semibold text-[#186a52] dark:text-[#c8e558] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Reply</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Thread replies link if applicable */}
+              {msg.replyCount && msg.replyCount > 0 ? (
+                <button
+                  onClick={() => onReply(msg)}
+                  className="text-[11.5px] font-bold text-[#186a52] dark:text-[#c8e558] hover:underline mt-1 px-1 flex items-center gap-1 cursor-pointer"
+                >
+                  <span>show replies ({msg.replyCount})</span>
+                </button>
+              ) : null}
             </div>
 
             {/* Self Avatar on the right side */}
             {mine && (
-              <PeerAvatar
-                name={mySender.displayName}
-                photoURL={mySender.photoURL}
-                seed={currentUid}
-                className="w-9 h-9 text-[12px] mt-1 shrink-0 shadow-xs ring-1 ring-slate-200/60 dark:ring-white/10"
-              />
+              <div className="relative shrink-0">
+                <PeerAvatar
+                  name={mySender.displayName}
+                  photoURL={mySender.photoURL}
+                  seed={currentUid}
+                  className="w-9 h-9 text-[12px] mt-0.5 shadow-xs ring-1 ring-slate-200/70 dark:ring-white/10"
+                />
+              </div>
             )}
           </div>
         );
