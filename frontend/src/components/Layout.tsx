@@ -504,12 +504,18 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                        if (!isNewMenuOpen && newMenuButtonRef.current) {
                          const rect = newMenuButtonRef.current.getBoundingClientRect();
                          const estimatedH = 460;
-                         const clampedTop = Math.max(8, Math.min(rect.top, window.innerHeight - estimatedH - 8));
+                         const padding = 12;
+                         let top = rect.top;
+                         if (top + estimatedH > window.innerHeight - padding) {
+                           top = Math.max(padding, window.innerHeight - estimatedH - padding);
+                         }
+                         const maxHeight = Math.max(200, window.innerHeight - top - padding);
                          setNewMenuStyle({
                            position: 'fixed',
-                           top: clampedTop,
+                           top,
                            left: rect.right + 8,
                            width: 220,
+                           maxHeight,
                            zIndex: 9999,
                          });
                          setIsNewMenuOpen(true);
@@ -574,8 +580,7 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                       strokeWidth={isMoreFlyoutOpen || isAnyMoreItemActive ? 2 : 1.6}
                     />
                     <span className="truncate flex-1 text-left leading-none">More</span>
-                    <ChevronDown
-                      className={cn(
+                    <ChevronDown className={cn(
                         "w-3 h-3 shrink-0 transition-transform duration-200 text-slate-400 dark:text-gray-500",
                         isMoreFlyoutOpen && "rotate-180"
                       )}
@@ -643,13 +648,19 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                     onClick={() => {
                       if (!isMoreFlyoutOpen && moreButtonRef.current) {
                         const rect = moreButtonRef.current.getBoundingClientRect();
-                        const estimatedH = 480;
-                        const clampedTop = Math.max(8, Math.min(rect.top, window.innerHeight - estimatedH - 8));
+                        const estimatedH = 540;
+                        const padding = 12;
+                        let top = rect.top;
+                        if (top + estimatedH > window.innerHeight - padding) {
+                          top = Math.max(padding, window.innerHeight - estimatedH - padding);
+                        }
+                        const maxHeight = Math.max(200, window.innerHeight - top - padding);
                         setMoreFlyoutStyle({
                           position: 'fixed',
-                          top: clampedTop,
+                          top,
                           left: rect.right + 8,
-                          width: 228,
+                          width: 232,
+                          maxHeight,
                           zIndex: 9999,
                         });
                         setIsMoreFlyoutOpen(true);
@@ -691,10 +702,9 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                       animate={{ opacity: 1, x: 0, scale: 1 }}
                       exit={{ opacity: 0, x: -4, scale: 0.97 }}
                       transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                      className="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-white/[0.09] rounded-xl shadow-2xl overflow-y-auto"
+                      className="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-white/[0.09] rounded-xl shadow-2xl overflow-y-auto custom-scrollbar"
                       style={{
                         ...moreFlyoutStyle,
-                        maxHeight: 'calc(100vh - 32px)',
                         transformOrigin: 'top left',
                       }}
                     >
