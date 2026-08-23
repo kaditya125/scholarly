@@ -18,6 +18,7 @@ import {
   MessageCircle,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useAuth } from '../lib/AuthContext';
 import { useConnections, usePeopleSearch } from '../hooks/api/useConnections';
 import { useOnlineStatuses } from '../hooks/usePresence';
 import { sendRealNotification } from '../lib/api/realtimeNotifications';
@@ -54,6 +55,7 @@ export default function People() {
     unblock,
   } = useConnections();
 
+  const { user } = useAuth();
   const [tab, setTab] = useState<Tab>('discover');
   const [rawSearch, setRawSearch] = useState('');
   const [search, setSearch] = useState('');
