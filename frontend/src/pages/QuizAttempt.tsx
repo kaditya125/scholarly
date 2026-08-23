@@ -4,6 +4,8 @@ import {
   ArrowLeft, Clock, Loader2, CheckCircle2, XCircle, MinusCircle, AlertTriangle,
 } from 'lucide-react';
 import { useQuizAttempt, useSubmitQuizAttempt } from '../hooks/api/useQuizAttempts';
+import { useAuth } from '../lib/AuthContext';
+import { sendRealNotification } from '../lib/api/realtimeNotifications';
 import { cn } from '../lib/utils';
 
 /**
@@ -55,6 +57,7 @@ export default function QuizAttemptPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, isCompleted]);
 
+  const { user } = useAuth();
   const handleSubmit = async () => {
     if (!attempt || submit.isPending || isCompleted) return;
     setError(null);
@@ -62,6 +65,18 @@ export default function QuizAttemptPage() {
     try {
       await submit.mutateAsync({ answers, timeSpentSeconds: elapsedSeconds });
       setShowConfirm(false);
+      if (user?.uid) {
+        sendRealNotification({
+          userId: user.uid,
+          type: 'quiz_completed',
+          category: 'learning',
+          title: `🎯 Quiz Completed: "${attempt.quizTitle || 'Practice Test'}"`,
+          body: `Your answers have been scored. View your detailed breakdown, accuracy stats, and next recommendations.`,
+          actionUrl: `/quiz/attempts/${attemptId}`,
+          actions: ['View Results'],
+          priority: 'medium',
+        }).catch(() => {});
+      }
     } catch (e: any) {
       setError(e?.response?.data?.error ?? 'We couldn’t submit your answers. Please try again.');
     }

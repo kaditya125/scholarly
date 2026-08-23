@@ -5,8 +5,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useAdaptiveAssessment } from '../hooks/api/useAdaptiveAssessment';
 import { PreAssessmentScreen } from '../components/assessment/PreAssessmentScreen';
 
+import { useAuth } from '../lib/AuthContext';
+import { sendRealNotification } from '../lib/api/realtimeNotifications';
+
 export default function BaselineAssessmentEngine() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const {
     questions,
     currentQuestion,
@@ -28,9 +32,21 @@ export default function BaselineAssessmentEngine() {
 
   useEffect(() => {
     if (isAssessmentFinished) {
+      if (user?.uid) {
+        sendRealNotification({
+          userId: user.uid,
+          type: 'assessment',
+          category: 'ai',
+          title: '🧠 AI Baseline Assessment Complete!',
+          body: 'Your academic calibration is finished. Your Student Digital Twin and personalized roadmap are active.',
+          actionUrl: '/welcome',
+          actions: ['View Digital Twin'],
+          priority: 'high',
+        }).catch(() => {});
+      }
       navigate('/welcome');
     }
-  }, [isAssessmentFinished, navigate]);
+  }, [isAssessmentFinished, navigate, user?.uid]);
 
   useEffect(() => {
     if (questions && questions.length > 0) {

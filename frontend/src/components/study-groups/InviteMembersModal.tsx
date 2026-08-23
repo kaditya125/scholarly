@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { X, Check, Loader2, UserPlus, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "../../lib/utils";
+import { useAuth } from "../../lib/AuthContext";
+import { sendRealNotification } from "../../lib/api/realtimeNotifications";
 import { useConnections } from "../../hooks/api/useConnections";
 import { PeerAvatar } from "../social/PeerAvatar";
 
@@ -32,11 +34,26 @@ export function InviteMembersModal({ existingMemberIds, onInvite, onClose }: Inv
     });
   };
 
+  const { user } = useAuth();
   const submit = async () => {
     if (selected.size === 0) return;
     setInviting(true);
     try {
       await onInvite([...selected]);
+      // Dispatch live invitation notifications to all selected peers
+      selected.forEach((peerId) => {
+        sendRealNotification({
+          userId: peerId,
+          type: "study_group_invitation",
+          category: "social",
+          title: `${user?.displayName || "A classmate"} invited you to join a Study Circle! 👥`,
+          body: `Join to collaborate on shared mock tests, active chat discussions, and revision flashcards.`,
+          avatar: user?.photoURL || undefined,
+          actions: ["Join", "Later"],
+          actionUrl: "/community?tab=chats",
+          priority: "medium",
+        }).catch(() => {});
+      });
       onClose();
     } catch {
       setInviting(false);

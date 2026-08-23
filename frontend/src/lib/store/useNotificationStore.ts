@@ -2,6 +2,7 @@ import create from 'zustand';
 import { doc, updateDoc, writeBatch, collection, getDocs } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { NotificationPayload, notificationsApi } from '../api/notifications';
+import { handleNotificationAction } from '../api/realtimeNotifications';
 
 interface NotificationState {
   notifications: NotificationPayload[];
@@ -125,12 +126,12 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   },
 
   handleAction: async (id, actionState) => {
+    const notif = get().notifications.find((n) => n.id === id);
     get().updateNotification(id, { actionState, isRead: true });
     try {
       const user = auth.currentUser;
       if (user) {
-        const ref = doc(db, 'users', user.uid, 'notifications', id);
-        await updateDoc(ref, { actionState, isRead: true, read: true });
+        await handleNotificationAction(user.uid, id, actionState, (notif as any)?.metadata);
       }
     } catch (error) {
       console.error('Failed to handle notification action:', error);
