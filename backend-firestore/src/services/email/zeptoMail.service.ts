@@ -214,7 +214,7 @@ export class ZeptoMailService {
                 <tr>
                   <td style="font-size: 12.5px; color: #64748b; line-height: 1.6;">
                     <strong>Sadhya Technologies Pvt. Ltd.</strong><br>
-                    Bengaluru, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
+                    Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
                   </td>
                   <td align="right" style="font-size: 12px; color: #94a3b8;">
                     <a href="https://sadhya.app/privacy" style="color: #64748b; text-decoration: none; margin-left: 12px;">Privacy</a>
@@ -349,7 +349,7 @@ https://sadhya.app
                 <tr>
                   <td style="font-size: 12.5px; color: #64748b; line-height: 1.6;">
                     <strong>Sadhya Security Team</strong><br>
-                    Bengaluru, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
+                    Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
                   </td>
                   <td align="right" style="font-size: 12px; color: #94a3b8;">
                     <a href="https://sadhya.app/privacy" style="color: #64748b; text-decoration: none; margin-left: 12px;">Privacy</a>
@@ -575,7 +575,7 @@ https://sadhya.app
                 <tr>
                   <td style="font-size: 12.5px; color: #64748b; line-height: 1.6;">
                     <strong>Sadhya Technologies Pvt. Ltd.</strong><br>
-                    Bengaluru, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
+                    Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
                   </td>
                   <td align="right" style="font-size: 12px; color: #94a3b8;">
                     <a href="https://sadhya.app/privacy" style="color: #64748b; text-decoration: none; margin-left: 12px;">Privacy</a>
