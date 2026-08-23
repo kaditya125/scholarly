@@ -42,6 +42,149 @@ const CHANNELS = [
   },
 ];
 
+interface DraftTemplate {
+  label: string;
+  subject: string;
+  body: string;
+}
+
+const TEMPLATES: Record<'support' | 'sales' | 'security' | 'privacy', DraftTemplate[]> = {
+  support: [
+    {
+      label: 'Account & Login',
+      subject: 'Account / Login issue on Sadhya',
+      body: `Hi Sadhya Support Team,
+
+I am experiencing an issue accessing my account.
+
+Details:
+• Registered Email: 
+• Device & Browser: 
+• Problem Encountered: [e.g. OTP not arriving / Password reset error / Session expiring]
+• Error message (if any): 
+
+Please help me regain access to my account.`,
+    },
+    {
+      label: 'Payment & Billing',
+      subject: 'Payment & Billing Inquiry — Order Issue',
+      body: `Hi Sadhya Support Team,
+
+I have a question regarding a recent payment or subscription on Sadhya.
+
+Transaction Details:
+• Payment Date: 
+• Plan / Course: [e.g. Sadhya Pro Monthly / Annual]
+• Transaction / Order ID: 
+• Issue: [e.g. Payment deducted but plan not active / Invoice copy needed / Refund request]
+
+Looking forward to your swift resolution.`,
+    },
+    {
+      label: 'Bug Report / Feature',
+      subject: 'Technical Issue / Bug Report',
+      body: `Hi Sadhya Support Team,
+
+I encountered an unexpected issue while using the platform.
+
+Issue Details:
+• Feature affected: [e.g. Adaptive Test / Video Lesson / OCR Scanner / Podcast Studio]
+• What happened: 
+• Expected result: 
+• Operating System & Browser: 
+
+Thank you for looking into this!`,
+    },
+  ],
+  sales: [
+    {
+      label: 'School / Institution Pilot',
+      subject: 'Institutional Partnership & Bulk Licenses for [Institution Name]',
+      body: `Hi Sadhya Institutional Team,
+
+We are interested in deploying Sadhya's AI learning suite and teacher dashboards across our institution.
+
+Overview:
+• Institution Name: 
+• Approximate Number of Students: 
+• Target Exams / Grades: [e.g. JEE, NEET, Class 9-12 CBSE]
+• Key Requirements: [e.g. Teacher analytics, customized question banks, batch management]
+• Preferred Pilot Timeline: 
+
+Please share details on institutional pricing and schedule a product walkthrough.`,
+    },
+    {
+      label: 'Teacher / Coaching Tie-Up',
+      subject: 'Educator & Coaching Collaboration Inquiry',
+      body: `Hi Sadhya Partnerships Team,
+
+I am an educator / coaching institute director interested in hosting my classes and curriculum on Sadhya.
+
+Details:
+• Subject / Exam Specialization: 
+• Current Student Strength: 
+• City / Region: 
+• Collaboration Interests: [e.g. Custom course publishing, live tutoring, student assessment tools]
+
+Please connect with me to discuss next steps.`,
+    },
+  ],
+  security: [
+    {
+      label: 'Vulnerability Disclosure',
+      subject: 'Responsible Security Disclosure: [Brief Vulnerability Name]',
+      body: `Hi Sadhya Security & Engineering Team,
+
+I would like to report a potential security vulnerability in accordance with responsible disclosure guidelines.
+
+Vulnerability Details:
+• Affected Endpoint / URL: 
+• Vulnerability Classification: [e.g. IDOR, Authentication Bypass, XSS, CSRF, Misconfiguration]
+• Severity / Risk: [Low / Medium / High / Critical]
+
+Steps to Reproduce:
+1. 
+2. 
+3. 
+
+Suggested Remediation:
+
+Please confirm receipt so we can coordinate safe resolution.`,
+    },
+  ],
+  privacy: [
+    {
+      label: 'Grievance / DPDP Escalation',
+      subject: 'Statutory Grievance / DPDP Notice: [Topic]',
+      body: `To the Grievance Officer, Sadhya Technologies Pvt. Ltd.,
+
+I am submitting a formal grievance regarding my user data / platform services as per the Digital Personal Data Protection Act, 2023.
+
+Grievance Details:
+• Full Legal Name: 
+• Registered Email / Phone: 
+• Nature of Grievance: 
+• Specific Redressal Requested: 
+
+Please acknowledge receipt within 48 hours as required by law.`,
+    },
+    {
+      label: 'Data Export / Deletion',
+      subject: 'Personal Data Request: Account Data Deletion / Export',
+      body: `To the Privacy & Data Protection Team,
+
+I am requesting the following action regarding my personal data stored with Sadhya:
+
+Request Type: [Data Export / Complete Account & Data Deletion / Correction]
+• Account Email: 
+• User Display Name: 
+• Confirmation of Intent: I confirm that I am the authorized account owner making this request.
+
+Please process this request in accordance with the Sadhya Privacy Policy.`,
+    },
+  ],
+};
+
 export default function Contact() {
   useSeo({
     title: `Contact Us — ${SITE.name}`,
@@ -52,16 +195,38 @@ export default function Contact() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   const [selectedChannel, setSelectedChannel] = useState<'support' | 'sales' | 'security' | 'privacy'>('support');
+  const [selectedTemplateIndex, setSelectedTemplateIndex] = useState(0);
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
 
   // Form State
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [subject, setSubject] = useState('');
-  const [message, setMessage] = useState('');
+  const [subject, setSubject] = useState(TEMPLATES.support[0].subject);
+  const [message, setMessage] = useState(TEMPLATES.support[0].body);
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const applyTemplate = (channel: 'support' | 'sales' | 'security' | 'privacy', index: number) => {
+    setSelectedChannel(channel);
+    setSelectedTemplateIndex(index);
+    const tmpl = TEMPLATES[channel]?.[index] || TEMPLATES[channel]?.[0];
+    if (tmpl) {
+      setSubject(tmpl.subject);
+      setMessage(tmpl.body);
+    }
+  };
+
+  const handleChannelSelect = (channel: 'support' | 'sales' | 'security' | 'privacy') => {
+    setSelectedChannel(channel);
+    setSelectedTemplateIndex(0);
+    setSuccessMsg(null);
+    const tmpl = TEMPLATES[channel]?.[0];
+    if (tmpl) {
+      setSubject(tmpl.subject);
+      setMessage(tmpl.body);
+    }
+  };
 
   const handleCopy = (e: React.MouseEvent, emailToCopy: string) => {
     e.stopPropagation();
@@ -134,10 +299,7 @@ export default function Contact() {
               return (
                 <div
                   key={c.id}
-                  onClick={() => {
-                    setSelectedChannel(c.id);
-                    setSuccessMsg(null);
-                  }}
+                  onClick={() => handleChannelSelect(c.id)}
                   className={`cursor-pointer rounded-2xl border p-5 transition-all text-left group relative ${
                     isSelected
                       ? 'border-slate-900 dark:border-[#c8e558] bg-slate-50 dark:bg-white/[0.04] shadow-sm'
@@ -226,7 +388,10 @@ export default function Contact() {
                   </p>
                   <button
                     type="button"
-                    onClick={() => setSuccessMsg(null)}
+                    onClick={() => {
+                      setSuccessMsg(null);
+                      handleChannelSelect(selectedChannel);
+                    }}
                     className="mt-6 px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-semibold hover:opacity-90 transition-opacity"
                   >
                     Send another message
@@ -284,17 +449,52 @@ export default function Contact() {
                   </div>
 
                   <div>
-                    <label className="block text-[12.5px] font-medium text-slate-700 dark:text-gray-300 mb-1.5">
-                      Message <span className="text-red-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-[12.5px] font-medium text-slate-700 dark:text-gray-300">
+                        Message & Details <span className="text-red-500">*</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => applyTemplate(selectedChannel, selectedTemplateIndex)}
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                      >
+                        <Sparkles className="w-3 h-3 text-[#8ba32b] dark:text-[#c8e558]" />
+                        Reset Auto-Draft
+                      </button>
+                    </div>
+
+                    {/* Quick Topic Chips for the selected channel */}
+                    <div className="flex items-center gap-1.5 mb-2.5 overflow-x-auto no-scrollbar pb-1">
+                      <span className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0 mr-1">
+                        Topic Preset:
+                      </span>
+                      {TEMPLATES[selectedChannel]?.map((tmpl, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => applyTemplate(selectedChannel, idx)}
+                          className={`whitespace-nowrap px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
+                            selectedTemplateIndex === idx
+                              ? 'border-slate-900 dark:border-[#c8e558] bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-900 shadow-xs'
+                              : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] text-slate-600 dark:text-slate-300 hover:border-slate-300'
+                          }`}
+                        >
+                          {tmpl.label}
+                        </button>
+                      ))}
+                    </div>
+
                     <textarea
                       required
-                      rows={5}
+                      rows={9}
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       placeholder="How can we help you?"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white/30 resize-y"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] text-[13px] font-sans leading-relaxed text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white/30 resize-y"
                     />
+                    <p className="mt-1.5 text-[11.5px] text-slate-400 dark:text-slate-500">
+                      💡 Auto-draft formatted for swift resolution. You can freely edit or customize any text above.
+                    </p>
                   </div>
 
                   <div className="pt-2 flex items-center justify-between">
