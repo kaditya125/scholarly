@@ -23,10 +23,9 @@ import {
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAuth } from "../../lib/AuthContext";
-import { usePresence } from "../../hooks/usePresence";
+import { useOnlineStatuses } from "../../hooks/usePresence";
 import { useStudyGroup } from "../../hooks/api/useStudyGroups";
-import { useGroupMembers } from "../../hooks/api/useGroupMembers";
-import { useChannelMessages } from "../../hooks/api/useGroupChannels";
+import { useGroupChannels, useChannelMessages } from "../../hooks/api/useGroupChannels";
 import { useConversation } from "../../hooks/api/useDirectMessages";
 import { PeerAvatar } from "../social/PeerAvatar";
 import { GroupParticipantsModal } from "./GroupParticipantsModal";
@@ -387,9 +386,11 @@ export function ChannelInfoPanel({
   channelId: string;
   onClose?: () => void;
 }) {
+  const { user } = useAuth();
   const { group, invite } = useStudyGroup(groupId);
-  const { members } = useGroupMembers(groupId);
-  const { channel, messages } = useChannelMessages(groupId, channelId);
+  const { channels } = useGroupChannels(groupId);
+  const channel = channels.find((c) => c.id === channelId);
+  const { messages } = useChannelMessages(groupId, channelId);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   const resolveSender = useMemo(() => {
@@ -442,7 +443,7 @@ export function ChannelInfoPanel({
 
               <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-500/20 text-[11px] font-bold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>{members?.length || 1} Members</span>
+                <span>{memberProfiles.length || 1} Members</span>
               </div>
             </div>
 
@@ -486,11 +487,14 @@ export function ChannelInfoPanel({
       {/* Group Invite & Participants Modal */}
       {isInviteModalOpen && group && (
         <GroupParticipantsModal
-          group={group}
           isOpen={isInviteModalOpen}
           onClose={() => setIsInviteModalOpen(false)}
-          onInvite={async (emails) => {
-            await invite(emails);
+          groupName={group.name}
+          members={group.memberProfiles || []}
+          isAdmin={group.ownerId === user?.uid}
+          currentUserId={user?.uid}
+          onInvite={async (email) => {
+            await invite([email]);
           }}
         />
       )}
@@ -501,7 +505,8 @@ export function ChannelInfoPanel({
 /** Direct message info drawer / right panel */
 export function DmInfoPanel({ otherId, onClose }: { otherId: string; onClose?: () => void }) {
   const { peer, messages } = useConversation(otherId);
-  const { isOnline } = usePresence(otherId);
+  const onlineSet = useOnlineStatuses([otherId]);
+  const isOnline = onlineSet.has(otherId);
 
   const resolveSender = useMemo(() => {
     return (uid: string): Sender => {
