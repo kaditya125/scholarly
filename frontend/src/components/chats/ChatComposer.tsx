@@ -7,12 +7,11 @@ import {
   Pencil,
   Mic,
   Smile,
+  Type,
   Bold,
   Italic,
   Underline,
-  Strikethrough,
   Image as ImageIcon,
-  Sparkles,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { AttachmentBar } from "../social/AttachmentBar";
@@ -99,7 +98,7 @@ export function ChatComposer({
   const EMOJIS = ["👍", "❤️", "🔥", "🎉", "💡", "📚", "✨", "🙌", "🎯", "👏"];
 
   return (
-    <div className="shrink-0 border-t border-slate-200/80 dark:border-white/10 p-3 sm:p-4 bg-white/80 dark:bg-[#131316]/80 backdrop-blur-md">
+    <div className="shrink-0 p-3 sm:p-4 bg-transparent font-sans">
       <TypingIndicator users={typingUsers} />
 
       {/* Editing message banner */}
@@ -119,15 +118,15 @@ export function ChatComposer({
 
       {/* Reply quote banner */}
       {!editing && replyPreview && (
-        <div className="flex items-center gap-2 px-3 py-1.5 mb-2 rounded-xl bg-slate-100/80 dark:bg-white/5 text-[12px] border border-slate-200/60 dark:border-white/5">
-          <Reply className="w-3.5 h-3.5 shrink-0 text-[#8ba32b] dark:text-[#c8e558]" />
+        <div className="flex items-center gap-2 px-3 py-1.5 mb-2 rounded-xl bg-white/90 dark:bg-white/5 text-[12px] border border-slate-200/80 dark:border-white/5 shadow-2xs">
+          <Reply className="w-3.5 h-3.5 shrink-0 text-[#107050] dark:text-[#c8e558]" />
           <div className="min-w-0 flex-1">
             <span className="font-bold text-slate-700 dark:text-gray-200">{replyPreview.name}</span>
             <p className="truncate text-slate-400 dark:text-gray-500">{replyPreview.text}</p>
           </div>
           <button
             onClick={onCancelReply}
-            className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 cursor-pointer"
+            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer"
             aria-label="Cancel reply"
           >
             <X className="w-3.5 h-3.5 text-slate-400" />
@@ -145,22 +144,23 @@ export function ChatComposer({
           onCancel={() => setIsRecording(false)}
         />
       ) : (
-        <div className="rounded-3xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-[#19191c] p-2.5 focus-within:border-slate-400 dark:focus-within:border-white/20 transition-all shadow-2xs">
-          {/* Quick Toolbar (Inspired by Reference Image 1 & 5) */}
-          <div className="flex items-center justify-between px-2 pb-1.5 border-b border-slate-200/50 dark:border-white/5">
-            <div className="flex items-center gap-1 text-slate-400 dark:text-gray-400">
+        /* Minimalistic Sleek Composer Box */
+        <div className="rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#18181b] p-2.5 focus-within:border-slate-400 dark:focus-within:border-white/20 transition-all shadow-xs">
+          {/* Top Quick Minimal Toolbar matching Reference UI */}
+          <div className="flex items-center justify-between px-1 pb-1.5 border-b border-slate-100 dark:border-white/5 text-slate-400 dark:text-gray-400">
+            <div className="flex items-center gap-0.5">
               <button
                 type="button"
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-200/60 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
-                title="Add Emoji"
+                className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
+                title="Emoji"
               >
-                <Smile className="w-4 h-4" />
+                <Smile className="w-3.5 h-3.5" />
               </button>
               <button
                 type="button"
                 onClick={() => handleFormat("**")}
-                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-200/60 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
+                className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
                 title="Bold"
               >
                 <Bold className="w-3.5 h-3.5" />
@@ -168,21 +168,21 @@ export function ChatComposer({
               <button
                 type="button"
                 onClick={() => handleFormat("*")}
-                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-200/60 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
+                className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
                 title="Italic"
               >
                 <Italic className="w-3.5 h-3.5" />
               </button>
               <button
                 type="button"
-                onClick={() => handleFormat("~~")}
-                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-200/60 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
-                title="Strikethrough"
+                onClick={() => handleFormat("<u>", "</u>")}
+                className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
+                title="Underline"
               >
-                <Strikethrough className="w-3.5 h-3.5" />
+                <Underline className="w-3.5 h-3.5" />
               </button>
 
-              <div className="w-[1px] h-4 bg-slate-200 dark:bg-white/10 mx-1" />
+              <div className="w-[1px] h-3.5 bg-slate-200 dark:bg-white/10 mx-1" />
 
               <input
                 ref={fileRef}
@@ -197,10 +197,10 @@ export function ChatComposer({
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-200/60 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
+                className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
                 title="Attach Document"
               >
-                <Paperclip className="w-4 h-4" />
+                <Paperclip className="w-3.5 h-3.5" />
               </button>
 
               <input
@@ -217,26 +217,43 @@ export function ChatComposer({
               <button
                 type="button"
                 onClick={() => imageRef.current?.click()}
-                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-200/60 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
+                className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
                 title="Attach Photo"
               >
-                <ImageIcon className="w-4 h-4" />
+                <ImageIcon className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsRecording(true)}
+                className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/10 hover:text-emerald-600 dark:hover:text-[#c8e558] transition-colors cursor-pointer"
+                title="Voice Note"
+              >
+                <Mic className="w-3.5 h-3.5" />
               </button>
             </div>
 
+            {/* Top right green paperplane button matching reference template */}
             <button
+              onClick={submit}
+              disabled={!canSend || disabled || isSending}
+              aria-label="Send message"
               type="button"
-              onClick={() => setIsRecording(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11.5px] font-semibold text-emerald-600 dark:text-[#c8e558] hover:bg-emerald-50 dark:hover:bg-[#c8e558]/10 transition-colors cursor-pointer"
+              className={cn(
+                "w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer",
+                canSend && !disabled && !isSending
+                  ? "text-[#107050] dark:text-[#c8e558] hover:bg-emerald-50 dark:hover:bg-white/10 active:scale-95"
+                  : "text-slate-300 dark:text-gray-600 cursor-not-allowed opacity-50"
+              )}
+              title="Send"
             >
-              <Mic className="w-3.5 h-3.5" />
-              <span>Voice</span>
+              <Send className="w-4 h-4" />
             </button>
           </div>
 
           {/* Emoji Picker Popup */}
           {showEmojiPicker && (
-            <div className="p-2 border-b border-slate-200/60 dark:border-white/5 flex flex-wrap gap-1.5">
+            <div className="p-1.5 border-b border-slate-100 dark:border-white/5 flex flex-wrap gap-1">
               {EMOJIS.map((emoji) => (
                 <button
                   key={emoji}
@@ -245,7 +262,7 @@ export function ChatComposer({
                     onChange(value + emoji);
                     setShowEmojiPicker(false);
                   }}
-                  className="w-8 h-8 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 text-[16px] flex items-center justify-center transition-colors cursor-pointer"
+                  className="w-7 h-7 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-[15px] flex items-center justify-center transition-colors cursor-pointer"
                 >
                   {emoji}
                 </button>
@@ -253,8 +270,8 @@ export function ChatComposer({
             </div>
           )}
 
-          {/* Text input area */}
-          <div className="flex items-end gap-2 pt-2 px-1">
+          {/* Text Input Area */}
+          <div className="pt-1.5 px-1">
             <textarea
               ref={textareaRef}
               rows={1}
@@ -271,31 +288,16 @@ export function ChatComposer({
               }}
               placeholder={placeholder}
               disabled={disabled}
-              className="flex-1 bg-transparent border-0 outline-none text-[13.5px] text-slate-900 dark:text-white placeholder:text-slate-400 resize-none max-h-32 min-h-[38px] py-1.5 leading-relaxed"
+              className="w-full bg-transparent border-0 outline-none text-[13px] text-slate-900 dark:text-white placeholder:text-slate-400 resize-none max-h-28 min-h-[32px] py-1 leading-relaxed"
             />
-
-            <button
-              onClick={submit}
-              disabled={!canSend || disabled || isSending}
-              aria-label="Send message"
-              type="button"
-              className={cn(
-                "shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center transition-all cursor-pointer shadow-sm",
-                canSend && !disabled && !isSending
-                  ? "bg-[#8ba32b] dark:bg-[#c8e558] text-white dark:text-slate-900 hover:opacity-90 active:scale-95"
-                  : "bg-slate-200 dark:bg-white/10 text-slate-400 dark:text-gray-500 cursor-not-allowed opacity-60"
-              )}
-            >
-              <Send className="w-4 h-4 ml-0.5" />
-            </button>
           </div>
         </div>
       )}
 
-      {/* Pro tip helper text from reference screenshot */}
-      <div className="flex items-center justify-between px-3 pt-2 text-[11px] text-slate-400 dark:text-gray-500">
+      {/* Pro tip helper text */}
+      <div className="flex items-center justify-between px-2 pt-1.5 text-[10.5px] text-slate-400 dark:text-gray-500">
         <span>
-          <strong className="font-semibold text-slate-600 dark:text-gray-400">Pro tip:</strong> press <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-white/5 rounded border border-slate-200 dark:border-white/10 font-mono text-[10px]">Enter</kbd> to send, <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-white/5 rounded border border-slate-200 dark:border-white/10 font-mono text-[10px]">Shift+Enter</kbd> for new line
+          <strong className="font-semibold text-slate-600 dark:text-gray-400">Pro tips:</strong> can press <kbd className="px-1 py-0.2 bg-white dark:bg-white/5 rounded border border-slate-200 dark:border-white/10 font-mono text-[9.5px]">Enter</kbd> to send, <kbd className="px-1 py-0.2 bg-white dark:bg-white/5 rounded border border-slate-200 dark:border-white/10 font-mono text-[9.5px]">Shift+Enter</kbd> for new line
         </span>
       </div>
     </div>

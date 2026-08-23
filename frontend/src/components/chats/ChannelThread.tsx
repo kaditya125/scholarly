@@ -236,8 +236,8 @@ export function ChannelThread({
 
       <PinnedBar items={pinnedItems} onJump={jumpTo} onUnpin={(id) => pinMessage({ messageId: id, pinned: false })} />
 
-      {/* Message Feed */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
+      {/* Message Feed with Watermark Wallpaper */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar chat-doodle-wallpaper">
         {isLoading && messages.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <Loader2 className="w-6 h-6 text-slate-300 dark:text-white/20 animate-spin" />
