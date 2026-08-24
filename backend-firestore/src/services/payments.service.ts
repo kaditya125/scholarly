@@ -52,6 +52,32 @@ export class PaymentsService {
     return this._client;
   }
 
+  /**
+   * Wraps Razorpay order creation so gateway-side failures never masquerade as caller errors.
+   *
+   * Razorpay SDK rejections carry the gateway's OWN http status on `statusCode`, and the global
+   * error handler forwards `err.status || err.statusCode` verbatim. A bad or rotated key pair
+   * therefore surfaced to the browser as a 401, which the checkout page read as "the user is
+   * signed out" and answered by telling an authenticated user to sign in. A rejected *server*
+   * credential is our misconfiguration, not a failure of the caller's session, so it maps to 502.
+   */
+  private async createRemoteOrder(params: Record<string, any>) {
+    try {
+      return await this.client().orders.create(params as any);
+    } catch (error: any) {
+      const status = error?.statusCode ?? error?.status;
+      if (status === 401 || status === 403) {
+        const detail = error?.error?.description || error?.message || 'Authentication failed';
+        console.error(`[payments] Razorpay rejected our API credentials (${status}): ${detail}. Check RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET.`);
+        throw Object.assign(
+          new Error("The payment gateway rejected this server's credentials. Please try again later."),
+          { statusCode: 502, code: 'GATEWAY_AUTH_FAILED' },
+        );
+      }
+      throw error;
+    }
+  }
+
   /** Resolves the authoritative price for a plan/billing period. Amount is in paise. */
   private priceFor(planId: string, yearly: boolean): { plan: PlanDef; rupees: number; paise: number } {
     const plan = PLANS[planId];
@@ -68,7 +94,7 @@ export class PaymentsService {
     const { plan, rupees, paise } = this.priceFor(planId, yearly);
     const receipt = `sch_${userId.slice(0, 8)}_${Date.now()}`.slice(0, 40);
 
-    const order = await this.client().orders.create({
+    const order = await this.createRemoteOrder({
       amount: paise,
       currency: 'INR',
       receipt,
@@ -109,7 +135,7 @@ export class PaymentsService {
     if (amountPaise < 100) throw new Error('Minimum order amount is 100 paise (₹1).');
     const orderReceipt = (receipt || `sch_${userId.slice(0, 8)}_${Date.now()}`).slice(0, 40);
 
-    const order = await this.client().orders.create({
+    const order = await this.createRemoteOrder({
       amount: amountPaise,
       currency,
       receipt: orderReceipt,
@@ -164,7 +190,7 @@ export class PaymentsService {
     const paise = rupees * 100;
     const receipt = `cls_${classId.slice(0, 8)}_${Date.now()}`.slice(0, 40);
 
-    const order = await this.client().orders.create({
+    const order = await this.createRemoteOrder({
       amount: paise,
       currency: 'INR',
       receipt,
