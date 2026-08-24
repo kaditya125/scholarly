@@ -9,6 +9,7 @@ import {
 import { cn } from "../lib/utils";
 import { api } from "../lib/api/client";
 import { useAuth } from "../lib/AuthContext";
+import { auth } from "../lib/firebase";
 
 /** Loads the Razorpay Checkout SDK once; resolves false if it fails to load. */
 function loadRazorpayScript(): Promise<boolean> {
@@ -140,8 +141,13 @@ export default function Checkout() {
     } catch (e: any) {
       const status = e?.response?.status;
       let msg = "Something went wrong starting the payment.";
-      if (status === 401) {
-        msg = "Please sign in or create an account to complete your purchase.";
+      // A 401 only means *this user* is signed out when Firebase agrees they are. The payment
+      // gateway can also answer 401 (rejected server credentials), and treating that as a
+      // session problem told signed-in users to sign in on a page they were already signed in on.
+      if (status === 401 && !auth.currentUser) {
+        msg = "Your session expired. Please sign in again to complete your purchase.";
+      } else if (status === 502) {
+        msg = "The payment gateway is unavailable right now. Please try again later.";
       } else if (status === 503) {
         msg = "Payments aren't configured on the server yet. Please try again later.";
       } else if (typeof e?.response?.data?.error === 'string') {
