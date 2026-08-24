@@ -88,7 +88,13 @@ export class PaymentsController {
       if (result.orderType === 'class_purchase') {
         return res.json({ success: true, orderType: 'class_purchase', classId: result.classId });
       }
-      res.json({ success: true, orderType: 'subscription', plan: 'pro' });
+      if (result.orderType === 'subscription') {
+        return res.json({ success: true, orderType: 'subscription', plan: 'pro' });
+      }
+      // Generic / unrecognised order: payment recorded, but no plan was granted. Reporting
+      // `plan: 'pro'` here would have the client show Pro for an entitlement the server
+      // never actually applied.
+      res.json({ success: true, orderType: result.orderType ?? 'unknown', plan: null });
     } catch (error: any) {
       console.error('[payments] verifyPayment failed:', error?.message || error);
       next(error);
