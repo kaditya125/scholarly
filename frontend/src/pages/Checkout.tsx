@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "motion/react";
 import {
@@ -10,6 +10,7 @@ import { cn } from "../lib/utils";
 import { api } from "../lib/api/client";
 import { useAuth } from "../lib/AuthContext";
 import { auth } from "../lib/firebase";
+import { usePlan } from "../hooks/usePlan";
 
 /** Loads the Razorpay Checkout SDK once; resolves false if it fails to load. */
 function loadRazorpayScript(): Promise<boolean> {
@@ -71,8 +72,26 @@ export default function Checkout() {
   const [discount, setDiscount] = useState("");
   const [showDiscount, setShowDiscount] = useState(false);
   const [discountApplied, setDiscountApplied] = useState(false);
-  const [processing, setProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  /**
+   * Explicit payment phase. A single `processing` boolean could not tell "cancelled" apart from
+   * "failed" apart from "we genuinely do not know yet", so dismissing the modal looked like a
+   * failure, and a network drop after paying was reported as a failure outright.
+   */
+  const [phase, setPhase] = useState<
+    'idle' | 'creating' | 'awaiting' | 'verifying' | 'pending' | 'cancelled' | 'failed' | 'error'
+  >('idle');
+  const [notice, setNotice] = useState<{ tone: 'info' | 'error' | 'warn'; title: string; body?: string } | null>(null);
+  const orderRef = useRef<string | null>(null);
+  const { isPro, loading: planLoading } = usePlan();
+
+  // Busy = a payment is genuinely in flight. Blocks a second attempt without freezing the page.
+  const busy = phase === 'creating' || phase === 'awaiting' || phase === 'verifying' || phase === 'pending';
+  const PHASE_LABEL: Record<string, string> = {
+    creating: 'Creating payment...',
+    awaiting: 'Opening checkout...',
+    verifying: 'Verifying payment...',
+    pending: 'Confirming payment...',
+  };
 
   // Safe navigation handler that keeps logged-in users inside their workspace
   const handleGoBack = () => {
@@ -86,17 +105,19 @@ export default function Checkout() {
   };
 
   const handleCheckout = async () => {
-    setError(null);
+    setNotice(null);
     if (!user) {
       navigate(`/signup?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
       return;
     }
-    setProcessing(true);
+    if (busy) return;                 // guards the double-click before the request even leaves
+    setPhase('creating');
     try {
       const loaded = await loadRazorpayScript();
-      if (!loaded) throw new Error("Couldn't load the payment SDK — check your connection and try again.");
+      if (!loaded) throw new Error("Couldn't load the payment SDK - check your connection and try again.");
 
-      // 1. Ask the backend to create a Razorpay order (amount is computed server-side).
+      // 1. Ask the backend to create a Razorpay order (amount is computed server-side). The
+      //    backend reuses an existing open order for this plan, so a retry cannot mint duplicates.
       const { data } = await api.post("/payments/order", {
         plan: planId,
         billing: isYearly ? "yearly" : "monthly",
@@ -104,20 +125,24 @@ export default function Checkout() {
       const key = data?.keyId || (import.meta.env.VITE_RAZORPAY_KEY_ID as string);
       const orderId = data?.order_id || data?.orderId || data?.id;
       if (!orderId || !key) throw new Error("Payment could not be started.");
+      orderRef.current = orderId;
 
       // 2. Open Razorpay's hosted, PCI-compliant checkout (card data never touches our servers).
+      setPhase('awaiting');
       const rzp = new (window as any).Razorpay({
         key,
         order_id: orderId,
         amount: data.amount,
         currency: data.currency || "INR",
         name: "Sadhya",
-        description: `${data.planName || "Sadhya Pro"} — ${isYearly ? "Yearly (billed once)" : "Monthly"}`,
+        description: `${data.planName || "Sadhya Pro"} - ${isYearly ? "Yearly (billed once)" : "Monthly"}`,
         ...(import.meta.env.VITE_BRAND_LOGO_URL ? { image: import.meta.env.VITE_BRAND_LOGO_URL as string } : {}),
         prefill: { name: user?.displayName || "", email: user?.email || "" },
         theme: { color: "#c8e558", backdrop_color: "#0b0b0c" },
-        // 3. On success, verify the signature server-side, then show the Thank-You page.
+        // 3. On success, verify server-side. Opening checkout is NOT payment, and this callback
+        //    is not the entitlement authority - the server decides, here and via the webhook.
         handler: async (resp: any) => {
+          setPhase('verifying');
           try {
             await api.post("/payments/verify", {
               razorpay_order_id: resp.razorpay_order_id,
@@ -126,20 +151,56 @@ export default function Checkout() {
             });
             navigate("/payment-success");
           } catch {
-            setError("Payment received — we're confirming it now. Your Pro access will activate shortly.");
-            setProcessing(false);
+            // The money may well have left. Never call this a failure - ask the server what
+            // actually happened, and let the webhook finish the job if this browser cannot.
+            setPhase('pending');
+            setNotice({
+              tone: 'info',
+              title: 'Payment processing',
+              body: "We are confirming your payment with the bank. Please do not pay again - your Pro access will activate automatically.",
+            });
+            reconcile(resp?.razorpay_order_id || orderId);
           }
         },
-        modal: { ondismiss: () => setProcessing(false) },
+        // 4. Dismissal is a cancellation, not a failure. Tell the server so the order reaches a
+        //    terminal state instead of lingering as an abandoned `created` row forever.
+        modal: {
+          ondismiss: () => {
+            setPhase((prev) => (prev === 'verifying' || prev === 'pending' ? prev : 'cancelled'));
+            setNotice({
+              tone: 'warn',
+              title: 'Payment cancelled',
+              body: "No payment was completed and you have not been charged. You can try again whenever you are ready.",
+            });
+            if (orderRef.current) {
+              api.post(`/payments/order/${orderRef.current}/cancel`).catch(() => { /* best-effort */ });
+            }
+          },
+        },
       });
       rzp.on("payment.failed", (r: any) => {
-        const desc = typeof r?.error?.description === 'string' ? r.error.description : "Payment failed. Please try again.";
-        setError(desc);
-        setProcessing(false);
+        const desc = typeof r?.error?.description === 'string' ? r.error.description : undefined;
+        setPhase('failed');
+        setNotice({
+          tone: 'error',
+          title: 'Payment failed',
+          body: `${desc ? desc + ' ' : ''}No Pro access was activated. Please try again.`,
+        });
       });
       rzp.open();
     } catch (e: any) {
       const status = e?.response?.status;
+      const code = e?.response?.data?.code;
+
+      // The server is the authority on entitlement: it rejects a second purchase even if the UI
+      // somehow offered one. Reflect that truthfully rather than as a generic error.
+      if (status === 409 && code === 'ALREADY_PRO') {
+        setPhase('idle');
+        setNotice({ tone: 'info', title: "You are already a Pro member", body: 'No payment is needed. Taking you back to your settings...' });
+        setTimeout(() => navigate('/settings'), 1800);
+        return;
+      }
+
       let msg = "Something went wrong starting the payment.";
       // A 401 only means *this user* is signed out when Firebase agrees they are. The payment
       // gateway can also answer 401 (rejected server credentials), and treating that as a
@@ -157,10 +218,65 @@ export default function Checkout() {
       } else if (typeof e?.message === 'string') {
         msg = e.message;
       }
-      setError(msg);
-      setProcessing(false);
+      setPhase('error');
+      setNotice({ tone: 'error', title: 'Payment could not be started', body: msg });
     }
   };
+
+  /**
+   * Asks the server what really happened to an order whose browser callback we lost. Polls
+   * briefly because the webhook may still be in flight, and gives up quietly rather than ever
+   * telling the user "failed" about a payment we cannot actually disprove.
+   */
+  const reconcile = async (orderId: string, attempt = 0) => {
+    try {
+      const { data } = await api.get(`/payments/order/${orderId}/status`);
+      if (data?.status === 'paid') {
+        navigate('/payment-success');
+        return;
+      }
+    } catch { /* keep waiting - an error here is not evidence of failure */ }
+    if (attempt < 10) setTimeout(() => reconcile(orderId, attempt + 1), 3000);
+  };
+
+  /**
+   * A member who already holds Pro must never be shown a purchase form. The backend rejects the
+   * order regardless (409 ALREADY_PRO), but offering the form at all is what made an active
+   * subscriber believe they had to pay again. Rendered only once entitlement is actually known,
+   * so a Free user never sees this flash by mistake.
+   */
+  if (!planLoading && isPro) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 bg-white dark:bg-[#0b0b0c]">
+        <div className="w-full max-w-md text-center">
+          <div className="mx-auto w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center">
+            <Check className="w-7 h-7 text-emerald-600 dark:text-emerald-400" strokeWidth={2.5} />
+          </div>
+          <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            You are already a Pro member
+          </h1>
+          <p className="mt-2 text-[14px] text-slate-500 dark:text-slate-400 leading-relaxed">
+            Your subscription is active, so there is nothing to pay for. You already have unlimited
+            AI tutoring, adaptive tests, the podcast studio and video lessons.
+          </p>
+          <div className="mt-7 flex items-center justify-center gap-3">
+            <button
+              onClick={() => navigate('/settings')}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-950 font-bold text-[13.5px] hover:opacity-90 transition-all shadow-md cursor-pointer active:scale-98"
+            >
+              Manage subscription <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleGoBack}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-slate-200 dark:border-white/15 bg-white dark:bg-[#1a1a1e] text-[13px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#232328] transition-all cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" /> Go back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#131315] text-slate-900 dark:text-slate-100 font-sans antialiased transition-colors duration-200">
@@ -254,10 +370,26 @@ export default function Checkout() {
             </p>
           </div>
 
-          {error && (
-            <div className="mt-5 flex items-start gap-2.5 rounded-2xl border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-4 py-3 text-[13px] text-rose-700 dark:text-rose-300">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>{error}</span>
+          {/* One banner, three tones. Cancellation is amber and reassuring, a real failure is
+              red, and an unconfirmed payment is blue and explicitly tells the user NOT to retry. */}
+          {notice && (
+            <div
+              className={cn(
+                "mt-5 flex items-start gap-2.5 rounded-2xl border px-4 py-3 text-[13px]",
+                notice.tone === 'error' && "border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300",
+                notice.tone === 'warn' && "border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300",
+                notice.tone === 'info' && "border-sky-200 dark:border-sky-500/30 bg-sky-50 dark:bg-sky-500/10 text-sky-800 dark:text-sky-300",
+              )}
+              role="status"
+              aria-live="polite"
+            >
+              {notice.tone === 'info'
+                ? <Loader2 className={cn("w-4 h-4 shrink-0 mt-0.5", busy && "animate-spin")} />
+                : <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />}
+              <span>
+                <span className="font-semibold">{notice.title}</span>
+                {notice.body && <> — {notice.body}</>}
+              </span>
             </div>
           )}
 
@@ -271,16 +403,22 @@ export default function Checkout() {
             </button>
             <button
               onClick={handleCheckout}
-              disabled={processing}
+              disabled={busy || isPro || planLoading}
               className="inline-flex items-center gap-2 px-7 py-2.5 rounded-full bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-950 font-bold text-[13.5px] hover:opacity-90 disabled:opacity-50 transition-all shadow-md cursor-pointer active:scale-98"
             >
-              {processing ? (
+              {busy ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> Processing…
+                  <Loader2 className="w-4 h-4 animate-spin" /> {PHASE_LABEL[phase] ?? 'Working...'}
                 </>
               ) : (
                 <>
-                  <span>Pay ₹{total.toLocaleString("en-IN")}</span>
+                  {/* After a cancellation or a failure the label invites a safe retry rather
+                      than leaving a dead-looking button behind. */}
+                  <span>
+                    {phase === 'cancelled' || phase === 'failed' || phase === 'error'
+                      ? `Try again — ₹${total.toLocaleString("en-IN")}`
+                      : `Pay ₹${total.toLocaleString("en-IN")}`}
+                  </span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}

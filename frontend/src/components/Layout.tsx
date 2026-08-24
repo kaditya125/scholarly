@@ -60,6 +60,7 @@ import { ShareModal } from "./ShareModal";
 import { FeedbackModal } from "./FeedbackModal";
 import HighlightAction from "./HighlightAction";
 import { useAuth } from "../lib/AuthContext";
+import { usePlan } from "../hooks/usePlan";
 import { api } from "../lib/api/client";
 import { AppearanceModal } from "./AppearanceModal";
 import { NotificationsMenu } from "./NotificationsMenu";
@@ -200,6 +201,11 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
   }, [isCollapsed]);
   const [isRecentOpen, setIsRecentOpen] = useState(true);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  // Server-derived entitlement. The upgrade CTAs below were previously unconditional, so an
+  // active Pro member was still invited to buy Pro — the state the whole payment audit started
+  // from. `usePlan` reads GET /payments/subscription, i.e. the same server record the backend
+  // enforces against, so the button and the API can no longer disagree.
+  const { isPro, loading: planLoading } = usePlan();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [isNewMenuOpen, setIsNewMenuOpen] = useState(false);
@@ -794,8 +800,9 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
              </div>
            )}
 
-           {/* Upgrade card */}
-           {!isRail && (
+           {/* Upgrade card — hidden for Pro members and while entitlement is still unknown,
+               so it never flashes to someone who has already paid. */}
+           {!isRail && !isPro && !planLoading && (
              <div className="px-2.5 mt-8 mb-2">
                <div className="relative overflow-hidden rounded-2xl border border-slate-200/70 dark:border-white/[0.06] bg-gradient-to-br from-indigo-50 via-white to-white dark:from-indigo-500/[0.08] dark:via-transparent dark:to-transparent p-4">
                  <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-indigo-500/10 dark:bg-indigo-400/10 blur-2xl pointer-events-none" aria-hidden="true" />
@@ -936,13 +943,16 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                 <Bug className="w-[18px] h-[18px]" strokeWidth={1.75} />
                 Report Bug
               </button>
-              <button 
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 md:px-4 py-2 rounded-full text-xs md:text-[13px] font-semibold transition-colors shadow-sm"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span className="hidden sm:inline">Upgrade Plan</span>
-                <span className="sm:hidden">Upgrade</span>
-              </button>
+              {!isPro && !planLoading && (
+                <button
+                  onClick={() => navigate('/checkout?plan=pro')}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 md:px-4 py-2 rounded-full text-xs md:text-[13px] font-semibold transition-colors shadow-sm"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span className="hidden sm:inline">Upgrade Plan</span>
+                  <span className="sm:hidden">Upgrade</span>
+                </button>
+              )}
             </div>
           ) : (
             // Minimal action rail: one bordered element (search), everything else is a

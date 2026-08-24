@@ -16,6 +16,12 @@ router.get('/subscription', requireAuth, controller.getSubscription);
 router.get('/history', requireAuth, controller.getHistory);
 router.post('/order', requireAuth, controller.createOrder);
 router.post('/create-order', requireAuth, controller.createOrder);
+
+// Reconciliation + explicit cancellation, so a lost callback or a dismissed modal resolves to a
+// definite state instead of leaving the user guessing whether they were charged.
+router.get('/order/:orderId/status', requireAuth, controller.getOrderStatus);
+router.post('/order/:orderId/cancel', requireAuth, controller.cancelOrder);
+
 router.post('/verify', requireAuth, controller.verifyPayment);
 router.post('/verify-payment', requireAuth, controller.verifyPayment);
 

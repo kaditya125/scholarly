@@ -33,6 +33,19 @@ export class PaymentsController {
       const planId = String(req.body?.plan || 'pro').toLowerCase();
       const yearly = req.body?.billing === 'yearly';
 
+      // The backend is the authority on entitlement, not the button. Hiding the CTA stops an
+      // honest double-purchase; this stops a scripted one. A user who already holds active Pro
+      // cannot mint another Pro order by calling this endpoint directly.
+      const entitlement = await paymentsService.hasActivePro(userId);
+      if (entitlement.active) {
+        console.log(`[payments] ORDER_REJECTED_ALREADY_PRO user=${userId}`);
+        return res.status(409).json({
+          code: 'ALREADY_PRO',
+          error: "You're already a Pro member.",
+          currentPeriodEnd: entitlement.currentPeriodEnd ?? null,
+        });
+      }
+
       const order = await paymentsService.createOrder(userId, planId, yearly);
       res.json(order);
     } catch (error: any) {
@@ -63,6 +76,39 @@ export class PaymentsController {
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
       const payments = await paymentsService.getHistory(userId);
       res.json({ payments });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Reconciliation endpoint. Lets a browser that lost the success callback — closed tab, dropped
+   * network, crashed mid-payment — ask the server what actually happened, instead of the user
+   * being told "failed" for a payment that succeeded. Scoped to the caller's own orders.
+   */
+  public getOrderStatus = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+      const result = await paymentsService.getOrderStatus(String(req.params.orderId), userId);
+      if (!result.found) return res.status(404).json({ code: 'ORDER_NOT_FOUND', error: 'Order not found.' });
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Records that the user dismissed Razorpay checkout. Only moves `created` -> `cancelled`, so
+   * it can never overwrite a payment that actually completed — a dismissal racing a real
+   * capture leaves the `paid` state intact.
+   */
+  public cancelOrder = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+      const result = await paymentsService.markOrderCancelled(String(req.params.orderId), userId);
+      res.json({ success: true, cancelled: result.cancelled });
     } catch (error) {
       next(error);
     }
@@ -117,7 +163,9 @@ export class PaymentsController {
         return res.status(400).json({ error: 'Invalid signature' });
       }
 
-      await paymentsService.handleWebhookEvent(req.body);
+      const eventId = (req.headers['x-razorpay-event-id'] as string | undefined) || undefined;
+      console.log(`[payments] PAYMENT_WEBHOOK_RECEIVED event=${eventId ?? 'n/a'} type=${req.body?.event ?? 'n/a'}`);
+      await paymentsService.handleWebhookEvent(req.body, eventId);
       res.status(200).json({ received: true });
     } catch (error: any) {
       // Log but still 200 so Razorpay doesn't hammer retries on a transient error we've recorded.
