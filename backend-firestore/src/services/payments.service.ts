@@ -35,6 +35,29 @@ const PLANS: Record<string, PlanDef> = {
 export class PaymentsService {
   private _client: Razorpay | null = null;
 
+  /**
+   * Serialises order creation per user.
+   *
+   * `findReusableOrder` is a read followed by a create, which is not atomic: two clicks landing
+   * together both saw "no open order" and each minted one. A Firestore transaction cannot help,
+   * because creating the Razorpay order is an external side effect that cannot participate in
+   * one. This queue makes the read-then-create sequence run one-at-a-time per user, which is
+   * sufficient because PM2 runs this API as a SINGLE fork instance (ecosystem.config.js pins
+   * instances: 1). If that ever becomes multi-instance, this must be replaced by a distributed
+   * lock — an in-process queue would no longer span the workers.
+   */
+  private orderLocks = new Map<string, Promise<unknown>>();
+
+  private withUserLock<T>(userId: string, fn: () => Promise<T>): Promise<T> {
+    const prev = this.orderLocks.get(userId) ?? Promise.resolve();
+    const run = prev.catch(() => undefined).then(fn);
+    this.orderLocks.set(userId, run.catch(() => undefined));
+    void run.finally(() => {
+      if (this.orderLocks.get(userId) === undefined) this.orderLocks.delete(userId);
+    });
+    return run;
+  }
+
   /** Payments are only available when both Razorpay keys are configured. */
   isEnabled(): boolean {
     return !!(env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET);
@@ -144,6 +167,10 @@ export class PaymentsService {
    * (payments/{orderId}) with the user id, so the webhook can attribute the payment later.
    */
   async createOrder(userId: string, planId: string, yearly: boolean) {
+    return this.withUserLock(userId, () => this.createOrderInner(userId, planId, yearly));
+  }
+
+  private async createOrderInner(userId: string, planId: string, yearly: boolean) {
     const { plan, rupees, paise } = this.priceFor(planId, yearly);
     const billing = yearly ? 'yearly' : 'monthly';
 
@@ -225,6 +252,39 @@ export class PaymentsService {
     return { cancelled: true };
   }
 
+  /**
+   * Confirms a settled payment matches the order the SERVER priced. The order amount is already
+   * server-derived, and the signature binds order+payment, so this is defence in depth — but it
+   * is the check that makes "never trust a browser-supplied amount" true end to end rather than
+   * merely true by construction. Unknown/absent amounts are treated as a mismatch, not waved
+   * through, so a missing field can never become an accidental bypass.
+   */
+  async paymentMatchesOrder(orderId: string, paidAmount: unknown, paidCurrency: unknown): Promise<{ ok: boolean; reason?: string }> {
+    const snap = await db.collection('payments').doc(orderId).get();
+    if (!snap.exists) return { ok: false, reason: 'order-not-found' };
+    const o = snap.data() as any;
+    if (paidAmount == null) return { ok: false, reason: 'no-amount-on-event' };
+    if (Number(paidAmount) !== Number(o.amountPaise)) {
+      return { ok: false, reason: `amount-mismatch expected=${o.amountPaise} got=${paidAmount}` };
+    }
+    const expectedCurrency = o.currency || 'INR';
+    if (paidCurrency && String(paidCurrency) !== expectedCurrency) {
+      return { ok: false, reason: `currency-mismatch expected=${expectedCurrency} got=${paidCurrency}` };
+    }
+    return { ok: true };
+  }
+
+  /** Fetches a payment straight from Razorpay so the client path can be checked the same way. */
+  async fetchRemotePayment(paymentId: string): Promise<{ amount?: number; currency?: string; status?: string } | null> {
+    try {
+      const p: any = await (this.client() as any).payments.fetch(paymentId);
+      return { amount: p?.amount, currency: p?.currency, status: p?.status };
+    } catch (e: any) {
+      console.warn(`[payments] fetchRemotePayment failed for ${paymentId}: ${e?.error?.description || e?.message}`);
+      return null;
+    }
+  }
+
   /** Order status for reconciliation — lets a browser that lost the callback learn the truth. */
   async getOrderStatus(orderId: string, userId: string): Promise<{ found: boolean; status?: string; orderType?: string; environment?: string; amountRupees?: number }> {
     const snap = await db.collection('payments').doc(orderId).get();
@@ -251,6 +311,7 @@ export class PaymentsService {
     await db.collection('payments').doc(order.id).set({
       orderId: order.id,
       orderType: 'generic',
+      environment: this.environment,
       userId,
       amountPaise,
       amountRupees: Math.round(amountPaise / 100),
@@ -306,6 +367,7 @@ export class PaymentsService {
     await db.collection('payments').doc(order.id).set({
       orderId: order.id,
       orderType: 'class_purchase',
+      environment: this.environment,
       userId: studentUid,
       classId,
       teacherUid: record.ownerUid,
@@ -353,7 +415,7 @@ export class PaymentsService {
     // was recorded carry no value; those are grandfathered through rather than retroactively
     // invalidated, since revoking an existing entitlement is not this function's decision.
     if (data.environment && data.environment !== this.environment) {
-      console.warn(`[payments] Order ${orderId} was created in '${data.environment}' but this process runs '${this.environment}'; refusing to apply (source=${source}).`);
+      console.warn(`[payments] PAYMENT_WEBHOOK_REJECTED_ENVIRONMENT order=${orderId} orderEnv=${data.environment} processEnv=${this.environment} source=${source}`);
       return { applied: false, orderType: null };
     }
 
@@ -459,36 +521,63 @@ export class PaymentsService {
       return { upgraded: false };
     }
     const data = snap.data() as any;
-    if (data.status === 'paid') {
-      return { upgraded: true, userId: data.userId }; // already applied
-    }
-
+    const userRef = db.collection('users').doc(data.userId);
     const now = Date.now();
-    await ref.set({ status: 'paid', paymentId, paidAt: now, paidVia: source, ...(method ? { method } : {}) }, { merge: true });
-
     const billing = data.billing || 'monthly';
     const periodMs = billing === 'yearly' ? 365 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
 
-    await db.collection('users').doc(data.userId).set({
-      plan: 'pro',
-      proSince: now,
-      subscription: {
-        status: 'active',
-        plan: data.planId || 'pro',
-        planName: data.planName || 'Sadhya Pro',
-        billing,
-        orderId,
-        paymentId,
-        method: method || null,
-        amountRupees: data.amountRupees,
-        activatedAt: now,
-        currentPeriodEnd: now + periodMs,
-        provider: 'razorpay',
-        source,
-      },
-    }, { merge: true });
+    // Both writes happen in ONE transaction. Previously they were sequential: if the order was
+    // marked paid and the user write then failed, the caller was charged, held no Pro, and every
+    // retry short-circuited on `status === 'paid'` and reported success — an unrecoverable
+    // charged-but-free state. The transaction also re-reads inside the lock, so two racing
+    // callers (webhook + client verify on the same order) collapse to a single activation.
+    const outcome = await db.runTransaction(async (tx) => {
+      const [orderSnap, userSnap] = await Promise.all([tx.get(ref), tx.get(userRef)]);
+      if (!orderSnap.exists) return { upgraded: false, repaired: false, noop: false };
 
-    console.log(`[payments] ✅ Upgraded ${data.userId} to Pro (order ${orderId}, via ${source}).`);
+      const o = orderSnap.data() as any;
+      const u = (userSnap.exists ? userSnap.data() : {}) as any;
+      const alreadyEntitled = u?.plan === 'pro' && u?.subscription?.orderId === orderId;
+
+      // Already fully applied — nothing to do. This is the only genuine no-op path.
+      if (o.status === 'paid' && alreadyEntitled) {
+        return { upgraded: true, repaired: false, noop: true };
+      }
+
+      if (o.status !== 'paid') {
+        tx.set(ref, { status: 'paid', paymentId, paidAt: now, paidVia: source, updatedAt: now, ...(method ? { method } : {}) }, { merge: true });
+      }
+
+      tx.set(userRef, {
+        plan: 'pro',
+        proSince: u?.proSince ?? now,
+        subscription: {
+          status: 'active',
+          plan: o.planId || 'pro',
+          planName: o.planName || 'Sadhya Pro',
+          billing,
+          orderId,
+          paymentId,
+          method: method || null,
+          amountRupees: o.amountRupees,
+          activatedAt: now,
+          currentPeriodEnd: now + periodMs,
+          provider: 'razorpay',
+          source,
+        },
+      }, { merge: true });
+
+      // `repaired` = the order was already paid but the entitlement was missing, i.e. we just
+      // healed a previously stranded charged-but-free user.
+      return { upgraded: true, repaired: o.status === 'paid', noop: false };
+    });
+
+    if (outcome.noop) return { upgraded: true, userId: data.userId };
+    if (!outcome.upgraded) return { upgraded: false };
+    if (outcome.repaired) {
+      console.warn(`[payments] PRO_ENTITLEMENT_REPAIRED user=${data.userId} order=${orderId} (order was paid but entitlement was missing)`);
+    }
+    console.log(`[payments] PRO_ENTITLEMENT_ACTIVATED user=${data.userId} order=${orderId} via=${source}`);
     return { upgraded: true, userId: data.userId };
   }
 
@@ -570,8 +659,21 @@ export class PaymentsService {
       if (orderId) {
         // Report what actually happened. Logging PROCESSED for an event the environment guard
         // refused would make a rejected cross-environment payment look like a successful one.
+        // Amount/currency are checked against the order the SERVER priced, using the values
+        // Razorpay itself signed into the event — so a payment that does not match the order it
+        // claims to settle cannot activate anything.
+        const amountOk = await this.paymentMatchesOrder(orderId, payment?.amount, payment?.currency);
+        if (!amountOk.ok) {
+          console.warn(`[payments] PAYMENT_WEBHOOK_REJECTED_AMOUNT order=${orderId} reason=${amountOk.reason}`);
+          return { handled: true };
+        }
+
         const outcome = await this.applyOrderPayment(orderId, paymentId, 'webhook', payment?.method);
-        console.log(`[payments] PAYMENT_WEBHOOK_PROCESSED event=${eventId ?? 'n/a'} type=${type} order=${orderId} applied=${outcome.applied} orderType=${outcome.orderType ?? 'none'}`);
+        if (outcome.applied) {
+          console.log(`[payments] PAYMENT_WEBHOOK_PROCESSED event=${eventId ?? 'n/a'} type=${type} order=${orderId} orderType=${outcome.orderType}`);
+        } else {
+          console.warn(`[payments] PAYMENT_WEBHOOK_NOT_APPLIED event=${eventId ?? 'n/a'} type=${type} order=${orderId}`);
+        }
         return { handled: true };
       }
     }

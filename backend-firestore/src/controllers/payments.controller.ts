@@ -126,11 +126,29 @@ export class PaymentsController {
         return res.status(400).json({ success: false, error: 'Invalid payment signature' });
       }
 
-      const result = await paymentsService.applyOrderPayment(razorpay_order_id, razorpay_payment_id, 'client');
-      // Guard against a signed callback for someone else's order.
-      if (result.userId && result.userId !== userId) {
-        return res.status(403).json({ success: false, error: 'Order does not belong to this user' });
+      // Ownership is checked BEFORE any side effect. It used to run *after* applyOrderPayment,
+      // so the 403 was cosmetic — the entitlement had already been written by the time the
+      // caller was told they had no business touching this order.
+      const owned = await paymentsService.getOrderStatus(razorpay_order_id, userId);
+      if (!owned.found) {
+        console.warn(`[payments] PAYMENT_REJECTED_UNAUTHORIZED_ORDER order=${razorpay_order_id} user=${userId}`);
+        return res.status(403).json({ code: 'ORDER_NOT_OWNED', success: false, error: 'Order does not belong to this user' });
       }
+
+      // Confirm with Razorpay that the settled amount/currency match the order the SERVER priced.
+      // The signature already binds order+payment, so this is defence in depth; on a lookup
+      // failure we decline to activate here and let the webhook (the source of truth) finish,
+      // rather than failing open on a security check.
+      const remote = await paymentsService.fetchRemotePayment(razorpay_payment_id);
+      if (remote) {
+        const match = await paymentsService.paymentMatchesOrder(razorpay_order_id, remote.amount, remote.currency);
+        if (!match.ok) {
+          console.warn(`[payments] PAYMENT_REJECTED_AMOUNT order=${razorpay_order_id} reason=${match.reason}`);
+          return res.status(400).json({ code: 'PAYMENT_AMOUNT_MISMATCH', success: false, error: 'Payment could not be verified.' });
+        }
+      }
+
+      const result = await paymentsService.applyOrderPayment(razorpay_order_id, razorpay_payment_id, 'client');
       if (result.orderType === 'class_purchase') {
         return res.json({ success: true, orderType: 'class_purchase', classId: result.classId });
       }
