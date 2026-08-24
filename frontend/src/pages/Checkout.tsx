@@ -96,16 +96,18 @@ export default function Checkout() {
         plan: planId,
         billing: isYearly ? "yearly" : "monthly",
       });
-      if (!data?.orderId || !data?.keyId) throw new Error("Payment could not be started.");
+      const key = data?.keyId || (import.meta.env.VITE_RAZORPAY_KEY_ID as string);
+      const orderId = data?.order_id || data?.orderId || data?.id;
+      if (!orderId || !key) throw new Error("Payment could not be started.");
 
       // 2. Open Razorpay's hosted, PCI-compliant checkout (card data never touches our servers).
       const rzp = new (window as any).Razorpay({
-        key: data.keyId,
-        order_id: data.orderId,
+        key,
+        order_id: orderId,
         amount: data.amount,
-        currency: data.currency,
+        currency: data.currency || "INR",
         name: "Sadhya",
-        description: `${data.planName} — ${isYearly ? "Yearly (billed once)" : "Monthly"}`,
+        description: `${data.planName || "Sadhya Pro"} — ${isYearly ? "Yearly (billed once)" : "Monthly"}`,
         ...(import.meta.env.VITE_BRAND_LOGO_URL ? { image: import.meta.env.VITE_BRAND_LOGO_URL as string } : {}),
         prefill: { name: user?.displayName || "", email: user?.email || "" },
         theme: { color: "#c8e558", backdrop_color: "#0b0b0c" },

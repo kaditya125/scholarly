@@ -7,7 +7,7 @@ export class PaymentsController {
     res.json({ enabled: paymentsService.isEnabled(), keyId: paymentsService.publicKeyId || null });
   };
 
-  /** Creates a Razorpay order for the authenticated user. Amount is computed server-side. */
+  /** Creates a Razorpay order for the authenticated user. */
   public createOrder = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.uid;
@@ -16,6 +16,20 @@ export class PaymentsController {
         return res.status(503).json({ error: 'Payments are not configured on this server.' });
       }
 
+      // 1. Generic amount path (e.g. from standard checkout)
+      if (req.body?.amount != null) {
+        const amountPaise = Number(req.body.amount);
+        if (isNaN(amountPaise) || amountPaise < 100) {
+          return res.status(400).json({ error: 'Amount must be at least 100 paise (₹1).' });
+        }
+        const currency = req.body.currency || 'INR';
+        const receipt = req.body.receipt;
+        const notes = req.body.notes;
+        const order = await paymentsService.createGenericOrder(userId, amountPaise, currency, receipt, notes);
+        return res.json(order);
+      }
+
+      // 2. Plan/subscription path
       const planId = String(req.body?.plan || 'pro').toLowerCase();
       const yearly = req.body?.billing === 'yearly';
 

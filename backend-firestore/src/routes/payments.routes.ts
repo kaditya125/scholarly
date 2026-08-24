@@ -15,6 +15,8 @@ router.post('/webhook', controller.webhook);
 router.get('/subscription', requireAuth, controller.getSubscription);
 router.get('/history', requireAuth, controller.getHistory);
 router.post('/order', requireAuth, controller.createOrder);
+router.post('/create-order', requireAuth, controller.createOrder);
 router.post('/verify', requireAuth, controller.verifyPayment);
+router.post('/verify-payment', requireAuth, controller.verifyPayment);
 
 export default router;

@@ -90,13 +90,51 @@ export class PaymentsService {
     });
 
     return {
+      order_id: order.id,
       orderId: order.id,
+      id: order.id,
       amount: paise,
       currency: 'INR',
       keyId: this.publicKeyId,
       planName: plan.name,
       billing: yearly ? 'yearly' : 'monthly',
       amountRupees: rupees,
+    };
+  }
+
+  /**
+   * Creates a generic Razorpay order for any custom amount (min 100 paise).
+   */
+  async createGenericOrder(userId: string, amountPaise: number, currency = 'INR', receipt?: string, notes?: Record<string, any>) {
+    if (amountPaise < 100) throw new Error('Minimum order amount is 100 paise (₹1).');
+    const orderReceipt = (receipt || `sch_${userId.slice(0, 8)}_${Date.now()}`).slice(0, 40);
+
+    const order = await this.client().orders.create({
+      amount: amountPaise,
+      currency,
+      receipt: orderReceipt,
+      notes: { userId, ...(notes || {}) },
+    });
+
+    await db.collection('payments').doc(order.id).set({
+      orderId: order.id,
+      orderType: 'generic',
+      userId,
+      amountPaise,
+      amountRupees: Math.round(amountPaise / 100),
+      currency,
+      status: 'created',
+      createdAt: Date.now(),
+    });
+
+    return {
+      order_id: order.id,
+      orderId: order.id,
+      id: order.id,
+      amount: amountPaise,
+      currency,
+      receipt: orderReceipt,
+      keyId: this.publicKeyId,
     };
   }
 
