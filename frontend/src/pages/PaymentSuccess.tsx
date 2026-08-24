@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { CheckCircle2, Mail, ArrowRight, Bot, Target, CalendarCheck, Printer, Sparkles, Check } from "lucide-react";
 import { api } from "../lib/api/client";
 import { useAuth } from "../lib/AuthContext";
+import { notifyEntitlementChanged } from "../hooks/usePlan";
 
 const NEXT_STEPS = [
   "Start an interactive session with your AI tutor",
@@ -24,9 +25,12 @@ export default function PaymentSuccess() {
   const { user } = useAuth();
   const [receipt, setReceipt] = useState<Receipt | null>(null);
 
-  // Pull the latest subscription so the printable receipt reflects the real payment.
+  // Pull the latest subscription so the printable receipt reflects the real payment, and tell
+  // the rest of the app the entitlement changed so the sidebar/header stop offering an upgrade
+  // the user has just bought — without making them reload the page.
   useEffect(() => {
     if (!user) return;
+    notifyEntitlementChanged();
     api.get("/payments/subscription").then((r) => {
       const s = r.data?.subscription;
       if (s) {

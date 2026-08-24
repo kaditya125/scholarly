@@ -35,6 +35,29 @@ const PLANS: Record<string, PlanDef> = {
 export class PaymentsService {
   private _client: Razorpay | null = null;
 
+  /**
+   * Serialises order creation per user.
+   *
+   * `findReusableOrder` is a read followed by a create, which is not atomic: two clicks landing
+   * together both saw "no open order" and each minted one. A Firestore transaction cannot help,
+   * because creating the Razorpay order is an external side effect that cannot participate in
+   * one. This queue makes the read-then-create sequence run one-at-a-time per user, which is
+   * sufficient because PM2 runs this API as a SINGLE fork instance (ecosystem.config.js pins
+   * instances: 1). If that ever becomes multi-instance, this must be replaced by a distributed
+   * lock — an in-process queue would no longer span the workers.
+   */
+  private orderLocks = new Map<string, Promise<unknown>>();
+
+  private withUserLock<T>(userId: string, fn: () => Promise<T>): Promise<T> {
+    const prev = this.orderLocks.get(userId) ?? Promise.resolve();
+    const run = prev.catch(() => undefined).then(fn);
+    this.orderLocks.set(userId, run.catch(() => undefined));
+    void run.finally(() => {
+      if (this.orderLocks.get(userId) === undefined) this.orderLocks.delete(userId);
+    });
+    return run;
+  }
+
   /** Payments are only available when both Razorpay keys are configured. */
   isEnabled(): boolean {
     return !!(env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET);
@@ -42,6 +65,73 @@ export class PaymentsService {
 
   get publicKeyId(): string | undefined {
     return env.RAZORPAY_KEY_ID;
+  }
+
+  /**
+   * Which Razorpay environment this process is wired to, derived from the key prefix so it can
+   * never drift from the credentials actually in use.
+   *
+   * Every order doc records this. Before an order can grant an entitlement, its recorded
+   * environment must match the running one — otherwise a payment made in test mode would grant
+   * production access, which is exactly how the first Pro entitlement on this system was created
+   * (a `rzp_test_` payment wrote `plan: 'pro'` because payment docs carried no environment at all).
+   */
+  get environment(): 'live' | 'test' {
+    return (env.RAZORPAY_KEY_ID || '').startsWith('rzp_live_') ? 'live' : 'test';
+  }
+
+  /**
+   * The authoritative entitlement check. Reads the SERVER's copy of the user record — never a
+   * claim, never anything the caller supplied — and treats Pro as active only while it is both
+   * marked active and unexpired, so a lapsed subscription correctly allows re-purchase.
+   */
+  async hasActivePro(userId: string): Promise<{ active: boolean; currentPeriodEnd?: number }> {
+    const { plan, subscription } = await this.getUserPlan(userId);
+    return this.evaluateEntitlement(plan, subscription);
+  }
+
+  /**
+   * The single definition of "is this user Pro right now". Pure, so the order endpoint and the
+   * subscription endpoint cannot drift apart.
+   *
+   * They previously did: `getSubscription` returned `isPro: plan === 'pro'`, ignoring both
+   * `status` and `currentPeriodEnd`. A subscriber whose 30-day period had lapsed was therefore
+   * shown as Pro by the UI — which hid the upgrade CTA and made Checkout refuse to sell to them —
+   * while this method correctly reported them inactive and the server would have accepted the
+   * payment. The result was an expired subscriber who could not renew.
+   */
+  evaluateEntitlement(plan: string, subscription: any): { active: boolean; currentPeriodEnd?: number } {
+    if (plan !== 'pro') return { active: false };
+    const status = subscription?.status;
+    const end = Number(subscription?.currentPeriodEnd ?? 0);
+    if (status && status !== 'active') return { active: false, currentPeriodEnd: end || undefined };
+    if (end && end <= Date.now()) return { active: false, currentPeriodEnd: end };
+    return { active: true, currentPeriodEnd: end || undefined };
+  }
+
+  /**
+   * Returns a still-usable unpaid order for the same user/plan/billing so a double-click, a
+   * refresh or a retry reuses the open Razorpay order instead of minting another one. Razorpay
+   * orders stay payable indefinitely, but a stale one confuses reconciliation, so reuse is capped
+   * to REUSE_WINDOW_MS. Bounded by `limit` + an in-memory sort to avoid needing a composite index.
+   */
+  private async findReusableOrder(userId: string, planId: string, billing: string): Promise<any | null> {
+    const REUSE_WINDOW_MS = 30 * 60 * 1000;
+    const cutoff = Date.now() - REUSE_WINDOW_MS;
+    const snap = await db.collection('payments')
+      .where('userId', '==', userId)
+      .where('status', '==', 'created')
+      .limit(25)
+      .get();
+    const candidates = snap.docs
+      .map(d => d.data() as any)
+      .filter(d => d.orderType === 'subscription'
+        && d.planId === planId
+        && d.billing === billing
+        && d.environment === this.environment
+        && Number(d.createdAt ?? 0) >= cutoff)
+      .sort((a, b) => Number(b.createdAt ?? 0) - Number(a.createdAt ?? 0));
+    return candidates[0] ?? null;
   }
 
   private client(): Razorpay {
@@ -91,14 +181,41 @@ export class PaymentsService {
    * (payments/{orderId}) with the user id, so the webhook can attribute the payment later.
    */
   async createOrder(userId: string, planId: string, yearly: boolean) {
+    return this.withUserLock(userId, () => this.createOrderInner(userId, planId, yearly));
+  }
+
+  private async createOrderInner(userId: string, planId: string, yearly: boolean) {
     const { plan, rupees, paise } = this.priceFor(planId, yearly);
+    const billing = yearly ? 'yearly' : 'monthly';
+
+    // Idempotency: a double-click, a refresh or a retry after an ambiguous response must not
+    // mint a second Razorpay order. Reuse the caller's own still-open order for the same
+    // plan/billing instead. (Before this, every click created a new order — four orders for
+    // one user in a single afternoon, three of them abandoned in `created` forever.)
+    const existing = await this.findReusableOrder(userId, plan.id, billing);
+    if (existing) {
+      console.log(`[payments] PAYMENT_ORDER_REUSED order=${existing.orderId} user=${userId} plan=${plan.id}`);
+      return {
+        order_id: existing.orderId,
+        orderId: existing.orderId,
+        id: existing.orderId,
+        amount: existing.amountPaise,
+        currency: existing.currency || 'INR',
+        keyId: this.publicKeyId,
+        planName: existing.planName,
+        billing: existing.billing,
+        amountRupees: existing.amountRupees,
+        reused: true,
+      };
+    }
+
     const receipt = `sch_${userId.slice(0, 8)}_${Date.now()}`.slice(0, 40);
 
     const order = await this.createRemoteOrder({
       amount: paise,
       currency: 'INR',
       receipt,
-      notes: { userId, planId: plan.id, billing: yearly ? 'yearly' : 'monthly' },
+      notes: { userId, planId: plan.id, billing },
     });
 
     await db.collection('payments').doc(order.id).set({
@@ -107,13 +224,16 @@ export class PaymentsService {
       userId,
       planId: plan.id,
       planName: plan.name,
-      billing: yearly ? 'yearly' : 'monthly',
+      billing,
       amountPaise: paise,
       amountRupees: rupees,
       currency: 'INR',
       status: 'created',
+      environment: this.environment,
       createdAt: Date.now(),
+      updatedAt: Date.now(),
     });
+    console.log(`[payments] PAYMENT_ORDER_CREATED order=${order.id} user=${userId} plan=${plan.id} env=${this.environment}`);
 
     return {
       order_id: order.id,
@@ -123,9 +243,69 @@ export class PaymentsService {
       currency: 'INR',
       keyId: this.publicKeyId,
       planName: plan.name,
-      billing: yearly ? 'yearly' : 'monthly',
+      billing,
       amountRupees: rupees,
+      reused: false,
     };
+  }
+
+  /**
+   * Marks an unpaid order as cancelled when the user dismisses Razorpay checkout. Only ever
+   * moves `created` → `cancelled`, so a dismissal that races a real payment can never undo it —
+   * the webhook's `paid` write wins regardless of arrival order.
+   */
+  async markOrderCancelled(orderId: string, userId: string): Promise<{ cancelled: boolean }> {
+    const ref = db.collection('payments').doc(orderId);
+    const snap = await ref.get();
+    if (!snap.exists) return { cancelled: false };
+    const data = snap.data() as any;
+    if (data.userId !== userId) return { cancelled: false };
+    if (data.status !== 'created') return { cancelled: false };
+    await ref.set({ status: 'cancelled', cancelledAt: Date.now(), updatedAt: Date.now() }, { merge: true });
+    console.log(`[payments] PAYMENT_CANCELLED order=${orderId} user=${userId}`);
+    return { cancelled: true };
+  }
+
+  /**
+   * Confirms a settled payment matches the order the SERVER priced. The order amount is already
+   * server-derived, and the signature binds order+payment, so this is defence in depth — but it
+   * is the check that makes "never trust a browser-supplied amount" true end to end rather than
+   * merely true by construction. Unknown/absent amounts are treated as a mismatch, not waved
+   * through, so a missing field can never become an accidental bypass.
+   */
+  async paymentMatchesOrder(orderId: string, paidAmount: unknown, paidCurrency: unknown): Promise<{ ok: boolean; reason?: string }> {
+    const snap = await db.collection('payments').doc(orderId).get();
+    if (!snap.exists) return { ok: false, reason: 'order-not-found' };
+    const o = snap.data() as any;
+    if (paidAmount == null) return { ok: false, reason: 'no-amount-on-event' };
+    if (Number(paidAmount) !== Number(o.amountPaise)) {
+      return { ok: false, reason: `amount-mismatch expected=${o.amountPaise} got=${paidAmount}` };
+    }
+    const expectedCurrency = o.currency || 'INR';
+    if (paidCurrency && String(paidCurrency) !== expectedCurrency) {
+      return { ok: false, reason: `currency-mismatch expected=${expectedCurrency} got=${paidCurrency}` };
+    }
+    return { ok: true };
+  }
+
+  /** Fetches a payment straight from Razorpay so the client path can be checked the same way. */
+  async fetchRemotePayment(paymentId: string): Promise<{ amount?: number; currency?: string; status?: string } | null> {
+    try {
+      const p: any = await (this.client() as any).payments.fetch(paymentId);
+      return { amount: p?.amount, currency: p?.currency, status: p?.status };
+    } catch (e: any) {
+      console.warn(`[payments] fetchRemotePayment failed for ${paymentId}: ${e?.error?.description || e?.message}`);
+      return null;
+    }
+  }
+
+  /** Order status for reconciliation — lets a browser that lost the callback learn the truth. */
+  async getOrderStatus(orderId: string, userId: string): Promise<{ found: boolean; status?: string; orderType?: string; environment?: string; amountRupees?: number }> {
+    const snap = await db.collection('payments').doc(orderId).get();
+    if (!snap.exists) return { found: false };
+    const d = snap.data() as any;
+    if (d.userId !== userId) return { found: false };
+    return { found: true, status: d.status, orderType: d.orderType, environment: d.environment, amountRupees: d.amountRupees };
   }
 
   /**
@@ -145,6 +325,7 @@ export class PaymentsService {
     await db.collection('payments').doc(order.id).set({
       orderId: order.id,
       orderType: 'generic',
+      environment: this.environment,
       userId,
       amountPaise,
       amountRupees: Math.round(amountPaise / 100),
@@ -200,6 +381,7 @@ export class PaymentsService {
     await db.collection('payments').doc(order.id).set({
       orderId: order.id,
       orderType: 'class_purchase',
+      environment: this.environment,
       userId: studentUid,
       classId,
       teacherUid: record.ownerUid,
@@ -239,7 +421,19 @@ export class PaymentsService {
       console.warn(`[payments] Order ${orderId} not found in Firestore (source=${source}); ignoring.`);
       return { applied: false, orderType: null };
     }
-    const stored = (snap.data() as any).orderType;
+    const data = snap.data() as any;
+
+    // An order may only be applied by the environment that created it. Without this, a payment
+    // made against `rzp_test_` keys grants real production access — which is precisely how the
+    // first Pro entitlement on this system came to exist. Orders written before `environment`
+    // was recorded carry no value; those are grandfathered through rather than retroactively
+    // invalidated, since revoking an existing entitlement is not this function's decision.
+    if (data.environment && data.environment !== this.environment) {
+      console.warn(`[payments] PAYMENT_WEBHOOK_REJECTED_ENVIRONMENT order=${orderId} orderEnv=${data.environment} processEnv=${this.environment} source=${source}`);
+      return { applied: false, orderType: null };
+    }
+
+    const stored = data.orderType;
 
     if (stored === 'class_purchase') {
       const result = await this.markClassOrderPaid(orderId, paymentId, source, method);
@@ -341,36 +535,63 @@ export class PaymentsService {
       return { upgraded: false };
     }
     const data = snap.data() as any;
-    if (data.status === 'paid') {
-      return { upgraded: true, userId: data.userId }; // already applied
-    }
-
+    const userRef = db.collection('users').doc(data.userId);
     const now = Date.now();
-    await ref.set({ status: 'paid', paymentId, paidAt: now, paidVia: source, ...(method ? { method } : {}) }, { merge: true });
-
     const billing = data.billing || 'monthly';
     const periodMs = billing === 'yearly' ? 365 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
 
-    await db.collection('users').doc(data.userId).set({
-      plan: 'pro',
-      proSince: now,
-      subscription: {
-        status: 'active',
-        plan: data.planId || 'pro',
-        planName: data.planName || 'Sadhya Pro',
-        billing,
-        orderId,
-        paymentId,
-        method: method || null,
-        amountRupees: data.amountRupees,
-        activatedAt: now,
-        currentPeriodEnd: now + periodMs,
-        provider: 'razorpay',
-        source,
-      },
-    }, { merge: true });
+    // Both writes happen in ONE transaction. Previously they were sequential: if the order was
+    // marked paid and the user write then failed, the caller was charged, held no Pro, and every
+    // retry short-circuited on `status === 'paid'` and reported success — an unrecoverable
+    // charged-but-free state. The transaction also re-reads inside the lock, so two racing
+    // callers (webhook + client verify on the same order) collapse to a single activation.
+    const outcome = await db.runTransaction(async (tx) => {
+      const [orderSnap, userSnap] = await Promise.all([tx.get(ref), tx.get(userRef)]);
+      if (!orderSnap.exists) return { upgraded: false, repaired: false, noop: false };
 
-    console.log(`[payments] ✅ Upgraded ${data.userId} to Pro (order ${orderId}, via ${source}).`);
+      const o = orderSnap.data() as any;
+      const u = (userSnap.exists ? userSnap.data() : {}) as any;
+      const alreadyEntitled = u?.plan === 'pro' && u?.subscription?.orderId === orderId;
+
+      // Already fully applied — nothing to do. This is the only genuine no-op path.
+      if (o.status === 'paid' && alreadyEntitled) {
+        return { upgraded: true, repaired: false, noop: true };
+      }
+
+      if (o.status !== 'paid') {
+        tx.set(ref, { status: 'paid', paymentId, paidAt: now, paidVia: source, updatedAt: now, ...(method ? { method } : {}) }, { merge: true });
+      }
+
+      tx.set(userRef, {
+        plan: 'pro',
+        proSince: u?.proSince ?? now,
+        subscription: {
+          status: 'active',
+          plan: o.planId || 'pro',
+          planName: o.planName || 'Sadhya Pro',
+          billing,
+          orderId,
+          paymentId,
+          method: method || null,
+          amountRupees: o.amountRupees,
+          activatedAt: now,
+          currentPeriodEnd: now + periodMs,
+          provider: 'razorpay',
+          source,
+        },
+      }, { merge: true });
+
+      // `repaired` = the order was already paid but the entitlement was missing, i.e. we just
+      // healed a previously stranded charged-but-free user.
+      return { upgraded: true, repaired: o.status === 'paid', noop: false };
+    });
+
+    if (outcome.noop) return { upgraded: true, userId: data.userId };
+    if (!outcome.upgraded) return { upgraded: false };
+    if (outcome.repaired) {
+      console.warn(`[payments] PRO_ENTITLEMENT_REPAIRED user=${data.userId} order=${orderId} (order was paid but entitlement was missing)`);
+    }
+    console.log(`[payments] PRO_ENTITLEMENT_ACTIVATED user=${data.userId} order=${orderId} via=${source}`);
     return { upgraded: true, userId: data.userId };
   }
 
@@ -419,9 +640,30 @@ export class PaymentsService {
     }
   }
 
-  /** Handles a verified webhook event. Returns whether an upgrade was applied. */
-  async handleWebhookEvent(event: any): Promise<{ handled: boolean }> {
+  /**
+   * Handles a verified webhook event. Returns whether an upgrade was applied.
+   *
+   * Razorpay retries delivery and can send the same event more than once — a single ₹1 test
+   * produced two deliveries in seconds. Applying an order is already idempotent (both
+   * `markPaidAndUpgrade` and `markOrderPaidOnly` no-op once `status === 'paid'`), so the guard
+   * here is a second layer: it stops repeat *side effects* hanging off this path, and gives a
+   * clean PAYMENT_WEBHOOK_DUPLICATE signal instead of silent rework. `create()` fails when the
+   * doc already exists, which makes the claim atomic without needing a transaction.
+   */
+  async handleWebhookEvent(event: any, eventId?: string): Promise<{ handled: boolean; duplicate?: boolean }> {
     const type = event?.event;
+
+    if (eventId) {
+      try {
+        await db.collection('webhookEvents').doc(eventId).create({
+          eventId, type: type ?? null, provider: 'razorpay', receivedAt: Date.now(),
+        });
+      } catch {
+        console.log(`[payments] PAYMENT_WEBHOOK_DUPLICATE event=${eventId} type=${type}`);
+        return { handled: true, duplicate: true };
+      }
+    }
+
     // Both events carry the order id; payment.captured is the primary success signal.
     if (type === 'payment.captured' || type === 'order.paid') {
       const payment = event?.payload?.payment?.entity;
@@ -429,10 +671,47 @@ export class PaymentsService {
       const orderId = payment?.order_id || orderEntity?.id;
       const paymentId = payment?.id || 'webhook';
       if (orderId) {
-        await this.applyOrderPayment(orderId, paymentId, 'webhook', payment?.method);
+        // Report what actually happened. Logging PROCESSED for an event the environment guard
+        // refused would make a rejected cross-environment payment look like a successful one.
+        // Amount/currency are checked against the order the SERVER priced, using the values
+        // Razorpay itself signed into the event — so a payment that does not match the order it
+        // claims to settle cannot activate anything.
+        // `order.paid` can carry the settled amount on the ORDER entity rather than the payment
+        // one. Reading only `payment.amount` would refuse a legitimate activation as
+        // "no-amount-on-event", so fall back across both entities before deciding.
+        const settledAmount = payment?.amount ?? orderEntity?.amount_paid ?? orderEntity?.amount;
+        const settledCurrency = payment?.currency ?? orderEntity?.currency;
+        const amountOk = await this.paymentMatchesOrder(orderId, settledAmount, settledCurrency);
+        if (!amountOk.ok) {
+          console.warn(`[payments] PAYMENT_WEBHOOK_REJECTED_AMOUNT order=${orderId} reason=${amountOk.reason}`);
+          return { handled: true };
+        }
+
+        const outcome = await this.applyOrderPayment(orderId, paymentId, 'webhook', payment?.method);
+        if (outcome.applied) {
+          console.log(`[payments] PAYMENT_WEBHOOK_PROCESSED event=${eventId ?? 'n/a'} type=${type} order=${orderId} orderType=${outcome.orderType}`);
+        } else {
+          console.warn(`[payments] PAYMENT_WEBHOOK_NOT_APPLIED event=${eventId ?? 'n/a'} type=${type} order=${orderId}`);
+        }
         return { handled: true };
       }
     }
+
+    // A genuine payment failure reported by Razorpay — record it so the order reaches a terminal
+    // state instead of sitting in `created` and looking like an abandoned checkout forever.
+    if (type === 'payment.failed') {
+      const orderId = event?.payload?.payment?.entity?.order_id;
+      if (orderId) {
+        const ref = db.collection('payments').doc(orderId);
+        const snap = await ref.get();
+        if (snap.exists && (snap.data() as any).status === 'created') {
+          await ref.set({ status: 'failed', failedAt: Date.now(), updatedAt: Date.now() }, { merge: true });
+          console.log(`[payments] PAYMENT_FAILED order=${orderId} (via webhook)`);
+        }
+        return { handled: true };
+      }
+    }
+
     return { handled: false };
   }
 }
