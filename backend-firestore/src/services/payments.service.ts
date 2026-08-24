@@ -662,7 +662,12 @@ export class PaymentsService {
         // Amount/currency are checked against the order the SERVER priced, using the values
         // Razorpay itself signed into the event — so a payment that does not match the order it
         // claims to settle cannot activate anything.
-        const amountOk = await this.paymentMatchesOrder(orderId, payment?.amount, payment?.currency);
+        // `order.paid` can carry the settled amount on the ORDER entity rather than the payment
+        // one. Reading only `payment.amount` would refuse a legitimate activation as
+        // "no-amount-on-event", so fall back across both entities before deciding.
+        const settledAmount = payment?.amount ?? orderEntity?.amount_paid ?? orderEntity?.amount;
+        const settledCurrency = payment?.currency ?? orderEntity?.currency;
+        const amountOk = await this.paymentMatchesOrder(orderId, settledAmount, settledCurrency);
         if (!amountOk.ok) {
           console.warn(`[payments] PAYMENT_WEBHOOK_REJECTED_AMOUNT order=${orderId} reason=${amountOk.reason}`);
           return { handled: true };
