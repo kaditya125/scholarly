@@ -226,23 +226,51 @@ export class PaymentsService {
    * (client callback) and `handleWebhookEvent` (server-to-server) call this rather than deciding
    * the type themselves, so there is exactly one place that reads `orderType` and dispatches.
    *
-   * `markPaidAndUpgrade` is untouched by this addition — for a subscription order it is called
-   * exactly as it always was, unconditionally applying the Pro upgrade it's named for.
+   * Dispatch is on KNOWN types only — an unrecognised type grants nothing. It previously read
+   * `orderType === 'class_purchase' ? 'class_purchase' : 'subscription'`, so every other value
+   * fell into the subscription branch and got the Pro upgrade. `createGenericOrder` stores
+   * `orderType: 'generic'` for an amount supplied in the REQUEST BODY (floor: 100 paise), so
+   * any signed-in caller could POST `{amount: 100}`, pay ₹1 and be upgraded to a ₹199 plan.
+   * A client-priced order can never buy an entitlement; it is recorded as paid and nothing else.
    */
-  async applyOrderPayment(orderId: string, paymentId: string, source: 'client' | 'webhook', method?: string): Promise<{ applied: boolean; orderType: 'subscription' | 'class_purchase' | null; userId?: string; classId?: string }> {
+  async applyOrderPayment(orderId: string, paymentId: string, source: 'client' | 'webhook', method?: string): Promise<{ applied: boolean; orderType: 'subscription' | 'class_purchase' | 'generic' | null; userId?: string; classId?: string }> {
     const snap = await db.collection('payments').doc(orderId).get();
     if (!snap.exists) {
       console.warn(`[payments] Order ${orderId} not found in Firestore (source=${source}); ignoring.`);
       return { applied: false, orderType: null };
     }
-    const orderType = (snap.data() as any).orderType === 'class_purchase' ? 'class_purchase' : 'subscription';
+    const stored = (snap.data() as any).orderType;
 
-    if (orderType === 'class_purchase') {
+    if (stored === 'class_purchase') {
       const result = await this.markClassOrderPaid(orderId, paymentId, source, method);
-      return { applied: result.applied, orderType, userId: result.userId, classId: result.classId };
+      return { applied: result.applied, orderType: 'class_purchase', userId: result.userId, classId: result.classId };
     }
-    const result = await this.markPaidAndUpgrade(orderId, paymentId, source, method);
-    return { applied: result.upgraded, orderType, userId: result.userId };
+    if (stored === 'subscription') {
+      const result = await this.markPaidAndUpgrade(orderId, paymentId, source, method);
+      return { applied: result.upgraded, orderType: 'subscription', userId: result.userId };
+    }
+
+    const result = await this.markOrderPaidOnly(orderId, paymentId, source, method, stored);
+    return { applied: result.applied, orderType: 'generic', userId: result.userId };
+  }
+
+  /**
+   * Records a payment against an order that confers NO entitlement — a generic (client-priced)
+   * order, or one whose `orderType` we don't recognise. Idempotent on `status` exactly like
+   * `markPaidAndUpgrade`, so a retried webhook is safe. Deliberately touches only the payment
+   * doc: it never writes to `users`, which is what keeps a ₹1 order from granting Pro.
+   */
+  private async markOrderPaidOnly(orderId: string, paymentId: string, source: 'client' | 'webhook', method: string | undefined, storedType: unknown): Promise<{ applied: boolean; userId?: string }> {
+    const ref = db.collection('payments').doc(orderId);
+    const snap = await ref.get();
+    if (!snap.exists) return { applied: false };
+    const data = snap.data() as any;
+
+    if (data.status !== 'paid') {
+      await ref.set({ status: 'paid', paymentId, paidAt: Date.now(), paidVia: source, ...(method ? { method } : {}) }, { merge: true });
+    }
+    console.log(`[payments] Order ${orderId} (orderType=${String(storedType)}) recorded paid for ${data.userId}; no entitlement granted.`);
+    return { applied: true, userId: data.userId };
   }
 
   /**
