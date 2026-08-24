@@ -83,6 +83,7 @@ router.use('/doubts', doubtsRoutes);
 router.use('/media', mediaRoutes);
 router.use('/notifications', notificationsRoutes);
 router.use('/payments', paymentsRoutes);
+router.use('/', paymentsRoutes);
 router.use('/planning', planningRoutes);
 router.use('/podcasts', podcastsRoutes);
 router.use('/quiz', quizRoutes);
