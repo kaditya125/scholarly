@@ -353,7 +353,7 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="flex h-[100dvh] w-full bg-slate-50 dark:bg-[#131314] overflow-hidden font-sans transition-colors duration-300"
+      className="app-shell flex h-[100dvh] w-full bg-slate-50 dark:bg-[#131314] overflow-hidden font-sans transition-colors duration-300"
     >
       
       {/* Overlay for mobile */}
