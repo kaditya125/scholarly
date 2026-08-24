@@ -62,8 +62,17 @@ export class PaymentsController {
     try {
       const userId = req.user?.uid;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+      // `isPro` MUST come from the same predicate the order endpoint enforces. Deriving it from
+      // `plan === 'pro'` alone ignored expiry, so a lapsed subscriber was shown as Pro, had the
+      // upgrade CTA hidden and was refused at checkout — while the server would have sold to
+      // them. One authority, so the UI and the API cannot contradict each other.
       const info = await paymentsService.getUserPlan(userId);
-      res.json({ ...info, isPro: info.plan === 'pro' });
+      const entitlement = paymentsService.evaluateEntitlement(info.plan, info.subscription);
+      res.json({
+        ...info,
+        isPro: entitlement.active,
+        currentPeriodEnd: entitlement.currentPeriodEnd ?? null,
+      });
     } catch (error) {
       next(error);
     }
