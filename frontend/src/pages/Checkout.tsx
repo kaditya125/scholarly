@@ -71,6 +71,14 @@ export default function Checkout() {
   // Undiscounted list price for the same billing period, so the launch offer can be shown as a
   // real saving rather than just a low number. Derived, not hardcoded: if pricing ever changes
   // so there is no discount, `hasOffer` goes false and the promotional rows simply disappear.
+  // What the yearly plan actually saves against paying month-to-month for a year. Derived, so
+  // the toggle can no longer contradict the prices: the label previously read "-15%" while the
+  // real figure was 25% (₹199×12 = ₹2,388 vs ₹1,788), understating the offer by 10 points.
+  const yearlyBaseline = plan.monthly * 12;
+  const yearlySavingPct = yearlyBaseline > 0
+    ? Math.round(((yearlyBaseline - plan.yearlyTotal) / yearlyBaseline) * 100)
+    : 0;
+
   const regularTotal = isYearly ? PRO_REGULAR_YEARLY_TOTAL_INR : PRO_REGULAR_MONTHLY_INR;
   const savings = Math.max(0, regularTotal - total);
   const savingsPct = regularTotal > 0 ? Math.round((savings / regularTotal) * 100) : 0;
@@ -474,7 +482,7 @@ export default function Checkout() {
                       isYearly ? "bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-950 shadow-2xs" : "text-slate-500 dark:text-slate-400"
                     )}
                   >
-                    Yearly (-15%)
+                    Yearly{yearlySavingPct > 0 ? ` (−${yearlySavingPct}%)` : ""}
                   </button>
                 </div>
               </div>
