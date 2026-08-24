@@ -1744,26 +1744,7 @@ export default function Chat() {
 
           </div>
 
-          {/* Quick Learning Action Chips (matching landing page UI) */}
-          <div className="flex items-center justify-center gap-1.5 mt-2 flex-wrap px-2">
-            {[
-              { label: 'Explain', prompt: 'Can you explain this concept step-by-step with simple examples and analogies?' },
-              { label: 'Revise', prompt: 'Give me a quick 5-bullet high-yield revision summary for this topic.' },
-              { label: 'Quiz', prompt: 'Generate 3 exam-level practice questions on this topic with detailed explanations.' },
-              { label: 'Essay', prompt: 'Structure a high-scoring answer-writing format and outline for this topic.' },
-              { label: 'Research', prompt: 'Provide a deep dive research analysis and official source context for this.' },
-            ].map((action) => (
-              <button
-                key={action.label}
-                onClick={() => handleSuggestionSubmit(action.prompt)}
-                className="px-3 py-1 rounded-full text-[11px] font-medium bg-white/80 dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200/80 dark:border-white/10 shadow-2xs transition-all active:scale-95 cursor-pointer"
-              >
-                {action.label}
-              </button>
-            ))}
-          </div>
-
-          <p className="mt-1.5 text-[10.5px] text-slate-400 dark:text-gray-500 text-center">
+          <p className="mt-3 text-[10.5px] text-slate-400 dark:text-gray-500 text-center">
             Sadhya AI can make mistakes. Please verify important exam facts.
           </p>
         </div>
