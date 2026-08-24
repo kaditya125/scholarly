@@ -87,10 +87,24 @@ export class PaymentsService {
    */
   async hasActivePro(userId: string): Promise<{ active: boolean; currentPeriodEnd?: number }> {
     const { plan, subscription } = await this.getUserPlan(userId);
+    return this.evaluateEntitlement(plan, subscription);
+  }
+
+  /**
+   * The single definition of "is this user Pro right now". Pure, so the order endpoint and the
+   * subscription endpoint cannot drift apart.
+   *
+   * They previously did: `getSubscription` returned `isPro: plan === 'pro'`, ignoring both
+   * `status` and `currentPeriodEnd`. A subscriber whose 30-day period had lapsed was therefore
+   * shown as Pro by the UI — which hid the upgrade CTA and made Checkout refuse to sell to them —
+   * while this method correctly reported them inactive and the server would have accepted the
+   * payment. The result was an expired subscriber who could not renew.
+   */
+  evaluateEntitlement(plan: string, subscription: any): { active: boolean; currentPeriodEnd?: number } {
     if (plan !== 'pro') return { active: false };
     const status = subscription?.status;
     const end = Number(subscription?.currentPeriodEnd ?? 0);
-    if (status && status !== 'active') return { active: false };
+    if (status && status !== 'active') return { active: false, currentPeriodEnd: end || undefined };
     if (end && end <= Date.now()) return { active: false, currentPeriodEnd: end };
     return { active: true, currentPeriodEnd: end || undefined };
   }
