@@ -86,6 +86,10 @@ export default function Checkout() {
 
   const handleCheckout = async () => {
     setError(null);
+    if (!user) {
+      navigate(`/signup?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+      return;
+    }
     setProcessing(true);
     try {
       const loaded = await loadRazorpayScript();
@@ -128,17 +132,26 @@ export default function Checkout() {
         modal: { ondismiss: () => setProcessing(false) },
       });
       rzp.on("payment.failed", (r: any) => {
-        setError(r?.error?.description || "Payment failed. Please try again.");
+        const desc = typeof r?.error?.description === 'string' ? r.error.description : "Payment failed. Please try again.";
+        setError(desc);
         setProcessing(false);
       });
       rzp.open();
     } catch (e: any) {
       const status = e?.response?.status;
-      setError(
-        status === 503
-          ? "Payments aren't configured on the server yet. Please try again later."
-          : e?.response?.data?.error || e?.message || "Something went wrong starting the payment.",
-      );
+      let msg = "Something went wrong starting the payment.";
+      if (status === 401) {
+        msg = "Please sign in or create an account to complete your purchase.";
+      } else if (status === 503) {
+        msg = "Payments aren't configured on the server yet. Please try again later.";
+      } else if (typeof e?.response?.data?.error === 'string') {
+        msg = e.response.data.error;
+      } else if (typeof e?.response?.data?.error?.message === 'string') {
+        msg = e.response.data.error.message;
+      } else if (typeof e?.message === 'string') {
+        msg = e.message;
+      }
+      setError(msg);
       setProcessing(false);
     }
   };
