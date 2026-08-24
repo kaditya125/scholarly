@@ -68,6 +68,15 @@ export default function Checkout() {
   const perMonth = isYearly ? PRO_YEARLY_PER_MONTH_INR : monthly;
   const total = isYearly ? plan.yearlyTotal : perMonth;
 
+  // Undiscounted list price for the same billing period, so the launch offer can be shown as a
+  // real saving rather than just a low number. Derived, not hardcoded: if pricing ever changes
+  // so there is no discount, `hasOffer` goes false and the promotional rows simply disappear.
+  const regularTotal = isYearly ? PRO_REGULAR_YEARLY_TOTAL_INR : PRO_REGULAR_MONTHLY_INR;
+  const savings = Math.max(0, regularTotal - total);
+  const savingsPct = regularTotal > 0 ? Math.round((savings / regularTotal) * 100) : 0;
+  const hasOffer = savings > 0 && planId === 'pro';
+  const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+
   const [method, setMethod] = useState<Method>("card");
   const [discount, setDiscount] = useState("");
   const [showDiscount, setShowDiscount] = useState(false);
@@ -477,13 +486,18 @@ export default function Checkout() {
 
             <div className="border-t border-slate-100 dark:border-white/[0.08] pt-3.5 text-[13px] space-y-2">
               <div className="flex justify-between text-slate-600 dark:text-slate-300">
-                <span>Subtotal</span>
-                <span>₹{total.toLocaleString("en-IN")}</span>
+                <span>{hasOffer ? "Price" : "Subtotal"}</span>
+                <span className="flex items-baseline gap-1.5">
+                  {hasOffer && (
+                    <span className="text-slate-400 dark:text-slate-500 line-through">{inr(regularTotal)}</span>
+                  )}
+                  <span className="font-semibold text-slate-900 dark:text-white">{inr(total)}</span>
+                </span>
               </div>
-              {isYearly && (
+              {hasOffer && (
                 <div className="flex justify-between text-[#8ba32b] dark:text-[#c8e558] font-semibold text-[12.5px]">
-                  <span>Yearly 15% discount</span>
-                  <span>Applied</span>
+                  <span>Launch offer — {savingsPct}% off</span>
+                  <span>&minus; {inr(savings)}</span>
                 </div>
               )}
               <div className="flex justify-between text-slate-600 dark:text-slate-300">
@@ -531,9 +545,16 @@ export default function Checkout() {
                 <span className="text-[11.5px] text-slate-400 uppercase tracking-wider font-bold block">Total Due</span>
                 <span className="text-[12px] text-slate-500 dark:text-slate-400">{isYearly ? "Billed annually" : "Billed monthly"}</span>
               </div>
-              <span className="text-2xl font-bold text-slate-900 dark:text-[#c8e558]">
-                ₹{total.toLocaleString("en-IN")}
-              </span>
+              <div className="flex items-baseline gap-2">
+                {hasOffer && (
+                  <span className="text-[15px] font-semibold text-slate-400 dark:text-slate-500 line-through">
+                    {inr(regularTotal)}
+                  </span>
+                )}
+                <span className="text-2xl font-bold text-slate-900 dark:text-[#c8e558]">
+                  {inr(total)}
+                </span>
+              </div>
             </div>
           </div>
 
