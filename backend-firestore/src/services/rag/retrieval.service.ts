@@ -282,12 +282,22 @@ Standalone Search Query:`;
     query: string,
     topK: number = 5
   ): Promise<RetrievalResult[]> {
+    /*
+     * Exam ids are stored canonically as UPPERCASE_UNDERSCORE (`SSC_CGL`) — examMaster.service.ts
+     * normalises on write. Callers arrive holding whatever form they happen to have: the voice
+     * tool schema advertises `ssc-cgl` and a Gemini function call will pass exactly that.
+     * Pinecone metadata equality is literal, so an unnormalised id matches nothing — and a zero
+     * result here is indistinguishable from "this topic is not in the syllabus". Normalise at the
+     * boundary using the same rule as the write path.
+     */
+    const canonicalExamId = examId.trim().toUpperCase().replace(/[\s_-]+/g, '_');
+
     return this.retrieveContext(
       query,
       '', // global search across exam namespace
       {
-        exam: examId,
-        examId,
+        exam: canonicalExamId,
+        examId: canonicalExamId,
         scopeOfficialSyllabusOnly: true,
       },
       topK

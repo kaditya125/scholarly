@@ -1,3 +1,4 @@
+import { SyllabusNode } from '../../types/exam.types';
 /**
  * J.9 — deterministic merge of per-chunk extraction results.
  *
@@ -25,7 +26,7 @@
 /** What the model is allowed to return: names, types, order, and children. No identifiers. */
 export interface ExtractedNode {
   name: string;
-  type: 'STAGE' | 'PAPER' | 'SUBJECT' | 'TOPIC' | 'SUBTOPIC';
+  type: 'STAGE' | 'PAPER' | 'SECTION' | 'SUBJECT' | 'TOPIC' | 'SUBTOPIC';
   order?: number;
   marks?: number | null;
   questionCount?: number | null;
@@ -70,8 +71,17 @@ export interface MergeResult {
   nodeCount: number;
 }
 
-const VALID_TYPES: ExtractedNode['type'][] = ['STAGE', 'PAPER', 'SUBJECT', 'TOPIC', 'SUBTOPIC'];
-const MAX_DEPTH = 5;
+const VALID_TYPES: ExtractedNode['type'][] = ['STAGE', 'PAPER', 'SECTION', 'SUBJECT', 'TOPIC', 'SUBTOPIC'];
+/*
+ * A runaway guard, NOT a statement about how deep a syllabus may legitimately be.
+ *
+ * The original 5 encoded the fixed STAGE>PAPER>SUBJECT>TOPIC>SUBTOPIC ladder, and the official
+ * SSC CGL 2026 notice broke it twice: Paper-I needs a SECTION level (6), and Paper-III prints
+ * "... > Fundamental principles ... > Financial Accounting > Nature and scope" (7). Since
+ * SUBTOPIC now nests into itself, depth is bounded only by what the document actually prints.
+ * This value exists solely so a pathological extraction cannot build an unbounded tree.
+ */
+const MAX_DEPTH = 12;
 
 /** Identity key. Case/whitespace-normalised for matching only; the official name is preserved. */
 const pathKey = (parentPath: string[], name: string) =>
@@ -170,77 +180,74 @@ export function mergeChunkExtractions(chunks: ChunkExtraction[]): MergeResult {
 // ─── Assembly into the persisted schema ──────────────────────────────────────────────────────
 
 /**
- * Converts the merged tree into the existing `ExamStage[]` shape.
+ * Merged tree -> canonical syllabus nodes.
  *
- * THE ID FIELDS ARE FILLED WITH CANONICAL IDS, by the J.1 generator, from the version's own
- * coordinates. There is deliberately no second identifier scheme: `stageId`, `paperId`,
- * `subjectId`, `topicId` and `subtopicId` now hold exactly what `buildCanonicalGraph` will
- * independently derive for the same node, because both call `canonicalNodeId` with the same
+ * Identity is derived, never authored: every nodeId is what `buildCanonicalGraph` will
+ * independently compute for the same node, because both call `canonicalNodeId` with the same
  * (examId, cycleId, syllabusId, type, ordered parent path, official name).
  *
- * That closes the defect J.8 found: those fields used to be model-authored slugs, and the Pinecone
- * indexer keyed its vectors on them. A model that renamed a slug between two runs would have
- * orphaned every vector for that topic. Now the model never sees them.
+ * That closes the defect J.8 found: these fields used to be model-authored slugs and the Pinecone
+ * indexer keyed its vectors on them, so a model that renamed a slug between runs orphaned every
+ * vector for that topic. The model never sees them now.
  *
- * The required nesting (STAGE → PAPER → SUBJECT → TOPIC → SUBTOPIC) is the one the persisted schema
- * and the graph validator already enforce; a document that does not fit it is reported as a
- * structural error rather than being bent into shape, because inventing a stage the official
- * document does not have is exactly the fabrication this pipeline forbids.
+ * There is no longer a required ladder to bend a document into. The merge already refuses to
+ * choose between contradicting chunks, and the graph validator enforces that each child is
+ * strictly deeper than its parent — which permits the level-skipping real syllabi actually do
+ * (a stage with subjects and no papers, a section with topics and no subjects) without inventing
+ * a level the official document does not contain.
  */
-export function toExamStages(
+/**
+ * Drops branches that contain no TOPIC.
+ *
+ * Government notices routinely describe the same tier twice: once as a scheme-of-examination
+ * TABLE (structure, marks, timings) and once as the SYLLABUS proper. Both extract, and because
+ * the headings differ ("Tier-II" vs "Tier-II Examination") the merge keeps them as siblings —
+ * one carrying every topic and all the marks metadata, the other carrying nothing but shape.
+ *
+ * The test is structural, never name similarity: a syllabus tree exists to describe examinable
+ * content, so a branch with no topic anywhere beneath it describes none. Collapsing on name
+ * resemblance would be guessing, and would eventually merge two genuinely distinct stages.
+ *
+ * A TOPIC keeps its whole subtree — its subtopics are content, not empty scaffolding.
+ */
+export function pruneContentlessBranches(nodes: SyllabusNode[]): { nodes: SyllabusNode[]; dropped: string[] } {
+  const dropped: string[] = [];
+  const hasTopic = (n: SyllabusNode): boolean =>
+    n.type === 'TOPIC' || (n.children || []).some(hasTopic);
+
+  const keep = (list: SyllabusNode[], path: string[]): SyllabusNode[] =>
+    list
+      .filter((n) => {
+        if (hasTopic(n)) return true;
+        dropped.push([...path, n.name].join(' → '));
+        return false;
+      })
+      .map((n) => (n.type === 'TOPIC' ? n : { ...n, children: keep(n.children || [], [...path, n.name]) }));
+
+  return { nodes: keep(nodes, []), dropped };
+}
+
+export function toSyllabusNodes(
   merged: MergedNode[],
   scope: { examId: string; cycleId: string; syllabusId: string },
   canonicalId: (p: {
     examId: string; cycleId: string; syllabusId: string;
     type: ExtractedNode['type']; parentPath: string[]; officialName: string;
   }) => string,
-): { stages: any[]; errors: MergeConflict[] } {
+): { nodes: SyllabusNode[]; errors: MergeConflict[]; dropped: string[] } {
   const errors: MergeConflict[] = [];
-  const idFor = (n: MergedNode) => canonicalId({
-    ...scope, type: n.type, parentPath: n.parentPath, officialName: n.name,
+
+  const convert = (node: MergedNode, i: number): SyllabusNode => ({
+    nodeId: canonicalId({ ...scope, type: node.type, parentPath: node.parentPath, officialName: node.name }),
+    type: node.type,
+    name: node.name,
+    order: node.order ?? i + 1,
+    marks: node.marks ?? undefined,
+    questionCount: node.questionCount ?? undefined,
+    durationMinutes: node.durationMinutes ?? undefined,
+    children: (node.children || []).map(convert),
   });
 
-  const expect = (n: MergedNode, type: ExtractedNode['type']): boolean => {
-    if (n.type === type) return true;
-    errors.push({
-      code: 'INVALID_TYPE',
-      path: [...n.parentPath, n.name].join(' → '),
-      detail: `expected ${type} at this level, found ${n.type}`,
-      chunkIndexes: n.sourceChunks,
-    });
-    return false;
-  };
-
-  const stages = merged
-    .filter((stage) => expect(stage, 'STAGE'))
-    .map((stage, si) => ({
-      stageId: idFor(stage),
-      name: stage.name,
-      order: stage.order ?? si + 1,
-      papers: stage.children.filter((p) => expect(p, 'PAPER')).map((paper, pi) => ({
-        paperId: idFor(paper),
-        name: paper.name,
-        order: paper.order ?? pi + 1,
-        subjects: paper.children.filter((s) => expect(s, 'SUBJECT')).map((subject, sj) => ({
-          subjectId: idFor(subject),
-          name: subject.name,
-          order: subject.order ?? sj + 1,
-          marks: subject.marks ?? undefined,
-          questionCount: subject.questionCount ?? undefined,
-          durationMinutes: subject.durationMinutes ?? undefined,
-          topics: subject.children.filter((t) => expect(t, 'TOPIC')).map((topic, ti) => ({
-            topicId: idFor(topic),
-            name: topic.name,
-            order: topic.order ?? ti + 1,
-            subtopics: topic.children.filter((st) => expect(st, 'SUBTOPIC')).map((sub, k) => ({
-              subtopicId: idFor(sub),
-              name: sub.name,
-              order: sub.order ?? k + 1,
-            })),
-          })),
-        })),
-      })),
-    }));
-
-  return { stages, errors };
+  const { nodes, dropped } = pruneContentlessBranches(merged.map(convert));
+  return { nodes, errors, dropped };
 }

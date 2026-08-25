@@ -91,7 +91,7 @@ describe('SyllabusDiffService', () => {
                   order: 1,
                   marks: 50,
                   topics: [
-                    ...baseSyllabus.stages[0].papers[0].subjects[0].topics,
+                    ...baseSyllabus.stages![0].papers[0].subjects[0].topics,
                     {
                       topicId: 'quant_statistics',
                       name: 'Statistics and Probability',
@@ -135,7 +135,7 @@ describe('SyllabusDiffService', () => {
                   name: 'Quantitative Aptitude',
                   order: 1,
                   marks: 50,
-                  topics: [baseSyllabus.stages[0].papers[0].subjects[0].topics[0]], // removed geometry
+                  topics: [baseSyllabus.stages![0].papers[0].subjects[0].topics[0]], // removed geometry
                 },
               ],
             },
@@ -182,7 +182,7 @@ describe('SyllabusDiffService', () => {
                         { subtopicId: 'alg_surds', name: 'Elementary Surds & Roots', order: 2 }, // Added
                       ], // Removed Linear Equations
                     },
-                    baseSyllabus.stages[0].papers[0].subjects[0].topics[1],
+                    baseSyllabus.stages![0].papers[0].subjects[0].topics[1],
                   ],
                 },
               ],

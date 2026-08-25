@@ -35,6 +35,7 @@ export type FetchRejectionCode =
   | 'PRIVATE_ADDRESS_BLOCKED'
   | 'DNS_RESOLUTION_FAILED'
   | 'RESPONSE_TOO_LARGE'
+  | 'EMPTY_DOCUMENT'
   | 'REQUEST_FAILED';
 
 export class OfficialFetchError extends Error {
@@ -204,6 +205,19 @@ export async function fetchOfficialDocument(params: {
     }
 
     const buffer = Buffer.from(response.data);
+    /*
+     * A zero-byte body is never a valid official document, and letting one through is not a
+     * harmless no-op: hashing it yields the SHA-256 of the empty string (e3b0c442...b855),
+     * which is a perfectly well-formed hash. That is how exam_syllabi/syl_ssc_cgl_2026_v1 came
+     * to hold real-looking provenance for a document nobody ever retrieved. Rejecting here
+     * means no downstream stage can mistake emptiness for content.
+     */
+    if (buffer.length === 0) {
+      throw new OfficialFetchError(
+        'EMPTY_DOCUMENT',
+        `${current} returned 0 bytes (status ${response.status})`,
+      );
+    }
     if (buffer.length > maxBytes) {
       throw new OfficialFetchError('RESPONSE_TOO_LARGE', `${current} returned ${buffer.length} bytes`);
     }

@@ -16,6 +16,7 @@
  */
 import { retrievalService } from '../rag/retrieval.service';
 import { studentContextService } from '../studentContext.service';
+import { examMasterService } from '../exam/examMaster.service';
 
 /** Keeps spoken answers short and the turn fast. */
 const MAX_SNIPPETS = 4;
@@ -41,7 +42,7 @@ export const VOICE_TOOL_DECLARATIONS = [
     parameters: {
       type: 'OBJECT',
       properties: {
-        examId: { type: 'STRING', description: "Exam identifier, e.g. 'ssc-cgl'. Omit to use the student's current exam." },
+        examId: { type: 'STRING', description: "Exam identifier, e.g. 'SSC_CGL'. Omit to use the student's current exam." },
         query: { type: 'STRING', description: 'What to look up, in a few words.' },
       },
       required: ['query'],
@@ -108,9 +109,31 @@ export async function executeVoiceTool(
 
         const results = await retrievalService.retrieveOfficialSyllabusContext(examId, query, MAX_SNIPPETS);
         const snippets = toSnippets(results);
-        return snippets.length
-          ? { found: true, examId, snippets, authoritative: true }
-          : { found: false, examId, reason: 'nothing in the official syllabus matched' };
+        if (snippets.length) return { found: true, examId, snippets, authoritative: true };
+
+        /*
+         * An empty result carries two very different meanings and `found:false` alone cannot
+         * separate them:
+         *
+         *   - we hold this exam's official syllabus and the topic genuinely is not in it
+         *   - we hold no official syllabus for this exam at all
+         *
+         * Reporting the second as the first makes the tutor tell a student a topic is NOT on their
+         * exam when in truth nothing is indexed — close to the most damaging thing it could say
+         * about someone's preparation. One Firestore read, on the miss path only, buys the
+         * distinction; the hit path above is untouched.
+         */
+        const published = await examMasterService.getCurrentSyllabus(examId).catch(() => null);
+        return published
+          ? { found: false, examId, syllabusAvailable: true, reason: "not found in this exam's official syllabus" }
+          : {
+              found: false,
+              examId,
+              syllabusAvailable: false,
+              reason:
+                'No official syllabus is loaded for this exam. Tell the student you cannot confirm ' +
+                'the syllabus right now and must not guess. Do NOT say the topic is excluded.',
+            };
       }
 
       case 'searchKnowledge': {

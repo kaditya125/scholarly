@@ -135,12 +135,35 @@ export interface ExamOfficialSource {
 /**
  * 4. Canonical Syllabus Hierarchy Sub-Entities
  */
+/**
+ * The leaf level, and deliberately RECURSIVE.
+ *
+ * A fixed ladder of level names cannot describe real syllabi. SSC CGL 2026 Paper-III prints
+ * "General Studies-Finance and Economics > Part A: Finance and Accounts > Fundamental principles
+ * ... > Financial Accounting > Nature and scope" — seven levels, and nothing guarantees the next
+ * notice stops there. Rather than invent a name for each new depth (SUB_SUBTOPIC and onward),
+ * the leaf nests into itself, so arbitrary official nesting is representable without changing
+ * the vocabulary again.
+ */
 export interface ExamSubtopic {
   subtopicId: string; // e.g. "ssc_cgl_quant_algebra_identities"
   name: string;
   order: number;
   description?: string;
   officialSourceRef?: string;
+  /** Present only where the document nests below this point. */
+  subtopics?: ExamSubtopic[];
+}
+
+/** Every subtopic under a node, flattened depth-first with its printed nesting preserved. */
+export function flattenSubtopics(
+  subtopics: ExamSubtopic[] | undefined,
+  depth = 0,
+): Array<{ subtopic: ExamSubtopic; depth: number }> {
+  return (subtopics || []).flatMap((subtopic) => [
+    { subtopic, depth },
+    ...flattenSubtopics(subtopic.subtopics, depth + 1),
+  ]);
 }
 
 export interface ExamTopic {
@@ -162,12 +185,113 @@ export interface ExamSubject {
   topics: ExamTopic[];
 }
 
+/**
+ * An OPTIONAL grouping of subjects inside a paper.
+ *
+ * Most exams go straight from paper to subject, and for those this level is simply absent. Some
+ * do not: SSC CGL Tier-II prints "Tier | Paper | Session | Subject" as its own column headers and
+ * groups subjects into "Section-I"/"Section-II", each carrying its own sectional timing and
+ * qualifying marks. Those are real exam mechanics a candidate is assessed on, so flattening a
+ * section into its subjects would discard something the official document actually states.
+ *
+ * When `sections` is present, `subjects` on the paper is empty and every subject hangs off a
+ * section. Use `eachSubjectOfPaper` rather than reading either field directly — a consumer that
+ * reads `paper.subjects` alone silently sees nothing for a sectioned paper.
+ */
+export interface ExamSection {
+  sectionId: string; // e.g. "section_1"
+  name: string; // e.g. "Section-I"
+  order: number;
+  description?: string;
+  subjects: ExamSubject[];
+}
+
 export interface ExamPaper {
   paperId: string; // e.g. "paper_1"
   name: string;
   order: number;
   description?: string;
   subjects: ExamSubject[];
+  /** Present only when the official document groups this paper's subjects into sections. */
+  sections?: ExamSection[];
+}
+
+/**
+ * Every subject in a paper, whether or not the paper is divided into sections.
+ *
+ * One place knows the optional-section rule so no caller has to remember it.
+ */
+export function eachSubjectOfPaper(
+  paper: ExamPaper,
+): Array<{ subject: ExamSubject; section?: ExamSection }> {
+  if (paper.sections?.length) {
+    return paper.sections.flatMap((section) =>
+      (section.subjects || []).map((subject) => ({ subject, section })));
+  }
+  return (paper.subjects || []).map((subject) => ({ subject }));
+}
+
+/*
+ * ── The canonical syllabus shape ──────────────────────────────────────────────────────────
+ *
+ * A syllabus is a TREE OF TYPED NODES, not a fixed ladder of stage>paper>subject>topic>subtopic.
+ *
+ * The ladder was tried and it does not survive contact with real documents. SSC CGL 2026 alone
+ * breaks it three separate ways: Tier-I lists four subjects with no paper level at all; Tier-II
+ * Paper-I groups subjects into Sections; Paper-III nests seven deep. Each is legitimate, and each
+ * is the commission describing its own exam. A model that demands every rung be present can only
+ * represent such a document by inventing levels it does not contain.
+ *
+ * So the rule is a RANK ORDER rather than a chain: a child must be strictly deeper than its
+ * parent, and levels may be skipped freely. SUBTOPIC is the one exception — it may contain
+ * SUBTOPIC, which is what lets arbitrary official nesting be represented without inventing a new
+ * type name for every additional depth.
+ */
+export type SyllabusNodeType = 'STAGE' | 'PAPER' | 'SECTION' | 'SUBJECT' | 'TOPIC' | 'SUBTOPIC';
+
+export const SYLLABUS_NODE_RANK: Record<SyllabusNodeType, number> = {
+  STAGE: 0, PAPER: 1, SECTION: 2, SUBJECT: 3, TOPIC: 4, SUBTOPIC: 5,
+};
+
+/** May a node of type `child` hang directly off a node of type `parent`? */
+export function isValidSyllabusNesting(parent: SyllabusNodeType, child: SyllabusNodeType): boolean {
+  if (parent === 'SUBTOPIC') return child === 'SUBTOPIC';
+  return SYLLABUS_NODE_RANK[child] > SYLLABUS_NODE_RANK[parent];
+}
+
+export interface SyllabusNode {
+  /** Canonical, derived id. Never the slug printed in the source document. */
+  nodeId: string;
+  type: SyllabusNodeType;
+  /** Official name exactly as printed. */
+  name: string;
+  order: number;
+  description?: string;
+  officialSourceRef?: string;
+  marks?: number;
+  durationMinutes?: number;
+  questionCount?: number;
+  children: SyllabusNode[];
+}
+
+/** Depth-first walk, handing each node its ancestor names. */
+export function walkSyllabusNodes(
+  nodes: SyllabusNode[] | undefined,
+  visit: (node: SyllabusNode, parentPath: string[], parent?: SyllabusNode) => void,
+  parentPath: string[] = [],
+  parent?: SyllabusNode,
+): void {
+  for (const node of nodes || []) {
+    visit(node, parentPath, parent);
+    walkSyllabusNodes(node.children, visit, [...parentPath, node.name], node);
+  }
+}
+
+/** Every node of a given type, in document order. */
+export function syllabusNodesOfType(nodes: SyllabusNode[] | undefined, type: SyllabusNodeType): SyllabusNode[] {
+  const out: SyllabusNode[] = [];
+  walkSyllabusNodes(nodes, (n) => { if (n.type === type) out.push(n); });
+  return out;
 }
 
 export interface ExamStage {
@@ -176,6 +300,57 @@ export interface ExamStage {
   order: number;
   description?: string;
   papers: ExamPaper[];
+}
+
+/**
+ * Legacy nested shape -> canonical node tree.
+ *
+ * Kept because fixtures and older records describe syllabi as stages/papers/subjects/topics.
+ * Anything the nested shape can express, the tree can; the reverse is not true, which is why
+ * the tree is canonical and this converts one way only.
+ *
+ * Incoming *Id slugs are carried across but are NOT canonical identity — buildCanonicalGraph
+ * derives ids from type and ancestor path and ignores whatever the document happened to print.
+ */
+export function fromExamStages(stages: ExamStage[] | undefined): SyllabusNode[] {
+  const subtopic = (st: ExamSubtopic, i: number): SyllabusNode => ({
+    nodeId: st.subtopicId, type: 'SUBTOPIC', name: st.name, order: st.order ?? i + 1,
+    description: st.description, officialSourceRef: st.officialSourceRef,
+    children: (st.subtopics || []).map(subtopic),
+  });
+  const topic = (t: ExamTopic, i: number): SyllabusNode => ({
+    nodeId: t.topicId, type: 'TOPIC', name: t.name, order: t.order ?? i + 1,
+    description: t.description, officialSourceRef: t.officialSourceRef,
+    children: (t.subtopics || []).map(subtopic),
+  });
+  const subject = (sj: ExamSubject, i: number): SyllabusNode => ({
+    nodeId: sj.subjectId, type: 'SUBJECT', name: sj.name, order: sj.order ?? i + 1,
+    marks: sj.marks, durationMinutes: sj.durationMinutes, questionCount: sj.questionCount,
+    children: (sj.topics || []).map(topic),
+  });
+  const section = (sc: ExamSection, i: number): SyllabusNode => ({
+    nodeId: sc.sectionId, type: 'SECTION', name: sc.name, order: sc.order ?? i + 1,
+    description: sc.description, children: (sc.subjects || []).map(subject),
+  });
+  const paper = (p: ExamPaper, i: number): SyllabusNode => ({
+    nodeId: p.paperId, type: 'PAPER', name: p.name, order: p.order ?? i + 1,
+    description: p.description,
+    children: p.sections?.length ? p.sections.map(section) : (p.subjects || []).map(subject),
+  });
+  return (stages || []).map((st, i) => ({
+    nodeId: st.stageId, type: 'STAGE' as const, name: st.name, order: st.order ?? i + 1,
+    description: st.description, children: (st.papers || []).map(paper),
+  }));
+}
+
+/**
+ * The node tree for a syllabus, whichever shape it was stored in.
+ *
+ * Every consumer should go through this rather than reading either field, so that a record
+ * written in the legacy shape can never be read as an empty syllabus.
+ */
+export function syllabusNodesOf(syllabus: { nodes?: SyllabusNode[]; stages?: ExamStage[] }): SyllabusNode[] {
+  return syllabus.nodes?.length ? syllabus.nodes : fromExamStages(syllabus.stages);
 }
 
 /**
@@ -220,7 +395,12 @@ export interface ExamSyllabus {
   invalidatedAt?: number;
   invalidationReason?: SyllabusInvalidationReason;
   invalidationDetail?: string;
-  stages: ExamStage[];
+  /**
+   * CANONICAL structure. A tree of typed nodes that may skip levels — see SyllabusNode.
+   */
+  nodes?: SyllabusNode[];
+  /** @deprecated Legacy nested shape. Read via `syllabusNodesOf`, never directly. */
+  stages?: ExamStage[];
   notes?: string;
   createdAt: number;
   updatedAt: number;
