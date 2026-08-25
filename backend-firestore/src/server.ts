@@ -321,6 +321,18 @@ app.use(errorHandler);
 const server = app.listen(env.PORT, () => {
   console.log(`🚀 Server running in ${env.NODE_ENV} mode on port ${env.PORT}`);
 
+  // Voice gateway (Phase 3 prototype). Attaches a WebSocket endpoint at /voice to this same
+  // HTTP server and bridges it to Vertex Gemini Live. Deliberately separate from the SSE text
+  // chat path, which is untouched. Wrapped so a failure here can never take down HTTP —
+  // voice is additive, and text chat must keep working if it breaks.
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { attachVoiceGateway } = require('./services/voice/voiceGateway');
+    attachVoiceGateway(server);
+  } catch (err: any) {
+    console.warn('[voice] gateway failed to attach; text chat unaffected:', err?.message || err);
+  }
+
   // Start the BullMQ background worker so enqueued jobs (podcast.generate,
   // podcast.postassets, intelligence.*, notifications, etc.) actually get
   // processed. Without this call, /api/podcasts/generate accepts the request,
