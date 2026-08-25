@@ -141,7 +141,6 @@ export class BackgroundWorker {
     });
   }
 
-  private quotaErrorLogged = false;
 
   private async handleSessionGenerateTitle(payload: SessionGenerateTitlePayload) {
     await this.chatService.generateAndSaveTitle(payload.sessionId, payload.messages);

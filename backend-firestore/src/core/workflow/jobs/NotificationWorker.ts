@@ -107,16 +107,14 @@ class NotificationWorker {
     });
 
     worker.on('error', (err: any) => {
-      const msg = err?.message || '';
-      if (msg.includes('max requests limit exceeded') || msg.includes('Limit:')) {
-        if (!this.quotaErrorLogged) {
-          this.quotaErrorLogged = true;
-          logger.warn('[NotificationWorker] Upstash Redis daily quota limit reached (500k limit exceeded). Pausing worker polling to stop error spam.');
-        }
+      // Third quota handler in this file; all of them now report through the one breaker so the
+      // process says it once, and all of them schedule their own resume.
+      if (noteRedisError(err, 'NotificationWorker.worker')) {
         worker.pause(true).catch(() => {});
-      } else {
-        logger.error(`[NotificationWorker] Worker error: ${msg}`);
+        scheduleQuotaRecovery(() => { worker.resume(); }, 'NotificationWorker.worker');
+        return;
       }
+      logger.error(`[NotificationWorker] Worker error: ${err?.message || err}`);
     });
   }
 
@@ -279,7 +277,6 @@ class NotificationWorker {
     }
   }
 
-  private quotaErrorLogged = false;
 
   async close(): Promise<void> {
     try {

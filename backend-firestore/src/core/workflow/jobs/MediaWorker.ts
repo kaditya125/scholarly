@@ -74,7 +74,6 @@ export class MediaWorker {
     });
   }
 
-  private quotaErrorLogged = false;
 
   async close() {
     try {
