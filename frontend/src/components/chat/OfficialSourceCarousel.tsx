@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { useExamSyllabus } from '../../hooks/api/useExams';
+import { syllabusNodesOf, type SyllabusNode } from '../../lib/api/exams';
 
 export interface OfficialSourceItem {
   examName?: string;
@@ -37,6 +38,79 @@ interface OfficialSourceCarouselProps {
   className?: string;
   onSuggestionClick?: (query: string) => void;
 }
+
+/**
+ * Renders a syllabus node and everything beneath it.
+ *
+ * Recursive, and styled by the node's TYPE rather than its depth, because the tree deliberately
+ * skips levels: SSC CGL Tier-I holds subjects directly while Tier-II holds papers, so the same
+ * visual depth means different things in different branches. A fixed four-level render dropped
+ * whichever branches did not match its assumed shape.
+ */
+const SyllabusNodeView: React.FC<{ node: SyllabusNode; depth?: number }> = ({ node, depth = 0 }) => {
+  const kids = node.children || [];
+  const badge =
+    node.marks != null ? (
+      <span className="text-[10.5px] font-mono text-indigo-600 dark:text-indigo-400">
+        {node.questionCount != null ? `${node.questionCount}Q • ` : ''}{node.marks}M
+      </span>
+    ) : null;
+
+  if (node.type === 'STAGE') {
+    return (
+      <div className="p-4 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/70 dark:border-white/5 space-y-3">
+        <div className="flex items-center justify-between font-bold text-sm text-slate-900 dark:text-white">
+          <span className="flex items-center gap-1.5">
+            <Layers className="w-4 h-4 text-indigo-500" /> {node.name}
+          </span>
+          {badge}
+        </div>
+        {kids.map((c) => <SyllabusNodeView key={c.nodeId} node={c} depth={depth + 1} />)}
+      </div>
+    );
+  }
+
+  if (node.type === 'PAPER' || node.type === 'SECTION') {
+    return (
+      <div className="space-y-2 pl-2">
+        <div className="flex items-center justify-between font-semibold text-slate-700 dark:text-gray-300">
+          <span>{node.name}</span>
+          {badge}
+        </div>
+        <div className="space-y-2">
+          {kids.map((c) => <SyllabusNodeView key={c.nodeId} node={c} depth={depth + 1} />)}
+        </div>
+      </div>
+    );
+  }
+
+  if (node.type === 'SUBJECT') {
+    return (
+      <div className="p-3 rounded-lg bg-white dark:bg-white/5 border border-slate-200/50 dark:border-white/5 space-y-1.5">
+        <div className="flex justify-between items-center font-bold text-slate-800 dark:text-gray-200">
+          <span>{node.name}</span>
+          {badge}
+        </div>
+        <div className="space-y-1 text-[11px] text-slate-500 dark:text-gray-400">
+          {kids.map((c) => <SyllabusNodeView key={c.nodeId} node={c} depth={depth + 1} />)}
+        </div>
+      </div>
+    );
+  }
+
+  // TOPIC and SUBTOPIC — the leaves, indented by how deep the document actually nests them.
+  return (
+    <div className="space-y-1" style={{ paddingLeft: node.type === 'SUBTOPIC' ? 10 : 0 }}>
+      <div className="flex items-start gap-1">
+        <span className={node.type === 'TOPIC' ? 'text-indigo-500 font-bold' : 'text-slate-400'}>•</span>
+        <span className={node.type === 'TOPIC'
+          ? 'text-slate-700 dark:text-gray-300 font-medium'
+          : 'text-slate-500 dark:text-gray-400'}>{node.name}</span>
+      </div>
+      {kids.map((c) => <SyllabusNodeView key={c.nodeId} node={c} depth={depth + 1} />)}
+    </div>
+  );
+};
 
 export const OfficialSourceCarousel: React.FC<OfficialSourceCarouselProps> = ({
   source,
@@ -69,6 +143,8 @@ export const OfficialSourceCarousel: React.FC<OfficialSourceCarouselProps> = ({
 
   const { data: syllabusData } = useExamSyllabus(showDocModal ? examId : null);
   const syllabus = syllabusData?.syllabus;
+  // Handles both the canonical node tree and older nested records.
+  const syllabusNodes = syllabusNodesOf(syllabus);
 
   return (
     <div className={cn('my-3.5 space-y-2.5', className)}>
@@ -195,53 +271,9 @@ export const OfficialSourceCarousel: React.FC<OfficialSourceCarouselProps> = ({
 
               {/* Document Syllabus Breakdown */}
               <div className="flex-1 overflow-y-auto space-y-4 pr-1 text-xs">
-                {syllabus?.stages && syllabus.stages.length > 0 ? (
-                  syllabus.stages.map((stage) => (
-                    <div
-                      key={stage.stageId}
-                      className="p-4 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/70 dark:border-white/5 space-y-3"
-                    >
-                      <div className="flex items-center justify-between font-bold text-sm text-slate-900 dark:text-white">
-                        <span className="flex items-center gap-1.5">
-                          <Layers className="w-4 h-4 text-indigo-500" /> {stage.name}
-                        </span>
-                      </div>
-
-                      {stage.papers?.map((paper) => (
-                        <div key={paper.paperId} className="space-y-2 pl-2">
-                          <div className="font-semibold text-slate-700 dark:text-gray-300">
-                            {paper.name}
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {paper.subjects?.map((sub) => (
-                              <div
-                                key={sub.subjectId}
-                                className="p-3 rounded-lg bg-white dark:bg-white/5 border border-slate-200/50 dark:border-white/5 space-y-1.5"
-                              >
-                                <div className="flex justify-between items-center font-bold text-slate-800 dark:text-gray-200">
-                                  <span>{sub.name}</span>
-                                  {sub.marks && (
-                                    <span className="text-[10.5px] font-mono text-indigo-600 dark:text-indigo-400">
-                                      {sub.questionCount}Q • {sub.marks}M
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="space-y-1 text-[11px] text-slate-500 dark:text-gray-400">
-                                  {sub.topics?.map((top) => (
-                                    <div key={top.topicId} className="flex items-start gap-1">
-                                      <span className="text-indigo-500 font-bold">•</span>
-                                      <span className="text-slate-700 dark:text-gray-300 font-medium">
-                                        {top.name}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                {syllabusNodes.length > 0 ? (
+                  syllabusNodes.map((node) => (
+                    <SyllabusNodeView key={node.nodeId} node={node} />
                   ))
                 ) : (
                   <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 space-y-2">

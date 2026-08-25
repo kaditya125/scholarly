@@ -14,7 +14,7 @@ import {
   chunkExtractedBlocks, assertNoTextLost, MAX_CHUNK_CHARS,
 } from '../../src/services/exam/syllabusChunking';
 import {
-  mergeChunkExtractions, toExamStages, ChunkExtraction, ExtractedNode,
+  mergeChunkExtractions, toSyllabusNodes, ChunkExtraction, ExtractedNode,
 } from '../../src/services/exam/syllabusMerge';
 import { canonicalNodeId } from '../../src/services/exam/syllabusCanonicalGraph';
 import type { ExtractedBlock } from '../../src/core/pipeline/types';
@@ -204,14 +204,14 @@ describe('J.9 model-supplied identifiers are structurally impossible', () => {
     const r = mergeChunkExtractions([chunk(0, [
       node('T', 'STAGE', [node('P', 'PAPER', [node('Quant', 'SUBJECT', [hostile])])]),
     ])]);
-    const { stages, errors } = toExamStages(r.nodes, SCOPE, canonicalNodeId);
+    const { nodes, errors } = toSyllabusNodes(r.nodes, SCOPE, canonicalNodeId);
     expect(errors).toEqual([]);
 
-    const topic = stages[0].papers[0].subjects[0].topics[0];
-    expect(topic.topicId).not.toContain('ATTACKER');
-    expect(topic.topicId).not.toContain('evil');
+    const topic = nodes[0].children[0].children[0].children[0];
+    expect(topic.nodeId).not.toContain('ATTACKER');
+    expect(topic.nodeId).not.toContain('evil');
     // It is exactly what the canonical generator derives from the coordinates.
-    expect(topic.topicId).toBe(canonicalNodeId({
+    expect(topic.nodeId).toBe(canonicalNodeId({
       ...SCOPE, type: 'TOPIC', parentPath: ['T', 'P', 'Quant'], officialName: 'Algebra',
     }));
   });
@@ -221,9 +221,9 @@ describe('J.9 model-supplied identifiers are structurally impossible', () => {
     const r = mergeChunkExtractions([chunk(0, [
       node('T', 'STAGE', [node('P', 'PAPER', [node('Quant', 'SUBJECT', [same('Algebra'), same('Geometry')])])]),
     ])]);
-    const { stages } = toExamStages(r.nodes, SCOPE, canonicalNodeId);
-    const [t1, t2] = stages[0].papers[0].subjects[0].topics;
-    expect(t1.topicId).not.toBe(t2.topicId);
+    const { nodes } = toSyllabusNodes(r.nodes, SCOPE, canonicalNodeId);
+    const [t1, t2] = nodes[0].children[0].children[0].children;
+    expect(t1.nodeId).not.toBe(t2.nodeId);
   });
 
   it('the extraction prompt does not ask for identifiers', () => {
@@ -256,21 +256,63 @@ describe('J.9 assembly enforces the persisted hierarchy', () => {
         node('Quant', 'SUBJECT', [node('Algebra', 'TOPIC', [node('Identities', 'SUBTOPIC')])]),
       ])]),
     ])]);
-    const { stages, errors } = toExamStages(r.nodes, SCOPE, canonicalNodeId);
+    const { nodes, errors } = toSyllabusNodes(r.nodes, SCOPE, canonicalNodeId);
     expect(errors).toEqual([]);
-    const s = stages[0];
-    for (const id of [s.stageId, s.papers[0].paperId, s.papers[0].subjects[0].subjectId,
-                      s.papers[0].subjects[0].topics[0].topicId,
-                      s.papers[0].subjects[0].topics[0].subtopics[0].subtopicId]) {
+    const stage = nodes[0];
+    const paper = stage.children[0];
+    const subject = paper.children[0];
+    const topic = subject.children[0];
+    const subtopic = topic.children[0];
+    for (const id of [stage.nodeId, paper.nodeId, subject.nodeId, topic.nodeId, subtopic.nodeId]) {
       expect(id).toMatch(/^(stage|paper|subject|topic|subtopic):SSC_CGL:2026:syl_v1:/);
     }
   });
 
-  it('a structure that does not fit the hierarchy is reported, never bent into shape', () => {
-    // A SUBJECT at root: real for some exams, but not what the persisted schema models.
-    const r = mergeChunkExtractions([chunk(0, [node('Quant', 'SUBJECT')])]);
-    const { stages, errors } = toExamStages(r.nodes, SCOPE, canonicalNodeId);
-    expect(stages).toEqual([]);
-    expect(errors.some((e) => e.code === 'INVALID_TYPE')).toBe(true);
+  it('a level-skipping structure is preserved, never bent into shape', () => {
+    // A SUBJECT at root is real for some exams — SSC CGL Tier-I lists subjects with no paper
+    // above them. The tree keeps it exactly where the document put it; nothing is invented to
+    // fill the missing level, and nothing is dropped for failing to fit one.
+    const r = mergeChunkExtractions([chunk(0, [node('Quant', 'SUBJECT', [node('Algebra', 'TOPIC')])])]);
+    const { nodes, errors } = toSyllabusNodes(r.nodes, SCOPE, canonicalNodeId);
+    expect(errors).toEqual([]);
+    expect(nodes.map((n) => [n.type, n.name])).toEqual([['SUBJECT', 'Quant']]);
+    expect(nodes[0].children.map((c) => [c.type, c.name])).toEqual([['TOPIC', 'Algebra']]);
+  });
+});
+
+describe('content-free branches are dropped, content is never touched', () => {
+  it('drops a scheme-table duplicate of a tier while keeping the one with the topics', () => {
+    // Exactly the SSC CGL 2026 shape: the notice describes Tier-II twice — once as a scheme of
+    // examination (structure only) and once as the syllabus (structure + topics).
+    const r = mergeChunkExtractions([chunk(0, [
+      node('Tier-II', 'STAGE', [node('Paper-I', 'PAPER', [
+        node('Quant', 'SUBJECT', [node('Algebra', 'TOPIC')]),
+      ])]),
+      node('Tier-II Examination', 'STAGE', [node('Paper-I', 'PAPER', [
+        node('Section-I', 'SECTION'),
+        node('Section-II', 'SECTION'),
+      ])]),
+    ])]);
+    const { nodes, dropped } = toSyllabusNodes(r.nodes, SCOPE, canonicalNodeId);
+
+    expect(nodes.map((n) => n.name)).toEqual(['Tier-II']);
+    expect(dropped).toContain('Tier-II Examination');
+  });
+
+  it('never prunes the subtopics beneath a topic', () => {
+    // A SUBTOPIC has no TOPIC under it by definition. Pruning on that basis would strip the
+    // deepest and most specific content in the syllabus.
+    const r = mergeChunkExtractions([chunk(0, [
+      node('T', 'STAGE', [node('P', 'PAPER', [node('S', 'SUBJECT', [
+        node('Algebra', 'TOPIC', [node('Identities', 'SUBTOPIC', [node('Binomial', 'SUBTOPIC')])]),
+      ])])]),
+    ])]);
+    const { nodes, dropped } = toSyllabusNodes(r.nodes, SCOPE, canonicalNodeId);
+
+    expect(dropped).toEqual([]);
+    const topic = nodes[0].children[0].children[0].children[0];
+    expect(topic.name).toBe('Algebra');
+    expect(topic.children[0].name).toBe('Identities');
+    expect(topic.children[0].children[0].name).toBe('Binomial');
   });
 });

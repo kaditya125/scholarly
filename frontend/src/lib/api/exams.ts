@@ -128,6 +128,44 @@ export interface StudentEligibilityEvaluation {
   ineligiblePosts: { postName: string; reason: string }[];
 }
 
+export type SyllabusNodeType = 'STAGE' | 'PAPER' | 'SECTION' | 'SUBJECT' | 'TOPIC' | 'SUBTOPIC';
+
+export interface SyllabusNode {
+  nodeId: string;
+  type: SyllabusNodeType;
+  name: string;
+  order: number;
+  description?: string;
+  officialSourceRef?: string;
+  marks?: number;
+  durationMinutes?: number;
+  questionCount?: number;
+  children: SyllabusNode[];
+}
+
+/** Legacy nested records converted to the node tree, so one renderer handles both. */
+export function syllabusNodesOf(syllabus?: ExamSyllabus | null): SyllabusNode[] {
+  if (!syllabus) return [];
+  if (syllabus.nodes?.length) return syllabus.nodes;
+  return (syllabus.stages || []).map((stage) => ({
+    nodeId: stage.stageId, type: 'STAGE' as const, name: stage.name, order: stage.order,
+    children: (stage.papers || []).map((paper) => ({
+      nodeId: paper.paperId, type: 'PAPER' as const, name: paper.name, order: paper.order,
+      children: (paper.subjects || []).map((subject) => ({
+        nodeId: subject.subjectId, type: 'SUBJECT' as const, name: subject.name, order: subject.order,
+        marks: subject.marks, questionCount: subject.questionCount,
+        children: (subject.topics || []).map((topic) => ({
+          nodeId: topic.topicId, type: 'TOPIC' as const, name: topic.name, order: topic.order,
+          officialSourceRef: topic.officialSourceRef,
+          children: (topic.subtopics || []).map((st) => ({
+            nodeId: st.subtopicId, type: 'SUBTOPIC' as const, name: st.name, order: st.order, children: [],
+          })),
+        })),
+      })),
+    })),
+  }));
+}
+
 export interface ExamSyllabus {
   syllabusId: string;
   examId: string;
@@ -137,21 +175,31 @@ export interface ExamSyllabus {
   status: string;
   sourceDocumentUrl: string;
   sourceDocumentHash: string;
-  stages: {
+  /**
+   * CANONICAL structure: a tree of typed nodes.
+   *
+   * Not a fixed stage>paper>subject>topic ladder, because real syllabi skip levels. SSC CGL 2026
+   * lists Tier-I's subjects with no paper above them, groups Tier-II's into sections, and nests
+   * parts of Paper-III six deep. Anything that renders a fixed depth silently drops whichever
+   * branches do not match it.
+   */
+  nodes?: SyllabusNode[];
+  /** @deprecated Legacy nested shape from older records. Prefer `nodes`. */
+  stages?: {
     stageId: string;
     name: string;
     order: number;
-    papers: {
+    papers?: {
       paperId: string;
       name: string;
       order: number;
-      subjects: {
+      subjects?: {
         subjectId: string;
         name: string;
         order: number;
         marks?: number;
         questionCount?: number;
-        topics: {
+        topics?: {
           topicId: string;
           name: string;
           order: number;

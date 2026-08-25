@@ -1,5 +1,7 @@
 import crypto from 'crypto';
-import { ExamSyllabus } from '../../types/exam.types';
+import {
+  ExamSyllabus, SyllabusNode, syllabusNodesOf, isValidSyllabusNesting,
+} from '../../types/exam.types';
 // Type-only: the service imports the builders from here, so a value import would close a runtime
 // require() cycle. `import type` is erased at compile time and cannot.
 import type { SyllabusGraphNode, SyllabusGraphEdge } from './syllabusGraph.service';
@@ -32,7 +34,7 @@ import type { SyllabusGraphNode, SyllabusGraphEdge } from './syllabusGraph.servi
 /** Node types that may carry a question. Kept here so validation and the read API agree. */
 export const QUESTION_BEARING_TYPES: Array<SyllabusGraphNode['type']> = ['TOPIC', 'SUBTOPIC'];
 
-const VALID_TYPES: Array<SyllabusGraphNode['type']> = ['STAGE', 'PAPER', 'SUBJECT', 'TOPIC', 'SUBTOPIC'];
+const VALID_TYPES: Array<SyllabusGraphNode['type']> = ['STAGE', 'PAPER', 'SECTION', 'SUBJECT', 'TOPIC', 'SUBTOPIC'];
 
 /**
  * Normalizes an official name for IDENTITY purposes only — the displayed label always keeps the
@@ -128,39 +130,35 @@ export function buildCanonicalGraph(syllabus: ExamSyllabus): CanonicalGraph {
     return id;
   };
 
-  for (const stage of syllabus.stages || []) {
-    const stagePath: string[] = [];
-    const stageId = add('STAGE', stage.name, stagePath, stage.order);
+  /*
+   * One generic descent. There is no per-level code, because there is no fixed set of levels: a
+   * STAGE may hold SUBJECTs directly, a SECTION may hold TOPICs, a SUBTOPIC may hold SUBTOPICs.
+   * Whatever the official document nests, this walks.
+   *
+   * Ids still come from type + ancestor path, so nesting that skips a level yields a stable,
+   * reproducible identity and the *Id slugs printed in the source stay ignored.
+   */
+  const descend = (children: SyllabusNode[] | undefined, parentPath: string[], parentEntityId?: string) => {
+    let prevTopicId: string | null = null;
 
-    for (const paper of stage.papers || []) {
-      const paperPath = [stage.name];
-      const paperId = add('PAPER', paper.name, paperPath, paper.order, stageId);
+    (children || []).forEach((node, i) => {
+      const id = add(node.type, node.name, parentPath, node.order ?? i + 1, parentEntityId, node.marks);
 
-      for (const subject of paper.subjects || []) {
-        const subjectPath = [stage.name, paper.name];
-        const subjectId = add('SUBJECT', subject.name, subjectPath, subject.order, paperId, subject.marks);
-
-        let prevTopicId: string | null = null;
-        for (const topic of subject.topics || []) {
-          const topicPath = [stage.name, paper.name, subject.name];
-          const topicId = add('TOPIC', topic.name, topicPath, topic.order, subjectId);
-
-          // Sequential hint between topics as printed in the official order. Advisory only — it is
-          // never consulted for identity, and carries no claim about real prerequisite structure.
-          if (prevTopicId) {
-            edges.push({ id: `${prevTopicId}->${topicId}`, sourceId: prevTopicId, targetId: topicId,
-                         relationType: 'PREREQUISITE_OF', weight: 0.8 });
-          }
-          prevTopicId = topicId;
-
-          for (const subtopic of topic.subtopics || []) {
-            const subtopicPath = [stage.name, paper.name, subject.name, topic.name];
-            add('SUBTOPIC', subtopic.name, subtopicPath, subtopic.order, topicId);
-          }
+      // Sequential hint between sibling topics as printed in the official order. Advisory only —
+      // never consulted for identity, and carries no claim about real prerequisite structure.
+      if (node.type === 'TOPIC') {
+        if (prevTopicId) {
+          edges.push({ id: `${prevTopicId}->${id}`, sourceId: prevTopicId, targetId: id,
+                       relationType: 'PREREQUISITE_OF', weight: 0.8 });
         }
+        prevTopicId = id;
       }
-    }
-  }
+
+      descend(node.children, [...parentPath, node.name], id);
+    });
+  };
+
+  descend(syllabusNodesOf(syllabus), []);
 
   return { nodes, edges };
 }
@@ -181,10 +179,14 @@ export interface GraphValidationResult {
   errors: GraphValidationError[];
 }
 
-/** Which parent type each node type must have. A TOPIC hanging off a STAGE is malformed. */
-const REQUIRED_PARENT: Record<SyllabusGraphNode['type'], SyllabusGraphNode['type'] | null> = {
-  STAGE: null, PAPER: 'STAGE', SUBJECT: 'PAPER', TOPIC: 'SUBJECT', SUBTOPIC: 'TOPIC',
-};
+/**
+ * The only node type allowed to have no parent.
+ *
+ * Everything below is governed by isValidSyllabusNesting — a rank comparison, not a fixed
+ * parent-per-type map. That map could not express "a SUBJECT may hang off a PAPER, a SECTION or
+ * a STAGE depending on what this exam prints", which is the rule real documents follow.
+ */
+const ROOT_TYPES: Array<SyllabusGraphNode['type']> = ['STAGE'];
 
 /**
  * Validates a graph BEFORE it is allowed to become usable.
@@ -237,11 +239,9 @@ export function validateCanonicalGraph(
   }
 
   for (const n of byId.values()) {
-    const requiredParent = REQUIRED_PARENT[n.type];
-
-    if (requiredParent === null) {
+    if (ROOT_TYPES.includes(n.type)) {
       if (n.parentEntityId) {
-        errors.push({ code: 'INVALID_HIERARCHY', nodeId: n.id, detail: `STAGE must not have a parent` });
+        errors.push({ code: 'INVALID_HIERARCHY', nodeId: n.id, detail: `${n.type} must not have a parent` });
       }
       continue;
     }
@@ -254,9 +254,9 @@ export function validateCanonicalGraph(
       errors.push({ code: 'MISSING_PARENT', nodeId: n.id, detail: `parent ${n.parentEntityId} not in graph` });
       continue;
     }
-    if (parent.type !== requiredParent) {
+    if (!isValidSyllabusNesting(parent.type, n.type)) {
       errors.push({ code: 'INVALID_HIERARCHY', nodeId: n.id,
-                    detail: `${n.type} parent must be ${requiredParent}, found ${parent.type}` });
+                    detail: `${n.type} cannot hang off ${parent.type}` });
     }
   }
 

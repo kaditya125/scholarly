@@ -6,13 +6,15 @@
 
 import { logger } from '../../utils/logger';
 import { db } from '../../config/firebase';
-import { ExamSyllabus, ExamTopic } from '../../types/exam.types';
+import {
+  ExamSyllabus, ExamTopic, SyllabusNode, syllabusNodesOf, syllabusNodesOfType,
+} from '../../types/exam.types';
 import { buildCanonicalGraph, validateCanonicalGraph } from './syllabusCanonicalGraph';
 
 export interface SyllabusGraphNode {
   id: string; // e.g. "stage:tier_1", "topic:ssc_cgl_quant_algebra"
   label: string;
-  type: 'STAGE' | 'PAPER' | 'SUBJECT' | 'TOPIC' | 'SUBTOPIC';
+  type: 'STAGE' | 'PAPER' | 'SECTION' | 'SUBJECT' | 'TOPIC' | 'SUBTOPIC';
   examId: string;
   cycleId: string;
   syllabusId: string;
@@ -133,17 +135,21 @@ export class SyllabusGraphService {
    * Fast in-memory extraction of all syllabus topic nodes for an exam from an ExamSyllabus.
    */
   public extractTopicsFromSyllabus(syllabus: ExamSyllabus): ExamTopic[] {
-    const list: ExamTopic[] = [];
-    for (const stage of syllabus.stages || []) {
-      for (const paper of stage.papers || []) {
-        for (const subject of paper.subjects || []) {
-          for (const topic of subject.topics || []) {
-            list.push(topic);
-          }
-        }
-      }
-    }
-    return list;
+    /*
+     * Depth-first over the node tree rather than a fixed four-deep walk: a TOPIC does not always
+     * sit under stage>paper>subject. SSC CGL Tier-II Section-III lists topics directly under the
+     * section, and the old walk returned none of them while looking perfectly successful.
+     */
+    return syllabusNodesOfType(syllabusNodesOf(syllabus), 'TOPIC').map((node): ExamTopic => ({
+      topicId: node.nodeId,
+      name: node.name,
+      order: node.order,
+      description: node.description,
+      officialSourceRef: node.officialSourceRef,
+      subtopics: (node.children || [])
+        .filter((c: SyllabusNode) => c.type === 'SUBTOPIC')
+        .map((c: SyllabusNode) => ({ subtopicId: c.nodeId, name: c.name, order: c.order })),
+    }));
   }
 
   // ── Read side ─────────────────────────────────────────────────────────────────────────────

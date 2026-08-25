@@ -228,7 +228,7 @@ export class SyllabusIngestionOrchestrator {
                storagePath: archived.storagePath, reason: 'DOCUMENT_CONTAINS_NO_EXTRACTABLE_TEXT' };
     }
 
-    let stages;
+    let nodes;
     try {
       /*
        * DETERMINISTIC CHUNKED EXTRACTION (J.9).
@@ -242,7 +242,7 @@ export class SyllabusIngestionOrchestrator {
        * fit the canonical hierarchy aborts the ingestion, because "publish the chunks that worked"
        * yields a syllabus indistinguishable from a complete one and silently missing pages.
        */
-      ({ stages } = await syllabusIngestionService.normalizeSyllabusDocument({
+      ({ nodes } = await syllabusIngestionService.normalizeSyllabusDocument({
         exam, blocks: extractedBlocks, documentHash: archived.hash,
         scope: { examId, cycleId, syllabusId },
       }));
@@ -276,7 +276,7 @@ export class SyllabusIngestionOrchestrator {
       storageDownloadUrl: archived.downloadUrl,
       retrievedAt,
       extractedAt: Date.now(),
-      stages,
+      nodes,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     } as ExamSyllabus;

@@ -13,6 +13,8 @@ import {
   ExamOfficialSource,
   ExamSyllabus,
   OfficialSourceType,
+  fromExamStages,
+  syllabusNodesOfType,
 } from '../../types/exam.types';
 import { examRepository, ExamRepository } from '../../repositories/exam.repository';
 import { officialSourceVerificationService, OfficialSourceVerificationService } from './officialSourceVerification.service';
@@ -57,7 +59,10 @@ export interface CreateSyllabusDto {
   sourceDocumentUrl: string;
   sourceDocumentHash?: string;
   sourceDocumentId?: string;
-  stages: ExamSyllabus['stages'];
+  /** Canonical tree. Preferred. */
+  nodes?: ExamSyllabus['nodes'];
+  /** @deprecated Legacy nested shape; converted on write. */
+  stages?: ExamSyllabus['stages'];
   notes?: string;
 }
 
@@ -409,7 +414,8 @@ export class ExamMasterService {
       sourceDocumentUrl: dto.sourceDocumentUrl,
       sourceDocumentHash: contentHash,
       extractedAt: now,
-      stages: dto.stages || [],
+      // Accepts either shape from callers; the tree is what gets stored and read back.
+      nodes: dto.nodes?.length ? dto.nodes : fromExamStages(dto.stages),
       notes: dto.notes,
       createdAt: now,
       updatedAt: now,
@@ -424,7 +430,7 @@ export class ExamMasterService {
       cycleId,
       entityId: syllabusId,
       performedBy,
-      details: { version, stageCount: syllabus.stages.length },
+      details: { version, stageCount: syllabusNodesOfType(syllabus.nodes, 'STAGE').length },
       timestamp: now,
     });
 

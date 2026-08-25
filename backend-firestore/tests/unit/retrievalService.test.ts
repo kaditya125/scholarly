@@ -172,3 +172,25 @@ describe('verifyClaimsAndCalculateConfidence', () => {
     expect(r.confidenceScore).toBeCloseTo(0.8);
   });
 });
+
+describe('official syllabus exam id normalisation', () => {
+  /*
+   * Regression: this normalisation once shipped as /[s-]+/ instead of /[\s_-]+/ — a single lost
+   * backslash. It stripped literal lowercase 's' and hyphens but not whitespace, so 'ssc-cgl' and
+   * 'SSC_CGL' both happened to come out right while 'Ssc Cgl' silently became 'SSC CGL' and
+   * matched nothing. Two of three casings passing by luck is exactly why this is asserted on the
+   * FILTER Pinecone actually receives rather than on retrieval returning something.
+   */
+  it.each(['ssc-cgl', 'SSC_CGL', 'Ssc Cgl', 'SSC-CGL', '  ssc  cgl  ', 'ssc_cgl'])(
+    'resolves %j to the canonical SSC_CGL filter',
+    async (raw) => {
+      mockPinecone.queryVectors.mockResolvedValue([]);
+      mockReranker.rerank.mockResolvedValue([]);
+      await svc.retrieveOfficialSyllabusContext(raw, 'anything', 4);
+
+      const filter = mockPinecone.queryVectors.mock.calls[0][2];
+      expect(filter.examId).toBe('SSC_CGL');
+      expect(filter.documentType).toBe('OFFICIAL_SYLLABUS');
+    },
+  );
+});

@@ -4,7 +4,9 @@
  * additions, deletions, structural changes, and subtopic modifications.
  */
 
-import { ExamSyllabus, ExamStage, ExamPaper, ExamSubject, ExamTopic } from '../../types/exam.types';
+import {
+  ExamSyllabus, SyllabusNode, syllabusNodesOf,
+} from '../../types/exam.types';
 
 export interface TopicChange {
   stageId: string;
@@ -39,17 +41,43 @@ export class SyllabusDiffService {
    * Flattens a syllabus into a lookup map of TopicId -> { stage, paper, subject, topic }
    */
   private flattenTopics(syllabus: ExamSyllabus) {
-    const map = new Map<string, { stage: ExamStage; paper: ExamPaper; subject: ExamSubject; topic: ExamTopic }>();
+    type Entry = {
+      stage: { stageId: string; name: string };
+      subject: { subjectId: string; name: string; marks?: number };
+      topic: { topicId: string; name: string; subtopics: Array<{ name: string }> };
+    };
+    const map = new Map<string, Entry>();
 
-    for (const stage of syllabus.stages || []) {
-      for (const paper of stage.papers || []) {
-        for (const subject of paper.subjects || []) {
-          for (const topic of subject.topics || []) {
-            map.set(topic.topicId, { stage, paper, subject, topic });
-          }
-        }
+    /*
+     * Ancestors are looked up by type, not by position, because a topic's ancestry is not uniform
+     * even within one exam: SSC CGL Tier-I has no PAPER, and Tier-II Section-III has no SUBJECT.
+     * Where a level is genuinely absent the nearest enclosing level stands in, so a diff line reads
+     * "... in Tier-II (Section-III)" rather than "... in undefined (undefined)".
+     */
+    const visit = (node: SyllabusNode, chain: SyllabusNode[]) => {
+      if (node.type === 'TOPIC') {
+        const near = (t: SyllabusNode['type']) => [...chain].reverse().find((a) => a.type === t);
+        const stage = near('STAGE');
+        const subject = near('SUBJECT') ?? near('SECTION') ?? near('PAPER') ?? stage;
+
+        map.set(node.nodeId, {
+          stage: { stageId: stage?.nodeId ?? '', name: stage?.name ?? '(unspecified stage)' },
+          subject: {
+            subjectId: subject?.nodeId ?? '',
+            name: subject?.name ?? '(unspecified subject)',
+            marks: subject?.marks,
+          },
+          topic: {
+            topicId: node.nodeId,
+            name: node.name,
+            subtopics: (node.children || []).filter((c) => c.type === 'SUBTOPIC').map((c) => ({ name: c.name })),
+          },
+        });
       }
-    }
+      for (const child of node.children || []) visit(child, [...chain, node]);
+    };
+
+    for (const root of syllabusNodesOf(syllabus)) visit(root, []);
 
     return map;
   }

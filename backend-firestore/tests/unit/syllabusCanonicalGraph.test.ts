@@ -186,12 +186,39 @@ describe('validation rejects malformed graphs', () => {
     expect(r.errors.some((e) => e.code === 'INVALID_NODE_TYPE')).toBe(true);
   });
 
-  it('an invalid hierarchy (TOPIC under STAGE) is rejected', () => {
+  it('an INVERTED hierarchy (PAPER under TOPIC) is rejected', () => {
     const g = {
-      nodes: [node({ id: 's', type: 'STAGE' }), node({ id: 't', type: 'TOPIC', parentEntityId: 's' })],
+      nodes: [node({ id: 't', type: 'TOPIC' }), node({ id: 'p', type: 'PAPER', parentEntityId: 't' })],
       edges: [],
     };
     expect(validateCanonicalGraph(g as any, expected).errors.some((e) => e.code === 'INVALID_HIERARCHY')).toBe(true);
+  });
+
+  it('a SKIPPED level is accepted — real syllabi omit levels', () => {
+    // SSC CGL Tier-I lists subjects with no paper; Tier-II Section-III lists topics with no
+    // subject. Both are the commission describing its own exam, so neither may be rejected.
+    const g = {
+      nodes: [
+        node({ id: 's', type: 'STAGE' }),
+        node({ id: 'sub', type: 'SUBJECT', parentEntityId: 's' }),
+        node({ id: 't', type: 'TOPIC', parentEntityId: 'sub' }),
+      ],
+      edges: [],
+    };
+    expect(validateCanonicalGraph(g as any, expected).errors.filter((e) => e.code === 'INVALID_HIERARCHY')).toEqual([]);
+  });
+
+  it('a SUBTOPIC nested inside a SUBTOPIC is accepted', () => {
+    // SSC CGL Paper-III nests seven deep; the leaf has to be able to contain itself.
+    const g = {
+      nodes: [
+        node({ id: 't', type: 'TOPIC' }),
+        node({ id: 'st1', type: 'SUBTOPIC', parentEntityId: 't' }),
+        node({ id: 'st2', type: 'SUBTOPIC', parentEntityId: 'st1' }),
+      ],
+      edges: [],
+    };
+    expect(validateCanonicalGraph(g as any, expected).errors.filter((e) => e.code === 'INVALID_HIERARCHY')).toEqual([]);
   });
 
   it('an empty identifier is rejected', () => {
