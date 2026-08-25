@@ -36,7 +36,8 @@ export class StudentContextService {
    */
   async aggregateContext(userId: string): Promise<StudentContext> {
     // Fetch everything in parallel for speed
-    const [profile, memory, analytics, stats, planner, notebooks] = await Promise.all([
+    const [identity, profile, memory, analytics, stats, planner, notebooks] = await Promise.all([
+      this.fetchIdentity(userId),
       this.fetchProfile(userId),
       this.fetchMemory(userId),
       this.fetchAnalytics(userId),
@@ -101,6 +102,7 @@ export class StudentContextService {
 
     return {
       userId,
+      identity,
       profile,
       memory,
       analytics,
@@ -114,6 +116,28 @@ export class StudentContextService {
   }
 
   // ─── Private Fetchers ──────────────────────────────────────────────────────
+
+  /**
+   * Who the student actually is.
+   *
+   * The StudentProfile document holds what they are STUDYING — exam, subjects, goal — and has
+   * no name on it. The account record is a different document entirely, which is why the voice
+   * tutor asked a signed-in student for their name and then truthfully reported that it could
+   * not find one: it was reading the study profile and the name was never in there.
+   *
+   * Deliberately limited to the display name. The model gets what it needs to address someone
+   * properly and no more of their account record than that.
+   */
+  private async fetchIdentity(userId: string): Promise<{ name: string | null }> {
+    try {
+      const doc = await db.collection('users').doc(userId).get();
+      const name = (doc.data() as any)?.displayName;
+      return { name: typeof name === 'string' && name.trim() ? name.trim() : null };
+    } catch (e) {
+      console.warn('StudentContext: Failed to fetch identity', e);
+      return { name: null };
+    }
+  }
 
   private async fetchProfile(userId: string): Promise<StudentProfile | null> {
     try {

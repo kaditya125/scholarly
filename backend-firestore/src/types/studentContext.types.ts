@@ -99,6 +99,15 @@ export interface StudentContext {
   /** User ID */
   userId: string;
 
+  /**
+   * Who the student IS, as distinct from what they study.
+   *
+   * Separate from `profile` because they live in different documents: the study profile carries
+   * exam and subjects and has never had a name on it, while the display name sits on the account
+   * record. Conflating the two is why a signed-in student could be asked their name.
+   */
+  identity?: { name: string | null };
+
   /** Onboarding profile (exam, target year, study hours, etc.) */
   profile: StudentProfile | null;
 

@@ -64,9 +64,10 @@ export const VOICE_TOOL_DECLARATIONS = [
   {
     name: 'getStudentContext',
     description:
-      'Get this student\'s current exam, subjects and recent study activity, so you can pitch the ' +
-      'explanation at the right level. Takes no arguments — it always refers to the student you are ' +
-      'speaking with.',
+      "Get who you are speaking with: their name, current exam, level and recent study activity. " +
+      'Use it to address them properly and to pitch explanations at the right level, and whenever ' +
+      'they ask anything about themselves — their name, their exam, what they have been studying. ' +
+      'Takes no arguments; it always refers to the student in this conversation.',
     parameters: { type: 'OBJECT', properties: {} },
   },
 ] as const;
@@ -103,7 +104,11 @@ export async function executeVoiceTool(
         if (!examId) {
           // Fall back to the student's own exam rather than trusting the model to know it.
           const sc: any = await studentContextService.aggregateContext(ctx.userId).catch(() => null);
-          examId = sc?.profile?.examId || sc?.profile?.exam || '';
+          // `targetExam` is what the profile document actually stores. The two names tried before
+          // it exist on no schema in this codebase, so this fallback silently resolved to '' and
+          // every lookup that relied on it answered "no exam selected for this student".
+          // retrieveOfficialSyllabusContext canonicalises whatever form it is stored in.
+          examId = sc?.profile?.targetExam || sc?.profile?.examId || sc?.profile?.exam || '';
         }
         if (!examId) return { found: false, reason: 'no exam selected for this student' };
 
@@ -151,8 +156,15 @@ export async function executeVoiceTool(
         const sc: any = await studentContextService.aggregateContext(ctx.userId);
         return {
           found: true,
-          exam: sc?.profile?.examName || sc?.profile?.exam || null,
-          level: sc?.profile?.level || null,
+          // The student is signed in, so their name is known and there is never a reason to ask
+          // for it. Its absence here is what made the tutor ask, then correctly report that it
+          // could not find one.
+          name: sc?.identity?.name || null,
+          exam: sc?.profile?.targetExam || sc?.profile?.examName || sc?.profile?.exam || null,
+          // Real fields on the profile document, all of which were being dropped.
+          subjects: (sc?.profile?.subjects || []).slice(0, 8),
+          goal: sc?.profile?.goal || null,
+          level: sc?.profile?.classLevel || sc?.profile?.level || null,
           recentTopics: (sc?.memory?.recentTopics || []).slice(0, 5),
           weakAreas: (sc?.analytics?.weakAreas || []).slice(0, 5),
         };
