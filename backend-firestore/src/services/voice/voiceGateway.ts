@@ -21,6 +21,7 @@ import { GoogleGenAI, Modality, type Session } from '@google/genai';
 import { auth } from '../../config/firebase';
 import { env } from '../../config/env';
 import { paymentsService } from '../payments.service';
+import { VOICE_TOOL_DECLARATIONS, executeVoiceTool } from './voiceTools';
 
 /** Verified against this project on 2026-08-25 by enumerating models.list(). */
 export const VOICE_MODEL = 'gemini-live-2.5-flash-native-audio';
@@ -159,6 +160,9 @@ export function attachVoiceGateway(server: Server) {
               enableAffectiveDialog: true,
               // Server-side VAD: this is what makes barge-in work without timers.
               realtimeInputConfig: { automaticActivityDetection: {} },
+              // Sadhya's own knowledge, reachable by name only. The model cannot touch
+              // Firestore or any service directly — see voiceTools.ts.
+              tools: [{ functionDeclarations: VOICE_TOOL_DECLARATIONS as any }],
             },
             callbacks: {
               onopen: () => {},
@@ -173,6 +177,24 @@ export function attachVoiceGateway(server: Server) {
                     send(ws, { type: 'session_limit' });
                     teardown('max-duration');
                   }, MAX_SESSION_MS);
+                  return;
+                }
+
+                // Tool calls: run them against Sadhya's real services and hand the result back.
+                // The uid comes from the verified token in `state`, never from the model.
+                if (m.toolCall?.functionCalls?.length) {
+                  const calls = m.toolCall.functionCalls;
+                  (async () => {
+                    const responses = [];
+                    for (const call of calls) {
+                      const started = Date.now();
+                      log('VOICE_TOOL_REQUESTED', { user: state.userId, tool: call.name });
+                      const result = await executeVoiceTool(String(call.name), (call.args || {}) as any, { userId: state.userId });
+                      log('VOICE_TOOL_COMPLETED', { user: state.userId, tool: call.name, found: !!result.found, ms: Date.now() - started });
+                      responses.push({ id: call.id, name: call.name, response: result });
+                    }
+                    try { state.live?.sendToolResponse({ functionResponses: responses as any }); } catch { /* session closing */ }
+                  })();
                   return;
                 }
 
