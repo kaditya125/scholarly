@@ -325,6 +325,17 @@ const server = app.listen(env.PORT, () => {
   // HTTP server and bridges it to Vertex Gemini Live. Deliberately separate from the SSE text
   // chat path, which is untouched. Wrapped so a failure here can never take down HTTP —
   // voice is additive, and text chat must keep working if it breaks.
+  // Pay the RAG cold-start cost at boot rather than on a student's first question. Measured
+  // at ~6.1s cold vs ~1.1s warm, so this is the difference between a 6-second pause and a
+  // conversational one. Fire-and-forget: startup must not wait on Google or Pinecone.
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { warmupRag } = require('./services/rag/warmup');
+    void warmupRag();
+  } catch (err: any) {
+    console.warn('[rag] warm-up could not be scheduled:', err?.message || err);
+  }
+
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { attachVoiceGateway } = require('./services/voice/voiceGateway');
