@@ -67,6 +67,21 @@ export function useVoiceSession() {
   const stateRef = useRef<VoiceState>('IDLE');
   const endedByUser = useRef(false);
 
+  // Dev-only conversation metrics. Measuring "user stops speaking -> first AI audio" by
+  // stopwatch is hopeless at these timescales, so the session records it per turn and exposes
+  // the table on window.__voiceMetrics. Purely observational: nothing here alters audio,
+  // pacing or state, so the experience being judged is the real one.
+  const lastSpeechEndRef = useRef(0);
+  const awaitingFirstAudioRef = useRef(false);
+  const bargeStartRef = useRef(0);
+  const metricsRef = useRef<Array<Record<string, number | string>>>([]);
+  const record = useCallback((row: Record<string, number | string>) => {
+    metricsRef.current.push(row);
+    if (typeof window !== 'undefined') (window as any).__voiceMetrics = metricsRef.current;
+    // eslint-disable-next-line no-console
+    console.log('[voice-metric]', row);
+  }, []);
+
   const setVoiceState = useCallback((s: VoiceState) => {
     stateRef.current = s;
     setState(s);
@@ -146,6 +161,17 @@ export function useVoiceSession() {
 
   const end = useCallback(() => {
     endedByUser.current = true;
+    const replies = metricsRef.current.filter((r) => r.metric === 'end_of_speech_to_first_audio').map((r) => Number(r.ms));
+    const barges = metricsRef.current.filter((r) => r.metric === 'barge_in_speech_to_silence' && Number(r.ms) >= 0).map((r) => Number(r.ms));
+    const avg = (a: number[]) => (a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : null);
+    // eslint-disable-next-line no-console
+    console.log('[voice-metric] SUMMARY', {
+      turns: replies.length,
+      replyLatencyMs: replies,
+      avgReplyLatencyMs: avg(replies),
+      bargeIns: barges.length,
+      avgBargeInMs: avg(barges),
+    });
     setVoiceState('ENDING');
     try { wsRef.current?.send(JSON.stringify({ type: 'end' })); } catch { /* noop */ }
     cleanup();
@@ -205,10 +231,23 @@ export function useVoiceSession() {
             appendTranscript(m.role, m.text);
             break;
           case 'audio':
+            if (awaitingFirstAudioRef.current && lastSpeechEndRef.current) {
+              awaitingFirstAudioRef.current = false;
+              record({
+                turn: metricsRef.current.filter((r) => r.metric === 'end_of_speech_to_first_audio').length + 1,
+                metric: 'end_of_speech_to_first_audio',
+                ms: Date.now() - lastSpeechEndRef.current,
+              });
+            }
             enqueueAudio(m.data);
             break;
           case 'interrupted':
             // Server VAD heard the user talk over the model: drop queued audio at once.
+            record({
+              metric: 'barge_in_speech_to_silence',
+              ms: bargeStartRef.current ? Date.now() - bargeStartRef.current : -1,
+            });
+            bargeStartRef.current = 0;
             stopPlayback();
             setVoiceState('INTERRUPTED');
             setTimeout(() => { if (stateRef.current === 'INTERRUPTED') setVoiceState('LISTENING'); }, 150);
@@ -246,8 +285,17 @@ export function useVoiceSession() {
       worklet.port.onmessage = (e) => {
         const { pcm, peak } = e.data as { pcm: ArrayBuffer; peak: number };
         setLevel(peak);
-        if (stateRef.current === 'LISTENING' && peak > SPEAKING_THRESHOLD) setVoiceState('USER_SPEAKING');
-        else if (stateRef.current === 'USER_SPEAKING' && peak <= SPEAKING_THRESHOLD) setVoiceState('LISTENING');
+        if (stateRef.current === 'LISTENING' && peak > SPEAKING_THRESHOLD) {
+          setVoiceState('USER_SPEAKING');
+        } else if (stateRef.current === 'USER_SPEAKING' && peak <= SPEAKING_THRESHOLD) {
+          // Student just stopped talking: this is the clock start for reply latency.
+          lastSpeechEndRef.current = Date.now();
+          awaitingFirstAudioRef.current = true;
+          setVoiceState('LISTENING');
+        } else if (stateRef.current === 'AI_SPEAKING' && peak > SPEAKING_THRESHOLD && !bargeStartRef.current) {
+          // Student started talking over Sadhya: clock start for barge-in responsiveness.
+          bargeStartRef.current = Date.now();
+        }
 
         if (ws.readyState !== WebSocket.OPEN) return;
         const bytes = new Uint8Array(pcm);
