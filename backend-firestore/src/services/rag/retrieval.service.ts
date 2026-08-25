@@ -139,7 +139,13 @@ Standalone Search Query:`;
     const scopeKey = scopeSourceIds && scopeSourceIds.length > 0
       ? scopeSourceIds.slice().sort().join(',')
       : '';
-    const cacheKey = `retrieval:${notebookId}:${expandedQuery}:${topK}:${scopeKey}`;
+    // The exam MUST be part of the key. `retrieveOfficialSyllabusContext` passes notebookId=''
+    // and carries examId only in the Pinecone filter, so without this two exams asking the same
+    // question collide and the second is served the first one's syllabus. Latent today because
+    // no exam-tagged documents are indexed yet; it would surface silently the moment they are.
+    const examKey = examContext?.examId || examContext?.exam || '';
+    const scopeFlags = examContext?.scopeOfficialSyllabusOnly ? 'syl' : '';
+    const cacheKey = `retrieval:${notebookId}:${examKey}:${scopeFlags}:${expandedQuery}:${topK}:${scopeKey}`;
     const cached = await cacheService.get<RetrievalResult[]>(cacheKey);
     if (cached) {
       Telemetry.logLatency('retrieval_cache_hit', performance.now() - tStart, { query });
