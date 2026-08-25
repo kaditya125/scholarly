@@ -93,7 +93,23 @@ function clientSafeError(code: string, message: string) {
 
 export function attachVoiceGateway(server: Server) {
   if (ACCESS_MODE === 'off') {
-    log('GATEWAY_DISABLED', { reason: 'VOICE_ACCESS_MODE=off' });
+    /*
+     * Bind /voice anyway, and say why.
+     *
+     * Returning early left nothing listening, so the browser's WebSocket failed at the transport
+     * layer with no reason attached. A client cannot tell that apart from a dropped network, so it
+     * reported "Voice chat encountered a temporary problem" and offered a Try again that could
+     * never work: voice was off by configuration, and retrying does not change configuration.
+     *
+     * One accept-and-explain handshake per attempt is cheaper than a user retrying a dead socket,
+     * and it lets the UI offer the one action that actually helps.
+     */
+    const disabledWss = new WebSocketServer({ server, path: '/voice' });
+    disabledWss.on('connection', (ws: WebSocket) => {
+      send(ws, clientSafeError('VOICE_DISABLED', 'Voice chat is switched off at the moment. You can carry on with text chat.'));
+      try { ws.close(); } catch { /* already gone */ }
+    });
+    log('GATEWAY_DISABLED', { reason: 'VOICE_ACCESS_MODE=off', behaviour: 'accept-and-explain' });
     return;
   }
 

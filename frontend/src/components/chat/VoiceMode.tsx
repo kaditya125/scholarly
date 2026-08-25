@@ -92,6 +92,16 @@ export function VoiceMode({ open, onClose, onFallbackToText }: {
   const copy = COPY[state];
   const failed = state === 'ERROR' || (state === 'ENDED' && !!error);
 
+  /*
+   * Retrying only helps when the failure was transient.
+   *
+   * Voice being switched off, gated to Pro, or a rejected token are settled facts about the
+   * account or the deployment — pressing a button cannot change any of them. Offering "Try again"
+   * for those invites someone to keep hitting a control that is guaranteed to fail, which is
+   * exactly what a disabled gateway looked like from the outside.
+   */
+  const canRetry = !['VOICE_DISABLED', 'VOICE_REQUIRES_PRO', 'UNAUTHENTICATED'].includes(error?.code ?? '');
+
   return (
     <AnimatePresence>
       <motion.div
@@ -137,15 +147,20 @@ export function VoiceMode({ open, onClose, onFallbackToText }: {
 
           {failed && (
             <div className="mt-6 flex items-center gap-3">
-              <button
-                onClick={() => { startedRef.current = true; start(); }}
-                className="px-5 py-2.5 rounded-full bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-950 text-[13.5px] font-bold hover:opacity-90 transition-all"
-              >
-                Try again
-              </button>
+              {canRetry && (
+                <button
+                  onClick={() => { startedRef.current = true; start(); }}
+                  className="px-5 py-2.5 rounded-full bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-950 text-[13.5px] font-bold hover:opacity-90 transition-all"
+                >
+                  Try again
+                </button>
+              )}
+              {/* Promoted to the primary action when it is the only one that can help. */}
               <button
                 onClick={() => { end(); onFallbackToText(); }}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-slate-200 dark:border-white/15 text-[13px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+                className={canRetry
+                  ? 'inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-slate-200 dark:border-white/15 text-[13px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors'
+                  : 'inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-950 text-[13.5px] font-bold hover:opacity-90 transition-all'}
               >
                 <MessageSquare className="w-4 h-4" /> Continue with text chat
               </button>
