@@ -54,6 +54,7 @@ import { cn } from '../lib/utils';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import AssistantReply, { Rating } from '../components/chat/AssistantReply';
 import { ShareModal } from '../components/ShareModal';
+import { VoiceMode } from "../components/chat/VoiceMode";
 import { api } from '../lib/api/client';
 import { useAuth } from '../lib/AuthContext';
 import { useTheme } from '../lib/ThemeContext';
@@ -239,6 +240,9 @@ export default function Chat() {
   
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem('selectedModel') || 'gemini');
+  // Voice conversation mode (Phase 3 prototype). Entirely additive: text chat below is
+  // untouched, and closing voice returns the user to exactly the thread they left.
+  const [isVoiceOpen, setIsVoiceOpen] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
   const [isListening, setIsListening] = useState(false);
@@ -1587,6 +1591,19 @@ export default function Chat() {
                         that. `selectedModel` state, its localStorage persistence and the
                         `model` field on the request are all untouched, so replies are
                         unchanged; the choice simply is not surfaced. */}
+
+                    {/* Voice mode. Distinct from the mic on the left, which dictates into this
+                        box — this opens a live spoken conversation. Labelled rather than a bare
+                        icon so the difference between the two is obvious. */}
+                    <button
+                      onClick={() => setIsVoiceOpen(true)}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12.5px] font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
+                      title="Talk to Sadhya — live voice conversation"
+                      aria-label="Start voice conversation"
+                    >
+                      <AudioLines className="w-[17px] h-[17px]" strokeWidth={1.7} />
+                      <span className="hidden sm:inline">Voice</span>
+                    </button>
                     {/* Character budget. Hidden on phones: the toolbar's left icon group plus
                         the model picker already consume the width, and pushing this in as well
                         squeezed the send button. Reappears from sm: up. */}
@@ -1634,6 +1651,12 @@ export default function Chat() {
           </p>
         </div>
       </div>
+
+      <VoiceMode
+        open={isVoiceOpen}
+        onClose={() => setIsVoiceOpen(false)}
+        onFallbackToText={() => setIsVoiceOpen(false)}
+      />
 
       <ShareModal isOpen={isShareOpen} onClose={() => setIsShareOpen(false)} />
     </div>
