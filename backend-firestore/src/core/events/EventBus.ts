@@ -6,6 +6,7 @@ import { backgroundQueue } from '../workflow/jobs/BackgroundQueue';
 import { env } from '../../config/env';
 import { createClient } from 'redis';
 import { NotificationPayload } from '../notifications/NotificationEngine';
+import { noteRedisError } from '../../services/redisQuota';
 
 /**
  * Global Event Types for the Sadhya platform.
@@ -193,9 +194,21 @@ export class EventBus extends EventEmitter {
     const redisUrl = env.REDIS_URL;
     try {
       this.pubClient = createClient({ url: redisUrl });
-      this.pubClient.on('error', (err) => console.error('[EventBus] pubClient Redis error:', err.message));
+      // Routed through the shared breaker: while the request allowance is exhausted every
+      // command fails, and logging each one drowns the signal. The breaker reports it once.
+      this.pubClient.on('error', (err: any) => {
+        if (!noteRedisError(err, 'EventBus.pubClient')) {
+          console.error('[EventBus] pubClient Redis error:', err?.message ?? err);
+        }
+      });
       this.subClient = createClient({ url: redisUrl });
-      this.subClient.on('error', (err) => console.error('[EventBus] subClient Redis error:', err.message));
+      // Routed through the shared breaker: while the request allowance is exhausted every
+      // command fails, and logging each one drowns the signal. The breaker reports it once.
+      this.subClient.on('error', (err: any) => {
+        if (!noteRedisError(err, 'EventBus.subClient')) {
+          console.error('[EventBus] subClient Redis error:', err?.message ?? err);
+        }
+      });
 
       await Promise.all([
         this.pubClient.connect(),

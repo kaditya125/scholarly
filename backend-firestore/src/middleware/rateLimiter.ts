@@ -1,54 +1,34 @@
 import rateLimit from 'express-rate-limit';
-import { RedisStore } from 'rate-limit-redis';
-import { createClient } from 'redis';
 import { Request, Response } from 'express';
 
-// Setup Redis Client
-let redisClient: ReturnType<typeof createClient> | null = null;
-let useRedis = false;
-
-if (process.env.REDIS_URL) {
-  redisClient = createClient({ url: process.env.REDIS_URL });
-
-  /*
-   * THIS LISTENER IS LOAD-BEARING, not defensive noise.
-   *
-   * node-redis emits 'error' on the client for runtime socket faults, and an EventEmitter with no
-   * 'error' listener THROWS — which becomes an uncaughtException and, before this, took the whole
-   * API down. This was the only one of the four Redis clients in the codebase missing a handler
-   * (EventBus's pub/sub clients and the NotificationWorker's anti-spam client all have one), and
-   * it is the least-used connection, so it sat idle longest and was the first the provider
-   * dropped. That produced the ~6-hourly production restarts.
-   *
-   * The .catch() below does NOT cover this: it only settles the initial connect promise. Faults
-   * after a successful connect had nowhere to go.
-   *
-   * Logged and swallowed on purpose — node-redis reconnects on its own, and getStore() already
-   * degrades to the in-memory limiter, so a dropped connection is a recoverable condition rather
-   * than a reason to stop serving traffic.
-   */
-  redisClient.on('error', (err: any) => {
-    console.warn('[RateLimiter] Redis error (reconnect is handled by the client):', err?.message);
-  });
-
-  redisClient.connect().then(() => {
-    console.log('Connected to Redis for Rate Limiting');
-    useRedis = true;
-  }).catch(err => {
-    console.warn('Redis connection failed, falling back to in-memory rate limiting', err);
-    useRedis = false;
-  });
+/*
+ * ── Rate limiting is IN-MEMORY here, deliberately ────────────────────────────────────────
+ *
+ * It already was, though not on purpose. `getStore()` was evaluated synchronously while these
+ * limiters were constructed at module load, but `useRedis` only became true inside the async
+ * `.connect()` callback — which always resolved later. So the flag was invariably false at the
+ * moment it was read, every limiter got the default memory store, and the Redis client that was
+ * opened for this purpose sat idle and unused. Idle is exactly why the provider kept dropping it,
+ * which is the reconnect churn the previous comment here was written to explain.
+ *
+ * Making it in-memory explicitly is also correct for this deployment rather than merely cheaper:
+ * ecosystem.config.js pins `instances: 1` / `exec_mode: fork`, verified in production, so there
+ * is no second process for a shared store to coordinate with. A Redis round trip per request
+ * would buy nothing and Upstash bills per request.
+ *
+ * If this ever runs more than one instance, a shared store becomes REQUIRED for the limits to
+ * mean anything — set RATE_LIMIT_REDIS_URL and restore a store here. Leaving it unset is a
+ * decision about topology, not an oversight.
+ */
+if (process.env.RATE_LIMIT_REDIS_URL) {
+  console.warn(
+    '[RateLimiter] RATE_LIMIT_REDIS_URL is set but a shared store is not wired up. ' +
+    'Rate limits are per-process; with more than one instance they will not be enforced globally.',
+  );
 }
 
-// Generate the store conditionally
-const getStore = () => {
-  if (useRedis && redisClient) {
-    return new RedisStore({
-      sendCommand: (...args: string[]) => redisClient!.sendCommand(args),
-    });
-  }
-  return undefined; // Default in-memory store
-};
+/** Default in-memory store. Explicit so the call sites read as a choice. */
+const getStore = () => undefined;
 
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, 

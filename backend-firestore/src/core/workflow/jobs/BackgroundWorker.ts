@@ -16,6 +16,10 @@ import { semanticCache } from '../../intelligence/SemanticCache';
 import { ChatService } from '../../../services/chat.service';
 import { podcastEngineService } from '../../../services/podcast/podcastEngine.service';
 import { podcastAssetsService } from '../../../services/podcast/podcastAssets.service';
+import { noteRedisError, scheduleQuotaRecovery } from '../../../services/redisQuota';
+
+/** How often to scan for jobs whose worker died mid-flight. See the note at the use site. */
+const STALLED_INTERVAL_MS = Number(process.env.BULLMQ_STALLED_INTERVAL_MS || 300_000);
 
 export class BackgroundWorker {
   private worker: Worker | null = null;
@@ -96,9 +100,18 @@ export class BackgroundWorker {
     }, {
       connection,
       // ─── Upstash-friendly settings ───────────────────────────────────────
-      stalledInterval: 30_000,   // check stalled jobs every 30 s (default: 5 s)
+      stalledInterval: STALLED_INTERVAL_MS,
+        // ─── Upstash bills per REQUEST, and this check runs forever ─────────
+        // Three workers checking every 30 s is ~8,600 checks/day, several Redis commands
+        // each — on its own more than the 500k/month allowance this account has. The only
+        // thing a shorter interval buys is faster recovery of a job whose worker died
+        // mid-flight, which for notifications, media and background jobs is not worth
+        // spending the entire budget on. Overridable for a plan with room.
       lockDuration:   60_000,    // hold lock for 60 s → fewer EXPIRE calls
-      drainDelay:        300,    // idle poll every 300 ms (default: 5 ms)
+      drainDelay: 300,
+        // SECONDS, not milliseconds — BullMQ blocks this long on an empty queue and the
+        // default is 5. The old comment here read "300 ms instead of the default 5 ms",
+        // which had the unit wrong in both halves; the value is fine, the reasoning was not.
     });
     this.worker = worker;
 
@@ -111,16 +124,20 @@ export class BackgroundWorker {
     });
 
     worker.on('error', (err: any) => {
-      const msg = err?.message || '';
-      if (msg.includes('max requests limit exceeded') || msg.includes('Limit:')) {
-        if (!this.quotaErrorLogged) {
-          this.quotaErrorLogged = true;
-          logger.warn('[BackgroundWorker] Upstash Redis daily quota limit reached (500k limit exceeded). Pausing worker polling to stop error spam. Set DISABLE_WORKERS=true or upgrade Upstash tier.');
-        }
+      /*
+       * Quota exhaustion is reported through the shared breaker so the whole process logs it
+       * once, not once per worker, and so the other Redis consumers stop asking too.
+       *
+       * Pausing without scheduling a resume is what previously turned a temporary allowance
+       * problem into a permanently dead job pipeline: nothing called resume, so jobs stayed
+       * unprocessed even after the quota window rolled over.
+       */
+      if (noteRedisError(err, 'BackgroundWorker')) {
         worker.pause(true).catch(() => {});
-      } else {
-        logger.error(`[BackgroundWorker] Worker error: ${msg}`);
+        scheduleQuotaRecovery(() => { worker.resume(); }, 'BackgroundWorker');
+        return;
       }
+      logger.error(`[BackgroundWorker] Worker error: ${err?.message || err}`);
     });
   }
 

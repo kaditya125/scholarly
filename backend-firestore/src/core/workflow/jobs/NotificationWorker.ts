@@ -15,6 +15,10 @@ import { createClient } from 'redis';
 import { db } from '../../../config/firebase'; // 'admin' is not exported, we use getFirestore or admin messaging
 import * as admin from 'firebase-admin';
 import { isQueueBrokerEnabled, queueBrokerDisabledReason } from './BackgroundQueue';
+import { noteRedisError, scheduleQuotaRecovery } from '../../../services/redisQuota';
+
+/** How often to scan for jobs whose worker died mid-flight. See the note at the use site. */
+const STALLED_INTERVAL_MS = Number(process.env.BULLMQ_STALLED_INTERVAL_MS || 300_000);
 
 class NotificationWorker {
   private worker: Worker | null = null;
@@ -40,7 +44,13 @@ class NotificationWorker {
 
     const connection = { url: env.REDIS_URL! };
     this.redisClient = createClient({ url: connection.url });
-    this.redisClient.on('error', (err) => console.error('[NotificationWorker] Redis error:', err.message));
+    // Unconditional logging here produced most of the flood: this client emits on every
+    // rejection, and while over quota that is every operation. The breaker de-duplicates.
+    this.redisClient.on('error', (err: any) => {
+      if (!noteRedisError(err, 'NotificationWorker.antiSpam')) {
+        console.error('[NotificationWorker] Redis error:', err?.message ?? err);
+      }
+    });
     this.redisClient.connect().catch(e => logger.error('[NotificationWorker] Redis connect error', e));
 
     const worker: Worker = new Worker(
@@ -61,22 +71,30 @@ class NotificationWorker {
         // ─── Upstash-friendly settings ───────────────────────────────────────
         // stalledInterval: how often (ms) to check for stalled jobs.
         // Default is 5 000 ms — far too aggressive for Upstash free tier.
-        stalledInterval: 30_000,   // check every 30 s instead of 5 s
+        stalledInterval: STALLED_INTERVAL_MS,
+        // ─── Upstash bills per REQUEST, and this check runs forever ─────────
+        // Three workers checking every 30 s is ~8,600 checks/day, several Redis commands
+        // each — on its own more than the 500k/month allowance this account has. The only
+        // thing a shorter interval buys is faster recovery of a job whose worker died
+        // mid-flight, which for notifications, media and background jobs is not worth
+        // spending the entire budget on. Overridable for a plan with room.
         // lockDuration: how long (ms) a job lock is held before renewal.
         lockDuration: 60_000,      // 60 s lock → fewer EXPIRE calls
         // drainDelay: idle poll delay (ms) when the queue is empty.
-        drainDelay: 300,           // 300 ms instead of the default 5 ms
+        drainDelay: 300,
+        // SECONDS, not milliseconds — BullMQ blocks this long on an empty queue and the
+        // default is 5. The old comment here read "300 ms instead of the default 5 ms",
+        // which had the unit wrong in both halves; the value is fine, the reasoning was not.
       }
     );
     this.worker = worker;
 
     this.redisClient.on('error', (err: any) => {
-      if (err?.message?.includes('max requests limit exceeded')) {
-        if (!this.quotaErrorLogged) {
-          this.quotaErrorLogged = true;
-          logger.warn('[NotificationWorker] Upstash Redis daily quota limit reached (500k limit exceeded). Pausing worker polling to stop error spam.');
-        }
+      // Same breaker as every other Redis consumer — see BackgroundWorker for why resume is
+      // scheduled rather than left to a process restart.
+      if (noteRedisError(err, 'NotificationWorker')) {
         worker.pause(true).catch(() => {});
+        scheduleQuotaRecovery(() => { worker.resume(); }, 'NotificationWorker');
       }
     });
 
