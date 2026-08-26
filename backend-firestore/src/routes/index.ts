@@ -43,6 +43,7 @@ import webhooksRoutes from './webhooks.routes';
 import helpRoutes from './help.routes';
 import examRoutes from './exam.routes';
 import coverageRoutes from './coverage.routes';
+import studyPlanRoutes from './studyPlan.routes';
 import pyqRoutes from './pyq.routes';
 import canonicalAssessmentRoutes from './canonicalAssessment.routes';
 import automationRoutes from './automation.routes';
@@ -53,6 +54,7 @@ const router = Router();
 
 router.use('/analytics', analyticsRoutes);
 router.use('/coverage', coverageRoutes);
+router.use('/study-plan', studyPlanRoutes);
 router.use('/briefing', briefingRoutes);
 router.use('/questions', questionsRoutes);
 router.use('/tests', testsRoutes);

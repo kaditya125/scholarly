@@ -96,6 +96,7 @@ const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const About = lazy(() => import("./pages/About"));
 const Blog = lazy(() => import("./pages/Blog"));
 const SyllabusCoverage = lazy(() => import("./pages/SyllabusCoverage"));
+const StudyPlanToday = lazy(() => import("./pages/StudyPlanToday"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Contact = lazy(() => import("./pages/Contact"));
 const ForTeachers = lazy(() => import("./pages/ForTeachers"));
@@ -338,6 +339,7 @@ function AppRoutes() {
           <Route path="/tests" element={<TestCenter />} />
           <Route path="/analytics" element={<Dashboard />} />
           <Route path="/coverage" element={<SyllabusCoverage />} />
+          <Route path="/plan" element={<StudyPlanToday />} />
           <Route path="/report" element={<Report />} />
           <Route path="/planner" element={<Planner />} />
           <Route path="/discussions" element={<Discussions />} />
