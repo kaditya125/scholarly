@@ -42,6 +42,8 @@ import videoLessonRoutes from './video-lesson.routes';
 import webhooksRoutes from './webhooks.routes';
 import helpRoutes from './help.routes';
 import examRoutes from './exam.routes';
+import coverageRoutes from './coverage.routes';
+import pyqRoutes from './pyq.routes';
 import canonicalAssessmentRoutes from './canonicalAssessment.routes';
 import automationRoutes from './automation.routes';
 import contactRoutes from './contact.routes';
@@ -50,6 +52,7 @@ import savedMessageRoutes from './savedMessage.routes';
 const router = Router();
 
 router.use('/analytics', analyticsRoutes);
+router.use('/coverage', coverageRoutes);
 router.use('/briefing', briefingRoutes);
 router.use('/questions', questionsRoutes);
 router.use('/tests', testsRoutes);
@@ -95,6 +98,7 @@ router.use('/video-lesson', videoLessonRoutes);
 router.use('/webhooks', webhooksRoutes);
 router.use('/help', helpRoutes);
 router.use('/exams', examRoutes);
+router.use('/pyq', pyqRoutes);
 // J.7.1 — the only syllabus-backed assessment surface. See canonicalAssessment.routes.
 router.use('/assessment', canonicalAssessmentRoutes);
 router.use('/automations', automationRoutes);

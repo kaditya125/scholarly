@@ -95,6 +95,7 @@ const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 // a visitor (and Razorpay's merchant review) must be able to read them signed out.
 const About = lazy(() => import("./pages/About"));
 const Blog = lazy(() => import("./pages/Blog"));
+const SyllabusCoverage = lazy(() => import("./pages/SyllabusCoverage"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Contact = lazy(() => import("./pages/Contact"));
 const ForTeachers = lazy(() => import("./pages/ForTeachers"));
@@ -336,6 +337,7 @@ function AppRoutes() {
           <Route path="/exam-center" element={<ExamCommandCenter />} />
           <Route path="/tests" element={<TestCenter />} />
           <Route path="/analytics" element={<Dashboard />} />
+          <Route path="/coverage" element={<SyllabusCoverage />} />
           <Route path="/report" element={<Report />} />
           <Route path="/planner" element={<Planner />} />
           <Route path="/discussions" element={<Discussions />} />
