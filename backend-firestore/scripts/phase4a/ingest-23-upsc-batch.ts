@@ -12,6 +12,14 @@
  *   npx tsx scripts/phase4a/ingest-23-upsc-batch.ts [examId ...]
  */
 import 'dotenv/config';
+
+/*
+ * A failed ingestion still leaves a record, so a retry under the same version is refused as
+ * ALREADY_EXISTS. Overridable so a re-run after a pipeline fix lands as a new version rather
+ * than silently doing nothing.
+ */
+const VERSION = process.env.SYLLABUS_VERSION || '2026-v1';
+const CYCLE = process.env.SYLLABUS_CYCLE || '2026';
 import fs from 'fs';
 import path from 'path';
 import { examMasterService } from '../../src/services/exam/examMaster.service';
@@ -35,7 +43,7 @@ interface PlanRow { examId: string; name: string; source: string; url: string; l
     const started = Date.now();
     try {
       const r = await syllabusIngestionOrchestrator.ingestSyllabusVersion({
-        exam, cycleId: '2026', version: '2026-v1',
+        exam, cycleId: CYCLE, version: VERSION,
         sourceUrl: 'https://www.upsc.gov.in/examinations/active-exams',
         sourceDocumentUrl: row.url,
         sourceDocumentTitle: row.source,
