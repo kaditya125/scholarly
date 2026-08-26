@@ -38,6 +38,23 @@ export interface IngestSyllabusParams {
   userId: string;
 }
 
+/**
+ * The ancestor trail an extraction ended on — deepest-last node, walked down its final child.
+ * Used to tell the next chunk what it is continuing under. Capped so a deep tail cannot crowd
+ * out the actual document text in the prompt.
+ */
+function deepestTrail(prev?: ChunkExtraction, maxDepth = 4): string[] {
+  if (!prev?.nodes?.length) return [];
+  const trail: string[] = [];
+  let cursor: any = prev.nodes[prev.nodes.length - 1];
+  while (cursor && trail.length < maxDepth) {
+    trail.push(`${cursor.type}: ${cursor.name}`);
+    const kids = cursor.children || [];
+    cursor = kids.length ? kids[kids.length - 1] : null;
+  }
+  return trail;
+}
+
 export class SyllabusIngestionService {
   private embeddingProvider: GoogleEmbeddingProvider;
 
@@ -97,9 +114,32 @@ RULES:
    * Extracts syllabus structure from ONE chunk. A chunk is not a syllabus; this is an intermediate
    * artifact that `mergeChunkExtractions` reassembles.
    */
-  async extractChunk(exam: ExamMaster, chunk: SyllabusChunk): Promise<ChunkExtraction> {
+  async extractChunk(
+    exam: ExamMaster,
+    chunk: SyllabusChunk,
+    continuingUnder: string[] = [],
+  ): Promise<ChunkExtraction> {
+    /*
+     * Tell the chunk what it is continuing from.
+     *
+     * Chunks are extracted independently, so a split landing mid-subject leaves the second half
+     * with no idea what it belongs to. NEET's syllabus split between "Biology" and its later
+     * units, and those units came back as root-level nodes with no parent — which graph validation
+     * correctly rejected as orphans rather than publishing a syllabus with detached content.
+     *
+     * The merge joins nodes by ancestor path, so asking the model to repeat the trail it is
+     * continuing under makes the two halves reassemble into one subject instead of two fragments.
+     * Repetition costs nothing precisely because the merge is path-keyed.
+     */
+    const carry = continuingUnder.length
+      ? `\n\nThis text continues from the previous section, which ended inside:\n` +
+        `${continuingUnder.join(' > ')}\n` +
+        `If the content below belongs under that trail, repeat those ancestor nodes at the top of ` +
+        `your output so the pieces join up. If it clearly begins something new, do not.`
+      : '';
+
     const result = await callStructuredLLM<{ nodes: ExtractedNode[] }>({
-      prompt: `Official notice section (pages ${chunk.pageStart}-${chunk.pageEnd}) for ${exam.shortName}:\n\n${chunk.text}`,
+      prompt: `Official notice section (pages ${chunk.pageStart}-${chunk.pageEnd}) for ${exam.shortName}:\n\n${chunk.text}${carry}`,
       system: this.extractionSystemPrompt(exam),
       // An EMPTY nodes array is a valid answer — administrative sections legitimately contain no
       // syllabus. Only a malformed response is a failure, so this checks the shape, not the size.
@@ -169,7 +209,7 @@ RULES:
     // parallel burst on a 100-page notice is the reliable way to get throttled mid-document.
     const extractions: ChunkExtraction[] = [];
     for (const chunk of chunks) {
-      extractions.push(await this.extractChunk(exam, chunk));
+      extractions.push(await this.extractChunk(exam, chunk, deepestTrail(extractions[extractions.length - 1])));
     }
 
     const merged = mergeChunkExtractions(extractions);

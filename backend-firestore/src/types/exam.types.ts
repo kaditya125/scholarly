@@ -256,6 +256,18 @@ export const SYLLABUS_NODE_RANK: Record<SyllabusNodeType, number> = {
 /** May a node of type `child` hang directly off a node of type `parent`? */
 export function isValidSyllabusNesting(parent: SyllabusNodeType, child: SyllabusNodeType): boolean {
   if (parent === 'SUBTOPIC') return child === 'SUBTOPIC';
+  /*
+   * SECTION is a GROUPING construct, not a fixed tier.
+   *
+   * SSC CGL prints "Section-I" between a paper and its subjects. NEET prints "Physical Chemistry",
+   * "Inorganic Chemistry", "Organic Chemistry" between the Chemistry subject and its units. Both
+   * are an authority describing its own paper, and pinning SECTION to one rank rejects whichever
+   * one it was not pinned to — NEET failed validation on exactly these three nodes.
+   *
+   * So it may sit under a stage, a paper, or a subject. It still may not contain another section,
+   * which keeps the level from nesting into itself indefinitely.
+   */
+  if (child === 'SECTION') return parent === 'STAGE' || parent === 'PAPER' || parent === 'SUBJECT';
   return SYLLABUS_NODE_RANK[child] > SYLLABUS_NODE_RANK[parent];
 }
 
