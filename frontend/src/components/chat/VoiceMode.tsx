@@ -31,7 +31,7 @@ export function VoiceMode({ open, onClose, onFallbackToText }: {
   onClose: () => void;
   onFallbackToText: () => void;
 }) {
-  const { state, transcript, error, start, end, readSpectrum } = useVoiceSession();
+  const { state, transcript, error, remainingSeconds, start, end, readSpectrum } = useVoiceSession();
   const startedRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -53,12 +53,17 @@ export function VoiceMode({ open, onClose, onFallbackToText }: {
   /*
    * Retrying only helps when the failure was transient.
    *
-   * Voice being switched off, gated to Pro, or a rejected token are settled facts about the
-   * account or the deployment — pressing a button cannot change any of them. Offering "Try again"
-   * for those invites someone to keep hitting a control that is guaranteed to fail, which is
-   * exactly what a disabled gateway looked like from the outside.
+   * Voice being switched off, gated to Pro, a rejected token, or a spent daily budget are settled
+   * facts about the account or the deployment — pressing a button cannot change any of them.
+   * Offering "Try again" for those invites someone to keep hitting a control that is guaranteed to
+   * fail, which is exactly what a disabled gateway looked like from the outside.
+   *
+   * The other two quota refusals are deliberately NOT here. VOICE_SESSION_ALREADY_ACTIVE clears as
+   * soon as the other tab is closed and VOICE_STARTING_TOO_FAST clears within seconds, so for both
+   * of them retrying is the correct next action and the message says as much.
    */
-  const canRetry = !['VOICE_DISABLED', 'VOICE_REQUIRES_PRO', 'UNAUTHENTICATED'].includes(error?.code ?? '');
+  const canRetry = !['VOICE_DISABLED', 'VOICE_REQUIRES_PRO', 'UNAUTHENTICATED', 'VOICE_DAILY_LIMIT']
+    .includes(error?.code ?? '');
 
   return (
     <AnimatePresence>
@@ -167,6 +172,18 @@ export function VoiceMode({ open, onClose, onFallbackToText }: {
             >
               Back to chat
             </button>
+          )}
+          {/*
+            Surfaced only when the day's budget is genuinely close to spent. Shown always, it is
+            noise on a ten-minute session; shown never, the student is cut off with no warning and
+            no idea why. Ten minutes is one full session's worth of warning.
+          */}
+          {remainingSeconds !== null && remainingSeconds < 600 && (
+            <p className="text-[11.5px] font-semibold text-amber-600 dark:text-amber-400">
+              {remainingSeconds < 60
+                ? 'Less than a minute of voice time left today'
+                : `About ${Math.floor(remainingSeconds / 60)} min of voice time left today`}
+            </p>
           )}
           <p className="text-[11.5px] text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
             <AlertCircle className="w-3 h-3" /> Prototype — audio isn't recorded or stored

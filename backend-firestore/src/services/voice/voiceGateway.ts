@@ -22,6 +22,7 @@ import { auth } from '../../config/firebase';
 import { env } from '../../config/env';
 import { paymentsService } from '../payments.service';
 import { VOICE_TOOL_DECLARATIONS, executeVoiceTool } from './voiceTools';
+import { beginSession, accrue, endSession, voiceQuotaLimits } from './voiceQuota';
 
 /** Verified against this project on 2026-08-25 by enumerating models.list(). */
 export const VOICE_MODEL = 'gemini-live-2.5-flash-native-audio';
@@ -30,14 +31,47 @@ const INPUT_SAMPLE_RATE = 16000;   // browser -> Vertex
 const OUTPUT_SAMPLE_RATE = 24000;  // Vertex -> browser (documented for the client)
 
 /**
- * Who may use voice. Prototype default is `all`; flip to `pro` to gate on the same
- * entitlement authority the payment system enforces. Phase 4 replaces this with real quotas.
+ * Who may use voice. `all` now means "any signed-in student, within quota" rather than
+ * "unmetered" — the per-user limits in voiceQuota.ts are what make that mode safe to run.
  */
 type VoiceAccessMode = 'all' | 'pro' | 'off';
 const ACCESS_MODE = (process.env.VOICE_ACCESS_MODE as VoiceAccessMode) || 'all';
 
 /** Hard ceiling so a forgotten tab cannot bill indefinitely. Native audio is not cheap. */
 const MAX_SESSION_MS = 10 * 60 * 1000;
+
+/**
+ * Close sockets that connect and never authenticate.
+ *
+ * Without this an unauthenticated socket lived until the client went away. It reaches nothing —
+ * every path past `auth` requires `state.live` — but it is free to open and holds a file
+ * descriptor, so opening thousands is a cheap way to exhaust the process.
+ */
+const AUTH_DEADLINE_MS = 15_000;
+
+/**
+ * Usage is written to Firestore this often DURING a session, not only at the end.
+ *
+ * A session that ends by crash, kill or unclean socket close would otherwise be entirely
+ * unaccounted, and "make the process die" must never be a way to get free minutes. One minute is
+ * the most that can go unbilled.
+ */
+const ACCRUAL_INTERVAL_MS = 60_000;
+
+/**
+ * Ceiling on inbound audio per session.
+ *
+ * The session clock stops a long conversation, but nothing stopped a client sending audio FASTER
+ * than real time — Vertex is billed on the audio it receives, so a modified client could spend a
+ * ten-minute budget in seconds by firing frames in a loop. At 16kHz mono 16-bit, speech is
+ * 32KB/s, so a full session is ~19MB; the 1.6x headroom absorbs base64 overhead and jitter while
+ * still being far below what a flood would need. Beyond this the stream is not real-time speech
+ * whatever it claims to be.
+ */
+const MAX_SESSION_AUDIO_BYTES = Math.round((MAX_SESSION_MS / 1000) * INPUT_SAMPLE_RATE * 2 * 1.6);
+
+/** Largest single client frame. Audio frames are a few KB; this is generous and bounds memory. */
+const MAX_PAYLOAD_BYTES = 256 * 1024;
 
 const SYSTEM_INSTRUCTION = `You are Sadhya AI Tutor, speaking with a student in real time.
 
@@ -87,6 +121,13 @@ interface VoiceSession {
   startedAt: number;
   timer?: NodeJS.Timeout;
   closed: boolean;
+  /** True once a quota slot is held, so teardown only releases what it actually took. */
+  quotaHeld: boolean;
+  /** Wall-clock of the last usage write, so each accrual bills only the time since. */
+  lastAccrualAt: number;
+  accrualTimer?: NodeJS.Timeout;
+  authTimer?: NodeJS.Timeout;
+  audioBytes: number;
 }
 
 const log = (event: string, fields: Record<string, unknown> = {}) => {
@@ -125,22 +166,63 @@ export function attachVoiceGateway(server: Server) {
     return;
   }
 
-  const wss = new WebSocketServer({ server, path: '/voice' });
-  log('GATEWAY_ATTACHED', { path: '/voice', model: VOICE_MODEL, accessMode: ACCESS_MODE });
+  const wss = new WebSocketServer({ server, path: '/voice', maxPayload: MAX_PAYLOAD_BYTES });
+  const limits = voiceQuotaLimits();
+  log('GATEWAY_ATTACHED', {
+    path: '/voice', model: VOICE_MODEL, accessMode: ACCESS_MODE,
+    dailySeconds: limits.dailySeconds, dailySessions: limits.dailySessions,
+  });
 
   wss.on('connection', (ws: WebSocket) => {
-    const state: VoiceSession = { userId: '', live: null, startedAt: 0, closed: false };
+    const state: VoiceSession = {
+      userId: '', live: null, startedAt: 0, closed: false,
+      quotaHeld: false, lastAccrualAt: 0, audioBytes: 0,
+    };
 
     const teardown = async (reason: string) => {
       if (state.closed) return;
       state.closed = true;
       if (state.timer) clearTimeout(state.timer);
+      if (state.authTimer) clearTimeout(state.authTimer);
+      if (state.accrualTimer) clearInterval(state.accrualTimer);
       try { state.live?.close(); } catch { /* already gone */ }
       state.live = null;
+
       const durationMs = state.startedAt ? Date.now() - state.startedAt : 0;
-      log('VOICE_SESSION_ENDED', { user: state.userId || 'anon', durationMs, reason });
+
+      /*
+       * Bill the tail — whatever ran since the last periodic accrual — and only then hand the
+       * concurrency slot back. Released in a `finally` because a failed usage write must not
+       * leave the user locked out of voice until the next restart: the daily budget is the thing
+       * protecting cost here, and it has already been written up to the last tick.
+       */
+      if (state.quotaHeld) {
+        try {
+          const tail = (Date.now() - state.lastAccrualAt) / 1000;
+          if (state.lastAccrualAt && tail > 0) await accrue(state.userId, tail);
+        } finally {
+          endSession(state.userId);
+          state.quotaHeld = false;
+        }
+      }
+
+      log('VOICE_SESSION_ENDED', {
+        user: state.userId || 'anon', durationMs, reason,
+        audioKB: Math.round(state.audioBytes / 1024),
+      });
       try { ws.close(); } catch { /* already closed */ }
     };
+
+    /*
+     * Nothing has been authenticated yet, so give this socket a deadline. Cleared the moment a
+     * token verifies; if it fires first the socket is closed with a reason the client can show.
+     */
+    state.authTimer = setTimeout(() => {
+      if (state.userId) return;
+      log('VOICE_SESSION_ERROR', { reason: 'auth-timeout' });
+      send(ws, clientSafeError('UNAUTHENTICATED', 'Please sign in again to use voice chat.'));
+      teardown('auth-timeout');
+    }, AUTH_DEADLINE_MS);
 
     ws.on('message', async (raw) => {
       let msg: ClientMsg;
@@ -152,6 +234,7 @@ export function attachVoiceGateway(server: Server) {
         try {
           const decoded = await auth.verifyIdToken(msg.token);
           state.userId = decoded.uid;
+          if (state.authTimer) clearTimeout(state.authTimer);
         } catch {
           log('VOICE_SESSION_ERROR', { reason: 'bad-token' });
           send(ws, clientSafeError('UNAUTHENTICATED', 'Please sign in again to use voice chat.'));
@@ -166,6 +249,19 @@ export function attachVoiceGateway(server: Server) {
             return teardown('not-entitled');
           }
         }
+
+        /*
+         * Quota is checked HERE — after the token is verified, before the Vertex connect. Any
+         * earlier and it would be metering an unidentified socket; any later and the expensive
+         * thing has already happened, which is precisely what the budget exists to prevent.
+         */
+        const decision = await beginSession(state.userId);
+        if (!decision.ok) {
+          log('VOICE_QUOTA_DENIED', { user: state.userId, code: decision.code });
+          send(ws, clientSafeError(decision.code!, decision.message!));
+          return teardown(`quota:${decision.code}`);
+        }
+        state.quotaHeld = true;
 
         try {
           const ai = new GoogleGenAI({
@@ -199,12 +295,28 @@ export function attachVoiceGateway(server: Server) {
 
                 if (m.setupComplete) {
                   state.startedAt = Date.now();
+                  // Billing starts when the model is actually live, not when the socket opened —
+                  // a slow Vertex handshake is our latency, not the student's quota.
+                  state.lastAccrualAt = state.startedAt;
                   log('VOICE_SESSION_CONNECTED', { user: state.userId, model: VOICE_MODEL });
-                  send(ws, { type: 'ready', outputSampleRate: OUTPUT_SAMPLE_RATE, inputSampleRate: INPUT_SAMPLE_RATE });
+                  send(ws, {
+                    type: 'ready',
+                    outputSampleRate: OUTPUT_SAMPLE_RATE,
+                    inputSampleRate: INPUT_SAMPLE_RATE,
+                    // Lets the UI show time remaining instead of cutting the student off unheralded.
+                    remainingSeconds: decision.remaining,
+                  });
                   state.timer = setTimeout(() => {
                     send(ws, { type: 'session_limit' });
                     teardown('max-duration');
                   }, MAX_SESSION_MS);
+
+                  state.accrualTimer = setInterval(() => {
+                    const now = Date.now();
+                    const elapsed = (now - state.lastAccrualAt) / 1000;
+                    state.lastAccrualAt = now;
+                    void accrue(state.userId, elapsed);
+                  }, ACCRUAL_INTERVAL_MS);
                   return;
                 }
 
@@ -263,6 +375,17 @@ export function attachVoiceGateway(server: Server) {
       if (!state.live) return;
 
       if (msg.type === 'audio') {
+        /*
+         * Count before forwarding. Vertex bills on audio received, so the budget has to be spent
+         * by the frame that would exceed it, not by the one after.
+         */
+        state.audioBytes += Math.floor((msg.data?.length || 0) * 0.75); // base64 -> raw bytes
+        if (state.audioBytes > MAX_SESSION_AUDIO_BYTES) {
+          log('VOICE_AUDIO_BUDGET_EXCEEDED', { user: state.userId, kb: Math.round(state.audioBytes / 1024) });
+          send(ws, clientSafeError('VOICE_UNAVAILABLE', 'Voice chat hit a problem. You can continue with text chat.'));
+          return teardown('audio-budget');
+        }
+
         // Forwarded frame-by-frame, never batched: see the pacing note at the top.
         try {
           state.live.sendRealtimeInput({
