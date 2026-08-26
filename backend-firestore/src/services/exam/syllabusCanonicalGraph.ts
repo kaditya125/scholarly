@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import {
-  ExamSyllabus, SyllabusNode, syllabusNodesOf, isValidSyllabusNesting, SYLLABUS_NODE_RANK,
+  ExamSyllabus, SyllabusNode, syllabusNodesOf,
 } from '../../types/exam.types';
 // Type-only: the service imports the builders from here, so a value import would close a runtime
 // require() cycle. `import type` is erased at compile time and cannot.
@@ -179,22 +179,6 @@ export interface GraphValidationResult {
   errors: GraphValidationError[];
 }
 
-/**
- * Which nodes may legitimately have no parent.
- *
- * Requiring roots to be STAGE was wrong in both directions. Five BPSC syllabi failed on it: a
- * two-page document listing "Paper I" and "Paper II" has no stage anywhere, so its top level is
- * PAPER and demanding a STAGE above it rejects a perfectly well-formed syllabus. But simply
- * allowing any root would have accepted NEET's chunk-boundary damage, where units were detached
- * from Biology and surfaced at root as if they belonged to nothing.
- *
- * The distinction is whether the document has a shallower level AT ALL. A parentless SUBJECT in a
- * document that also contains STAGEs is a node that lost its parent; the same SUBJECT in a
- * document containing nothing shallower is simply where that syllabus starts.
- */
-function shallowestRankPresent(nodes: SyllabusGraphNode[]): number {
-  return nodes.reduce((min, n) => Math.min(min, SYLLABUS_NODE_RANK[n.type]), Number.POSITIVE_INFINITY);
-}
 
 /**
  * Validates a graph BEFORE it is allowed to become usable.
@@ -246,7 +230,6 @@ export function validateCanonicalGraph(
     seenCoordinates.add(n.id);
   }
 
-  const rootRank = shallowestRankPresent([...byId.values()]);
 
   for (const n of byId.values()) {
     /*
@@ -263,18 +246,47 @@ export function validateCanonicalGraph(
         errors.push({ code: 'MISSING_PARENT', nodeId: n.id, detail: `parent ${n.parentEntityId} not in graph` });
         continue;
       }
-      if (!isValidSyllabusNesting(parent.type, n.type)) {
-        errors.push({ code: 'INVALID_HIERARCHY', nodeId: n.id,
-                      detail: `${n.type} cannot hang off ${parent.type}` });
-      }
+      /*
+       * Nesting is NOT validated by type any more, and that is a deliberate retreat.
+       *
+       * Five separate rules were tried and every one was contradicted by a real notice:
+       *
+       *   SECTION under SUBJECT     NEET      Physical/Inorganic/Organic Chemistry
+       *   PAPER under SECTION       UPSC CDS  sections grouping English, GK, Mathematics
+       *   STAGE under SECTION       UPSC CSE  "Part A—Preliminary Examination"   (79 nodes)
+       *   STAGE under STAGE         UPSC CDS  "Stage I" inside an examination stage
+       *   SUBTOPIC under SUBTOPIC   SSC CGL   seven-deep accounting syllabus
+       *
+       * The type is a LABEL a model assigns to a heading, not a tier a commission agreed to. Each
+       * rule rejected documents that were correctly extracted and perfectly readable, and the cost
+       * was paid in exams that never got a syllabus at all.
+       *
+       * Everything that detects actual damage stays and is unchanged: MISSING_PARENT for a
+       * reference that does not resolve, PARENT_CYCLE for a chain that would hang traversal,
+       * duplicate ids and coordinates for identity integrity, INVALID_NODE_TYPE for a type outside
+       * the vocabulary, EMPTY_GRAPH. Those describe broken data. Hierarchy described taste.
+       */
       continue;
     }
 
-    // No parent at all: legitimate only at the shallowest level the document actually contains.
-    if (SYLLABUS_NODE_RANK[n.type] !== rootRank) {
-      errors.push({ code: 'ORPHAN_NODE', nodeId: n.id,
-                    detail: `${n.type} has no parent, but this syllabus contains shallower levels` });
-    }
+    /*
+     * A parentless node is accepted at ANY rank.
+     *
+     * The previous rule — legitimate only at the shallowest rank present — assumed a document has
+     * one top level. Official notices do not. UPSC NDA carries a medical-standards annexure beside
+     * its syllabus (16 rejected nodes), BPSC OSH carries statutory schedules (3), and BPSC's
+     * Assistant Professor notice is 18 per-discipline papers standing alongside stages. All were
+     * refused for being a second top-level block.
+     *
+     * This check existed to catch chunk-boundary damage, where content is severed from a parent
+     * that is right there in the tree — NEET's units cut off from Biology. That is now prevented
+     * at source: each chunk is told the ancestor trail it continues from, and NEET re-ingested
+     * cleanly. Detecting after the fact what is no longer produced cost far more legitimate
+     * documents than it saved.
+     *
+     * MISSING_PARENT above is untouched and still fatal: a parent id that does not resolve is
+     * always damage, never a layout.
+     */
   }
 
   // Cycle detection. Structurally impossible from buildCanonicalGraph (parents always precede

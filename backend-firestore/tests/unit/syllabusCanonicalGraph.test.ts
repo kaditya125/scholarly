@@ -154,19 +154,6 @@ describe('validation rejects malformed graphs', () => {
     expect(r.errors[0].code).toBe('MISSING_PARENT');
   });
 
-  it('7b. a parentless node BELOW the top level of the document is rejected as an orphan', () => {
-    /*
-     * The real case: NEET's chunk boundary separated Biology from its later units, and those
-     * units came back parentless. The document plainly has a STAGE, so a floating TOPIC is
-     * content that lost its parent, not content that sits at the top.
-     */
-    const g = {
-      nodes: [node({ id: 'stage:t', type: 'STAGE' }), node({ id: 'topic:x', type: 'TOPIC' })],
-      edges: [],
-    };
-    const r = validateCanonicalGraph(g as any, expected);
-    expect(r.errors.some((e) => e.code === 'ORPHAN_NODE')).toBe(true);
-  });
 
   it('7c. a parentless node AT the top level of the document is accepted', () => {
     // Several BPSC syllabi are two pages listing Paper I and Paper II with no stage anywhere.
@@ -206,13 +193,6 @@ describe('validation rejects malformed graphs', () => {
     expect(r.errors.some((e) => e.code === 'INVALID_NODE_TYPE')).toBe(true);
   });
 
-  it('an INVERTED hierarchy (PAPER under TOPIC) is rejected', () => {
-    const g = {
-      nodes: [node({ id: 't', type: 'TOPIC' }), node({ id: 'p', type: 'PAPER', parentEntityId: 't' })],
-      edges: [],
-    };
-    expect(validateCanonicalGraph(g as any, expected).errors.some((e) => e.code === 'INVALID_HIERARCHY')).toBe(true);
-  });
 
   it('a SKIPPED level is accepted — real syllabi omit levels', () => {
     // SSC CGL Tier-I lists subjects with no paper; Tier-II Section-III lists topics with no
@@ -239,6 +219,51 @@ describe('validation rejects malformed graphs', () => {
       edges: [],
     };
     expect(validateCanonicalGraph(g as any, expected).errors.filter((e) => e.code === 'INVALID_HIERARCHY')).toEqual([]);
+  });
+
+  /*
+   * Nesting is deliberately NOT validated by type. Five separate rules were tried and every one
+   * was contradicted by a real notice, so these assert that the shapes commissions actually print
+   * are ACCEPTED. They exist to stop the constraint being reintroduced.
+   */
+  it.each([
+    ['SECTION under SUBJECT  (NEET: Physical/Inorganic/Organic Chemistry)', 'SUBJECT', 'SECTION'],
+    ['PAPER under SECTION    (UPSC CDS: sections grouping English, GK, Maths)', 'SECTION', 'PAPER'],
+    ['STAGE under SECTION    (UPSC CSE: "Part A-Preliminary Examination")', 'SECTION', 'STAGE'],
+    ['STAGE under STAGE      (UPSC CDS: "Stage I" inside an examination stage)', 'STAGE', 'STAGE'],
+    ['SUBTOPIC in SUBTOPIC   (SSC CGL: seven-deep accounting syllabus)', 'SUBTOPIC', 'SUBTOPIC'],
+    ['SUBJECT under STAGE    (SSC CGL Tier-I: subjects with no paper)', 'STAGE', 'SUBJECT'],
+  ])('accepts %s', (_label, parentType, childType) => {
+    const g = {
+      nodes: [
+        node({ id: 'p', type: parentType as any }),
+        node({ id: 'c', type: childType as any, parentEntityId: 'p' }),
+      ],
+      edges: [],
+    };
+    expect(validateCanonicalGraph(g as any, expected).errors
+      .filter((e) => e.code === 'INVALID_HIERARCHY')).toEqual([]);
+  });
+
+  it('accepts several independent top-level blocks at different depths', () => {
+    // UPSC NDA carries a medical-standards annexure beside its syllabus; BPSC OSH carries
+    // statutory schedules. Both were previously refused for being a second top level.
+    const g = {
+      nodes: [
+        node({ id: 'stage', type: 'STAGE' }),
+        node({ id: 'annexure', type: 'SUBJECT' }),
+        node({ id: 'schedule', type: 'PAPER' }),
+      ],
+      edges: [],
+    };
+    const r = validateCanonicalGraph(g as any, expected);
+    expect(r.errors.filter((e) => e.code === 'ORPHAN_NODE')).toEqual([]);
+  });
+
+  it('still rejects a parent id that does not resolve — that is damage, not layout', () => {
+    const g = { nodes: [node({ id: 'topic:x', parentEntityId: 'subject:nonexistent' })], edges: [] };
+    const r = validateCanonicalGraph(g as any, expected);
+    expect(r.errors.some((e) => e.code === 'MISSING_PARENT')).toBe(true);
   });
 
   it('an empty identifier is rejected', () => {
