@@ -66,6 +66,20 @@ export default function BlogPost() {
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
+              /*
+               * A `#` in post markdown is a PART divider, not a page title.
+               *
+               * The page already has one h1 — the post's title — and a long post that opens new
+               * parts with `#` would emit several more, leaving the document with five h1s and no
+               * styling for any of them. Rendered as an h2 with its own heavier treatment: still
+               * a section boundary to a screen reader, visibly a bigger break to a reader, and
+               * the page keeps exactly one h1.
+               */
+              h1: ({ children }) => (
+                <h2 className="mt-16 mb-6 pt-8 border-t border-slate-200 dark:border-white/10 text-[27px] font-bold tracking-tight text-slate-900 dark:text-white">
+                  {children}
+                </h2>
+              ),
               h2: ({ children }) => (
                 <h2 className="mt-12 mb-4 text-[23px] font-bold tracking-tight text-slate-900 dark:text-white">
                   {children}
