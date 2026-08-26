@@ -523,10 +523,11 @@ true, and say plainly when something is not ready.
 /* ────────────────────────────────────────────────────────────────────────────────────────── */
 
 import { graph, tools, capabilities } from './blogPostsDeep';
+import { workflow } from './blogPostsWorkflow';
 
 /** Newest and most specific first — a reader landing here should meet the unusual decisions first. */
 export const BLOG_POSTS: BlogPost[] = [
-  graph, tools, capabilities, answering, provenance, voice, stack, principles,
+  workflow, graph, tools, capabilities, answering, provenance, voice, stack, principles,
 ];
 
 export const getPost = (slug: string): BlogPost | undefined =>
