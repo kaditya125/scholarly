@@ -1,13 +1,14 @@
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Mic, X, MessageSquare, AlertCircle, Loader2 } from 'lucide-react';
+import { X, MessageSquare, AlertCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useVoiceSession, type VoiceState } from '../../hooks/useVoiceSession';
+import VoiceWaveform from './VoiceWaveform';
 
 /**
  * Full-screen voice conversation surface.
  *
- * The orb is the primary affordance and the transcript is deliberately secondary — this is a
+ * The waveform is the primary affordance and the transcript is deliberately secondary — this is a
  * conversation, not a recorder. Every visual cue is derived from the session state machine, so
  * the UI can never claim to be listening while the socket is actually down.
  */
@@ -25,55 +26,12 @@ const COPY: Record<VoiceState, { title: string; hint?: string }> = {
   ENDED: { title: 'Conversation ended' },
 };
 
-/** The orb reads state at a glance: lime when the student holds the floor, white when Sadhya does. */
-function Orb({ state, level }: { state: VoiceState; level: number }) {
-  const userTurn = state === 'USER_SPEAKING' || state === 'INTERRUPTED';
-  const aiTurn = state === 'AI_SPEAKING';
-  const busy = state === 'CONNECTING' || state === 'RECONNECTING' || state === 'ENDING';
-  // Mic level drives the ring, so it responds to the same samples that get sent upstream.
-  const scale = userTurn ? 1 + Math.min(level * 2.2, 0.45) : aiTurn ? 1.06 : 1;
-
-  return (
-    <div className="relative flex items-center justify-center w-44 h-44">
-      <motion.div
-        className={cn(
-          'absolute rounded-full blur-2xl',
-          userTurn ? 'bg-[#c8e558]/30' : aiTurn ? 'bg-white/20' : 'bg-slate-400/15'
-        )}
-        animate={{ width: 176 * scale, height: 176 * scale, opacity: busy ? 0.35 : 0.75 }}
-        transition={{ type: 'spring', stiffness: 220, damping: 22 }}
-      />
-      <motion.div
-        className={cn(
-          'relative rounded-full border flex items-center justify-center',
-          userTurn
-            ? 'bg-[#c8e558] border-[#c8e558]'
-            : aiTurn
-              ? 'bg-white dark:bg-white border-white'
-              : 'bg-slate-100 dark:bg-[#232328] border-slate-200 dark:border-white/10'
-        )}
-        animate={{
-          width: 104 * (userTurn ? scale : 1),
-          height: 104 * (userTurn ? scale : 1),
-          // A slow breath while Sadhya talks reads as "alive" without a spinner.
-          ...(aiTurn ? { opacity: [0.85, 1, 0.85] } : { opacity: 1 }),
-        }}
-        transition={aiTurn ? { duration: 1.6, repeat: Infinity, ease: 'easeInOut' } : { type: 'spring', stiffness: 260, damping: 20 }}
-      >
-        {busy
-          ? <Loader2 className="w-7 h-7 animate-spin text-slate-400" strokeWidth={1.8} />
-          : <Mic className={cn('w-8 h-8', userTurn ? 'text-slate-900' : aiTurn ? 'text-slate-900' : 'text-slate-400 dark:text-slate-500')} strokeWidth={1.7} />}
-      </motion.div>
-    </div>
-  );
-}
-
 export function VoiceMode({ open, onClose, onFallbackToText }: {
   open: boolean;
   onClose: () => void;
   onFallbackToText: () => void;
 }) {
-  const { state, transcript, error, level, start, end } = useVoiceSession();
+  const { state, transcript, error, start, end, readSpectrum } = useVoiceSession();
   const startedRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -130,7 +88,19 @@ export function VoiceMode({ open, onClose, onFallbackToText }: {
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6 -mt-6">
-          <Orb state={state} level={level} />
+          {/*
+            The ribbon sits on its own dark ground rather than the page background. It is drawn
+            with additive blending — overlapping filaments brighten the way light does — and that
+            only reads as light against something dark. On the white theme the same canvas washes
+            out to a pale smear.
+          */}
+          <div className="relative w-full max-w-2xl h-48 sm:h-60 rounded-[28px] overflow-hidden bg-[#05070a] ring-1 ring-black/5 dark:ring-white/5">
+            <VoiceWaveform
+              state={state}
+              readSpectrum={readSpectrum}
+              className="absolute inset-0 w-full h-full"
+            />
+          </div>
 
           <motion.h2
             key={copy.title}
