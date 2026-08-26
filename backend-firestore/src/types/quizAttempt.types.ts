@@ -44,7 +44,14 @@ export interface StoredQuizQuestion {
   identityStatus?: 'CANONICAL' | 'UNANCHORED';
 }
 
-/** Per-topic (section) result inside a single attempt. */
+/**
+ * Per-topic (section) result inside a single attempt.
+ *
+ * Carries the canonical node so mastery can aggregate by syllabus location. Grading previously
+ * grouped on the `topic` STRING and dropped the node the question already carried, which is the
+ * exact re-derivation the question type warns against — and it meant every mastery record landed
+ * under a label slug that collides across exams and that coverage cannot see.
+ */
 export interface TopicBreakdown {
   topic: string;
   correct: number;
@@ -52,6 +59,9 @@ export interface TopicBreakdown {
   unattempted: number;
   total: number;
   accuracy: number; // 0-100 (correct / total)
+  /** Present when the questions in this row were generated against a validated syllabus node. */
+  syllabusNodeId?: string;
+  identityStatus?: 'CANONICAL' | 'UNANCHORED';
 }
 
 export interface QuizAttempt {

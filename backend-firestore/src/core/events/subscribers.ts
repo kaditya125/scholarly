@@ -3,6 +3,7 @@ import { NotificationFactory } from '../notifications/NotificationEngine';
 import { logger } from '../../utils/logger';
 import { featureFlags } from '../../config/featureFlags';
 import { masteryEngine, slugifyConcept } from '../intelligence/MasteryEngine';
+import { masteryKeyForNode } from '../../services/learning/nodeMastery.service';
 
 /**
  * Guards against double registration.
@@ -80,7 +81,19 @@ export function registerEventSubscribers(): { registered: boolean } {
         // syllabus location rather than by an LLM-invented label ("Algebra" would otherwise
         // collide across every exam). Falls back to the label slug for unanchored evidence,
         // which keeps legacy records working and distinguishable.
-        const conceptKey = row.syllabusNodeId ? slugifyConcept(row.syllabusNodeId) : slugifyConcept(label);
+        /*
+         * ONE keying scheme, shared with the Stage 2 node-mastery service.
+         *
+         * This previously used slugifyConcept(nodeId), which ends in .slice(0, 120) — and the
+         * disambiguating fingerprint is the LAST segment of a canonical id, so any id over the cap
+         * would lose exactly what makes it unique. More immediately, it produced a DIFFERENT
+         * document key than nodeMastery.service writes for the same node, so the same syllabus
+         * location could accumulate two separate mastery records depending on which path recorded
+         * the evidence. masteryKeyForNode is lossless and is now the only derivation.
+         */
+        const conceptKey = row.syllabusNodeId
+          ? masteryKeyForNode(row.syllabusNodeId)
+          : slugifyConcept(label);
         // Scoped per concept: one submission writes several concept documents, so each needs its
         // own idempotency key or the second topic would look already-processed.
         const perTopicEventId = meta?.eventId ? `${meta.eventId}#${conceptKey}` : undefined;
