@@ -137,7 +137,16 @@ RULES:
       return [await this.extractChunk(exam, chunk, continuingUnder)];
     } catch (err: any) {
       const message = String(err?.message ?? err);
-      const isShapeFailure = /Expected a "nodes" array|schema validation failed/i.test(message);
+      /*
+       * Truncation shows up two ways, and both mean the same thing.
+       *
+       * If the cut lands mid-structure the JSON is unparseable; if it lands somewhere the repair
+       * pass can close, the result parses but has no `nodes` array. Only the second was matched
+       * here, so BPSC's Combined Competitive syllabus failed on "Unparseable JSON after
+       * extract/repair/salvage" without ever being split — the one remedy that addresses the cause.
+       */
+      const isShapeFailure =
+        /Expected a "nodes" array|schema validation failed|unparseable json/i.test(message);
       if (!isShapeFailure || depth >= MAX_SPLIT_DEPTH || chunk.text.length < MIN_SPLIT_CHARS) throw err;
 
       // Split on a paragraph boundary near the middle so neither half begins mid-sentence.
