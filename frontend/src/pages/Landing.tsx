@@ -12,6 +12,7 @@ import SiteFooter from '../components/landing/SiteFooter';
 import PricingSection from '../components/landing/PricingSection';
 import ProcessChain from '../components/landing/ProcessChain';
 import VoiceOrbDemo from '../components/landing/VoiceOrbDemo';
+import BuiltWith from '../components/landing/BuiltWith';
 import AvatarStack from '../components/landing/AvatarStack';
 import { HandwrittenTagline } from '../components/brand/HandwrittenTagline';
 import { EXAM_CATALOG } from '../lib/examCatalog';
@@ -931,6 +932,15 @@ export default function LandingPage() {
           </Reveal>
         </section>
       </main>
+
+        {/* ══ Attribution ════════════════════════════════════════════════════ */}
+        <section className="border-t border-slate-100 dark:border-white/[0.07]">
+          <div className="max-w-[1160px] mx-auto px-5 sm:px-8 py-14 sm:py-16">
+            <Reveal>
+              <BuiltWith />
+            </Reveal>
+          </div>
+        </section>
 
       <SiteFooter />
     </div>
