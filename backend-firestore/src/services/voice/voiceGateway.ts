@@ -255,6 +255,14 @@ export function attachVoiceGateway(server: Server) {
          * earlier and it would be metering an unidentified socket; any later and the expensive
          * thing has already happened, which is precisely what the budget exists to prevent.
          */
+        /*
+         * The socket can die during token verification, which is a network round trip. Stop here
+         * if it did: teardown has already run and will not run again, so anything acquired past
+         * this point would never be released — and the session counter would tick for a client
+         * that is no longer there.
+         */
+        if (state.closed) return;
+
         const decision = await beginSession(state.userId);
         if (!decision.ok) {
           log('VOICE_QUOTA_DENIED', { user: state.userId, code: decision.code });
@@ -262,6 +270,22 @@ export function attachVoiceGateway(server: Server) {
           return teardown(`quota:${decision.code}`);
         }
         state.quotaHeld = true;
+
+        /*
+         * Check again, because `beginSession` awaits Firestore and the slot is taken inside that
+         * await. A client that hung up in that window had its teardown run while `quotaHeld` was
+         * still false, so the slot leaked and locked that user out of voice until the process
+         * restarted — verified happening against production before this guard existed. Closing
+         * a tab mid-connect or a flaky mobile network is enough to trigger it.
+         *
+         * Returning here also spares us opening a Vertex session for a socket nobody is holding.
+         */
+        if (state.closed) {
+          endSession(state.userId);
+          state.quotaHeld = false;
+          log('VOICE_SESSION_ENDED', { user: state.userId, durationMs: 0, reason: 'closed-during-quota' });
+          return;
+        }
 
         try {
           const ai = new GoogleGenAI({
