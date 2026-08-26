@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Clock } from 'lucide-react';
+import { useMemo } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { ArrowRight, ArrowLeft, Clock } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
 import SiteFooter from '../components/landing/SiteFooter';
 import { useSeo } from '../lib/useSeo';
@@ -10,16 +10,25 @@ import { BLOG_POSTS, CATEGORIES } from '../content/blogPosts';
  * Blog index.
  *
  * An engineering blog rather than a marketing one: the posts describe how the product actually
- * works, including the parts that failed and were rebuilt. Filtering is client-side over a static
- * list because five posts do not need a CMS, and adding one would be more moving parts than the
- * content justifies.
+ * works, including the parts that failed and were rebuilt.
+ *
+ * ── Why the state lives in the URL ──────────────────────────────────────────────────────────
+ * Page and category are search params, not component state. A reader who lands on page 3 and
+ * sends someone the link should be sending page 3 — with component state they would be sending
+ * page 1 and the recipient would never find what was being pointed at. It also makes the browser
+ * back button behave the way a reader expects after paging forward.
+ *
+ * Filtering is client-side over a static list because a handful of posts do not need a CMS, and
+ * adding one would be more moving parts than the content justifies.
  */
+
+const PAGE_SIZE = 6;
 
 const fmt = (iso: string) =>
   new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
 
 export default function Blog() {
-  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>('All');
+  const [params, setParams] = useSearchParams();
 
   useSeo({
     title: 'Engineering blog — Sadhya',
@@ -28,10 +37,42 @@ export default function Blog() {
     url: 'https://sadhya.app/blog',
   });
 
-  const posts = useMemo(
+  const rawCategory = params.get('category') ?? 'All';
+  // An unknown category in the URL is a bad link, not an empty blog — fall back rather than
+  // rendering a page that looks like there is nothing here.
+  const category = (CATEGORIES as readonly string[]).includes(rawCategory)
+    ? (rawCategory as (typeof CATEGORIES)[number])
+    : 'All';
+
+  const filtered = useMemo(
     () => (category === 'All' ? BLOG_POSTS : BLOG_POSTS.filter((p) => p.category === category)),
     [category],
   );
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  /*
+   * Clamped rather than trusted. ?page=99 and ?page=-2 and ?page=banana all have to resolve to a
+   * real page; the alternative is an empty list that reads as "we have no posts".
+   */
+  const requested = Number.parseInt(params.get('page') ?? '1', 10);
+  const page = Number.isFinite(requested) ? Math.min(Math.max(requested, 1), pageCount) : 1;
+
+  const posts = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const go = (next: { category?: string; page?: number }) => {
+    const p = new URLSearchParams(params);
+    if (next.category !== undefined) {
+      // Changing the filter always returns to page 1. Keeping the page number can land a reader
+      // on page 3 of a category that has one page, which looks like an empty blog.
+      next.category === 'All' ? p.delete('category') : p.set('category', next.category);
+      p.delete('page');
+    }
+    if (next.page !== undefined) {
+      next.page === 1 ? p.delete('page') : p.set('page', String(next.page));
+    }
+    setParams(p);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#0b0b0c]">
@@ -54,7 +95,7 @@ export default function Blog() {
           {CATEGORIES.map((c) => (
             <button
               key={c}
-              onClick={() => setCategory(c)}
+              onClick={() => go({ category: c })}
               className={
                 c === category
                   ? 'px-3.5 py-1.5 rounded-full text-[13px] font-semibold bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-950'
@@ -94,6 +135,53 @@ export default function Blog() {
             </li>
           ))}
         </ul>
+
+        {/* One page needs no controls; showing a disabled pager just adds furniture. */}
+        {pageCount > 1 && (
+          <nav
+            className="mt-12 flex items-center justify-between gap-4 border-t border-slate-200 dark:border-white/10 pt-6"
+            aria-label="Blog pagination"
+          >
+            <button
+              onClick={() => go({ page: page - 1 })}
+              disabled={page === 1}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/15 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" /> Previous
+            </button>
+
+            <div className="flex items-center gap-1.5">
+              {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  onClick={() => go({ page: n })}
+                  aria-current={n === page ? 'page' : undefined}
+                  className={
+                    n === page
+                      ? 'w-8 h-8 rounded-full text-[13px] font-bold bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-950'
+                      : 'w-8 h-8 rounded-full text-[13px] font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors'
+                  }
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => go({ page: page + 1 })}
+              disabled={page === pageCount}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/15 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            >
+              Next <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </nav>
+        )}
+
+        <p className="mt-6 text-center text-[12.5px] text-slate-400 dark:text-slate-500">
+          {filtered.length} {filtered.length === 1 ? 'post' : 'posts'}
+          {category !== 'All' && ` in ${category}`}
+          {pageCount > 1 && ` · page ${page} of ${pageCount}`}
+        </p>
       </main>
 
       <SiteFooter />
