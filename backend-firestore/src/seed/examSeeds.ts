@@ -59,7 +59,17 @@ export const PILOT_EXAMS: ExamMaster[] = [
     category: 'MEDICAL',
     country: 'IN',
     aliases: ['NEET', 'NEET UG', 'NEET-UG', 'National Eligibility cum Entrance Test'],
-    officialDomains: ['exams.nta.ac.in', 'neet.nta.nic.in', 'nta.ac.in'],
+    /*
+     * cdnbbsr.s3waas.gov.in is where NTA actually serves its documents: the syllabus PDF is
+     * linked from neet.nta.nic.in but hosted on the government S3WaaS CDN. Without it the
+     * official syllabus is unfetchable, because verifyOfficialSource rejects the host it lives on.
+     *
+     * Named at host level rather than adding s3waas.gov.in, which would admit every department
+     * publishing through that CDN. Even so it is wider than ideal: matching is by hostname, and
+     * NTA tenancy is encoded in the path, so this cannot distinguish NTA from another tenant on
+     * the same host. Still a government-operated CDN, and far narrower than allowing the web.
+     */
+    officialDomains: ['exams.nta.ac.in', 'neet.nta.nic.in', 'nta.ac.in', 'cdnbbsr.s3waas.gov.in'],
     currentCycle: '2026',
     verifiedOfficialUrls: {
       authorityHome: 'https://exams.nta.ac.in/NEET',
