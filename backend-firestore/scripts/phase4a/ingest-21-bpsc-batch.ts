@@ -14,12 +14,21 @@
  *   npx tsx scripts/phase4a/ingest-21-bpsc-batch.ts
  */
 import 'dotenv/config';
+
+/*
+ * A failed ingestion still leaves a record, so a retry under the same version is refused as
+ * ALREADY_EXISTS. Overridable so a re-run after a pipeline fix lands as a new version rather
+ * than silently doing nothing.
+ */
+const VERSION = process.env.SYLLABUS_VERSION || '2026-v1';
+const CYCLE = process.env.SYLLABUS_CYCLE || '2026';
 import { examMasterService } from '../../src/services/exam/examMaster.service';
 import { syllabusIngestionOrchestrator } from '../../src/services/exam/syllabusIngestionOrchestrator';
 import { BPSC_SOURCES, BPSC_SYLLABUS_PAGE } from './bpsc-sources';
 
 /** Registry id for each source, keyed by the Commission's own dropdown item id. */
 const EXAM_BY_ITEM: Record<string, string> = {
+  '3':  'BPSC_CCE',
   '4':  'BPSC_JUDICIAL',
   '27': 'BPSC_LDC',
   '32': 'BPSC_ACF',
@@ -44,7 +53,7 @@ const EXAM_BY_ITEM: Record<string, string> = {
     console.log(`\n=== ${examId} — ${src.exam} ===`);
     try {
       const r = await syllabusIngestionOrchestrator.ingestSyllabusVersion({
-        exam, cycleId: '2026', version: '2026-v1',
+        exam, cycleId: CYCLE, version: VERSION,
         sourceUrl: BPSC_SYLLABUS_PAGE,
         sourceDocumentUrl: src.url,
         sourceDocumentTitle: src.title,
