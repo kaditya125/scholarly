@@ -89,7 +89,12 @@ export const PILOT_EXAMS: ExamMaster[] = [
     category: 'ENGINEERING',
     country: 'IN',
     aliases: ['JEE Main', 'JEE-Main', 'JEE', 'Joint Entrance Examination Main'],
-    officialDomains: ['jeemain.nta.ac.in', 'exams.nta.ac.in', 'nta.ac.in'],
+    /*
+     * jeemain.nta.nic.in is the host that actually serves; the .ac.in variant returns 502. And as
+     * with NEET, NTA publishes the syllabus PDF itself from the government S3WaaS CDN, so the
+     * document is unfetchable without that host even though it is linked from the exam site.
+     */
+    officialDomains: ['jeemain.nta.nic.in', 'jeemain.nta.ac.in', 'exams.nta.ac.in', 'nta.ac.in', 'cdnbbsr.s3waas.gov.in'],
     currentCycle: '2026',
     verifiedOfficialUrls: {
       authorityHome: 'https://jeemain.nta.ac.in',
