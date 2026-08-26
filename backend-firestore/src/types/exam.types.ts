@@ -267,7 +267,21 @@ export function isValidSyllabusNesting(parent: SyllabusNodeType, child: Syllabus
    * So it may sit under a stage, a paper, or a subject. It still may not contain another section,
    * which keeps the level from nesting into itself indefinitely.
    */
-  if (child === 'SECTION') return parent === 'STAGE' || parent === 'PAPER' || parent === 'SUBJECT';
+  /*
+   * SECTION is transparent to rank, in BOTH directions.
+   *
+   * Treating it as a tier that merely floats was still too strict. UPSC CDS groups its papers
+   * inside sections — SECTION → PAPER "English", "General Knowledge", "Elementary Mathematics" —
+   * and BPSC DPRO does the same. Under a rank comparison PAPER(1) below SECTION(2) reads as an
+   * inversion, so seven CDS nodes and one DPRO node were rejected for being laid out the way the
+   * commission actually prints them.
+   *
+   * A section is a grouping device. It can sit anywhere below a stage and it can contain anything
+   * below a stage; only nesting a section inside a leaf is meaningless.
+   */
+  if (parent === 'SECTION') return child !== 'STAGE';
+  // SUBTOPIC is already handled above, so TOPIC is the only remaining leaf to exclude.
+  if (child === 'SECTION') return parent !== 'TOPIC';
   return SYLLABUS_NODE_RANK[child] > SYLLABUS_NODE_RANK[parent];
 }
 

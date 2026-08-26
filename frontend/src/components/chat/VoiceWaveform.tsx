@@ -163,7 +163,27 @@ export const VoiceWaveform: React.FC<Props> = ({ state, readSpectrum, className 
             const orbBand = bands[Math.floor((0.5 + 0.5 * Math.cos(theta)) * (BAND_COUNT - 1))];
             // Barely reactive at rest: a room's background noise should not make the orb pulse.
             const react = 0.02 + morph * 0.10;
-            const wobble = 1 + Math.sin(theta * 3 + phase * 1.4) * 0.05 * fan + orbBand * react * fan;
+
+            /*
+             * The orb has to be alive without any audio at all.
+             *
+             * Damping the rest state to stop background noise driving it left a ring that just sat
+             * there, which reads as a loading spinner that forgot to spin. So the motion here is
+             * intrinsic rather than reactive: it continues in a silent room and the voice only
+             * adds to it.
+             *
+             * Three harmonics at unrelated temporal rates, plus a slow spin and a slower breath.
+             * None of the periods divide into one another, so the outline never returns to a pose
+             * it has held before — that non-repetition is what separates "living" from "looping".
+             */
+            const a = theta + t * r.drift * 0.9;
+            const undulate =
+              Math.sin(a * 2 + t * 0.62 + phase) * 0.055 +
+              Math.sin(a * 3 - t * 0.41 + phase * 1.3) * 0.038 +
+              Math.sin(a * 5 + t * 0.27) * 0.020;
+            const breath = 1 + Math.sin(t * 0.55 + r.phase) * 0.045;
+
+            const wobble = (1 + undulate * fan) * breath + orbBand * react * fan;
             const rr = orbR * wobble * (0.82 + spread * 0.16);
             const ox = cx + Math.cos(theta) * rr;
             const oy = cy + Math.sin(theta) * rr;
