@@ -1,0 +1,79 @@
+[
+ {
+  "examId": "UPSC_CSE",
+  "name": "Civil Services Examination",
+  "source": "Civil Services (Preliminary) Examination, 2026",
+  "url": "https://www.upsc.gov.in/sites/default/files/Notif-CSP-2026-Engl-060226Rev.pdf",
+  "label": "Download Notification Notice (2.76 MB)"
+ },
+ {
+  "examId": "UPSC_IFOS",
+  "name": "Indian Forest Service Examination",
+  "source": "Indian Forest Service (Preliminary) Examination, 2026 through CS(P) Examination, 2026",
+  "url": "https://www.upsc.gov.in/sites/default/files/Notif-IFSP-2026-Engl-060226Rev.pdf",
+  "label": "Download Notification Notice (1.15 MB)"
+ },
+ {
+  "examId": "UPSC_ESE",
+  "name": "Engineering Services Examination",
+  "source": "Engineering Services (Preliminary) Examination, 2026",
+  "url": "https://www.upsc.gov.in/sites/default/files/Notif-ESEP-26-Engl.pdf",
+  "label": "Download Notification Notice (502.2 KB)"
+ },
+ {
+  "examId": "UPSC_GEO",
+  "name": "Combined Geo-Scientist Examination",
+  "source": "Combined Geo-Scientist (Preliminary) Examination, 2026",
+  "url": "https://www.upsc.gov.in/sites/default/files/Notif-CGeoScnstPre-26-Engl.pdf",
+  "label": "Download Notification Notice (1.41 MB)"
+ },
+ {
+  "examId": "UPSC_CMS",
+  "name": "Combined Medical Services Examination",
+  "source": "Combined Medical Services Examination, 2026",
+  "url": "https://www.upsc.gov.in/sites/default/files/Notification-CMSE-2026-English-110326.pdf",
+  "label": "Download Notification Notice (563.39 KB)"
+ },
+ {
+  "examId": "UPSC_CAPF",
+  "name": "Central Armed Police Forces (ACs) Examination",
+  "source": "Central Armed Police Forces (ACs) Examination, 2026",
+  "url": "https://www.upsc.gov.in/sites/default/files/ExamNotifi_CAPF_AC_Exam_2026_Eng_20022026.pdf",
+  "label": "Download Notification Notice (1.44 MB)"
+ },
+ {
+  "examId": "UPSC_IES_ISS",
+  "name": "Indian Economic Service / Indian Statistical Service Examination",
+  "source": "Indian Economic Service - Indian Statistical Service Examination, 2026",
+  "url": "https://www.upsc.gov.in/sites/default/files/Exam_Notification_IES_ISS_Eng_11022026.pdf",
+  "label": "Download Notification Notice (1.24 MB)"
+ },
+ {
+  "examId": "UPSC_CDS",
+  "name": "Combined Defence Services Examination",
+  "source": "Combined Defence Services Examination (I), 2026",
+  "url": "https://www.upsc.gov.in/sites/default/files/Notif-CDSE-I-2026-Engl-101225.pdf",
+  "label": "Download Notification Notice (1.97 MB)"
+ },
+ {
+  "examId": "UPSC_NDA",
+  "name": "National Defence Academy and Naval Academy Examination",
+  "source": "National Defence Academy and Naval Academy Examination (I), 2026",
+  "url": "https://www.upsc.gov.in/sites/default/files/Notif-NDA-NA-I-2026-Engl-101225.pdf",
+  "label": "Download Notification Notice (2.2 MB)"
+ },
+ {
+  "examId": "UPSC_CISF_AC",
+  "name": "CISF Assistant Commandant (Executive) LDCE",
+  "source": "CISF AC(EXE) LDCE-2026",
+  "url": "https://www.upsc.gov.in/sites/default/files/Notif-CISF-AC-EXE-LDCE-26-Engl-031225.pdf",
+  "label": "Download Notification Notice (551.85 KB)"
+ },
+ {
+  "examId": "UPSC_SO_STENO",
+  "name": "Combined Section Officers'/Stenographers' LDCE",
+  "source": "Combined Section Officers' (Grade 'B') LDCE-2025 and Combined Stenographers' (Grade 'B'-Grade-'I') LDCE-2019, 2020 & 2021",
+  "url": "https://www.upsc.gov.in/sites/default/files/Notif-CSO-2025-CSteno-2019-2021-Engl.pdf",
+  "label": "Download Notification Notice (205.29 KB)"
+ }
+]
