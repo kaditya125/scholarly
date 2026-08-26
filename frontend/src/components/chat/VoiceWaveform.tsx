@@ -154,7 +154,16 @@ export const VoiceWaveform: React.FC<Props> = ({ state, readSpectrum, className 
 
             // ── resting form: a circle that breathes ──────────────────────────────────
             const theta = p * Math.PI * 2;
-            const wobble = 1 + Math.sin(theta * 3 + phase * 1.4) * 0.06 * fan + bandEnergy * 0.10 * fan;
+            /*
+             * The radius must be PERIODIC in theta or the ring cannot close. Indexing bands by p
+             * put band 0 at the start of the circle and band 23 at its end, at different radii —
+             * a visible gap, which is why the orb rendered as a C. cos(theta) returns the same
+             * value at p=0 and p=1, so the curve meets itself exactly.
+             */
+            const orbBand = bands[Math.floor((0.5 + 0.5 * Math.cos(theta)) * (BAND_COUNT - 1))];
+            // Barely reactive at rest: a room's background noise should not make the orb pulse.
+            const react = 0.02 + morph * 0.10;
+            const wobble = 1 + Math.sin(theta * 3 + phase * 1.4) * 0.05 * fan + orbBand * react * fan;
             const rr = orbR * wobble * (0.82 + spread * 0.16);
             const ox = cx + Math.cos(theta) * rr;
             const oy = cy + Math.sin(theta) * rr;
