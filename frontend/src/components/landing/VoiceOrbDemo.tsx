@@ -165,13 +165,17 @@ export const VoiceOrbDemo: React.FC<{ className?: string }> = ({ className }) =>
       </div>
 
       {/*
+        Served from /media/, NOT /voice-…: nginx proxies `location /voice` to the WebSocket
+        gateway as a PREFIX match, so any path merely BEGINNING with "/voice" — including
+        /voice-sample-ssc-cgl.mp3 — is handed to the socket handler and comes back 404.
+
         "metadata", not "none": with none the element never reaches a readable state until play is
         attempted, so onLoadedMetadata never fires and the button stays disabled forever. Metadata
         is a few KB of header — the 37KB of audio still only downloads if someone presses play.
       */}
       <audio
         ref={audioRef}
-        src="/voice-sample-ssc-cgl.mp3"
+        src="/media/voice-sample-ssc-cgl.mp3"
         preload="metadata"
         onCanPlay={() => setReady(true)}
         onLoadedMetadata={() => setReady(true)}
