@@ -119,11 +119,29 @@ export class QuizAttemptsService {
 
     let correct = 0;
     let incorrect = 0;
-    const byTopic = new Map<string, { correct: number; incorrect: number; unattempted: number; total: number }>();
+    /*
+     * Grouped by CANONICAL NODE where the question has one, falling back to the label otherwise.
+     *
+     * This used to group on `q.topic` alone, which silently discarded the syllabusNodeId the
+     * question already carried — measured at 0 of 20 breakdown rows retaining it while 19 of 129
+     * questions had one. Everything downstream then keyed mastery on a label slug, which collides
+     * across exams ("Algebra" is one key for JEE, SSC and banking) and which the coverage map and
+     * planner cannot see at all, because both filter on the presence of a canonical node.
+     *
+     * The loop was open here: a student could answer correctly and their coverage would not move.
+     */
+    const byTopic = new Map<string, {
+      topic: string; syllabusNodeId?: string; identityStatus?: 'CANONICAL' | 'UNANCHORED';
+      correct: number; incorrect: number; unattempted: number; total: number;
+    }>();
 
     for (const q of attempt.questions) {
       const topic = q.topic || 'General';
-      const bucket = byTopic.get(topic) || { correct: 0, incorrect: 0, unattempted: 0, total: 0 };
+      const key = q.syllabusNodeId || `label:${topic}`;
+      const bucket = byTopic.get(key) || {
+        topic, syllabusNodeId: q.syllabusNodeId, identityStatus: q.identityStatus,
+        correct: 0, incorrect: 0, unattempted: 0, total: 0,
+      };
       bucket.total++;
       const sel = answers[q.id];
       if (sel === undefined || sel === null) {
@@ -135,7 +153,7 @@ export class QuizAttemptsService {
         incorrect++;
         bucket.incorrect++;
       }
-      byTopic.set(topic, bucket);
+      byTopic.set(key, bucket);
     }
 
     const total = attempt.totalQuestions;
@@ -144,14 +162,17 @@ export class QuizAttemptsService {
     const maxMarks = round2(total * attempt.positiveMark);
     const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
 
-    const topicBreakdown: TopicBreakdown[] = Array.from(byTopic.entries())
-      .map(([topic, b]) => ({
-        topic,
+    const topicBreakdown: TopicBreakdown[] = Array.from(byTopic.values())
+      .map((b) => ({
+        topic: b.topic,
         correct: b.correct,
         incorrect: b.incorrect,
         unattempted: b.unattempted,
         total: b.total,
         accuracy: b.total > 0 ? Math.round((b.correct / b.total) * 100) : 0,
+        // Carried through to the mastery event. Absent is honest for unanchored questions.
+        syllabusNodeId: b.syllabusNodeId,
+        identityStatus: b.identityStatus,
       }))
       .sort((a, b) => a.accuracy - b.accuracy);
 
