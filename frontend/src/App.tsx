@@ -94,6 +94,8 @@ const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 // Public marketing + policy pages. These are intentionally outside ProtectedRoute:
 // a visitor (and Razorpay's merchant review) must be able to read them signed out.
 const About = lazy(() => import("./pages/About"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Contact = lazy(() => import("./pages/Contact"));
 const ForTeachers = lazy(() => import("./pages/ForTeachers"));
 const ExamLanding = lazy(() => import("./pages/ExamLanding"));
@@ -243,6 +245,8 @@ function AppRoutes() {
         <Route path="/referral-program" element={<ReferralProgram />} />
         <Route path="/help" element={<Help />} />
         <Route path="/about" element={<About />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
         {/* Public marketing page. Outside ProtectedRoute on purpose: a signed-out visitor,
             a signed-in student and a signed-in teacher must all see the same page, and none
             of them should be diverted into student onboarding by visiting it. */}

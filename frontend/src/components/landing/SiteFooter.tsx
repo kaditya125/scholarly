@@ -51,6 +51,7 @@ const COLUMNS: { title: string; links: { label: string; href: string; external?:
     title: 'Company',
     links: [
       { label: 'About', href: '/about' },
+      { label: 'Blog', href: '/blog' },
       { label: 'Contact', href: '/contact' },
       { label: 'Security', href: '/security' },
       { label: 'Help & Queries', href: '/help' },
