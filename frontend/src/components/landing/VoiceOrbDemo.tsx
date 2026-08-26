@@ -61,32 +61,35 @@ export const VoiceOrbDemo: React.FC<{ className?: string }> = ({ className }) =>
   }, []);
 
   return (
+    /*
+      No card. The waveform is transparent and draws with straight alpha, so it sits on the page
+      the same way it does in the app — and a border around it only drew attention to the box
+      rather than to the shape moving inside it.
+    */
     <div className={className}>
-      <div className="relative rounded-3xl border border-slate-200/70 dark:border-white/[0.07] bg-white dark:bg-white/[0.02] overflow-hidden">
-        <div className="flex items-center gap-2 px-5 pt-4 text-[12.5px] font-semibold text-slate-500 dark:text-slate-400">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#8ba32b] dark:bg-[#c8e558]" />
-          Voice mode
-        </div>
+      <div className="flex items-center justify-center gap-2 text-[12.5px] font-semibold text-slate-400 dark:text-slate-500">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#8ba32b] dark:bg-[#c8e558]" />
+        Voice mode
+      </div>
 
-        <VoiceWaveform
-          state={current.state}
-          readSpectrum={readSpectrum}
-          className="w-full h-44 sm:h-52"
-        />
+      <VoiceWaveform
+        state={current.state}
+        readSpectrum={readSpectrum}
+        className="w-full h-48 sm:h-56"
+      />
 
-        <div className="px-5 pb-5 text-center">
-          <motion.p
-            key={current.caption}
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-[14.5px] font-semibold text-slate-800 dark:text-slate-100"
-          >
-            {current.caption}
-          </motion.p>
-          <p className="mt-1 text-[12px] text-slate-400 dark:text-slate-500">
-            Illustration — no microphone is used on this page
-          </p>
-        </div>
+      <div className="text-center">
+        <motion.p
+          key={current.caption}
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-[14.5px] font-semibold text-slate-800 dark:text-slate-100"
+        >
+          {current.caption}
+        </motion.p>
+        <p className="mt-1 text-[12px] text-slate-400 dark:text-slate-500">
+          Illustration — no microphone is used on this page
+        </p>
       </div>
     </div>
   );
