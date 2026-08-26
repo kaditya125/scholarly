@@ -216,20 +216,40 @@ export const VoiceWaveform: React.FC<Props> = ({ state, readSpectrum, className 
 
     rafRef.current = requestAnimationFrame(frame);
 
-    const onVisibility = () => {
-      if (document.hidden && rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      } else if (!document.hidden && rafRef.current === null) {
+    /*
+     * Animate only when this is actually on screen AND the tab is visible.
+     *
+     * A hidden tab was already handled; on-screen was not, which mattered once the same component
+     * went onto the landing page. A visitor reading the top of a long page would otherwise be
+     * paying for a 60fps canvas sitting far below the fold, on a machine that may be a phone.
+     */
+    let onScreen = true;
+    const resume = () => {
+      if (rafRef.current === null && onScreen && !document.hidden) {
         last = performance.now();
         rafRef.current = requestAnimationFrame(frame);
       }
     };
+    const pause = () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+
+    const onVisibility = () => (document.hidden ? pause() : resume());
     document.addEventListener('visibilitychange', onVisibility);
 
+    const viewObserver = new IntersectionObserver(([entry]) => {
+      onScreen = entry.isIntersecting;
+      onScreen ? resume() : pause();
+    }, { rootMargin: '120px' });   // start a little before it scrolls in, so it is never caught still
+    viewObserver.observe(canvas);
+
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      pause();
       document.removeEventListener('visibilitychange', onVisibility);
+      viewObserver.disconnect();
       observer.disconnect();
     };
   }, [readSpectrum]);
