@@ -64,6 +64,20 @@ export function useVoiceSession() {
   const playCtxRef = useRef<AudioContext | null>(null);
   const nextStartRef = useRef(0);
   const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
+
+  /*
+   * Analysers for the visualiser, one per direction.
+   *
+   * The waveform has to follow whoever is talking, and the two directions live in different
+   * AudioContexts — the mic in the capture context, Sadhya in the playback one. A single
+   * analyser cannot see both.
+   *
+   * Read through a ref rather than React state on purpose: this is sampled every animation
+   * frame, and putting sixty spectrum updates a second through setState would re-render the
+   * whole voice surface for something only a canvas consumes.
+   */
+  const micAnalyserRef = useRef<AnalyserNode | null>(null);
+  const aiAnalyserRef = useRef<AnalyserNode | null>(null);
   const stateRef = useRef<VoiceState>('IDLE');
   const endedByUser = useRef(false);
 
@@ -123,7 +137,15 @@ export function useVoiceSession() {
 
     const src = ctx.createBufferSource();
     src.buffer = buffer;
-    src.connect(ctx.destination);
+    // Through the analyser, then on to the speakers — tapping the signal must not mute it.
+    if (!aiAnalyserRef.current) {
+      const a = ctx.createAnalyser();
+      a.fftSize = 256;
+      a.smoothingTimeConstant = 0.75;
+      a.connect(ctx.destination);
+      aiAnalyserRef.current = a;
+    }
+    src.connect(aiAnalyserRef.current);
 
     // Schedule against a running cursor so consecutive chunks butt up against each other
     // instead of overlapping or leaving audible gaps.
@@ -157,6 +179,8 @@ export function useVoiceSession() {
     try { wsRef.current?.close(); } catch { /* noop */ }
     wsRef.current = null;
     setLevel(0);
+    micAnalyserRef.current = null;
+    aiAnalyserRef.current = null;
   }, [stopPlayback]);
 
   const end = useCallback(() => {
@@ -215,6 +239,14 @@ export function useVoiceSession() {
       const source = captureCtx.createMediaStreamSource(stream);
       const worklet = new AudioWorkletNode(captureCtx, 'voice-capture');
       workletRef.current = worklet;
+
+      // Parallel branch: the analyser observes the mic without sitting in the path that feeds
+      // the worklet, so nothing about what gets sent upstream changes.
+      const micAnalyser = captureCtx.createAnalyser();
+      micAnalyser.fftSize = 256;
+      micAnalyser.smoothingTimeConstant = 0.75;
+      source.connect(micAnalyser);
+      micAnalyserRef.current = micAnalyser;
 
       const ws = new WebSocket(wsUrl());
       wsRef.current = ws;
@@ -317,5 +349,20 @@ export function useVoiceSession() {
   // Never leave the microphone live if the page unmounts mid-conversation.
   useEffect(() => () => cleanup(), [cleanup]);
 
-  return { state, transcript, error, level, start, end };
+  /**
+   * Fills `out` with the current spectrum and reports whether it holds live audio.
+   *
+   * Picks the direction that is actually sounding: Sadhya while she speaks, the mic otherwise.
+   * Returns false when neither is running so the visualiser can fall back to its idle drift
+   * rather than animating a flat array as though it were silence-shaped sound.
+   */
+  const readSpectrum = useCallback((out: Uint8Array): boolean => {
+    const speaking = stateRef.current === 'AI_SPEAKING';
+    const node = speaking ? aiAnalyserRef.current : micAnalyserRef.current;
+    if (!node) return false;
+    node.getByteFrequencyData(out as any);
+    return true;
+  }, []);
+
+  return { state, transcript, error, level, start, end, readSpectrum };
 }
