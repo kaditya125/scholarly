@@ -11,6 +11,7 @@ import SiteHeader from '../components/landing/SiteHeader';
 import SiteFooter from '../components/landing/SiteFooter';
 import PricingSection from '../components/landing/PricingSection';
 import ProcessChain from '../components/landing/ProcessChain';
+import VoiceOrbDemo from '../components/landing/VoiceOrbDemo';
 import AvatarStack from '../components/landing/AvatarStack';
 import { HandwrittenTagline } from '../components/brand/HandwrittenTagline';
 import { EXAM_CATALOG } from '../lib/examCatalog';
@@ -305,6 +306,20 @@ function PrimaryCta({ to, children }: { to: string; children: ReactNode }) {
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
+/*
+ * Exams whose OFFICIAL syllabus is loaded and searchable right now.
+ *
+ * Deliberately not the full list of exams the platform supports: this claim is about the
+ * commission's own syllabus being indexed and retrievable, which is a stronger and narrower
+ * statement. Several more are parsed but not yet indexed, and listing those would promise a
+ * student an answer the tutor cannot currently give.
+ */
+const SYLLABUS_LIVE = [
+  { name: 'SSC CGL', source: 'ssc.gov.in' },
+  { name: 'NEET UG', source: 'nta.ac.in' },
+  { name: 'JEE Main', source: 'nta.ac.in' },
+];
+
 export default function LandingPage() {
   useSeo({
     title: `${SITE.name} — ${SITE.tagline}`,
@@ -522,6 +537,49 @@ export default function LandingPage() {
           </Reveal>
 
           <ProcessChain />
+        </section>
+
+
+        {/* ══ Voice + official syllabus ══════════════════════════════════════ */}
+        <section id="voice" className="scroll-mt-16 max-w-[1160px] mx-auto px-5 sm:px-8 py-20 sm:py-28">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <Reveal>
+              <Eyebrow>Talk to it</Eyebrow>
+              <SectionHeading>Ask out loud, get an answer back.</SectionHeading>
+              <Lede>
+                Hold a real conversation with Sadhya — speak naturally, interrupt mid-sentence,
+                switch between English and Hindi without announcing it. It answers in the language
+                you asked in.
+              </Lede>
+              <p className="mt-5 text-[15px] leading-relaxed text-slate-500 dark:text-gray-400">
+                When you ask what an exam covers, it does not answer from memory. It looks the
+                topic up in the syllabus the commission itself published, and if it does not hold
+                that syllabus it says so rather than guessing — a wrong answer about what is on
+                your paper is worse than no answer.
+              </p>
+
+              <div className="mt-9 flex flex-wrap gap-2">
+                {SYLLABUS_LIVE.map((e) => (
+                  <span
+                    key={e.name}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-[13px] font-semibold text-slate-700 dark:text-gray-200"
+                  >
+                    {e.name}
+                    <span className="text-[11.5px] font-medium text-slate-400 dark:text-slate-500">
+                      {e.source}
+                    </span>
+                  </span>
+                ))}
+              </div>
+              <p className="mt-3 text-[12.5px] text-slate-400 dark:text-slate-500">
+                Official syllabus loaded and searchable. More exams are being added.
+              </p>
+            </Reveal>
+
+            <Reveal delay={0.08}>
+              <VoiceOrbDemo />
+            </Reveal>
+          </div>
         </section>
 
         {/* ══ Capabilities ═══════════════════════════════════════════════════ */}
