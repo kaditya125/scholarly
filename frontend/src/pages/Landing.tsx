@@ -317,8 +317,15 @@ function PrimaryCta({ to, children }: { to: string; children: ReactNode }) {
  */
 const SYLLABUS_LIVE = [
   { name: 'SSC CGL', source: 'ssc.gov.in' },
+  { name: 'SSC MTS', source: 'ssc.gov.in' },
+  { name: 'SSC GD Constable', source: 'ssc.gov.in' },
   { name: 'NEET UG', source: 'nta.ac.in' },
   { name: 'JEE Main', source: 'nta.ac.in' },
+  { name: 'UPSC ESE', source: 'upsc.gov.in' },
+  { name: 'UPSC CAPF', source: 'upsc.gov.in' },
+  { name: 'BPSC LDC', source: 'bpsc.bihar.gov.in' },
+  { name: 'BPSC DPRO', source: 'bpsc.bihar.gov.in' },
+  { name: 'BPSC CDPO', source: 'bpsc.bihar.gov.in' },
 ];
 
 export default function LandingPage() {
