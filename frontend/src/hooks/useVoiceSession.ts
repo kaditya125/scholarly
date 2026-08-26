@@ -65,6 +65,14 @@ const RELEASE_RATIO = 0.55;
  */
 const SPEECH_HOLD_MS = 400;
 
+/**
+ * How long a hidden page may stay hidden before the session is closed.
+ *
+ * Long enough to survive glancing at a notification, short enough that a phone going into a
+ * pocket does not spend a student's daily voice budget on silence.
+ */
+const BACKGROUND_GRACE_MS = 20_000;
+
 function wsUrl(): string {
   const api = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8080/api';
   const base = api.replace(/\/api\/?$/, '');
@@ -76,6 +84,12 @@ export function useVoiceSession() {
   const [transcript, setTranscript] = useState<TranscriptLine[]>([]);
   const [error, setError] = useState<VoiceError | null>(null);
   const [level, setLevel] = useState(0);
+  /*
+   * Voice time left in the student's day, as reported by the server when the session opens.
+   * Null until the server says, and null on deployments without quotas — the UI must not invent
+   * a number or imply a limit that is not being enforced.
+   */
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   /** Slow estimate of the room. Rises reluctantly, falls readily, so speech cannot become the floor. */
   const noiseFloorRef = useRef(0.01);
   /** When the level last stood clear of the floor. Drives SPEECH_HOLD_MS. */
@@ -228,6 +242,48 @@ export function useVoiceSession() {
     setVoiceState('ENDED');
   }, [cleanup, setVoiceState]);
 
+  /*
+   * A backgrounded page must not keep a voice session running.
+   *
+   * On phones especially, switching apps or locking the screen suspends both AudioContexts: the
+   * mic stops feeding and playback stops. The WebSocket, though, stays open — so before this the
+   * session sat there with the UI still saying "I'm listening", and once sessions began billing
+   * wall-clock time against a daily budget, a pocketed phone quietly spent a student's voice
+   * allowance on a conversation nobody was having.
+   *
+   * A short grace period, because a glance at a notification is not the same as leaving. Come
+   * back inside it and the contexts are resumed; stay away and the session is closed properly, so
+   * the server bills what was used and frees the slot instead of waiting for a socket timeout.
+   */
+  useEffect(() => {
+    if (state === 'IDLE' || state === 'ENDED' || state === 'ERROR') return;
+
+    let graceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const onVisibility = () => {
+      if (document.hidden) {
+        graceTimer = setTimeout(() => {
+          if (document.hidden) {
+            setError({ code: 'BACKGROUNDED', message: 'Voice chat ended because you left the page.' });
+            end();
+          }
+        }, BACKGROUND_GRACE_MS);
+      } else {
+        if (graceTimer) { clearTimeout(graceTimer); graceTimer = null; }
+        // Resume whatever the browser suspended, or the student returns to a dead mic.
+        void captureCtxRef.current?.resume().catch(() => {});
+        void playCtxRef.current?.resume().catch(() => {});
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      if (graceTimer) clearTimeout(graceTimer);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [state, end, setError]);
+
+
   const start = useCallback(async () => {
     setError(null);
     setTranscript([]);
@@ -283,6 +339,7 @@ export function useVoiceSession() {
         const m = JSON.parse(ev.data);
         switch (m.type) {
           case 'ready':
+            setRemainingSeconds(typeof m.remainingSeconds === 'number' ? m.remainingSeconds : null);
             setVoiceState('LISTENING');
             break;
           case 'transcript':
@@ -314,7 +371,12 @@ export function useVoiceSession() {
             if (sourcesRef.current.size === 0) setVoiceState('LISTENING');
             break;
           case 'session_limit':
-            setError({ code: 'SESSION_LIMIT', message: 'This voice session reached its time limit. You can start a new one.' });
+            /*
+             * Deliberately does not promise a new session. Per-user daily quotas mean the next
+             * attempt may be refused outright, and the old wording sent students straight into a
+             * VOICE_DAILY_LIMIT refusal after telling them they could carry on.
+             */
+            setError({ code: 'SESSION_LIMIT', message: 'This voice session reached its time limit.' });
             cleanup();
             setVoiceState('ENDED');
             break;
@@ -413,5 +475,5 @@ export function useVoiceSession() {
     return true;
   }, []);
 
-  return { state, transcript, error, level, start, end, readSpectrum };
+  return { state, transcript, error, level, remainingSeconds, start, end, readSpectrum };
 }
