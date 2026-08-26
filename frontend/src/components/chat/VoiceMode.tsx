@@ -89,18 +89,15 @@ export function VoiceMode({ open, onClose, onFallbackToText }: {
 
         <div className="flex-1 flex flex-col items-center justify-center px-6 -mt-6">
           {/*
-            The ribbon sits on its own dark ground rather than the page background. It is drawn
-            with additive blending — overlapping filaments brighten the way light does — and that
-            only reads as light against something dark. On the white theme the same canvas washes
-            out to a pale smear.
+            No panel and no background of its own: the canvas is transparent and draws with
+            straight alpha, so it sits on whatever the page is. It carries its own shape — an orb
+            at rest, a ribbon while anyone speaks — and a box around that only fought it.
           */}
-          <div className="relative w-full max-w-2xl h-48 sm:h-60 rounded-[28px] overflow-hidden bg-[#05070a] ring-1 ring-black/5 dark:ring-white/5">
-            <VoiceWaveform
-              state={state}
-              readSpectrum={readSpectrum}
-              className="absolute inset-0 w-full h-full"
-            />
-          </div>
+          <VoiceWaveform
+            state={state}
+            readSpectrum={readSpectrum}
+            className="w-full max-w-2xl h-56 sm:h-64"
+          />
 
           <motion.h2
             key={copy.title}

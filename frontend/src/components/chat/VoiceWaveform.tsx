@@ -2,25 +2,30 @@ import React, { useEffect, useRef } from 'react';
 import type { VoiceState } from '../../hooks/useVoiceSession';
 
 /**
- * The flowing ribbon that reacts to whoever is speaking.
+ * The voice visual: a calm orb at rest that unrolls into a flowing ribbon while anyone speaks.
  *
- * ── Why filaments rather than a line ────────────────────────────────────────────────────────
- * The look this imitates is not one stroke per ribbon. Each ribbon is a BUNDLE of many very thin
- * curves whose phases drift slightly apart, so where they converge the colour reads solid and
- * where they fan out it reads as silk. A single thick stroke with a glow cannot produce that —
- * it just looks like a neon worm.
+ * ── One shape, not two ──────────────────────────────────────────────────────────────────────
+ * The orb and the ribbon are the SAME curve drawn at two ends of a morph. Every filament is
+ * parametrised by p ∈ [0,1]; at morph 0 that p walks a circle, at morph 1 it walks left to right
+ * across the panel, and in between the two positions are interpolated. Cross-fading two separate
+ * visuals would show one dissolving through the other, which reads as a glitch rather than as a
+ * form changing shape.
  *
- * ── Why canvas rather than SVG or CSS ───────────────────────────────────────────────────────
- * ~2,000 curve segments redrawn every frame. In SVG that is 2,000 DOM nodes mutating at 60fps,
- * which is where the frame budget goes and why the page stops responding to anything else.
+ * ── Why filaments ───────────────────────────────────────────────────────────────────────────
+ * Each band is a BUNDLE of thin curves whose phases drift slightly apart — dense where they
+ * converge, translucent where they fan out. That is what gives the silk look; a single thick
+ * stroke with a glow reads as a neon worm.
  *
- * ── Why it reads audio through a ref ────────────────────────────────────────────────────────
- * `readSpectrum` fills a buffer rather than returning React state. Sixty spectrum updates a
- * second through setState would re-render the whole voice surface for something only this canvas
- * looks at.
+ * ── Compositing ─────────────────────────────────────────────────────────────────────────────
+ * Normal alpha, NOT 'lighter'. Additive blending only makes light on a dark ground, so it needed
+ * a black panel to work at all, and on the app's white surface the same canvas washed out.
+ * Straight alpha lets this sit directly on the page in either theme, with no container.
  *
- * Idle is deliberately not still: a frozen ribbon reads as broken. With no audio it drifts on its
- * own slow phase so the surface stays alive while nobody is talking.
+ * ── Why it no longer flickers ───────────────────────────────────────────────────────────────
+ * Everything that drives geometry is low-passed and nothing is allowed to snap. `readSpectrum`
+ * returns false the moment an analyser is absent — between turns, or while a context is torn
+ * down — and treating those frames as real silence drove the amplitude to zero and back on
+ * alternating frames. Silence now sags toward the resting shape instead of collapsing.
  */
 
 interface Props {
@@ -30,39 +35,36 @@ interface Props {
   className?: string;
 }
 
-/** One ribbon: a family of filaments sharing a wave shape but drifting apart in phase. */
 interface Ribbon {
   hue: number;
-  /** Vertical share of the canvas this ribbon may swing through. */
   reach: number;
-  /** Radians per second of horizontal travel. Different per ribbon so they never lock together. */
   drift: number;
-  /** Spatial frequency — how many crests fit across the width. */
   waves: number;
   phase: number;
   filaments: number;
 }
 
-/*
- * Tuned by measurement rather than by eye. The first pass used reach ~0.27 and a 0.18 swell base,
- * which sampled back as light confined to two vertical tenths of the canvas — a flat cyan smear
- * rather than a ribbon. These values spread it across roughly six tenths, which is the proportion
- * the reference actually has.
- */
 const RIBBONS: Ribbon[] = [
-  { hue: 226, reach: 0.46, drift: 0.22, waves: 1.00, phase: 0.0, filaments: 26 }, // deep blue
-  { hue: 190, reach: 0.38, drift: -0.31, waves: 1.50, phase: 1.9, filaments: 22 }, // cyan
-  { hue: 150, reach: 0.42, drift: 0.17, waves: 1.25, phase: 3.4, filaments: 24 }, // green
+  { hue: 222, reach: 0.42, drift: 0.20, waves: 1.00, phase: 0.0, filaments: 22 }, // blue
+  { hue: 190, reach: 0.34, drift: -0.28, waves: 1.50, phase: 1.9, filaments: 18 }, // cyan
+  { hue: 148, reach: 0.38, drift: 0.16, waves: 1.25, phase: 3.4, filaments: 20 }, // green
 ];
 
 const SPECTRUM_BINS = 128;
+const BAND_COUNT = 24;
+
+/** Approach `to` at a rate that does not depend on frame rate. */
+function ease(from: number, to: number, perSecond: number, dt: number): number {
+  return from + (to - from) * (1 - Math.exp(-perSecond * dt));
+}
 
 export const VoiceWaveform: React.FC<Props> = ({ state, readSpectrum, className }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const spectrumRef = useRef<Uint8Array>(new Uint8Array(SPECTRUM_BINS));
-  /** Smoothed band energies. Raw analyser output jitters hard enough to look like noise. */
-  const bandsRef = useRef<number[]>(new Array(24).fill(0));
+  const bandsRef = useRef<number[]>(new Array(BAND_COUNT).fill(0));
+  const swellRef = useRef(0.3);
+  const morphRef = useRef(0);
   const stateRef = useRef<VoiceState>(state);
 
   useEffect(() => { stateRef.current = state; }, [state]);
@@ -78,7 +80,7 @@ export const VoiceWaveform: React.FC<Props> = ({ state, readSpectrum, className 
     let width = 0;
     let height = 0;
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2); // 3x on phones costs more than it shows
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const rect = canvas.getBoundingClientRect();
       width = Math.max(1, Math.floor(rect.width));
       height = Math.max(1, Math.floor(rect.height));
@@ -87,7 +89,6 @@ export const VoiceWaveform: React.FC<Props> = ({ state, readSpectrum, className 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     resize();
-
     const observer = new ResizeObserver(resize);
     observer.observe(canvas);
 
@@ -96,85 +97,96 @@ export const VoiceWaveform: React.FC<Props> = ({ state, readSpectrum, className 
 
     const frame = (now: number) => {
       rafRef.current = requestAnimationFrame(frame);
-
+      const dt = Math.min((now - last) / 1000, 0.05);
       last = now;
       const t = (now - start) / 1000;
+
+      const s = stateRef.current;
+      const speaking = s === 'USER_SPEAKING' || s === 'AI_SPEAKING' || s === 'INTERRUPTED';
 
       const live = readSpectrum(spectrumRef.current);
       const spectrum = spectrumRef.current;
       const bands = bandsRef.current;
 
-      // Fold the spectrum into a handful of bands. Voice energy sits low, so the bins are read
-      // over the lower half where the detail actually is rather than spread across the full range.
       let energy = 0;
-      for (let b = 0; b < bands.length; b++) {
-        const lo = Math.floor((b / bands.length) * (SPECTRUM_BINS * 0.55));
-        const hi = Math.floor(((b + 1) / bands.length) * (SPECTRUM_BINS * 0.55));
+      for (let b = 0; b < BAND_COUNT; b++) {
+        const lo = Math.floor((b / BAND_COUNT) * (SPECTRUM_BINS * 0.55));
+        const hi = Math.floor(((b + 1) / BAND_COUNT) * (SPECTRUM_BINS * 0.55));
         let sum = 0;
         for (let i = lo; i < hi; i++) sum += spectrum[i];
-        const target = live ? sum / Math.max(1, hi - lo) / 255 : 0;
-        // Rise quickly, fall slowly: speech should feel responsive on attack but not flicker.
-        const k = target > bands[b] ? 0.35 : 0.08;
-        bands[b] += (target - bands[b]) * k;
+        const raw = hi > lo ? sum / (hi - lo) / 255 : 0;
+        /*
+         * With no analyser at all, sag from the previous value rather than snapping to zero.
+         * `live` goes false between turns and during teardown, and reading those frames as
+         * silence is what made the whole shape pump.
+         */
+        const target = live ? raw : bands[b] * 0.75;
+        bands[b] = ease(bands[b], target, target > bands[b] ? 14 : 4, dt);
         energy += bands[b];
       }
-      energy /= bands.length;
+      energy /= BAND_COUNT;
 
-      const idle = stateRef.current === 'IDLE' || stateRef.current === 'ENDED' || stateRef.current === 'ERROR';
-      // A floor keeps the ribbon breathing when nobody is speaking.
-      // A generous floor: the ribbon should have shape even in silence, not collapse to a line.
-      const swell = idle ? 0.30 : 0.42 + Math.min(energy * 1.15, 0.55);
+      // Geometry follows eased values only — nothing below reads a raw sample.
+      swellRef.current = ease(swellRef.current, speaking ? 0.45 + Math.min(energy * 1.1, 0.5) : 0.30, 5, dt);
+      morphRef.current = ease(morphRef.current, speaking ? 1 : 0, 3.2, dt);
+
+      const swell = swellRef.current;
+      const morph = morphRef.current;
 
       ctx.clearRect(0, 0, width, height);
-      ctx.globalCompositeOperation = 'lighter'; // overlapping filaments brighten, as light does
 
+      const cx = width / 2;
       const cy = height / 2;
+      const orbR = Math.min(width, height) * 0.26;
 
       for (const r of RIBBONS) {
         for (let f = 0; f < r.filaments; f++) {
-          const u = f / (r.filaments - 1);          // 0..1 across the bundle
-          const spread = (u - 0.5) * 2;             // -1..1
-          // Filaments fan out from the centre of the bundle, so the middle stays dense.
-          const fan = 1 - Math.abs(spread) * 0.55;
-          const amp = height * r.reach * swell * fan;
-          const phase = r.phase + spread * 0.55 + (reduceMotion ? 0 : t * r.drift);
+          const u = f / (r.filaments - 1);
+          const spread = (u - 0.5) * 2;
+          const fan = 1 - Math.abs(spread) * 0.5;
+          const phase = r.phase + spread * 0.5 + (reduceMotion ? 0 : t * r.drift);
 
           ctx.beginPath();
-          const steps = 64;
+          const steps = 72;
           for (let i = 0; i <= steps; i++) {
-            const x = (i / steps) * width;
             const p = i / steps;
+            const bandEnergy = bands[Math.min(BAND_COUNT - 1, Math.floor(p * BAND_COUNT))];
 
-            // Envelope: pinned at both ends so ribbons taper to nothing at the edges.
-            const envelope = Math.sin(Math.PI * p);
-            const bandEnergy = bands[Math.min(bands.length - 1, Math.floor(p * bands.length))];
+            // ── resting form: a circle that breathes ──────────────────────────────────
+            const theta = p * Math.PI * 2;
+            const wobble = 1 + Math.sin(theta * 3 + phase * 1.4) * 0.06 * fan + bandEnergy * 0.10 * fan;
+            const rr = orbR * wobble * (0.82 + spread * 0.16);
+            const ox = cx + Math.cos(theta) * rr;
+            const oy = cy + Math.sin(theta) * rr;
 
-            const y =
-              cy +
-              Math.sin(p * Math.PI * 2 * r.waves + phase) * amp * envelope +
-              // Second harmonic driven by the spectrum: this is what makes it track the voice
-              // rather than merely pulse with its volume.
-              Math.sin(p * Math.PI * 6 * r.waves - phase * 1.7) * amp * envelope * bandEnergy * 0.55 +
-              spread * height * 0.012 * envelope;
+            // ── speaking form: a ribbon across the panel ──────────────────────────────
+            const envelope = Math.sin(Math.PI * p);   // pinned at both ends
+            const amp = height * r.reach * swell * fan;
+            const lx = p * width;
+            const ly = cy
+              + Math.sin(p * Math.PI * 2 * r.waves + phase) * amp * envelope
+              + Math.sin(p * Math.PI * 6 * r.waves - phase * 1.7) * amp * envelope * bandEnergy * 0.5
+              + spread * height * 0.012 * envelope;
+
+            // The circle unrolls into the line; both are functions of the same p.
+            const x = ox + (lx - ox) * morph;
+            const y = oy + (ly - oy) * morph;
 
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
           }
+          if (morph < 0.02) ctx.closePath(); // a circle should not show a seam
 
-          const alpha = 0.045 + (1 - Math.abs(spread)) * 0.10;
-          const light = 52 + bandAt(bands, u) * 18;
-          ctx.strokeStyle = `hsla(${r.hue + spread * 14}, 92%, ${light}%, ${alpha})`;
-          ctx.lineWidth = 1;
+          const alpha = 0.10 + (1 - Math.abs(spread)) * 0.16;
+          ctx.strokeStyle = `hsla(${r.hue + spread * 12}, 78%, 48%, ${alpha})`;
+          ctx.lineWidth = 1.15;
           ctx.stroke();
         }
       }
-
-      ctx.globalCompositeOperation = 'source-over';
     };
 
     rafRef.current = requestAnimationFrame(frame);
 
-    // A hidden tab should not keep a 60fps canvas alive.
     const onVisibility = () => {
       if (document.hidden && rafRef.current) {
         cancelAnimationFrame(rafRef.current);
@@ -195,11 +207,5 @@ export const VoiceWaveform: React.FC<Props> = ({ state, readSpectrum, className 
 
   return <canvas ref={canvasRef} className={className} aria-hidden="true" />;
 };
-
-/** Average band energy near a bundle position — used only to brighten the denser filaments. */
-function bandAt(bands: number[], u: number): number {
-  const i = Math.min(bands.length - 1, Math.max(0, Math.floor(u * bands.length)));
-  return bands[i];
-}
 
 export default VoiceWaveform;
