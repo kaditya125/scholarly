@@ -2,6 +2,7 @@ import { GeminiProvider } from '../ai/gemini.provider';
 import { UserStatsService } from '../userStats.service';
 import { knowledgeService } from '../../core/knowledge';
 import { syllabusGraphService } from '../exam/syllabusGraph.service';
+import { validateSyllabusNodeId } from '../exam/syllabusNodeIdentity';
 import { logger } from '../../utils/logger';
 
 /**
@@ -96,11 +97,17 @@ export class QuizGeneratorService {
     let canonicalPath: string[] = [];
     if (opts.syllabusNodeId) {
       const examIdForNode = opts.examId || exam;
-      const check = await syllabusGraphService.validateNodeForQuestion({
+      /*
+       * Routed through the shared identity contract rather than calling the graph service
+       * directly, so there is ONE definition of a valid syllabus identity across quizzes, PYQs,
+       * attempts and everything Stage 2 adds. Behaviour is unchanged — the shared validator
+       * delegates existence and type checks to the same graph call this used to make — but a
+       * wrong exam or a malformed id is now rejected without a read, and the reason arrives as a
+       * structured code instead of a message to be parsed.
+       */
+      const check = await validateSyllabusNodeId({
         examId: examIdForNode,
-        nodeId: opts.syllabusNodeId,
-        cycleId: opts.cycleId,
-        syllabusId: opts.syllabusId,
+        syllabusNodeId: opts.syllabusNodeId,
       });
       if (!check.valid) {
         // Hard failure, deliberately. An invalid canonical request must NOT degrade into an
@@ -108,11 +115,12 @@ export class QuizGeneratorService {
         // producing evidence attributed elsewhere (or nowhere) is worse than refusing. Missing
         // id => unanchored; INVALID id => error. Two different situations, two different results.
         logger.error('[QuizGenerator] canonical node rejected; refusing to generate', {
-          userId, examId: examIdForNode, syllabusNodeId: opts.syllabusNodeId, reason: check.reason,
+          userId, examId: examIdForNode, syllabusNodeId: opts.syllabusNodeId,
+          code: check.code, reason: check.detail,
         });
-        throw new Error(`Invalid syllabus node for question generation: ${check.reason}`);
+        throw new Error(`Invalid syllabus node for question generation: ${check.code}`);
       }
-      canonicalNode = check.node;
+      canonicalNode = check.node ?? null;
       canonicalPath = await syllabusGraphService.getNodeParentPath(examIdForNode, canonicalNode!.id)
         .catch(() => [] as string[]);
     }
