@@ -154,9 +154,29 @@ describe('validation rejects malformed graphs', () => {
     expect(r.errors[0].code).toBe('MISSING_PARENT');
   });
 
-  it('7b. an orphan (no parent at all) is rejected', () => {
-    const r = validateCanonicalGraph({ nodes: [node({ id: 'topic:x' })], edges: [] } as any, expected);
+  it('7b. a parentless node BELOW the top level of the document is rejected as an orphan', () => {
+    /*
+     * The real case: NEET's chunk boundary separated Biology from its later units, and those
+     * units came back parentless. The document plainly has a STAGE, so a floating TOPIC is
+     * content that lost its parent, not content that sits at the top.
+     */
+    const g = {
+      nodes: [node({ id: 'stage:t', type: 'STAGE' }), node({ id: 'topic:x', type: 'TOPIC' })],
+      edges: [],
+    };
+    const r = validateCanonicalGraph(g as any, expected);
     expect(r.errors.some((e) => e.code === 'ORPHAN_NODE')).toBe(true);
+  });
+
+  it('7c. a parentless node AT the top level of the document is accepted', () => {
+    // Several BPSC syllabi are two pages listing Paper I and Paper II with no stage anywhere.
+    // Demanding a STAGE above them rejects a perfectly well-formed syllabus.
+    const g = {
+      nodes: [node({ id: 'paper:1', type: 'PAPER' }), node({ id: 'paper:2', type: 'PAPER' })],
+      edges: [],
+    };
+    const r = validateCanonicalGraph(g as any, expected);
+    expect(r.errors.filter((e) => e.code === 'ORPHAN_NODE')).toEqual([]);
   });
 
   it('8. a parent cycle is rejected rather than hanging the ancestor walk', () => {
