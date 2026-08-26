@@ -42,8 +42,28 @@ interface VoiceError {
 }
 
 const OUTPUT_SAMPLE_RATE = 24000;
-/** Peak level above which we treat the user as actually speaking, not just room noise. */
-const SPEAKING_THRESHOLD = 0.045;
+/*
+ * Speech detection, against a room rather than against a constant.
+ *
+ * A single fixed threshold assumes every student sits in the same room. In a quiet one it
+ * triggers on nothing; in a noisy one the ambient level sits right on it and the state flips
+ * every 100 ms frame — which is what made the visualiser strobe, since each flip restarts the
+ * orb/ribbon morph.
+ *
+ * So: measure the room, and require speech to stand clear of it.
+ */
+
+/** Absolute floor. Below this it is not speech no matter how silent the room is. */
+const MIN_SPEECH_PEAK = 0.035;
+/** Speech must exceed the measured noise floor by this factor to count as starting. */
+const SPEECH_OVER_NOISE = 2.6;
+/** Dropping out uses a lower bar than starting, so one quiet syllable does not end the turn. */
+const RELEASE_RATIO = 0.55;
+/*
+ * Natural speech has gaps — between words, and mid-sentence while thinking. Ending the turn on
+ * the first quiet frame chops it up, so a turn stays open through short pauses.
+ */
+const SPEECH_HOLD_MS = 400;
 
 function wsUrl(): string {
   const api = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8080/api';
@@ -56,6 +76,10 @@ export function useVoiceSession() {
   const [transcript, setTranscript] = useState<TranscriptLine[]>([]);
   const [error, setError] = useState<VoiceError | null>(null);
   const [level, setLevel] = useState(0);
+  /** Slow estimate of the room. Rises reluctantly, falls readily, so speech cannot become the floor. */
+  const noiseFloorRef = useRef(0.01);
+  /** When the level last stood clear of the floor. Drives SPEECH_HOLD_MS. */
+  const lastLoudRef = useRef(0);
 
   const wsRef = useRef<WebSocket | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -179,6 +203,8 @@ export function useVoiceSession() {
     try { wsRef.current?.close(); } catch { /* noop */ }
     wsRef.current = null;
     setLevel(0);
+    noiseFloorRef.current = 0.01;
+    lastLoudRef.current = 0;
     micAnalyserRef.current = null;
     aiAnalyserRef.current = null;
   }, [stopPlayback]);
@@ -317,14 +343,37 @@ export function useVoiceSession() {
       worklet.port.onmessage = (e) => {
         const { pcm, peak } = e.data as { pcm: ArrayBuffer; peak: number };
         setLevel(peak);
-        if (stateRef.current === 'LISTENING' && peak > SPEAKING_THRESHOLD) {
+
+        /*
+         * Track the room. The floor creeps up slowly and drops quickly, so a long utterance
+         * cannot drag it upward until speech stops registering — the failure mode of a naive
+         * running average.
+         */
+        const nf = noiseFloorRef.current;
+        noiseFloorRef.current = peak < nf ? nf + (peak - nf) * 0.25 : nf + (peak - nf) * 0.005;
+
+        const enter = Math.max(MIN_SPEECH_PEAK, noiseFloorRef.current * SPEECH_OVER_NOISE);
+        const release = enter * RELEASE_RATIO;
+        const now = Date.now();
+        if (peak > enter) lastLoudRef.current = now;
+        /*
+         * EITHER still audible, OR inside the hold window — not both.
+         *
+         * Requiring both defeats the point: the gap between two words is silent by definition,
+         * so `peak > release` is false exactly when the hold is supposed to be carrying the turn.
+         * Measured over speech with normal word gaps, the conjunction flipped state 50 times where
+         * the disjunction flips twice.
+         */
+        const voiced = peak > release || now - lastLoudRef.current < SPEECH_HOLD_MS;
+
+        if (stateRef.current === 'LISTENING' && peak > enter) {
           setVoiceState('USER_SPEAKING');
-        } else if (stateRef.current === 'USER_SPEAKING' && peak <= SPEAKING_THRESHOLD) {
+        } else if (stateRef.current === 'USER_SPEAKING' && !voiced) {
           // Student just stopped talking: this is the clock start for reply latency.
           lastSpeechEndRef.current = Date.now();
           awaitingFirstAudioRef.current = true;
           setVoiceState('LISTENING');
-        } else if (stateRef.current === 'AI_SPEAKING' && peak > SPEAKING_THRESHOLD && !bargeStartRef.current) {
+        } else if (stateRef.current === 'AI_SPEAKING' && peak > enter && !bargeStartRef.current) {
           // Student started talking over Sadhya: clock start for barge-in responsiveness.
           bargeStartRef.current = Date.now();
         }
