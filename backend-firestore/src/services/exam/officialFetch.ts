@@ -19,6 +19,8 @@
  * — a second allowlist would drift from the first, and the drift would be silent.
  */
 import axios from 'axios';
+import https from 'https';
+import { certificateAuthorities } from './trust';
 import dns from 'dns/promises';
 import net from 'net';
 import { logger } from '../../utils/logger';
@@ -186,6 +188,15 @@ export async function fetchOfficialDocument(params: {
         decompress: true,
         validateStatus: (s) => s >= 200 && s < 400,
         headers: { 'User-Agent': 'Sadhya-Exam-Intelligence-Archiver/1.0' },
+        /*
+         * System roots PLUS intermediates that some official hosts fail to send.
+         *
+         * bpsc.bihar.gov.in serves a chain missing the CA that actually signed its leaf, so Node
+         * cannot build a path and refuses the connection. Verification stays fully enabled —
+         * chain, expiry and hostname are all still checked, and a genuinely bad certificate still
+         * fails. See trust/index.ts for why this is not rejectUnauthorized: false.
+         */
+        httpsAgent: new https.Agent({ ca: certificateAuthorities() }),
       });
     } catch (err: any) {
       if (err?.code === 'ERR_FR_MAX_CONTENT_LENGTH_EXCEEDED') {
