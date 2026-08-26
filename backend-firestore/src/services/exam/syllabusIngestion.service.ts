@@ -111,6 +111,62 @@ RULES:
   }
 
   /**
+   * Extracts a chunk, halving it if the model cannot answer in the required shape.
+   *
+   * Chunk size is a guess about how much SOURCE text fits in a request; what actually overflows
+   * is the RESPONSE. A page of eligibility prose yields almost no nodes, while a page of dense
+   * syllabus yields hundreds, so a fixed character budget cannot bound the output. UPSC's notice
+   * hit this on pages 96-121: the appendix syllabus produced more structure than one response
+   * could carry, the JSON came back truncated, and the retry at temperature 0 failed identically
+   * because the cause was size and not sampling.
+   *
+   * Splitting on failure adapts to density instead of guessing at it: sparse chunks are never
+   * split, dense ones are split as far as they need. The halves are still merged by ancestor
+   * path, so dividing a chunk does not divide the syllabus.
+   */
+  private async extractChunkAdaptively(
+    exam: ExamMaster,
+    chunk: SyllabusChunk,
+    continuingUnder: string[],
+    depth = 0,
+  ): Promise<ChunkExtraction[]> {
+    const MAX_SPLIT_DEPTH = 3;   // 40k -> 5k before giving up; deeper means something else is wrong
+    const MIN_SPLIT_CHARS = 2_000;
+
+    try {
+      return [await this.extractChunk(exam, chunk, continuingUnder)];
+    } catch (err: any) {
+      const message = String(err?.message ?? err);
+      const isShapeFailure = /Expected a "nodes" array|schema validation failed/i.test(message);
+      if (!isShapeFailure || depth >= MAX_SPLIT_DEPTH || chunk.text.length < MIN_SPLIT_CHARS) throw err;
+
+      // Split on a paragraph boundary near the middle so neither half begins mid-sentence.
+      const mid = Math.floor(chunk.text.length / 2);
+      const boundary = chunk.text.lastIndexOf('\n', mid);
+      const cut = boundary > MIN_SPLIT_CHARS ? boundary : mid;
+
+      logger.warn('[SyllabusIngestion] chunk too dense to answer in one response; splitting', {
+        examId: exam.examId, chunkIndex: chunk.chunkIndex,
+        pages: `${chunk.pageStart}-${chunk.pageEnd}`, chars: chunk.text.length, depth,
+      });
+
+      const halves: SyllabusChunk[] = [
+        { ...chunk, text: chunk.text.slice(0, cut) },
+        { ...chunk, text: chunk.text.slice(cut) },
+      ];
+
+      const out: ChunkExtraction[] = [];
+      let trail = continuingUnder;
+      for (const half of halves) {
+        const parts = await this.extractChunkAdaptively(exam, half, trail, depth + 1);
+        out.push(...parts);
+        trail = deepestTrail(parts[parts.length - 1]) || trail;
+      }
+      return out;
+    }
+  }
+
+  /**
    * Extracts syllabus structure from ONE chunk. A chunk is not a syllabus; this is an intermediate
    * artifact that `mergeChunkExtractions` reassembles.
    */
@@ -209,7 +265,10 @@ RULES:
     // parallel burst on a 100-page notice is the reliable way to get throttled mid-document.
     const extractions: ChunkExtraction[] = [];
     for (const chunk of chunks) {
-      extractions.push(await this.extractChunk(exam, chunk, deepestTrail(extractions[extractions.length - 1])));
+      const trail = deepestTrail(extractions[extractions.length - 1]);
+      for (const part of await this.extractChunkAdaptively(exam, chunk, trail)) {
+        extractions.push(part);
+      }
     }
 
     const merged = mergeChunkExtractions(extractions);
