@@ -16,7 +16,7 @@ export interface BlogPost {
   title: string;
   summary: string;
   /** Reader-facing grouping, used for the filter chips on the index. */
-  category: 'Architecture' | 'Retrieval' | 'Voice' | 'Principles';
+  category: 'Architecture' | 'Retrieval' | 'Voice' | 'Principles' | 'Product';
   date: string;          // ISO
   readingMinutes: number;
   /** GitHub-flavoured markdown. */
@@ -522,9 +522,14 @@ true, and say plainly when something is not ready.
 
 /* ────────────────────────────────────────────────────────────────────────────────────────── */
 
-export const BLOG_POSTS: BlogPost[] = [answering, provenance, voice, stack, principles];
+import { graph, tools, capabilities } from './blogPostsDeep';
+
+/** Newest and most specific first — a reader landing here should meet the unusual decisions first. */
+export const BLOG_POSTS: BlogPost[] = [
+  graph, tools, capabilities, answering, provenance, voice, stack, principles,
+];
 
 export const getPost = (slug: string): BlogPost | undefined =>
   BLOG_POSTS.find((p) => p.slug === slug);
 
-export const CATEGORIES = ['All', 'Architecture', 'Retrieval', 'Voice', 'Principles'] as const;
+export const CATEGORIES = ['All', 'Architecture', 'Retrieval', 'Voice', 'Product', 'Principles'] as const;
