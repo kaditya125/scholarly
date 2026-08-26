@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import {
-  ExamSyllabus, SyllabusNode, syllabusNodesOf, isValidSyllabusNesting,
+  ExamSyllabus, SyllabusNode, syllabusNodesOf, isValidSyllabusNesting, SYLLABUS_NODE_RANK,
 } from '../../types/exam.types';
 // Type-only: the service imports the builders from here, so a value import would close a runtime
 // require() cycle. `import type` is erased at compile time and cannot.
@@ -180,13 +180,21 @@ export interface GraphValidationResult {
 }
 
 /**
- * The only node type allowed to have no parent.
+ * Which nodes may legitimately have no parent.
  *
- * Everything below is governed by isValidSyllabusNesting — a rank comparison, not a fixed
- * parent-per-type map. That map could not express "a SUBJECT may hang off a PAPER, a SECTION or
- * a STAGE depending on what this exam prints", which is the rule real documents follow.
+ * Requiring roots to be STAGE was wrong in both directions. Five BPSC syllabi failed on it: a
+ * two-page document listing "Paper I" and "Paper II" has no stage anywhere, so its top level is
+ * PAPER and demanding a STAGE above it rejects a perfectly well-formed syllabus. But simply
+ * allowing any root would have accepted NEET's chunk-boundary damage, where units were detached
+ * from Biology and surfaced at root as if they belonged to nothing.
+ *
+ * The distinction is whether the document has a shallower level AT ALL. A parentless SUBJECT in a
+ * document that also contains STAGEs is a node that lost its parent; the same SUBJECT in a
+ * document containing nothing shallower is simply where that syllabus starts.
  */
-const ROOT_TYPES: Array<SyllabusGraphNode['type']> = ['STAGE'];
+function shallowestRankPresent(nodes: SyllabusGraphNode[]): number {
+  return nodes.reduce((min, n) => Math.min(min, SYLLABUS_NODE_RANK[n.type]), Number.POSITIVE_INFINITY);
+}
 
 /**
  * Validates a graph BEFORE it is allowed to become usable.
@@ -238,25 +246,34 @@ export function validateCanonicalGraph(
     seenCoordinates.add(n.id);
   }
 
+  const rootRank = shallowestRankPresent([...byId.values()]);
+
   for (const n of byId.values()) {
-    if (ROOT_TYPES.includes(n.type)) {
-      if (n.parentEntityId) {
-        errors.push({ code: 'INVALID_HIERARCHY', nodeId: n.id, detail: `${n.type} must not have a parent` });
+    /*
+     * A dangling parent pointer is checked FIRST, whatever the node's rank.
+     *
+     * Ordering the root rule ahead of it reported "must not have a parent" for a node whose parent
+     * simply was not in the graph — describing a reference that failed to resolve as though the
+     * reference should not exist. The two are different faults and only one of them means the
+     * hierarchy is wrong.
+     */
+    if (n.parentEntityId) {
+      const parent = byId.get(n.parentEntityId);
+      if (!parent) {
+        errors.push({ code: 'MISSING_PARENT', nodeId: n.id, detail: `parent ${n.parentEntityId} not in graph` });
+        continue;
+      }
+      if (!isValidSyllabusNesting(parent.type, n.type)) {
+        errors.push({ code: 'INVALID_HIERARCHY', nodeId: n.id,
+                      detail: `${n.type} cannot hang off ${parent.type}` });
       }
       continue;
     }
-    if (!n.parentEntityId) {
-      errors.push({ code: 'ORPHAN_NODE', nodeId: n.id, detail: `${n.type} has no parent` });
-      continue;
-    }
-    const parent = byId.get(n.parentEntityId);
-    if (!parent) {
-      errors.push({ code: 'MISSING_PARENT', nodeId: n.id, detail: `parent ${n.parentEntityId} not in graph` });
-      continue;
-    }
-    if (!isValidSyllabusNesting(parent.type, n.type)) {
-      errors.push({ code: 'INVALID_HIERARCHY', nodeId: n.id,
-                    detail: `${n.type} cannot hang off ${parent.type}` });
+
+    // No parent at all: legitimate only at the shallowest level the document actually contains.
+    if (SYLLABUS_NODE_RANK[n.type] !== rootRank) {
+      errors.push({ code: 'ORPHAN_NODE', nodeId: n.id,
+                    detail: `${n.type} has no parent, but this syllabus contains shallower levels` });
     }
   }
 
