@@ -51,6 +51,9 @@ const COLUMNS: { title: string; links: { label: string; href: string; external?:
     title: 'Company',
     links: [
       { label: 'About', href: '/about' },
+      /* Labelled "Our Team" while the page itself is headed "Meet the Founder", so the
+         link survives Sadhya growing past one builder. See pages/OurTeam.tsx. */
+      { label: 'Our Team', href: '/our-team' },
       { label: 'Blog', href: '/blog' },
       { label: 'Contact', href: '/contact' },
       { label: 'Security', href: '/security' },

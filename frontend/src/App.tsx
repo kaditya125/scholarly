@@ -94,6 +94,7 @@ const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 // Public marketing + policy pages. These are intentionally outside ProtectedRoute:
 // a visitor (and Razorpay's merchant review) must be able to read them signed out.
 const About = lazy(() => import("./pages/About"));
+const OurTeam = lazy(() => import("./pages/OurTeam"));
 const Blog = lazy(() => import("./pages/Blog"));
 const SyllabusCoverage = lazy(() => import("./pages/SyllabusCoverage"));
 const StudyPlanToday = lazy(() => import("./pages/StudyPlanToday"));
@@ -247,6 +248,9 @@ function AppRoutes() {
         <Route path="/referral-program" element={<ReferralProgram />} />
         <Route path="/help" element={<Help />} />
         <Route path="/about" element={<About />} />
+        {/* "Meet the Founder". The route and the footer link say "Our Team" so the page can
+            grow into a real team page later without moving the URL — see pages/OurTeam.tsx. */}
+        <Route path="/our-team" element={<OurTeam />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         {/* Public marketing page. Outside ProtectedRoute on purpose: a signed-out visitor,
