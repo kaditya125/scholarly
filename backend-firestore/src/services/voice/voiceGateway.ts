@@ -23,6 +23,7 @@ import { env } from '../../config/env';
 import { paymentsService } from '../payments.service';
 import { VOICE_TOOL_DECLARATIONS, executeVoiceTool } from './voiceTools';
 import { beginSession, accrue, endSession, voiceQuotaLimits } from './voiceQuota';
+import { SADHYA_FOUNDER_KNOWLEDGE_VOICE } from '../knowledge/founderKnowledge';
 
 /** Verified against this project on 2026-08-25 by enumerating models.list(). */
 export const VOICE_MODEL = 'gemini-live-2.5-flash-native-audio';
@@ -107,7 +108,9 @@ cannot browse the internet and you cannot check anything after this conversation
 you will "check the official website", "look into it", or "keep trying" — you will not, and the
 student will wait for an answer that never comes. When a tool finds nothing, say plainly that you
 do not have that information, and point them at the conducting authority's official site so they
-can check it themselves.`;
+can check it themselves.
+
+${SADHYA_FOUNDER_KNOWLEDGE_VOICE}`;
 
 type ClientMsg =
   | { type: 'auth'; token: string }

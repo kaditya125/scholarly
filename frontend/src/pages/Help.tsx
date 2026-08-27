@@ -72,6 +72,7 @@ interface SupportChatMessage {
 const SUGGESTED_QUESTIONS = [
   "What is the Launch Celebration offer on Pro?",
   "How does AI tutoring work?",
+  "Who is the founder of Sadhya?",
   "What is included in the Free plan vs Pro?",
   "How do I use the Podcast Studio & OCR?"
 ];
@@ -100,6 +101,14 @@ const EXPLORE_TOPICS = [
     icon: LayoutGrid,
     desc: "Classes, analytics & earnings",
     prompt: "How can teachers create classes and earn on Sadhya?"
+  },
+  {
+    // The assistant can already answer this from its knowledge base; the card is here so
+    // someone who never thinks to ask still finds out who is behind the product.
+    title: "Who Built Sadhya",
+    icon: MessageCircleQuestion,
+    desc: "The founder and why it exists",
+    prompt: "Who is the founder of Sadhya, and why did they build it?"
   }
 ];
 

@@ -1,5 +1,6 @@
 import { StudentContext } from '../types/studentContext.types';
 import { TeacherContext } from '../types/teacherContext.types';
+import { SADHYA_FOUNDER_KNOWLEDGE } from '../services/knowledge/founderKnowledge';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SADHYA AI — SYSTEM PROMPTS & IDENTITY
@@ -900,6 +901,19 @@ export function buildSadhyaSystemPrompt(options: {
 
   // Add exam knowledge
   prompt += '\n\n' + SADHYA_EXAM_KNOWLEDGE;
+
+  /*
+   * Who built Sadhya.
+   *
+   * "Who made you?" is one of the first things students ask an AI tutor, and without this the
+   * model answers from the identity block above — which says what Sadhya is but not who is
+   * behind it, so it either deflects or invents. Injected for both viewer roles: a teacher asks
+   * it as often as a student does.
+   *
+   * The block carries its own hard limit against inventing a biography. Do not summarise or
+   * paraphrase it here — the limit is the half that would get lost.
+   */
+  prompt += '\n\n' + SADHYA_FOUNDER_KNOWLEDGE;
 
   // Add student/teacher context if available
   if (isTeacherViewer) {
