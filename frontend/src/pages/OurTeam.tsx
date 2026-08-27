@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import { ArrowRight, Mail, MessageSquare } from 'lucide-react';
@@ -127,11 +127,21 @@ function StatusPill({ status }: { status: BuildStatus }) {
  * string in founderPageData.ts; nothing else changes.
  */
 function Avatar({ person, className }: { person: Person; className?: string }) {
-  if (person.photo) {
+  /*
+   * A photo that fails to load falls back to the monogram rather than leaving a broken-image
+   * icon on the page. The likeliest cause is a typo'd path after someone drops a file in
+   * public/, and the monogram is the same thing the page shows without a photo at all — so the
+   * failure degrades to the designed state instead of to a torn placeholder.
+   */
+  const [failed, setFailed] = useState(false);
+
+  if (person.photo && !failed) {
     return (
       <img
         src={person.photo}
         alt={`${person.name}, ${person.role} at ${SITE.name}`}
+        onError={() => setFailed(true)}
+        // Square source expected; object-cover centre-crops anything else rather than squashing it.
         className={cn('object-cover rounded-2xl border border-slate-200 dark:border-white/10', className)}
       />
     );
