@@ -7,11 +7,15 @@ import { GoogleEmbeddingProvider } from '../../src/services/ai/providers/google-
 import { pineconeService } from '../../src/services/rag/pinecone.service';
 import { retrievalService } from '../../src/services/rag/retrieval.service';
 import { executeVoiceTool } from '../../src/services/voice/voiceTools';
+import { requireNoIndexer } from './_embedding-guard';
 
 const now = () => Date.now();
 const CTX = { userId: 'synthetic-verification-uid' };
 
 (async () => {
+  // This suite performs real semantic retrieval throughout, so it yields to a live indexer.
+  requireNoIndexer('phase4a retrieval verification');
+
   // ── PART 4: Pinecone markers ────────────────────────────────────────────────────────
   console.log('=== PART 4a: Pinecone ===');
   console.log(`namespace: ${JSON.stringify(env.PINECONE_NAMESPACE)}`);
