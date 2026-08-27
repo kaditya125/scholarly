@@ -1,9 +1,15 @@
+import { SADHYA_FOUNDER_KNOWLEDGE } from './founderKnowledge';
+
 /**
  * Complete, authoritative product knowledge base for Sadhya.
  * Used by the Ask Sadhya public AI guide to answer questions about the platform with high accuracy and depth.
+ *
+ * Section 7 is imported rather than written here: the same founder facts are also injected into
+ * the AI tutor chat and the live voice tutor, and three hand-maintained copies would drift.
+ * See founderKnowledge.ts, which also carries the rule against inventing a biography.
  */
 
-export const SADHYA_MASTER_KNOWLEDGE = `
+const KNOWLEDGE_BODY = `
 # SADHYA PLATFORM MASTER KNOWLEDGE BASE
 
 ## 1. What is Sadhya?
@@ -132,4 +138,8 @@ export const SADHYA_MASTER_KNOWLEDGE = `
 ## 6. Privacy, Security & Data Safety
 - **Data Isolation**: Private student documents and notebooks are encrypted and isolated; they are never leaked or used in public search.
 - **Safe Educational AI**: Built-in guardrails prevent hallucinations, inappropriate content, and prompt injection attacks.
+
+---
 `;
+
+export const SADHYA_MASTER_KNOWLEDGE = KNOWLEDGE_BODY + SADHYA_FOUNDER_KNOWLEDGE;
