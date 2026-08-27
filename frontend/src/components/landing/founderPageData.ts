@@ -46,10 +46,11 @@ export interface Person {
   /** Initials for the typographic avatar, used whenever `photo` is absent. */
   initials: string;
   /**
-   * Path to a real photograph, e.g. '/founder.jpg' in public/.
-   * Deliberately null: no verified image of the founder exists in this project, and a
-   * generated or stock portrait of a real person would be a fabrication. Drop a file in
-   * public/ and set this string — the avatar component swaps automatically, no other edit.
+   * Path to a real photograph in public/.
+   *
+   * Must be an actual photograph of the person. A generated or stock portrait on a page whose
+   * whole point is that the founder is real would be a fabrication, so this stays null until a
+   * genuine image exists rather than being filled with a placeholder face.
    */
   photo: string | null;
   /**
@@ -70,7 +71,9 @@ export const FOUNDER: Person = {
   blurb:
     'Building Sadhya across product, engineering, AI-powered learning systems, syllabus intelligence, PYQ infrastructure, personalized mastery, study planning, and the student experience.',
   initials: 'AK',
-  photo: null,
+  // Supplied by the founder, 354x472. Rendered unretouched; the avatar crops it square from the
+  // top so the face survives the crop without the source needing to be pre-cropped.
+  photo: '/founder.jpg',
   links: [],
 };
 
