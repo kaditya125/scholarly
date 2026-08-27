@@ -52,6 +52,15 @@ const AUTHORITY_WEIGHTS: Record<string, number> = {
   'WEB_SEARCH': 0.8
 };
 
+/**
+ * Minimum Cohere rerank relevance a public-knowledge hit must reach to be returned at all.
+ * See the measurement table on retrievePublicKnowledge for how this number was chosen.
+ *
+ * Scoped deliberately to the public path. The private notebook and curriculum paths have their
+ * own long-established behaviour and are not measured here, so they are left alone.
+ */
+const PUBLIC_RELEVANCE_FLOOR = 0.10;
+
 export class RetrievalService {
   private embeddingProvider: GoogleEmbeddingProvider;
   private llmProvider: GeminiProvider;
@@ -306,8 +315,29 @@ Standalone Search Query:`;
 
   /**
    * Specifically retrieves context from the public knowledge base.
-   * EXPLICITLY enforces { public: true } at the Pinecone filter layer to isolate 
+   * EXPLICITLY enforces { public: true } at the Pinecone filter layer to isolate
    * public documentation from private user notebooks or credentials.
+   *
+   * ── WHY A RELEVANCE FLOOR ─────────────────────────────────────────────────────────────
+   * The `>= 0.50` vector-score filter below runs on raw embedding similarity, which is a weak
+   * signal — unrelated text clears it routinely. Nothing then filtered on the RERANKER score,
+   * so this always returned topK documents no matter how irrelevant, and the caller injected
+   * them into a prompt labelled "verified context".
+   *
+   * Measured against the live index on 2026-08-27, top reranker score per query:
+   *   "who is the founder of Sadhya?"            ~0.0010   NCERT Social Science
+   *   "who developed you?"                        0.0013   NCERT Geography
+   *   "what is included in the free plan vs pro?" 0.0004   NCERT Chemistry
+   *   "how does the AI tutor use my documents?"   0.0000   NCERT Mathematics
+   *   "explain the water cycle"                   0.9283   NCERT Class 7 Science  ← genuine
+   *
+   * Three orders of magnitude separate noise from a real hit, so the exact floor barely matters;
+   * 0.10 sits ~75x above the worst observed noise and ~8x below the weakest genuine hit.
+   *
+   * Note what that table also shows: the public index holds study content only, with no product
+   * documentation in it at all. Platform answers were never coming from retrieval — they come
+   * from SADHYA_MASTER_KNOWLEDGE in the prompt — so filtering this removes noise without
+   * removing any answer. If product docs are indexed later they will clear 0.10 easily.
    */
   async retrievePublicKnowledge(
     query: string,
@@ -351,6 +381,12 @@ Standalone Search Query:`;
     // 1. Cohere Reranking Phase
     const documentsToRerank = deduplicatedMatches.map(m => m.metadata?.text as string);
     const rerankedDocs = await this.rerankerProvider.rerank(query, documentsToRerank, topK * 2);
+    /*
+     * Did the reranker actually run? If it fell back, every score is 0 for want of a judgement
+     * rather than for want of relevance, and the floor below must not be applied — otherwise a
+     * Cohere outage stops being degraded retrieval and becomes no retrieval.
+     */
+    const rerankDegraded = rerankedDocs.some(d => d.degraded);
 
     // 2. Score mapping
     const rankedResults: RetrievalResult[] = rerankedDocs.map(reranked => {
@@ -381,8 +417,24 @@ Standalone Search Query:`;
          : combinedResults.slice(0, topK);
     }
 
-    await cacheService.set(cacheKey, combinedResults, 600);
-    return combinedResults;
+    // Drop what the reranker judged irrelevant. Returning nothing is the correct answer when
+    // the index holds nothing on the subject — an empty result lets the caller say so, whereas
+    // three unrelated chapters invite it to answer from them.
+    const relevant = rerankDegraded
+      ? combinedResults
+      : combinedResults.filter(r => (r.weightedScore ?? 0) >= PUBLIC_RELEVANCE_FLOOR);
+
+    if (relevant.length < combinedResults.length) {
+      Telemetry.logLatency('public_retrieval_filtered', performance.now() - tStart, {
+        query,
+        dropped: combinedResults.length - relevant.length,
+        kept: relevant.length,
+        floor: PUBLIC_RELEVANCE_FLOOR,
+      });
+    }
+
+    await cacheService.set(cacheKey, relevant, 600);
+    return relevant;
   }
 
   /**

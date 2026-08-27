@@ -52,8 +52,15 @@ export class CohereRerankerProvider implements RerankerProvider {
 
     } catch (error) {
       console.error('Error during Cohere reranking:', error);
-      // Fallback: return unreranked with 0 scores
-      return documents.map((_, i) => ({ index: i, relevanceScore: 0 }));
+      /*
+       * Fallback: pass the documents through in their original order, unranked.
+       *
+       * `degraded` is what makes this honest. The scores below are 0 because nothing scored them,
+       * not because the documents are irrelevant, and a caller filtering on score cannot tell those
+       * apart from the numbers alone. Without the flag, a threshold downstream would convert a
+       * Cohere outage into silent, total retrieval failure.
+       */
+      return documents.map((_, i) => ({ index: i, relevanceScore: 0, degraded: true }));
     }
   }
 }
