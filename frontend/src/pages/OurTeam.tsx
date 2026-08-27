@@ -141,8 +141,16 @@ function Avatar({ person, className }: { person: Person; className?: string }) {
         src={person.photo}
         alt={`${person.name}, ${person.role} at ${SITE.name}`}
         onError={() => setFailed(true)}
-        // Square source expected; object-cover centre-crops anything else rather than squashing it.
-        className={cn('object-cover rounded-2xl border border-slate-200 dark:border-white/10', className)}
+        /*
+         * object-top, not the default centre. The avatar is square and a headshot is usually
+         * portrait, so a centre-crop takes its window from the middle of the frame — clipping the
+         * top of the head while keeping a band of shirt. Anchoring to the top keeps the face in
+         * the crop for any portrait source without needing the image pre-cropped.
+         */
+        className={cn(
+          'object-cover object-top rounded-2xl border border-slate-200 dark:border-white/10',
+          className,
+        )}
       />
     );
   }
