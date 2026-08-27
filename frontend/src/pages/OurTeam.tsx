@@ -26,9 +26,13 @@ import {
  * has to migrate a URL, update the footer, or fix inbound links.
  *
  * ── HOW THIS GROWS ────────────────────────────────────────────────────────────────────────
- * PersonCard is the unit. FOUNDER, TEAM and ADVISORS in founderPageData.ts all hold the same
- * `Person` shape, and Roster renders NOTHING for an empty list — so there is never a "Team"
- * heading sitting over an empty grid. Adding the first hire is a push to TEAM.
+ * `Person` is the unit. FOUNDER, TEAM and ADVISORS in founderPageData.ts all hold the same
+ * shape, and Roster renders NOTHING for an empty list — so there is never a "Team" heading
+ * sitting over an empty grid. Adding the first hire is a push to TEAM.
+ *
+ * The founder is the one Person the page does NOT render as a card: the hero shows the
+ * photograph at full size with the details beside it, because a page about one person shouldn't
+ * introduce them inside a box. PersonCard is untouched and still waiting for TEAM.
  *
  * Every factual claim on the page is carried by founderPageData.ts, where the rule is that
  * nothing about the founder is written unless it is independently verifiable, and nothing is
@@ -171,8 +175,75 @@ function Avatar({ person, className }: { person: Person; className?: string }) {
 }
 
 /**
- * One person. The founder uses it today; TEAM and ADVISORS use the identical card the day
- * they stop being empty, which is what keeps this page from needing a rewrite later.
+ * The founder's photograph, at the size a founder page earns.
+ *
+ * ── WHY IT IS NOT CROPPED ─────────────────────────────────────────────────────────────────
+ * This is an environmental portrait, not a headshot: full figure, seated, with the Sadhya wall
+ * and its tagline behind. A square or 4:5 window would take either the head or the wall, and the
+ * wall is half of why the picture is worth showing. So it renders at the source's own 2:3, and
+ * `aspect-[2/3]` on the img reserves that space before the bytes land — the hero does not reflow
+ * around it on a slow connection.
+ *
+ * ── WHY THREE FILES ───────────────────────────────────────────────────────────────────────
+ * The master is a 1.9 MB PNG. On the first paint of a public page that is the entire weight
+ * budget spent on one image; the 1000px WebP is 85 KB for the same picture at the size it is
+ * actually drawn, and phones take the 500px one. Sizes are declared so the browser chooses
+ * before layout rather than after.
+ *
+ * Returns null if it fails to load. The monogram is the right fallback for a 72px avatar and the
+ * wrong one blown up to 430px, so the hero simply becomes a text hero — a designed state, not a
+ * torn one.
+ */
+function FounderPortrait({ person }: { person: Person }) {
+  const [failed, setFailed] = useState(false);
+  const hero = person.heroPhoto;
+  if (!hero || failed) return null;
+
+  return (
+    <figure className="relative w-full max-w-[300px] sm:max-w-[380px] lg:max-w-none mx-auto">
+      {/* Brand wash behind the frame. Load-bearing, not decorative: the photograph's own
+          background is a near-white wall, and without this it dissolves into a white page. */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -inset-5 rounded-[38px] bg-gradient-to-tr from-[#c8e558]/25 via-emerald-500/10 to-transparent blur-2xl"
+      />
+
+      <div className="relative overflow-hidden rounded-[26px] border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.04] shadow-[0_24px_60px_-30px_rgba(15,23,42,0.5)]">
+        {/* The same hairline of brand colour PersonCard carries, so the photo reads as part of
+            the page's vocabulary rather than an image dropped into it. */}
+        <span
+          aria-hidden
+          className="absolute inset-x-10 top-0 z-10 h-px bg-gradient-to-r from-transparent via-[#c8e558] to-transparent"
+        />
+        <picture>
+          <source
+            type="image/webp"
+            srcSet={`${hero.webp500} 500w, ${hero.webp1000} 1000w`}
+            sizes="(min-width: 1024px) 420px, (min-width: 640px) 380px, 300px"
+          />
+          <img
+            src={hero.jpg1000}
+            alt={`${person.name}, ${person.role} at ${SITE.name}, ${hero.alt}`}
+            width={hero.width}
+            height={hero.height}
+            /* Above the fold on this page, so it is fetched eagerly and early rather than
+               lazily — a lazy hero is a hero that arrives after the reader has scrolled past. */
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            onError={() => setFailed(true)}
+            className="block w-full h-auto aspect-[2/3] object-cover"
+          />
+        </picture>
+      </div>
+    </figure>
+  );
+}
+
+/**
+ * One person. TEAM and ADVISORS use it the day they stop being empty, which is what keeps this
+ * page from needing a rewrite later. The founder no longer uses it — on a page about one person
+ * the name belongs in the hero itself, not in a box standing beside it.
  */
 function PersonCard({
   person,
@@ -311,7 +382,10 @@ export default function OurTeam() {
           />
 
           <div className="relative max-w-[1160px] mx-auto px-5 sm:px-8 pt-14 sm:pt-20 lg:pt-24 pb-16 sm:pb-20">
-            <div className="grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] gap-12 lg:gap-16 items-center">
+            {/* Text first in the DOM so the h1 leads for a screen reader and for search, and the
+                photograph follows. On lg the photograph sits beside it; below lg it stacks under,
+                which is the same reading order either way. */}
+            <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] gap-12 lg:gap-16 items-center">
               <motion.div
                 initial={reduced ? false : { opacity: 0, y: 16 }}
                 animate={reduced ? undefined : { opacity: 1, y: 0 }}
@@ -321,9 +395,20 @@ export default function OurTeam() {
                 <h1 className="mt-3 text-[34px] sm:text-[46px] lg:text-[54px] leading-[1.06] font-semibold tracking-[-0.035em]">
                   Meet the Founder
                 </h1>
-                <p className="mt-4 text-[18px] sm:text-[21px] leading-[1.35] font-medium tracking-[-0.02em] text-slate-700 dark:text-gray-200">
-                  Building Sadhya from the ground up.
-                </p>
+
+                {/* Identity, promoted out of the card it used to sit in. The h2 directly under
+                    the h1 is the outline this page should have had all along: the page is about
+                    a person, and the person is the first thing beneath its title. */}
+                <div className="mt-6 flex items-baseline flex-wrap gap-x-3 gap-y-1">
+                  <h2 className="text-[24px] sm:text-[28px] font-semibold tracking-[-0.025em] text-slate-900 dark:text-white">
+                    {FOUNDER.name}
+                  </h2>
+                  <p className="text-[14px] font-medium text-[#5f7415] dark:text-[#c8e558]">{FOUNDER.role}</p>
+                </div>
+
+                {/* The blurb comes from founderPageData.ts, where the rule is that nothing about
+                    the founder is written unless it is independently verifiable. */}
+                <Lede className="max-w-[34rem]">{FOUNDER.blurb}</Lede>
                 <Lede className="max-w-[34rem]">
                   Sadhya started with a simple idea: exam preparation should understand not only
                   what students study, but what they actually know.
@@ -350,6 +435,19 @@ export default function OurTeam() {
                     Get in touch
                   </Link>
                 </div>
+
+                {/* Carried over from the founder card this hero replaced, so removing the card
+                    didn't quietly remove the one direct address on the page. */}
+                <a
+                  href={`mailto:${SITE.email.support}`}
+                  className={cn(
+                    'mt-6 inline-flex items-center gap-1.5 text-[13.5px] text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors rounded',
+                    FOCUS,
+                  )}
+                >
+                  <Mail className="w-[15px] h-[15px]" strokeWidth={1.9} aria-hidden />
+                  {SITE.email.support}
+                </a>
               </motion.div>
 
               <motion.div
@@ -357,7 +455,7 @@ export default function OurTeam() {
                 animate={reduced ? undefined : { opacity: 1, y: 0 }}
                 transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
               >
-                <PersonCard person={FOUNDER} nameAs="h2" showContact />
+                <FounderPortrait person={FOUNDER} />
               </motion.div>
             </div>
           </div>
