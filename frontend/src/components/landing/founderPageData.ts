@@ -57,9 +57,9 @@ export interface Person {
    * A large environmental portrait for the page hero, when one exists.
    *
    * Deliberately separate from `photo`. `photo` feeds a 72px square avatar and wants a headshot
-   * that survives a square crop; this feeds a ~430px tall frame and wants the opposite — the
-   * whole picture, uncropped. One image cannot be both, so the page carries both rather than
-   * mangling one into the other's shape.
+   * tight enough to survive a square crop; this feeds a wide 4:3 cover band across the top of
+   * the same card and wants the opposite — room, context, the wall behind. One image cannot be
+   * both, so the page carries both rather than mangling one into the other's shape.
    *
    * Three files because a hero photograph on a public page is the heaviest thing on it: WebP at
    * two widths for the browsers that take it, a JPEG at one width for the ones that don't.
