@@ -23,7 +23,20 @@ import fs from 'fs';
 import path from 'path';
 import tls from 'tls';
 
-const SUPPLEMENTAL_FILES = ['gogetssl-rsa-dv-ssl-ca-2.pem'];
+const SUPPLEMENTAL_FILES = [
+  'gogetssl-rsa-dv-ssl-ca-2.pem',
+  /*
+   * www.ibps.in sends ONLY its leaf. The leaf is genuine — "Institute of Banking Personnel
+   * Selection", Mumbai — but its issuer, GlobalSign RSA OV SSL CA 2018, is never transmitted, so
+   * Node cannot build a path and reports "unable to verify the first certificate".
+   *
+   * Fetched from the AIA URI in the site's own leaf certificate:
+   *   http://secure.globalsign.com/cacert/gsrsaovsslca2018.crt
+   * It chains to GlobalSign Root CA - R3, which is already a system root, so this only restores
+   * the link the server omits. Verification stays fully on.
+   */
+  'globalsign-rsa-ov-ssl-ca-2018.pem',
+];
 
 let cached: string[] | null = null;
 
