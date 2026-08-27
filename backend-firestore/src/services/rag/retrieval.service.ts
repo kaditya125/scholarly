@@ -338,6 +338,13 @@ Standalone Search Query:`;
    * documentation in it at all. Platform answers were never coming from retrieval — they come
    * from SADHYA_MASTER_KNOWLEDGE in the prompt — so filtering this removes noise without
    * removing any answer. If product docs are indexed later they will clear 0.10 easily.
+   *
+   * THE FLOOR DEPENDS ON A MULTILINGUAL RERANKER. Under Cohere's English-only model a correct
+   * Devanagari match scored 0.0015 — inside the noise band — so this filter silently emptied
+   * retrieval for every Hindi-script query. CohereRerankerProvider now defaults to
+   * rerank-multilingual-v3.0, which restores the separation in Hindi and Hinglish; see the
+   * measurement in that file. Do not pin the reranker back to an English-only model while this
+   * floor is in place.
    */
   async retrievePublicKnowledge(
     query: string,
