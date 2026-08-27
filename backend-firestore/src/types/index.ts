@@ -285,6 +285,7 @@ export interface PodcastMetadata {
 export * from "./notebook";
 export * from "./observability";
 export * from "./exam.types";
+export * from "./pyq.types";
 
 export const isReadyStatus = (status: string) => status === 'READY' || status === 'READY_DEGRADED';
 export type KGRelationshipType = string;
