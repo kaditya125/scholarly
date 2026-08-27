@@ -54,6 +54,30 @@ export interface Person {
    */
   photo: string | null;
   /**
+   * A large environmental portrait for the page hero, when one exists.
+   *
+   * Deliberately separate from `photo`. `photo` feeds a 72px square avatar and wants a headshot
+   * that survives a square crop; this feeds a ~430px tall frame and wants the opposite — the
+   * whole picture, uncropped. One image cannot be both, so the page carries both rather than
+   * mangling one into the other's shape.
+   *
+   * Three files because a hero photograph on a public page is the heaviest thing on it: WebP at
+   * two widths for the browsers that take it, a JPEG at one width for the ones that don't.
+   */
+  heroPhoto?: {
+    /** Desktop / retina-mobile WebP. */
+    webp1000: string;
+    /** Small-screen WebP, so a phone doesn't pull the desktop file. */
+    webp500: string;
+    /** Fallback for browsers without WebP, and the `src` the <img> actually carries. */
+    jpg1000: string;
+    /** Intrinsic size of the delivered files, so the hero reserves its space before they land. */
+    width: number;
+    height: number;
+    /** Read into the alt text, so it describes this photograph rather than any photograph. */
+    alt: string;
+  } | null;
+  /**
    * Public professional profiles.
    *
    * Empty on purpose. The only handle derivable from this repository is a personal GitHub
@@ -74,6 +98,21 @@ export const FOUNDER: Person = {
   // Supplied by the founder, 354x472. Rendered unretouched; the avatar crops it square from the
   // top so the face survives the crop without the source needing to be pre-cropped.
   photo: '/founder.jpg',
+  /*
+   * Supplied by the founder as a 1024x1536 PNG (`public/founder hero.png`, 1.9 MB). These three
+   * are resamples of it, generated with sharp — same photograph, 85 KB instead of 1.9 MB at the
+   * size the page actually renders. The original stays in public/ as the master; nothing links
+   * to it, and its filename contains a space, which is the other reason nothing should.
+   */
+  heroPhoto: {
+    webp1000: '/founder-hero-1000.webp',
+    webp500: '/founder-hero-500.webp',
+    jpg1000: '/founder-hero-1000.jpg',
+    width: 1000,
+    height: 1500,
+    // Describes what is in the frame. Everything named here is visible in the photograph.
+    alt: 'seated at a workbench in the Sadhya workspace, beside a laptop, with the Sadhya logo and the line "Every goal, attainable." on the wall behind',
+  },
   links: [],
 };
 
