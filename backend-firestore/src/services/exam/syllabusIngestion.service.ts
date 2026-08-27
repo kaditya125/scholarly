@@ -368,6 +368,74 @@ RULES:
   /**
    * Chunks and indexes the canonical syllabus document into Pinecone vectors with rich metadata.
    */
+  /**
+   * Embed one chunk, treating an exhausted quota window as a pause rather than a failure.
+   *
+   * The provider already retries transient 429s six times, honouring any server-supplied delay —
+   * roughly half a minute of backoff. That rides out a brief spike, but not a per-minute window
+   * that is genuinely spent, and when it ran out the exception escaped this loop and abandoned the
+   * whole exam. Worse, the batch runner then started the next exam immediately, which hit the same
+   * exhausted window and died the same way: six exams failed inside eight minutes and wrote zero
+   * vectors between them.
+   *
+   * A spent quota window is not an error, it is a wait. Backing off in minute-scale steps costs
+   * some wall-clock time on a job that already runs for hours, and turns a cascade of total
+   * failures into a slow patch. Anything that is NOT a rate limit still throws immediately —
+   * a malformed request or a dead credential must not be sat on for ten minutes.
+   */
+  private async embedWithQuotaBackoff(
+    text: string, index: number, total: number, examId: string,
+  ): Promise<number[]> {
+    const waits = [60_000, 120_000, 240_000];   // the window is per-minute; wait in minutes
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await this.embeddingProvider.generateEmbedding(text);
+      } catch (err: any) {
+        const msg = String(err?.message ?? err);
+        const rateLimited = /429|RESOURCE_EXHAUSTED|Quota exceeded|rate limit/i.test(msg);
+        if (!rateLimited || attempt >= waits.length) throw err;
+        const wait = waits[attempt];
+        logger.warn(
+          `[SyllabusIngestion] embedding quota exhausted at topic ${index + 1}/${total} for ${examId}; ` +
+          `pausing ${wait / 1000}s (attempt ${attempt + 1}/${waits.length})`,
+        );
+        await new Promise((r) => setTimeout(r, wait));
+      }
+    }
+  }
+
+  /**
+   * Upsert a batch, retrying transient Pinecone transport failures.
+   *
+   * Two long runs died on "Request failed to reach Pinecone" — a network fault, not a rate limit,
+   * so the quota backoff correctly did not swallow it and the exception ended the exam. For
+   * BPSC_ASST_PROF that happened at topic 390 of 1161, roughly forty minutes in.
+   *
+   * The write is safe to repeat: vector ids are canonical node ids, so re-upserting a batch
+   * converges on the same index state rather than duplicating anything. Short waits, because a
+   * transport blip clears in seconds — unlike a quota window, which needs minutes.
+   */
+  private async upsertWithTransportRetry(
+    batch: any[], namespace: string | undefined, examId: string,
+  ): Promise<void> {
+    const waits = [2_000, 8_000, 20_000];
+    for (let attempt = 0; ; attempt++) {
+      try {
+        await pineconeService.upsertVectors(batch, namespace as any);
+        return;
+      } catch (err: any) {
+        const msg = String(err?.message ?? err);
+        const transient = /failed to reach|ECONNRESET|ETIMEDOUT|ENOTFOUND|socket hang up|network|503|502|504/i.test(msg);
+        if (!transient || attempt >= waits.length) throw err;
+        logger.warn(
+          `[SyllabusIngestion] Pinecone unreachable while upserting ${batch.length} vectors for ` +
+          `${examId}; retrying in ${waits[attempt] / 1000}s (attempt ${attempt + 1}/${waits.length})`,
+        );
+        await new Promise((r) => setTimeout(r, waits[attempt]));
+      }
+    }
+  }
+
   async indexSyllabusToVectorDb(syllabus: ExamSyllabus, userId: string): Promise<number> {
     const chunks: {
       text: string;
@@ -462,7 +530,7 @@ RULES:
       if (i > 0 && i % 20 === 0) {
         logger.info(`[SyllabusIngestion] embedded ${i}/${chunks.length} topics for ${syllabus.examId}`);
       }
-      const embedding = await this.embeddingProvider.generateEmbedding(chunk.text);
+      const embedding = await this.embedWithQuotaBackoff(chunk.text, i, chunks.length, syllabus.examId);
       /*
        * VECTOR IDENTITY IS APPLICATION-OWNED (J.9).
        *
@@ -534,13 +602,13 @@ RULES:
        */
       if (vectorsToUpsert.length >= 20) {
         const batch = vectorsToUpsert.splice(0);
-        await pineconeService.upsertVectors(batch, namespace);
+        await this.upsertWithTransportRetry(batch, namespace, syllabus.examId);
         upserted += batch.length;
       }
     }
 
     if (vectorsToUpsert.length > 0) {
-      await pineconeService.upsertVectors(vectorsToUpsert, namespace);
+      await this.upsertWithTransportRetry(vectorsToUpsert, namespace, syllabus.examId);
       upserted += vectorsToUpsert.length;
     }
     logger.info(`[SyllabusIngestion] Successfully upserted ${upserted} vectors to Pinecone for ${syllabus.syllabusId}`);
