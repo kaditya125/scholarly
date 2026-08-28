@@ -27,6 +27,7 @@ export const PRODUCT_GROUPS: NavGroup[] = [
     icon: MessagesSquare,
     links: [
       { label: 'AI Tutor', href: '/chat', desc: 'Cited answers with a visible reasoning trace' },
+      { label: 'Live Voice Chat', href: '/chat?mode=voice', desc: 'Real-time spoken AI tutor with instant voice responses' },
       { label: 'Teacher Classrooms', href: '/my-classes', desc: 'Join free & paid classes by verified educators' },
       { label: 'Scan & Solve', href: '/chat', desc: 'Photograph a question, solve it step by step' },
       { label: 'Notebooks & Notes', href: '/notebooks', desc: 'Upload your PDFs or unlock teacher notes' },
