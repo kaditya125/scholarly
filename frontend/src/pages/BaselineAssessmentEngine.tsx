@@ -125,14 +125,14 @@ export default function BaselineAssessmentEngine() {
             <button
               onClick={() => retry()}
               disabled={isStarting}
-              className="inline-flex items-center gap-2 h-10 px-5 rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13px] font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity"
+              className="inline-flex items-center gap-2 h-11 px-5 rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13px] font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity"
             >
               {isStarting ? 'Trying again…' : 'Try again'}
               <ArrowRight className="w-4 h-4" strokeWidth={2.25} aria-hidden />
             </button>
             <button
               onClick={() => navigate('/dashboard')}
-              className="h-10 px-5 rounded-md border border-slate-300 dark:border-white/15 text-[13px] font-semibold hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-colors"
+              className="h-11 px-5 rounded-md border border-slate-300 dark:border-white/15 text-[13px] font-semibold hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-colors"
             >
               Skip for now
             </button>
@@ -181,7 +181,7 @@ export default function BaselineAssessmentEngine() {
           <button
             onClick={() => startAssessment()}
             disabled={isStarting}
-            className="mt-5 h-10 px-5 rounded-md border border-slate-300 dark:border-white/15 text-[13px] font-semibold hover:bg-slate-50 dark:hover:bg-white/[0.06] disabled:opacity-40 transition-colors"
+            className="mt-5 h-11 px-5 rounded-md border border-slate-300 dark:border-white/15 text-[13px] font-semibold hover:bg-slate-50 dark:hover:bg-white/[0.06] disabled:opacity-40 transition-colors"
           >
             {isStarting ? 'Preparing…' : 'Retry'}
           </button>
@@ -257,7 +257,7 @@ export default function BaselineAssessmentEngine() {
 
           <div className="flex-1 px-4 sm:px-6 py-6">
             {/* Plain, high-contrast and selectable — read the way a paper would be. */}
-            <p className="text-[16px] sm:text-[17.5px] leading-[1.65] text-slate-900 dark:text-gray-100 select-text">
+            <p className="text-[16px] sm:text-[17.5px] leading-[1.65] text-slate-900 dark:text-gray-100 select-text break-words">
               {currentQuestion.question}
             </p>
 
@@ -295,7 +295,7 @@ export default function BaselineAssessmentEngine() {
                         >
                           {optionLetter(idx)}
                         </span>
-                        <span className="text-[15px] leading-relaxed text-slate-800 dark:text-gray-200">{opt}</span>
+                        <span className="text-[15px] leading-relaxed text-slate-800 dark:text-gray-200 break-words min-w-0">{opt}</span>
                       </label>
                     </li>
                   );
@@ -323,7 +323,7 @@ export default function BaselineAssessmentEngine() {
               type="button"
               onClick={clearResponse}
               disabled={selectedAnswer === null}
-              className="h-10 px-4 rounded-md border border-slate-300 dark:border-white/15 text-[13px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-white dark:hover:bg-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="h-11 px-4 rounded-md border border-slate-300 dark:border-white/15 text-[13px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-white dark:hover:bg-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Clear Response
             </button>
@@ -331,7 +331,7 @@ export default function BaselineAssessmentEngine() {
               type="button"
               onClick={() => setShowConfidencePrompt(true)}
               disabled={selectedAnswer === null || isFetchingBatch || isSubmitting}
-              className="h-10 px-5 rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13px] font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity ml-auto inline-flex items-center gap-2"
+              className="h-11 px-5 rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13px] font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity ml-auto inline-flex items-center gap-2"
             >
               {isFetchingBatch ? 'Loading next…' : 'Save & Next'}
               <ArrowRight className="w-4 h-4" strokeWidth={2.25} aria-hidden />
