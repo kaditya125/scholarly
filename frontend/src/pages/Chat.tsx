@@ -242,7 +242,16 @@ export default function Chat() {
   const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem('selectedModel') || 'gemini');
   // Voice conversation mode (Phase 3 prototype). Entirely additive: text chat below is
   // untouched, and closing voice returns the user to exactly the thread they left.
-  const [isVoiceOpen, setIsVoiceOpen] = useState(false);
+  const [isVoiceOpen, setIsVoiceOpen] = useState(() => {
+    return searchParams.get('mode') === 'voice' || searchParams.get('voice') === '1' || searchParams.get('voice') === 'true';
+  });
+
+  useEffect(() => {
+    if (searchParams.get('mode') === 'voice' || searchParams.get('voice') === '1' || searchParams.get('voice') === 'true') {
+      setIsVoiceOpen(true);
+    }
+  }, [searchParams]);
+
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
   const [isListening, setIsListening] = useState(false);
