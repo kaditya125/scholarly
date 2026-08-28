@@ -9,6 +9,7 @@ exports.buildRecommendationsBlock = buildRecommendationsBlock;
 exports.buildSadhyaSystemPrompt = buildSadhyaSystemPrompt;
 exports.getGreetingOrOnboardingPrompt = getGreetingOrOnboardingPrompt;
 exports.isGreetingMessage = isGreetingMessage;
+const founderKnowledge_1 = require("../services/knowledge/founderKnowledge");
 // ═══════════════════════════════════════════════════════════════════════════════
 // SADHYA AI — SYSTEM PROMPTS & IDENTITY
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -818,6 +819,18 @@ function buildSadhyaSystemPrompt(options) {
     prompt += `\n\n## System Context\n- **Current UTC Time**: ${now.toISOString()}\n- **Current Local Server Time**: ${now.toString()}`;
     // Add exam knowledge
     prompt += '\n\n' + exports.SADHYA_EXAM_KNOWLEDGE;
+    /*
+     * Who built Sadhya.
+     *
+     * "Who made you?" is one of the first things students ask an AI tutor, and without this the
+     * model answers from the identity block above — which says what Sadhya is but not who is
+     * behind it, so it either deflects or invents. Injected for both viewer roles: a teacher asks
+     * it as often as a student does.
+     *
+     * The block carries its own hard limit against inventing a biography. Do not summarise or
+     * paraphrase it here — the limit is the half that would get lost.
+     */
+    prompt += '\n\n' + founderKnowledge_1.SADHYA_FOUNDER_KNOWLEDGE;
     // Add student/teacher context if available
     if (isTeacherViewer) {
         if (teacherContext)

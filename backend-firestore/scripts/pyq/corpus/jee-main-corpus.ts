@@ -7,13 +7,25 @@ import { pyqExtractorService } from '../../../src/services/pyq/pyqExtractor.serv
 import { buildCompleteJan27FullPapers } from './jee-main-2024-jan27-shifts';
 import { buildCompleteJan29FullPapers } from './jee-main-2024-jan29-shifts';
 import { buildCompleteJan30FullPapers } from './jee-main-2024-jan30-shifts';
+import { buildCompleteJan31FullPapers } from './jee-main-2024-jan31-shifts';
+import { buildCompleteFeb01FullPapers } from './jee-main-2024-feb01-shifts';
+import { buildCompleteApr04FullPapers } from './jee-main-2024-apr04-shifts';
+import { buildCompleteApr05FullPapers } from './jee-main-2024-apr05-shifts';
+import { buildCompleteApr06FullPapers } from './jee-main-2024-apr06-shifts';
+import { buildCompleteApr08FullPapers } from './jee-main-2024-apr08-shifts';
 
 export function buildJEEMainCorpus(): CanonicalPYQQuestion[] {
-  // Start with full complete papers for 2024 Session 1 (27 Jan Shifts 1 & 2 + 29 Jan Shifts 1 & 2 + 30 Jan Shifts 1 & 2 = 450 questions)
+  // Start with full complete papers for 2024 Session 1 (750 Qs) + Session 2 (600 Qs from 04, 05, 06, 08 Apr) = 1350 questions
   const questions: CanonicalPYQQuestion[] = [
     ...buildCompleteJan27FullPapers(),
     ...buildCompleteJan29FullPapers(),
     ...buildCompleteJan30FullPapers(),
+    ...buildCompleteJan31FullPapers(),
+    ...buildCompleteFeb01FullPapers(),
+    ...buildCompleteApr04FullPapers(),
+    ...buildCompleteApr05FullPapers(),
+    ...buildCompleteApr06FullPapers(),
+    ...buildCompleteApr08FullPapers(),
   ];
   const now = Date.now();
 

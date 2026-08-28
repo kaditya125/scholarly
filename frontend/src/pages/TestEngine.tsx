@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Clock, Info, CheckSquare, List, BookmarkPlus, Bookmark, ChevronRight, ChevronLeft, Target, Moon, Sun, Bot, X, Send, Loader2, Play } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "../lib/utils";
 import { useTheme } from "../lib/ThemeContext";
-import { useQuiz } from "../hooks/ai/useQuiz";
+import { quizApi, StoredQuizQuestion } from "../lib/api/quiz";
 import { useAuth } from "../lib/AuthContext";
 
 export default function TestEngine() {
@@ -13,13 +13,57 @@ export default function TestEngine() {
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
   const isDarkMode = theme === 'dark';
-  
+
   // Mode: "exam" or "study"
   const mode = location.state?.mode || 'exam';
   const testTitle = location.state?.topic || location.state?.notebookTitle || 'AI Mock Practice Exam';
   const isStudyMode = mode === 'study';
-  const { questions: mockQuestions, isLoading, submitQuiz } = useQuiz();
-  
+
+  // ── Quiz generation state ─────────────────────────────────────────────────
+  const [mockQuestions, setMockQuestions] = useState<StoredQuizQuestion[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  const attemptIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setGenerateError(null);
+
+    const topic = location.state?.topic as string | undefined;
+    const notebookId = location.state?.notebookId as string | undefined;
+    const notebookTitle = location.state?.notebookTitle as string | undefined;
+    const count = location.state?.count as number | undefined;
+    const quizMode = location.state?.mode as string | undefined;
+
+    quizApi.generate({ topic, notebookId, notebookTitle, count, mode: quizMode as any })
+      .then((result) => {
+        if (cancelled) return;
+        attemptIdRef.current = result.attemptId;
+        // The generate endpoint returns answer-free questions; map them to the full type
+        // with dummy correctAnswerIndex/-1 (masked server-side) so TestEngine renders.
+        setMockQuestions(
+          result.questions.map((q) => ({
+            ...q,
+            correctAnswerIndex: -1,
+            explanation: '',
+          }))
+        );
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('[TestEngine] quiz generation failed:', err);
+        setGenerateError(
+          err?.response?.data?.error || 'Failed to generate quiz questions. Please try again.'
+        );
+        setIsLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount — location.state doesn't change mid-session
+
   const [currentQIndex, setCurrentQIndex] = useState(() => {
     const saved = sessionStorage.getItem('testEngine_currentQIndex');
     return saved ? parseInt(saved, 10) : 0;
@@ -97,30 +141,40 @@ export default function TestEngine() {
     sessionStorage.removeItem('testEngine_marked');
     sessionStorage.removeItem('testEngine_bookmarked');
     sessionStorage.removeItem('testEngine_endDate');
-    
-    let score = 0;
-    mockQuestions.forEach(q => {
-      if (answers[q.id] === q.correctAnswerIndex) {
-        score++;
-      }
-    });
 
     const timeSpentSeconds = Math.max(1, (30 * 60) - timeLeft);
 
     try {
-      await submitQuiz({ answers, timeSpent: timeSpentSeconds });
+      const attemptId = attemptIdRef.current;
+      if (attemptId) {
+        // Server-side scoring — returns the full attempt with correctAnswerIndex + explanation.
+        const result = await quizApi.submitAttempt(attemptId, { answers, timeSpentSeconds });
+        navigate("/report", {
+          state: {
+            attemptId,
+            score: result.correctCount ?? 0,
+            total: result.totalQuestions,
+            answers,
+            timeSpentSeconds,
+            questions: result.questions, // full question objects with answers revealed
+            topicBreakdown: result.topicBreakdown,
+            accuracy: result.accuracy,
+            feedback: result.feedback,
+          }
+        });
+        return;
+      }
     } catch (err) {
-      console.warn("Quiz submission sync fallback:", err);
+      console.warn("Quiz submission failed, falling back to client scoring:", err);
     }
 
-    navigate("/report", { 
-      state: { 
-        score, 
-        total: mockQuestions.length, 
-        answers,
-        timeSpentSeconds,
-        questions: mockQuestions
-      } 
+    // Client-side fallback (no attemptId or server error)
+    let score = 0;
+    mockQuestions.forEach(q => {
+      if (answers[q.id] === q.correctAnswerIndex) score++;
+    });
+    navigate("/report", {
+      state: { score, total: mockQuestions.length, answers, timeSpentSeconds, questions: mockQuestions }
     });
   };
 
@@ -139,13 +193,31 @@ export default function TestEngine() {
     );
   }
 
+  if (generateError) {
+    return (
+      <div className="w-full h-screen flex flex-col items-center justify-center bg-[#fafbfc] dark:bg-[#0b0b0c] text-slate-500 font-sans p-6 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-rose-500/10 flex items-center justify-center mb-4 border border-rose-500/20">
+          <Info className="w-7 h-7 text-rose-500" />
+        </div>
+        <h2 className="text-[18px] font-semibold text-slate-900 dark:text-white mb-1.5">Couldn't Generate Questions</h2>
+        <p className="text-[13.5px] max-w-sm mb-5 text-slate-500">{generateError}</p>
+        <button
+          onClick={() => navigate('/tests')}
+          className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 rounded-xl text-[13px] font-semibold transition-all shadow-xs"
+        >
+          Back to Test Center
+        </button>
+      </div>
+    );
+  }
+
   if (!mockQuestions || mockQuestions.length === 0) {
     return (
       <div className="w-full h-screen flex flex-col items-center justify-center bg-[#fafbfc] dark:bg-[#0b0b0c] text-slate-500 font-sans p-6 text-center">
         <h2 className="text-[18px] font-semibold text-slate-900 dark:text-white mb-1.5">No Active Practice Test</h2>
         <p className="text-[13.5px] max-w-sm mb-4">Please return to the Test Center to start or generate a mock test.</p>
-        <button 
-          onClick={() => navigate('/tests')} 
+        <button
+          onClick={() => navigate('/tests')}
           className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 rounded-xl text-[13px] font-semibold transition-all shadow-xs"
         >
           Go to Test Center
@@ -153,6 +225,7 @@ export default function TestEngine() {
       </div>
     );
   }
+
 
   const currentQ = mockQuestions[currentQIndex] || mockQuestions[0];
 
