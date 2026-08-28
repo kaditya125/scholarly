@@ -7,84 +7,91 @@ interface ExamLogoProps {
 }
 
 /**
- * Official vector logos and seals for each competitive exam and board covered in EXAM_CATALOG.
- * Crafted with authentic colors, conducting body insignias, and sharp vector geometry.
+ * Official emblems and logos for Indian competitive exams and education boards.
+ * Rendered with transparent backgrounds, official colors, and authentic agency insignias.
  */
-export function ExamLogo({ slug, className = 'w-4 h-4', size = 16 }: ExamLogoProps) {
+export function ExamLogo({ slug, className = 'w-4 h-4', size = 18 }: ExamLogoProps) {
   switch (slug) {
-    // 1. NEET — National Eligibility cum Entrance Test (NTA / Medical Council)
+    // 1. NEET — National Eligibility cum Entrance Test (NTA & National Medical Commission)
     case 'neet':
       return (
         <svg
           width={size}
           height={size}
-          viewBox="0 0 32 32"
+          viewBox="0 0 36 36"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={className}
-          aria-label="NEET Logo"
+          aria-label="NEET Official Logo"
         >
-          <rect width="32" height="32" rx="7" fill="#0D5C3A" />
-          {/* Medical Caduceus Staff & Wings */}
-          <path d="M16 4V28M16 4C14.5 4 13.5 5 13.5 6.5C13.5 8 14.5 9 16 9C17.5 9 18.5 8 18.5 6.5C18.5 5 17.5 4 16 4Z" stroke="#F6C343" strokeWidth="1.8" strokeLinecap="round" />
+          {/* Medical Green Circular Crest */}
+          <circle cx="18" cy="18" r="17" fill="#FFFFFF" stroke="#00796B" strokeWidth="2" />
+          <circle cx="18" cy="18" r="14.5" fill="#E0F2F1" stroke="#004D40" strokeWidth="0.8" />
+          {/* Asclepius Staff & Golden Wings */}
+          <path d="M18 6V30" stroke="#B45309" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="18" cy="6" r="2.2" fill="#D97706" />
           {/* Left Wing */}
-          <path d="M14 9C9 9 5 12 6 16C8 16 11 14 14 12" stroke="#F6C343" strokeWidth="1.5" strokeLinecap="round" />
+          <path d="M16 10C11 9 7 13 8 18C10 18 13 16 16 14" fill="#F59E0B" stroke="#B45309" strokeWidth="0.8" />
           {/* Right Wing */}
-          <path d="M18 9C23 9 27 12 26 16C24 16 21 14 18 12" stroke="#F6C343" strokeWidth="1.5" strokeLinecap="round" />
-          {/* Entwined Serpents */}
-          <path d="M11 15C11 18 21 17 21 21C21 24 16 25 16 27" stroke="#FFFFFF" strokeWidth="1.6" strokeLinecap="round" />
-          <path d="M21 15C21 18 11 17 11 21C11 24 16 25 16 27" stroke="#FFFFFF" strokeWidth="1.6" strokeLinecap="round" />
-          {/* Red Cross Accent */}
-          <circle cx="16" cy="16" r="3.5" fill="#E53E3E" />
-          <path d="M16 14V18M14 16H18" stroke="#FFFFFF" strokeWidth="1.2" strokeLinecap="round" />
+          <path d="M20 10C25 9 29 13 28 18C26 18 23 16 20 14" fill="#F59E0B" stroke="#B45309" strokeWidth="0.8" />
+          {/* Coiled Serpent */}
+          <path d="M13 16C13 19 23 18 23 22C23 25 18 26 18 29" stroke="#004D40" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M23 16C23 19 13 18 13 22C13 25 18 26 18 29" stroke="#00796B" strokeWidth="1.8" strokeLinecap="round" />
+          {/* Red Cross emblem in center */}
+          <rect x="16.2" y="14" width="3.6" height="8" rx="0.5" fill="#DC2626" />
+          <rect x="14" y="16.2" width="8" height="3.6" rx="0.5" fill="#DC2626" />
         </svg>
       );
 
-    // 2. JEE Main — Joint Entrance Examination Main (NTA)
+    // 2. JEE Main — NTA (National Testing Agency) Joint Entrance Examination
     case 'jee-main':
       return (
         <svg
           width={size}
           height={size}
-          viewBox="0 0 32 32"
+          viewBox="0 0 36 36"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={className}
-          aria-label="JEE Main Logo"
+          aria-label="JEE Main Official Logo"
         >
-          <rect width="32" height="32" rx="7" fill="#0A2540" />
-          {/* Atomic Orbits representing Engineering Science */}
-          <ellipse cx="16" cy="16" rx="11" ry="4.5" transform="rotate(30 16 16)" stroke="#00D4B2" strokeWidth="1.4" />
-          <ellipse cx="16" cy="16" rx="11" ry="4.5" transform="rotate(-30 16 16)" stroke="#FF8A00" strokeWidth="1.4" />
-          <ellipse cx="16" cy="16" rx="11" ry="4.5" transform="rotate(90 16 16)" stroke="#635BFF" strokeWidth="1.4" />
-          {/* Nucleus */}
-          <circle cx="16" cy="16" r="3" fill="#FFFFFF" />
-          <circle cx="16" cy="16" r="1.5" fill="#FF8A00" />
+          {/* NTA Tri-color Modern Geometric Flag Motif */}
+          <circle cx="18" cy="18" r="17" fill="#FFFFFF" stroke="#0284C7" strokeWidth="1.5" />
+          {/* Saffron & Green Waves */}
+          <path d="M7 11C13 8 23 14 29 11V16C23 19 13 13 7 16V11Z" fill="#FF9933" />
+          <path d="M7 17C13 14 23 20 29 17V22C23 25 13 19 7 22V17Z" fill="#138808" />
+          {/* Navy Blue Central Hexagon & "JEE" */}
+          <polygon points="18,8 26,13 26,23 18,28 10,23 10,13" stroke="#000080" strokeWidth="1.5" fill="#FFFFFF" fillOpacity="0.8" />
+          <circle cx="18" cy="18" r="3" fill="#000080" />
+          <circle cx="18" cy="18" r="1.2" fill="#FFFFFF" />
+          {/* Orbit rings */}
+          <ellipse cx="18" cy="18" rx="9" ry="3.5" transform="rotate(30 18 18)" stroke="#0284C7" strokeWidth="1" />
+          <ellipse cx="18" cy="18" rx="9" ry="3.5" transform="rotate(-30 18 18)" stroke="#0284C7" strokeWidth="1" />
         </svg>
       );
 
-    // 3. JEE Advanced — IIT Joint Entrance Examination
+    // 3. JEE Advanced — Official IIT (Indian Institutes of Technology) Joint Entrance Logo
     case 'jee-advanced':
       return (
         <svg
           width={size}
           height={size}
-          viewBox="0 0 32 32"
+          viewBox="0 0 36 36"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={className}
           aria-label="JEE Advanced IIT Logo"
         >
-          <rect width="32" height="32" rx="7" fill="#881337" />
-          {/* IIT Cogwheel / Flame Emblem */}
-          <circle cx="16" cy="16" r="9.5" stroke="#FDE047" strokeWidth="1.5" strokeDasharray="3.5 2" />
-          <circle cx="16" cy="16" r="7" stroke="#FFFFFF" strokeWidth="1.2" />
-          {/* Central Torch Flame */}
-          <path d="M16 8C14 11 13 13 14 15C14.8 16.5 16 16 16 17C16 16 17.2 16.5 18 15C19 13 18 11 16 8Z" fill="#F59E0B" />
-          <path d="M16 11C15 12.5 14.5 13.5 15 14.5C15.5 15.2 16 15 16 15.5C16 15 16.5 15.2 17 14.5C17.5 13.5 17 12.5 16 11Z" fill="#FEF08A" />
-          {/* Base of Torch */}
-          <path d="M13.5 18H18.5L17.5 23H14.5L13.5 18Z" fill="#E2E8F0" />
-          <path d="M12.5 23H19.5V24.5H12.5V23Z" fill="#FDE047" />
+          {/* Official IIT Maroon Circular Cogwheel */}
+          <circle cx="18" cy="18" r="17" fill="#881337" />
+          <circle cx="18" cy="18" r="15" stroke="#FDE047" strokeWidth="1.8" strokeDasharray="3 1.2" />
+          <circle cx="18" cy="18" r="12" fill="#9F1239" stroke="#FFFFFF" strokeWidth="0.8" />
+          {/* Torch Flame of Knowledge */}
+          <path d="M18 9C15.5 12.5 14.5 14.5 15.5 17C16.5 18.5 18 18 18 19.5C18 18 19.5 18.5 20.5 17C21.5 14.5 20.5 12.5 18 9Z" fill="#FBBF24" />
+          <path d="M18 12C16.8 14 16.2 15.2 16.8 16.5C17.2 17.2 18 17 18 17.8C18 17 18.8 17.2 19.2 16.5C19.8 15.2 19.2 14 18 12Z" fill="#FEF08A" />
+          {/* Torch Base */}
+          <path d="M15 19H21L19.5 24H16.5L15 19Z" fill="#F1F5F9" />
+          <rect x="14" y="24" width="8" height="2" rx="0.5" fill="#FDE047" />
         </svg>
       );
 
@@ -94,24 +101,26 @@ export function ExamLogo({ slug, className = 'w-4 h-4', size = 16 }: ExamLogoPro
         <svg
           width={size}
           height={size}
-          viewBox="0 0 32 32"
+          viewBox="0 0 36 36"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={className}
-          aria-label="UPSC Logo"
+          aria-label="UPSC Official Emblem"
         >
-          <rect width="32" height="32" rx="7" fill="#1E1B4B" />
-          {/* Circular Gold Seal */}
-          <circle cx="16" cy="16" r="11" stroke="#D97706" strokeWidth="1.5" />
-          <circle cx="16" cy="16" r="9" stroke="#FDE68A" strokeWidth="0.8" />
-          {/* Ashoka Lion Capital Motif */}
-          <path d="M16 9C15.2 9 14.5 9.5 14.5 10.3C14.5 11 15 11.5 15.5 12C15 12.5 14 13.5 14 15H18C18 13.5 17 12.5 16.5 12C17 11.5 17.5 11 17.5 10.3C17.5 9.5 16.8 9 16 9Z" fill="#F59E0B" />
-          <rect x="13.5" y="16" width="5" height="1.5" rx="0.5" fill="#F59E0B" />
+          {/* Official Royal Navy & Gold Seal */}
+          <circle cx="18" cy="18" r="17" fill="#0F172A" stroke="#D97706" strokeWidth="1.8" />
+          <circle cx="18" cy="18" r="14.5" stroke="#FDE68A" strokeWidth="0.8" strokeDasharray="1.5 1" />
+          {/* Ashoka Lion Capital (State Emblem of India) */}
+          <path d="M18 8C17 8 16 8.8 16 9.8C16 10.8 16.8 11.5 17.5 12C16.8 12.8 15.5 14 15.5 16H20.5C20.5 14 19.2 12.8 18.5 12C19.2 11.5 20 10.8 20 9.8C20 8.8 19 8 18 8Z" fill="#F59E0B" />
+          {/* Left & Right Lion profiles */}
+          <path d="M14 11C13.2 11 12.5 11.8 12.8 12.8C13.2 13.8 14.5 14.5 15.5 15V16H13C12.5 15 11.5 14 11 12C11 11 12.5 10 14 11Z" fill="#D97706" />
+          <path d="M22 11C22.8 11 23.5 11.8 23.2 12.8C22.8 13.8 21.5 14.5 20.5 15V16H23C23.5 15 24.5 14 25 12C25 11 23.5 10 22 11Z" fill="#D97706" />
           {/* Ashoka Chakra Base */}
-          <circle cx="16" cy="20" r="2.5" stroke="#38BDF8" strokeWidth="0.8" />
-          <circle cx="16" cy="20" r="0.8" fill="#38BDF8" />
+          <rect x="12" y="17" width="12" height="2" fill="#F59E0B" />
+          <circle cx="18" cy="22" r="3.2" stroke="#38BDF8" strokeWidth="1" fill="#FFFFFF" />
+          <circle cx="18" cy="22" r="1" fill="#0284C7" />
           {/* Base Plinth */}
-          <path d="M11 23.5H21V25H11V23.5Z" fill="#F59E0B" />
+          <path d="M10 26H26L24 28H12L10 26Z" fill="#D97706" />
         </svg>
       );
 
@@ -121,25 +130,24 @@ export function ExamLogo({ slug, className = 'w-4 h-4', size = 16 }: ExamLogoPro
         <svg
           width={size}
           height={size}
-          viewBox="0 0 32 32"
+          viewBox="0 0 36 36"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={className}
-          aria-label="SSC CGL Logo"
+          aria-label="SSC CGL Official Logo"
         >
-          <rect width="32" height="32" rx="7" fill="#7C2D12" />
-          {/* Circular Wreath / Star Crest */}
-          <circle cx="16" cy="16" r="11.5" stroke="#FBBF24" strokeWidth="1.2" />
-          <circle cx="16" cy="16" r="9.5" stroke="#FFFFFF" strokeWidth="0.8" strokeDasharray="1.5 1" />
-          {/* National Ashoka Lion Shape */}
-          <path d="M14 10C14 9 15 8 16 8C17 8 18 9 18 10C18 11 17.5 11.8 17 12.5V14.5H15V12.5C14.5 11.8 14 11 14 10Z" fill="#FEF08A" />
-          <path d="M12 14.5H20V16H12V14.5Z" fill="#FEF08A" />
-          {/* Three Stars */}
-          <circle cx="13" cy="19" r="1" fill="#FBBF24" />
-          <circle cx="16" cy="20" r="1.3" fill="#FBBF24" />
-          <circle cx="19" cy="19" r="1" fill="#FBBF24" />
-          {/* Pedestal */}
-          <path d="M11 23H21L19.5 24.5H12.5L11 23Z" fill="#FEF08A" />
+          {/* Official SSC Circular Crest (Crimson & Gold) */}
+          <circle cx="18" cy="18" r="17" fill="#7F1D1D" stroke="#F59E0B" strokeWidth="1.8" />
+          <circle cx="18" cy="18" r="14.5" fill="#991B1B" stroke="#FDE68A" strokeWidth="0.8" />
+          {/* Ashoka Lion Motif & Wreath */}
+          <path d="M18 8C17 8 16 9 16 10.5C16 12 17.5 13 17.5 14.5H18.5C18.5 13 20 12 20 10.5C20 9 19 8 18 8Z" fill="#FEF08A" />
+          <path d="M14 14.5H22V16.5H14V14.5Z" fill="#FDE047" />
+          {/* SSC Letters & Star Garland */}
+          <circle cx="14" cy="20" r="1.4" fill="#FDE047" />
+          <circle cx="18" cy="22" r="1.8" fill="#FDE047" />
+          <circle cx="22" cy="20" r="1.4" fill="#FDE047" />
+          {/* Wreath border */}
+          <path d="M10 25C13 27 23 27 26 25" stroke="#FDE047" strokeWidth="1.4" strokeLinecap="round" />
         </svg>
       );
 
@@ -149,19 +157,18 @@ export function ExamLogo({ slug, className = 'w-4 h-4', size = 16 }: ExamLogoPro
         <svg
           width={size}
           height={size}
-          viewBox="0 0 32 32"
+          viewBox="0 0 36 36"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={className}
-          aria-label="SSC CHSL Logo"
+          aria-label="SSC CHSL Official Logo"
         >
-          <rect width="32" height="32" rx="7" fill="#991B1B" />
-          <circle cx="16" cy="16" r="11" stroke="#FCD34D" strokeWidth="1.3" />
-          {/* Shield & Quill */}
-          <path d="M16 7L22 10V15.5C22 19.5 19.5 23 16 24.5C12.5 23 10 19.5 10 15.5V10L16 7Z" fill="#7F1D1D" stroke="#FCD34D" strokeWidth="1" />
-          {/* Star and Book */}
-          <path d="M16 11L17.2 13.5L20 13.8L18 15.7L18.5 18.5L16 17.2L13.5 18.5L14 15.7L12 13.8L14.8 13.5L16 11Z" fill="#FCD34D" />
-          <path d="M12 20.5C14 19.8 18 19.8 20 20.5" stroke="#FFFFFF" strokeWidth="1" strokeLinecap="round" />
+          <circle cx="18" cy="18" r="17" fill="#831843" stroke="#FBBF24" strokeWidth="1.8" />
+          <circle cx="18" cy="18" r="14.5" fill="#9D174D" stroke="#FFFFFF" strokeWidth="0.8" />
+          {/* Shield & Star */}
+          <path d="M18 8L25 11.5V18C25 22.5 21.5 26 18 27.5C14.5 26 11 22.5 11 18V11.5L18 8Z" fill="#BE185D" stroke="#FDE047" strokeWidth="1.2" />
+          {/* Golden Star */}
+          <polygon points="18,12 19.5,15.5 23,16 20.5,18.5 21,22 18,20.2 15,22 15.5,18.5 13,16 16.5,15.5" fill="#FDE047" />
         </svg>
       );
 
@@ -171,45 +178,47 @@ export function ExamLogo({ slug, className = 'w-4 h-4', size = 16 }: ExamLogoPro
         <svg
           width={size}
           height={size}
-          viewBox="0 0 32 32"
+          viewBox="0 0 36 36"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={className}
-          aria-label="BPSC Logo"
+          aria-label="BPSC Official Seal"
         >
-          <rect width="32" height="32" rx="7" fill="#064E3B" />
-          {/* Bihar State Seal — Bodhi Tree & Gateway */}
-          <circle cx="16" cy="16" r="11" stroke="#F59E0B" strokeWidth="1.4" />
-          {/* Bodhi Tree Canopy */}
-          <path d="M16 7C13 7 11 9 11 11.5C11 13 12 14 13.5 14.5C12 15 11 16.5 11 18C11 20 13 21 16 21C19 21 21 20 21 18C21 16.5 20 15 18.5 14.5C20 14 21 13 21 11.5C21 9 19 7 16 7Z" fill="#10B981" stroke="#FDE68A" strokeWidth="0.8" />
+          {/* Official Bihar Government & BPSC Bodhi Tree Emblem */}
+          <circle cx="18" cy="18" r="17" fill="#FFFFFF" stroke="#047857" strokeWidth="2" />
+          <circle cx="18" cy="18" r="14.5" fill="#ECFDF5" stroke="#D97706" strokeWidth="1" />
+          {/* Sacred Bodhi Tree */}
+          <path d="M18 7C14.5 7 12 9.5 12 12C12 13.5 13 14.8 14.5 15.5C13 16 12 17.5 12 19C12 21.5 14.5 23 18 23C21.5 23 24 21.5 24 19C24 17.5 23 16 21.5 15.5C23 14.8 24 13.5 24 12C24 9.5 21.5 7 18 7Z" fill="#059669" stroke="#047857" strokeWidth="0.8" />
           {/* Tree Trunk */}
-          <rect x="15" y="18" width="2" height="5" fill="#D97706" />
-          {/* Base Bar */}
-          <rect x="10" y="23" width="12" height="1.8" rx="0.5" fill="#F59E0B" />
+          <rect x="17" y="19" width="2" height="6" fill="#B45309" />
+          {/* Two Sacred Symbols (Swastikas) on either side */}
+          <path d="M10 14H12V16H10V14ZM10 16H8V18" stroke="#D97706" strokeWidth="0.8" />
+          <path d="M26 14H24V16H26V14ZM26 16H28V18" stroke="#D97706" strokeWidth="0.8" />
+          {/* Base Platform */}
+          <rect x="11" y="25" width="14" height="2" rx="0.5" fill="#D97706" />
         </svg>
       );
 
-    // 8. Bihar TRE — Bihar Teacher Recruitment Exam (BSEB / BPSC)
+    // 8. Bihar TRE — Bihar Teacher Recruitment (BSEB / BPSC)
     case 'bihar-tre':
       return (
         <svg
           width={size}
           height={size}
-          viewBox="0 0 32 32"
+          viewBox="0 0 36 36"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={className}
-          aria-label="Bihar TRE Logo"
+          aria-label="Bihar TRE Official Logo"
         >
-          <rect width="32" height="32" rx="7" fill="#047857" />
-          {/* Open Book of Education with Rising Sun */}
-          <path d="M16 11C18 9 22 9.5 24 10.5V20.5C22 19.5 18 19 16 21C14 19 10 19.5 8 20.5V10.5C10 9.5 14 9 16 11Z" fill="#F0FDF4" stroke="#FBBF24" strokeWidth="1.2" />
-          <line x1="16" y1="11" x2="16" y2="21" stroke="#047857" strokeWidth="1.2" />
-          {/* Sun of Knowledge */}
-          <circle cx="16" cy="7.5" r="2.5" fill="#F59E0B" />
-          <path d="M16 3.5V4.5M12.5 5L13.2 5.7M19.5 5L18.8 5.7M11 7.5H12M20 7.5H21" stroke="#F59E0B" strokeWidth="1" strokeLinecap="round" />
-          {/* Teacher Pen / Quill */}
-          <path d="M22 15L24 13L25.5 14.5L23.5 16.5L22 15Z" fill="#F59E0B" />
+          {/* Bihar Education Department Emblem */}
+          <circle cx="18" cy="18" r="17" fill="#065F46" stroke="#F59E0B" strokeWidth="1.8" />
+          {/* Open Book of Learning */}
+          <path d="M18 14C20.5 12 25 12.5 28 14V24C25 22.5 20.5 22 18 24C15.5 22 11 22.5 8 24V14C11 12.5 15.5 12 18 14Z" fill="#FFFFFF" stroke="#FDE68A" strokeWidth="1.2" />
+          <line x1="18" y1="14" x2="18" y2="24" stroke="#065F46" strokeWidth="1.4" />
+          {/* Rising Sun of Knowledge */}
+          <circle cx="18" cy="10" r="3" fill="#F59E0B" />
+          <path d="M18 5V6.5M13.5 7L14.5 8M22.5 7L21.5 8M11.5 10H13M23 10H24.5" stroke="#FDE68A" strokeWidth="1.2" strokeLinecap="round" />
         </svg>
       );
 
@@ -219,20 +228,22 @@ export function ExamLogo({ slug, className = 'w-4 h-4', size = 16 }: ExamLogoPro
         <svg
           width={size}
           height={size}
-          viewBox="0 0 32 32"
+          viewBox="0 0 36 36"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={className}
-          aria-label="CTET & STET Logo"
+          aria-label="CTET Official Logo"
         >
-          <rect width="32" height="32" rx="7" fill="#1E3A8A" />
-          {/* Traditional Indian Diya / Lamp of Wisdom */}
-          <path d="M16 7C14.5 9.5 14 11 15 12.5C15.5 13.2 16.5 13.2 17 12.5C18 11 17.5 9.5 16 7Z" fill="#F59E0B" />
-          <path d="M16 9C15.3 10.5 15 11.2 15.5 12C15.8 12.4 16.2 12.4 16.5 12C17 11.2 16.7 10.5 16 9Z" fill="#FEF08A" />
-          {/* Diya Base */}
-          <path d="M10 14C10 17 13 18.5 16 18.5C19 18.5 22 17 22 14H10Z" fill="#D97706" />
-          {/* Open Book Foundation */}
-          <path d="M16 19C18 17.5 22 18 24 19V25C22 24 18 23.5 16 25C14 23.5 10 24 8 25V19C10 18 14 17.5 16 19Z" fill="#FFFFFF" stroke="#60A5FA" strokeWidth="1" />
+          {/* CBSE / CTET Official Blue & Gold Seal */}
+          <circle cx="18" cy="18" r="17" fill="#1E3A8A" stroke="#F59E0B" strokeWidth="1.8" />
+          <circle cx="18" cy="18" r="14.5" fill="#172554" stroke="#60A5FA" strokeWidth="0.8" />
+          {/* Traditional Deepak (Lamp of Wisdom) */}
+          <path d="M18 7C16.5 10 16 11.5 17 13.5C17.5 14.5 18.5 14.5 19 13.5C20 11.5 19.5 10 18 7Z" fill="#F59E0B" />
+          <path d="M18 9C17.2 11 17 11.8 17.5 12.8C17.8 13.2 18.2 13.2 18.5 12.8C19 11.8 18.8 11 18 9Z" fill="#FEF08A" />
+          {/* Diya Clay Base */}
+          <path d="M11 15C11 18.5 14.5 20.5 18 20.5C21.5 20.5 25 18.5 25 15H11Z" fill="#D97706" />
+          {/* Open Book */}
+          <path d="M18 21C20.5 19.5 25 20 27 21.5V27C25 25.5 20.5 25 18 26.5C15.5 25 11 25.5 9 27V21.5C11 20 15.5 19.5 18 21Z" fill="#FFFFFF" stroke="#93C5FD" strokeWidth="1" />
         </svg>
       );
 
@@ -242,21 +253,25 @@ export function ExamLogo({ slug, className = 'w-4 h-4', size = 16 }: ExamLogoPro
         <svg
           width={size}
           height={size}
-          viewBox="0 0 32 32"
+          viewBox="0 0 36 36"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={className}
-          aria-label="CUET Logo"
+          aria-label="CUET Official Logo"
         >
-          <rect width="32" height="32" rx="7" fill="#312E81" />
-          {/* University Pillars & Graduation Cap */}
-          <path d="M16 6L25 10.5L16 15L7 10.5L16 6Z" fill="#F59E0B" />
-          <path d="M16 15V18.5C16 20.5 19 21.5 22 20.5V13.5" stroke="#FDE68A" strokeWidth="1.2" strokeLinecap="round" />
-          <path d="M25 10.5V16.5" stroke="#F59E0B" strokeWidth="1.2" strokeLinecap="round" />
-          {/* University Greek Pillars */}
-          <path d="M9 20H23" stroke="#FFFFFF" strokeWidth="1.4" strokeLinecap="round" />
-          <path d="M11 20V25M15 20V25M17 20V25M21 20V25" stroke="#CBD5E1" strokeWidth="1.4" strokeLinecap="round" />
-          <path d="M8 26H24" stroke="#FFFFFF" strokeWidth="1.6" strokeLinecap="round" />
+          {/* Academic Indigo & Orange University Emblem */}
+          <circle cx="18" cy="18" r="17" fill="#312E81" stroke="#F59E0B" strokeWidth="1.8" />
+          {/* Mortarboard */}
+          <polygon points="18,7 28,12 18,17 8,12" fill="#F59E0B" stroke="#FEF08A" strokeWidth="0.8" />
+          <path d="M18 17V21C18 23 21.5 24.5 25 23.5V15.5" stroke="#FDE68A" strokeWidth="1.4" strokeLinecap="round" />
+          <path d="M28 12V18" stroke="#F59E0B" strokeWidth="1.4" strokeLinecap="round" />
+          {/* University Greek Columns */}
+          <path d="M10 22H26" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="12" y1="22" x2="12" y2="28" stroke="#CBD5E1" strokeWidth="1.8" strokeLinecap="round" />
+          <line x1="16" y1="22" x2="16" y2="28" stroke="#CBD5E1" strokeWidth="1.8" strokeLinecap="round" />
+          <line x1="20" y1="22" x2="20" y2="28" stroke="#CBD5E1" strokeWidth="1.8" strokeLinecap="round" />
+          <line x1="24" y1="22" x2="24" y2="28" stroke="#CBD5E1" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M9 29H27" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
         </svg>
       );
 
@@ -266,114 +281,114 @@ export function ExamLogo({ slug, className = 'w-4 h-4', size = 16 }: ExamLogoPro
         <svg
           width={size}
           height={size}
-          viewBox="0 0 32 32"
+          viewBox="0 0 36 36"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={className}
-          aria-label="IBPS PO Logo"
+          aria-label="IBPS Official Logo"
         >
-          <rect width="32" height="32" rx="7" fill="#0C4A6E" />
-          {/* IBPS Classic Shield */}
-          <path d="M16 6L24 9V16C24 21 20 25 16 26.5C12 25 8 21 8 16V9L16 6Z" fill="#0369A1" stroke="#FCD34D" strokeWidth="1.4" />
-          {/* Flame of Knowledge */}
-          <path d="M16 10C14.5 12 14 13.5 15 15C15.5 15.8 16.5 15.8 17 15C18 13.5 17.5 12 16 10Z" fill="#F59E0B" />
-          {/* Open Book */}
-          <path d="M16 17C17.5 16 20 16.5 21.5 17V21C20 20.5 17.5 20 16 21C14.5 20 12 20.5 10.5 21V17C12 16.5 14.5 16 16 17Z" fill="#FFFFFF" />
-          <line x1="16" y1="17" x2="16" y2="21" stroke="#0369A1" strokeWidth="0.8" />
+          {/* Official IBPS Navy Shield */}
+          <circle cx="18" cy="18" r="17" fill="#0C4A6E" stroke="#38BDF8" strokeWidth="1.5" />
+          <path d="M18 7L27 10.5V18C27 23.5 22.5 27.5 18 29C13.5 27.5 9 23.5 9 18V10.5L18 7Z" fill="#0284C7" stroke="#FDE047" strokeWidth="1.5" />
+          {/* Torch & Open Book */}
+          <path d="M18 11C16.5 13 16 14.5 17 16C17.5 16.8 18.5 16.8 19 16C20 14.5 19.5 13 18 11Z" fill="#F59E0B" />
+          <path d="M18 18C20 17 23 17.5 24.5 18V23C23 22.2 20 21.8 18 22.8C16 21.8 13 22.2 11.5 23V18C13 17.5 16 17 18 18Z" fill="#FFFFFF" />
         </svg>
       );
 
-    // 12. SBI PO — State Bank of India
+    // 12. SBI PO — State Bank of India Official Logo
     case 'sbi-po':
       return (
         <svg
           width={size}
           height={size}
-          viewBox="0 0 32 32"
+          viewBox="0 0 36 36"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={className}
-          aria-label="SBI Logo"
+          aria-label="SBI Official Logo"
         >
-          {/* Official SBI Blue Circle */}
-          <rect width="32" height="32" rx="7" fill="#FFFFFF" />
-          <circle cx="16" cy="16" r="12" fill="#0076BE" />
-          {/* Official Keyhole Cutout */}
-          <circle cx="16" cy="14" r="3.2" fill="#FFFFFF" />
-          <path d="M14.5 14H17.5V23.5H14.5V14Z" fill="#FFFFFF" />
+          {/* Authentic SBI Solid Blue Circle with Keyhole Cutout */}
+          <circle cx="18" cy="18" r="17" fill="#0076BE" />
+          {/* Central Keyhole */}
+          <circle cx="18" cy="15" r="4.2" fill="#FFFFFF" />
+          <rect x="16" y="15" width="4" height="12" fill="#FFFFFF" />
         </svg>
       );
 
-    // 13. RBI Grade B — Reserve Bank of India
+    // 13. RBI Grade B — Reserve Bank of India Official Seal
     case 'rbi-grade-b':
       return (
         <svg
           width={size}
           height={size}
-          viewBox="0 0 32 32"
+          viewBox="0 0 36 36"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={className}
-          aria-label="RBI Logo"
+          aria-label="RBI Official Seal"
         >
-          <rect width="32" height="32" rx="7" fill="#0F172A" />
-          {/* Official Double Ring Seal */}
-          <circle cx="16" cy="16" r="12" stroke="#EAB308" strokeWidth="1.5" />
-          <circle cx="16" cy="16" r="10" stroke="#CA8A04" strokeWidth="0.8" fill="#1E293B" />
+          {/* Authentic RBI Gold & Black Double Ring Seal */}
+          <circle cx="18" cy="18" r="17" fill="#0A0A0A" stroke="#CA8A04" strokeWidth="2" />
+          <circle cx="18" cy="18" r="14.5" stroke="#EAB308" strokeWidth="1" strokeDasharray="1.5 1" />
           {/* Palm Tree */}
-          <path d="M16 12V22" stroke="#FDE047" strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M16 12C14 10 11 11 11 11M16 12C18 10 21 11 21 11M16 14C13 13 11 14.5 11 14.5M16 14C19 13 21 14.5 21 14.5M16 16C13.5 16 12 18 12 18M16 16C18.5 16 20 18 20 18" stroke="#FDE047" strokeWidth="1.2" strokeLinecap="round" />
-          {/* Bengal Tiger Silhouette under the Palm Tree */}
-          <path d="M9 22C10 21 12 21 14 21.5C14.5 21 15 21 15.5 21.5H18C19 21.5 20 22 21 22.5" stroke="#F59E0B" strokeWidth="1.4" strokeLinecap="round" />
+          <path d="M18 13V25" stroke="#FDE047" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M18 13C15 11 12 12 12 12M18 13C21 11 24 12 24 12M18 15C14.5 14 12 15.5 12 15.5M18 15C21.5 14 24 15.5 24 15.5M18 17C15 17 13 19 13 19M18 17C21 17 23 19 23 19" stroke="#FDE047" strokeWidth="1.4" strokeLinecap="round" />
+          {/* Royal Bengal Tiger Silhouette */}
+          <path d="M10 25C11.5 23.5 13.5 23.5 15.5 24.2C16 23.5 17 23.5 17.5 24.2H20C21.5 24.2 23 25 24.5 25.5" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" />
         </svg>
       );
 
-    // 14. RRB NTPC — Indian Railways Recruitment Board
+    // 14. RRB NTPC — Indian Railways Official Emblem
     case 'rrb-ntpc':
       return (
         <svg
           width={size}
           height={size}
-          viewBox="0 0 32 32"
+          viewBox="0 0 36 36"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={className}
-          aria-label="Indian Railways RRB Logo"
+          aria-label="Indian Railways Official Logo"
         >
-          <rect width="32" height="32" rx="7" fill="#991B1B" />
-          {/* Railway Cog Wheel & Track Circle */}
-          <circle cx="16" cy="16" r="11" stroke="#FBBF24" strokeWidth="1.5" strokeDasharray="3 1.5" />
-          <circle cx="16" cy="16" r="8.5" fill="#B91C1C" stroke="#FFFFFF" strokeWidth="0.8" />
-          {/* Steam Engine Train Silhouette */}
-          <path d="M12 18H20V20.5H12V18Z" fill="#FDE047" />
-          <path d="M13 14H19L19.5 18H12.5L13 14Z" fill="#FFFFFF" />
-          <rect x="14.5" y="11" width="3" height="3" rx="0.5" fill="#FDE047" />
-          <circle cx="14" cy="21.5" r="1.5" fill="#FFFFFF" />
-          <circle cx="18" cy="21.5" r="1.5" fill="#FFFFFF" />
+          {/* Authentic Indian Railways Crimson Circular Track Crest */}
+          <circle cx="18" cy="18" r="17" fill="#990000" stroke="#FBBF24" strokeWidth="2" />
+          <circle cx="18" cy="18" r="14" fill="#B91C1C" stroke="#FFFFFF" strokeWidth="1" strokeDasharray="2.5 1" />
+          {/* Steam Engine Train Face */}
+          <rect x="13" y="14" width="10" height="9" rx="1.5" fill="#FEF08A" />
+          <rect x="14.5" y="15" width="7" height="3.5" rx="0.5" fill="#1E293B" />
+          {/* Headlight */}
+          <circle cx="18" cy="20" r="1.5" fill="#DC2626" />
+          {/* Train Wheels */}
+          <circle cx="14.5" cy="24.5" r="1.8" fill="#FFFFFF" />
+          <circle cx="21.5" cy="24.5" r="1.8" fill="#FFFFFF" />
+          <path d="M11 27H25" stroke="#FDE047" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
       );
 
-    // 15. UGC NET — University Grants Commission
+    // 15. UGC NET — University Grants Commission Official Logo
     case 'ugc-net':
       return (
         <svg
           width={size}
           height={size}
-          viewBox="0 0 32 32"
+          viewBox="0 0 36 36"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={className}
-          aria-label="UGC NET Logo"
+          aria-label="UGC Official Logo"
         >
-          <rect width="32" height="32" rx="7" fill="#1E40AF" />
-          {/* UGC Global Academic Emblem */}
-          <circle cx="16" cy="16" r="11" stroke="#60A5FA" strokeWidth="1.2" />
-          {/* Globe Lines */}
-          <ellipse cx="16" cy="16" rx="10.5" ry="4.5" stroke="#93C5FD" strokeWidth="0.8" />
-          <ellipse cx="16" cy="16" rx="4.5" ry="10.5" stroke="#93C5FD" strokeWidth="0.8" />
-          {/* Central Sun of Knowledge */}
-          <circle cx="16" cy="16" r="4.5" fill="#F59E0B" stroke="#FEF08A" strokeWidth="1" />
-          <path d="M16 9.5V11M16 21V22.5M9.5 16H11M21 16H22.5" stroke="#FDE68A" strokeWidth="1.2" strokeLinecap="round" />
+          {/* UGC Global Blue Circular Seal */}
+          <circle cx="18" cy="18" r="17" fill="#1E40AF" stroke="#60A5FA" strokeWidth="1.8" />
+          {/* Globe Meridian Grid */}
+          <ellipse cx="18" cy="18" rx="13" ry="5.5" stroke="#93C5FD" strokeWidth="1" />
+          <ellipse cx="18" cy="18" rx="5.5" ry="13" stroke="#93C5FD" strokeWidth="1" />
+          {/* Central Radiating Sun */}
+          <circle cx="18" cy="18" r="5" fill="#F59E0B" stroke="#FEF08A" strokeWidth="1.2" />
+          <line x1="18" y1="10" x2="18" y2="12" stroke="#FDE68A" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="18" y1="24" x2="18" y2="26" stroke="#FDE68A" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="10" y1="18" x2="12" y2="18" stroke="#FDE68A" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="24" y1="18" x2="26" y2="18" stroke="#FDE68A" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       );
 
@@ -383,48 +398,47 @@ export function ExamLogo({ slug, className = 'w-4 h-4', size = 16 }: ExamLogoPro
         <svg
           width={size}
           height={size}
-          viewBox="0 0 32 32"
+          viewBox="0 0 36 36"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={className}
-          aria-label="State PSCs Logo"
+          aria-label="State PSC Official Emblem"
         >
-          <rect width="32" height="32" rx="7" fill="#334155" />
-          {/* Scales of Justice & Ashoka Emblem */}
-          <circle cx="16" cy="16" r="11" stroke="#94A3B8" strokeWidth="1.2" />
-          {/* Pillar / Scales */}
-          <line x1="16" y1="8" x2="16" y2="23" stroke="#F1F5F9" strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="10" y1="12" x2="22" y2="12" stroke="#F1F5F9" strokeWidth="1.5" strokeLinecap="round" />
+          {/* National Ashoka & Scales of Justice Crest */}
+          <circle cx="18" cy="18" r="17" fill="#1E293B" stroke="#94A3B8" strokeWidth="1.8" />
+          <circle cx="18" cy="18" r="14.5" stroke="#E2E8F0" strokeWidth="0.8" />
+          {/* Scales of Justice */}
+          <line x1="18" y1="9" x2="18" y2="26" stroke="#F8FAFC" strokeWidth="1.8" strokeLinecap="round" />
+          <line x1="11" y1="14" x2="25" y2="14" stroke="#F8FAFC" strokeWidth="1.8" strokeLinecap="round" />
           {/* Left Pan */}
-          <path d="M10 12L8.5 16H11.5L10 12Z" fill="#CBD5E1" stroke="#F1F5F9" strokeWidth="0.8" />
+          <path d="M11 14L9 18.5H13L11 14Z" fill="#FDE047" stroke="#F8FAFC" strokeWidth="0.8" />
           {/* Right Pan */}
-          <path d="M22 12L20.5 16H23.5L22 12Z" fill="#CBD5E1" stroke="#F1F5F9" strokeWidth="0.8" />
-          {/* Base */}
-          <rect x="12" y="23" width="8" height="2" rx="0.5" fill="#E2E8F0" />
+          <path d="M25 14L23 18.5H27L25 14Z" fill="#FDE047" stroke="#F8FAFC" strokeWidth="0.8" />
+          <rect x="13" y="26" width="10" height="2" rx="0.5" fill="#E2E8F0" />
         </svg>
       );
 
-    // 17. CBSE & ICSE — Board Curricula Class 6-12
+    // 17. CBSE & ICSE — Central Board of Secondary Education
     case 'cbse-icse':
     default:
       return (
         <svg
           width={size}
           height={size}
-          viewBox="0 0 32 32"
+          viewBox="0 0 36 36"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={className}
-          aria-label="CBSE & ICSE Logo"
+          aria-label="CBSE Official Logo"
         >
-          <rect width="32" height="32" rx="7" fill="#1E3A8A" />
-          {/* CBSE Circular Emblem */}
-          <circle cx="16" cy="16" r="11" stroke="#FBBF24" strokeWidth="1.4" />
+          {/* Official CBSE Blue & Golden Wheat Seal */}
+          <circle cx="18" cy="18" r="17" fill="#003366" stroke="#F59E0B" strokeWidth="2" />
+          <circle cx="18" cy="18" r="14.5" stroke="#FDE68A" strokeWidth="1" strokeDasharray="2 1" />
+          {/* Deepak (Lamp) */}
+          <path d="M18 8C16.8 10 16.5 11.2 17.2 12.5C17.6 13.2 18.4 13.2 18.8 12.5C19.5 11.2 19.2 10 18 8Z" fill="#F59E0B" />
           {/* Open Book */}
-          <path d="M16 13C18 11.5 21 12 23 13V21C21 20 18 19.5 16 21C14 19.5 11 20 9 21V13C11 12 14 11.5 16 13Z" fill="#FFFFFF" stroke="#93C5FD" strokeWidth="0.8" />
-          <line x1="16" y1="13" x2="16" y2="21" stroke="#1E3A8A" strokeWidth="1" />
-          {/* Flame of Education */}
-          <path d="M16 7C14.8 8.8 14.5 10 15.2 11C15.6 11.6 16.4 11.6 16.8 11C17.5 10 17.2 8.8 16 7Z" fill="#F59E0B" />
+          <path d="M18 15C20.5 13.5 24 14 26 15.5V23.5C24 22 20.5 21.5 18 23C15.5 21.5 12 22 10 23.5V15.5C12 14 15.5 13.5 18 15Z" fill="#FFFFFF" stroke="#93C5FD" strokeWidth="1" />
+          <line x1="18" y1="15" x2="18" y2="23" stroke="#003366" strokeWidth="1.2" />
         </svg>
       );
   }
