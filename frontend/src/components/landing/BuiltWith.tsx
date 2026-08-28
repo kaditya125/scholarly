@@ -1,13 +1,13 @@
 import React from 'react';
-import { Gemini, Cohere, ElevenLabs, Claude, Antigravity } from '@lobehub/icons';
+import { Gemini, OpenAI, Cohere, ElevenLabs, Claude, Antigravity } from '@lobehub/icons';
 
 /**
  * Attribution, split into the two claims it actually contains.
  *
  * These are different statements and conflating them would be untrue in both directions:
  *
- *   RUNTIME      the models that serve students. Google Gemini via Vertex AI, Cohere for
- *                reranking, ElevenLabs for speech. Verifiable in the deployment's own config.
+ *   RUNTIME      the models that serve students. Google Gemini, OpenAI / ChatGPT for reasoning,
+ *                Cohere for reranking, ElevenLabs for speech. Verifiable in the deployment's own config.
  *   DEVELOPMENT  the tools the product was written with. That is a statement about how the
  *                codebase was authored, not about what runs when someone asks a question.
  *
@@ -46,11 +46,13 @@ const mark = (icon: any): React.ComponentType<{ size?: number }> => icon.Color ?
 
 const RUNTIME: Credit[] = [
   { name: 'Google Gemini', role: 'Reasoning, embeddings and the live voice model', Logo: mark(Gemini) },
+  { name: 'ChatGPT (OpenAI)', role: 'Conversational reasoning and concept synthesis', Logo: mark(OpenAI) },
   { name: 'Cohere', role: 'Reranking retrieved passages', Logo: mark(Cohere) },
   { name: 'ElevenLabs', role: 'Speech synthesis', Logo: mark(ElevenLabs) },
 ];
 
 const BUILT_WITH: Credit[] = [
+  { name: 'ChatGPT', role: '', Logo: mark(OpenAI) },
   { name: 'Claude', role: '', Logo: mark(Claude) },
   { name: 'Antigravity', role: '', Logo: mark(Antigravity) },
 ];
