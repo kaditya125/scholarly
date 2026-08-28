@@ -204,39 +204,39 @@ function FounderPortrait({ person }: { person: Person }) {
   if (!hero || failed) return null;
 
   return (
-    <figure className="relative w-full max-w-[300px] sm:max-w-[380px] lg:max-w-none mx-auto">
-      {/* Brand wash behind the frame. Load-bearing, not decorative: the photograph's own
-          background is a near-white wall, and without this it dissolves into a white page. */}
+    <figure className="relative w-full max-w-[260px] sm:max-w-[310px] lg:max-w-[340px] mx-auto">
+      {/* Soft atmospheric ambient glow matching the wall tone & brand lime */}
       <span
         aria-hidden
-        className="pointer-events-none absolute -inset-5 rounded-[38px] bg-gradient-to-tr from-[#c8e558]/25 via-emerald-500/10 to-transparent blur-2xl"
+        className="pointer-events-none absolute -inset-4 sm:-inset-6 rounded-[36px] bg-gradient-to-tr from-[#c8e558]/20 via-slate-200/40 dark:via-white/[0.04] to-transparent blur-2xl"
       />
 
-      <div className="relative overflow-hidden rounded-[26px] border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.04] shadow-[0_24px_60px_-30px_rgba(15,23,42,0.5)]">
-        {/* The same hairline of brand colour PersonCard carries, so the photo reads as part of
-            the page's vocabulary rather than an image dropped into it. */}
+      {/* Container with soft blended border */}
+      <div className="relative overflow-hidden rounded-[24px] border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] shadow-[0_16px_40px_-20px_rgba(15,23,42,0.35)]">
+        {/* Top subtle brand hairline */}
         <span
           aria-hidden
-          className="absolute inset-x-10 top-0 z-10 h-px bg-gradient-to-r from-transparent via-[#c8e558] to-transparent"
+          className="absolute inset-x-8 top-0 z-10 h-px bg-gradient-to-r from-transparent via-[#c8e558] to-transparent opacity-80"
         />
+        {/* Soft edge fade overlay merging inner image edges into the page */}
+        <div className="pointer-events-none absolute inset-0 z-10 rounded-[24px] ring-1 ring-inset ring-black/[0.04] dark:ring-white/[0.08] shadow-[inset_0_0_24px_rgba(255,255,255,0.4)] dark:shadow-[inset_0_0_24px_rgba(10,10,11,0.7)]" />
+
         <picture>
           <source
             type="image/webp"
             srcSet={`${hero.webp500} 500w, ${hero.webp1000} 1000w`}
-            sizes="(min-width: 1024px) 420px, (min-width: 640px) 380px, 300px"
+            sizes="(min-width: 1024px) 340px, (min-width: 640px) 310px, 260px"
           />
           <img
             src={hero.jpg1000}
             alt={`${person.name}, ${person.role} at ${SITE.name}, ${hero.alt}`}
             width={hero.width}
             height={hero.height}
-            /* Above the fold on this page, so it is fetched eagerly and early rather than
-               lazily — a lazy hero is a hero that arrives after the reader has scrolled past. */
             loading="eager"
             fetchPriority="high"
             decoding="async"
             onError={() => setFailed(true)}
-            className="block w-full h-auto aspect-[2/3] object-cover"
+            className="block w-full h-auto aspect-[2/3] object-cover transition-transform duration-500 hover:scale-[1.01]"
           />
         </picture>
       </div>
@@ -389,7 +389,7 @@ export default function OurTeam() {
             {/* Text first in the DOM so the h1 leads for a screen reader and for search; the
                 photograph and the founder card follow. On lg they sit beside the text, below lg
                 they stack under it — the same reading order either way. */}
-            <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] gap-12 lg:gap-16 items-center">
+            <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)] gap-12 lg:gap-16 items-center">
               <motion.div
                 initial={reduced ? false : { opacity: 0, y: 16 }}
                 animate={reduced ? undefined : { opacity: 1, y: 0 }}
