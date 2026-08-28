@@ -132,6 +132,15 @@ export function useAdaptiveAssessment() {
     setSelectedAnswer(opt);
   };
 
+  /**
+   * "Clear Response" — deselect without recording an answer switch.
+   *
+   * Switch count feeds the behavioural signals used for confidence calibration, and clearing an
+   * answer is not the same act as changing your mind between two options. Routing this through
+   * handleSelectOption would inflate that signal every time a student tidied up before moving on.
+   */
+  const clearResponse = () => setSelectedAnswer(null);
+
   // Submit question with confidence rating
   const handleAnswerQuestion = async (confidence: 'Very Confident' | 'Confident' | 'Not Sure' | 'Pure Guess') => {
     if (!currentQuestion || selectedAnswer === null) return;
@@ -206,6 +215,7 @@ export function useAdaptiveAssessment() {
     retry: () => startMutation.mutateAsync(),
     startAssessment: startMutation.mutateAsync,
     handleSelectOption,
+    clearResponse,
     handleAnswerQuestion,
     trackHover: () => setOptionHovers((prev) => prev + 1),
     submitAssessment: () => submitMutation.mutateAsync(userResponses),
