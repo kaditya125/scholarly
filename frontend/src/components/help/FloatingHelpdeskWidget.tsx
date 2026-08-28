@@ -293,6 +293,16 @@ function AssistantWidgetMessage({
                   <Headphones className="w-3.5 h-3.5" />
                   {res.cta.label}
                 </button>
+              ) : res.cta.url.startsWith('http') ? (
+                <a
+                  href={res.cta.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12px] font-semibold hover:opacity-90 transition-opacity"
+                >
+                  {res.cta.label}
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </a>
               ) : (
                 <Link
                   to={res.cta.url}

@@ -188,38 +188,43 @@ Query: "${query}"`;
     const q = query.toLowerCase();
     const safeIntent = (intent || 'UNKNOWN').toUpperCase();
 
-    // 1. Referrals & Rewards (Checked first to avoid 'pro' in 'program')
+    // 1. Founder & Team queries
+    if (q.includes('founder') || q.includes('aditya') || q.includes('who built') || q.includes('who made') || q.includes('team') || q.includes('creator')) {
+      return { label: 'Connect on LinkedIn / Meet Founder', url: 'https://www.linkedin.com/in/aditya-kumar-122370267/', type: 'primary' };
+    }
+
+    // 2. Referrals & Rewards (Checked first to avoid 'pro' in 'program')
     if (q.includes('refer') || q.includes('invite') || q.includes('reward') || q.includes('affiliate') || /\bearn\b/i.test(q)) {
       return { label: 'Explore Referral Program', url: '/refer', type: 'primary' };
     }
 
-    // 2. AI Podcast Studio
+    // 3. AI Podcast Studio
     if (q.includes('podcast') || q.includes('audio') || q.includes('voice') || /\blisten\b/i.test(q)) {
       return { label: 'Explore Podcast Studio', url: '/signup', type: 'primary' };
     }
 
-    // 3. Test Center & Assessments
+    // 4. Test Center & Assessments
     if (q.includes('test') || q.includes('exam') || q.includes('assessment') || q.includes('quiz') || q.includes('mock') || q.includes('jee') || q.includes('neet') || q.includes('cbse')) {
       return { label: 'Try Adaptive Practice Tests', url: '/signup', type: 'primary' };
     }
 
-    // 4. Teacher Ecosystem & Classroom tools
+    // 5. Teacher Ecosystem & Classroom tools
     if (q.includes('teacher') || q.includes('class') || q.includes('curriculum') || q.includes('syllabus') || q.includes('teach') || q.includes('assignment') || safeIntent.includes('TEACHER')) {
       return { label: 'Create Teacher Workspace', url: '/for-teachers', type: 'primary' };
     }
 
-    // 5. Pricing, Cost & Subscriptions (Using regex for word boundaries so 'program' does not match 'pro')
+    // 6. Pricing, Cost & Subscriptions (Using regex for word boundaries so 'program' does not match 'pro')
     if (q.includes('price') || q.includes('cost') || q.includes('subscription') || q.includes('refund') || /\b(plan|plans|pro|pricing|billing|discount|free)\b/i.test(q) || safeIntent.includes('PRICING')) {
       return { label: 'View Pricing & Plans', url: '/pricing', type: 'primary' };
     }
 
-    // 6. Flashcards, Mindmaps & Notebooks
+    // 7. Flashcards, Mindmaps & Notebooks
     if (q.includes('flashcard') || q.includes('mindmap') || q.includes('mind map') || q.includes('note') || q.includes('ocr') || q.includes('pdf') || q.includes('tutor') || safeIntent.includes('AI_TUTOR')) {
       return { label: 'Try AI Tutor for Free', url: '/signup', type: 'primary' };
     }
 
-    // 7. If model proposed a valid custom CTA with safe URL, prioritize it
-    if (proposedCTA?.label && proposedCTA?.url && (proposedCTA.url.startsWith('/') || proposedCTA.url.startsWith('mailto:'))) {
+    // 8. If model proposed a valid custom CTA with safe URL, prioritize it
+    if (proposedCTA?.label && proposedCTA?.url && (proposedCTA.url.startsWith('/') || proposedCTA.url.startsWith('https://') || proposedCTA.url.startsWith('mailto:'))) {
       return proposedCTA;
     }
 
