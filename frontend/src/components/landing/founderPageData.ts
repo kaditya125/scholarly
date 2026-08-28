@@ -1,6 +1,6 @@
 import {
   Network, FileSearch, Target, CalendarRange, Bot, Users,
-  Code2, BookOpenCheck, PenTool, MessagesSquare,
+  Code2, BookOpenCheck, PenTool, MessagesSquare, Linkedin,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -114,7 +114,13 @@ export const FOUNDER: Person = {
     // Describes what is in the frame. Everything named here is visible in the photograph.
     alt: 'seated at a workbench in the Sadhya workspace, beside a laptop, with the Sadhya logo and the line "Every goal, attainable." on the wall behind',
   },
-  links: [],
+  links: [
+    {
+      label: 'LinkedIn',
+      href: 'https://www.linkedin.com/in/aditya-kumar-122370267/',
+      icon: Linkedin,
+    },
+  ],
 };
 
 /**
