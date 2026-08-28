@@ -10,8 +10,8 @@ interface ExamLogoProps {
  * Official logo image mapping for each exam from public/ folder.
  */
 const OFFICIAL_IMAGE_MAP: Record<string, string> = {
-  'neet': '/cuet.webp',
-  'jee-main': '/cuet.webp',
+  'neet': '/nta.webp',
+  'jee-main': '/nta.webp',
   'jee-advanced': '/advance.webp',
   'upsc-cse': '/upsc.webp',
   'ssc-cgl': '/ssc cgl.webp',
@@ -19,7 +19,7 @@ const OFFICIAL_IMAGE_MAP: Record<string, string> = {
   'bpsc': '/bpsc.webp',
   'bihar-tre': '/bpsc tre.webp',
   'ctet-stet': '/ctet.webp',
-  'cuet': '/cuet.webp',
+  'cuet': '/nta.webp',
   'ibps-po': '/ibps.webp',
   'sbi-po': '/sbi.webp',
   'rbi-grade-b': '/rbi.webp',
