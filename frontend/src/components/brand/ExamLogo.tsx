@@ -23,7 +23,7 @@ const OFFICIAL_IMAGE_MAP: Record<string, string> = {
   'ibps-po': '/ibps.webp',
   'sbi-po': '/sbi.webp',
   'rbi-grade-b': '/rbi.webp',
-  'rrb-ntpc': '/rrb.webp',
+  'rrb-ntpc': '/rrb new.webp',
   'ugc-net': '/ugc net.webp',
   'state-pscs': '/upsc.webp',
   'cbse-icse': '/cbse.webp',
