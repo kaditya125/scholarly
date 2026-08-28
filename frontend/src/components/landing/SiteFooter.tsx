@@ -96,20 +96,37 @@ export default function SiteFooter() {
 
             {SITE.social.length > 0 && (
               <div className="mt-6 flex items-center gap-2">
-                {SITE.social.map((s) => (
-                  <a
-                    key={s.name}
-                    href={s.href}
-                    target="_blank"
-                    rel="noopener noreferrer me"
-                    aria-label={`${SITE.name} on ${s.name}`}
-                    className="w-9 h-9 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-white/20 hover:bg-white dark:hover:bg-white/[0.06] transition-colors"
-                  >
-                    <svg viewBox="0 0 24 24" className="w-[15px] h-[15px]" fill="currentColor" aria-hidden>
-                      <path d={BRAND_PATHS[s.icon]} />
-                    </svg>
-                  </a>
-                ))}
+                {SITE.social.map((s) => {
+                  const isInternal = s.href.startsWith('/');
+                  if (isInternal) {
+                    return (
+                      <Link
+                        key={s.name}
+                        to={s.href}
+                        aria-label={`${SITE.name} on ${s.name}`}
+                        className="w-9 h-9 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-white/20 hover:bg-white dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+                      >
+                        <svg viewBox="0 0 24 24" className="w-[15px] h-[15px]" fill="currentColor" aria-hidden>
+                          <path d={BRAND_PATHS[s.icon]} />
+                        </svg>
+                      </Link>
+                    );
+                  }
+                  return (
+                    <a
+                      key={s.name}
+                      href={s.href}
+                      target="_blank"
+                      rel="noopener noreferrer me"
+                      aria-label={`${SITE.name} on ${s.name}`}
+                      className="w-9 h-9 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-white/20 hover:bg-white dark:hover:bg-white/[0.06] transition-colors"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-[15px] h-[15px]" fill="currentColor" aria-hidden>
+                        <path d={BRAND_PATHS[s.icon]} />
+                      </svg>
+                    </a>
+                  );
+                })}
               </div>
             )}
           </div>

@@ -82,12 +82,12 @@ export const SITE = {
    * icon, so there is never a dead link pointing at a profile that doesn't exist.
    */
   social: [
-    { name: 'X (Twitter)', href: 'https://x.com/sadhyalearn', icon: 'x' },
-    { name: 'LinkedIn', href: 'https://www.linkedin.com/company/sadhyalearn', icon: 'linkedin' },
-    { name: 'Instagram', href: 'https://www.instagram.com/sadhyalearn', icon: 'instagram' },
-    { name: 'Facebook', href: 'https://www.facebook.com/sadhyalearn', icon: 'facebook' },
-    { name: 'YouTube', href: 'https://www.youtube.com/@sadhyalearn', icon: 'youtube' },
-    { name: 'GitHub', href: 'https://github.com/sadhyalearn', icon: 'github' },
+    { name: 'X (Twitter)', href: '/social?tab=x', icon: 'x' },
+    { name: 'LinkedIn', href: '/social?tab=linkedin', icon: 'linkedin' },
+    { name: 'Instagram', href: '/social?tab=instagram', icon: 'instagram' },
+    { name: 'Facebook', href: '/social?tab=facebook', icon: 'facebook' },
+    { name: 'YouTube', href: '/social?tab=youtube', icon: 'youtube' },
+    { name: 'GitHub', href: '/social?tab=github', icon: 'github' },
   ] as const,
 
   /** Shown as "Last updated" on every legal page. Bump when you revise them. */
