@@ -69,24 +69,16 @@ export function useAdaptiveAssessment() {
     staleTime: 1000 * 30,
   });
 
-  // Start / Resume Mutation
-  const startMutation = useMutation({
-    mutationFn: async () => {
-      if (!userId) throw new Error('Not authenticated');
-      return baselineAssessmentApi.startOrResume(userId);
-    },
-    onSuccess: (data) => {
-      if (data && data.currentBatch && data.currentBatch.length > 0) {
-        setQuestions(data.currentBatch);
-        setBatchIndex(data.sessionState?.batchIndex || 0);
-        if (data.sessionState?.responses) {
-          setUserResponses(data.sessionState.responses);
-          setCurrentQIndex(data.sessionState.responses.length);
-        }
-      }
-      questionTimerRef.current = Date.now();
-    },
-  });
+  /*
+   * The Start/Resume MUTATION that lived here has been removed.
+   *
+   * It called startOrResume a second time, in parallel with sessionQuery above, and because
+   * generation takes 12-24 s the two overlapped for any student who pressed Start promptly —
+   * two paid Gemini calls for one student, with the slower one overwriting the other's session.
+   *
+   * It is deleted rather than left unused: an unused mutation that still calls the API is one
+   * edit away from being wired back in, and this exact duplication is what it caused.
+   */
 
   // Fetch Next Batch Mutation
   const nextBatchMutation = useMutation({
@@ -199,7 +191,7 @@ export function useAdaptiveAssessment() {
     selectedAnswer,
     userResponses,
     isAssessmentFinished,
-    isStarting: startMutation.isPending,
+    isStarting: sessionQuery.isFetching,
     isSubmitting: submitMutation.isPending,
     isFetchingBatch: nextBatchMutation.isPending,
     /*
@@ -209,11 +201,34 @@ export function useAdaptiveAssessment() {
      * "still loading" and "this is broken, retry".
      */
     loadError:
-      (startMutation.error as Error | null)?.message ??
-      (nextBatchMutation.error as Error | null)?.message ??
+      (sessionQuery.error as Error | null)?.message ??
+            (nextBatchMutation.error as Error | null)?.message ??
       null,
-    retry: () => startMutation.mutateAsync(),
-    startAssessment: startMutation.mutateAsync,
+    retry: async () => {
+      const r = await sessionQuery.refetch();
+      return r.data ?? null;
+    },
+    /*
+     * ── WHY THIS NO LONGER CALLS THE API DIRECTLY ─────────────────────────────────────────
+     *
+     * `sessionQuery` above already fires startOrResume on mount (`enabled: !!userId`), and this
+     * used to fire it AGAIN when the student pressed Start. Because the pre-assessment screen
+     * appears immediately, a student who clicks promptly triggered both while the first was still
+     * in flight — and generation takes 12–24 s, so that overlap was the normal case, not an edge.
+     *
+     * The backend only short-circuits when a session DOCUMENT already exists. Two concurrent
+     * requests both found none, so both ran a full Gemini generation: two paid model calls for one
+     * student, and whichever finished last overwrote the other's session in Firestore.
+     *
+     * The query owns the request now. Pressing Start dismisses the modal and waits on the fetch
+     * that is already running; it only issues one itself if the query is idle with nothing cached.
+     */
+    startAssessment: async () => {
+      if (sessionQuery.data) return sessionQuery.data;
+      if (sessionQuery.isFetching) return null;   // already in flight — the query will populate state
+      const r = await sessionQuery.refetch();
+      return r.data ?? null;
+    },
     handleSelectOption,
     clearResponse,
     handleAnswerQuestion,
