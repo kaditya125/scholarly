@@ -509,12 +509,12 @@ export default function LandingPage() {
         <section className="border-y border-slate-100 dark:border-white/[0.07] bg-slate-50/60 dark:bg-white/[0.02]">
           <div className="max-w-[1160px] mx-auto px-5 sm:px-8 py-12 sm:py-14">
             <Reveal>
-              <div className="lg:flex lg:items-start lg:gap-16">
-                <p className="lg:w-[15rem] shrink-0 text-[13.5px] leading-relaxed font-medium text-slate-500 dark:text-gray-400">
+              <div className="lg:flex lg:items-center lg:gap-14">
+                <p className="lg:w-[16rem] shrink-0 text-[15px] sm:text-[15.5px] leading-relaxed font-medium text-slate-600 dark:text-gray-300">
                   It knows the pattern, syllabus and marking scheme for the exams students here
                   actually sit.
                 </p>
-                <Stagger className="mt-6 lg:mt-0 flex flex-wrap gap-x-2 gap-y-2" gap={0.025}>
+                <Stagger className="mt-6 lg:mt-0 flex flex-wrap gap-x-2 gap-y-2.5 items-center flex-1" gap={0.025}>
                   {EXAM_CATALOG.map((e) => (
                     <Item key={e.slug} y={8}>
                       <Link
