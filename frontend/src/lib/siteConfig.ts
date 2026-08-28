@@ -85,6 +85,7 @@ export const SITE = {
     { name: 'X (Twitter)', href: 'https://x.com/sadhyalearn', icon: 'x' },
     { name: 'LinkedIn', href: 'https://www.linkedin.com/company/sadhyalearn', icon: 'linkedin' },
     { name: 'Instagram', href: 'https://www.instagram.com/sadhyalearn', icon: 'instagram' },
+    { name: 'Facebook', href: 'https://www.facebook.com/sadhyalearn', icon: 'facebook' },
     { name: 'YouTube', href: 'https://www.youtube.com/@sadhyalearn', icon: 'youtube' },
     { name: 'GitHub', href: 'https://github.com/sadhyalearn', icon: 'github' },
   ] as const,

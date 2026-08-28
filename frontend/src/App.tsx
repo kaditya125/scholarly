@@ -107,6 +107,7 @@ const Terms = lazy(() => import("./pages/legal/Terms"));
 const Privacy = lazy(() => import("./pages/legal/Privacy"));
 const Refunds = lazy(() => import("./pages/legal/Refunds"));
 const Security = lazy(() => import("./pages/legal/Security"));
+const SocialHub = lazy(() => import("./pages/SocialHub"));
 const AutomationDashboard = lazy(() => import("./pages/admin/AutomationDashboard"));
 const AutomationStudio = lazy(() => import("./pages/admin/AutomationStudio"));
 const ExecutionDetail = lazy(() => import("./pages/admin/ExecutionDetail"));
@@ -266,6 +267,8 @@ function AppRoutes() {
             student wizard and lose the invitation. The page owns its own gate. */}
         <Route path="/join/:code" element={<JoinClass />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/social" element={<SocialHub />} />
+        <Route path="/community/social" element={<SocialHub />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/refunds" element={<Refunds />} />
