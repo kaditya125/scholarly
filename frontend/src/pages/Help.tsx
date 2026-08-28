@@ -325,6 +325,21 @@ function AssistantMessageView({
                   {msg.structuredResponse.cta.label}
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
+              ) : msg.structuredResponse.cta.url.startsWith('http') ? (
+                <a
+                  href={msg.structuredResponse.cta.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[12.5px] sm:text-[13px] font-medium tracking-normal transition-all active:scale-[0.98]",
+                    msg.structuredResponse.cta.type === 'primary' 
+                      ? "bg-[#c8e558] hover:bg-[#b5d341] text-slate-900 shadow-sm"
+                      : "bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-900 dark:text-white"
+                  )}
+                >
+                  {msg.structuredResponse.cta.label}
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </a>
               ) : (
                 <Link 
                   to={msg.structuredResponse.cta.url}
