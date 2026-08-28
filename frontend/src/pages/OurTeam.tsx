@@ -403,11 +403,24 @@ export default function OurTeam() {
 
                 {/* Identity beside the photograph. The passport headshot and the contact card
                     now live in their own section further down, so nothing here is repeated. */}
-                <div className="mt-6 flex items-baseline flex-wrap gap-x-3 gap-y-1">
+                <div className="mt-6 flex items-center flex-wrap gap-x-3 gap-y-2">
                   <h2 className="text-[24px] sm:text-[28px] font-semibold tracking-[-0.025em] text-slate-900 dark:text-white">
                     {FOUNDER.name}
                   </h2>
-                  <p className="text-[14px] font-medium text-[#5f7415] dark:text-[#c8e558]">{FOUNDER.role}</p>
+                  <span className="text-[14px] font-medium text-[#5f7415] dark:text-[#c8e558]">{FOUNDER.role}</span>
+                  <a
+                    href="https://www.linkedin.com/in/aditya-kumar-122370267/"
+                    target="_blank"
+                    rel="noopener noreferrer me"
+                    title="Aditya Kumar on LinkedIn"
+                    className={cn(
+                      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] text-[12.5px] font-medium text-slate-600 dark:text-gray-300 hover:text-[#0077b5] dark:hover:text-[#38a6e6] hover:border-[#0077b5]/40 hover:bg-[#0077b5]/5 transition-all shadow-2xs cursor-pointer',
+                      FOCUS,
+                    )}
+                  >
+                    <Linkedin className="w-3.5 h-3.5 text-[#0077b5] dark:text-[#38a6e6]" />
+                    <span>LinkedIn</span>
+                  </a>
                 </div>
 
                 <Lede className="max-w-[34rem]">{FOUNDER.blurb}</Lede>
@@ -416,7 +429,7 @@ export default function OurTeam() {
                   what students study, but what they actually know.
                 </Lede>
 
-                <div className="mt-8 flex flex-wrap items-center gap-3 sm:gap-4">
+                <div className="mt-8 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
                   <Link
                     to="/how-it-works"
                     className={cn(
@@ -427,22 +440,10 @@ export default function OurTeam() {
                     Explore Sadhya
                     <ArrowRight className="w-4 h-4" strokeWidth={2.25} aria-hidden />
                   </Link>
-                  <a
-                    href="https://www.linkedin.com/in/aditya-kumar-122370267/"
-                    target="_blank"
-                    rel="noopener noreferrer me"
-                    className={cn(
-                      'inline-flex items-center justify-center gap-2 h-12 px-5 rounded-xl border border-slate-200 dark:border-white/12 bg-white dark:bg-white/[0.03] text-[14.5px] font-semibold text-slate-800 dark:text-gray-200 hover:border-[#0077b5]/50 hover:bg-[#0077b5]/5 hover:text-[#0077b5] dark:hover:text-[#38a6e6] transition-all shadow-2xs cursor-pointer',
-                      FOCUS,
-                    )}
-                  >
-                    <Linkedin className="w-4 h-4 text-[#0077b5] dark:text-[#38a6e6]" />
-                    <span>Connect on LinkedIn</span>
-                  </a>
                   <Link
                     to="/contact"
                     className={cn(
-                      'inline-flex items-center justify-center h-12 px-5 rounded-xl border border-slate-200 dark:border-white/12 text-[14.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors',
+                      'inline-flex items-center justify-center h-12 px-6 rounded-xl border border-slate-200 dark:border-white/12 text-[14.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors',
                       FOCUS,
                     )}
                   >
