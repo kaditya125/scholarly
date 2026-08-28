@@ -33,7 +33,7 @@ const OFFICIAL_IMAGE_MAP: Record<string, string> = {
  * Official logos for Indian competitive exams and education boards.
  * Uses official webp logos placed in public directory with vector SVG fallbacks.
  */
-export function ExamLogo({ slug, className = 'w-4 h-4', size = 18 }: ExamLogoProps) {
+export function ExamLogo({ slug, className = 'w-7 h-7', size = 28 }: ExamLogoProps) {
   const [error, setError] = useState(false);
   const imageSrc = OFFICIAL_IMAGE_MAP[slug];
 
@@ -45,7 +45,7 @@ export function ExamLogo({ slug, className = 'w-4 h-4', size = 18 }: ExamLogoPro
         width={size}
         height={size}
         onError={() => setError(true)}
-        className={`${className} object-contain shrink-0 rounded-xs`}
+        className={`${className} object-contain shrink-0`}
         loading="lazy"
       />
     );

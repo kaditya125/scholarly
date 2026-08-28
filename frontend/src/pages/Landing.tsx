@@ -519,9 +519,9 @@ export default function LandingPage() {
                     <Item key={e.slug} y={8}>
                       <Link
                         to={`/exams/${e.slug}`}
-                        className="inline-flex items-center gap-2.5 px-3.5 py-2 rounded-xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-white/[0.04] text-[13px] font-medium text-slate-800 dark:text-gray-200 hover:border-slate-300 dark:hover:border-white/25 hover:text-slate-950 dark:hover:text-white transition-all shadow-2xs hover:shadow-xs group"
+                        className="inline-flex items-center gap-3 px-3.5 py-2 rounded-xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-white/[0.04] text-[13.5px] font-medium text-slate-800 dark:text-gray-200 hover:border-slate-300 dark:hover:border-white/25 hover:text-slate-950 dark:hover:text-white transition-all shadow-2xs hover:shadow-xs group"
                       >
-                        <ExamLogo slug={e.slug} className="w-5 h-5 shrink-0 object-contain transition-transform group-hover:scale-110" size={20} />
+                        <ExamLogo slug={e.slug} className="w-7 h-7 shrink-0 object-contain transition-transform group-hover:scale-110" size={28} />
                         <span>{e.name}</span>
                       </Link>
                     </Item>

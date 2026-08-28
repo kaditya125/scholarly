@@ -180,9 +180,9 @@ export default function ExamLanding() {
                   <Link
                     key={e.slug}
                     to={`/exams/${e.slug}`}
-                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 px-3.5 py-1.5 text-[13px] font-medium text-slate-600 dark:text-gray-300 hover:border-slate-300 dark:hover:border-white/25 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group"
+                    className="inline-flex items-center gap-2.5 rounded-xl border border-slate-200 dark:border-white/10 px-3.5 py-2 text-[13px] font-medium text-slate-600 dark:text-gray-300 hover:border-slate-300 dark:hover:border-white/25 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group"
                   >
-                    <ExamLogo slug={e.slug} className="w-3.5 h-3.5 rounded-xs transition-transform group-hover:scale-110" size={14} />
+                    <ExamLogo slug={e.slug} className="w-6 h-6 shrink-0 object-contain transition-transform group-hover:scale-110" size={24} />
                     <span>{e.name}</span>
                   </Link>
                 ))}
