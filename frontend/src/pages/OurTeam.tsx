@@ -691,28 +691,18 @@ export default function OurTeam() {
         <Roster title="The team" blurb="The people building Sadhya alongside its founder." people={TEAM} />
         <Roster title="Advisors" blurb="People who help steer what Sadhya becomes." people={ADVISORS} />
 
-        {/* ══ 7 · Get involved ══════════════════════════════════════════════════════
-            Replaces the older "There's more to build", which made the same invitation
-            without saying what anyone would actually do. An invitation with no substance
-            reads as decoration; this one names the work. */}
+        {/* ══ 7 · Get involved / Join the Mission ════════════════════════════════════ */}
         <section className="border-y border-slate-100 dark:border-white/[0.07] bg-slate-50/60 dark:bg-white/[0.02]">
           <div className="max-w-[1160px] mx-auto px-5 sm:px-8 py-20 sm:py-24">
             <Reveal>
-              <div className="max-w-[42rem]">
-                <Eyebrow>Get involved</Eyebrow>
-                <SectionHeading>Want to build this with me?</SectionHeading>
+              <div className="max-w-[44rem]">
+                <Eyebrow>Join the mission</Eyebrow>
+                <SectionHeading>Let&rsquo;s build the future of learning together.</SectionHeading>
                 <Lede>
-                  Sadhya is being built by one person, for students preparing for some of the
-                  hardest exams in the country. There is more here than one person can do well,
-                  so if any of this is your kind of problem, I&rsquo;d like to hear from you.
+                  Sadhya is on a mission to democratize authentic, syllabus-grounded AI learning for millions of competitive exam aspirants across India. Transforming how students prepare, master concepts, and achieve their goals is a massive undertaking — and the most impactful tools are created by curious, passionate builders working together.
                 </Lede>
-                {/* Says plainly what is NOT on offer. Anything warmer would imply a hiring
-                    process that does not exist, and someone might act on it. */}
                 <Lede>
-                  To be straight about it: there is no funding, no salary and no hiring process
-                  behind this yet. What there is instead is real problems, real students, and a
-                  genuine say in how the thing gets built. Contributions of any size are welcome,
-                  including one good bug report.
+                  Whether you write code, teach with mastery, design delightful products, or are an aspirant testing every edge case: <strong>your ideas, energy, and voice are deeply valued here.</strong> If you believe in empowering students and building technology that genuinely serves learners, we&rsquo;d love to collaborate with you!
                 </Lede>
               </div>
             </Reveal>
@@ -720,7 +710,7 @@ export default function OurTeam() {
             <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {CONTRIBUTION_AREAS.map((area, i) => (
                 <Reveal key={area.title} delay={Math.min(i, 4) * 0.05} className="h-full">
-                  <article className="h-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-6">
+                  <article className="h-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-6 hover:border-slate-300 dark:hover:border-white/20 transition-all shadow-2xs hover:shadow-xs">
                     <span className="inline-flex w-10 h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.05] items-center justify-center">
                       <area.icon
                         className="w-[18px] h-[18px] text-slate-700 dark:text-gray-300"
@@ -740,9 +730,7 @@ export default function OurTeam() {
             </div>
 
             <Reveal delay={0.12}>
-              <div className="mt-10 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
-                {/* No careers system exists, so this goes to the real contact form rather than a
-                    job-application flow that isn't there. */}
+              <div className="mt-10 flex flex-wrap items-center gap-3 sm:gap-4">
                 <Link
                   to="/contact"
                   className={cn(
@@ -750,13 +738,25 @@ export default function OurTeam() {
                     FOCUS,
                   )}
                 >
-                  Tell me what you&rsquo;d work on
+                  Get involved &amp; build with us
                   <ArrowRight className="w-4 h-4" strokeWidth={2.25} aria-hidden />
                 </Link>
                 <a
+                  href="https://www.linkedin.com/in/aditya-kumar-122370267/"
+                  target="_blank"
+                  rel="noopener noreferrer me"
+                  className={cn(
+                    'inline-flex items-center justify-center gap-2 h-12 px-5 rounded-xl border border-slate-200 dark:border-white/12 bg-white dark:bg-white/[0.03] text-[14.5px] font-semibold text-slate-800 dark:text-gray-200 hover:border-[#0077b5]/50 hover:bg-[#0077b5]/5 hover:text-[#0077b5] dark:hover:text-[#38a6e6] transition-all shadow-2xs cursor-pointer',
+                    FOCUS,
+                  )}
+                >
+                  <Linkedin className="w-4 h-4 text-[#0077b5] dark:text-[#38a6e6]" />
+                  <span>Connect with Founder</span>
+                </a>
+                <a
                   href={`mailto:${SITE.email.support}`}
                   className={cn(
-                    'inline-flex items-center gap-1.5 text-[13.5px] text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors rounded',
+                    'inline-flex items-center gap-1.5 h-12 px-4 text-[13.5px] text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors rounded-xl',
                     FOCUS,
                   )}
                 >

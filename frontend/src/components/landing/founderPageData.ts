@@ -230,23 +230,23 @@ export interface ContributionArea {
 export const CONTRIBUTION_AREAS: ContributionArea[] = [
   {
     icon: Code2,
-    title: 'Engineering',
-    body: 'React and TypeScript on the front, Node services behind it, and the retrieval and AI plumbing that connects the syllabus to what a student actually sees.',
+    title: 'Engineering & AI',
+    body: 'Build high-impact full-stack features with React & TypeScript, optimize sub-second vector search & syllabus retrieval pipelines, and craft real-time multimodal AI tutoring experiences.',
   },
   {
     icon: BookOpenCheck,
-    title: 'Teaching & subject expertise',
-    body: 'Mapping real syllabi, judging whether a question is genuinely representative, and checking what the AI explains against what an examiner would actually accept.',
+    title: 'Teaching & Subject Expertise',
+    body: 'Shape curriculum intelligence, review syllabus blueprints, validate answer explanations against official commission standards, and guide students with authentic pedagogical insight.',
   },
   {
     icon: PenTool,
-    title: 'Design & product',
-    body: 'Making dense information — coverage, mastery, a plan for tomorrow — legible to a student who is tired and short of time.',
+    title: 'Design & Product Experience',
+    body: 'Craft frictionless, accessible, and distraction-free learning interfaces that turn dense mastery metrics and study schedules into intuitive, empowering student workflows.',
   },
   {
     icon: MessagesSquare,
-    title: 'Students & feedback',
-    body: 'Preparing for a real exam using it, and saying plainly where it falls short. This is the most useful thing anyone can do right now.',
+    title: 'Student Champions & Feedback',
+    body: 'Test real exam workflows, share fearless feedback, discover edge cases, and help co-create the exact study companion you and fellow aspirants need to succeed.',
   },
 ];
 
