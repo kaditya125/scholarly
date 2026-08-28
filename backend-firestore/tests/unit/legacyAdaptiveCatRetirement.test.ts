@@ -29,74 +29,63 @@ const DEMO = ['Physics', 'Chemistry', 'Mathematics'];
 
 beforeEach(() => jest.clearAllMocks());
 
-describe('J.7.2 — the demo bank never mislabels its content', () => {
-  it('THE REGRESSION: a non-PCM subject no longer yields Physics content wearing its name', async () => {
-    mockGetProfile.mockResolvedValue({ subjects: ['Reasoning', 'General Knowledge'] });
-    const r = await svc.generateAdaptiveBatch('u1', 0, []);
-
-    // Whatever is served, it is labelled with the subject it actually came from.
-    for (const q of r.questions) {
-      expect(DEMO).toContain(q.subject);
-      expect(q.subject).not.toBe('Reasoning');
-      expect(q.subject).not.toBe('General Knowledge');
-    }
-    // ...and the mismatch is reported rather than hidden.
-    expect(r.offProfile).toBe(true);
-    expect(r.unsupportedSubjects.sort()).toEqual(['General Knowledge', 'Reasoning']);
-  });
-
-  it('an SSC CGL student (no mapped subjects) is flagged, not silently served as if on-profile', async () => {
-    // suggestedSubjects('SSC') returns [] — the exact production shape.
-    mockGetProfile.mockResolvedValue({ targetExam: 'SSC', subjects: [] });
-    const r = await svc.generateAdaptiveBatch('u1', 0, []);
-    expect(r.questions.length).toBeGreaterThan(0); // onboarding is not broken
-    expect(r.questions.every((q) => DEMO.includes(q.subject))).toBe(true);
-  });
-
-  it('a supported subject is served from its OWN bank, never substituted', async () => {
-    mockGetProfile.mockResolvedValue({ subjects: ['Chemistry'] });
-    const r = await svc.generateAdaptiveBatch('u1', 0, []);
-    expect(r.questions.every((q) => q.subject === 'Chemistry')).toBe(true);
-    expect(r.offProfile).toBe(false);
-    expect(r.unsupportedSubjects).toEqual([]);
-  });
-
-  it('mixed subjects rotate over only the supported ones', async () => {
-    mockGetProfile.mockResolvedValue({ subjects: ['Reasoning', 'Physics'] });
-    const r = await svc.generateAdaptiveBatch('u1', 0, []);
-    expect(r.questions.every((q) => q.subject === 'Physics')).toBe(true);
-    expect(r.unsupportedSubjects).toEqual(['Reasoning']);
-    expect(r.offProfile).toBe(false);
-  });
-
-  it('every legacy question stays UNANCHORED and flagged, whatever the profile', async () => {
-    for (const subjects of [[], ['Physics'], ['Reasoning'], ['Biology', 'General Knowledge']]) {
-      mockGetProfile.mockResolvedValue({ subjects });
-      const r = await svc.generateAdaptiveBatch('u1', 0, []);
-      for (const q of r.questions) {
-        expect(q.identityStatus).toBe('UNANCHORED');
-        expect(q.isLegacyDemo).toBe(true);
-        expect(q).not.toHaveProperty('syllabusNodeId');
-        expect(q).not.toHaveProperty('syllabusId');
-      }
-    }
-  });
-
-  it('the Physics fallback is gone from the source, not merely unreachable', () => {
+/*
+ * ── THIS BLOCK WAS REWRITTEN, AND WHY ─────────────────────────────────────────────────────
+ *
+ * It used to CONTAIN the demo bank: assert that its mislabelling was bounded, that every question
+ * it produced was flagged `isLegacyDemo: true`, that substitution stayed within PCM. Those were
+ * the right tests for a service whose only source of questions was a static array.
+ *
+ * The bank has since been deleted outright (see adaptiveCat.service.ts). Containing something
+ * that no longer exists is not a test, so these assertions are replaced by the stronger property
+ * that is now true: no static assessment question can be produced at all.
+ *
+ * HONEST NOTE ON WHAT BROKE. Of the five bank-behaviour tests here, THREE were already failing
+ * before the bank was removed — `offProfile` and `unsupportedSubjects` had been hardcoded to
+ * `false` / `[]` in the service for some time, so the test had drifted from the code it guarded.
+ * Two failed because of the removal. Measured by running this suite against the pre-change
+ * service: 3 failed / 10 passed, versus 5 failed afterwards.
+ *
+ * The product rule at the top of this file is unchanged and better served than before.
+ */
+describe('J.7.2 — no static question source survives', () => {
+  it('THE REGRESSION: the bank is gone from source, not merely unreachable', () => {
     const src = fs.readFileSync(
       path.join(__dirname, '../../src/services/adaptiveCat.service.ts'), 'utf8')
       .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-    expect(src).not.toContain(`INSTANT_QUESTION_BANK['Physics']`);
+    expect(src).not.toContain('INSTANT_QUESTION_BANK');
     // The PCM default for an empty profile is also gone.
     expect(src).not.toContain(`['Physics', 'Chemistry', 'Mathematics']`);
+    // And none of the four questions that were served to every student, whatever their exam.
+    for (const q of ['vector quantity', 'acceleration produced', 'exothermic reaction']) {
+      expect(src.toLowerCase()).not.toContain(q);
+    }
   });
 
-  it('AdaptiveCat resolves no AI provider — it is a static bank and must not imply otherwise', () => {
+  it('a failure to generate throws instead of serving anything', async () => {
+    // No LLM is reachable in this suite, so generation genuinely fails — which is the point.
+    mockGetProfile.mockResolvedValue({ subjects: ['Reasoning', 'General Knowledge'] });
+    await expect(svc.generateAdaptiveBatch('u1', 0, [])).rejects.toMatchObject({
+      name: 'AdaptiveGenerationError',
+      status: 503,
+    });
+  });
+
+  it('the same holds for an exam with no mapped subjects — no PCM substitute appears', async () => {
+    mockGetProfile.mockResolvedValue({ targetExam: 'SSC', subjects: [] });
+    await expect(svc.generateAdaptiveBatch('u1', 0, [])).rejects.toThrow(/try again/i);
+    // The old behaviour: DEMO subjects served to an SSC candidate. It cannot happen now.
+    expect(DEMO).toEqual(['Physics', 'Chemistry', 'Mathematics']);   // fixture intact
+  });
+
+  it('AdaptiveCat resolves no DI provider — its only source is the injected LLM', () => {
     const src = fs.readFileSync(
       path.join(__dirname, '../../src/services/adaptiveCat.service.ts'), 'utf8')
       .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
     expect(src).not.toContain('container.resolve');
     expect(src).not.toContain('ReasoningProvider');
+    // It is no longer a static bank — it must resolve questions through the LLM path.
+    expect(src).toContain('this.llm.generateResponse');
   });
 });
 

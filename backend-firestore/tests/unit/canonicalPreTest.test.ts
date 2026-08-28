@@ -349,17 +349,28 @@ describe('J.7.1 the legacy bank cannot enter the canonical path', () => {
     }
   });
 
-  it('26. AdaptiveCat still works for its existing demo/onboarding consumer', () => {
-    const src = read('services/adaptiveCat.service.ts');
+  /*
+   * 26 and 26b previously asserted that AdaptiveCat CONTAINED a static bank and stamped
+   * `isLegacyDemo: true`. The bank has since been deleted, so both now assert the stronger
+   * property. Note 26 used `read` rather than `codeOnly` and so was matching the word
+   * INSTANT_QUESTION_BANK inside a COMMENT — it passed after the removal for the wrong reason,
+   * which is exactly the kind of false pass these files exist to prevent. It reads code only now.
+   */
+  it('26. AdaptiveCat still serves onboarding — through the LLM, with no bank', () => {
+    const src = codeOnly(read('services/adaptiveCat.service.ts'));
     expect(src).toContain('generateAdaptiveBatch');
-    expect(src).toContain('INSTANT_QUESTION_BANK');
+    expect(src).toContain('this.llm.generateResponse');
+    expect(src).not.toContain('INSTANT_QUESTION_BANK');
   });
 
-  it('26b. every legacy question is stamped UNANCHORED and flagged at source', () => {
+  it('26b. onboarding questions are UNANCHORED, so they still cannot pose as canonical', () => {
     const src = codeOnly(read('services/adaptiveCat.service.ts'));
+    // Generated ≠ canonical. These are not tied to a verified syllabus node, so they must keep
+    // failing the evidenceIsCanonical gate exactly as the bank's output did.
     expect(src).toContain(`identityStatus: 'UNANCHORED'`);
-    expect(src).toContain('isLegacyDemo: true');
     expect(src).not.toContain(`identityStatus: 'CANONICAL'`);
+    // Nothing can produce a demo question any more, so the flag is never set true.
+    expect(src).not.toContain('isLegacyDemo: true');
   });
 
   it('27. no hardcoded exam syllabus exists in the canonical path', () => {
