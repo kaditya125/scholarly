@@ -1,7 +1,7 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
-import { ArrowRight, Mail, MessageSquare } from 'lucide-react';
+import { ArrowRight, Mail, MessageSquare, Linkedin } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
 import SiteFooter from '../components/landing/SiteFooter';
 import { cn } from '../lib/utils';
@@ -291,11 +291,12 @@ function PersonCard({
               rel="noopener noreferrer me"
               aria-label={`${person.name} on ${l.label}`}
               className={cn(
-                'w-9 h-9 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-white/20 transition-colors',
+                'inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-[12.5px] font-medium text-slate-700 dark:text-gray-300 hover:text-[#0077b5] dark:hover:text-[#38a6e6] hover:border-[#0077b5]/40 hover:bg-[#0077b5]/5 transition-colors',
                 FOCUS,
               )}
             >
-              <l.icon className="w-[15px] h-[15px]" strokeWidth={1.9} aria-hidden />
+              <l.icon className="w-4 h-4 text-[#0077b5] dark:text-[#38a6e6]" strokeWidth={1.9} aria-hidden />
+              <span>{l.label}</span>
             </a>
           ))}
         </div>
@@ -415,7 +416,7 @@ export default function OurTeam() {
                   what students study, but what they actually know.
                 </Lede>
 
-                <div className="mt-8 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
+                <div className="mt-8 flex flex-wrap items-center gap-3 sm:gap-4">
                   <Link
                     to="/how-it-works"
                     className={cn(
@@ -426,10 +427,22 @@ export default function OurTeam() {
                     Explore Sadhya
                     <ArrowRight className="w-4 h-4" strokeWidth={2.25} aria-hidden />
                   </Link>
+                  <a
+                    href="https://www.linkedin.com/in/aditya-kumar-122370267/"
+                    target="_blank"
+                    rel="noopener noreferrer me"
+                    className={cn(
+                      'inline-flex items-center justify-center gap-2 h-12 px-5 rounded-xl border border-slate-200 dark:border-white/12 bg-white dark:bg-white/[0.03] text-[14.5px] font-semibold text-slate-800 dark:text-gray-200 hover:border-[#0077b5]/50 hover:bg-[#0077b5]/5 hover:text-[#0077b5] dark:hover:text-[#38a6e6] transition-all shadow-2xs cursor-pointer',
+                      FOCUS,
+                    )}
+                  >
+                    <Linkedin className="w-4 h-4 text-[#0077b5] dark:text-[#38a6e6]" />
+                    <span>Connect on LinkedIn</span>
+                  </a>
                   <Link
                     to="/contact"
                     className={cn(
-                      'inline-flex items-center justify-center h-12 px-6 rounded-xl border border-slate-200 dark:border-white/12 text-[14.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors',
+                      'inline-flex items-center justify-center h-12 px-5 rounded-xl border border-slate-200 dark:border-white/12 text-[14.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors',
                       FOCUS,
                     )}
                   >
