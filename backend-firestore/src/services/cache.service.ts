@@ -152,8 +152,41 @@ class TieredCache implements CacheService {
   }
 }
 
-// Factory to resolve correct cache based on environment
-export const cacheService: CacheService =
-  (env.NODE_ENV === 'production' && env.REDIS_URL && env.REDIS_TOKEN)
-    ? new TieredCache(new InMemoryCache(), new UpstashRedisCache(env.REDIS_URL, env.REDIS_TOKEN))
-    : new InMemoryCache();
+/**
+ * Factory.
+ *
+ * ── THE TRAP THIS GUARDS ──────────────────────────────────────────────────────────────────
+ * This previously read `new UpstashRedisCache(env.REDIS_URL, env.REDIS_TOKEN)`. REDIS_URL is the
+ * RESP endpoint — `rediss://…upstash.io:6379` — but UpstashRedisCache is an HTTP client that
+ * builds `${url}/get/${key}` and calls fetch() on it. fetch cannot speak rediss://, so every
+ * get and set would have thrown, been swallowed by the catch in each method, and produced a
+ * cache with a permanent 0% hit rate that logged nothing anyone would notice.
+ *
+ * It never fired only because REDIS_TOKEN was unset in production, so this branch was dead —
+ * meaning the bug was waiting for whoever finally tried to turn Redis caching on.
+ *
+ * REDIS_REST_URL is now a separate variable, and the http(s) check below makes a misconfiguration
+ * announce itself at boot instead of degrading into a silent no-op.
+ */
+function resolveCache(): CacheService {
+  const memory = new InMemoryCache();
+  if (env.NODE_ENV !== 'production') return memory;
+
+  const restUrl = env.REDIS_REST_URL;
+  const token = env.REDIS_TOKEN;
+  if (!restUrl || !token) return memory;   // not configured: in-memory only, which is fine
+
+  if (!/^https?:\/\//i.test(restUrl)) {
+    console.warn(
+      '[cache] REDIS_REST_URL is not an http(s) URL, so the Redis cache tier is DISABLED. ' +
+      'It must be the Upstash REST endpoint (https://…upstash.io), not the rediss:// ' +
+      'connection string used by REDIS_URL. Falling back to in-memory cache.',
+    );
+    return memory;
+  }
+
+  console.log('[cache] Redis cache tier enabled (in-memory L1 + Upstash REST L2)');
+  return new TieredCache(memory, new UpstashRedisCache(restUrl, token));
+}
+
+export const cacheService: CacheService = resolveCache();

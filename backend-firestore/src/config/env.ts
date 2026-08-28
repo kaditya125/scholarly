@@ -34,8 +34,20 @@ const envSchema = z.object({
   TAVILY_API_KEY: z.string().optional(),
   COHERE_API_KEY: z.string().optional(),
   
-  // Caching
+  /*
+   * Caching / queues.
+   *
+   * These are TWO DIFFERENT ADDRESSES for the same Upstash database, and they are not
+   * interchangeable:
+   *   REDIS_URL      rediss://…upstash.io:6379  — the RESP protocol endpoint. BullMQ and the
+   *                                               EventBus speak this. Not fetchable over HTTP.
+   *   REDIS_REST_URL https://…upstash.io        — the REST endpoint. The cache tier speaks this,
+   *                                               with REDIS_TOKEN as a bearer token.
+   * Both are shown on the same page of the Upstash console. Passing the first where the second
+   * belongs produces a cache that fails every request silently — see cache.service.ts.
+   */
   REDIS_URL: z.string().optional(),
+  REDIS_REST_URL: z.string().optional(),
   REDIS_TOKEN: z.string().optional(),
 
   // Security / Ops
