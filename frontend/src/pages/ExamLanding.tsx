@@ -172,8 +172,9 @@ export default function ExamLanding() {
                   <ArrowRight className="w-4 h-4" />
                 </Link>
                 <Link
-                  to="/test"
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] px-5 py-2.5 text-[14.5px] font-semibold text-slate-800 dark:text-gray-200 hover:border-slate-300 dark:hover:border-white/25 hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-2xs"
+                  to={`/test?topic=${encodeURIComponent(exam.name + ' - ' + exam.fullName)}&slug=${exam.slug}`}
+                  state={{ topic: `${exam.name}: ${exam.fullName}`, slug: exam.slug, count: 10, mode: 'exam' }}
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] px-5 py-2.5 text-[14.5px] font-semibold text-slate-800 dark:text-gray-200 hover:border-slate-300 dark:hover:border-white/25 hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-2xs cursor-pointer"
                 >
                   <Sparkles className="w-4 h-4 text-amber-500" />
                   Take Practice Quiz
@@ -363,9 +364,19 @@ export default function ExamLanding() {
                         <span className="w-2.5 h-2.5 rounded-full" style={{ background: ACCENT }} />
                         {subj.subject}
                       </h3>
-                      <span className="text-[13px] font-medium text-slate-400 dark:text-gray-500">
-                        {subj.chapters.length} Core Units
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[13px] font-medium text-slate-400 dark:text-gray-500 hidden sm:inline">
+                          {subj.chapters.length} Core Units
+                        </span>
+                        <Link
+                          to={`/test?topic=${encodeURIComponent(exam.name + ' - ' + subj.subject)}&slug=${exam.slug}`}
+                          state={{ topic: `${exam.name}: ${subj.subject}`, slug: exam.slug, count: 5, mode: 'study' }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[12.5px] font-medium bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-gray-200 transition-colors shadow-2xs cursor-pointer"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                          Practice Subject
+                        </Link>
+                      </div>
                     </div>
 
                     {/* High weightage tags */}
@@ -510,8 +521,9 @@ export default function ExamLanding() {
                   </p>
                 </div>
                 <Link
-                  to="/test"
-                  className="shrink-0 px-6 py-3 rounded-xl font-semibold text-slate-900 transition-transform hover:scale-[1.02]"
+                  to={`/test?topic=${encodeURIComponent(exam.name + ' - ' + exam.fullName)}&slug=${exam.slug}`}
+                  state={{ topic: `${exam.name}: ${exam.fullName}`, slug: exam.slug, count: 10, mode: 'exam' }}
+                  className="shrink-0 px-6 py-3 rounded-xl font-semibold text-slate-900 transition-transform hover:scale-[1.02] active:scale-98 shadow-xs cursor-pointer"
                   style={{ background: ACCENT }}
                 >
                   Generate Practice Test
