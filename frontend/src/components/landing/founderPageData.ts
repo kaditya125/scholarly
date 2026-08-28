@@ -1,5 +1,6 @@
 import {
   Network, FileSearch, Target, CalendarRange, Bot, Users,
+  Code2, BookOpenCheck, PenTool, MessagesSquare,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -196,6 +197,50 @@ export const BUILDING: BuildCard[] = [
     body: 'Creating a space where students can learn, discuss, and grow together.',
     status: 'available',
     href: '/community',
+  },
+];
+
+/* ── Section: getting involved ────────────────────────────────────────────────────────── */
+
+/**
+ * Ways someone could contribute.
+ *
+ * ── THE RULE FOR THIS BLOCK ───────────────────────────────────────────────────────────────
+ * These are AREAS OF WORK, not job openings, and the copy must never imply otherwise. Nothing
+ * here may promise a salary, equity, a title, a start date, or a hiring process — none of those
+ * exist, and a public page is exactly where an implied offer becomes something someone acts on.
+ * The page says plainly that there is no formal process and routes people to the real /contact
+ * form, which is the only commitment that can actually be honoured today.
+ *
+ * Each entry describes work the project genuinely needs, drawn from what is actually being
+ * built (see BUILDING above) rather than from a generic startup roles list.
+ */
+export interface ContributionArea {
+  icon: LucideIcon;
+  title: string;
+  body: string;
+}
+
+export const CONTRIBUTION_AREAS: ContributionArea[] = [
+  {
+    icon: Code2,
+    title: 'Engineering',
+    body: 'React and TypeScript on the front, Node services behind it, and the retrieval and AI plumbing that connects the syllabus to what a student actually sees.',
+  },
+  {
+    icon: BookOpenCheck,
+    title: 'Teaching & subject expertise',
+    body: 'Mapping real syllabi, judging whether a question is genuinely representative, and checking what the AI explains against what an examiner would actually accept.',
+  },
+  {
+    icon: PenTool,
+    title: 'Design & product',
+    body: 'Making dense information — coverage, mastery, a plan for tomorrow — legible to a student who is tired and short of time.',
+  },
+  {
+    icon: MessagesSquare,
+    title: 'Students & feedback',
+    body: 'Preparing for a real exam using it, and saying plainly where it falls short. This is the most useful thing anyone can do right now.',
   },
 ];
 

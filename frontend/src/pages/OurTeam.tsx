@@ -9,7 +9,7 @@ import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
 import {
   FOUNDER, TEAM, ADVISORS, BUILDING, BUILD_STATUS_LABEL, LEARNING_CHAIN,
-  PHILOSOPHY_QUESTIONS, type Person, type BuildStatus,
+  PHILOSOPHY_QUESTIONS, CONTRIBUTION_AREAS, type Person, type BuildStatus,
 } from '../components/landing/founderPageData';
 
 /**
@@ -30,9 +30,11 @@ import {
  * shape, and Roster renders NOTHING for an empty list — so there is never a "Team" heading
  * sitting over an empty grid. Adding the first hire is a push to TEAM.
  *
- * The founder gets one thing nobody else does: a photograph above his card in the hero. The
- * card itself is the ordinary PersonCard every future colleague will get, so the day TEAM stops
- * being empty the page already looks consistent.
+ * ── TWO PHOTOGRAPHS, TWO PLACES ───────────────────────────────────────────────────────────
+ * `heroPhoto` is an environmental portrait and fills the hero uncropped at its own 2:3.
+ * `photo` is a square passport crop and appears once, at avatar size, beside the founder's note
+ * in section 5. They are never in the same block, so neither competes with the other and
+ * neither is squeezed into the other's aspect ratio.
  *
  * Every factual claim on the page is carried by founderPageData.ts, where the rule is that
  * nothing about the founder is written unless it is independently verifiable, and nothing is
@@ -175,58 +177,70 @@ function Avatar({ person, className }: { person: Person; className?: string }) {
 }
 
 /**
- * The founder's photograph, as a cover band across the top of his card.
+ * The founder's photograph, whole, in the hero.
  *
- * ── WHY A BAND AND NOT THE WHOLE FRAME ────────────────────────────────────────────────────
- * The first attempt floated the full 2:3 portrait above the card as a separate object, and it
- * read as two disconnected boxes stacked in a column with the hero text stranded beside them.
- * Making the photograph part of the card fixes that: one border, one radius, one object.
+ * ── WHY IT IS NOT CROPPED ─────────────────────────────────────────────────────────────────
+ * This is an environmental portrait, not a headshot: full figure, seated, with the Sadhya wall
+ * and its tagline behind. A square or 4:3 window takes either the head or the wall, and the wall
+ * is half of why the picture is worth showing — so it renders at the source's own 2:3, uncropped.
+ * `aspect-[2/3]` reserves that space before the bytes land, so the hero does not reflow on a
+ * slow connection.
  *
- * The 4:3 window is anchored to the TOP (`object-top`), which is not an arbitrary crop. This
- * photograph puts everything that carries meaning in its upper half — the Sadhya logo, the
- * tagline, his face, the laptop, the mug — and only floor below it. Measured on the master: a
- * 4:3 window keeps the top 50% of the frame and loses nothing but the floor. A CENTRE crop, the
- * browser default, would take his head off; that is why `object-top` is here.
- *
- * The square headshot is not displaced by this. It is immediately below in PersonCard's Avatar,
- * which uses `person.photo` — the passport crop. Each image is used at the shape it was taken
- * for, and the pairing is the ordinary cover-plus-avatar profile layout.
+ * The square headshot is not displaced by this. `person.photo` — the passport crop — has its own
+ * section further down the page, where a 72px square is the right shape for it. Each image is
+ * used at the aspect it was taken for, and neither is squeezed into the other's frame.
  *
  * ── WEIGHT ────────────────────────────────────────────────────────────────────────────────
- * The master is a 1.9 MB PNG. At the ~380px this band renders at, the same picture is 31 KB on
- * a standard screen and 85 KB on a retina one.
+ * The master is a 1.9 MB PNG, which on the first paint of a public page is the entire weight
+ * budget spent on one image. At the ~420px this renders at, the same picture is 31 KB on a
+ * standard screen and 85 KB on a retina one.
  *
- * Returns null if it fails to load, leaving the card exactly as it was before the photograph
- * existed — name, role, monogram, contact. A designed state, not a torn one.
+ * Returns null if it fails to load: the hero becomes a text hero, which is a designed state
+ * rather than a torn one, and the founder's details are beside it regardless.
  */
-function FounderCover({ person }: { person: Person }) {
+function FounderPortrait({ person }: { person: Person }) {
   const [failed, setFailed] = useState(false);
   const hero = person.heroPhoto;
   if (!hero || failed) return null;
 
   return (
-    <div className="relative border-b border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.04]">
-      <picture>
-        <source
-          type="image/webp"
-          srcSet={`${hero.webp500} 500w, ${hero.webp1000} 1000w`}
-          sizes="(min-width: 1024px) 380px, (min-width: 640px) 420px, 100vw"
+    <figure className="relative w-full max-w-[300px] sm:max-w-[380px] lg:max-w-none mx-auto">
+      {/* Brand wash behind the frame. Load-bearing, not decorative: the photograph's own
+          background is a near-white wall, and without this it dissolves into a white page. */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -inset-5 rounded-[38px] bg-gradient-to-tr from-[#c8e558]/25 via-emerald-500/10 to-transparent blur-2xl"
+      />
+
+      <div className="relative overflow-hidden rounded-[26px] border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.04] shadow-[0_24px_60px_-30px_rgba(15,23,42,0.5)]">
+        {/* The same hairline of brand colour PersonCard carries, so the photo reads as part of
+            the page's vocabulary rather than an image dropped into it. */}
+        <span
+          aria-hidden
+          className="absolute inset-x-10 top-0 z-10 h-px bg-gradient-to-r from-transparent via-[#c8e558] to-transparent"
         />
-        <img
-          src={hero.jpg1000}
-          alt={`${person.name}, ${person.role} at ${SITE.name}, ${hero.alt}`}
-          width={hero.width}
-          height={hero.height}
-          /* Above the fold on this page, so it is fetched eagerly and early rather than
-             lazily — a lazy hero is a hero that arrives after the reader has scrolled past. */
-          loading="eager"
-          fetchPriority="high"
-          decoding="async"
-          onError={() => setFailed(true)}
-          className="block w-full aspect-[4/3] object-cover object-top"
-        />
-      </picture>
-    </div>
+        <picture>
+          <source
+            type="image/webp"
+            srcSet={`${hero.webp500} 500w, ${hero.webp1000} 1000w`}
+            sizes="(min-width: 1024px) 420px, (min-width: 640px) 380px, 300px"
+          />
+          <img
+            src={hero.jpg1000}
+            alt={`${person.name}, ${person.role} at ${SITE.name}, ${hero.alt}`}
+            width={hero.width}
+            height={hero.height}
+            /* Above the fold on this page, so it is fetched eagerly and early rather than
+               lazily — a lazy hero is a hero that arrives after the reader has scrolled past. */
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            onError={() => setFailed(true)}
+            className="block w-full h-auto aspect-[2/3] object-cover"
+          />
+        </picture>
+      </div>
+    </figure>
   );
 }
 
@@ -239,32 +253,20 @@ function PersonCard({
   person,
   nameAs: NameTag = 'h3',
   showContact = false,
-  cover = false,
 }: {
   person: Person;
   nameAs?: 'h2' | 'h3';
   showContact?: boolean;
-  /** Render `person.heroPhoto` full-bleed across the top. Only the founder has one today. */
-  cover?: boolean;
 }) {
   return (
-    /*
-     * The padding moved off the root and onto the inner wrapper below, so a cover photo can run
-     * edge to edge while the text keeps its inset. `overflow-hidden` is what makes the photo take
-     * the card's corner radius instead of squaring it off. A card with no cover renders exactly
-     * as it did before — same border, same radius, same padding.
-     */
-    <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03]">
+    <div className="relative rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-6 sm:p-7">
       {/* A single hairline of brand colour along the top edge — the page's only decoration
-          that isn't type or space. z-10 keeps it above a cover photo. */}
+          that isn't type or space. */}
       <span
         aria-hidden
-        className="absolute inset-x-6 sm:inset-x-7 top-0 z-10 h-px bg-gradient-to-r from-transparent via-[#c8e558] to-transparent"
+        className="absolute inset-x-6 sm:inset-x-7 top-0 h-px bg-gradient-to-r from-transparent via-[#c8e558] to-transparent"
       />
 
-      {cover && <FounderCover person={person} />}
-
-      <div className="p-6 sm:p-7">
       <div className="flex items-center gap-4">
         <Avatar person={person} className="w-16 h-16 sm:w-[72px] sm:h-[72px] text-[22px] sm:text-[25px] shrink-0" />
         <div className="min-w-0">
@@ -323,7 +325,6 @@ function PersonCard({
           </a>
         </div>
       )}
-      </div>
     </div>
   );
 }
@@ -388,7 +389,7 @@ export default function OurTeam() {
             {/* Text first in the DOM so the h1 leads for a screen reader and for search; the
                 photograph and the founder card follow. On lg they sit beside the text, below lg
                 they stack under it — the same reading order either way. */}
-            <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] gap-12 lg:gap-16 items-center">
+            <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] gap-12 lg:gap-16 items-center">
               <motion.div
                 initial={reduced ? false : { opacity: 0, y: 16 }}
                 animate={reduced ? undefined : { opacity: 1, y: 0 }}
@@ -399,11 +400,16 @@ export default function OurTeam() {
                   Meet the Founder
                 </h1>
 
-                {/* The name, role and blurb live in the card on the right, not here — one
-                    identity per hero. This line carries the page, the card carries the person. */}
-                <p className="mt-4 text-[18px] sm:text-[21px] leading-[1.35] font-medium tracking-[-0.02em] text-slate-700 dark:text-gray-200">
-                  Building Sadhya from the ground up.
-                </p>
+                {/* Identity beside the photograph. The passport headshot and the contact card
+                    now live in their own section further down, so nothing here is repeated. */}
+                <div className="mt-6 flex items-baseline flex-wrap gap-x-3 gap-y-1">
+                  <h2 className="text-[24px] sm:text-[28px] font-semibold tracking-[-0.025em] text-slate-900 dark:text-white">
+                    {FOUNDER.name}
+                  </h2>
+                  <p className="text-[14px] font-medium text-[#5f7415] dark:text-[#c8e558]">{FOUNDER.role}</p>
+                </div>
+
+                <Lede className="max-w-[34rem]">{FOUNDER.blurb}</Lede>
                 <Lede className="max-w-[34rem]">
                   Sadhya started with a simple idea: exam preparation should understand not only
                   what students study, but what they actually know.
@@ -432,15 +438,13 @@ export default function OurTeam() {
                 </div>
               </motion.div>
 
-              {/* One card: photograph across the top, passport headshot and details beneath.
-                  Two views of the same person, and neither duplicates the other — the cover is
-                  where he works, the avatar is his face at the size a 72px square can hold. */}
+              {/* The photograph whole, at its own 2:3, with no crop taken out of it. */}
               <motion.div
                 initial={reduced ? false : { opacity: 0, y: 20 }}
                 animate={reduced ? undefined : { opacity: 1, y: 0 }}
                 transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
               >
-                <PersonCard person={FOUNDER} nameAs="h2" showContact cover />
+                <FounderPortrait person={FOUNDER} />
               </motion.div>
             </div>
           </div>
@@ -628,6 +632,43 @@ export default function OurTeam() {
               </Lede>
             </div>
           </Reveal>
+
+          {/* ── A note from the founder ──────────────────────────────────────────────
+              Where the passport headshot lives. It is a square crop of a face, so it
+              belongs at avatar size next to a signature — not stretched across a hero,
+              which is what the environmental portrait at the top of the page is for.
+              The two photographs never appear in the same block, so neither competes. */}
+          <Reveal delay={0.08}>
+            <figure className="mt-12 max-w-[46rem] rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-6 sm:p-8">
+              <span
+                aria-hidden
+                className="block w-8 h-px mb-5 bg-gradient-to-r from-[#c8e558] to-transparent"
+              />
+              <blockquote className="text-[15.5px] sm:text-[16.5px] leading-relaxed text-slate-600 dark:text-gray-300 space-y-4">
+                <p>
+                  I&rsquo;m building Sadhya on my own right now, which means every part of it —
+                  the syllabus map, the question infrastructure, the tutor, the planner — has had
+                  to be designed to fit together rather than bolted on afterwards. That is slower
+                  to start and much better to build on.
+                </p>
+                <p>
+                  If something here doesn&rsquo;t work the way you&rsquo;d expect it to, I would
+                  genuinely rather hear it than not.
+                </p>
+              </blockquote>
+              <figcaption className="mt-6 flex items-center gap-4">
+                <Avatar person={FOUNDER} className="w-14 h-14 text-[19px] shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[15px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">
+                    {FOUNDER.name}
+                  </p>
+                  <p className="mt-0.5 text-[13px] font-medium text-[#5f7415] dark:text-[#c8e558]">
+                    {FOUNDER.role}
+                  </p>
+                </div>
+              </figcaption>
+            </figure>
+          </Reveal>
         </section>
 
         {/* ══ 6 · Team & advisors ═══════════════════════════════════════════════════
@@ -636,30 +677,78 @@ export default function OurTeam() {
         <Roster title="The team" blurb="The people building Sadhya alongside its founder." people={TEAM} />
         <Roster title="Advisors" blurb="People who help steer what Sadhya becomes." people={ADVISORS} />
 
-        {/* ══ 7 · There's more to build ═════════════════════════════════════════════ */}
+        {/* ══ 7 · Get involved ══════════════════════════════════════════════════════
+            Replaces the older "There's more to build", which made the same invitation
+            without saying what anyone would actually do. An invitation with no substance
+            reads as decoration; this one names the work. */}
         <section className="border-y border-slate-100 dark:border-white/[0.07] bg-slate-50/60 dark:bg-white/[0.02]">
           <div className="max-w-[1160px] mx-auto px-5 sm:px-8 py-20 sm:py-24">
             <Reveal>
               <div className="max-w-[42rem]">
-                <Eyebrow>What&rsquo;s next</Eyebrow>
-                <SectionHeading>There&rsquo;s more to build.</SectionHeading>
+                <Eyebrow>Get involved</Eyebrow>
+                <SectionHeading>Want to build this with me?</SectionHeading>
                 <Lede>
-                  Sadhya is starting with one builder, but the vision is much bigger. As the
-                  platform grows, the goal is to bring together people who care deeply about
-                  education, technology, and the students we&rsquo;re building for.
+                  Sadhya is being built by one person, for students preparing for some of the
+                  hardest exams in the country. There is more here than one person can do well,
+                  so if any of this is your kind of problem, I&rsquo;d like to hear from you.
                 </Lede>
+                {/* Says plainly what is NOT on offer. Anything warmer would imply a hiring
+                    process that does not exist, and someone might act on it. */}
+                <Lede>
+                  To be straight about it: there is no funding, no salary and no hiring process
+                  behind this yet. What there is instead is real problems, real students, and a
+                  genuine say in how the thing gets built. Contributions of any size are welcome,
+                  including one good bug report.
+                </Lede>
+              </div>
+            </Reveal>
+
+            <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {CONTRIBUTION_AREAS.map((area, i) => (
+                <Reveal key={area.title} delay={Math.min(i, 4) * 0.05} className="h-full">
+                  <article className="h-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-6">
+                    <span className="inline-flex w-10 h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.05] items-center justify-center">
+                      <area.icon
+                        className="w-[18px] h-[18px] text-slate-700 dark:text-gray-300"
+                        strokeWidth={1.9}
+                        aria-hidden
+                      />
+                    </span>
+                    <h3 className="mt-4 text-[16.5px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">
+                      {area.title}
+                    </h3>
+                    <p className="mt-2 text-[14px] leading-relaxed text-slate-500 dark:text-gray-400">
+                      {area.body}
+                    </p>
+                  </article>
+                </Reveal>
+              ))}
+            </div>
+
+            <Reveal delay={0.12}>
+              <div className="mt-10 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
                 {/* No careers system exists, so this goes to the real contact form rather than a
                     job-application flow that isn't there. */}
                 <Link
                   to="/contact"
                   className={cn(
-                    'mt-8 inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl border border-slate-300 dark:border-white/15 text-[14.5px] font-semibold text-slate-900 dark:text-white hover:bg-white dark:hover:bg-white/[0.06] transition-colors',
+                    'inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl bg-[#c8e558] hover:bg-[#bcd94c] active:bg-[#b0cd40] text-slate-900 text-[14.5px] font-semibold transition-colors',
                     FOCUS,
                   )}
                 >
-                  Be part of the journey
+                  Tell me what you&rsquo;d work on
                   <ArrowRight className="w-4 h-4" strokeWidth={2.25} aria-hidden />
                 </Link>
+                <a
+                  href={`mailto:${SITE.email.support}`}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 text-[13.5px] text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors rounded',
+                    FOCUS,
+                  )}
+                >
+                  <Mail className="w-[15px] h-[15px]" strokeWidth={1.9} aria-hidden />
+                  {SITE.email.support}
+                </a>
               </div>
             </Reveal>
           </div>
