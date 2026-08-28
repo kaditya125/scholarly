@@ -7,6 +7,7 @@ import SiteFooter from '../components/landing/SiteFooter';
 import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
 import { EXAM_CATALOG, getExamBySlug } from '../lib/examCatalog';
+import { ExamLogo } from '../components/brand/ExamLogo';
 
 /**
  * /exams/:slug — one dedicated, genuinely distinct landing page per exam Sadhya covers.
@@ -94,16 +95,19 @@ export default function ExamLanding() {
               <span className="text-slate-600 dark:text-gray-300">{exam.name}</span>
             </nav>
 
-            <span
-              className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-medium"
-              style={{ borderColor: `${ACCENT}55`, color: '#5c7a1a', background: `${ACCENT}14` }}
-            >
-              <GraduationCap className="w-3.5 h-3.5" />
-              {exam.category}
-            </span>
+            <div className="flex items-center gap-2">
+              <span
+                className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[12px] font-medium"
+                style={{ borderColor: `${ACCENT}55`, color: '#5c7a1a', background: `${ACCENT}14` }}
+              >
+                <ExamLogo slug={exam.slug} className="w-3.5 h-3.5 rounded-xs" size={14} />
+                <span>{exam.category}</span>
+              </span>
+            </div>
 
-            <h1 className="mt-4 text-[30px] sm:text-[40px] lg:text-[46px] leading-[1.1] font-semibold tracking-[-0.03em] text-slate-900 dark:text-white">
-              {exam.fullName}
+            <h1 className="mt-4 text-[30px] sm:text-[40px] lg:text-[46px] leading-[1.1] font-semibold tracking-[-0.03em] text-slate-900 dark:text-white flex items-center gap-3.5 flex-wrap">
+              <ExamLogo slug={exam.slug} className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl shadow-xs shrink-0" size={44} />
+              <span>{exam.fullName}</span>
             </h1>
             <p className="mt-2 text-[15px] text-slate-400 dark:text-gray-500">
               Conducted by {exam.conductedBy}
@@ -176,9 +180,10 @@ export default function ExamLanding() {
                   <Link
                     key={e.slug}
                     to={`/exams/${e.slug}`}
-                    className="rounded-full border border-slate-200 dark:border-white/10 px-3.5 py-1.5 text-[13px] text-slate-600 dark:text-gray-300 hover:border-slate-300 dark:hover:border-white/25 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 px-3.5 py-1.5 text-[13px] font-medium text-slate-600 dark:text-gray-300 hover:border-slate-300 dark:hover:border-white/25 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group"
                   >
-                    {e.name}
+                    <ExamLogo slug={e.slug} className="w-3.5 h-3.5 rounded-xs transition-transform group-hover:scale-110" size={14} />
+                    <span>{e.name}</span>
                   </Link>
                 ))}
               </div>

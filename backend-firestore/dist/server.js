@@ -276,6 +276,29 @@ app.use(errorHandler_1.errorHandler);
 // ==========================================
 const server = app.listen(env_1.env.PORT, () => {
     console.log(`🚀 Server running in ${env_1.env.NODE_ENV} mode on port ${env_1.env.PORT}`);
+    // Voice gateway (Phase 3 prototype). Attaches a WebSocket endpoint at /voice to this same
+    // HTTP server and bridges it to Vertex Gemini Live. Deliberately separate from the SSE text
+    // chat path, which is untouched. Wrapped so a failure here can never take down HTTP —
+    // voice is additive, and text chat must keep working if it breaks.
+    // Pay the RAG cold-start cost at boot rather than on a student's first question. Measured
+    // at ~6.1s cold vs ~1.1s warm, so this is the difference between a 6-second pause and a
+    // conversational one. Fire-and-forget: startup must not wait on Google or Pinecone.
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { warmupRag } = require('./services/rag/warmup');
+        void warmupRag();
+    }
+    catch (err) {
+        console.warn('[rag] warm-up could not be scheduled:', err?.message || err);
+    }
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { attachVoiceGateway } = require('./services/voice/voiceGateway');
+        attachVoiceGateway(server);
+    }
+    catch (err) {
+        console.warn('[voice] gateway failed to attach; text chat unaffected:', err?.message || err);
+    }
     // Start the BullMQ background worker so enqueued jobs (podcast.generate,
     // podcast.postassets, intelligence.*, notifications, etc.) actually get
     // processed. Without this call, /api/podcasts/generate accepts the request,
@@ -365,6 +388,19 @@ const server = app.listen(env_1.env.PORT, () => {
         }
         catch (err) {
             console.error('[server] Failed to start notification worker:', err?.message || err);
+        }
+        // Background sync of registered users into the social discovery directory
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const { connectionService } = require('./services/connection.service');
+            connectionService.syncAllRegisteredUsers().then((count) => {
+                console.log(`[DirectorySync] Synced ${count} registered users into social discovery directory`);
+            }).catch((err) => {
+                console.warn('[DirectorySync] Background directory sync warning:', err?.message || err);
+            });
+        }
+        catch (err) {
+            console.warn('[DirectorySync] Failed to initiate directory sync:', err?.message || err);
         }
     }
 });

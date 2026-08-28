@@ -18,5 +18,6 @@ exports.isReadyStatus = void 0;
 __exportStar(require("./notebook"), exports);
 __exportStar(require("./observability"), exports);
 __exportStar(require("./exam.types"), exports);
+__exportStar(require("./pyq.types"), exports);
 const isReadyStatus = (status) => status === 'READY' || status === 'READY_DEGRADED';
 exports.isReadyStatus = isReadyStatus;

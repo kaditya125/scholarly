@@ -18,6 +18,14 @@ const AUTHORITY_WEIGHTS = {
     'USER_UPLOAD': 1.0,
     'WEB_SEARCH': 0.8
 };
+/**
+ * Minimum Cohere rerank relevance a public-knowledge hit must reach to be returned at all.
+ * See the measurement table on retrievePublicKnowledge for how this number was chosen.
+ *
+ * Scoped deliberately to the public path. The private notebook and curriculum paths have their
+ * own long-established behaviour and are not measured here, so they are left alone.
+ */
+const PUBLIC_RELEVANCE_FLOOR = 0.10;
 class RetrievalService {
     embeddingProvider;
     llmProvider;
@@ -93,7 +101,13 @@ Standalone Search Query:`;
         const scopeKey = scopeSourceIds && scopeSourceIds.length > 0
             ? scopeSourceIds.slice().sort().join(',')
             : '';
-        const cacheKey = `retrieval:${notebookId}:${expandedQuery}:${topK}:${scopeKey}`;
+        // The exam MUST be part of the key. `retrieveOfficialSyllabusContext` passes notebookId=''
+        // and carries examId only in the Pinecone filter, so without this two exams asking the same
+        // question collide and the second is served the first one's syllabus. Latent today because
+        // no exam-tagged documents are indexed yet; it would surface silently the moment they are.
+        const examKey = examContext?.examId || examContext?.exam || '';
+        const scopeFlags = examContext?.scopeOfficialSyllabusOnly ? 'syl' : '';
+        const cacheKey = `retrieval:${notebookId}:${examKey}:${scopeFlags}:${expandedQuery}:${topK}:${scopeKey}`;
         const cached = await cache_service_1.cacheService.get(cacheKey);
         if (cached) {
             telemetry_1.Telemetry.logLatency('retrieval_cache_hit', performance.now() - tStart, { query });
@@ -215,10 +229,19 @@ Standalone Search Query:`;
      * Enforces { examId, documentType: 'OFFICIAL_SYLLABUS' } at the Pinecone filter layer.
      */
     async retrieveOfficialSyllabusContext(examId, query, topK = 5) {
+        /*
+         * Exam ids are stored canonically as UPPERCASE_UNDERSCORE (`SSC_CGL`) — examMaster.service.ts
+         * normalises on write. Callers arrive holding whatever form they happen to have: the voice
+         * tool schema advertises `ssc-cgl` and a Gemini function call will pass exactly that.
+         * Pinecone metadata equality is literal, so an unnormalised id matches nothing — and a zero
+         * result here is indistinguishable from "this topic is not in the syllabus". Normalise at the
+         * boundary using the same rule as the write path.
+         */
+        const canonicalExamId = examId.trim().toUpperCase().replace(/[\s_-]+/g, '_');
         return this.retrieveContext(query, '', // global search across exam namespace
         {
-            exam: examId,
-            examId,
+            exam: canonicalExamId,
+            examId: canonicalExamId,
             scopeOfficialSyllabusOnly: true,
         }, topK);
     }
@@ -226,6 +249,34 @@ Standalone Search Query:`;
      * Specifically retrieves context from the public knowledge base.
      * EXPLICITLY enforces { public: true } at the Pinecone filter layer to isolate
      * public documentation from private user notebooks or credentials.
+     *
+     * ── WHY A RELEVANCE FLOOR ─────────────────────────────────────────────────────────────
+     * The `>= 0.50` vector-score filter below runs on raw embedding similarity, which is a weak
+     * signal — unrelated text clears it routinely. Nothing then filtered on the RERANKER score,
+     * so this always returned topK documents no matter how irrelevant, and the caller injected
+     * them into a prompt labelled "verified context".
+     *
+     * Measured against the live index on 2026-08-27, top reranker score per query:
+     *   "who is the founder of Sadhya?"            ~0.0010   NCERT Social Science
+     *   "who developed you?"                        0.0013   NCERT Geography
+     *   "what is included in the free plan vs pro?" 0.0004   NCERT Chemistry
+     *   "how does the AI tutor use my documents?"   0.0000   NCERT Mathematics
+     *   "explain the water cycle"                   0.9283   NCERT Class 7 Science  ← genuine
+     *
+     * Three orders of magnitude separate noise from a real hit, so the exact floor barely matters;
+     * 0.10 sits ~75x above the worst observed noise and ~8x below the weakest genuine hit.
+     *
+     * Note what that table also shows: the public index holds study content only, with no product
+     * documentation in it at all. Platform answers were never coming from retrieval — they come
+     * from SADHYA_MASTER_KNOWLEDGE in the prompt — so filtering this removes noise without
+     * removing any answer. If product docs are indexed later they will clear 0.10 easily.
+     *
+     * THE FLOOR DEPENDS ON A MULTILINGUAL RERANKER. Under Cohere's English-only model a correct
+     * Devanagari match scored 0.0015 — inside the noise band — so this filter silently emptied
+     * retrieval for every Hindi-script query. CohereRerankerProvider now defaults to
+     * rerank-multilingual-v3.0, which restores the separation in Hindi and Hinglish; see the
+     * measurement in that file. Do not pin the reranker back to an English-only model while this
+     * floor is in place.
      */
     async retrievePublicKnowledge(query, topK = 5) {
         const tStart = performance.now();
@@ -261,6 +312,12 @@ Standalone Search Query:`;
         // 1. Cohere Reranking Phase
         const documentsToRerank = deduplicatedMatches.map(m => m.metadata?.text);
         const rerankedDocs = await this.rerankerProvider.rerank(query, documentsToRerank, topK * 2);
+        /*
+         * Did the reranker actually run? If it fell back, every score is 0 for want of a judgement
+         * rather than for want of relevance, and the floor below must not be applied — otherwise a
+         * Cohere outage stops being degraded retrieval and becomes no retrieval.
+         */
+        const rerankDegraded = rerankedDocs.some(d => d.degraded);
         // 2. Score mapping
         const rankedResults = rerankedDocs.map(reranked => {
             const match = deduplicatedMatches[reranked.index];
@@ -286,8 +343,22 @@ Standalone Search Query:`;
                     .filter((r) => Boolean(r))
                 : combinedResults.slice(0, topK);
         }
-        await cache_service_1.cacheService.set(cacheKey, combinedResults, 600);
-        return combinedResults;
+        // Drop what the reranker judged irrelevant. Returning nothing is the correct answer when
+        // the index holds nothing on the subject — an empty result lets the caller say so, whereas
+        // three unrelated chapters invite it to answer from them.
+        const relevant = rerankDegraded
+            ? combinedResults
+            : combinedResults.filter(r => (r.weightedScore ?? 0) >= PUBLIC_RELEVANCE_FLOOR);
+        if (relevant.length < combinedResults.length) {
+            telemetry_1.Telemetry.logLatency('public_retrieval_filtered', performance.now() - tStart, {
+                query,
+                dropped: combinedResults.length - relevant.length,
+                kept: relevant.length,
+                floor: PUBLIC_RELEVANCE_FLOOR,
+            });
+        }
+        await cache_service_1.cacheService.set(cacheKey, relevant, 600);
+        return relevant;
     }
     /**
      * Retrieves context from the shared NCERT / curriculum corpus, i.e. content

@@ -15,6 +15,7 @@ import VoiceOrbDemo from '../components/landing/VoiceOrbDemo';
 import BuiltWith from '../components/landing/BuiltWith';
 import AvatarStack from '../components/landing/AvatarStack';
 import { HandwrittenTagline } from '../components/brand/HandwrittenTagline';
+import { ExamLogo } from '../components/brand/ExamLogo';
 import { EXAM_CATALOG } from '../lib/examCatalog';
 import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
@@ -518,9 +519,10 @@ export default function LandingPage() {
                     <Item key={e.slug} y={8}>
                       <Link
                         to={`/exams/${e.slug}`}
-                        className="inline-block px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-[13px] font-medium text-slate-600 dark:text-gray-300 hover:border-slate-300 dark:hover:border-white/25 hover:text-slate-900 dark:hover:text-white transition-colors"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] text-[13px] font-medium text-slate-700 dark:text-gray-200 hover:border-slate-300 dark:hover:border-white/25 hover:text-slate-900 dark:hover:text-white transition-all shadow-2xs hover:shadow-xs group"
                       >
-                        {e.name}
+                        <ExamLogo slug={e.slug} className="w-4 h-4 shrink-0 rounded-xs transition-transform group-hover:scale-110" size={16} />
+                        <span>{e.name}</span>
                       </Link>
                     </Item>
                   ))}
