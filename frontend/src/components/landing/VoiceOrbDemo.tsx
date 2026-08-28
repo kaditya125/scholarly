@@ -32,16 +32,7 @@ import type { VoiceState } from '../../hooks/useVoiceSession';
 
 const SPECTRUM_BINS = 128;
 
-/** A turn cycle at a conversational pace, used only when the clip is not playing. */
-const IDLE_SCRIPT: Array<{ state: VoiceState; caption: string; ms: number }> = [
-  { state: 'LISTENING', caption: 'Listening…', ms: 2600 },
-  { state: 'USER_SPEAKING', caption: '“What’s in the SSC CGL quant syllabus?”', ms: 3400 },
-  { state: 'AI_SPEAKING', caption: 'Sadhya answers — from the official notice', ms: 5200 },
-  { state: 'LISTENING', caption: 'Listening…', ms: 2200 },
-];
-
 export const VoiceOrbDemo: React.FC<{ className?: string }> = ({ className }) => {
-  const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -52,19 +43,12 @@ export const VoiceOrbDemo: React.FC<{ className?: string }> = ({ className }) =>
   const stateRef = useRef<VoiceState>('LISTENING');
   const playingRef = useRef(false);
 
-  const idle = IDLE_SCRIPT[step % IDLE_SCRIPT.length];
   const current: { state: VoiceState; caption: string } = playing
     ? { state: 'AI_SPEAKING', caption: 'Sadhya answers — from the official SSC notice' }
-    : idle;
+    : { state: 'LISTENING', caption: 'Listening…' };
+
   stateRef.current = current.state;
   playingRef.current = playing;
-
-  // The idle cycle only advances while nothing is playing; real audio drives the state otherwise.
-  useEffect(() => {
-    if (playing) return;
-    const id = setTimeout(() => setStep((s) => s + 1), idle.ms);
-    return () => clearTimeout(id);
-  }, [step, idle.ms, playing]);
 
   const toggle = useCallback(async () => {
     const el = audioRef.current;
@@ -181,7 +165,7 @@ export const VoiceOrbDemo: React.FC<{ className?: string }> = ({ className }) =>
         onLoadedMetadata={() => setReady(true)}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
-        onEnded={() => { setPlaying(false); setStep(0); startedRef.current = performance.now(); }}
+        onEnded={() => { setPlaying(false); startedRef.current = performance.now(); }}
         onError={() => setReady(false)}
       />
     </div>
