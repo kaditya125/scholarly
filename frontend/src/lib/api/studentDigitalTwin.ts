@@ -93,40 +93,33 @@ export interface StudentDigitalTwinData {
   };
 }
 
-const DEFAULT_FALLBACK_BATCH: AdaptiveQuestion[] = [
-  {
-    id: 'cat_q_0_1', batchIndex: 0, questionNumber: 1, subject: 'Physics',
-    topic: 'Kinematics', subtopic: 'Vectors', difficulty: 'Medium', type: 'MCQ',
-    question: 'Which of the following physical quantities is a vector quantity?',
-    options: ['Distance', 'Speed', 'Velocity', 'Energy'],
-    correctAnswer: 'Velocity', explanation: 'Velocity has both magnitude and direction, making it a vector quantity.',
-    estimatedTimeSeconds: 60, knowledgeGraphTag: 'Physics > Kinematics > Vectors'
-  },
-  {
-    id: 'cat_q_0_2', batchIndex: 0, questionNumber: 2, subject: 'Physics',
-    topic: 'Laws of Motion', subtopic: 'Force', difficulty: 'Medium', type: 'MCQ',
-    question: 'A force of 20 N acts on a mass of 4 kg. What is the acceleration produced?',
-    options: ['2 m/s²', '5 m/s²', '10 m/s²', '80 m/s²'],
-    correctAnswer: '5 m/s²', explanation: 'a = F / m = 20 / 4 = 5 m/s².',
-    estimatedTimeSeconds: 60, knowledgeGraphTag: 'Physics > Dynamics > Force'
-  },
-  {
-    id: 'cat_q_0_3', batchIndex: 0, questionNumber: 3, subject: 'Chemistry',
-    topic: 'Chemical Reactions', subtopic: 'Exothermic', difficulty: 'Medium', type: 'MCQ',
-    question: 'Which of the following is an example of an exothermic reaction?',
-    options: ['Photosynthesis', 'Respiration', 'Evaporation of water', 'Melting of ice'],
-    correctAnswer: 'Respiration', explanation: 'Respiration releases thermal energy.',
-    estimatedTimeSeconds: 60, knowledgeGraphTag: 'Chemistry > Reactions > Exothermic'
-  },
-  {
-    id: 'cat_q_0_4', batchIndex: 0, questionNumber: 4, subject: 'Mathematics',
-    topic: 'Algebra', subtopic: 'Quadratic Equations', difficulty: 'Medium', type: 'MCQ',
-    question: 'If the discriminant of a quadratic equation is zero, its roots are:',
-    options: ['Real and equal', 'Real and distinct', 'Imaginary', 'Zero'],
-    correctAnswer: 'Real and equal', explanation: 'When D = 0, roots are real and equal.',
-    estimatedTimeSeconds: 60, knowledgeGraphTag: 'Mathematics > Algebra > Roots'
-  }
-];
+/*
+ * ── WHY THERE IS NO FALLBACK QUESTION BATCH HERE ─────────────────────────────────────────
+ *
+ * There used to be one: four hardcoded MCQs — vectors, F = ma, exothermic reactions, quadratic
+ * discriminants — returned whenever these calls failed or came back empty. Both question-fetching
+ * methods used it, and it did real damage:
+ *
+ *   · Every student saw the SAME four questions, so it was not a baseline assessment of anything.
+ *   · They were JEE physics, chemistry and maths, served regardless of exam. A UPSC, SSC, BPSC or
+ *     banking aspirant was calibrated on subjects they do not sit.
+ *   · The answers were submitted and graded like any others, so fabricated questions became the
+ *     evidence underpinning that student's Digital Twin and their first-week roadmap.
+ *   · It hid the outage that caused it. Every one of these calls was 404ing against a path that
+ *     did not exist (see below), and because the catch quietly substituted questions, the product
+ *     looked like it worked for ten days.
+ *
+ * This is the same rule already applied to submitAssessment below, for the same reason: a
+ * failure must surface as a failure. An error the student can retry is recoverable; a plausible
+ * assessment built from invented questions is not, because nothing downstream can tell it apart
+ * from a real one.
+ *
+ * ── THE OUTAGE IT WAS MASKING ───────────────────────────────────────────────────────────
+ * These five calls addressed `/assessment/baseline/*`, but the backend mounts the router at
+ * `/baseline-assessment/*` (routes/index.ts). Every request fell through to the canonical
+ * `/assessment` router, passed its requireAuth, matched nothing and returned 404 — verified in
+ * the production access log. Paths corrected 2026-08-28.
+ */
 
 export const baselineAssessmentApi = {
   async startOrResume(userId: string): Promise<{
@@ -134,19 +127,11 @@ export const baselineAssessmentApi = {
     currentBatch: AdaptiveQuestion[];
     isComplete: boolean;
   }> {
-    try {
-      const { data } = await api.get(`/assessment/baseline/start/${userId}`);
-      if (data && data.currentBatch && data.currentBatch.length > 0) {
-        return data;
-      }
-    } catch (e) {
-      console.warn('baselineAssessmentApi.startOrResume: using instant fallback batch', e);
+    const { data } = await api.get(`/baseline-assessment/start/${userId}`);
+    if (!data?.currentBatch?.length) {
+      throw new Error('Could not start your assessment. Please try again in a moment.');
     }
-    return {
-      sessionState: { userId, batchIndex: 0, responses: [], isComplete: false },
-      currentBatch: DEFAULT_FALLBACK_BATCH,
-      isComplete: false,
-    };
+    return data;
   },
 
   async getNextBatch(
@@ -154,15 +139,16 @@ export const baselineAssessmentApi = {
     batchIndex: number,
     responses: any[]
   ): Promise<{ questions: AdaptiveQuestion[]; isComplete: boolean }> {
-    try {
-      const { data } = await api.post(`/assessment/baseline/next-batch/${userId}`, { batchIndex, responses });
-      if (data && data.questions && data.questions.length > 0) {
-        return data;
-      }
-    } catch (e) {
-      console.warn('baselineAssessmentApi.getNextBatch: using fallback batch', e);
+    const { data } = await api.post(`/baseline-assessment/next-batch/${userId}`, { batchIndex, responses });
+    /*
+     * An empty batch is NOT an error when the run is over — that is how the backend says
+     * "finished". It is only a failure if it claims to be incomplete while sending nothing,
+     * because the student would then sit on a screen waiting for a question that never comes.
+     */
+    if (!data?.questions?.length && !data?.isComplete) {
+      throw new Error('Could not load the next questions. Please try again in a moment.');
     }
-    return { questions: DEFAULT_FALLBACK_BATCH, isComplete: false };
+    return { questions: data.questions ?? [], isComplete: !!data.isComplete };
   },
 
   async submitAssessment(
@@ -179,7 +165,7 @@ export const baselineAssessmentApi = {
     // of the assessment they had just sat, for subjects they may not even take. A failed
     // submission must surface as a failure so the caller can retry or show an error; inventing a
     // plausible profile is the one outcome that is worse than an error message.
-    const { data } = await api.post(`/assessment/baseline/submit/${userId}`, payload);
+    const { data } = await api.post(`/baseline-assessment/submit/${userId}`, payload);
     if (!data?.digitalTwin) {
       throw new Error('Assessment submitted but no profile was returned. Please retry.');
     }
@@ -188,7 +174,7 @@ export const baselineAssessmentApi = {
 
   async resetAssessment(userId: string): Promise<{ success: boolean }> {
     try {
-      const { data } = await api.post(`/assessment/baseline/reset/${userId}`);
+      const { data } = await api.post(`/baseline-assessment/reset/${userId}`);
       return data;
     } catch (e) {
       console.warn('baselineAssessmentApi.resetAssessment error', e);
@@ -198,7 +184,7 @@ export const baselineAssessmentApi = {
 
   async getDigitalTwin(userId: string): Promise<StudentDigitalTwinData | null> {
     try {
-      const { data } = await api.get(`/assessment/baseline/digital-twin/${userId}`);
+      const { data } = await api.get(`/baseline-assessment/digital-twin/${userId}`);
       if (data && data.userId) return data as StudentDigitalTwinData;
     } catch (e) {
       console.warn('baselineAssessmentApi.getDigitalTwin fallback', e);

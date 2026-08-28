@@ -193,6 +193,17 @@ export function useAdaptiveAssessment() {
     isStarting: startMutation.isPending,
     isSubmitting: submitMutation.isPending,
     isFetchingBatch: nextBatchMutation.isPending,
+    /*
+     * Surfaced deliberately. These calls used to swallow their own failures and hand back a
+     * hardcoded question batch, so the UI had nothing to show and no reason to show it. Now a
+     * failure reaches the screen, which is the only way a student can tell the difference between
+     * "still loading" and "this is broken, retry".
+     */
+    loadError:
+      (startMutation.error as Error | null)?.message ??
+      (nextBatchMutation.error as Error | null)?.message ??
+      null,
+    retry: () => startMutation.mutateAsync(),
     startAssessment: startMutation.mutateAsync,
     handleSelectOption,
     handleAnswerQuestion,

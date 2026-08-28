@@ -25,6 +25,8 @@ export default function BaselineAssessmentEngine() {
     handleSelectOption,
     handleAnswerQuestion,
     trackHover,
+    loadError,
+    retry,
   } = useAdaptiveAssessment();
 
   const [showPreModal, setShowPreModal] = useState(true);
@@ -68,6 +70,46 @@ export default function BaselineAssessmentEngine() {
     setShowConfidencePrompt(false);
     await handleAnswerQuestion(rating);
   };
+
+  /*
+   * An honest failure state. Previously a failed load was invisible: the API substituted four
+   * hardcoded questions and the student sat a fabricated assessment believing it was theirs.
+   * Showing the error costs a moment; the alternative silently calibrated their Digital Twin on
+   * questions from an exam they may not even be taking.
+   */
+  if (loadError && (!questions || questions.length === 0)) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white p-6">
+        <div className="text-center space-y-4 max-w-sm">
+          <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 mx-auto">
+            <ShieldAlert className="w-8 h-8 text-amber-400" />
+          </div>
+          <h3 className="text-base font-bold text-white">We couldn&rsquo;t load your assessment</h3>
+          <p className="text-sm text-slate-400">{loadError}</p>
+          <p className="text-xs text-slate-500">
+            We&rsquo;d rather show you this than a generic test — your assessment is built around
+            your exam, so it isn&rsquo;t worth doing with someone else&rsquo;s questions.
+          </p>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => retry()}
+              disabled={isStarting}
+              className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-indigo-500 hover:bg-indigo-400 disabled:opacity-60 text-white text-sm font-semibold transition-colors"
+            >
+              {isStarting ? 'Trying again…' : 'Try again'}
+              <ArrowRight className="w-4 h-4" strokeWidth={2.25} aria-hidden />
+            </button>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="h-11 px-5 rounded-xl border border-white/15 text-slate-200 text-sm font-semibold hover:bg-white/5 transition-colors"
+            >
+              Skip for now
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (showPreModal && (!questions || questions.length === 0)) {
     return <PreAssessmentScreen isOpen={showPreModal} onStart={handleStart} isLoading={isStarting} />;
