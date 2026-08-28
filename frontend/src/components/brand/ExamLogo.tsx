@@ -39,15 +39,17 @@ export function ExamLogo({ slug, className = 'w-5 h-5', size = 20 }: ExamLogoPro
 
   if (imageSrc && !error) {
     return (
-      <img
-        src={imageSrc}
-        alt={`${slug} logo`}
-        width={size}
-        height={size}
-        onError={() => setError(true)}
-        className={`${className} object-contain shrink-0`}
-        loading="lazy"
-      />
+      <span className={`${className} rounded-md bg-white p-0.5 overflow-hidden shrink-0 inline-flex items-center justify-center shadow-2xs`}>
+        <img
+          src={imageSrc}
+          alt={`${slug} logo`}
+          width={size}
+          height={size}
+          onError={() => setError(true)}
+          className="w-full h-full object-contain"
+          loading="lazy"
+        />
+      </span>
     );
   }
 
