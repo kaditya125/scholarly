@@ -11,32 +11,48 @@ export default function TestEngine() {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const isDarkMode = theme === 'dark';
 
-  // Mode: "exam" or "study"
-  const mode = location.state?.mode || 'exam';
-  const testTitle = location.state?.topic || location.state?.notebookTitle || 'AI Mock Practice Exam';
+  const searchParams = new URLSearchParams(location.search);
+  const topicParam = (location.state?.topic as string | undefined) || searchParams.get('topic') || (searchParams.get('slug') ? `${searchParams.get('slug')?.replace(/-/g, ' ').toUpperCase()} Practice Exam` : undefined);
+  const notebookId = (location.state?.notebookId as string | undefined) || searchParams.get('notebookId') || undefined;
+  const notebookTitle = (location.state?.notebookTitle as string | undefined) || searchParams.get('notebookTitle') || undefined;
+  const count = (location.state?.count as number | undefined) || (searchParams.get('count') ? parseInt(searchParams.get('count')!, 10) : 10);
+  const mode = (location.state?.mode as string | undefined) || searchParams.get('mode') || 'exam';
+  const testTitle = topicParam || notebookTitle || 'AI Mock Practice Exam';
   const isStudyMode = mode === 'study';
 
   // ── Quiz generation state ─────────────────────────────────────────────────
   const [mockQuestions, setMockQuestions] = useState<StoredQuizQuestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const attemptIdRef = useRef<string | null>(null);
 
+  const retryGeneration = () => {
+    setRetryKey((k) => k + 1);
+  };
+
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+
     let cancelled = false;
     setIsLoading(true);
     setGenerateError(null);
 
-    const topic = location.state?.topic as string | undefined;
-    const notebookId = location.state?.notebookId as string | undefined;
-    const notebookTitle = location.state?.notebookTitle as string | undefined;
-    const count = location.state?.count as number | undefined;
-    const quizMode = location.state?.mode as string | undefined;
-
-    quizApi.generate({ topic, notebookId, notebookTitle, count, mode: quizMode as any })
+    quizApi.generate({
+      topic: topicParam || 'General Knowledge & Exam Practice',
+      notebookId,
+      notebookTitle,
+      count,
+      mode: mode as any,
+    })
       .then((result) => {
         if (cancelled) return;
         attemptIdRef.current = result.attemptId;
@@ -55,14 +71,13 @@ export default function TestEngine() {
         if (cancelled) return;
         console.error('[TestEngine] quiz generation failed:', err);
         setGenerateError(
-          err?.response?.data?.error || 'Failed to generate quiz questions. Please try again.'
+          err?.response?.data?.error || err?.message || 'Failed to generate quiz questions. Please try again.'
         );
         setIsLoading(false);
       });
 
     return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // run once on mount — location.state doesn't change mid-session
+  }, [user, authLoading, retryKey, topicParam, notebookId, notebookTitle, count, mode]);
 
   const [currentQIndex, setCurrentQIndex] = useState(() => {
     const saved = sessionStorage.getItem('testEngine_currentQIndex');
@@ -184,11 +199,44 @@ export default function TestEngine() {
     }
   }, [timeLeft]);
 
+  if (!user && !authLoading) {
+    return (
+      <div className="w-full h-screen flex flex-col items-center justify-center bg-[#fafbfc] dark:bg-[#0b0b0c] text-slate-500 font-sans p-6 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 dark:bg-indigo-400/10 flex items-center justify-center mb-5 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 shadow-2xs">
+          <Target className="w-8 h-8" />
+        </div>
+        <h2 className="text-[22px] font-semibold text-slate-900 dark:text-white mb-2">
+          Start Your Practice Assessment
+        </h2>
+        <p className="text-[14.5px] max-w-md mb-6 text-slate-600 dark:text-gray-300">
+          Sign in or create a free Sadhya account to take the <span className="font-semibold text-slate-900 dark:text-white">{testTitle}</span> with AI diagnostic scoring, detailed step explanations, and performance tracking.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <button
+            onClick={() => navigate('/signup', { state: { from: location, intent: testTitle } })}
+            className="px-6 py-2.5 bg-[#c8e558] hover:bg-[#bcd94c] text-slate-900 rounded-xl text-[14px] font-semibold transition-all shadow-xs cursor-pointer active:scale-98"
+          >
+            Create Free Account
+          </button>
+          <button
+            onClick={() => navigate('/signin', { state: { from: location, intent: testTitle } })}
+            className="px-6 py-2.5 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-800 dark:text-gray-200 rounded-xl text-[14px] font-medium transition-all cursor-pointer"
+          >
+            Sign In
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
-      <div className="w-full h-screen flex flex-col items-center justify-center bg-[#fafbfc] dark:bg-[#0b0b0c] font-sans">
-        <Loader2 className="w-8 h-8 animate-spin text-[#8ba32b] dark:text-[#c8e558] mb-3" />
-        <p className="text-[14px] text-slate-500 font-medium">Generating calibrated exam questions with Gemini AI...</p>
+      <div className="w-full h-screen flex flex-col items-center justify-center bg-[#fafbfc] dark:bg-[#0b0b0c] font-sans p-6 text-center">
+        <Loader2 className="w-9 h-9 animate-spin text-[#8ba32b] dark:text-[#c8e558] mb-4" />
+        <h3 className="text-[17px] font-semibold text-slate-900 dark:text-white mb-1">Generating Calibrated Assessment</h3>
+        <p className="text-[14px] text-slate-500 dark:text-gray-400 font-medium max-w-sm">
+          Gemini AI is formulating exam-aligned questions for <span className="text-slate-800 dark:text-gray-200">{testTitle}</span>...
+        </p>
       </div>
     );
   }
@@ -196,17 +244,25 @@ export default function TestEngine() {
   if (generateError) {
     return (
       <div className="w-full h-screen flex flex-col items-center justify-center bg-[#fafbfc] dark:bg-[#0b0b0c] text-slate-500 font-sans p-6 text-center">
-        <div className="w-14 h-14 rounded-2xl bg-rose-500/10 flex items-center justify-center mb-4 border border-rose-500/20">
-          <Info className="w-7 h-7 text-rose-500" />
+        <div className="w-14 h-14 rounded-2xl bg-rose-500/10 flex items-center justify-center mb-4 border border-rose-500/20 text-rose-500">
+          <Info className="w-7 h-7" />
         </div>
-        <h2 className="text-[18px] font-semibold text-slate-900 dark:text-white mb-1.5">Couldn't Generate Questions</h2>
-        <p className="text-[13.5px] max-w-sm mb-5 text-slate-500">{generateError}</p>
-        <button
-          onClick={() => navigate('/tests')}
-          className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 rounded-xl text-[13px] font-semibold transition-all shadow-xs"
-        >
-          Back to Test Center
-        </button>
+        <h2 className="text-[19px] font-semibold text-slate-900 dark:text-white mb-1.5">Couldn't Generate Practice Questions</h2>
+        <p className="text-[14px] max-w-sm mb-6 text-slate-600 dark:text-gray-400">{generateError}</p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <button
+            onClick={retryGeneration}
+            className="px-5 py-2.5 bg-[#c8e558] hover:bg-[#bcd94c] text-slate-900 rounded-xl text-[13.5px] font-semibold transition-all shadow-xs cursor-pointer active:scale-98"
+          >
+            Retry Generation
+          </button>
+          <button
+            onClick={() => navigate('/tests')}
+            className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-white/5 dark:hover:bg-white/10 dark:text-gray-200 rounded-xl text-[13.5px] font-semibold transition-all cursor-pointer"
+          >
+            Go to Test Center
+          </button>
+        </div>
       </div>
     );
   }
@@ -216,12 +272,20 @@ export default function TestEngine() {
       <div className="w-full h-screen flex flex-col items-center justify-center bg-[#fafbfc] dark:bg-[#0b0b0c] text-slate-500 font-sans p-6 text-center">
         <h2 className="text-[18px] font-semibold text-slate-900 dark:text-white mb-1.5">No Active Practice Test</h2>
         <p className="text-[13.5px] max-w-sm mb-4">Please return to the Test Center to start or generate a mock test.</p>
-        <button
-          onClick={() => navigate('/tests')}
-          className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 rounded-xl text-[13px] font-semibold transition-all shadow-xs"
-        >
-          Go to Test Center
-        </button>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <button
+            onClick={retryGeneration}
+            className="px-5 py-2.5 bg-[#c8e558] hover:bg-[#bcd94c] text-slate-900 rounded-xl text-[13px] font-semibold transition-all shadow-xs"
+          >
+            Generate Test Now
+          </button>
+          <button
+            onClick={() => navigate('/tests')}
+            className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[13px] font-semibold transition-all shadow-xs"
+          >
+            Go to Test Center
+          </button>
+        </div>
       </div>
     );
   }
