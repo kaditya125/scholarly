@@ -1012,12 +1012,6 @@ export default function Chat() {
                 </span>
               )}
             </div>
-            <button
-              onClick={() => navigate('/exam-center')}
-              className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline flex items-center gap-1"
-            >
-              Exam Command Center →
-            </button>
           </div>
         )}
 

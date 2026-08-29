@@ -105,7 +105,7 @@ const PRIMARY_NAV = [
   { label: "AI Chat",    path: "/chat",        icon: BotMessageSquare },
   { label: "Documents",  path: "/documents",   icon: FolderOpen },
   { label: "Tests",      path: "/tests",       icon: FileText },
-  { label: "Exam Center",path: "/exam-center", icon: Award },
+  { label: "Leaderboard", path: "/leaderboard", icon: Award },
 ];
 
 /**
