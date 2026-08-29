@@ -4,19 +4,44 @@ import { LeaderboardEntry } from '../types';
 export class LeaderboardRepository {
   private userStatsCollection = db.collection('user_stats');
 
+  private isSyntheticTestId(id: string): boolean {
+    const lower = id.toLowerCase();
+    return (
+      lower.startsWith('e2e_') ||
+      lower.startsWith('test-') ||
+      lower.startsWith('test_') ||
+      lower.startsWith('test') ||
+      lower.startsWith('prod_') ||
+      lower.startsWith('production_') ||
+      lower.startsWith('verification_') ||
+      lower.startsWith('persona_') ||
+      lower.startsWith('reliability_') ||
+      lower.startsWith('sched_tpl_') ||
+      lower.startsWith('wa_integration_') ||
+      lower.startsWith('zz-') ||
+      lower.includes('_student_') ||
+      lower.includes('probe') ||
+      lower.includes('script-user') ||
+      lower.includes('validation')
+    );
+  }
+
   async getTopUsers(limit: number = 100, targetExam?: string): Promise<LeaderboardEntry[]> {
     try {
       const snapshot = await this.userStatsCollection
         .orderBy('gamification.xp', 'desc')
-        .limit(limit)
+        .limit(Math.min(limit * 2, 200)) // Fetch wider to account for filtered test accounts
         .get();
 
       if (snapshot.empty) {
         return [];
       }
 
+      // Filter out test IDs first
+      const validDocs = snapshot.docs.filter((doc) => !this.isSyntheticTestId(doc.id));
+
       const entries = await Promise.all(
-        snapshot.docs.map(async (doc, index) => {
+        validDocs.map(async (doc) => {
           const data = doc.data();
           const userId = doc.id;
           const gamification = data.gamification || { xp: 0, level: 1, rank: 'Bronze', studyStreakDays: 0 };
@@ -60,8 +85,8 @@ export class LeaderboardRepository {
             followers: (data.followersCount || 0).toString(),
             points: (gamification.xp || 0).toString(),
             reward: Math.floor((gamification.xp || 0) * 0.1),
-            rank: index + 1,
-            rankTrend: index === 0 ? 'up' : 'same',
+            rank: 0, // Assigned after filtering & sorting
+            rankTrend: 'same',
             scoreTrend: 'up',
             targetExam: exam || 'Competitive Prep',
             streakDays: gamification.studyStreakDays || data.studyStreakDays || 0,
@@ -72,14 +97,16 @@ export class LeaderboardRepository {
         })
       );
 
+      let finalEntries = entries;
       if (targetExam && targetExam !== 'ALL') {
-        const filtered = entries.filter(
+        finalEntries = entries.filter(
           (e) => e.targetExam && e.targetExam.toLowerCase().includes(targetExam.toLowerCase())
         );
-        return filtered.map((e, idx) => ({ ...e, rank: idx + 1 }));
       }
 
-      return entries;
+      return finalEntries
+        .slice(0, limit)
+        .map((e, idx) => ({ ...e, rank: idx + 1, rankTrend: idx === 0 ? 'up' : 'same' }));
     } catch (err) {
       console.error('[LeaderboardRepository] Failed to fetch top users:', err);
       return [];
