@@ -17,6 +17,7 @@ import AvatarStack from '../components/landing/AvatarStack';
 import { HandwrittenTagline } from '../components/brand/HandwrittenTagline';
 import { ExamLogo } from '../components/brand/ExamLogo';
 import { EXAM_CATALOG } from '../lib/examCatalog';
+import ExamExplorerSection from '../components/landing/ExamExplorerSection';
 import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
 import { cn } from '../lib/utils';
@@ -505,32 +506,8 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ══ Exam coverage ══════════════════════════════════════════════════ */}
-        <section className="border-y border-slate-100 dark:border-white/[0.07] bg-slate-50/60 dark:bg-white/[0.02]">
-          <div className="max-w-[1160px] mx-auto px-5 sm:px-8 py-12 sm:py-14">
-            <Reveal>
-              <div className="lg:flex lg:items-center lg:gap-14">
-                <p className="lg:w-[16rem] shrink-0 text-[15px] sm:text-[15.5px] leading-relaxed font-medium text-slate-600 dark:text-gray-300">
-                  It knows the pattern, syllabus and marking scheme for the exams students here
-                  actually sit.
-                </p>
-                <Stagger className="mt-6 lg:mt-0 flex flex-wrap gap-x-2 gap-y-2.5 items-center flex-1" gap={0.025}>
-                  {EXAM_CATALOG.map((e) => (
-                    <Item key={e.slug} y={8}>
-                      <Link
-                        to={`/exams/${e.slug}`}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200/90 dark:border-white/10 bg-white dark:bg-white/[0.04] text-[13px] font-medium text-slate-800 dark:text-gray-200 hover:border-slate-300 dark:hover:border-white/25 hover:text-slate-950 dark:hover:text-white transition-all shadow-2xs hover:shadow-xs group"
-                      >
-                        <ExamLogo slug={e.slug} className="w-5 h-5 shrink-0 object-contain transition-transform group-hover:scale-110" size={20} />
-                        <span>{e.name}</span>
-                      </Link>
-                    </Item>
-                  ))}
-                </Stagger>
-              </div>
-            </Reveal>
-          </div>
-        </section>
+        {/* ══ Exam coverage & Intelligence Explorer ═══════════════════════ */}
+        <ExamExplorerSection />
 
         {/* ══ How it works ═══════════════════════════════════════════════════ */}
         <section id="how" className="scroll-mt-16 max-w-[1160px] mx-auto px-5 sm:px-8 py-20 sm:py-28">
