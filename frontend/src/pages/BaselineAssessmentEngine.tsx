@@ -59,12 +59,12 @@ export default function BaselineAssessmentEngine() {
           category: 'ai',
           title: '🧠 AI Baseline Assessment Complete!',
           body: 'Your academic calibration is finished. Your Student Digital Twin and personalized roadmap are active.',
-          actionUrl: '/welcome',
-          actions: ['View Digital Twin'],
+          actionUrl: '/baseline-assessment/report',
+          actions: ['View AI Report'],
           priority: 'high',
         }).catch(() => {});
       }
-      navigate('/welcome');
+      navigate('/baseline-assessment/report');
     }
   }, [isAssessmentFinished, navigate, user?.uid]);
 
