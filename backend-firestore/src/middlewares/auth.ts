@@ -27,6 +27,22 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
 };
 
 /**
+ * Attaches the user if a valid Bearer token is present, but allows the request to continue anonymously if missing or invalid.
+ */
+export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
+  const token = req.headers.authorization?.split('Bearer ')[1];
+  if (!token) return next();
+
+  try {
+    const decodedToken = await auth.verifyIdToken(token);
+    req.user = decodedToken;
+  } catch (error) {
+    // Proceed as unauthenticated
+  }
+  next();
+};
+
+/**
  * Ensures the authenticated user matches the `:userId` (or the supplied param)
  * present in the route. MUST be used after `requireAuth`.
  *
