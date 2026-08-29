@@ -16,26 +16,25 @@ export class UserStatsRepository {
 
   async addXP(userId: string, amount: number): Promise<void> {
     const doc = await this.findByUserId(userId);
-    if (!doc) return;
     
-    let { gamification } = doc;
+    let gamification = doc?.gamification;
     if (!gamification) {
       gamification = {
         xp: 0,
         level: 1,
         rank: 'Bronze',
-        studyStreakDays: 0,
-        longestStreak: 0,
+        studyStreakDays: 1,
+        longestStreak: 1,
         badges: []
       };
     }
     
-    gamification.xp += amount;
+    gamification.xp = (gamification.xp || 0) + amount;
     
-    // Level calculation (e.g. 100 XP per level)
+    // Level calculation (100 XP per level)
     gamification.level = Math.floor(gamification.xp / 100) + 1;
     
-    // Rank calculation
+    // Tier / Rank calculation
     if (gamification.level >= 50) gamification.rank = 'Diamond';
     else if (gamification.level >= 25) gamification.rank = 'Platinum';
     else if (gamification.level >= 10) gamification.rank = 'Gold';

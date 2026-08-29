@@ -1,10 +1,12 @@
 import { testsRepository } from '../../repositories/tests.repository';
 import { TestAttempt, MockTest, Question } from '../../types/tests.types';
 import { PlannerService } from '../planner.service';
+import { UserStatsService } from '../userStats.service';
 import { v4 as uuidv4 } from 'uuid';
 
 export class ResultAnalysisService {
   private plannerService = new PlannerService();
+  private statsService = new UserStatsService();
   async processSubmission(attemptId: string): Promise<TestAttempt> {
     const attempt = await testsRepository.getTestAttempt(attemptId);
     if (!attempt) throw new Error('Attempt not found');
@@ -192,6 +194,16 @@ export class ResultAnalysisService {
       });
     } catch (err) {
       console.error('[ResultAnalysis] Failed to emit learning events (non-fatal)', err);
+    }
+
+    // Award XP for completing test
+    try {
+      await this.statsService.awardXP(attempt.userId, 'QUIZ_COMPLETE');
+      if (accuracy >= 75) {
+        await this.statsService.awardXP(attempt.userId, 'QUIZ_HIGH_SCORE');
+      }
+    } catch (e) {
+      console.error('[ResultAnalysis] Failed to award test completion XP', e);
     }
 
     // If needs revision, add a task to the planner

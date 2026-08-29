@@ -11,6 +11,10 @@ import {
   Users,
   Search,
   Sparkles,
+  Info,
+  Target,
+  BookOpen,
+  CheckCircle2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useLeaderboard } from "../hooks/api/useLeaderboard";
@@ -90,14 +94,14 @@ export default function Leaderboard() {
   }, [safePage, searchQuery, topThree, paginatedList]);
 
   return (
-    <div className="w-full h-full overflow-y-auto p-4 sm:p-6 lg:p-8 bg-[#fafbfc] dark:bg-[#0b0b0c] text-slate-900 dark:text-white transition-colors duration-300 font-sans">
+    <div className="w-full h-full overflow-y-auto p-4 sm:p-6 lg:p-8 bg-[#f8fafc] dark:bg-[#131417] text-slate-900 dark:text-slate-100 transition-colors duration-300 font-sans">
       <div className="max-w-[880px] mx-auto space-y-6 pb-20">
         
         {/* ══ Minimal Header ═══════════════════════════════════════════════ */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/60 dark:border-white/[0.06]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/70 dark:border-white/[0.08]">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[11.5px] font-semibold tracking-wider uppercase text-slate-400 dark:text-gray-500">
+              <span className="text-[11.5px] font-semibold tracking-wider uppercase text-slate-400 dark:text-gray-400">
                 Season 1 · Live Ranking
               </span>
             </div>
@@ -119,7 +123,7 @@ export default function Leaderboard() {
 
         {/* ══ Current User Standing (Sleek Bar) ════════════════════════════ */}
         {user && (
-          <div className="rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#111113] p-4 sm:p-5 shadow-2xs">
+          <div className="rounded-2xl border border-slate-200/90 dark:border-white/[0.08] bg-white dark:bg-[#1a1b20] p-4 sm:p-5 shadow-2xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3.5">
                 <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/60 dark:border-white/10 flex items-center justify-center font-bold text-base text-slate-800 dark:text-gray-200 shrink-0">
@@ -138,7 +142,7 @@ export default function Leaderboard() {
                       {profile?.targetExam || 'General'}
                     </span>
                   </div>
-                  <p className="text-[12px] text-slate-400 dark:text-gray-500 mt-0.5">
+                  <p className="text-[12px] text-slate-400 dark:text-gray-400 mt-0.5">
                     Level {currentUserLevel} · {currentUserTier} Tier
                   </p>
                 </div>
@@ -218,7 +222,7 @@ export default function Leaderboard() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                 {/* #1 Leader */}
                 {topThree[0] && (
-                  <div className="sm:order-2 rounded-2xl border-2 border-amber-300 dark:border-amber-500/40 bg-white dark:bg-[#111113] p-4 text-center relative shadow-xs">
+                  <div className="sm:order-2 rounded-2xl border-2 border-amber-300 dark:border-amber-500/40 bg-white dark:bg-[#1a1b20] p-4 text-center relative shadow-xs">
                     <div className="w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center mx-auto absolute -top-3 left-1/2 -translate-x-1/2 shadow-xs">
                       1
                     </div>
@@ -237,7 +241,7 @@ export default function Leaderboard() {
 
                 {/* #2 */}
                 {topThree[1] && (
-                  <div className="sm:order-1 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#111113] p-4 text-center relative">
+                  <div className="sm:order-1 rounded-2xl border border-slate-200/90 dark:border-white/[0.08] bg-white dark:bg-[#1a1b20] p-4 text-center relative shadow-2xs">
                     <div className="w-6 h-6 rounded-full bg-slate-300 dark:bg-slate-600 text-slate-900 dark:text-white font-bold text-xs flex items-center justify-center mx-auto absolute -top-3 left-1/2 -translate-x-1/2 shadow-xs">
                       2
                     </div>
@@ -247,7 +251,7 @@ export default function Leaderboard() {
                     <h4 className="font-bold text-[14px] text-slate-900 dark:text-white truncate">
                       {topThree[1].name}
                     </h4>
-                    <p className="text-[11.5px] text-slate-400 dark:text-gray-500 truncate mb-2">
+                    <p className="text-[11.5px] text-slate-400 dark:text-gray-400 truncate mb-2">
                       {topThree[1].targetExam || topThree[1].handle}
                     </p>
                     <p className="text-[15px] font-bold text-amber-500">{Number(topThree[1].points).toLocaleString()} XP</p>
@@ -256,7 +260,7 @@ export default function Leaderboard() {
 
                 {/* #3 */}
                 {topThree[2] && (
-                  <div className="sm:order-3 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#111113] p-4 text-center relative">
+                  <div className="sm:order-3 rounded-2xl border border-slate-200/90 dark:border-white/[0.08] bg-white dark:bg-[#1a1b20] p-4 text-center relative shadow-2xs">
                     <div className="w-6 h-6 rounded-full bg-amber-600/70 text-white font-bold text-xs flex items-center justify-center mx-auto absolute -top-3 left-1/2 -translate-x-1/2 shadow-xs">
                       3
                     </div>
@@ -266,7 +270,7 @@ export default function Leaderboard() {
                     <h4 className="font-bold text-[14px] text-slate-900 dark:text-white truncate">
                       {topThree[2].name}
                     </h4>
-                    <p className="text-[11.5px] text-slate-400 dark:text-gray-500 truncate mb-2">
+                    <p className="text-[11.5px] text-slate-400 dark:text-gray-400 truncate mb-2">
                       {topThree[2].targetExam || topThree[2].handle}
                     </p>
                     <p className="text-[15px] font-bold text-amber-500">{Number(topThree[2].points).toLocaleString()} XP</p>
@@ -276,10 +280,10 @@ export default function Leaderboard() {
             )}
 
             {/* ══ Rankings Table ═══════════════════════════════════════════ */}
-            <div className="rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-[#111113] overflow-hidden shadow-2xs">
+            <div className="rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1a1b20] overflow-hidden shadow-2xs">
               <div className="overflow-x-auto">
                 <table className="w-full text-[13px] text-left">
-                  <thead className="bg-slate-50/60 dark:bg-white/[0.02] border-b border-slate-100 dark:border-white/[0.06] text-slate-400 dark:text-gray-500 uppercase font-medium text-[10.5px] tracking-wider">
+                  <thead className="bg-slate-50/70 dark:bg-white/[0.02] border-b border-slate-100 dark:border-white/[0.06] text-slate-400 dark:text-gray-400 uppercase font-medium text-[10.5px] tracking-wider">
                     <tr>
                       <th className="px-4 sm:px-5 py-3 w-16">Rank</th>
                       <th className="px-4 sm:px-5 py-3">Scholar</th>
@@ -301,7 +305,7 @@ export default function Leaderboard() {
                               : "hover:bg-slate-50/50 dark:hover:bg-white/[0.015]"
                           )}
                         >
-                          <td className="px-4 sm:px-5 py-3.5 font-bold text-slate-400 dark:text-gray-500">
+                          <td className="px-4 sm:px-5 py-3.5 font-bold text-slate-400 dark:text-gray-400">
                             #{entry.rank}
                           </td>
                           <td className="px-4 sm:px-5 py-3.5">
@@ -320,7 +324,7 @@ export default function Leaderboard() {
                                     </span>
                                   )}
                                 </p>
-                                <p className="text-slate-400 dark:text-gray-500 text-[11.5px]">{entry.handle}</p>
+                                <p className="text-slate-400 dark:text-gray-400 text-[11.5px]">{entry.handle}</p>
                               </div>
                             </div>
                           </td>
@@ -369,7 +373,7 @@ export default function Leaderboard() {
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={safePage === 1}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-white/10 bg-white dark:bg-white/[0.03] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1a1b20] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                     <span>Prev</span>
@@ -382,7 +386,7 @@ export default function Leaderboard() {
                   <button
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={safePage === totalPages}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-white/10 bg-white dark:bg-white/[0.03] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1a1b20] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
                   >
                     <span>Next</span>
                     <ChevronRight className="w-3.5 h-3.5" />
@@ -390,6 +394,51 @@ export default function Leaderboard() {
                 </div>
               </div>
             )}
+
+            {/* ══ How Rankings & XP Work ═══════════════════════════════════ */}
+            <div className="mt-8 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#1a1b20] p-5 sm:p-6 shadow-2xs">
+              <div className="flex items-center gap-2 mb-3">
+                <Info className="w-4 h-4 text-[#8ba32b] dark:text-[#c8e558]" />
+                <h3 className="font-semibold text-[14.5px] text-slate-900 dark:text-white">
+                  How Leaderboard Rankings & XP Work
+                </h3>
+              </div>
+              <p className="text-[13px] text-slate-500 dark:text-gray-400 leading-relaxed mb-4">
+                XP (Experience Points) reflect your continuous effort and mastery across Sadhya. Your leaderboard rank updates live whenever you practice or study.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[12.5px]">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/[0.05]">
+                  <div className="flex items-center gap-1.5 font-semibold text-slate-900 dark:text-white mb-1">
+                    <Target className="w-3.5 h-3.5 text-blue-500" />
+                    <span>Mock Tests & Practice</span>
+                  </div>
+                  <p className="text-slate-500 dark:text-gray-400 leading-snug">
+                    <strong className="text-slate-800 dark:text-slate-200">+50 XP</strong> for completing a test, plus <strong className="text-amber-500">+20 XP bonus</strong> for accuracy ≥ 75%.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/[0.05]">
+                  <div className="flex items-center gap-1.5 font-semibold text-slate-900 dark:text-white mb-1">
+                    <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>Quizzes & Flashcards</span>
+                  </div>
+                  <p className="text-slate-500 dark:text-gray-400 leading-snug">
+                    <strong className="text-slate-800 dark:text-slate-200">+30 XP</strong> per completed chapter quiz or revision deck with instant review.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/[0.05]">
+                  <div className="flex items-center gap-1.5 font-semibold text-slate-900 dark:text-white mb-1">
+                    <Flame className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Daily Streaks & Tiers</span>
+                  </div>
+                  <p className="text-slate-500 dark:text-gray-400 leading-snug">
+                    Every 100 XP levels you up. Progress through <strong className="text-slate-800 dark:text-slate-200">Bronze → Silver → Gold → Platinum → Diamond</strong>.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
