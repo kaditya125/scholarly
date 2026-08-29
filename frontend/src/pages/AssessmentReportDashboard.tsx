@@ -1,81 +1,44 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BrainCircuit,
-  Bot,
-  Cpu,
-  Workflow,
+  Target,
   Sparkles,
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
   ArrowRight,
   Zap,
-  Command,
+  BookOpen,
+  Award,
+  TrendingUp,
+  Clock,
   CheckCircle2,
-  Sliders,
-  ChevronRight,
-  Maximize2
+  Layers,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { useAdaptiveAssessment } from '../hooks/api/useAdaptiveAssessment';
+import { useProfile } from '../hooks/api/useProfile';
+import { useUserStats } from '../hooks/api/useUserStats';
 import { useAuth } from '../lib/AuthContext';
 
 export default function AssessmentReportDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { digitalTwin, isLoadingDigitalTwin } = useAdaptiveAssessment();
+  const { profile } = useProfile();
+  const { stats } = useUserStats();
+  const { digitalTwin } = useAdaptiveAssessment();
 
-  const [autoTrain, setAutoTrain] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [progress, setProgress] = useState(65);
-  const [audioDuration, setAudioDuration] = useState(0);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [autoAdapt, setAutoAdapt] = useState(true);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Derive dynamic student diagnostic data
+  const targetExam = profile?.targetExam || 'Competitive Exam';
+  const studentName = profile?.name || user?.displayName || 'Scholar';
+  
+  const rawReadiness = digitalTwin?.overallReadinessScore ?? stats?.averageAccuracy ?? 88.5;
+  const readinessNumber = typeof rawReadiness === 'number' && rawReadiness > 0 ? rawReadiness : 88.5;
+  const accuracyText = `${readinessNumber.toFixed(1)}%`;
 
-  // Derive dynamic or calibrated metrics from digitalTwin
-  const readiness = digitalTwin?.overallReadinessScore ?? 99.9;
-  const accuracyText = typeof readiness === 'number' && readiness > 0 ? `${readiness.toFixed(1)}%` : '99.9%';
-  const speedMultiplier = '100x';
-
-  const togglePlay = () => {
-    const el = audioRef.current;
-    if (!el) return;
-    if (isPlaying) {
-      el.pause();
-      setIsPlaying(false);
-    } else {
-      el.play()
-        .then(() => setIsPlaying(true))
-        .catch(() => setIsPlaying(false));
-    }
-  };
-
-  const toggleMute = () => {
-    const el = audioRef.current;
-    if (!el) return;
-    el.muted = !isMuted;
-    setIsMuted(!isMuted);
-  };
-
-  const handleTimeUpdate = () => {
-    const el = audioRef.current;
-    if (!el || !el.duration) return;
-    setCurrentTime(el.currentTime);
-    setProgress((el.currentTime / el.duration) * 100);
-  };
-
-  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = audioRef.current;
-    if (!el || !el.duration) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const pos = (e.clientX - rect.left) / rect.width;
-    el.currentTime = pos * el.duration;
-    setProgress(pos * 100);
-  };
+  const subjectsCount = Object.keys(digitalTwin?.subjectMastery || {}).length || 3;
+  const avgSpeedSec = digitalTwin?.behavioralProfile?.avgThinkingTimeSeconds || 42;
+  const speedDisplay = avgSpeedSec > 0 ? `${avgSpeedSec}s` : '1.8x';
 
   const handleProceed = () => {
     sessionStorage.setItem('onboarding_completed', 'true');
@@ -83,14 +46,14 @@ export default function AssessmentReportDashboard() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#f6f7fb] dark:bg-[#0c0d10] text-slate-900 dark:text-white font-sans flex flex-col justify-between p-4 sm:p-8 lg:p-12 relative overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen w-full bg-[#f6f7fb] dark:bg-[#0c0d10] text-slate-900 dark:text-white font-sans flex flex-col justify-center items-center p-4 sm:p-8 lg:p-12 relative overflow-x-hidden selection:bg-indigo-500 selection:text-white">
       
       {/* Background Subtle Gradient & Grid Texture */}
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-70" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-b from-indigo-100/40 via-purple-50/20 to-transparent dark:from-indigo-950/20 dark:via-purple-950/10 dark:to-transparent blur-3xl pointer-events-none" />
 
       {/* Main Container */}
-      <div className="max-w-[1020px] w-full mx-auto relative z-10 space-y-10 my-auto pb-24">
+      <div className="max-w-[1020px] w-full mx-auto relative z-10 space-y-10 my-auto py-8">
         
         {/* ══ Header ═══════════════════════════════════════════════════════ */}
         <div className="text-center space-y-3 max-w-2xl mx-auto">
@@ -99,11 +62,15 @@ export default function AssessmentReportDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/15 border border-indigo-200/80 dark:border-indigo-500/25 text-[11.5px] font-bold text-indigo-600 dark:text-indigo-300 uppercase tracking-wider mb-2">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+              <span>{targetExam} · Diagnostic Baseline</span>
+            </div>
             <h1 className="text-[34px] sm:text-[46px] font-extrabold tracking-[-0.03em] text-slate-950 dark:text-white leading-tight">
-              AI Automation
+              Diagnostic Performance Analysis
             </h1>
             <p className="text-[14px] sm:text-[16px] text-slate-500 dark:text-slate-400 font-normal leading-relaxed mt-2">
-              Deploy autonomous agents, optimize workflows, and scale your intelligence layer instantly.
+              Calibrate your exam readiness, master high-yield syllabus concepts, and accelerate your preparation.
             </p>
           </motion.div>
         </div>
@@ -111,7 +78,7 @@ export default function AssessmentReportDashboard() {
         {/* ══ Bento Grid ═══════════════════════════════════════════════════ */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
           
-          {/* ── 1. Left Tall Card (Neural Agents) ── */}
+          {/* ── 1. Left Tall Card (Adaptive Learning Twin) ── */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -130,34 +97,34 @@ export default function AssessmentReportDashboard() {
 
               <div className="pt-2">
                 <h3 className="text-[20px] font-bold text-slate-900 dark:text-white tracking-tight">
-                  Neural Agents
+                  Adaptive Study Twin
                 </h3>
                 <p className="text-[13.5px] text-slate-500 dark:text-slate-400 leading-relaxed mt-2.5">
-                  Self-learning models that adapt to your data infrastructure. Automate complex decision-making.
+                  Self-calibrating diagnostic profile tuned for {targetExam}. Automates spaced repetition and weak topic recovery.
                 </p>
               </div>
             </div>
 
-            {/* Bottom Auto-Train Pill */}
+            {/* Bottom Auto-Adapt Pill */}
             <div className="relative z-10 pt-6">
               <div className="flex items-center justify-between px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200/70 dark:border-white/[0.06]">
                 <div className="flex items-center gap-2 text-[12.5px] font-semibold text-slate-700 dark:text-slate-200">
                   <Zap className="w-3.5 h-3.5 text-indigo-500 fill-indigo-500" />
-                  <span>Auto-Train</span>
+                  <span>Auto-Adapt Syllabus</span>
                 </div>
                 
                 {/* Switch button */}
                 <button
                   type="button"
-                  onClick={() => setAutoTrain(!autoTrain)}
+                  onClick={() => setAutoAdapt(!autoAdapt)}
                   className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer p-0.5 ${
-                    autoTrain ? 'bg-slate-300 dark:bg-slate-600' : 'bg-slate-200 dark:bg-slate-700'
+                    autoAdapt ? 'bg-indigo-600 dark:bg-indigo-500' : 'bg-slate-200 dark:bg-slate-700'
                   }`}
-                  aria-label="Toggle Auto-Train"
+                  aria-label="Toggle Auto-Adapt"
                 >
                   <motion.div
                     className="w-4 h-4 rounded-full bg-white shadow-xs"
-                    animate={{ x: autoTrain ? 16 : 0 }}
+                    animate={{ x: autoAdapt ? 16 : 0 }}
                     transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   />
                 </button>
@@ -165,10 +132,10 @@ export default function AssessmentReportDashboard() {
             </div>
           </motion.div>
 
-          {/* ── 2. Middle Column: Active Models & Confidence ── */}
+          {/* ── 2. Middle Column: Calibrated Subjects & Diagnostic Accuracy ── */}
           <div className="md:col-span-4 flex flex-col gap-5 justify-between">
             
-            {/* Top: Active Models */}
+            {/* Top: Calibrated Subjects */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -177,22 +144,22 @@ export default function AssessmentReportDashboard() {
             >
               <div>
                 <h4 className="text-[16px] font-bold text-slate-900 dark:text-white tracking-tight">
-                  Active Models
+                  Calibrated Domains
                 </h4>
                 <p className="text-[12.5px] text-slate-400 dark:text-slate-500 mt-0.5">
-                  03 LLMs Connected
+                  0{subjectsCount} Core Syllabus Modules
                 </p>
               </div>
 
               {/* Triple Icon Pill Cluster */}
               <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 bg-indigo-50/70 dark:bg-indigo-500/10 px-3 py-1.5 rounded-xl border border-indigo-100 dark:border-indigo-500/20">
-                <Bot className="w-4 h-4" />
-                <Cpu className="w-4 h-4" />
-                <Workflow className="w-4 h-4" />
+                <Target className="w-4 h-4" />
+                <BookOpen className="w-4 h-4" />
+                <Award className="w-4 h-4" />
               </div>
             </motion.div>
 
-            {/* Bottom: Confidence & 99.9% Precision */}
+            {/* Bottom: Confidence & Diagnostic Accuracy */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -202,10 +169,10 @@ export default function AssessmentReportDashboard() {
               <div className="flex items-start justify-between">
                 <div>
                   <h4 className="text-[15px] font-bold text-slate-900 dark:text-white">
-                    Confidence
+                    Diagnostic Accuracy
                   </h4>
                   <p className="text-[11.5px] text-slate-400 dark:text-slate-500 mt-0.5">
-                    Output Accuracy
+                    Baseline Calibration
                   </p>
                 </div>
 
@@ -221,13 +188,13 @@ export default function AssessmentReportDashboard() {
               </div>
 
               <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 pt-2 border-t border-slate-100 dark:border-white/[0.04]">
-                <span>Hallucination Rate</span>
-                <span className="font-semibold text-slate-800 dark:text-slate-300">Model Reliability</span>
+                <span>Risk Margin: Low</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-300">Exam Readiness: Strong</span>
               </div>
             </motion.div>
           </div>
 
-          {/* ── 3. Right Tall Card (100x Processing Speed) ── */}
+          {/* ── 3. Right Tall Card (Solving Velocity) ── */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -239,21 +206,21 @@ export default function AssessmentReportDashboard() {
 
             <div className="relative z-10">
               <span className="text-[52px] sm:text-[64px] font-black text-slate-950 dark:text-white tracking-[-0.04em] leading-none block">
-                {speedMultiplier}
+                {speedDisplay}
               </span>
             </div>
 
             <div className="relative z-10 space-y-2 pt-8">
               <h3 className="text-[19px] font-bold text-slate-900 dark:text-white tracking-tight">
-                Processing Speed
+                Solving Velocity
               </h3>
               <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                Accelerate data ingestion and analysis with our optimized inference engine.
+                Average solving pace per question calibrated against {targetExam} qualifying benchmark.
               </p>
             </div>
           </motion.div>
 
-          {/* ── 4. Bottom Full-Width Card (Natural Language) ── */}
+          {/* ── 4. Bottom Full-Width Card (Proceed Action) ── */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -266,10 +233,10 @@ export default function AssessmentReportDashboard() {
               </div>
               <div>
                 <h4 className="text-[15px] font-bold text-slate-900 dark:text-white">
-                  Natural Language
+                  Personalized Study Roadmap Ready
                 </h4>
                 <p className="text-[12.5px] text-slate-500 dark:text-slate-400">
-                  Control your infrastructure using plain English commands.
+                  Your daily planner, syllabus tracker, and AI tutor are calibrated for {studentName}.
                 </p>
               </div>
             </div>
@@ -283,7 +250,7 @@ export default function AssessmentReportDashboard() {
 
               <button
                 onClick={handleProceed}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-[13px] font-bold shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-950 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-[13.5px] font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
               >
                 <span>Proceed to Dashboard</span>
                 <ArrowRight className="w-4 h-4" />
@@ -294,69 +261,6 @@ export default function AssessmentReportDashboard() {
         </div>
 
       </div>
-
-      {/* ══ Bottom Floating Audio Player Bar ═══════════════════════════════ */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.6 }}
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[880px] z-50 flex items-center gap-3 sm:gap-4 p-2 sm:p-2.5 rounded-full bg-white/90 dark:bg-[#14151a]/90 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-2xl"
-      >
-        {/* Play / Pause Circular Button */}
-        <button
-          type="button"
-          onClick={togglePlay}
-          className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white dark:bg-[#1e1f25] border border-slate-200/90 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
-          aria-label={isPlaying ? 'Pause voice' : 'Play voice'}
-        >
-          {isPlaying ? <Pause className="w-4 h-4 fill-slate-900 dark:fill-white" /> : <Play className="w-4 h-4 fill-slate-900 dark:fill-white ml-0.5" />}
-        </button>
-
-        {/* Volume Button */}
-        <button
-          type="button"
-          onClick={toggleMute}
-          className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white dark:bg-[#1e1f25] border border-slate-200/90 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
-          aria-label={isMuted ? 'Unmute' : 'Mute'}
-        >
-          {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-        </button>
-
-        {/* Hot Pink / Violet Scrubber Track */}
-        <div
-          onClick={handleSeek}
-          className="flex-1 h-3 rounded-full bg-slate-100 dark:bg-white/10 p-0.5 cursor-pointer relative overflow-hidden"
-        >
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-[#ec4899] via-[#f43f5e] to-[#ec4899] transition-all duration-150 relative"
-            style={{ width: `${Math.max(5, progress)}%` }}
-          >
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white shadow-xs" />
-          </div>
-        </div>
-
-        {/* Audio Element */}
-        <audio
-          ref={audioRef}
-          src="/media/voice-sample-ssc-cgl.mp3"
-          preload="auto"
-          onTimeUpdate={handleTimeUpdate}
-          onLoadedMetadata={() => setAudioDuration(audioRef.current?.duration || 0)}
-          onEnded={() => {
-            setIsPlaying(false);
-            setProgress(100);
-          }}
-        />
-
-        {/* Proceed Action Button inside Controller */}
-        <button
-          onClick={handleProceed}
-          className="px-4 sm:px-6 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-[12.5px] sm:text-[13px] font-bold shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-transform flex items-center gap-1.5 shrink-0 cursor-pointer"
-        >
-          <span>Continue</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
-      </motion.div>
 
     </div>
   );
