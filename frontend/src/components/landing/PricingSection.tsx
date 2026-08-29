@@ -381,7 +381,7 @@ export default function PricingSection({
   const reduced = useReducedMotion();
 
   return (
-    <section id={id} className="scroll-mt-16 max-w-[1160px] mx-auto px-5 sm:px-8 py-20 sm:py-28">
+    <section id={id} className="scroll-mt-16 max-w-[1160px] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 lg:py-24">
       {/* ── Launch Callout (Minimalist & Sleek) ── */}
       <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.02]">
         <div className="flex items-center gap-3">
@@ -406,17 +406,17 @@ export default function PricingSection({
         <p className="text-[12px] font-semibold uppercase tracking-[0.13em] text-slate-500 dark:text-gray-400">
           Plans
         </p>
-        <Heading className="mt-3 text-[28px] sm:text-[34px] lg:text-[40px] leading-[1.12] font-semibold tracking-[-0.03em]">
+        <Heading className="mt-3 text-[26px] sm:text-[34px] lg:text-[40px] leading-[1.15] font-semibold tracking-[-0.03em]">
           Start free. Upgrade when it&rsquo;s carrying real weight.
         </Heading>
-        <p className="mt-4 text-[15.5px] sm:text-[16.5px] leading-relaxed text-slate-500 dark:text-gray-400">
+        <p className="mt-3 sm:mt-4 text-[14.5px] sm:text-[16.5px] leading-relaxed text-slate-500 dark:text-gray-400">
           The tutor, your notebooks and the practice engine are free to use. Pro lifts the limits
           and adds the studio — for the months when preparation stops being casual.
         </p>
       </div>
 
       {/* ── Billing toggle ── */}
-      <div className="mt-9 inline-flex items-center p-1 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03]">
+      <div className="mt-7 sm:mt-9 inline-flex items-center p-1 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] touch-manipulation">
         {(['monthly', 'yearly'] as Billing[]).map((b) => (
           <button
             key={b}
@@ -424,7 +424,7 @@ export default function PricingSection({
             onClick={() => setBilling(b)}
             aria-pressed={billing === b}
             className={cn(
-              'relative h-9 px-4 rounded-lg text-[13.5px] font-medium transition-colors cursor-pointer',
+              'relative h-9 px-3.5 sm:px-4 rounded-lg text-[13px] sm:text-[13.5px] font-medium transition-colors cursor-pointer touch-manipulation',
               billing === b
                 ? 'text-slate-900 dark:text-white'
                 : 'text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200',
@@ -439,7 +439,7 @@ export default function PricingSection({
             )}
             <span className="relative capitalize">{b}</span>
             {b === 'yearly' && (
-              <span className="relative ml-2 text-[11.5px] font-semibold text-[#7d9a1f] dark:text-[#c8e558]">
+              <span className="relative ml-1.5 sm:ml-2 text-[11px] sm:text-[11.5px] font-semibold text-[#7d9a1f] dark:text-[#c8e558]">
                 −70% Launch
               </span>
             )}
@@ -448,21 +448,21 @@ export default function PricingSection({
       </div>
 
       {/* ── Tiers Grid ── */}
-      <div className="mt-8 grid gap-4 sm:gap-5 lg:grid-cols-3 items-start">
+      <div className="mt-8 grid gap-5 lg:grid-cols-3 items-stretch">
         {TIERS.map((tier) => {
           const to = tier.cta.to && tier.id === 'pro' ? `${tier.cta.to}&billing=${billing}` : tier.cta.to;
           return (
             <div
               key={tier.id}
               className={cn(
-                'relative h-full flex flex-col rounded-2xl border p-6 sm:p-7',
+                'relative flex flex-col rounded-2xl border p-5 sm:p-7 transition-shadow',
                 tier.featured
-                  ? 'border-[#c8e558] dark:border-[#c8e558]/60 bg-white dark:bg-[#141416] shadow-[0_18px_50px_-24px_rgba(140,170,40,0.4)] lg:-mt-3 lg:pb-9'
+                  ? 'border-[#c8e558] dark:border-[#c8e558]/60 bg-white dark:bg-[#141416] shadow-[0_18px_50px_-24px_rgba(140,170,40,0.4)] lg:-mt-2 lg:pb-8'
                   : 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416]',
               )}
             >
               {tier.featured && (
-                <span className="absolute -top-3 left-6 sm:left-7 inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full bg-[#c8e558] text-slate-900 text-[11.5px] font-semibold">
+                <span className="absolute -top-3 left-5 sm:left-7 inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full bg-[#c8e558] text-slate-900 text-[11.5px] font-semibold">
                   <Sparkles className="w-3 h-3" strokeWidth={2.5} />
                   {tier.badge || 'Launch Special'}
                 </span>
@@ -471,11 +471,11 @@ export default function PricingSection({
               <h3 className="text-[17px] font-semibold tracking-[-0.015em] text-slate-900 dark:text-white">
                 {tier.name}
               </h3>
-              <p className="mt-1.5 text-[13.5px] leading-relaxed text-slate-500 dark:text-gray-400 min-h-[2.6rem]">
+              <p className="mt-1.5 text-[13.5px] leading-relaxed text-slate-500 dark:text-gray-400">
                 {tier.tagline}
               </p>
 
-              <div className="mt-5 min-h-[4.2rem]">
+              <div className="mt-4 sm:mt-5">
                 <Price tier={tier} billing={billing} />
               </div>
 
@@ -483,7 +483,7 @@ export default function PricingSection({
                 <Link
                   to={to}
                   className={cn(
-                    'mt-6 inline-flex items-center justify-center gap-2 h-11 rounded-xl text-[14px] font-semibold transition-colors',
+                    'mt-5 sm:mt-6 inline-flex items-center justify-center gap-2 h-11 rounded-xl text-[14px] font-semibold transition-colors touch-manipulation cursor-pointer',
                     tier.featured
                       ? 'bg-[#c8e558] hover:bg-[#bcd94c] active:bg-[#b0cd40] text-slate-900'
                       : 'border border-slate-200 dark:border-white/12 text-slate-800 dark:text-gray-100 hover:bg-slate-50 dark:hover:bg-white/[0.05]',
@@ -495,16 +495,16 @@ export default function PricingSection({
               ) : (
                 <a
                   href={tier.cta.href}
-                  className="mt-6 inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-slate-200 dark:border-white/12 text-[14px] font-semibold text-slate-800 dark:text-gray-100 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors"
+                  className="mt-5 sm:mt-6 inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-slate-200 dark:border-white/12 text-[14px] font-semibold text-slate-800 dark:text-gray-100 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors touch-manipulation"
                 >
                   {tier.cta.label}
                   <ArrowRight className="w-4 h-4" strokeWidth={2.25} />
                 </a>
               )}
 
-              <ul className="mt-7 space-y-3 flex-1">
+              <ul className="mt-6 space-y-2.5 sm:space-y-3 flex-1">
                 {tier.features.map((f) => (
-                  <li key={f} className="flex gap-2.5">
+                  <li key={f} className="flex gap-2.5 items-start">
                     <Check
                       className={cn(
                         'w-4 h-4 mt-0.5 shrink-0',
@@ -512,7 +512,7 @@ export default function PricingSection({
                       )}
                       strokeWidth={2.5}
                     />
-                    <span className="text-[13.5px] leading-relaxed text-slate-600 dark:text-gray-300">
+                    <span className="text-[13px] sm:text-[13.5px] leading-relaxed text-slate-600 dark:text-gray-300">
                       {f}
                     </span>
                   </li>
@@ -520,7 +520,7 @@ export default function PricingSection({
               </ul>
 
               {tier.footnote && (
-                <p className="mt-6 pt-5 border-t border-slate-100 dark:border-white/[0.07] text-[12px] leading-relaxed text-slate-500 dark:text-gray-400">
+                <p className="mt-5 pt-4 border-t border-slate-100 dark:border-white/[0.07] text-[12px] leading-relaxed text-slate-500 dark:text-gray-400">
                   {tier.footnote}
                 </p>
               )}
@@ -529,46 +529,55 @@ export default function PricingSection({
         })}
       </div>
 
-      {/* ── Sleek Side-by-Side Feature Comparison Matrix (Only on /pricing page) ── */}
+      {/* ── Sleek Side-by-Side Feature Comparison Matrix ── */}
       {showComparison && (
-        <div className="mt-20 pt-10 border-t border-slate-100 dark:border-white/[0.07]">
-          <div className="flex items-center justify-between gap-4 mb-6">
+        <div className="mt-14 sm:mt-20 pt-8 sm:pt-10 border-t border-slate-100 dark:border-white/[0.07]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6">
             <div>
-              <h3 className="text-[20px] sm:text-[24px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">
+              <h3 className="text-[19px] sm:text-[24px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">
                 Compare features across plans
               </h3>
-              <p className="mt-1 text-[13.5px] text-slate-500 dark:text-gray-400">
+              <p className="mt-1 text-[13px] sm:text-[13.5px] text-slate-500 dark:text-gray-400">
                 A detailed overview of capabilities, quotas, and limits.
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsTableExpanded(!isTableExpanded)}
-              className="inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer shrink-0"
-            >
-              {isTableExpanded ? 'Hide table' : 'Show table'}
-              <ChevronDown className={cn('w-4 h-4 transition-transform duration-200', isTableExpanded && 'rotate-180')} />
-            </button>
+            <div className="flex items-center gap-3">
+              <span className="sm:hidden text-[11px] text-slate-400 dark:text-gray-500">
+                Swipe table horizontally ↔
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsTableExpanded(!isTableExpanded)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] text-[12.5px] font-medium text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer shrink-0 touch-manipulation"
+              >
+                {isTableExpanded ? 'Hide comparison' : 'Show comparison'}
+                <ChevronDown className={cn('w-4 h-4 transition-transform duration-200', isTableExpanded && 'rotate-180')} />
+              </button>
+            </div>
           </div>
 
           {isTableExpanded && (
-            <div className="w-full overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416]">
-              <div className="overflow-x-auto touch-pan-x overscroll-x-contain custom-scrollbar">
-                <table className="w-full text-left border-collapse min-w-[580px] sm:min-w-[640px]">
+            <div className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416] overflow-hidden shadow-sm">
+              {/* Table Wrapper: touch-auto and smooth horizontal scrolling without blocking page vertical scrolling */}
+              <div
+                className="w-full overflow-x-auto touch-auto custom-scrollbar"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+              >
+                <table className="w-full text-left border-collapse min-w-[520px] sm:min-w-[640px]">
                   {/* Header */}
                   <thead>
-                    <tr className="border-b border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.03]">
-                      <th className="py-3.5 px-4 sm:px-5 text-[13.5px] font-semibold text-slate-900 dark:text-white sticky left-0 z-20 bg-slate-50 dark:bg-[#18181b] min-w-[170px] sm:min-w-[240px] shadow-[1px_0_0_0_rgba(0,0,0,0.06)] dark:shadow-[1px_0_0_0_rgba(255,255,255,0.08)]">
+                    <tr className="border-b border-slate-200 dark:border-white/10 bg-slate-50/90 dark:bg-white/[0.04]">
+                      <th className="py-3.5 px-3.5 sm:px-5 text-[12.5px] sm:text-[13.5px] font-semibold text-slate-900 dark:text-white sticky left-0 z-20 bg-slate-50 dark:bg-[#18181b] min-w-[130px] sm:min-w-[220px] shadow-[1px_0_0_0_rgba(0,0,0,0.06)] dark:shadow-[1px_0_0_0_rgba(255,255,255,0.08)]">
                         Feature
                       </th>
-                      <th className="py-3.5 px-3 sm:px-4 text-[13px] font-semibold text-slate-900 dark:text-white text-center min-w-[100px] sm:min-w-[120px]">
+                      <th className="py-3.5 px-2.5 sm:px-4 text-[12.5px] sm:text-[13px] font-semibold text-slate-900 dark:text-white text-center min-w-[85px] sm:min-w-[110px]">
                         Free
                       </th>
-                      <th className="py-3.5 px-3 sm:px-4 text-[13px] font-semibold text-[#728c1c] dark:text-[#c8e558] text-center bg-[#c8e558]/[0.08] min-w-[110px] sm:min-w-[130px]">
+                      <th className="py-3.5 px-2.5 sm:px-4 text-[12.5px] sm:text-[13px] font-semibold text-[#728c1c] dark:text-[#c8e558] text-center bg-[#c8e558]/[0.08] min-w-[95px] sm:min-w-[120px]">
                         Pro (Launch)
                       </th>
-                      <th className="py-3.5 px-3 sm:px-4 text-[13px] font-semibold text-slate-900 dark:text-white text-center min-w-[100px] sm:min-w-[120px]">
+                      <th className="py-3.5 px-2.5 sm:px-4 text-[12.5px] sm:text-[13px] font-semibold text-slate-900 dark:text-white text-center min-w-[85px] sm:min-w-[110px]">
                         Institution
                       </th>
                     </tr>
@@ -579,10 +588,10 @@ export default function PricingSection({
                     {COMPARISON_CATEGORIES.map((category) => (
                       <Fragment key={category.title}>
                         {/* Category Header */}
-                        <tr className="bg-slate-50/50 dark:bg-white/[0.02]">
+                        <tr className="bg-slate-50/60 dark:bg-white/[0.02]">
                           <td
                             colSpan={4}
-                            className="py-2.5 px-4 sm:px-5 text-[11.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-gray-400 sticky left-0 z-10 bg-slate-50/90 dark:bg-[#18181b]/90"
+                            className="py-2.5 px-3.5 sm:px-5 text-[11px] sm:text-[11.5px] font-semibold uppercase tracking-wider text-slate-500 dark:text-gray-400 sticky left-0 z-10 bg-slate-50/95 dark:bg-[#18181b]/95"
                           >
                             {category.title}
                           </td>
@@ -594,23 +603,23 @@ export default function PricingSection({
                             key={row.feature}
                             className="hover:bg-slate-50/50 dark:hover:bg-white/[0.015] transition-colors"
                           >
-                            <td className="py-3 px-4 sm:px-5 sticky left-0 z-10 bg-white dark:bg-[#141416] shadow-[1px_0_0_0_rgba(0,0,0,0.06)] dark:shadow-[1px_0_0_0_rgba(255,255,255,0.08)]">
-                              <div className="text-[13px] sm:text-[13.5px] font-medium text-slate-800 dark:text-gray-200">
+                            <td className="py-3 px-3.5 sm:px-5 sticky left-0 z-10 bg-white dark:bg-[#141416] shadow-[1px_0_0_0_rgba(0,0,0,0.06)] dark:shadow-[1px_0_0_0_rgba(255,255,255,0.08)]">
+                              <div className="text-[12.5px] sm:text-[13.5px] font-medium text-slate-800 dark:text-gray-200">
                                 {row.feature}
                               </div>
                               {row.hint && (
-                                <div className="text-[11px] sm:text-[11.5px] text-slate-400 dark:text-gray-500 mt-0.5 leading-snug">
+                                <div className="text-[10.5px] sm:text-[11.5px] text-slate-400 dark:text-gray-500 mt-0.5 leading-snug">
                                   {row.hint}
                                 </div>
                               )}
                             </td>
-                            <td className="py-3 px-3 sm:px-4 text-center">
+                            <td className="py-3 px-2.5 sm:px-4 text-center">
                               <ValueCell val={row.free} />
                             </td>
-                            <td className="py-3 px-3 sm:px-4 text-center bg-[#c8e558]/[0.03]">
+                            <td className="py-3 px-2.5 sm:px-4 text-center bg-[#c8e558]/[0.03]">
                               <ValueCell val={row.pro} />
                             </td>
-                            <td className="py-3 px-3 sm:px-4 text-center">
+                            <td className="py-3 px-2.5 sm:px-4 text-center">
                               <ValueCell val={row.institution} />
                             </td>
                           </tr>
@@ -626,7 +635,7 @@ export default function PricingSection({
       )}
 
       {/* ── Footer notes ── */}
-      <p className="mt-8 text-[12.5px] leading-relaxed text-slate-500 dark:text-gray-400">
+      <p className="mt-8 text-[12px] sm:text-[12.5px] leading-relaxed text-slate-500 dark:text-gray-400">
         Payments are processed by Razorpay — card details never touch our servers. Includes 7-day money back guarantee. See our{' '}
         <Link to="/refunds" className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white">
           refunds &amp; cancellation policy

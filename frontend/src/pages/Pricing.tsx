@@ -111,9 +111,9 @@ function Faq({ q, a }: { q: string; a: ReactNode }) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="w-full flex items-start justify-between gap-6 py-5 text-left group"
+        className="w-full flex items-start justify-between gap-4 py-4 sm:py-5 text-left group cursor-pointer touch-manipulation"
       >
-        <span className="text-[15.5px] font-medium tracking-[-0.01em] text-slate-900 dark:text-white">
+        <span className="text-[15px] sm:text-[15.5px] font-medium tracking-[-0.01em] text-slate-900 dark:text-white pr-2">
           {q}
         </span>
         <ChevronDown
@@ -125,7 +125,7 @@ function Faq({ q, a }: { q: string; a: ReactNode }) {
         />
       </button>
       {open && (
-        <p className="pb-5 pr-10 text-[14.5px] leading-[1.75] text-slate-600 dark:text-gray-300">
+        <p className="pb-4 sm:pb-5 pr-4 sm:pr-8 text-[13.5px] sm:text-[14.5px] leading-[1.75] text-slate-600 dark:text-gray-300">
           {a}
         </p>
       )}
@@ -142,20 +142,20 @@ export default function Pricing() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased">
+    <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased overflow-x-hidden">
       <SiteHeader />
 
-      <main>
+      <main className="w-full">
         <PricingSection id="plans" headingAs="h1" />
 
         <section className="border-t border-slate-100 dark:border-white/[0.07]">
-          <div className="max-w-[1160px] mx-auto px-5 sm:px-8 py-20 sm:py-24">
-            <div className="grid lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] gap-10 lg:gap-16">
+          <div className="max-w-[1160px] mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+            <div className="grid lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] gap-8 lg:gap-16">
               <div>
-                <h2 className="text-[26px] sm:text-[32px] leading-[1.14] font-semibold tracking-[-0.03em]">
+                <h2 className="text-[24px] sm:text-[30px] lg:text-[32px] leading-[1.15] font-semibold tracking-[-0.03em]">
                   Before you pay.
                 </h2>
-                <p className="mt-4 text-[15px] leading-relaxed text-slate-500 dark:text-gray-400">
+                <p className="mt-3 sm:mt-4 text-[14px] sm:text-[15px] leading-relaxed text-slate-500 dark:text-gray-400">
                   Still unsure? Ask our 24/7 AI guide, chat live with a support specialist, or write to{' '}
                   <a
                     href={`mailto:${SITE.email.support}`}
@@ -164,17 +164,17 @@ export default function Pricing() {
                     {SITE.email.support}
                   </a>. We&rsquo;d rather answer the question than take a subscription you regret.
                 </p>
-                <div className="mt-6">
+                <div className="mt-5 sm:mt-6">
                   <Link
                     to="/help"
-                    className="inline-flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13.5px] font-semibold hover:opacity-90 transition-opacity"
+                    className="inline-flex items-center gap-2 px-4.5 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13.5px] font-semibold hover:opacity-90 transition-opacity touch-manipulation"
                   >
                     Ask Sadhya Guide
                   </Link>
                 </div>
               </div>
 
-              <div>
+              <div className="mt-2 lg:mt-0">
                 {FAQS.map((f) => (
                   <Faq key={f.q} q={f.q} a={f.a} />
                 ))}
