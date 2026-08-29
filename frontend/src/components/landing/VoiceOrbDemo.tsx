@@ -34,7 +34,7 @@ const SPECTRUM_BINS = 128;
 
 export const VoiceOrbDemo: React.FC<{ className?: string }> = ({ className }) => {
   const [playing, setPlaying] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(true);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
@@ -50,32 +50,52 @@ export const VoiceOrbDemo: React.FC<{ className?: string }> = ({ className }) =>
   stateRef.current = current.state;
   playingRef.current = playing;
 
+  useEffect(() => {
+    if (audioRef.current && (audioRef.current.readyState >= 1 || audioRef.current.currentSrc)) {
+      setReady(true);
+    }
+  }, []);
+
   const toggle = useCallback(async () => {
     const el = audioRef.current;
     if (!el) return;
 
-    if (playingRef.current) { el.pause(); return; }
+    if (playingRef.current) {
+      el.pause();
+      setPlaying(false);
+      return;
+    }
 
     /*
-     * Built on the click, never before: an AudioContext created without a gesture starts
-     * suspended, and a MediaElementSource can only be attached to an element once — so both are
-     * done here, once, and reused for every later play.
+     * Built on the click: AudioContext created with user gesture
      */
     if (!ctxRef.current) {
-      const Ctor = window.AudioContext || (window as any).webkitAudioContext;
-      const ctx = new Ctor();
-      const src = ctx.createMediaElementSource(el);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.75;
-      src.connect(analyser);
-      analyser.connect(ctx.destination);   // still has to reach the speakers
-      ctxRef.current = ctx;
-      analyserRef.current = analyser;
+      try {
+        const Ctor = window.AudioContext || (window as any).webkitAudioContext;
+        const ctx = new Ctor();
+        const src = ctx.createMediaElementSource(el);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.75;
+        src.connect(analyser);
+        analyser.connect(ctx.destination); // still has to reach the speakers
+        ctxRef.current = ctx;
+        analyserRef.current = analyser;
+      } catch (err) {
+        console.warn('WebAudio Analyser initialization failed, falling back to audio playback', err);
+      }
     }
-    if (ctxRef.current.state === 'suspended') await ctxRef.current.resume();
+    if (ctxRef.current && ctxRef.current.state === 'suspended') {
+      await ctxRef.current.resume();
+    }
 
-    try { el.currentTime = 0; await el.play(); } catch { /* blocked or interrupted; button stays */ }
+    try {
+      el.currentTime = 0;
+      await el.play();
+      setPlaying(true);
+    } catch (err) {
+      console.warn('Audio play error:', err);
+    }
   }, []);
 
   useEffect(() => () => { void ctxRef.current?.close().catch(() => {}); }, []);
@@ -133,13 +153,12 @@ export const VoiceOrbDemo: React.FC<{ className?: string }> = ({ className }) =>
 
         <button
           onClick={toggle}
-          disabled={!ready}
           className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-white/15
                      text-[13px] font-semibold text-slate-700 dark:text-slate-200
-                     hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-50"
+                     hover:bg-slate-100 dark:hover:bg-white/[0.06] active:scale-98 transition-all cursor-pointer shadow-2xs"
           aria-label={playing ? 'Stop the voice sample' : 'Play a real answer from Sadhya'}
         >
-          {playing ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+          {playing ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 text-[#186a52] dark:text-[#c8e558]" />}
           {playing ? 'Stop' : 'Hear a real answer'}
         </button>
 
@@ -148,25 +167,15 @@ export const VoiceOrbDemo: React.FC<{ className?: string }> = ({ className }) =>
         </p>
       </div>
 
-      {/*
-        Served from /media/, NOT /voice-…: nginx proxies `location /voice` to the WebSocket
-        gateway as a PREFIX match, so any path merely BEGINNING with "/voice" — including
-        /voice-sample-ssc-cgl.mp3 — is handed to the socket handler and comes back 404.
-
-        "metadata", not "none": with none the element never reaches a readable state until play is
-        attempted, so onLoadedMetadata never fires and the button stays disabled forever. Metadata
-        is a few KB of header — the 37KB of audio still only downloads if someone presses play.
-      */}
       <audio
         ref={audioRef}
         src="/media/voice-sample-ssc-cgl.mp3"
-        preload="metadata"
+        preload="auto"
         onCanPlay={() => setReady(true)}
         onLoadedMetadata={() => setReady(true)}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => { setPlaying(false); startedRef.current = performance.now(); }}
-        onError={() => setReady(false)}
       />
     </div>
   );
