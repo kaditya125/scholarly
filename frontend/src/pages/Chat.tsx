@@ -1094,48 +1094,27 @@ export default function Chat() {
                 </div>
               )}
 
-              {/* Previous Study Session Resume Card */}
+              {/* Minimalist Previous Session Resume Chip */}
               {lastSession && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
+                <motion.button
+                  initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
+                  transition={{ duration: 0.25 }}
                   onClick={() => handleSelectSession(lastSession.sessionId)}
-                  className="mt-5 w-full p-4 sm:p-4.5 rounded-2xl border border-[#c8e558]/50 dark:border-[#c8e558]/30 bg-gradient-to-r from-[#f7fbe6]/90 via-white to-white dark:from-[#c8e558]/[0.08] dark:via-[#141416] dark:to-[#141416] hover:border-[#8ba32b] dark:hover:border-[#c8e558] transition-all shadow-2xs hover:shadow-xs group flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 cursor-pointer"
+                  className="mt-4 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-slate-200/90 dark:border-white/10 bg-white dark:bg-white/[0.04] hover:border-[#8ba32b] dark:hover:border-[#c8e558] text-[13px] text-slate-700 dark:text-gray-300 hover:text-slate-950 dark:hover:text-white transition-all shadow-2xs hover:shadow-xs group cursor-pointer max-w-full text-left"
                 >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-[#c8e558]/25 dark:bg-[#c8e558]/15 border border-[#c8e558]/40 flex items-center justify-center text-[#556b12] dark:text-[#c8e558] shrink-0">
-                      <BookOpen className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#556b12] dark:text-[#c8e558]">
-                          Resume Your Last Study Session
-                        </span>
-                        {lastSession.createdAt && (
-                          <span className="text-[11.5px] text-slate-400 dark:text-gray-500">
-                            • {formatSessionTime(lastSession.createdAt)}
-                          </span>
-                        )}
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#8ba32b] dark:bg-[#c8e558] animate-pulse" />
-                      </div>
-                      <p className="text-[14px] font-semibold text-slate-900 dark:text-white truncate mt-0.5">
-                        {lastSession.title || 'Previous Chat Session'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSelectSession(lastSession.sessionId);
-                    }}
-                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-[12.5px] font-semibold bg-[#c8e558] hover:bg-[#bcd94c] text-slate-950 shadow-2xs transition-all shrink-0 self-start sm:self-auto group-hover:shadow-xs active:scale-98 cursor-pointer"
-                  >
-                    <span>Continue Session</span>
-                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
-                  </button>
-                </motion.div>
+                  <span className="w-2 h-2 rounded-full bg-[#8ba32b] dark:bg-[#c8e558] animate-pulse shrink-0" />
+                  <span className="text-slate-400 dark:text-gray-500 font-normal shrink-0">Resume:</span>
+                  <span className="font-semibold text-slate-900 dark:text-white truncate max-w-[260px] sm:max-w-[420px]">
+                    {lastSession.title || 'Previous Chat Session'}
+                  </span>
+                  {lastSession.createdAt && (
+                    <span className="text-[11.5px] text-slate-400 dark:text-gray-500 font-normal shrink-0 hidden sm:inline">
+                      • {formatSessionTime(lastSession.createdAt)}
+                    </span>
+                  )}
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#8ba32b] dark:group-hover:text-[#c8e558] transition-transform group-hover:translate-x-0.5 ml-0.5 shrink-0" />
+                </motion.button>
               )}
 
               {/* Suggestion cards — sleek 4-column glass grid */}
