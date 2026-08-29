@@ -47,6 +47,8 @@ import { api } from "../lib/api/client";
 import { useAdaptiveAssessment } from "../hooks/api/useAdaptiveAssessment";
 import { OnboardingChecklist } from "../components/dashboard/OnboardingChecklist";
 import { LearningVelocityWidget } from "../components/dashboard/LearningVelocityWidget";
+import { AiRecommendedDrills } from "../components/dashboard/AiRecommendedDrills";
+import { AchievementsMilestones } from "../components/dashboard/AchievementsMilestones";
 
 const GeminiIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className}>
@@ -492,169 +494,22 @@ export default function StudentDashboard() {
           <LearningVelocityWidget />
         </motion.div>
 
-        {/* 7. AI-Recommended Tests (Direct Launch) */}
+        {/* 7. AI-Recommended Tests (Dynamic & Adaptive to Student Course & Subjects) */}
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.3 }}
-          className="space-y-3"
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-[13px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <Brain className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558]" />
-                AI-Recommended Weak Area Drills
-              </h2>
-            </div>
-            <button 
-              onClick={() => navigate('/tests')}
-              className="text-[11.5px] font-semibold text-[#8ba32b] dark:text-[#c8e558] hover:underline cursor-pointer flex items-center gap-0.5"
-            >
-              All Tests <ChevronRight className="w-3 h-3" />
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-            <div className={cn(
-              "p-4 rounded-2xl border transition-all flex flex-col justify-between shadow-2xs",
-              isDarkMode ? "bg-[#1a1a1e] border-white/[0.08]" : "bg-white border-slate-200/90"
-            )}>
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <h3 className="text-[13.5px] font-semibold text-slate-900 dark:text-white">Modern Indian History - 1857 Revolt</h3>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-full border border-amber-500/20">
-                    High Yield
-                  </span>
-                </div>
-                <p className="text-[11.5px] text-slate-500 dark:text-slate-400 mb-3">
-                  Calibrated to address your recent 45% accuracy in freedom movement questions.
-                </p>
-                <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400 mb-4">
-                  <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-amber-500" /> 15 Mins</span>
-                  <span className="flex items-center gap-1"><HelpCircle className="w-3 h-3 text-emerald-500" /> 10 Questions</span>
-                </div>
-              </div>
-              
-              <button 
-                onClick={() => launch({ topic: 'Modern Indian History - 1857 Revolt', count: 10, mode: 'exam' })}
-                className={cn(
-                  "w-full py-2 rounded-xl text-[12px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-98",
-                  isDarkMode 
-                    ? "bg-[#c8e558] hover:bg-[#bcd94c] text-slate-900" 
-                    : "bg-slate-900 hover:bg-slate-800 text-white"
-                )}
-              >
-                <Zap className="w-3.5 h-3.5 fill-current" /> Start Practice Drill
-              </button>
-            </div>
-
-            <div className={cn(
-              "p-4 rounded-2xl border transition-all flex flex-col justify-between shadow-2xs",
-              isDarkMode ? "bg-[#1a1a1e] border-white/[0.08]" : "bg-white border-slate-200/90"
-            )}>
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <h3 className="text-[13.5px] font-semibold text-slate-900 dark:text-white">Quantitative Aptitude - Linear Equations</h3>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full border border-emerald-500/20">
-                    Speed Booster
-                  </span>
-                </div>
-                <p className="text-[11.5px] text-slate-500 dark:text-slate-400 mb-3">
-                  Reinforce elimination shortcuts and algebraic substitution speed.
-                </p>
-                <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400 mb-4">
-                  <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-amber-500" /> 15 Mins</span>
-                  <span className="flex items-center gap-1"><HelpCircle className="w-3 h-3 text-emerald-500" /> 10 Questions</span>
-                </div>
-              </div>
-              
-              <button 
-                onClick={() => launch({ topic: 'Quantitative Aptitude - Linear Equations', count: 10, mode: 'exam' })}
-                className={cn(
-                  "w-full py-2 rounded-xl text-[12px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-98",
-                  isDarkMode 
-                    ? "bg-[#c8e558] hover:bg-[#bcd94c] text-slate-900" 
-                    : "bg-slate-900 hover:bg-slate-800 text-white"
-                )}
-              >
-                <Zap className="w-3.5 h-3.5 fill-current" /> Start Practice Drill
-              </button>
-            </div>
-          </div>
+          <AiRecommendedDrills />
         </motion.div>
 
-        {/* 8. Recent Achievements */}
+        {/* 8. Recent Achievements & Milestones (Live Telemetry & Activity Tracking) */}
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.3 }}
-          className="space-y-3"
         >
-          <div className="flex items-center justify-between">
-            <h2 className="text-[13px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-              <Trophy className="w-3.5 h-3.5 text-amber-500" />
-              Achievements &amp; Milestones
-            </h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-            <div className={cn(
-              "p-4 rounded-2xl border transition-all flex items-start gap-3 shadow-2xs",
-              isDarkMode ? "bg-[#1a1a1e] border-white/[0.08]" : "bg-white border-slate-200/90"
-            )}>
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0 border border-amber-500/20">
-                <Trophy className="w-5 h-5" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-[13px] font-semibold text-slate-900 dark:text-white">Top Accuracy</h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Scored 90%+ in 5 consecutive tests.</p>
-                <div className="mt-2.5 flex items-center gap-2">
-                  <div className="flex-1 h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-amber-500 rounded-full" style={{ width: '100%' }} />
-                  </div>
-                  <span className="text-[9.5px] font-bold text-amber-500">Unlocked!</span>
-                </div>
-              </div>
-            </div>
-
-            <div className={cn(
-              "p-4 rounded-2xl border transition-all flex items-start gap-3 shadow-2xs",
-              isDarkMode ? "bg-[#1a1a1e] border-white/[0.08]" : "bg-white border-slate-200/90"
-            )}>
-              <div className="w-10 h-10 rounded-xl bg-[#8ba32b]/10 dark:bg-[#c8e558]/10 text-[#8ba32b] dark:text-[#c8e558] flex items-center justify-center shrink-0 border border-[#8ba32b]/20 dark:border-[#c8e558]/20">
-                <Flame className="w-5 h-5" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-[13px] font-semibold text-slate-900 dark:text-white">7-Day Streak</h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Logged in and solved quizzes 7 days straight.</p>
-                <div className="mt-2.5 flex items-center gap-2">
-                  <div className="flex-1 h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#8ba32b] dark:bg-[#c8e558] rounded-full" style={{ width: '100%' }} />
-                  </div>
-                  <span className="text-[9.5px] font-bold text-[#8ba32b] dark:text-[#c8e558]">Unlocked!</span>
-                </div>
-              </div>
-            </div>
-
-            <div className={cn(
-              "p-4 rounded-2xl border transition-all flex items-start gap-3 shadow-2xs",
-              isDarkMode ? "bg-[#1a1a1e] border-white/[0.08]" : "bg-white border-slate-200/90"
-            )}>
-              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-400 flex items-center justify-center shrink-0 border border-slate-200/80 dark:border-white/10">
-                <Zap className="w-5 h-5" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-[13px] font-semibold text-slate-900 dark:text-white">Speedy Solver</h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Complete a test in under 60% of allotted time.</p>
-                <div className="mt-2.5 flex items-center gap-2">
-                  <div className="flex-1 h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-slate-400 dark:bg-slate-500 rounded-full" style={{ width: '40%' }} />
-                  </div>
-                  <span className="text-[9.5px] font-medium text-slate-400">2/5 Tests</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <AchievementsMilestones />
         </motion.div>
 
       </div>
