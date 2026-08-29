@@ -148,6 +148,11 @@ export interface LeaderboardEntry {
   handle: string;
   rankTrend: "up" | "down" | "same";
   scoreTrend: "up" | "down" | "same";
+  targetExam?: string;
+  streakDays?: number;
+  level?: number;
+  tier?: string;
+  accuracy?: number;
 }
 
 export type PlanningMode = "Crash Course" | "Balanced" | "Weekend Only" | "Working Professional" | "Daily Practice" | "Revision Mode" | "Final 30 Days";
