@@ -79,6 +79,11 @@ export default function BaselineAssessmentEngine() {
     await startAssessment();
   };
 
+  const handleSkip = () => {
+    sessionStorage.setItem('onboarding_skipped', 'true');
+    navigate('/dashboard', { replace: true });
+  };
+
   /*
    * Selecting an option no longer pops the confidence prompt. In a CBT you choose, you may change
    * your mind, and only then commit with Save & Next — interrupting at the moment of selection
@@ -131,7 +136,7 @@ export default function BaselineAssessmentEngine() {
               <ArrowRight className="w-4 h-4" strokeWidth={2.25} aria-hidden />
             </button>
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={handleSkip}
               className="h-11 px-5 rounded-md border border-slate-300 dark:border-white/15 text-[13px] font-semibold hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-colors"
             >
               Skip for now
@@ -143,7 +148,15 @@ export default function BaselineAssessmentEngine() {
   }
 
   if (showPreModal && (!questions || questions.length === 0)) {
-    return <PreAssessmentScreen isOpen={showPreModal} onStart={handleStart} isLoading={isStarting} />;
+    return (
+      <PreAssessmentScreen
+        isOpen={showPreModal}
+        onStart={handleStart}
+        onSkip={handleSkip}
+        onClose={handleSkip}
+        isLoading={isStarting}
+      />
+    );
   }
 
   /*
@@ -173,18 +186,24 @@ export default function BaselineAssessmentEngine() {
         <div className="w-full max-w-sm text-center bg-white dark:bg-white/[0.03] border border-slate-300 dark:border-white/10 rounded-lg p-7">
           <Loader2 className="w-7 h-7 mx-auto animate-spin text-slate-500 dark:text-gray-400" aria-hidden />
           <h2 className="mt-4 text-[16px] font-semibold">Preparing your paper</h2>
-          {/* Honest about the wait: generation takes ~13 s, and an unexplained blank screen for
-              that long reads as a hang. */}
           <p className="mt-2 text-[13px] leading-relaxed text-slate-500 dark:text-gray-400">
             Questions are being set for your exam and subjects. This usually takes a few seconds.
           </p>
-          <button
-            onClick={() => startAssessment()}
-            disabled={isStarting}
-            className="mt-5 h-11 px-5 rounded-md border border-slate-300 dark:border-white/15 text-[13px] font-semibold hover:bg-slate-50 dark:hover:bg-white/[0.06] disabled:opacity-40 transition-colors"
-          >
-            {isStarting ? 'Preparing…' : 'Retry'}
-          </button>
+          <div className="mt-5 flex items-center justify-center gap-2.5">
+            <button
+              onClick={() => startAssessment()}
+              disabled={isStarting}
+              className="h-11 px-5 rounded-md border border-slate-300 dark:border-white/15 text-[13px] font-semibold hover:bg-slate-50 dark:hover:bg-white/[0.06] disabled:opacity-40 transition-colors"
+            >
+              {isStarting ? 'Preparing…' : 'Retry'}
+            </button>
+            <button
+              onClick={handleSkip}
+              className="h-11 px-5 rounded-md border border-slate-300 dark:border-white/15 text-[13px] font-semibold hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-colors"
+            >
+              Skip for now
+            </button>
+          </div>
         </div>
       </div>
     );
