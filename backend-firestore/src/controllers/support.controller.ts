@@ -145,26 +145,32 @@ export class SupportController {
 
   /**
    * POST /help/feedback
-   * Records student satisfaction on support responses
+   * Records student satisfaction and general product feedback
    */
   async submitFeedback(req: Request, res: Response): Promise<Response> {
     try {
       const userId = (req as any).user?.uid || 'anonymous';
-      const { messageId, rating, comment, category } = req.body;
+      const userEmail = (req as any).user?.email || req.body.email || 'anonymous';
+      const { messageId, rating, comment, feedback, category, sentiment, currentUrl, metadata } = req.body;
+      const feedbackText = (comment || feedback || '').trim();
+
+      if (!feedbackText && !rating) {
+        return res.status(400).json({ error: 'Please provide feedback comments or a rating.' });
+      }
 
       const feedbackId = await feedbackService.submitFeedback({
         userId,
-        messageId: messageId || `help_${Date.now()}`,
-        sessionId: `help_${Date.now()}`,
+        messageId: messageId || `app_feedback_${Date.now()}`,
+        sessionId: `session_${Date.now()}`,
         rating: rating || 'thumbs_up',
-        comment,
-        promptVersion: 'support_v1',
+        comment: feedbackText,
+        promptVersion: 'app_feedback_v2',
         retrievalIds: [],
-        contextChunks: [],
-        providerUsed: 'Gemini/Groq Support Engine',
-        modelUsed: 'gemini-1.5-flash',
-        examMode: category || 'General Help',
-        learningMode: 'SUPPORT',
+        contextChunks: currentUrl ? [currentUrl] : [],
+        providerUsed: 'Sadhya Student Portal',
+        modelUsed: metadata?.device || 'web',
+        examMode: category || 'General Feedback',
+        learningMode: (sentiment || 'GENERAL').toUpperCase(),
         confidenceScore: 1.0,
         verificationScore: 1.0,
         traceId: `trace_${Date.now()}`,
@@ -172,6 +178,7 @@ export class SupportController {
         tokensUsed: 0,
       });
 
+      logger.info('[SupportController] Feedback submitted successfully', { feedbackId, userId, userEmail, category });
       return res.status(200).json({ success: true, data: { feedbackId } });
     } catch (err: any) {
       logger.error('[SupportController] Error in submitFeedback', err);

@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { HelpService } from '../services/help.service';
 import { supportController } from '../controllers/support.controller';
-import { requireAuth } from '../middlewares/auth';
+import { requireAuth, optionalAuth } from '../middlewares/auth';
 import { helpdeskLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
@@ -79,6 +79,6 @@ router.post('/tickets', requireAuth, (req, res) => supportController.createTicke
 router.post('/tickets/:id/messages', requireAuth, (req, res) => supportController.addTicketMessage(req, res));
 
 // Feedback
-router.post('/feedback', requireAuth, (req, res) => supportController.submitFeedback(req, res));
+router.post('/feedback', optionalAuth, (req, res) => supportController.submitFeedback(req, res));
 
 export default router;
