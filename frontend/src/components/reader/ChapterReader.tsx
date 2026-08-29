@@ -17,7 +17,8 @@ import {
   SlidersHorizontal,
   Target,
   Sun,
-  Moon
+  Moon,
+  ListTree
 } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
 import { auth } from '../../lib/firebase';
@@ -118,7 +119,7 @@ function YouTubeEmbed({ chapter, youtubeVideos }: { chapter: DocumentaryChapter;
   }
 
   return (
-    <div className="my-8 w-full rounded-md overflow-hidden" style={{ aspectRatio: '16/9' }}>
+    <div className="my-6 sm:my-8 w-full rounded-xl overflow-hidden aspect-video shadow-md">
       <iframe
         src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1`}
         title={`${chapter.title} — Video`}
@@ -137,50 +138,50 @@ function ArticleHero({ chapter }: { chapter: DocumentaryChapter }) {
   const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
 
   return (
-    <div className="mb-12">
+    <div className="mb-8 sm:mb-12">
       {/* Breadcrumb — "Home / Subjects / Physics / Chapter..." */}
       <div
-        className="text-center text-[13px] text-[#9A9A95]  mb-8"
+        className="text-center text-[11px] sm:text-[13px] text-[#9A9A95] mb-5 sm:mb-8 flex flex-wrap items-center justify-center gap-1 leading-normal"
         style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}
       >
         <span>Home</span>
-        <span className="mx-2 text-[#C0BDB5]">/</span>
+        <span className="mx-1.5 text-[#C0BDB5]">/</span>
         <span>Subjects</span>
-        <span className="mx-2 text-[#C0BDB5]">/</span>
+        <span className="mx-1.5 text-[#C0BDB5]">/</span>
         <span>{chapter.subject}</span>
-        <span className="mx-2 text-[#C0BDB5]">/</span>
-        <span className="text-[#1A1A1A] dark:text-white truncate">
-          {(chapter.title || '').length > 40 ? (chapter.title || '').slice(0, 40) + '...' : chapter.title}
+        <span className="mx-1.5 text-[#C0BDB5]">/</span>
+        <span className="text-[#1A1A1A] dark:text-white truncate max-w-[200px] sm:max-w-xs">
+          {chapter.title}
         </span>
       </div>
 
       {/* Tags + Date row */}
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4 sm:mb-5">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <span
-            className="text-[11px] font-semibold tracking-[0.12em] uppercase px-3 py-[5px] rounded-sm"
+            className="text-[10px] sm:text-[11px] font-semibold tracking-[0.12em] uppercase px-2.5 py-1 rounded-sm"
             style={{ background: '#EEDEB6', color: '#7A6540', fontFamily: "'Inter', sans-serif" }}
           >
             ARTICLE
           </span>
           <span
-            className="text-[11px] font-semibold tracking-[0.12em] uppercase px-3 py-[5px] rounded-sm"
+            className="text-[10px] sm:text-[11px] font-semibold tracking-[0.12em] uppercase px-2.5 py-1 rounded-sm"
             style={{ background: '#EEDEB6', color: '#7A6540', fontFamily: "'Inter', sans-serif" }}
           >
             {(chapter.subject || 'GENERAL').toUpperCase()}
           </span>
         </div>
         <span
-          className="text-[11px] font-semibold tracking-[0.08em] uppercase text-[#9A9A95] "
+          className="text-[10px] sm:text-[11px] font-semibold tracking-[0.08em] uppercase text-[#9A9A95]"
           style={{ fontFamily: "'Inter', sans-serif" }}
         >
           UPDATED ON:&nbsp;{dateStr}
         </span>
       </div>
 
-      {/* H1 Title — Eleken large bold */}
+      {/* H1 Title — Responsive font size */}
       <h1
-        className="text-[38px] sm:text-[44px] md:text-[50px] font-bold text-[#1A1A1A] dark:text-white leading-[1.15] tracking-[-0.02em] mb-5"
+        className="text-[24px] xs:text-[28px] sm:text-[36px] md:text-[44px] lg:text-[48px] font-bold text-[#1A1A1A] dark:text-white leading-[1.2] sm:leading-[1.15] tracking-[-0.02em] mb-3 sm:mb-5"
         style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}
       >
         {chapter.title}
@@ -188,17 +189,17 @@ function ArticleHero({ chapter }: { chapter: DocumentaryChapter }) {
 
       {/* Reading time — "11 MIN TO READ" */}
       <div
-        className="flex items-center gap-1.5 text-[13px] text-[#9A9A95]  mb-10"
+        className="flex items-center gap-1.5 text-[11.5px] sm:text-[13px] text-[#9A9A95] mb-6 sm:mb-10"
         style={{ fontFamily: "'Inter', sans-serif" }}
       >
         <span>{(chapter.estimatedReadingTime || '15 mins').replace(' mins', ' MIN')}</span>
-        <span className="font-semibold text-[#C4A96A]  tracking-[0.06em] uppercase text-[11px]">
+        <span className="font-semibold text-[#C4A96A] tracking-[0.06em] uppercase text-[10px] sm:text-[11px]">
           TO READ
         </span>
       </div>
 
       {/* Thin separator */}
-      <div className="border-t border-[#E8E7E1] .06]" />
+      <div className="border-t border-[#E8E7E1] dark:border-white/10" />
     </div>
   );
 }
@@ -321,7 +322,7 @@ function ArticleContent({
     <div style={{ fontFamily: fontStack }}>
 
       {/* ── Full-width Hero — spans the whole content area ── */}
-      <div className="px-8 md:px-12 lg:px-20 pt-12 max-w-[960px] mx-auto">
+      <div className="px-4 sm:px-8 md:px-12 lg:px-20 pt-6 sm:pt-12 max-w-[960px] mx-auto">
         <ArticleHero chapter={chapter} />
       </div>
 
@@ -331,9 +332,9 @@ function ArticleContent({
           Without it the aside stretches to fill the flex container and
           sticky has no room to stick.
           ─────────────────────────────────────────────────────────── */}
-      <div className="flex items-start px-8 md:px-12 lg:px-20 pb-20 max-w-[960px] mx-auto">
+      <div className="flex items-start px-4 sm:px-8 md:px-12 lg:px-20 pb-16 sm:pb-20 max-w-[960px] mx-auto">
 
-        {/* TOC — sticky with background #F4F3ED */}
+        {/* TOC — sticky with background #F4F3ED on desktop */}
         <SidebarTOC
           chapter={chapter}
           activeSectionId={activeSectionId}
@@ -344,8 +345,8 @@ function ArticleContent({
         <article className="flex-1 min-w-0">
 
           {/* Lead paragraph + YouTube embed */}
-          <div className="mb-10">
-            <p className="text-[17px] leading-[1.85] text-[#555555] dark:text-gray-300 mb-6">
+          <div className="mb-8 sm:mb-10">
+            <p className="text-[15.5px] sm:text-[17px] leading-[1.75] sm:leading-[1.85] text-[#555555] dark:text-gray-300 mb-6">
               {chapter.leadParagraph}
             </p>
             <YouTubeEmbed chapter={chapter} youtubeVideos={youtubeVideos} />
@@ -353,36 +354,36 @@ function ArticleContent({
 
           {/* Sections */}
           {(chapter.sections || []).map((sec) => (
-            <section key={sec.id} id={sec.id} className="mb-16 scroll-mt-8">
+            <section key={sec.id} id={sec.id} className="mb-12 sm:mb-16 scroll-mt-8">
               <h2
-                className="text-[36px] sm:text-[42px] font-medium text-[#111111] dark:text-[#F0EFF0] leading-[1.2] tracking-tight mt-14 mb-6"
+                className="text-[22px] sm:text-[30px] md:text-[38px] font-medium text-[#111111] dark:text-[#F0EFF0] leading-[1.25] tracking-tight mt-10 sm:mt-14 mb-4 sm:mb-6"
                 style={{ fontFamily: fontStack }}
               >
                 {sec.title}
               </h2>
               {sec.intro && (
-                <p className="text-[19px] leading-[1.8] text-[#737373] dark:text-[#9A9A9F] mb-8">{sec.intro}</p>
+                <p className="text-[15.5px] sm:text-[17.5px] md:text-[19px] leading-[1.75] sm:leading-[1.8] text-[#737373] dark:text-[#9A9A9F] mb-6 sm:mb-8">{sec.intro}</p>
               )}
               {(sec.concepts || []).map((concept, cIdx) => (
-                <div key={concept.id} className="mb-12">
+                <div key={concept.id} className="mb-8 sm:mb-12">
                   <h3
-                    className="text-[28px] sm:text-[32px] font-medium text-[#111111] dark:text-[#F0EFF0] leading-[1.25] tracking-tight mt-10 mb-5"
+                    className="text-[18px] sm:text-[24px] md:text-[30px] font-medium text-[#111111] dark:text-[#F0EFF0] leading-[1.3] tracking-tight mt-6 sm:mt-10 mb-3 sm:mb-5"
                     style={{ fontFamily: fontStack }}
                   >
                     {cIdx + 1}. {concept.heading}
                   </h3>
                   {(concept.body || []).map((para, pIdx) => (
-                    <p key={pIdx} className="text-[19px] leading-[1.8] text-[#737373] dark:text-gray-300 mb-6">
+                    <p key={pIdx} className="text-[15px] sm:text-[17px] md:text-[18.5px] leading-[1.75] sm:leading-[1.8] text-[#737373] dark:text-gray-300 mb-4 sm:mb-6">
                       {pIdx === 0 ? <HighlightedText text={para} highlights={concept.highlights || []} /> : para}
                     </p>
                   ))}
                   {concept.boldLines?.map((line, bIdx) => (
-                    <p key={`bold-${bIdx}`} className="text-[19px] leading-[1.8] text-[#333333] dark:text-[#E0E0E5] font-medium mb-6">{line}</p>
+                    <p key={`bold-${bIdx}`} className="text-[15px] sm:text-[17px] md:text-[18.5px] leading-[1.75] sm:leading-[1.8] text-[#333333] dark:text-[#E0E0E5] font-medium mb-4 sm:mb-6">{line}</p>
                   ))}
                   {concept.numberedList && concept.numberedList.length > 0 && (
-                    <ol className="my-6 space-y-2 list-none pl-0">
+                    <ol className="my-4 sm:my-6 space-y-2 list-none pl-0">
                       {concept.numberedList.map((item, nIdx) => (
-                        <li key={nIdx} className="flex items-start gap-3 text-[19px] leading-[1.8] text-[#737373] dark:text-[#9A9A9F] mb-3">
+                        <li key={nIdx} className="flex items-start gap-2.5 sm:gap-3 text-[15px] sm:text-[17px] md:text-[18.5px] leading-[1.75] sm:leading-[1.8] text-[#737373] dark:text-[#9A9A9F] mb-2 sm:mb-3">
                           <span className="shrink-0 font-medium text-[#333333] dark:text-[#E0E0E5] w-5 text-right">{nIdx + 1}.</span>
                           <span>{item}</span>
                         </li>
@@ -390,33 +391,33 @@ function ArticleContent({
                     </ol>
                   )}
                   {concept.bulletList && concept.bulletList.length > 0 && (
-                    <ul className="my-6 space-y-2 pl-0">
+                    <ul className="my-4 sm:my-6 space-y-2 pl-0">
                       {concept.bulletList.map((item, bIdx) => (
-                        <li key={bIdx} className="flex items-start gap-3 text-[19px] leading-[1.8] text-[#737373] dark:text-[#9A9A9F] mb-3">
+                        <li key={bIdx} className="flex items-start gap-2.5 sm:gap-3 text-[15px] sm:text-[17px] md:text-[18.5px] leading-[1.75] sm:leading-[1.8] text-[#737373] dark:text-[#9A9A9F] mb-2 sm:mb-3">
                           <span className="shrink-0 mt-[0.6em] w-1.5 h-1.5 rounded-full bg-[#BDBDB5] dark:bg-[#555]" />
                           <span>{item}</span>
                         </li>
                       ))}
                     </ul>
                   )}
-                  <div className="mt-10 border-t border-[#E8E7E1] .06]" />
+                  <div className="mt-8 sm:mt-10 border-t border-[#E8E7E1] dark:border-white/10" />
                 </div>
               ))}
             </section>
           ))}
 
           {/* In Summary */}
-          <section id="sec-summary" className="mt-10 mb-16 scroll-mt-8">
+          <section id="sec-summary" className="mt-8 sm:mt-10 mb-12 sm:mb-16 scroll-mt-8">
             <h2
-              className="text-[32px] sm:text-[36px] font-bold text-[#1A1A1A] dark:text-white leading-[1.2] tracking-[-0.015em] mt-14 mb-6"
+              className="text-[22px] sm:text-[28px] md:text-[34px] font-bold text-[#1A1A1A] dark:text-white leading-[1.2] tracking-[-0.015em] mt-10 sm:mt-14 mb-4 sm:mb-6"
               style={{ fontFamily: fontStack }}
             >
               In summary
             </h2>
-            <p className="text-[17px] leading-[1.85] text-[#555555] dark:text-gray-300 mb-6">{chapter.summary?.body}</p>
-            <ul className="space-y-3 pl-0">
+            <p className="text-[15.5px] sm:text-[17px] leading-[1.75] sm:leading-[1.85] text-[#555555] dark:text-gray-300 mb-6">{chapter.summary?.body}</p>
+            <ul className="space-y-2.5 sm:space-y-3 pl-0">
               {(chapter.summary?.keyPoints || []).map((point, i) => (
-                <li key={i} className="flex items-start gap-3 text-[17px] leading-[1.75] text-[#555555] dark:text-gray-300">
+                <li key={i} className="flex items-start gap-2.5 sm:gap-3 text-[15px] sm:text-[17px] leading-[1.7] sm:leading-[1.75] text-[#555555] dark:text-gray-300">
                   <span className="shrink-0 mt-[0.55em] w-1.5 h-1.5 rounded-full bg-[#BDBDB5] dark:bg-[#555]" />
                   <span>{point}</span>
                 </li>
@@ -458,7 +459,7 @@ export function ChapterReader({
   const [mode, setMode] = useState<ReadingMode>('documentary');
   const [numPages, setNumPages] = useState(0);
   const [pageNum, setPageNum] = useState(1);
-  const [scale, setScale] = useState(1.3);
+  const [scale, setScale] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 640 ? 0.85 : 1.3));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [scanMode, setScanMode] = useState(false);
@@ -466,6 +467,7 @@ export function ChapterReader({
   const [crop, setCrop] = useState<string | null>(null);
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [showPodcast, setShowPodcast] = useState(false);
+  const [showMobileToc, setShowMobileToc] = useState(false);
   const [activeSectionId, setActiveSectionId] = useState<string>('');
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
   
@@ -821,24 +823,24 @@ export function ChapterReader({
       `}</style>
 
       {/* ── Top Toolbar ── */}
-      <header className="h-[52px] shrink-0 flex items-center justify-between px-5 border-b border-[#E2E1DC] dark:border-white/10 bg-[#F9F8F4] dark:bg-[#131315] z-30">
-        <div className="flex items-center gap-3">
+      <header className="h-[52px] shrink-0 flex items-center justify-between px-3 sm:px-5 border-b border-[#E2E1DC] dark:border-white/10 bg-[#F9F8F4] dark:bg-[#131315] z-30">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={onBack}
-            className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#555] dark:text-gray-400 hover:text-[#1A1A1A] dark:hover:text-white transition-colors"
+            className="inline-flex items-center gap-1 text-[13px] font-medium text-[#555] dark:text-gray-400 hover:text-[#1A1A1A] dark:hover:text-white transition-colors shrink-0 touch-manipulation cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back
+            <span className="hidden xs:inline">Back</span>
           </button>
-          <div className="h-4 w-px bg-[#D0CEC6] dark:bg-white/10" />
-          <div>
-            <div className="text-[14px] font-semibold text-[#1A1A1A] dark:text-white truncate max-w-[200px] md:max-w-sm">
+          <div className="h-4 w-px bg-[#D0CEC6] dark:bg-white/10 shrink-0" />
+          <div className="min-w-0">
+            <div className="text-[13px] sm:text-[14px] font-semibold text-[#1A1A1A] dark:text-white truncate max-w-[120px] xs:max-w-[160px] sm:max-w-[220px] md:max-w-sm">
               {docChapter?.title || chapterTitle || 'Preparing Chapter...'}
             </div>
           </div>
         </div>
 
-        {/* Mode selector */}
+        {/* Mode selector - Desktop & Tablet */}
         <div className="hidden md:flex items-center gap-0.5 p-[3px] rounded-full bg-[#E9E8E3] dark:bg-white/5 border border-[#D5D3CB] dark:border-white/10 text-[12px] font-medium">
           {([
             { id: 'documentary', label: 'Article', icon: BookOpen },
@@ -847,7 +849,6 @@ export function ChapterReader({
             { id: 'exam', label: 'Exam Mode', icon: Target },
           ] as const).map((m) => {
             const Icon = m.icon;
-            // Force 'split' visually active if docChapter is null and mode is documentary, because PDF shows by default.
             const isEffectiveMode = (m.id === 'split' && !docChapter && mode === 'documentary') ? true : mode === m.id;
             const active = isEffectiveMode;
             return (
@@ -855,9 +856,9 @@ export function ChapterReader({
                 key={m.id}
                 onClick={() => setMode(m.id)}
                 className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all',
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all touch-manipulation cursor-pointer',
                   active
-                    ? 'bg-white  text-[#1A1A1A]  shadow-sm'
+                    ? 'bg-white dark:bg-[#232328] text-[#1A1A1A] dark:text-white shadow-xs font-semibold'
                     : 'text-[#777] dark:text-gray-400 hover:text-[#1A1A1A] dark:hover:text-white'
                 )}
               >
@@ -869,33 +870,61 @@ export function ChapterReader({
         </div>
 
         {/* Right actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Mobile Mode Switcher (Article vs PDF) */}
+          <div className="flex md:hidden items-center p-0.5 rounded-lg bg-[#E9E8E3] dark:bg-white/5 border border-[#D5D3CB] dark:border-white/10 text-[11px] font-medium mr-1">
+            <button
+              onClick={() => setMode('documentary')}
+              className={cn(
+                'px-2 py-1 rounded-md transition-all touch-manipulation flex items-center gap-1 cursor-pointer',
+                mode === 'documentary' ? 'bg-white dark:bg-[#232328] text-[#1A1A1A] dark:text-white shadow-xs font-semibold' : 'text-[#777] dark:text-gray-400'
+              )}
+              title="Article mode"
+            >
+              <BookOpen className="w-3 h-3" />
+              <span>Article</span>
+            </button>
+            <button
+              onClick={() => setMode('ncert')}
+              className={cn(
+                'px-2 py-1 rounded-md transition-all touch-manipulation flex items-center gap-1 cursor-pointer',
+                mode === 'ncert' || mode === 'split' ? 'bg-white dark:bg-[#232328] text-[#1A1A1A] dark:text-white shadow-xs font-semibold' : 'text-[#777] dark:text-gray-400'
+              )}
+              title="NCERT PDF mode"
+            >
+              <FileText className="w-3 h-3" />
+              <span>PDF</span>
+            </button>
+          </div>
+
           <button
             onClick={toggleTheme}
-            className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-[#D5D3CB] dark:border-white/10 text-[#555] dark:text-gray-400 hover:bg-[#E9E8E3] dark:hover:bg-white/5 transition-colors"
+            className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-[#D5D3CB] dark:border-white/10 text-[#555] dark:text-gray-400 hover:bg-[#E9E8E3] dark:hover:bg-white/5 transition-colors touch-manipulation cursor-pointer"
             title="Toggle theme"
           >
-            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
           </button>
           <button
             onClick={() => setShowPodcast(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#D5D3CB] dark:border-white/10 text-[12px] font-medium text-[#555] dark:text-gray-400 hover:bg-[#E9E8E3] dark:hover:bg-white/5 transition-colors"
+            className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-[#D5D3CB] dark:border-white/10 text-[11px] sm:text-[12px] font-medium text-[#555] dark:text-gray-400 hover:bg-[#E9E8E3] dark:hover:bg-white/5 transition-colors touch-manipulation cursor-pointer"
+            title="Listen to audio podcast"
           >
             <Headphones className="w-3.5 h-3.5" />
-            Listen
+            <span className="hidden sm:inline">Listen</span>
           </button>
           <button
             onClick={() => setShowFlashcards(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#D5D3CB] dark:border-white/10 text-[12px] font-medium text-[#555] dark:text-gray-400 hover:bg-[#E9E8E3] dark:hover:bg-white/5 transition-colors"
+            className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-[#D5D3CB] dark:border-white/10 text-[11px] sm:text-[12px] font-medium text-[#555] dark:text-gray-400 hover:bg-[#E9E8E3] dark:hover:bg-white/5 transition-colors touch-manipulation cursor-pointer"
+            title="Practice flashcards"
           >
             <Layers className="w-3.5 h-3.5" />
-            Flashcards
+            <span className="hidden sm:inline">Cards</span>
           </button>
         </div>
       </header>
 
       {/* ── Main Panes ── */}
-      <div className="flex-1 flex min-h-0">
+      <div className="flex-1 flex min-h-0 relative">
 
         {/* ═══════════════════════════════════════════════
             DOCUMENTARY — single scroll column, TOC sticky inside it
@@ -952,42 +981,42 @@ export function ChapterReader({
           <aside
             className={cn(
               'bg-[#151516] border-l border-slate-800 flex flex-col relative shrink-0 transition-all duration-300',
-              mode === 'ncert' ? 'w-full' : 'w-1/2'
+              mode === 'ncert' ? 'w-full' : 'hidden md:flex md:w-1/2'
             )}
           >
             {/* PDF toolbar */}
-            <div className="h-11 shrink-0 flex items-center justify-between px-4 border-b border-white/10 bg-[#1a1a1c]">
-              <div className="flex items-center gap-2 text-[12px] font-semibold text-slate-300">
+            <div className="h-11 shrink-0 flex items-center justify-between px-2.5 sm:px-4 border-b border-white/10 bg-[#1a1a1c]">
+              <div className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-300">
                 <FileText className="w-3.5 h-3.5 text-indigo-400" />
-                <span>Official NCERT PDF</span>
+                <span className="hidden xs:inline">NCERT PDF</span>
               </div>
-              <div className="flex items-center gap-1 text-[12px] text-gray-300">
-                <button onClick={() => gotoPage(pageNum - 1)} disabled={pageNum <= 1} className="p-1 rounded hover:bg-white/10 disabled:opacity-30">
+              <div className="flex items-center gap-0.5 sm:gap-1 text-[12px] text-gray-300">
+                <button onClick={() => gotoPage(pageNum - 1)} disabled={pageNum <= 1} className="p-1.5 rounded hover:bg-white/10 disabled:opacity-30 touch-manipulation cursor-pointer" title="Previous page">
                   <ChevronLeft className="w-4 h-4" />
                 </button>
-                <span className="tabular-nums w-12 text-center text-[11px]">
+                <span className="tabular-nums min-w-[45px] text-center text-[11px]">
                   {numPages ? `${pageNum}/${numPages}` : '—'}
                 </span>
-                <button onClick={() => gotoPage(pageNum + 1)} disabled={pageNum >= numPages} className="p-1 rounded hover:bg-white/10 disabled:opacity-30">
+                <button onClick={() => gotoPage(pageNum + 1)} disabled={pageNum >= numPages} className="p-1.5 rounded hover:bg-white/10 disabled:opacity-30 touch-manipulation cursor-pointer" title="Next page">
                   <ChevronRight className="w-4 h-4" />
                 </button>
-                <div className="w-px h-4 bg-white/10 mx-1" />
-                <button onClick={() => zoom(-0.2)} className="p-1 rounded hover:bg-white/10"><ZoomOut className="w-3.5 h-3.5" /></button>
-                <button onClick={() => zoom(0.2)} className="p-1 rounded hover:bg-white/10"><ZoomIn className="w-3.5 h-3.5" /></button>
+                <div className="w-px h-4 bg-white/10 mx-0.5 sm:mx-1" />
+                <button onClick={() => zoom(-0.2)} className="p-1.5 rounded hover:bg-white/10 touch-manipulation cursor-pointer" title="Zoom out"><ZoomOut className="w-3.5 h-3.5" /></button>
+                <button onClick={() => zoom(0.2)} className="p-1.5 rounded hover:bg-white/10 touch-manipulation cursor-pointer" title="Zoom in"><ZoomIn className="w-3.5 h-3.5" /></button>
                 <button
                   onClick={() => { setScanMode((v) => !v); setSelection(null); }}
                   className={cn(
-                    'p-1.5 rounded ml-1 text-[11px] font-semibold flex items-center gap-1 transition-colors',
+                    'px-2 py-1 rounded ml-1 text-[11px] font-semibold flex items-center gap-1 transition-colors touch-manipulation cursor-pointer',
                     scanMode ? 'bg-white text-slate-900' : 'bg-indigo-600 text-white hover:bg-indigo-700'
                   )}
                 >
-                  <ScanLine className="w-3.5 h-3.5" /> Scan
+                  <ScanLine className="w-3.5 h-3.5" /> <span className="hidden xs:inline">Scan</span>
                 </button>
               </div>
             </div>
 
             {/* PDF canvas */}
-            <div className="flex-1 overflow-auto flex justify-center py-6 px-4 relative">
+            <div className="flex-1 overflow-auto flex justify-center py-4 sm:py-6 px-2 sm:px-4 relative">
               {loading && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Loader2 className="w-6 h-6 animate-spin text-indigo-400" />
@@ -1001,10 +1030,10 @@ export function ChapterReader({
               )}
               <div
                 ref={wrapperRef}
-                className="relative h-fit shadow-2xl"
+                className="relative h-fit shadow-2xl max-w-full"
                 style={{ display: loading || error ? 'none' : 'block' }}
               >
-                <canvas ref={canvasRef} className="block rounded-sm" />
+                <canvas ref={canvasRef} className="block rounded-sm max-w-full" />
                 {scanMode && (
                   <div
                     className="absolute inset-0 cursor-crosshair"
@@ -1047,7 +1076,60 @@ export function ChapterReader({
             )}
           </aside>
         )}
+
+        {/* Mobile floating Table of Contents trigger button */}
+        {(mode === 'documentary' || mode === 'split') && !!docChapter && (docChapter.sections || []).length > 0 && (
+          <div className="lg:hidden fixed bottom-5 right-5 z-40">
+            <button
+              onClick={() => setShowMobileToc(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xl text-[12.5px] font-semibold touch-manipulation active:scale-95 transition-all cursor-pointer border border-slate-700/30 dark:border-slate-300"
+            >
+              <ListTree className="w-4 h-4" />
+              <span>Contents</span>
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Mobile Table of Contents Modal Sheet */}
+      {showMobileToc && docChapter && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4">
+          <div className="fixed inset-0" onClick={() => setShowMobileToc(false)} />
+          <div className="relative w-full max-w-lg rounded-t-3xl sm:rounded-2xl bg-white dark:bg-[#1a1a1e] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden max-h-[75vh] flex flex-col z-10">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03]">
+              <div className="flex items-center gap-2">
+                <ListTree className="w-4 h-4 text-[#8ba32b] dark:text-[#c8e558]" />
+                <span className="text-[14px] font-bold text-slate-900 dark:text-white">Table of Contents</span>
+              </div>
+              <button
+                onClick={() => setShowMobileToc(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-3 sm:p-4 overflow-y-auto space-y-1">
+              {tocEntries.map((entry) => (
+                <button
+                  key={entry.id}
+                  onClick={() => {
+                    scrollToSection(entry.id, entry.pageRef ?? 1);
+                    setShowMobileToc(false);
+                  }}
+                  className={cn(
+                    'w-full text-left px-3.5 py-2.5 rounded-xl text-[13px] sm:text-[13.5px] transition-colors cursor-pointer',
+                    activeSectionId === entry.id
+                      ? 'bg-[#8ba32b]/15 text-[#8ba32b] dark:bg-[#c8e558]/15 dark:text-[#c8e558] font-bold'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                  )}
+                >
+                  {entry.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       {docChapter && <FlashcardModal open={showFlashcards} onClose={() => setShowFlashcards(false)} cards={docChapter.flashcards || []} />}
