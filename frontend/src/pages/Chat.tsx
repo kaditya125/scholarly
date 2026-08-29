@@ -305,6 +305,26 @@ export default function Chat() {
   // First name for the greeting — same derivation the onboarding wizard uses.
   const firstName = (user?.displayName || '').trim().split(' ')[0] || 'there';
 
+  // Last study session for the current student
+  const lastSession = useMemo(() => {
+    if (!sessions || sessions.length === 0) return null;
+    return sessions[0];
+  }, [sessions]);
+
+  const formatSessionTime = (timestamp?: number) => {
+    if (!timestamp) return '';
+    const diff = Date.now() - timestamp;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days}d ago`;
+    return new Date(timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  };
+
   // ─── Reply feedback (👍/👎) ────────────────────────────────────────────────
   // Keyed by the persisted Firestore message id. Optimistic: we paint the choice
   // immediately and roll it back only if the POST fails.
@@ -1072,6 +1092,50 @@ export default function Chat() {
                       : 'Use one of the most common prompts below or use your own to begin'}
                   </p>
                 </div>
+              )}
+
+              {/* Previous Study Session Resume Card */}
+              {lastSession && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  onClick={() => handleSelectSession(lastSession.sessionId)}
+                  className="mt-5 w-full p-4 sm:p-4.5 rounded-2xl border border-[#c8e558]/50 dark:border-[#c8e558]/30 bg-gradient-to-r from-[#f7fbe6]/90 via-white to-white dark:from-[#c8e558]/[0.08] dark:via-[#141416] dark:to-[#141416] hover:border-[#8ba32b] dark:hover:border-[#c8e558] transition-all shadow-2xs hover:shadow-xs group flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 cursor-pointer"
+                >
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-[#c8e558]/25 dark:bg-[#c8e558]/15 border border-[#c8e558]/40 flex items-center justify-center text-[#556b12] dark:text-[#c8e558] shrink-0">
+                      <BookOpen className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#556b12] dark:text-[#c8e558]">
+                          Resume Your Last Study Session
+                        </span>
+                        {lastSession.createdAt && (
+                          <span className="text-[11.5px] text-slate-400 dark:text-gray-500">
+                            • {formatSessionTime(lastSession.createdAt)}
+                          </span>
+                        )}
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#8ba32b] dark:bg-[#c8e558] animate-pulse" />
+                      </div>
+                      <p className="text-[14px] font-semibold text-slate-900 dark:text-white truncate mt-0.5">
+                        {lastSession.title || 'Previous Chat Session'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelectSession(lastSession.sessionId);
+                    }}
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-[12.5px] font-semibold bg-[#c8e558] hover:bg-[#bcd94c] text-slate-950 shadow-2xs transition-all shrink-0 self-start sm:self-auto group-hover:shadow-xs active:scale-98 cursor-pointer"
+                  >
+                    <span>Continue Session</span>
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </button>
+                </motion.div>
               )}
 
               {/* Suggestion cards — sleek 4-column glass grid */}
