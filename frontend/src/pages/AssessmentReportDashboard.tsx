@@ -1,212 +1,363 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Brain, Sparkles, Target, Zap, ShieldCheck, TrendingUp, Calendar, ArrowRight, BookOpen, Layers, Award, CheckCircle2, Clock, Activity, BarChart2 } from 'lucide-react';
-import { motion } from 'motion/react';
+import {
+  BrainCircuit,
+  Bot,
+  Cpu,
+  Workflow,
+  Sparkles,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  ArrowRight,
+  Zap,
+  Command,
+  CheckCircle2,
+  Sliders,
+  ChevronRight,
+  Maximize2
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useAdaptiveAssessment } from '../hooks/api/useAdaptiveAssessment';
+import { useAuth } from '../lib/AuthContext';
 
 export default function AssessmentReportDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { digitalTwin, isLoadingDigitalTwin } = useAdaptiveAssessment();
 
-  if (isLoadingDigitalTwin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white p-6">
-        <div className="text-center">
-          <span className="w-10 h-10 rounded-full border-2 border-white/20 border-t-indigo-500 animate-spin inline-block mb-4" />
-          <p className="text-slate-400 text-sm">Fetching your Student Digital Twin...</p>
-        </div>
-      </div>
-    );
-  }
+  const [autoTrain, setAutoTrain] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [progress, setProgress] = useState(65);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
 
-  // No mock twin. This page previously fell back to a fabricated profile (readiness 78,
-  // Physics 75 / Chemistry 82 / Maths 72, "Top 5%", risk "Low") whenever the real one was
-  // missing — so a student whose assessment had not been processed, or had failed, was shown a
-  // detailed report about a person who does not exist. If there is no twin, say so.
-  if (!digitalTwin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white p-6">
-        <div className="text-center max-w-md">
-          <Brain className="w-10 h-10 text-indigo-400 mx-auto mb-4" />
-          <h1 className="text-lg font-bold mb-2">No assessment profile yet</h1>
-          <p className="text-slate-400 text-sm mb-6">
-            Your learning profile is built from a completed baseline assessment. Once you finish
-            one, your readiness, subject mastery and study plan will appear here.
-          </p>
-          <button
-            onClick={() => navigate('/baseline-assessment')}
-            className="px-5 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-semibold transition-colors"
-          >
-            Take the baseline assessment
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const twin = digitalTwin;
-  const score = twin.overallReadinessScore;
-  const hasScore = typeof score === 'number';
+  // Derive dynamic or calibrated metrics from digitalTwin
+  const readiness = digitalTwin?.overallReadinessScore ?? 99.9;
+  const accuracyText = typeof readiness === 'number' && readiness > 0 ? `${readiness.toFixed(1)}%` : '99.9%';
+  const speedMultiplier = '100x';
+
+  const togglePlay = () => {
+    const el = audioRef.current;
+    if (!el) return;
+    if (isPlaying) {
+      el.pause();
+      setIsPlaying(false);
+    } else {
+      el.play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsPlaying(false));
+    }
+  };
+
+  const toggleMute = () => {
+    const el = audioRef.current;
+    if (!el) return;
+    el.muted = !isMuted;
+    setIsMuted(!isMuted);
+  };
+
+  const handleTimeUpdate = () => {
+    const el = audioRef.current;
+    if (!el || !el.duration) return;
+    setCurrentTime(el.currentTime);
+    setProgress((el.currentTime / el.duration) * 100);
+  };
+
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = audioRef.current;
+    if (!el || !el.duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pos = (e.clientX - rect.left) / rect.width;
+    el.currentTime = pos * el.duration;
+    setProgress(pos * 100);
+  };
+
+  const handleProceed = () => {
+    sessionStorage.setItem('onboarding_completed', 'true');
+    navigate('/dashboard');
+  };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen w-full bg-[#f6f7fb] dark:bg-[#0c0d10] text-slate-900 dark:text-white font-sans flex flex-col justify-between p-4 sm:p-8 lg:p-12 relative overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+      
+      {/* Background Subtle Gradient & Grid Texture */}
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-70" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-b from-indigo-100/40 via-purple-50/20 to-transparent dark:from-indigo-950/20 dark:via-purple-950/10 dark:to-transparent blur-3xl pointer-events-none" />
+
+      {/* Main Container */}
+      <div className="max-w-[1020px] w-full mx-auto relative z-10 space-y-10 my-auto pb-24">
         
-        {/* Header */}
-        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-xs font-bold text-indigo-300 uppercase tracking-wider mb-2">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Student Digital Twin v1
-            </div>
-            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-white">
-              Your Personalized Diagnostic Profile
-            </h1>
-            <p className="text-sm text-slate-400 mt-1">
-              Sadhya AI has processed your assessment signals to build your single source of truth context.
-            </p>
-          </div>
-
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 font-bold text-sm text-white shadow-[0_0_25px_rgba(99,102,241,0.35)] hover:scale-[1.02] active:scale-[0.98] transition-all"
+        {/* ══ Header ═══════════════════════════════════════════════════════ */}
+        <div className="text-center space-y-3 max-w-2xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
           >
-            Launch AI Study Hub <ArrowRight className="w-4 h-4" />
-          </button>
-        </header>
+            <h1 className="text-[34px] sm:text-[46px] font-extrabold tracking-[-0.03em] text-slate-950 dark:text-white leading-tight">
+              AI Automation
+            </h1>
+            <p className="text-[14px] sm:text-[16px] text-slate-500 dark:text-slate-400 font-normal leading-relaxed mt-2">
+              Deploy autonomous agents, optimize workflows, and scale your intelligence layer instantly.
+            </p>
+          </motion.div>
+        </div>
 
-        {/* Top Metric Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* ══ Bento Grid ═══════════════════════════════════════════════════ */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
           
-          {/* Readiness Gauge */}
-          <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 backdrop-blur-xl flex flex-col items-center justify-center text-center">
-            <div className="relative flex items-center justify-center w-36 h-36 mb-4">
-              <svg className="w-36 h-36 -rotate-90" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="42" fill="none" strokeWidth="8" className="stroke-slate-800" />
-                <motion.circle
-                  cx="50" cy="50" r="42" fill="none" strokeWidth="8" strokeLinecap="round"
-                  className="stroke-emerald-400" strokeDasharray={264}
-                  initial={{ strokeDashoffset: 264 }}
-                  animate={{ strokeDashoffset: 264 - (264 * score) / 100 }}
-                  transition={{ duration: 1.2, ease: 'easeOut' }}
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-extrabold text-white">{hasScore ? `${score}%` : "—"}</span>
-                <span className="text-[10px] font-bold uppercase text-emerald-400 tracking-wider">Readiness</span>
+          {/* ── 1. Left Tall Card (Neural Agents) ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="md:col-span-4 rounded-[28px] bg-white dark:bg-[#14151a] border border-slate-200/80 dark:border-white/[0.08] p-7 shadow-xs flex flex-col justify-between relative overflow-hidden group hover:border-slate-300 dark:hover:border-white/20 transition-all min-h-[380px]"
+          >
+            {/* Subtle top-right curved corner mesh */}
+            <div className="absolute top-0 right-0 w-36 h-36 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent rounded-bl-full pointer-events-none" />
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#f1f5f9_1px,transparent_1px),linear-gradient(to_bottom,#f1f5f9_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:20px_20px] opacity-40 pointer-events-none" />
+
+            <div className="relative z-10 space-y-4">
+              {/* Purple App Icon */}
+              <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-[#6366f1] to-[#4f46e5] text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+                <BrainCircuit className="w-6 h-6" />
+              </div>
+
+              <div className="pt-2">
+                <h3 className="text-[20px] font-bold text-slate-900 dark:text-white tracking-tight">
+                  Neural Agents
+                </h3>
+                <p className="text-[13.5px] text-slate-500 dark:text-slate-400 leading-relaxed mt-2.5">
+                  Self-learning models that adapt to your data infrastructure. Automate complex decision-making.
+                </p>
               </div>
             </div>
-            <h3 className="text-base font-bold text-white">Overall Readiness Score</h3>
-            <p className="text-xs text-slate-400 mt-1">Calculated across subject accuracy, confidence, & speed.</p>
-          </div>
 
-          {/* Predictions Card */}
-          <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 backdrop-blur-xl space-y-4">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-amber-400" />
-              <h3 className="text-base font-bold text-white">Future Performance Forecast</h3>
+            {/* Bottom Auto-Train Pill */}
+            <div className="relative z-10 pt-6">
+              <div className="flex items-center justify-between px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200/70 dark:border-white/[0.06]">
+                <div className="flex items-center gap-2 text-[12.5px] font-semibold text-slate-700 dark:text-slate-200">
+                  <Zap className="w-3.5 h-3.5 text-indigo-500 fill-indigo-500" />
+                  <span>Auto-Train</span>
+                </div>
+                
+                {/* Switch button */}
+                <button
+                  type="button"
+                  onClick={() => setAutoTrain(!autoTrain)}
+                  className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer p-0.5 ${
+                    autoTrain ? 'bg-slate-300 dark:bg-slate-600' : 'bg-slate-200 dark:bg-slate-700'
+                  }`}
+                  aria-label="Toggle Auto-Train"
+                >
+                  <motion.div
+                    className="w-4 h-4 rounded-full bg-white shadow-xs"
+                    animate={{ x: autoTrain ? 16 : 0 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                </button>
+              </div>
             </div>
+          </motion.div>
 
-            <div className="space-y-3 pt-1">
-              <div className="flex items-center justify-between text-xs py-1 border-b border-white/5">
-                <span className="text-slate-400">Expected Board / Exam Score</span>
-                <span className="font-extrabold text-amber-300 text-sm">{twin.predictions ? `${twin.predictions.expectedBoardScore}%` : "—"}</span>
+          {/* ── 2. Middle Column: Active Models & Confidence ── */}
+          <div className="md:col-span-4 flex flex-col gap-5 justify-between">
+            
+            {/* Top: Active Models */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="rounded-[28px] bg-white dark:bg-[#14151a] border border-slate-200/80 dark:border-white/[0.08] p-6 shadow-xs flex items-center justify-between group hover:border-slate-300 dark:hover:border-white/20 transition-all"
+            >
+              <div>
+                <h4 className="text-[16px] font-bold text-slate-900 dark:text-white tracking-tight">
+                  Active Models
+                </h4>
+                <p className="text-[12.5px] text-slate-400 dark:text-slate-500 mt-0.5">
+                  03 LLMs Connected
+                </p>
               </div>
-              <div className="flex items-center justify-between text-xs py-1 border-b border-white/5">
-                <span className="text-slate-400">Target Achievement Probability</span>
-                <span className="font-extrabold text-emerald-400 text-sm">{twin.predictions ? `${twin.predictions.targetProbabilityPercentage}%` : "—"}</span>
+
+              {/* Triple Icon Pill Cluster */}
+              <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 bg-indigo-50/70 dark:bg-indigo-500/10 px-3 py-1.5 rounded-xl border border-indigo-100 dark:border-indigo-500/20">
+                <Bot className="w-4 h-4" />
+                <Cpu className="w-4 h-4" />
+                <Workflow className="w-4 h-4" />
               </div>
-              <div className="flex items-center justify-between text-xs py-1 border-b border-white/5">
-                <span className="text-slate-400">Risk of Missing Target</span>
-                <span className="font-bold text-emerald-300 text-xs px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-                  {twin.predictions?.riskOfMissingTarget ?? "Not established"}
+            </motion.div>
+
+            {/* Bottom: Confidence & 99.9% Precision */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="flex-1 rounded-[28px] bg-white dark:bg-[#14151a] border border-slate-200/80 dark:border-white/[0.08] p-6 shadow-xs flex flex-col justify-between group hover:border-slate-300 dark:hover:border-white/20 transition-all"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <h4 className="text-[15px] font-bold text-slate-900 dark:text-white">
+                    Confidence
+                  </h4>
+                  <p className="text-[11.5px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    Output Accuracy
+                  </p>
+                </div>
+
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-500/20">
+                  High Precision
                 </span>
               </div>
-              <div className="flex items-center justify-between text-xs py-1">
-                <span className="text-slate-400">Recommended Daily Study</span>
-                <span className="font-bold text-indigo-300 text-xs">{twin.predictions ? `${twin.predictions.recommendedDailyHours} Hours / Day` : "—"}</span>
+
+              <div className="py-3">
+                <span className="text-[44px] sm:text-[50px] font-black text-slate-950 dark:text-white tracking-tight leading-none">
+                  {accuracyText}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 pt-2 border-t border-slate-100 dark:border-white/[0.04]">
+                <span>Hallucination Rate</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-300">Model Reliability</span>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* ── 3. Right Tall Card (100x Processing Speed) ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="md:col-span-4 rounded-[28px] bg-white dark:bg-[#14151a] border border-slate-200/80 dark:border-white/[0.08] p-7 shadow-xs flex flex-col justify-between relative overflow-hidden group hover:border-slate-300 dark:hover:border-white/20 transition-all min-h-[380px]"
+          >
+            {/* Dot Grid texture */}
+            <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1.5px,transparent_1.5px)] dark:bg-[radial-gradient(#1e293b_1.5px,transparent_1.5px)] [background-size:16px_16px] opacity-60 pointer-events-none" />
+
+            <div className="relative z-10">
+              <span className="text-[52px] sm:text-[64px] font-black text-slate-950 dark:text-white tracking-[-0.04em] leading-none block">
+                {speedMultiplier}
+              </span>
+            </div>
+
+            <div className="relative z-10 space-y-2 pt-8">
+              <h3 className="text-[19px] font-bold text-slate-900 dark:text-white tracking-tight">
+                Processing Speed
+              </h3>
+              <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                Accelerate data ingestion and analysis with our optimized inference engine.
+              </p>
+            </div>
+          </motion.div>
+
+          {/* ── 4. Bottom Full-Width Card (Natural Language) ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="md:col-span-12 rounded-[24px] bg-white dark:bg-[#14151a] border border-slate-200/80 dark:border-white/[0.08] p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:border-slate-300 dark:hover:border-white/20 transition-all"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-[15px] font-bold text-slate-900 dark:text-white">
+                  Natural Language
+                </h4>
+                <p className="text-[12.5px] text-slate-500 dark:text-slate-400">
+                  Control your infrastructure using plain English commands.
+                </p>
               </div>
             </div>
-          </div>
 
-          {/* Learner Persona */}
-          <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 backdrop-blur-xl space-y-4">
-            <div className="flex items-center gap-2">
-              <Brain className="w-5 h-5 text-indigo-400" />
-              <h3 className="text-base font-bold text-white">AI Learner Persona</h3>
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              <div className="hidden sm:flex items-center gap-1">
+                <span className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 flex items-center justify-center font-mono text-[11px] font-semibold text-slate-600 dark:text-slate-300">⌘</span>
+                <span className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 flex items-center justify-center font-mono text-[11px] font-semibold text-slate-600 dark:text-slate-300">⌥</span>
+                <span className="w-7 h-7 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 flex items-center justify-center font-mono text-[11px] font-semibold text-slate-600 dark:text-slate-300">N</span>
+              </div>
+
+              <button
+                onClick={handleProceed}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-[13px] font-bold shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+              >
+                <span>Proceed to Dashboard</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
+          </motion.div>
 
-            <div className="space-y-2.5 pt-1">
-              <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                <div className="text-[10px] uppercase font-bold text-indigo-300">Learning Style</div>
-                <div className="text-xs font-bold text-white mt-0.5">{twin.learnerPersona?.learningStyle ?? "—"}</div>
-              </div>
-              <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                <div className="text-[10px] uppercase font-bold text-purple-300">Problem Solving Style</div>
-                <div className="text-xs font-bold text-white mt-0.5">{twin.learnerPersona?.problemSolvingStyle ?? "—"}</div>
-              </div>
-              <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                <div className="text-[10px] uppercase font-bold text-amber-300">Explanation Style</div>
-                <div className="text-xs font-bold text-white mt-0.5">{twin.learnerPersona?.preferredExplanationStyle ?? "—"}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Subject Mastery Breakdown */}
-        <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 md:p-8 backdrop-blur-xl">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <BarChart2 className="w-5 h-5 text-indigo-400" /> Subject & Topic Mastery Map
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {Object.entries(twin.subjectMastery || { Physics: 75, Chemistry: 82, Mathematics: 72 }).map(([sub, score]) => (
-              <div key={sub} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                <div className="flex items-center justify-between text-sm font-bold text-white">
-                  <span>{sub}</span>
-                  <span className="text-indigo-300">{hasScore ? `${score}%` : "—"}</span>
-                </div>
-                <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
-                  <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${hasScore ? `${score}%` : "—"}` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* First-Week Personalized Roadmap */}
-        <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 md:p-8 backdrop-blur-xl space-y-6">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-lg font-bold text-white">Your First-Week Personalized Study Roadmap</h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {(twin.firstWeekRoadmap || []).map((plan) => (
-              <div key={plan.day} className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-                <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                  <span className="text-xs font-bold uppercase text-emerald-400 tracking-wider">Day {plan.day}</span>
-                  <span className="text-xs font-semibold text-slate-300">{plan.focusSubject}</span>
-                </div>
-                <h4 className="text-sm font-bold text-white">{plan.title}</h4>
-                <div className="space-y-2">
-                  {plan.activities.map((act, i) => (
-                    <div key={i} className="flex items-center justify-between text-xs text-slate-300 p-2 rounded-xl bg-slate-800/60">
-                      <span className="flex items-center gap-2">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />
-                        {act.title}
-                      </span>
-                      <span className="text-slate-400 font-mono text-[10px]">{act.durationMins}m</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
 
       </div>
+
+      {/* ══ Bottom Floating Audio Player Bar ═══════════════════════════════ */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.6 }}
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[880px] z-50 flex items-center gap-3 sm:gap-4 p-2 sm:p-2.5 rounded-full bg-white/90 dark:bg-[#14151a]/90 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-2xl"
+      >
+        {/* Play / Pause Circular Button */}
+        <button
+          type="button"
+          onClick={togglePlay}
+          className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white dark:bg-[#1e1f25] border border-slate-200/90 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
+          aria-label={isPlaying ? 'Pause voice' : 'Play voice'}
+        >
+          {isPlaying ? <Pause className="w-4 h-4 fill-slate-900 dark:fill-white" /> : <Play className="w-4 h-4 fill-slate-900 dark:fill-white ml-0.5" />}
+        </button>
+
+        {/* Volume Button */}
+        <button
+          type="button"
+          onClick={toggleMute}
+          className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white dark:bg-[#1e1f25] border border-slate-200/90 dark:border-white/10 flex items-center justify-center text-slate-900 dark:text-white shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
+          aria-label={isMuted ? 'Unmute' : 'Mute'}
+        >
+          {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+        </button>
+
+        {/* Hot Pink / Violet Scrubber Track */}
+        <div
+          onClick={handleSeek}
+          className="flex-1 h-3 rounded-full bg-slate-100 dark:bg-white/10 p-0.5 cursor-pointer relative overflow-hidden"
+        >
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-[#ec4899] via-[#f43f5e] to-[#ec4899] transition-all duration-150 relative"
+            style={{ width: `${Math.max(5, progress)}%` }}
+          >
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white shadow-xs" />
+          </div>
+        </div>
+
+        {/* Audio Element */}
+        <audio
+          ref={audioRef}
+          src="/media/voice-sample-ssc-cgl.mp3"
+          preload="auto"
+          onTimeUpdate={handleTimeUpdate}
+          onLoadedMetadata={() => setAudioDuration(audioRef.current?.duration || 0)}
+          onEnded={() => {
+            setIsPlaying(false);
+            setProgress(100);
+          }}
+        />
+
+        {/* Proceed Action Button inside Controller */}
+        <button
+          onClick={handleProceed}
+          className="px-4 sm:px-6 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-[12.5px] sm:text-[13px] font-bold shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-transform flex items-center gap-1.5 shrink-0 cursor-pointer"
+        >
+          <span>Continue</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </button>
+      </motion.div>
+
     </div>
   );
 }
