@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Clock, Info, CheckSquare, List, BookmarkPlus, Bookmark, ChevronRight, ChevronLeft, Target, Moon, Sun, Bot, X, Send, Loader2, Play } from "lucide-react";
 import { motion } from "motion/react";
@@ -149,7 +149,7 @@ export default function TestEngine() {
     sessionStorage.setItem('testEngine_bookmarked', JSON.stringify(Array.from(bookmarked)));
   }, [bookmarked]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     setIsSubmitting(true);
     sessionStorage.removeItem('testEngine_currentQIndex');
     sessionStorage.removeItem('testEngine_answers');
@@ -191,13 +191,13 @@ export default function TestEngine() {
     navigate("/report", {
       state: { score, total: mockQuestions.length, answers, timeSpentSeconds, questions: mockQuestions }
     });
-  };
+  }, [timeLeft, answers, mockQuestions, navigate]);
 
   useEffect(() => {
     if (timeLeft === 0) {
       handleSubmit();
     }
-  }, [timeLeft]);
+  }, [timeLeft, handleSubmit]);
 
   if (!user && !authLoading) {
     return (
