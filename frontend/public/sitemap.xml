@@ -1,34 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://sadhya.app/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://sadhya.app/pricing</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://sadhya.app/how-it-works</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://sadhya.app/for-teachers</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://sadhya.app/about</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://sadhya.app/our-team</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://sadhya.app/contact</loc><changefreq>yearly</changefreq><priority>0.5</priority></url>
-  <url><loc>https://sadhya.app/referral-program</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
-  <url><loc>https://sadhya.app/help</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
-  <url><loc>https://sadhya.app/terms</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://sadhya.app/privacy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://sadhya.app/refunds</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://sadhya.app/security</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
 
-  <url><loc>https://sadhya.app/exams/neet</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://sadhya.app/exams/jee-main</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://sadhya.app/exams/jee-advanced</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://sadhya.app/exams/upsc-cse</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://sadhya.app/exams/ssc-cgl</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://sadhya.app/exams/ssc-chsl</loc><changefreq>monthly</changefreq><priority>0.85</priority></url>
-  <url><loc>https://sadhya.app/exams/bpsc</loc><changefreq>monthly</changefreq><priority>0.85</priority></url>
-  <url><loc>https://sadhya.app/exams/bihar-tre</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://sadhya.app/exams/ctet-stet</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://sadhya.app/exams/cuet</loc><changefreq>monthly</changefreq><priority>0.85</priority></url>
-  <url><loc>https://sadhya.app/exams/ibps-po</loc><changefreq>monthly</changefreq><priority>0.85</priority></url>
-  <url><loc>https://sadhya.app/exams/sbi-po</loc><changefreq>monthly</changefreq><priority>0.85</priority></url>
-  <url><loc>https://sadhya.app/exams/rbi-grade-b</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://sadhya.app/exams/rrb-ntpc</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://sadhya.app/exams/ugc-net</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://sadhya.app/exams/state-pscs</loc><changefreq>monthly</changefreq><priority>0.75</priority></url>
-  <url><loc>https://sadhya.app/exams/cbse-icse</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <!-- Core pages -->
+  <url><loc>https://sadhya.app/</loc><lastmod>2026-08-29</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://sadhya.app/pricing</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://sadhya.app/how-it-works</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://sadhya.app/for-teachers</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://sadhya.app/about</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://sadhya.app/our-team</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://sadhya.app/social</loc><lastmod>2026-08-29</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://sadhya.app/contact</loc><lastmod>2026-08-01</lastmod><changefreq>yearly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://sadhya.app/referral-program</loc><lastmod>2026-08-01</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://sadhya.app/help</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>
+
+  <!-- Legal -->
+  <url><loc>https://sadhya.app/terms</loc><lastmod>2026-08-01</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://sadhya.app/privacy</loc><lastmod>2026-08-01</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://sadhya.app/refunds</loc><lastmod>2026-08-01</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://sadhya.app/security</loc><lastmod>2026-08-01</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
+
+  <!-- Exam landing pages -->
+  <url><loc>https://sadhya.app/exams/neet</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://sadhya.app/exams/jee-main</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://sadhya.app/exams/jee-advanced</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://sadhya.app/exams/upsc-cse</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://sadhya.app/exams/ssc-cgl</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://sadhya.app/exams/ssc-chsl</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://sadhya.app/exams/bpsc</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://sadhya.app/exams/bihar-tre</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://sadhya.app/exams/ctet-stet</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://sadhya.app/exams/cuet</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://sadhya.app/exams/ibps-po</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://sadhya.app/exams/sbi-po</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://sadhya.app/exams/rbi-grade-b</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://sadhya.app/exams/rrb-ntpc</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://sadhya.app/exams/ugc-net</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://sadhya.app/exams/state-pscs</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.75</priority></url>
+  <url><loc>https://sadhya.app/exams/cbse-icse</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+
 </urlset>
+
