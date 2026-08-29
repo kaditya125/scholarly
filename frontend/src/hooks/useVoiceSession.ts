@@ -23,6 +23,7 @@ export type VoiceState =
   | 'CONNECTING'
   | 'LISTENING'
   | 'USER_SPEAKING'
+  | 'SEARCHING'
   | 'AI_SPEAKING'
   | 'INTERRUPTED'
   | 'RECONNECTING'
@@ -341,6 +342,15 @@ export function useVoiceSession() {
           case 'ready':
             setRemainingSeconds(typeof m.remainingSeconds === 'number' ? m.remainingSeconds : null);
             setVoiceState('LISTENING');
+            break;
+          case 'status':
+            if (m.status === 'SEARCHING') {
+              setVoiceState('SEARCHING');
+            } else if (m.status === 'READY') {
+              if (stateRef.current === 'SEARCHING') {
+                setVoiceState('LISTENING');
+              }
+            }
             break;
           case 'transcript':
             appendTranscript(m.role, m.text);

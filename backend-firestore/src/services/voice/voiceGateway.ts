@@ -76,8 +76,16 @@ const MAX_PAYLOAD_BYTES = 256 * 1024;
 
 const SYSTEM_INSTRUCTION = `You are Sadhya AI Tutor, speaking with a student in real time.
 
-Speak naturally and conversationally, the way a good tutor actually talks. Do not sound like a
+Warm Greeting Requirement:
+When the voice session begins or when greeting the student, greet them warmly and naturally in Hinglish:
+"Namaste! Kaise ho aap? Main yahan aapki study aur preparation mein help karne ke liye hoon. Aaj aap kya padhna ya discuss karna chahte hain?"
+
+Speech & Style:
+Speak naturally and conversationally, the way a good personal tutor actually talks. Do not sound like a
 customer-support bot and do not use formal corporate language.
+
+Search & Context Retrieval Reassurance:
+When you need to look up syllabus details, study notes, or facts with a tool, let the student know naturally and briefly (for example: "Main iske liye official syllabus aur notes search kar raha hoon, bas thoda rukiye..." or "Ek second, main aapka syllabus check kar leta hoon..."), so they know you are fetching the data and have not disconnected. As soon as the tool returns the results, immediately explain the complete, clear answer without making them wait further.
 
 Keep spoken answers short — usually one to three sentences — unless the student asks you to go
 deeper. This is speech, not an essay; long monologues are hard to follow by ear.
@@ -333,6 +341,22 @@ export function attachVoiceGateway(server: Server) {
                     // Lets the UI show time remaining instead of cutting the student off unheralded.
                     remainingSeconds: decision.remaining,
                   });
+
+                  // Trigger warm initial voice greeting so the tutor speaks immediately upon activation
+                  try {
+                    state.live?.sendClientContent({
+                      turns: [{
+                        role: 'user',
+                        parts: [{
+                          text: "[Session started. Greet the student warmly in natural Hinglish: say 'Namaste! Kaise ho aap? Main yahan aapki preparation mein help karne ke liye hoon. Aaj aap kya padhna chahte hain?' and invite them to speak.]"
+                        }]
+                      }],
+                      turnComplete: true
+                    });
+                  } catch (err) {
+                    log('VOICE_GREETING_TRIGGER_FAILED', { error: String(err) });
+                  }
+
                   state.timer = setTimeout(() => {
                     send(ws, { type: 'session_limit' });
                     teardown('max-duration');
@@ -351,6 +375,12 @@ export function attachVoiceGateway(server: Server) {
                 // The uid comes from the verified token in `state`, never from the model.
                 if (m.toolCall?.functionCalls?.length) {
                   const calls = m.toolCall.functionCalls;
+                  send(ws, {
+                    type: 'status',
+                    status: 'SEARCHING',
+                    tool: calls[0]?.name,
+                    message: 'Main iske liye search kar raha hoon, thoda rukiye…'
+                  });
                   (async () => {
                     const responses = [];
                     for (const call of calls) {
@@ -360,7 +390,10 @@ export function attachVoiceGateway(server: Server) {
                       log('VOICE_TOOL_COMPLETED', { user: state.userId, tool: call.name, found: !!result.found, ms: Date.now() - started });
                       responses.push({ id: call.id, name: call.name, response: result });
                     }
-                    try { state.live?.sendToolResponse({ functionResponses: responses as any }); } catch { /* session closing */ }
+                    try {
+                      state.live?.sendToolResponse({ functionResponses: responses as any });
+                      send(ws, { type: 'status', status: 'READY' });
+                    } catch { /* session closing */ }
                   })();
                   return;
                 }

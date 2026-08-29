@@ -16,8 +16,12 @@ import VoiceWaveform from './VoiceWaveform';
 const COPY: Record<VoiceState, { title: string; hint?: string }> = {
   IDLE: { title: 'Ready when you are' },
   CONNECTING: { title: 'Connecting to your tutor…' },
-  LISTENING: { title: "I'm listening", hint: 'Just start talking — you can interrupt me any time' },
-  USER_SPEAKING: { title: 'Go on…' },
+  LISTENING: { title: "I'm listening", hint: 'Just start talking — you can ask anything or discuss any topic' },
+  USER_SPEAKING: { title: 'Listening to you…' },
+  SEARCHING: {
+    title: 'Searching syllabus & notes…',
+    hint: 'Main iske liye search kar raha hoon, bas thoda rukiye…',
+  },
   AI_SPEAKING: { title: 'Sadhya is speaking', hint: 'Talk over me whenever you want' },
   INTERRUPTED: { title: 'Go ahead' },
   RECONNECTING: { title: 'Reconnecting…' },
@@ -80,7 +84,8 @@ export function VoiceMode({ open, onClose, onFallbackToText }: {
             <span className={cn('w-1.5 h-1.5 rounded-full',
               state === 'ERROR' ? 'bg-rose-500'
                 : state === 'CONNECTING' || state === 'RECONNECTING' ? 'bg-amber-400'
-                  : state === 'ENDED' ? 'bg-slate-400' : 'bg-[#8ba32b] dark:bg-[#c8e558]')} />
+                  : state === 'SEARCHING' ? 'bg-[#c8e558] animate-ping'
+                    : state === 'ENDED' ? 'bg-slate-400' : 'bg-[#8ba32b] dark:bg-[#c8e558]')} />
             Voice mode
           </div>
           <button
