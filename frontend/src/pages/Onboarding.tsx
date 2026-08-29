@@ -148,9 +148,9 @@ export default function Onboarding() {
         }).catch(() => {});
       }
     } catch { /* non-fatal — the partial autosaves already persisted their data */ }
-    // Keep the generation animation on screen for a minimum beat so it doesn't flash by.
+    // Keep the generation animation on screen for a short smooth beat.
     const elapsed = Date.now() - startedAt;
-    const wait = Math.max(0, 5200 - elapsed);
+    const wait = Math.max(0, 2400 - elapsed);
     setTimeout(() => navigate('/baseline-assessment', { replace: true }), wait);
   };
 

@@ -76,7 +76,14 @@ export class GeminiProvider implements AIProvider {
       parts: [{ text: msg.content }]
     }));
 
-    const config: any = { temperature: 0.7 };
+    const config: any = {
+      temperature: opts?.temperature !== undefined ? opts.temperature : 0.7,
+      // Disable internal thinking phase for direct fast completion unless caller specifies a budget
+      thinkingConfig: { thinkingBudget: (opts as any)?.thinkingBudget ?? 0 },
+    };
+    if (opts?.responseJson) {
+      config.responseMimeType = 'application/json';
+    }
     if (systemPrompt && systemPrompt.trim().length > 0) {
       config.systemInstruction = systemPrompt;
     }

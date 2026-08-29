@@ -6,11 +6,14 @@ interface PreAssessmentScreenProps {
   isOpen: boolean;
   onClose?: () => void;
   onStart: () => void;
+  onSkip?: () => void;
   isLoading?: boolean;
 }
 
-export function PreAssessmentScreen({ isOpen, onClose, onStart, isLoading }: PreAssessmentScreenProps) {
+export function PreAssessmentScreen({ isOpen, onClose, onStart, onSkip, isLoading }: PreAssessmentScreenProps) {
   if (!isOpen) return null;
+
+  const handleDismiss = onClose || onSkip;
 
   return (
     <AnimatePresence>
@@ -26,10 +29,11 @@ export function PreAssessmentScreen({ isOpen, onClose, onStart, isLoading }: Pre
           <div className="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
           <div className="pointer-events-none absolute -right-20 -bottom-20 h-64 w-64 rounded-full bg-amber-500/15 blur-3xl" />
 
-          {onClose && (
+          {handleDismiss && (
             <button
-              onClick={onClose}
-              className="absolute right-5 top-5 rounded-full p-2 text-slate-400 hover:bg-white/10 hover:text-white transition-colors"
+              onClick={handleDismiss}
+              className="absolute right-5 top-5 rounded-full p-2 text-slate-400 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+              title="Skip for now"
             >
               <X className="w-5 h-5" />
             </button>
@@ -101,16 +105,16 @@ export function PreAssessmentScreen({ isOpen, onClose, onStart, isLoading }: Pre
           </div>
 
           {/* CTA */}
-          <div className="relative mt-8 flex flex-col sm:flex-row items-center gap-3">
+          <div className="relative mt-8 flex flex-col sm:flex-row items-center gap-3.5">
             <button
               onClick={onStart}
               disabled={isLoading}
-              className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 font-bold text-sm text-white shadow-[0_0_30px_rgba(99,102,241,0.4)] hover:shadow-[0_0_40px_rgba(99,102,241,0.6)] hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50"
+              className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 font-bold text-sm text-white shadow-[0_0_30px_rgba(99,102,241,0.4)] hover:shadow-[0_0_40px_rgba(99,102,241,0.6)] hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer"
             >
               {isLoading ? (
                 <>
                   <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  Generating Adaptive Assessment...
+                  Preparing Questions...
                 </>
               ) : (
                 <>
@@ -118,6 +122,17 @@ export function PreAssessmentScreen({ isOpen, onClose, onStart, isLoading }: Pre
                 </>
               )}
             </button>
+
+            {onSkip && (
+              <button
+                type="button"
+                onClick={onSkip}
+                disabled={isLoading}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border border-white/15 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white font-semibold text-sm transition-all cursor-pointer"
+              >
+                Skip for now
+              </button>
+            )}
           </div>
         </motion.div>
       </div>

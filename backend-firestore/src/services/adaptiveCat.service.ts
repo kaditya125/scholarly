@@ -189,7 +189,7 @@ Output ONLY a raw JSON array of ${questionCount} objects (no markdown, no format
         const aiResp = await this.llm.generateResponse(
           [{ role: 'user', content: prompt, timestamp: Date.now() }],
           'You are an expert exam question author. Output strictly valid JSON arrays without markdown ticks.',
-          { userId, operation: 'baseline_adaptive_cat', temperature: 0.6 },
+          { userId, operation: 'baseline_adaptive_cat', temperature: 0.3, responseJson: true },
         );
 
         let raw = (aiResp.reply || '').trim().replace(/```json/gi, '').replace(/```/g, '').trim();
