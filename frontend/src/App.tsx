@@ -81,6 +81,7 @@ const Community = lazy(() => import("./pages/Community"));
 const Chats = lazy(() => import("./pages/Chats"));
 const People = lazy(() => import("./pages/People"));
 const Documents = lazy(() => import("./pages/Documents"));
+const Reader = lazy(() => import("./pages/Reader"));
 const VideoLesson = lazy(() => import("./pages/VideoLesson"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Notifications = lazy(() => import("./pages/Notifications"));
@@ -324,6 +325,7 @@ function AppRoutes() {
         <Route path="/baseline-assessment" element={<ProtectedRoute><BaselineAssessmentEngine /></ProtectedRoute>} />
         <Route path="/baseline-assessment/report" element={<ProtectedRoute><AssessmentReportDashboard /></ProtectedRoute>} />
         <Route path="/welcome" element={<ProtectedRoute><WelcomeBriefing /></ProtectedRoute>} />
+        <Route path="/read" element={<ProtectedRoute><Reader /></ProtectedRoute>} />
         <Route path="/admin/automations" element={<ProtectedRoute><AutomationDashboard /></ProtectedRoute>} />
         <Route path="/admin/automations/:id" element={<ProtectedRoute><AutomationStudio /></ProtectedRoute>} />
         <Route path="/admin/automations/:workflowId/executions" element={<ProtectedRoute><ExecutionDetail /></ProtectedRoute>} />
