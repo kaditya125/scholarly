@@ -103,6 +103,7 @@ export const VoiceWaveform: React.FC<Props> = ({ state, readSpectrum, className 
 
       const s = stateRef.current;
       const speaking = s === 'USER_SPEAKING' || s === 'AI_SPEAKING' || s === 'INTERRUPTED';
+      const searching = s === 'SEARCHING';
 
       const live = readSpectrum(spectrumRef.current);
       const spectrum = spectrumRef.current;
@@ -127,7 +128,7 @@ export const VoiceWaveform: React.FC<Props> = ({ state, readSpectrum, className 
       energy /= BAND_COUNT;
 
       // Geometry follows eased values only — nothing below reads a raw sample.
-      swellRef.current = ease(swellRef.current, speaking ? 0.45 + Math.min(energy * 1.1, 0.5) : 0.30, 5, dt);
+      swellRef.current = ease(swellRef.current, speaking ? 0.45 + Math.min(energy * 1.1, 0.5) : searching ? 0.38 + Math.sin(t * 3.5) * 0.05 : 0.30, 5, dt);
       morphRef.current = ease(morphRef.current, speaking ? 1 : 0, 3.2, dt);
 
       const swell = swellRef.current;
