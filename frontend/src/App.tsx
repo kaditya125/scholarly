@@ -37,7 +37,6 @@ const Signup = lazy(() => import("./pages/Signup"));
 const Signin = lazy(() => import("./pages/Signin"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const SelectRole = lazy(() => import("./pages/SelectRole"));
-const ExamCommandCenter = lazy(() => import("./pages/ExamCommandCenter"));
 const TeacherOnboarding = lazy(() => import("./pages/TeacherOnboarding"));
 // Teacher workspace (Phase 3C) — replaces the former TeacherLanding placeholder at /teach.
 const TeacherLayout = lazy(() => import("./components/teacher/TeacherLayout"));
@@ -344,7 +343,7 @@ function AppRoutes() {
               />
             }
           />
-          <Route path="/exam-center" element={<ExamCommandCenter />} />
+          <Route path="/exam-center" element={<Navigate to="/tests" replace />} />
           <Route path="/tests" element={<TestCenter />} />
           <Route path="/analytics" element={<Dashboard />} />
           <Route path="/coverage" element={<SyllabusCoverage />} />
