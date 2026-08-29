@@ -53,10 +53,22 @@ export default function Chats() {
     (activeGroup.ownerId === user?.uid ||
       activeGroup.members.find((m) => m.userId === user?.uid)?.role === "admin");
 
-  const [mobilePane, setMobilePane] = useState<"list" | "thread">("list");
+  const hasActiveConversation = Boolean(dm || (g && c) || ai);
+  const [mobilePane, setMobilePane] = useState<"list" | "thread">(() =>
+    hasActiveConversation ? "thread" : "list"
+  );
   const [infoOpen, setInfoOpen] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth >= 1024 : false
   );
+
+  // Sync mobile pane view with active conversation params in URL
+  useEffect(() => {
+    if (hasActiveConversation) {
+      setMobilePane("thread");
+    } else {
+      setMobilePane("list");
+    }
+  }, [hasActiveConversation]);
 
   // Reset transient view state on mobile whenever the active conversation changes.
   useEffect(() => {
