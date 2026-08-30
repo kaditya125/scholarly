@@ -444,7 +444,7 @@ export default function LandingPage() {
               {/* Brand signature */}
               <HandwrittenTagline
                 className="mt-3 flex text-[19px] sm:text-[21px] text-[#6ca855] dark:text-[#c8e558]"
-                animated={false}
+                delay={0.1}
               />
 
               <p className="mt-6 sm:mt-7 text-[16.5px] sm:text-[18px] leading-relaxed text-slate-500 dark:text-gray-400 max-w-[30rem]">
