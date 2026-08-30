@@ -68,6 +68,8 @@ const getInitialTheme = (): Theme => {
   return 'dark';
 };
 
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [themePreference, setThemePreferenceState] = useState<ThemePreference>(() => {
     const saved = localStorage.getItem('app-theme-preference') || localStorage.getItem('app-theme');
