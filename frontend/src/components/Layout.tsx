@@ -372,19 +372,19 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
       )}>
         {/* Brand + collapse control / mobile close */}
         <div className={cn(
-          "h-[60px] flex items-center shrink-0 transition-colors duration-300",
-          isRail ? "justify-center px-0 flex-col py-2" : "px-4 justify-between"
+          "h-[64px] flex items-center shrink-0 transition-colors duration-300",
+          isRail ? "flex-col justify-center gap-1 py-1 px-1" : "px-4 justify-between"
         )}>
           {!isRail ? (
-            <Link to={brandHome} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2.5 overflow-hidden group">
-              <LogoMark className="shrink-0 w-[22px] h-[22px] group-hover:scale-105 transition-transform" />
+            <Link to={brandHome} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2.5 overflow-hidden group text-slate-900 dark:text-white">
+              <LogoMark className="shrink-0 w-[22px] h-[22px] group-hover:scale-105 transition-transform text-slate-900 dark:text-white" />
               <span className="font-semibold text-[15.5px] tracking-tight text-slate-900 dark:text-white">
                 Sadhya<span className="text-[#c8e558]">.</span>
               </span>
             </Link>
           ) : (
-            <Link to={brandHome} className="flex items-center justify-center w-full mb-3 shrink-0 group">
-              <LogoMark className="w-[22px] h-[22px] group-hover:scale-105 transition-transform" />
+            <Link to={brandHome} className="flex items-center justify-center w-7 h-7 shrink-0 group text-slate-900 dark:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors" title="Sadhya">
+              <LogoMark className="w-[19px] h-[19px] group-hover:scale-105 transition-transform text-slate-900 dark:text-white" />
             </Link>
           )}
 
@@ -393,13 +393,13 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
             onClick={() => setIsCollapsed(!isCollapsed)}
             className={cn(
               "rounded-lg text-slate-500 dark:text-gray-500 hover:text-slate-800 dark:hover:text-gray-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.05] focus:outline-none transition-colors hidden md:flex items-center justify-center",
-              isRail ? "mt-1 w-8 h-8" : "w-7 h-7"
+              isRail ? "w-6 h-6" : "w-7 h-7"
             )}
             title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-expanded={!isCollapsed}
           >
-            {isCollapsed ? <PanelLeft className="w-[16px] h-[16px]" strokeWidth={1.75} /> : <PanelLeftClose className="w-[16px] h-[16px]" strokeWidth={1.75} />}
+            {isCollapsed ? <PanelLeft className="w-[14px] h-[14px]" strokeWidth={1.75} /> : <PanelLeftClose className="w-[16px] h-[16px]" strokeWidth={1.75} />}
           </button>
 
           {/* Mobile close button */}
