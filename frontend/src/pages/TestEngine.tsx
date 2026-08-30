@@ -199,6 +199,16 @@ export default function TestEngine() {
     }
   }, [timeLeft, handleSubmit]);
 
+  // Prevent accidental exits
+  useEffect(() => {
+    const blockExit = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', blockExit);
+    return () => window.removeEventListener('beforeunload', blockExit);
+  }, []);
+
   if (!user && !authLoading) {
     return (
       <div className="w-full h-screen flex flex-col items-center justify-center bg-[#fafbfc] dark:bg-[#0b0b0c] text-slate-500 font-sans p-6 text-center">
@@ -332,16 +342,6 @@ export default function TestEngine() {
       return newMap;
     });
   };
-
-  // Prevent accidental exits
-  useEffect(() => {
-    const blockExit = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
-    window.addEventListener('beforeunload', blockExit);
-    return () => window.removeEventListener('beforeunload', blockExit);
-  }, []);
 
   return (
     <motion.div 
