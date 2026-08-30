@@ -24,8 +24,8 @@ export function HandwrittenTagline({
   text = SITE.tagline,
   className,
   style,
-  delay = 0.2,
-  duration = 2.0,
+  delay = 0.05,
+  duration = 0.8,
   showNib = true,
   animated = true,
 }: {
@@ -61,20 +61,14 @@ export function HandwrittenTagline({
   // The rule is drawn first and the writing follows, so it reads as one continuous gesture —
   // the opening stroke, then the words. They overlap slightly rather than running end to end,
   // which would feel like two separate animations queued up.
-  const ruleDuration = 0.4;
-  const textDelay = delay + ruleDuration * 0.7;
+  const ruleDuration = 0.25;
+  const textDelay = delay + ruleDuration * 0.6;
 
   /*
    * Animates on mount (`animate`), NOT on scroll-into-view.
-   *
-   * This started as `whileInView` with a 60%-visible threshold, which was a latent bug: the
-   * initial keyframe clips the text away entirely, so anywhere the observer did not fire —
-   * a footer the viewport never covers 60% of, a short window — the tagline stayed clipped
-   * and was invisible forever. Tying "is this readable at all" to a scroll heuristic is the
-   * wrong trade; the line is content first and an effect second.
    */
   return (
-    <span className={cn('inline-flex items-center gap-2', base)} style={style}>
+    <span className={cn('inline-flex items-center gap-2', base)} style={{ willChange: 'transform', ...style }}>
       <motion.span
         aria-hidden="true"
         className={rule}
@@ -86,6 +80,7 @@ export function HandwrittenTagline({
       <span className="relative inline-block">
         <motion.span
           className="inline-block"
+          style={{ willChange: 'clip-path' }}
           initial={{ clipPath: 'inset(-35% 100% -35% -3%)' }}
           animate={{ clipPath: 'inset(-35% -6% -35% -3%)' }}
           transition={{ duration, delay: textDelay, ease }}
@@ -97,6 +92,7 @@ export function HandwrittenTagline({
           <motion.span
             aria-hidden="true"
             className="pointer-events-none absolute top-[14%] bottom-[16%] w-px bg-current"
+            style={{ willChange: 'left, opacity' }}
             initial={{ left: '0%', opacity: 0 }}
             animate={{ left: '100%', opacity: [0, 0.5, 0.5, 0] }}
             transition={{
