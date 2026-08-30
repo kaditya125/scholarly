@@ -335,7 +335,7 @@ export default function LandingPage() {
     url: SITE.url,
   });
 
-  const [studentCount, setStudentCount] = useState<number>(1);
+  const [studentCount, setStudentCount] = useState<number>(27);
   const [activeStudents, setActiveStudents] = useState<number | null>(null);
   const prevActiveRef = useRef<number | null>(null);
   const [activeAnimKey, setActiveAnimKey] = useState(0); // bumped on every change to trigger animation

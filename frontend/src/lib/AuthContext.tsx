@@ -98,7 +98,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       pathname.startsWith('/terms') ||
       pathname.startsWith('/privacy');
 
-    if (isPublicRoute && typeof window !== 'undefined') {
+    // If browser already holds a stored Firebase auth session, initialize immediately to prevent layout shift
+    const hasCachedAuth =
+      typeof window !== 'undefined' &&
+      Object.keys(window.localStorage).some(
+        (k) => k.startsWith('firebase:authUser:') || k === 'sadhya_auth_active'
+      );
+
+    if (isPublicRoute && !hasCachedAuth && typeof window !== 'undefined') {
       const onInteraction = () => {
         initAuth();
         window.removeEventListener('pointerdown', onInteraction);
