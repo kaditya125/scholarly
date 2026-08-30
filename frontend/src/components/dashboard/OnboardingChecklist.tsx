@@ -146,16 +146,16 @@ export function OnboardingChecklist() {
 
       {/* ── Step Cards ───────────────────────────────────────────────────── */}
       <div>
-        <div className="flex items-center gap-2 mb-2.5">
-          <span className="text-[12.5px] font-semibold text-slate-700 dark:text-slate-300">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[13px] font-semibold text-slate-900 dark:text-white tracking-tight">
             Complete these steps to get the most out of Sadhya
           </span>
-          <span className="text-[10.5px] font-semibold px-2 py-0.5 bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 rounded-full border border-slate-200/60 dark:border-white/5">
+          <span className="text-[11px] font-semibold px-2.5 py-0.5 bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 rounded-full border border-slate-200/80 dark:border-white/10">
             {completedCount}/{STEPS.length} done
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {STEPS.map((step, i) => {
             const done = completedSteps[step.id];
             const Icon = step.icon;
@@ -169,19 +169,19 @@ export function OnboardingChecklist() {
                 <Link
                   to={step.path}
                   className={cn(
-                    'flex flex-col w-full h-full rounded-2xl p-3.5 border transition-all duration-200 group cursor-pointer relative shadow-2xs',
+                    'flex flex-col w-full h-full rounded-2xl p-4 border transition-all duration-200 group cursor-pointer relative shadow-2xs',
                     done
                       ? 'bg-slate-50/60 dark:bg-white/[0.02] border-slate-200/60 dark:border-white/5 opacity-60'
-                      : 'bg-white dark:bg-[#1a1a1e] border-slate-200/90 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-[#202025] hover:shadow-xs'
+                      : 'bg-white dark:bg-[#161619] border-slate-200/90 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50/80 dark:hover:bg-white/[0.04] hover:shadow-xs'
                   )}
                 >
                   {/* Time / Status badge */}
-                  <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center justify-between mb-3">
                     <span className={cn(
-                      'text-[9.5px] font-semibold px-2 py-0.5 rounded-full border',
+                      'text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-md border',
                       done 
-                        ? 'bg-[#8ba32b]/15 text-[#8ba32b] dark:bg-[#c8e558]/15 dark:text-[#c8e558] border-[#8ba32b]/30 dark:border-[#c8e558]/30' 
-                        : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-slate-200/80 dark:border-white/10'
+                        ? 'bg-[#6ca855]/15 text-[#6ca855] dark:bg-[#c8e558]/15 dark:text-[#c8e558] border-[#6ca855]/30 dark:border-[#c8e558]/30' 
+                        : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 border-slate-200/80 dark:border-white/10'
                     )}>
                       {done ? 'DONE ✓' : step.time}
                     </span>
@@ -189,10 +189,10 @@ export function OnboardingChecklist() {
 
                   {/* Icon */}
                   <div className={cn(
-                    'w-8 h-8 rounded-xl flex items-center justify-center mb-2.5 border transition-all duration-200',
+                    'w-8.5 h-8.5 rounded-xl flex items-center justify-center mb-3 border transition-all duration-200',
                     done 
-                      ? 'bg-[#8ba32b]/15 dark:bg-[#c8e558]/15 border-[#8ba32b]/30 dark:border-[#c8e558]/30 text-[#8ba32b] dark:text-[#c8e558]' 
-                      : 'bg-slate-50 dark:bg-white/[0.04] border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300 group-hover:border-slate-300 dark:group-hover:border-[#c8e558]/40 group-hover:text-slate-900 dark:group-hover:text-[#c8e558]'
+                      ? 'bg-[#6ca855]/15 dark:bg-[#c8e558]/15 border-[#6ca855]/30 dark:border-[#c8e558]/30 text-[#6ca855] dark:text-[#c8e558]' 
+                      : 'bg-slate-50 dark:bg-white/[0.04] border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300 group-hover:border-slate-300 dark:group-hover:border-[#c8e558]/40 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558]'
                   )}>
                     {done
                       ? <CheckCircle2 className="w-4 h-4" />
@@ -200,17 +200,17 @@ export function OnboardingChecklist() {
                   </div>
 
                   {/* Text */}
-                  <div className="font-semibold text-[12.5px] text-slate-900 dark:text-white mb-1 leading-snug">
+                  <div className="font-semibold text-[13.5px] text-slate-900 dark:text-white mb-1 tracking-tight leading-snug">
                     {step.label}
                   </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed flex-1">
+                  <div className="text-[12px] text-slate-500 dark:text-gray-400 leading-relaxed flex-1">
                     {step.description}
                   </div>
 
                   {/* CTA link */}
                   {!done && (
-                    <div className="mt-2.5 flex items-center gap-0.5 text-[10.5px] font-semibold text-slate-700 dark:text-[#c8e558] opacity-0 group-hover:opacity-100 transition-opacity">
-                      Start <ChevronRight className="w-3 h-3" />
+                    <div className="mt-3 flex items-center gap-1 text-[11.5px] font-semibold text-slate-700 dark:text-[#c8e558] opacity-0 group-hover:opacity-100 transition-opacity">
+                      Start <ChevronRight className="w-3.5 h-3.5" />
                     </div>
                   )}
                 </Link>

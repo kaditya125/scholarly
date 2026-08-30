@@ -170,23 +170,23 @@ export default function StudentDashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="space-y-2"
+          className="space-y-2.5"
         >
           <div className="flex flex-wrap items-center gap-2">
             <div className={cn(
-              "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11.5px] font-medium border transition-colors",
+              "inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[12px] font-medium border transition-colors shadow-2xs",
               isDarkMode
-                ? "bg-white/[0.06] border-white/10 text-slate-200"
-                : "bg-white border-slate-200/90 text-slate-700 shadow-2xs"
+                ? "bg-white/[0.04] border-white/10 text-slate-200"
+                : "bg-white border-slate-200/90 text-slate-700"
             )}>
-              <Target className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558]" />
-              Preparing for {targetExam} 2026
+              <span className="w-1.5 h-1.5 rounded-full bg-[#6ca855] dark:bg-[#c8e558] animate-pulse" />
+              <span>Preparing for <strong className="font-semibold text-slate-900 dark:text-white">{targetExam} 2026</strong></span>
             </div>
           </div>
 
-          <h1 className="text-2xl sm:text-[28px] md:text-[32px] font-semibold tracking-[-0.025em] text-slate-900 dark:text-white">
+          <h1 className="text-[28px] sm:text-[34px] font-semibold tracking-[-0.035em] leading-[1.1] text-slate-900 dark:text-white">
             {getGreeting()},{' '}
-            <span className="text-[#8ba32b] dark:text-[#c8e558]">
+            <span className="text-[#6ca855] dark:text-[#c8e558]">
               {firstName}
             </span>
           </h1>
@@ -196,21 +196,21 @@ export default function StudentDashboard() {
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05, duration: 0.25 }}
-            className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pt-0.5 text-[13px] text-slate-500 dark:text-gray-400 font-normal antialiased"
+            className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pt-0.5 text-[13.5px] text-slate-500 dark:text-gray-400 font-normal leading-relaxed antialiased"
           >
             {latestSession ? (
               <div className="inline-flex items-center gap-1.5">
                 <span>Recently worked on</span>
                 <Link
                   to={`/chat?session=${latestSession.sessionId}`}
-                  className="font-medium text-slate-800 dark:text-slate-200 hover:text-slate-900 dark:hover:text-[#c8e558] hover:underline inline-flex items-center gap-1 transition-colors"
+                  className="font-medium text-slate-900 dark:text-white hover:text-[#6ca855] dark:hover:text-[#c8e558] hover:underline inline-flex items-center gap-1 transition-colors"
                 >
                   <span className="truncate max-w-[240px] sm:max-w-[340px]">{latestSession.title || (latestSession.topicType ? `${latestSession.topicType} session` : 'Study Session')}</span>
-                  <ArrowRight className="w-3 h-3 text-[#8ba32b] dark:text-[#c8e558] shrink-0 inline" />
+                  <ArrowRight className="w-3.5 h-3.5 text-[#6ca855] dark:text-[#c8e558] shrink-0 inline" />
                 </Link>
               </div>
             ) : (
-              <span>Ready for today's {targetExam} preparation session</span>
+              <span>Ready for today&rsquo;s <strong className="font-semibold text-slate-800 dark:text-slate-200">{targetExam}</strong> preparation session</span>
             )}
 
             <span className="text-slate-300 dark:text-gray-700 hidden sm:inline">•</span>
@@ -229,10 +229,10 @@ export default function StudentDashboard() {
               ) : (
                 <Link
                   to="/baseline-assessment"
-                  className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-[#c8e558] hover:underline inline-flex items-center gap-1"
+                  className="text-slate-700 dark:text-slate-300 hover:text-[#6ca855] dark:hover:text-[#c8e558] hover:underline inline-flex items-center gap-1"
                 >
                   <span>Diagnostic pending</span>
-                  <span className="text-[11px] text-[#8ba32b] dark:text-[#c8e558] font-medium">(Take Assessment →)</span>
+                  <span className="text-[12px] text-[#6ca855] dark:text-[#c8e558] font-semibold">(Take Assessment &rarr;)</span>
                 </Link>
               )}
             </div>
@@ -240,7 +240,7 @@ export default function StudentDashboard() {
             {stats?.gamification?.studyStreakDays && stats.gamification.studyStreakDays > 0 ? (
               <>
                 <span className="text-slate-300 dark:text-gray-700 hidden md:inline">•</span>
-                <span className="inline-flex items-center gap-1 text-slate-600 dark:text-gray-300 font-medium">
+                <span className="inline-flex items-center gap-1 text-slate-700 dark:text-gray-300 font-medium">
                   🔥 {stats.gamification.studyStreakDays}-day streak
                 </span>
               </>
@@ -259,12 +259,12 @@ export default function StudentDashboard() {
           className="relative z-30"
         >
           <div className={cn(
-            "w-full rounded-full pl-4 pr-1.5 py-1.5 flex items-center gap-2.5 border transition-all duration-200",
+            "w-full rounded-2xl pl-4 pr-2 py-2 flex items-center gap-3 border transition-all duration-200 shadow-2xs",
             isDarkMode 
-              ? "bg-[#1a1a1e]/95 border-white/[0.08] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.25)] focus-within:border-white/20 focus-within:ring-2 focus-within:ring-[#c8e558]/10" 
-              : "bg-white border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)] focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-900/5"
+              ? "bg-[#161619] border-white/[0.08] focus-within:border-[#c8e558]/40 focus-within:ring-2 focus-within:ring-[#c8e558]/10" 
+              : "bg-white border-slate-200/90 focus-within:border-[#6ca855]/50 focus-within:ring-2 focus-within:ring-[#6ca855]/10"
           )}>
-            <Sparkles className="w-4 h-4 text-[#8ba32b] dark:text-[#c8e558] shrink-0" />
+            <Sparkles className="w-4 h-4 text-[#6ca855] dark:text-[#c8e558] shrink-0" />
             
             <input 
               type="text" 
@@ -273,22 +273,22 @@ export default function StudentDashboard() {
               onKeyDown={handleGlobalChatKeyDown}
               placeholder="Ask Sadhya AI: Solve homework, generate notes, explain concepts, build practice tests..." 
               className={cn(
-                "flex-1 bg-transparent border-none outline-none text-[12.5px] font-normal h-8.5 px-1 min-w-0",
-                isDarkMode ? "text-white placeholder:text-slate-500" : "text-slate-900 placeholder:text-slate-400"
+                "flex-1 bg-transparent border-none outline-none text-[13.5px] font-normal h-9 px-1 min-w-0 tracking-tight",
+                isDarkMode ? "text-white placeholder:text-gray-500" : "text-slate-900 placeholder:text-slate-400"
               )}
             />
 
-            <div className="flex items-center gap-1.5 shrink-0 relative">
+            <div className="flex items-center gap-2 shrink-0 relative">
               {/* Model Selector Pill */}
               <div className="relative">
                 <button 
                   type="button"
                   onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
                   className={cn(
-                    "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors cursor-pointer",
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-medium border transition-colors cursor-pointer",
                     isDarkMode 
-                      ? "bg-white/5 hover:bg-white/10 border-white/10 text-slate-200" 
-                      : "bg-slate-100 hover:bg-slate-200/70 border-slate-200/80 text-slate-700"
+                      ? "bg-white/[0.04] hover:bg-white/[0.08] border-white/10 text-slate-200" 
+                      : "bg-slate-50 hover:bg-slate-100 border-slate-200/80 text-slate-700"
                   )}
                 >
                   <selectedModel.icon className="w-3.5 h-3.5" />
@@ -347,14 +347,14 @@ export default function StudentDashboard() {
               <button 
                 onClick={handleGlobalChatSubmit} 
                 className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95",
+                  "w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95",
                   isDarkMode 
                     ? "bg-[#c8e558] hover:bg-[#bcd94c] text-slate-900" 
                     : "bg-slate-900 hover:bg-slate-800 text-white"
                 )}
                 aria-label="Send prompt"
               >
-                <ArrowUp className="w-3.5 h-3.5" />
+                <ArrowUp className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -370,84 +370,84 @@ export default function StudentDashboard() {
           <div 
             onClick={() => navigate('/notebooks')} 
             className={cn(
-              "p-4 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
+              "p-5 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
               isDarkMode 
-                ? "bg-[#1a1a1e] border-white/[0.08] hover:border-white/20 hover:bg-[#202025]" 
+                ? "bg-[#161619] border-white/[0.08] hover:border-white/20 hover:bg-white/[0.03]" 
                 : "bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs"
             )}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-[#c8e558] group-hover:border-[#c8e558]/30 transition-colors">
-                <UploadCloud className="w-4 h-4" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
+                <UploadCloud className="w-4.5 h-4.5" />
               </div>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <ChevronRight className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
             </div>
             <div>
-              <h3 className="font-semibold text-[13.5px] text-slate-900 dark:text-white">Upload & Analyze</h3>
-              <p className="text-[11.5px] text-slate-500 dark:text-slate-400 mt-0.5">PDF, notes, syllabus &amp; web</p>
+              <h3 className="font-semibold text-[14px] text-slate-900 dark:text-white tracking-tight">Upload &amp; Analyze</h3>
+              <p className="text-[12.5px] text-slate-500 dark:text-gray-400 mt-1 leading-relaxed">PDF, notes, syllabus &amp; web</p>
             </div>
           </div>
 
           <div 
             onClick={() => navigate('/podcasts')} 
             className={cn(
-              "p-4 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
+              "p-5 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
               isDarkMode 
-                ? "bg-[#1a1a1e] border-white/[0.08] hover:border-white/20 hover:bg-[#202025]" 
+                ? "bg-[#161619] border-white/[0.08] hover:border-white/20 hover:bg-white/[0.03]" 
                 : "bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs"
             )}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-[#c8e558] group-hover:border-[#c8e558]/30 transition-colors">
-                <Headphones className="w-4 h-4" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
+                <Headphones className="w-4.5 h-4.5" />
               </div>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <ChevronRight className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
             </div>
             <div>
-              <h3 className="font-semibold text-[13.5px] text-slate-900 dark:text-white">AI Podcasts</h3>
-              <p className="text-[11.5px] text-slate-500 dark:text-slate-400 mt-0.5">Audio overview &amp; discussions</p>
+              <h3 className="font-semibold text-[14px] text-slate-900 dark:text-white tracking-tight">AI Podcasts</h3>
+              <p className="text-[12.5px] text-slate-500 dark:text-gray-400 mt-1 leading-relaxed">Audio overview &amp; discussions</p>
             </div>
           </div>
 
           <div 
             onClick={() => navigate('/tests')} 
             className={cn(
-              "p-4 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
+              "p-5 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
               isDarkMode 
-                ? "bg-[#1a1a1e] border-white/[0.08] hover:border-white/20 hover:bg-[#202025]" 
+                ? "bg-[#161619] border-white/[0.08] hover:border-white/20 hover:bg-white/[0.03]" 
                 : "bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs"
             )}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-[#c8e558] group-hover:border-[#c8e558]/30 transition-colors">
-                <Zap className="w-4 h-4" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
+                <Zap className="w-4.5 h-4.5" />
               </div>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <ChevronRight className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
             </div>
             <div>
-              <h3 className="font-semibold text-[13.5px] text-slate-900 dark:text-white">Adaptive Tests</h3>
-              <p className="text-[11.5px] text-slate-500 dark:text-slate-400 mt-0.5">Mock papers &amp; AI diagnostics</p>
+              <h3 className="font-semibold text-[14px] text-slate-900 dark:text-white tracking-tight">Adaptive Tests</h3>
+              <p className="text-[12.5px] text-slate-500 dark:text-gray-400 mt-1 leading-relaxed">Mock papers &amp; AI diagnostics</p>
             </div>
           </div>
 
           <div 
             onClick={() => navigate('/my-classes')} 
             className={cn(
-              "p-4 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
+              "p-5 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
               isDarkMode 
-                ? "bg-[#1a1a1e] border-white/[0.08] hover:border-white/20 hover:bg-[#202025]" 
+                ? "bg-[#161619] border-white/[0.08] hover:border-white/20 hover:bg-white/[0.03]" 
                 : "bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs"
             )}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-[#c8e558] group-hover:border-[#c8e558]/30 transition-colors">
-                <Radio className="w-4 h-4" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
+                <Radio className="w-4.5 h-4.5" />
               </div>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <ChevronRight className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
             </div>
             <div>
-              <h3 className="font-semibold text-[13.5px] text-slate-900 dark:text-white">Live Classes</h3>
-              <p className="text-[11.5px] text-slate-500 dark:text-slate-400 mt-0.5">Interactive &amp; recordings</p>
+              <h3 className="font-semibold text-[14px] text-slate-900 dark:text-white tracking-tight">Live Classes</h3>
+              <p className="text-[12.5px] text-slate-500 dark:text-gray-400 mt-1 leading-relaxed">Interactive &amp; recordings</p>
             </div>
           </div>
         </motion.div>
@@ -457,11 +457,11 @@ export default function StudentDashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.3 }}
-          className="space-y-3"
+          className="space-y-3.5"
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-[13px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558]" />
+            <h2 className="text-[14px] font-semibold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#6ca855] dark:text-[#c8e558]" />
               Study Tools &amp; Actions
             </h2>
           </div>
@@ -472,13 +472,13 @@ export default function StudentDashboard() {
                 key={idx} 
                 onClick={() => navigate(shortcut.path)}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[12px] font-medium transition-all cursor-pointer shadow-2xs",
+                  "flex items-center gap-2 px-3.5 py-2 rounded-xl border text-[12.5px] font-medium transition-all cursor-pointer shadow-2xs group",
                   isDarkMode 
-                    ? "bg-[#1a1a1e] border-white/[0.08] text-slate-300 hover:bg-[#232328] hover:text-white hover:border-white/20" 
-                    : "bg-white border-slate-200/80 text-slate-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300"
+                    ? "bg-[#161619] border-white/[0.08] text-slate-300 hover:bg-white/[0.05] hover:text-white hover:border-white/20" 
+                    : "bg-white border-slate-200/90 text-slate-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300"
                 )}
               >
-                <shortcut.icon className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                <shortcut.icon className="w-4 h-4 text-slate-400 dark:text-gray-500 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] transition-colors" />
                 <span>{shortcut.label}</span>
               </button>
             ))}
