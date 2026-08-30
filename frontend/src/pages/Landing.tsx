@@ -705,6 +705,7 @@ export default function LandingPage() {
                   <span className="text-[12.5px] font-medium text-slate-500 dark:text-gray-400">
                     Your learning profile
                   </span>
+                </div>
                 {/* Valid WCAG definition list */}
                 <dl className="divide-y divide-slate-100 dark:divide-white/[0.06]">
                   {PROFILE_FIELDS.map(([k, v]) => (
