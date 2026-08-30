@@ -98,24 +98,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       pathname.startsWith('/terms') ||
       pathname.startsWith('/privacy');
 
-    if (isPublicRoute && typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      const id = (window as any).requestIdleCallback(initAuth, { timeout: 1800 });
+    if (isPublicRoute && typeof window !== 'undefined') {
       const onInteraction = () => {
         initAuth();
         window.removeEventListener('pointerdown', onInteraction);
         window.removeEventListener('keydown', onInteraction);
         window.removeEventListener('scroll', onInteraction);
+        window.removeEventListener('touchstart', onInteraction);
       };
-      window.addEventListener('pointerdown', onInteraction, { passive: true });
-      window.addEventListener('keydown', onInteraction, { passive: true });
-      window.addEventListener('scroll', onInteraction, { passive: true });
+      window.addEventListener('pointerdown', onInteraction, { passive: true, once: true });
+      window.addEventListener('keydown', onInteraction, { passive: true, once: true });
+      window.addEventListener('scroll', onInteraction, { passive: true, once: true });
+      window.addEventListener('touchstart', onInteraction, { passive: true, once: true });
+
+      const timer = setTimeout(initAuth, 5000);
 
       return () => {
         isCancelled = true;
-        (window as any).cancelIdleCallback(id);
+        clearTimeout(timer);
         window.removeEventListener('pointerdown', onInteraction);
         window.removeEventListener('keydown', onInteraction);
         window.removeEventListener('scroll', onInteraction);
+        window.removeEventListener('touchstart', onInteraction);
         if (unsubscribe) unsubscribe();
       };
     } else {

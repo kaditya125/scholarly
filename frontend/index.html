@@ -46,16 +46,25 @@
       gtag('config', 'G-LF1WXJ09YY', { send_page_view: false });
 
       (function() {
+        var loaded = false;
         function loadGtag() {
+          if (loaded) return;
+          loaded = true;
+          window.removeEventListener('scroll', loadGtag);
+          window.removeEventListener('pointerdown', loadGtag);
+          window.removeEventListener('touchstart', loadGtag);
           var s = document.createElement('script');
           s.async = true;
           s.src = 'https://www.googletagmanager.com/gtag/js?id=G-LF1WXJ09YY';
           document.head.appendChild(s);
         }
+        window.addEventListener('scroll', loadGtag, { passive: true, once: true });
+        window.addEventListener('pointerdown', loadGtag, { passive: true, once: true });
+        window.addEventListener('touchstart', loadGtag, { passive: true, once: true });
         if ('requestIdleCallback' in window) {
-          window.requestIdleCallback(loadGtag, { timeout: 3500 });
+          window.requestIdleCallback(loadGtag, { timeout: 6000 });
         } else {
-          window.addEventListener('load', function() { setTimeout(loadGtag, 2000); });
+          setTimeout(loadGtag, 5000);
         }
       })();
     </script>
