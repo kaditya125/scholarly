@@ -74,14 +74,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setLoading(false);
-      setClaimsLoading(true);
-      void readClaims(u);
-    });
+    let unsubscribe: (() => void) | null = null;
+    let isCancelled = false;
 
-    return () => unsubscribe();
+    const initAuth = () => {
+      if (isCancelled || unsubscribe) return;
+      unsubscribe = onAuthStateChanged(auth, (u) => {
+        setUser(u);
+        setLoading(false);
+        setClaimsLoading(true);
+        void readClaims(u);
+      });
+    };
+
+    const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
+    const isPublicRoute =
+      pathname === '/' ||
+      pathname.startsWith('/about') ||
+      pathname.startsWith('/team') ||
+      pathname.startsWith('/pricing') ||
+      pathname.startsWith('/how-it-works') ||
+      pathname.startsWith('/legal') ||
+      pathname.startsWith('/terms') ||
+      pathname.startsWith('/privacy');
+
+    if (isPublicRoute && typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const id = (window as any).requestIdleCallback(initAuth, { timeout: 1800 });
+      const onInteraction = () => {
+        initAuth();
+        window.removeEventListener('pointerdown', onInteraction);
+        window.removeEventListener('keydown', onInteraction);
+        window.removeEventListener('scroll', onInteraction);
+      };
+      window.addEventListener('pointerdown', onInteraction, { passive: true });
+      window.addEventListener('keydown', onInteraction, { passive: true });
+      window.addEventListener('scroll', onInteraction, { passive: true });
+
+      return () => {
+        isCancelled = true;
+        (window as any).cancelIdleCallback(id);
+        window.removeEventListener('pointerdown', onInteraction);
+        window.removeEventListener('keydown', onInteraction);
+        window.removeEventListener('scroll', onInteraction);
+        if (unsubscribe) unsubscribe();
+      };
+    } else {
+      initAuth();
+      return () => {
+        isCancelled = true;
+        if (unsubscribe) unsubscribe();
+      };
+    }
   }, [readClaims]);
 
   const logout = async () => {
