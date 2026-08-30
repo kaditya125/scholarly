@@ -6,26 +6,28 @@ interface AvatarStackProps {
 }
 
 export default function AvatarStack({ className, avatars }: AvatarStackProps) {
-  // If avatars are empty, we just don't render anything, or we could render a default single generic avatar
-  if (!avatars || avatars.length === 0) return null;
+  const displayAvatars = (avatars && avatars.length > 0) ? avatars.slice(0, 4) : [
+    'https://lh3.googleusercontent.com/a/ACg8ocKAzheBPpqS7hokGk7Jph2pxnHPxEp7flbqQQ5k-7pj9yp5rus=s96-c',
+    'https://lh3.googleusercontent.com/a/ACg8ocITomVr-Weu-QNw1_ZmRGs3EhmP_S7mQrbo916Hesp2yAf7WA=s96-c',
+    'https://lh3.googleusercontent.com/a/ACg8ocLiiLcQtN9TguBm8svmA4TvWAth2gVXvIT4l9DErvCmM_QSgQ=s96-c'
+  ];
   
   return (
-    <div className={cn('flex -space-x-1.5 shrink-0', className)}>
-      {avatars.map((src, i) => (
+    <div className={cn('flex -space-x-1.5 shrink-0 items-center', className)}>
+      {displayAvatars.map((src, i) => (
         <img
           key={i}
           src={src}
-          alt={`User ${i + 1}`}
-          width={16}
-          height={16}
-          loading="lazy"
+          alt={`Scholar ${i + 1}`}
+          width={20}
+          height={20}
+          loading="eager"
           decoding="async"
           referrerPolicy="no-referrer"
-          className="w-4 h-4 rounded-full border border-slate-50 dark:border-[#141416] object-cover shadow-sm bg-slate-200 dark:bg-slate-800"
-          style={{ zIndex: avatars.length - i }}
+          className="w-5 h-5 rounded-full border-1.5 border-white dark:border-[#131314] object-cover shadow-xs bg-slate-200 dark:bg-slate-700 shrink-0"
+          style={{ zIndex: displayAvatars.length - i }}
           onError={(e) => {
-            // If a real profile pic fails to load, fallback to a dynamic initial-based one
-            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=U&background=random&color=000&rounded=true&bold=true`;
+            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=S&background=c8e558&color=0f172a&rounded=true&bold=true`;
           }}
         />
       ))}
