@@ -1,6 +1,7 @@
 import create from 'zustand';
 import { doc, updateDoc, writeBatch, collection, getDocs } from 'firebase/firestore';
-import { db, auth } from '../firebase';
+import { auth } from '../firebase';
+import { db } from '../firestore';
 import { NotificationPayload, notificationsApi } from '../api/notifications';
 import { handleNotificationAction } from '../api/realtimeNotifications';
 
