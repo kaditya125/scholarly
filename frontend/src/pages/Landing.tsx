@@ -1,4 +1,4 @@
-import { type ReactNode, useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { type ReactNode, useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import {
@@ -14,6 +14,7 @@ import { HandwrittenTagline } from '../components/brand/HandwrittenTagline';
 import { ExamLogo } from '../components/brand/ExamLogo';
 import { EXAM_CHIPS } from '../lib/examChips';
 import { useSeo } from '../lib/useSeo';
+import { useAuth } from '../lib/AuthContext';
 import { SITE } from '../lib/siteConfig';
 import { cn } from '../lib/utils';
 
@@ -341,16 +342,27 @@ export default function LandingPage() {
     url: SITE.url,
   });
 
+  const { user } = useAuth();
   const [studentCount, setStudentCount] = useState<number>(32);
   const [activeStudents, setActiveStudents] = useState<number | null>(null);
   const prevActiveRef = useRef<number | null>(null);
   const [activeAnimKey, setActiveAnimKey] = useState(0); // bumped on every change to trigger animation
   const [recentAvatars, setRecentAvatars] = useState<string[]>(DEFAULT_AVATARS);
+
+  const effectiveAvatars = useMemo(() => {
+    let list = [...recentAvatars];
+    if (user?.photoURL) {
+      list = [user.photoURL, ...list.filter((url) => url !== user.photoURL)];
+    }
+    return list.slice(0, 3);
+  }, [recentAvatars, user?.photoURL]);
+
   const handleOpenHelpWithQuestion = (q: string) => {
     window.dispatchEvent(new CustomEvent('sadhya-open-helpdesk', { detail: { question: q } }));
   };
 
   useEffect(() => {
+    let isMounted = true;
     let timeoutId: number;
 
     const fetchStats = async () => {
@@ -369,7 +381,7 @@ export default function LandingPage() {
               }
               setActiveStudents(data.activeStudents);
             }
-            if (data.recentStudentAvatars && Array.isArray(data.recentStudentAvatars)) {
+            if (data.recentStudentAvatars && Array.isArray(data.recentStudentAvatars) && data.recentStudentAvatars.length > 0) {
               setRecentAvatars(data.recentStudentAvatars);
             }
           }
@@ -379,8 +391,7 @@ export default function LandingPage() {
       }
     };
 
-    // Defer initial telemetry to allow smooth FCP/LCP
-    timeoutId = window.setTimeout(fetchStats, 2000);
+    fetchStats();
 
     // Refresh active student presence every 10s when tab is visible
     const interval = window.setInterval(() => {
@@ -398,7 +409,6 @@ export default function LandingPage() {
 
     return () => {
       isMounted = false;
-      clearTimeout(timeoutId);
       clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibility);
     };
@@ -422,7 +432,7 @@ export default function LandingPage() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#6ca855] opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-[#6ca855]"></span>
                 </span>
-                <AvatarStack avatars={recentAvatars} />
+                <AvatarStack avatars={effectiveAvatars} />
                 <span>
                   <strong className="font-semibold text-slate-900 dark:text-white">
                     {studentCount.toLocaleString()} {studentCount === 1 ? 'student' : 'students'}
