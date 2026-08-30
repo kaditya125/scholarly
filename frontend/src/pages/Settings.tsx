@@ -5,7 +5,7 @@ import {
   Check, X, Loader2, Camera, Monitor, Sun, Moon, ShieldCheck, ShieldAlert,
   Mail, KeyRound, LogOut, Trash2, CreditCard, Github,
   BadgeCheck, MapPin, Globe, Pencil, ArrowUpRight, Bot, BookOpen, FileText, Layers, GraduationCap,
-  ChevronLeft, Printer,
+  ChevronLeft, Printer, BarChart2, TrendingUp, Sparkles, Target
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { updateProfile, sendPasswordResetEmail, sendEmailVerification, deleteUser } from 'firebase/auth';
@@ -18,11 +18,12 @@ import { api } from '../lib/api/client';
 import { NotificationsPanel } from '../components/settings/NotificationsPanel';
 import { LearningProfileSettings } from '../components/settings/LearningProfileSettings';
 
-type TabId = 'profile' | 'learning' | 'general' | 'billing' | 'notifications' | 'apps' | 'security';
+type TabId = 'profile' | 'learning' | 'analytics' | 'general' | 'billing' | 'notifications' | 'apps' | 'security';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'profile', label: 'About Me' },
   { id: 'learning', label: 'Learning Profile' },
+  { id: 'analytics', label: 'Analytics' },
   { id: 'general', label: 'General' },
   { id: 'billing', label: 'Plan & Billing' },
   { id: 'notifications', label: 'Notifications' },
@@ -305,6 +306,35 @@ export default function Settings() {
       <div className="mt-8">
         {tab === 'learning' && !isTeacher && <LearningProfileSettings />}
 
+        {tab === 'analytics' && !isTeacher && (
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1a1a1b] p-6 sm:p-8 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 text-xs font-bold mb-2">
+                    <TrendingUp className="w-3.5 h-3.5" /> Performance & Diagnostics
+                  </div>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                    Student Learning Analytics & Performance
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-gray-400 mt-1 max-w-xl">
+                    View your comprehensive exam readiness grade, projected score boosts, syllabus mastery breakdown, and priority topics for revision.
+                  </p>
+                </div>
+
+                <Link
+                  to="/analytics"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-xs font-bold shadow-2xs hover:scale-[1.01] active:scale-[0.98] transition-all shrink-0"
+                >
+                  <BarChart2 className="w-4 h-4" />
+                  <span>Launch Full Analytics</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+
         {tab === 'profile' && (
           <div className="space-y-6">
             {/* Header card */}
@@ -332,6 +362,12 @@ export default function Settings() {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
+                  {!isTeacher && (
+                    <Link to="/analytics" className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                      <BarChart2 className="w-4 h-4 text-indigo-500" />
+                      Analytics
+                    </Link>
+                  )}
                   <Link to={homePath} className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                     View dashboard
                   </Link>
