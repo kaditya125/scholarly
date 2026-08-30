@@ -623,6 +623,7 @@ export function FloatingHelpdeskWidget({
             onClick={() => setIsOpen(true)}
             aria-label="Open Sadhya Helpdesk Assistant"
             className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white dark:bg-white hover:border-[#c8e558] shadow-[0_10px_35px_rgba(0,0,0,0.3)] hover:shadow-[0_0_25px_rgba(200,229,88,0.4)] border border-slate-200/90 dark:border-white/30 flex items-center justify-center transition-all group overflow-hidden"
+          >
             {/* Vector Helpdesk Launcher Icon */}
             <div className="relative flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 text-slate-900 dark:text-slate-900 transition-transform duration-300 group-hover:scale-110">
               <MessageSquare className="w-full h-full fill-slate-900/10 text-slate-900 stroke-[2.2]" />
