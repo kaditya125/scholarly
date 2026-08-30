@@ -116,12 +116,7 @@ export default function ProductPreview() {
 
           {/* ── Answer ────────────────────────────────────────────────────── */}
           {done && (
-            <motion.div
-              initial={reduced ? false : { opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-              className="space-y-3.5"
-            >
+            <div className="space-y-3.5">
               <div className="space-y-2.5 text-[13px] leading-[1.65] text-slate-700 dark:text-gray-300">
                 <p>
                   Current in a metal is carried by free electrons drifting through a lattice of
@@ -159,7 +154,7 @@ export default function ProductPreview() {
                   ))}
                 </div>
               </div>
-            </motion.div>
+            </div>
           )}
         </div>
 

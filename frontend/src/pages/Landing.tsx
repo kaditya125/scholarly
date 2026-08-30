@@ -496,14 +496,9 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <Reveal delay={0.22}>
-              <motion.div
-                whileHover={{ y: -4 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              >
-                <ProductPreview />
-              </motion.div>
-            </Reveal>
+            <div className="mt-8 lg:mt-0">
+              <ProductPreview />
+            </div>
           </div>
         </section>
 
