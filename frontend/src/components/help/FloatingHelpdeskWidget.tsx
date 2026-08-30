@@ -623,14 +623,12 @@ export function FloatingHelpdeskWidget({
             onClick={() => setIsOpen(true)}
             aria-label="Open Sadhya Helpdesk Assistant"
             className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white dark:bg-white hover:border-[#c8e558] shadow-[0_10px_35px_rgba(0,0,0,0.3)] hover:shadow-[0_0_25px_rgba(200,229,88,0.4)] border border-slate-200/90 dark:border-white/30 flex items-center justify-center transition-all group overflow-hidden"
-          >
-            {/* Animated Chat GIF Asset */}
-            <img
-              src="/chat-help.gif"
-              alt="Help Chat"
-              className="w-7.5 h-7.5 sm:w-9.5 sm:h-9.5 object-contain mix-blend-multiply transition-transform duration-300 group-hover:scale-110"
-            />
-            <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-[#c8e558] border-2 border-white shadow-[0_0_8px_#c8e558] animate-pulse" />
+            {/* Vector Helpdesk Launcher Icon */}
+            <div className="relative flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 text-slate-900 dark:text-slate-900 transition-transform duration-300 group-hover:scale-110">
+              <MessageSquare className="w-full h-full fill-slate-900/10 text-slate-900 stroke-[2.2]" />
+              <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-[#7d9a1f] animate-pulse" />
+            </div>
+            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-[#c8e558] border-2 border-white shadow-[0_0_8px_#c8e558] animate-pulse" />
           </motion.button>
         )}
       </AnimatePresence>
