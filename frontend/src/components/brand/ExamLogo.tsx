@@ -38,23 +38,17 @@ export function ExamLogo({ slug, className = 'w-5 h-5', size = 20 }: ExamLogoPro
   const imageSrc = OFFICIAL_IMAGE_MAP[slug];
 
   if (imageSrc && !error) {
-    const avifSrc = imageSrc.replace(/\.webp$/, '.avif');
     return (
       <span className={`${className} dark:bg-white dark:p-0.5 dark:rounded-md dark:shadow-2xs shrink-0 inline-flex items-center justify-center`}>
-        <picture>
-          <source type="image/avif" srcSet={avifSrc} />
-          <source type="image/webp" srcSet={imageSrc} />
-          <img
-            src={imageSrc}
-            alt={`${slug} logo`}
-            width={size}
-            height={size}
-            onError={() => setError(true)}
-            className="w-full h-full object-contain"
-            loading="lazy"
-            decoding="async"
-          />
-        </picture>
+        <img
+          src={imageSrc}
+          alt={`${slug} logo`}
+          width={size}
+          height={size}
+          onError={() => setError(true)}
+          className="w-full h-full object-contain"
+          loading="lazy"
+        />
       </span>
     );
   }

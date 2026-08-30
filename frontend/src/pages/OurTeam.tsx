@@ -223,11 +223,6 @@ function FounderPortrait({ person }: { person: Person }) {
 
         <picture>
           <source
-            type="image/avif"
-            srcSet={`${hero.webp500.replace(/\.webp$/, '.avif')} 500w, ${hero.webp1000.replace(/\.webp$/, '.avif')} 1000w`}
-            sizes="(min-width: 1024px) 340px, (min-width: 640px) 310px, 260px"
-          />
-          <source
             type="image/webp"
             srcSet={`${hero.webp500} 500w, ${hero.webp1000} 1000w`}
             sizes="(min-width: 1024px) 340px, (min-width: 640px) 310px, 260px"
