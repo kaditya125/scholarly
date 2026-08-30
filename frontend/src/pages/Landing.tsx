@@ -705,24 +705,18 @@ export default function LandingPage() {
                   <span className="text-[12.5px] font-medium text-slate-500 dark:text-gray-400">
                     Your learning profile
                   </span>
-                </div>
-                {/* Rows arrive one by one, so the card reads as a profile being filled in.
-                    Still a real <dl>: HTML permits a <div> grouping each dt/dd pair, which is
-                    exactly what <Item> renders. */}
-                <Stagger as="dl" className="divide-y divide-slate-100 dark:divide-white/[0.06]" gap={0.05}>
+                {/* Valid WCAG definition list */}
+                <dl className="divide-y divide-slate-100 dark:divide-white/[0.06]">
                   {PROFILE_FIELDS.map(([k, v]) => (
-                    <Item key={k} y={10}>
-                      <motion.div
-                        whileHover={{ x: 4, backgroundColor: 'rgba(200, 229, 88, 0.05)' }}
-                        transition={{ duration: 0.15 }}
-                        className="flex items-baseline gap-4 px-5 sm:px-6 py-3 cursor-default"
-                      >
-                        <dt className="w-[7.5rem] shrink-0 text-[13px] text-slate-500 dark:text-gray-400">{k}</dt>
-                        <dd className="text-[13.5px] font-medium text-slate-800 dark:text-gray-100">{v}</dd>
-                      </motion.div>
-                    </Item>
+                    <div
+                      key={k}
+                      className="flex items-baseline gap-4 px-5 sm:px-6 py-3 cursor-default hover:bg-[#c8e558]/5 transition-colors"
+                    >
+                      <dt className="w-[7.5rem] shrink-0 text-[13px] text-slate-600 dark:text-slate-300">{k}</dt>
+                      <dd className="text-[13.5px] font-medium text-slate-900 dark:text-gray-100">{v}</dd>
+                    </div>
                   ))}
-                </Stagger>
+                </dl>
               </motion.div>
             </Reveal>
           </div>
