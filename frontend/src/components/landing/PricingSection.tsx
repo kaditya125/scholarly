@@ -452,17 +452,19 @@ export default function PricingSection({
         {TIERS.map((tier) => {
           const to = tier.cta.to && tier.id === 'pro' ? `${tier.cta.to}&billing=${billing}` : tier.cta.to;
           return (
-            <div
+            <motion.div
               key={tier.id}
+              whileHover={reduced ? undefined : { y: -8, scale: 1.015 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 25 }}
               className={cn(
-                'relative flex flex-col rounded-2xl border p-5 sm:p-7 transition-shadow',
+                'relative flex flex-col rounded-2xl border p-5 sm:p-7 transition-all',
                 tier.featured
-                  ? 'border-[#c8e558] dark:border-[#c8e558]/60 bg-white dark:bg-[#141416] shadow-[0_18px_50px_-24px_rgba(140,170,40,0.4)] lg:-mt-2 lg:pb-8'
-                  : 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416]',
+                  ? 'border-[#c8e558] dark:border-[#c8e558]/60 bg-white dark:bg-[#141416] shadow-[0_18px_50px_-24px_rgba(140,170,40,0.4)] lg:-mt-2 lg:pb-8 hover:shadow-[0_24px_60px_-20px_rgba(140,170,40,0.5)]'
+                  : 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416] shadow-xs hover:shadow-lg hover:border-slate-300 dark:hover:border-white/20',
               )}
             >
               {tier.featured && (
-                <span className="absolute -top-3 left-5 sm:left-7 inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full bg-[#c8e558] text-slate-900 text-[11.5px] font-semibold">
+                <span className="absolute -top-3 left-5 sm:left-7 inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full bg-[#c8e558] text-slate-900 text-[11.5px] font-semibold shadow-xs">
                   <Sparkles className="w-3 h-3" strokeWidth={2.5} />
                   {tier.badge || 'Launch Special'}
                 </span>
@@ -524,7 +526,7 @@ export default function PricingSection({
                   {tier.footnote}
                 </p>
               )}
-            </div>
+            </motion.div>
           );
         })}
       </div>

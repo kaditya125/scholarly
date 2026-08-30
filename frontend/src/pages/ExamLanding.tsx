@@ -28,6 +28,7 @@ import { EXAM_CATALOG, getExamBySlug } from '../lib/examCatalog';
 import { ExamLogo } from '../components/brand/ExamLogo';
 
 const ACCENT = '#c8e558';
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 function Reveal({ children, delay = 0, className }: { children: ReactNode; delay?: number; className?: string }) {
   const reduced = useReducedMotion();
@@ -35,10 +36,10 @@ function Reveal({ children, delay = 0, className }: { children: ReactNode; delay
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 24, scale: 0.985 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
       viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1], delay }}
+      transition={{ duration: 0.6, ease: EASE, delay }}
     >
       {children}
     </motion.div>
@@ -99,54 +100,36 @@ export default function ExamLanding() {
     url: exam ? `${SITE.url}/exams/${exam.slug}` : `${SITE.url}/exams`,
   });
 
-  if (!exam) return <Navigate to="/" replace />;
-
-  const others = EXAM_CATALOG.filter((e) => e.slug !== exam.slug).slice(0, 8);
+  if (!exam) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0a0a0b] text-slate-900 dark:text-gray-100">
+    <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased">
       <SiteHeader />
 
-      <main className="pt-28 sm:pt-32 pb-24 px-4 sm:px-6 lg:px-8 max-w-[1160px] mx-auto">
-        {/* ══ Breadcrumbs & Category ═══════════════════════════════════════ */}
+      <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-10 sm:pt-14 pb-20 sm:pb-28">
+        {/* ══ Breadcrumbs ═════════════════════════════════════════════════ */}
         <Reveal>
-          <nav className="text-[13px] text-slate-400 dark:text-gray-500 mb-6 flex items-center gap-2" aria-label="Breadcrumb">
-            <Link to="/" className="hover:text-slate-700 dark:hover:text-gray-300 transition-colors">Home</Link>
+          <nav className="flex items-center gap-2 text-[13px] text-slate-500 dark:text-gray-400 mb-6">
+            <Link to="/" className="hover:text-slate-900 dark:hover:text-white transition-colors">Home</Link>
             <span>/</span>
-            <span className="text-slate-500 dark:text-gray-400">Exams</span>
+            <Link to="/#exams" className="hover:text-slate-900 dark:hover:text-white transition-colors">Exams</Link>
             <span>/</span>
-            <span className="text-slate-800 dark:text-gray-200 font-medium">{exam.name}</span>
+            <span className="text-slate-900 dark:text-white font-medium">{exam.name}</span>
           </nav>
 
           {/* ══ Hero Header ═════════════════════════════════════════════════ */}
-          <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-8 border-b border-slate-200 dark:border-white/10">
-            <div className="flex-1">
-              <div className="flex items-center gap-3">
-                <span
-                  className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[12px] font-medium"
-                  style={{ borderColor: `${ACCENT}55`, color: '#5c7a1a', background: `${ACCENT}14` }}
-                >
-                  <ExamLogo slug={exam.slug} className="w-3.5 h-3.5 object-contain" size={14} />
-                  <span>{exam.category}</span>
-                </span>
-                {exam.officialSite && (
-                  <a
-                    href={exam.officialSite}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="inline-flex items-center gap-1 text-[12px] font-medium text-slate-400 hover:text-slate-700 dark:hover:text-gray-200 transition-colors"
-                  >
-                    <span>Official Portal</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
-              </div>
-
-              <div className="mt-4 flex items-center gap-4 flex-wrap">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-slate-50 dark:bg-white/[0.05] border border-slate-200/80 dark:border-white/10 flex items-center justify-center p-2.5 shadow-2xs">
-                  <ExamLogo slug={exam.slug} className="w-full h-full object-contain" size={40} />
+          <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416] p-6 sm:p-10 shadow-xs">
+            <div className="max-w-4xl">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] flex items-center justify-center p-2.5 shrink-0 shadow-2xs">
+                  <ExamLogo slug={exam.slug} size={44} className="object-contain" />
                 </div>
                 <div>
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#c8e558]/20 dark:bg-[#c8e558]/10 text-slate-900 dark:text-[#c8e558] text-[12px] font-semibold mb-1">
+                    <span>{exam.category.toUpperCase()}</span>
+                  </div>
                   <h1 className="text-[28px] sm:text-[38px] lg:text-[42px] leading-[1.12] font-semibold tracking-[-0.03em] text-slate-950 dark:text-white">
                     {exam.fullName}
                   </h1>
@@ -162,60 +145,60 @@ export default function ExamLanding() {
 
               {/* Action Buttons */}
               <div className="mt-7 flex flex-wrap items-center gap-3">
-                <Link
-                  to="/signup"
-                  state={{ intent: exam.name }}
-                  className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[14.5px] font-semibold text-slate-900 shadow-xs transition-transform hover:scale-[1.02] active:scale-[0.98]"
-                  style={{ background: ACCENT }}
+                <motion.div
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 >
-                  Start Preparing for {exam.name}
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link
-                  to={`/test?topic=${encodeURIComponent(exam.name + ' - ' + exam.fullName)}&slug=${exam.slug}`}
-                  state={{ topic: `${exam.name}: ${exam.fullName}`, slug: exam.slug, count: 10, mode: 'exam' }}
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] px-5 py-2.5 text-[14.5px] font-semibold text-slate-800 dark:text-gray-200 hover:border-slate-300 dark:hover:border-white/25 hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-2xs cursor-pointer"
+                  <Link
+                    to="/signup"
+                    state={{ intent: exam.name }}
+                    className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[14.5px] font-semibold text-slate-900 shadow-sm hover:shadow-md transition-shadow"
+                    style={{ background: ACCENT }}
+                  >
+                    Start Preparing for {exam.name}
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 >
-                  <Sparkles className="w-4 h-4 text-amber-500" />
-                  Take Practice Quiz
-                </Link>
+                  <Link
+                    to={`/test?topic=${encodeURIComponent(exam.name + ' - ' + exam.fullName)}&slug=${exam.slug}`}
+                    state={{ topic: `${exam.name}: ${exam.fullName}`, slug: exam.slug, count: 10, mode: 'exam' }}
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] px-5 py-2.5 text-[14.5px] font-semibold text-slate-800 dark:text-gray-200 hover:border-slate-300 dark:hover:border-white/25 hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-2xs cursor-pointer"
+                  >
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    Take Practice Quiz
+                  </Link>
+                </motion.div>
               </div>
             </div>
           </div>
 
           {/* ══ Quick Facts Bar ═════════════════════════════════════════════ */}
           <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.02]">
-              <div className="flex items-center gap-2 text-slate-400 dark:text-gray-500">
-                <Clock className="w-4 h-4" />
-                <span className="text-[12px] font-medium uppercase tracking-wider">Duration</span>
-              </div>
-              <p className="mt-1.5 text-[14px] font-semibold text-slate-800 dark:text-gray-100">{exam.duration}</p>
-            </div>
-
-            <div className="p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.02]">
-              <div className="flex items-center gap-2 text-slate-400 dark:text-gray-500">
-                <Award className="w-4 h-4" />
-                <span className="text-[12px] font-medium uppercase tracking-wider">Total Marks</span>
-              </div>
-              <p className="mt-1.5 text-[14px] font-semibold text-slate-800 dark:text-gray-100">{exam.totalMarks}</p>
-            </div>
-
-            <div className="p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.02]">
-              <div className="flex items-center gap-2 text-slate-400 dark:text-gray-500">
-                <Layers className="w-4 h-4" />
-                <span className="text-[12px] font-medium uppercase tracking-wider">Mode</span>
-              </div>
-              <p className="mt-1.5 text-[14px] font-semibold text-slate-800 dark:text-gray-100">{exam.mode}</p>
-            </div>
-
-            <div className="p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.02]">
-              <div className="flex items-center gap-2 text-slate-400 dark:text-gray-500">
-                <Calendar className="w-4 h-4" />
-                <span className="text-[12px] font-medium uppercase tracking-wider">Frequency</span>
-              </div>
-              <p className="mt-1.5 text-[14px] font-semibold text-slate-800 dark:text-gray-100">{exam.frequency}</p>
-            </div>
+            {[
+              { icon: Clock, label: "Duration", value: exam.duration },
+              { icon: Award, label: "Total Marks", value: exam.totalMarks },
+              { icon: Layers, label: "Mode", value: exam.mode },
+              { icon: Calendar, label: "Frequency", value: exam.frequency },
+            ].map((fact, i) => (
+              <motion.div
+                key={i}
+                whileHover={{ y: -4, scale: 1.02 }}
+                transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                className="p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.02] shadow-2xs hover:shadow-xs transition-shadow cursor-default"
+              >
+                <div className="flex items-center gap-2 text-slate-400 dark:text-gray-500">
+                  <fact.icon className="w-4 h-4" />
+                  <span className="text-[12px] font-medium uppercase tracking-wider">{fact.label}</span>
+                </div>
+                <p className="mt-1.5 text-[14px] font-semibold text-slate-800 dark:text-gray-100">{fact.value}</p>
+              </motion.div>
+            ))}
           </div>
         </Reveal>
 
@@ -358,7 +341,12 @@ export default function ExamLanding() {
 
               <div className="space-y-6">
                 {exam.syllabus.map((subj, subIdx) => (
-                  <div key={subIdx} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111113] p-6 shadow-2xs">
+                  <motion.div
+                    key={subIdx}
+                    whileHover={{ y: -4 }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                    className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111113] p-6 shadow-2xs hover:shadow-md transition-shadow"
+                  >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-white/[0.07]">
                       <h3 className="text-[19px] font-semibold text-slate-900 dark:text-white flex items-center gap-2.5">
                         <span className="w-2.5 h-2.5 rounded-full" style={{ background: ACCENT }} />
@@ -426,7 +414,7 @@ export default function ExamLanding() {
                         );
                       })}
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </Reveal>
