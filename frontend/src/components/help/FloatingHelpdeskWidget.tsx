@@ -625,13 +625,17 @@ export function FloatingHelpdeskWidget({
             className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white dark:bg-white hover:border-[#c8e558] shadow-[0_6px_20px_rgba(0,0,0,0.22)] hover:shadow-[0_0_20px_rgba(200,229,88,0.4)] border border-slate-200/90 dark:border-white/30 flex items-center justify-center transition-all group overflow-hidden"
           >
             {/* Animated Helpdesk Mascot Image */}
-            <img
-              src="/chat-help.gif"
-              alt="Helpdesk Assistant"
-              width={44}
-              height={44}
-              className="w-full h-full object-cover rounded-full"
-            />
+            <picture>
+              <source type="image/webp" srcSet="/chat-help.webp" />
+              <img
+                src="/chat-help.gif"
+                alt="Helpdesk Assistant"
+                width={44}
+                height={44}
+                decoding="async"
+                className="w-full h-full object-cover rounded-full"
+              />
+            </picture>
             <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#c8e558] border-1.5 border-white shadow-[0_0_6px_#c8e558] animate-pulse" />
           </motion.button>
         )}
