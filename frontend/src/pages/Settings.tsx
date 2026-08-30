@@ -18,7 +18,7 @@ import { api } from '../lib/api/client';
 import { NotificationsPanel } from '../components/settings/NotificationsPanel';
 import { LearningProfileSettings } from '../components/settings/LearningProfileSettings';
 import { usePolicyConsent } from '../lib/hooks/usePolicyConsent';
-import { SADHYA_POLICIES, CURRENT_POLICY_METADATA } from '../content/policies/policyData';
+import { CURRENT_POLICY_METADATA } from '../content/policies/policyData';
 
 type TabId = 'profile' | 'learning' | 'analytics' | 'general' | 'billing' | 'notifications' | 'apps' | 'security' | 'policies';
 
@@ -848,77 +848,128 @@ export default function Settings() {
         )}
 
         {tab === 'policies' && (
-          <div className="space-y-8">
+          <div className="space-y-6">
             <Section
-              title="Your Accepted Platform Policies"
-              desc="The terms, AI guidelines, and community policies governing your Sadhya account."
+              title="Platform Terms & Agreements"
+              desc="The terms of service, data privacy rules, and educational policies governing your Sadhya account."
             >
-              <div className="rounded-xl border border-slate-200 dark:border-white/10 p-5 bg-slate-50/50 dark:bg-white/[0.02] space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-[#6ca855]/10 dark:bg-[#c8e558]/10 text-[#6ca855] dark:text-[#c8e558] flex items-center justify-center">
+              <div className="space-y-4">
+                {/* Consent Status Row */}
+                <div className="flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 px-4 py-3.5 bg-slate-50/50 dark:bg-white/[0.02]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                       <ShieldCheck className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="text-[14px] font-bold text-slate-900 dark:text-white">
-                        Version {consentStatus?.lastAcceptedVersion || CURRENT_POLICY_METADATA.version}
+                      <div className="text-[14px] font-medium text-slate-900 dark:text-white">
+                        Accepted Policy Version: <span className="font-semibold">{consentStatus?.lastAcceptedVersion || CURRENT_POLICY_METADATA.version}</span>
                       </div>
-                      <div className="text-[12px] text-slate-500 dark:text-gray-400">
+                      <div className="text-[12.5px] text-slate-500 dark:text-gray-400">
                         {consentStatus?.lastAcceptedAt
-                          ? `Accepted on ${new Date(consentStatus.lastAcceptedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`
-                          : `Status: Current Version (${CURRENT_POLICY_METADATA.version})`}
+                          ? `Recorded on ${new Date(consentStatus.lastAcceptedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`
+                          : `Active Release: August 31, 2026`}
                       </div>
                     </div>
                   </div>
 
                   <Link
                     to="/policies"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13px] font-semibold hover:opacity-90 transition-opacity"
+                    className="inline-flex items-center gap-1 text-[13px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline shrink-0"
                   >
                     <span>Transparency Center</span>
                     <ArrowUpRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
 
-                <div className="border-t border-slate-200/60 dark:border-white/5 pt-4">
-                  <p className="text-[13px] text-slate-600 dark:text-gray-300 leading-relaxed">
-                    Sadhya is built around transparency. You can review any individual policy clause or explore how our AI reasoning and adaptive tests function in detail.
-                  </p>
-                </div>
-              </div>
-            </Section>
-
-            <Section
-              title="Sadhya Platform Policy Directory"
-              desc="Direct access to all 13 official platform guidelines."
-            >
-              <div className="grid sm:grid-cols-2 gap-3">
-                {SADHYA_POLICIES.map((p) => (
+                {/* Clean Document Rows (No Bloated Cards) */}
+                <div className="rounded-xl border border-slate-200 dark:border-white/10 divide-y divide-slate-100 dark:divide-white/[0.06] overflow-hidden">
                   <Link
-                    key={p.id}
-                    to={`/policies?section=${p.id}`}
-                    className="p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1f1f21] hover:border-slate-300 dark:hover:border-white/20 transition-all flex flex-col justify-between group"
+                    to="/terms"
+                    className="flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors group"
                   >
                     <div>
-                      <div className="flex items-center justify-between gap-2 mb-1.5">
-                        <span className="text-[14px] font-semibold text-slate-900 dark:text-white group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] transition-colors">
-                          {p.title}
-                        </span>
-                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-gray-400">
-                          {p.badge}
-                        </span>
+                      <div className="text-[13.5px] font-medium text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                        Terms of Service
                       </div>
-                      <p className="text-[12.5px] text-slate-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
-                        {p.summary}
-                      </p>
+                      <div className="text-[12px] text-slate-500 dark:text-gray-400">
+                        Account eligibility, student and teacher workspaces, and platform availability.
+                      </div>
                     </div>
-
-                    <div className="mt-3 pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[12px] text-slate-400 group-hover:text-slate-700 dark:group-hover:text-gray-200">
-                      <span>Read clause</span>
-                      <ArrowUpRight className="w-3.5 h-3.5" />
-                    </div>
+                    <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 dark:group-hover:text-white shrink-0 ml-3" />
                   </Link>
-                ))}
+
+                  <Link
+                    to="/privacy"
+                    className="flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors group"
+                  >
+                    <div>
+                      <div className="text-[13.5px] font-medium text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                        Privacy &amp; Data Protection Policy
+                      </div>
+                      <div className="text-[12px] text-slate-500 dark:text-gray-400">
+                        DPDP Act 2023 compliance, telemetry data use, learner model, and deletion rights.
+                      </div>
+                    </div>
+                    <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 dark:group-hover:text-white shrink-0 ml-3" />
+                  </Link>
+
+                  <Link
+                    to="/refunds"
+                    className="flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors group"
+                  >
+                    <div>
+                      <div className="text-[13.5px] font-medium text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                        Refunds &amp; Cancellation Policy
+                      </div>
+                      <div className="text-[12px] text-slate-500 dark:text-gray-400">
+                        Transparent Razorpay Indian Rupee pricing, anytime cancellation, and 7-day refund guarantee.
+                      </div>
+                    </div>
+                    <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 dark:group-hover:text-white shrink-0 ml-3" />
+                  </Link>
+
+                  <Link
+                    to="/policies"
+                    className="flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors group"
+                  >
+                    <div>
+                      <div className="text-[13.5px] font-medium text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                        Platform Operating Guidelines &amp; AI Rules
+                      </div>
+                      <div className="text-[12px] text-slate-500 dark:text-gray-400">
+                        AI reasoning traces, syllabus grounding, adaptive tests, community conduct, and uploads.
+                      </div>
+                    </div>
+                    <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 dark:group-hover:text-white shrink-0 ml-3" />
+                  </Link>
+
+                  <Link
+                    to="/security"
+                    className="flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors group"
+                  >
+                    <div>
+                      <div className="text-[13.5px] font-medium text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                        Security Architecture
+                      </div>
+                      <div className="text-[12px] text-slate-500 dark:text-gray-400">
+                        Data encryption, authenticated sessions, and server-side safeguards.
+                      </div>
+                    </div>
+                    <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 dark:group-hover:text-white shrink-0 ml-3" />
+                  </Link>
+                </div>
+
+                {/* Grievance Footer */}
+                <div className="pt-2 text-[12.5px] text-slate-500 dark:text-gray-400">
+                  Questions or grievance inquiries? Contact our legal team at{' '}
+                  <a
+                    href="mailto:legal@sadhya.app"
+                    className="font-medium text-slate-900 dark:text-white underline underline-offset-2 hover:text-indigo-600 dark:hover:text-indigo-400"
+                  >
+                    legal@sadhya.app
+                  </a>
+                  .
+                </div>
               </div>
             </Section>
           </div>
