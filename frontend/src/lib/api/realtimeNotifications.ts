@@ -48,11 +48,7 @@ export async function sendRealNotification(params: CreateNotificationParams): Pr
     const docRef = doc(notificationsRef);
     const nowIso = new Date().toISOString();
 
-    const payload: Partial<NotificationPayload> & {
-      metadata?: Record<string, any>;
-      createdAt: string;
-      updatedAt: string;
-    } = {
+    const payload: Record<string, any> = {
       id: docRef.id,
       userId: params.userId,
       category: params.category || determineCategory(params.type),
@@ -60,18 +56,19 @@ export async function sendRealNotification(params: CreateNotificationParams): Pr
       title: params.title,
       body: params.body,
       priority: params.priority || "medium",
-      avatar: params.avatar || undefined,
       actionUrl: params.actionUrl || "",
       actions: params.actions || [],
       actionState: null,
-      targetBadge: params.targetBadge || undefined,
-      quote: params.quote || undefined,
       metadata: params.metadata || {},
       isRead: false,
       isArchived: false,
       createdAt: nowIso,
       updatedAt: nowIso,
     };
+
+    if (params.avatar) payload.avatar = params.avatar;
+    if (params.targetBadge) payload.targetBadge = params.targetBadge;
+    if (params.quote) payload.quote = params.quote;
 
     await setDoc(docRef, payload);
     return docRef.id;
