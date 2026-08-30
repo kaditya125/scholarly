@@ -17,8 +17,10 @@ import { cn } from '../lib/utils';
 import { api } from '../lib/api/client';
 import { NotificationsPanel } from '../components/settings/NotificationsPanel';
 import { LearningProfileSettings } from '../components/settings/LearningProfileSettings';
+import { usePolicyConsent } from '../lib/hooks/usePolicyConsent';
+import { SADHYA_POLICIES, CURRENT_POLICY_METADATA } from '../content/policies/policyData';
 
-type TabId = 'profile' | 'learning' | 'analytics' | 'general' | 'billing' | 'notifications' | 'apps' | 'security';
+type TabId = 'profile' | 'learning' | 'analytics' | 'general' | 'billing' | 'notifications' | 'apps' | 'security' | 'policies';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'profile', label: 'About Me' },
@@ -29,6 +31,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'notifications', label: 'Notifications' },
   { id: 'apps', label: 'Apps' },
   { id: 'security', label: 'Security' },
+  { id: 'policies', label: 'Terms & Policies' },
 ];
 
 const EXAMS = [
@@ -48,6 +51,7 @@ export default function Settings() {
   const testsPath = isTeacher ? '/teach/tests' : '/tests';
   const visibleTabs = isTeacher ? TABS.filter((t) => t.id !== 'learning') : TABS;
   const { themePreference, setThemePreference } = useTheme();
+  const { consentStatus } = usePolicyConsent(!!user);
   const navigate = useNavigate();
 
   const [tab, setTab] = useState<TabId>('profile');
@@ -840,6 +844,83 @@ export default function Settings() {
                 {busy === 'delete' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Delete my account
               </button>
             </div>
+          </div>
+        )}
+
+        {tab === 'policies' && (
+          <div className="space-y-8">
+            <Section
+              title="Your Accepted Platform Policies"
+              desc="The terms, AI guidelines, and community policies governing your Sadhya account."
+            >
+              <div className="rounded-xl border border-slate-200 dark:border-white/10 p-5 bg-slate-50/50 dark:bg-white/[0.02] space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-[#6ca855]/10 dark:bg-[#c8e558]/10 text-[#6ca855] dark:text-[#c8e558] flex items-center justify-center">
+                      <ShieldCheck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-[14px] font-bold text-slate-900 dark:text-white">
+                        Version {consentStatus?.lastAcceptedVersion || CURRENT_POLICY_METADATA.version}
+                      </div>
+                      <div className="text-[12px] text-slate-500 dark:text-gray-400">
+                        {consentStatus?.lastAcceptedAt
+                          ? `Accepted on ${new Date(consentStatus.lastAcceptedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`
+                          : `Status: Current Version (${CURRENT_POLICY_METADATA.version})`}
+                      </div>
+                    </div>
+                  </div>
+
+                  <Link
+                    to="/policies"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13px] font-semibold hover:opacity-90 transition-opacity"
+                  >
+                    <span>Transparency Center</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+
+                <div className="border-t border-slate-200/60 dark:border-white/5 pt-4">
+                  <p className="text-[13px] text-slate-600 dark:text-gray-300 leading-relaxed">
+                    Sadhya is built around transparency. You can review any individual policy clause or explore how our AI reasoning and adaptive tests function in detail.
+                  </p>
+                </div>
+              </div>
+            </Section>
+
+            <Section
+              title="Sadhya Platform Policy Directory"
+              desc="Direct access to all 13 official platform guidelines."
+            >
+              <div className="grid sm:grid-cols-2 gap-3">
+                {SADHYA_POLICIES.map((p) => (
+                  <Link
+                    key={p.id}
+                    to={`/policies?section=${p.id}`}
+                    className="p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#1f1f21] hover:border-slate-300 dark:hover:border-white/20 transition-all flex flex-col justify-between group"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <span className="text-[14px] font-semibold text-slate-900 dark:text-white group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] transition-colors">
+                          {p.title}
+                        </span>
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-gray-400">
+                          {p.badge}
+                        </span>
+                      </div>
+                      <p className="text-[12.5px] text-slate-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
+                        {p.summary}
+                      </p>
+                    </div>
+
+                    <div className="mt-3 pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[12px] text-slate-400 group-hover:text-slate-700 dark:group-hover:text-gray-200">
+                      <span>Read clause</span>
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </Section>
           </div>
         )}
       </div>

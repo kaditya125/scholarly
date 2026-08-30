@@ -49,9 +49,11 @@ import canonicalAssessmentRoutes from './canonicalAssessment.routes';
 import automationRoutes from './automation.routes';
 import contactRoutes from './contact.routes';
 import savedMessageRoutes from './savedMessage.routes';
+import policiesRoutes from './policies.routes';
 
 const router = Router();
 
+router.use('/policies', policiesRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/coverage', coverageRoutes);
 router.use('/study-plan', studyPlanRoutes);

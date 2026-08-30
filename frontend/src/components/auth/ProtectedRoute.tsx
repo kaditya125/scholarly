@@ -1,12 +1,23 @@
-import React from "react";
+import React, { useState } from "react";
 import { useLocation, Navigate } from "react-router-dom";
 import { useAuth } from "../../lib/AuthContext";
 import { useProfile } from "../../hooks/api/useProfile";
+import { usePolicyConsent } from "../../lib/hooks/usePolicyConsent";
+import FirstTimeConsentModal from "../policies/FirstTimeConsentModal";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading, role, claimsLoading } = useAuth();
   const { profile, isLoading: profileLoading } = useProfile();
   const location = useLocation();
+
+  const {
+    consentStatus,
+    isLoading: consentLoading,
+    requiresReview,
+    refetch: refetchConsent,
+  } = usePolicyConsent(!!user);
+
+  const [dismissModalForSession, setDismissModalForSession] = useState(false);
 
   // Show nothing while auth initialises — prevents flash of /signin redirect
   if (authLoading) {
@@ -41,6 +52,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
       '/baseline-assessment',
       '/welcome',
       '/teacher-onboarding',
+      '/policies',
     ];
     const isAllowed = roleSetupAllowedPaths.some((p) => location.pathname.startsWith(p));
     if (!isAllowed) {
@@ -57,34 +69,22 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     }
   }
 
-  if (profileLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#131314]">
-        <span className="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-white/10 border-t-indigo-500 animate-spin" />
-      </div>
-    );
-  }
-
-  if (role === 'teacher') {
-    return <>{children}</>;
-  }
-
-  // Routes that are part of the onboarding/assessment flow — always allow through
-  // even when the profile is incomplete, to avoid redirect loops.
-  const bypassRoutes = ['/onboarding', '/baseline-assessment', '/welcome', '/assessment', '/assessment/report', '/select-role', '/teacher/onboarding', '/verify-email'];
+  // Routes that are part of the onboarding/assessment/policy flow — always allow through
+  const bypassRoutes = [
+    '/onboarding',
+    '/baseline-assessment',
+    '/welcome',
+    '/assessment',
+    '/assessment/report',
+    '/select-role',
+    '/teacher/onboarding',
+    '/verify-email',
+    '/policies',
+  ];
   const isBypassRoute = bypassRoutes.some((r) => location.pathname.startsWith(r));
 
   // Student-profile completeness is a STUDENT-ONLY gate.
-  //
-  // useProfile() fetches the *student* learning profile, so a teacher account never has one and
-  // `isComplete` stays falsy for them permanently. Without the role check, every teacher would be
-  // redirected into the student onboarding wizard on every non-bypass route — the bug this phase
-  // fixes. Teachers reach their own destination via /teacher/onboarding.
-  //
-  // The profileLoading wait is scoped the same way on purpose: that query polls (refetchInterval)
-  // and would never settle for a teacher, producing intermittent spinners on every route.
   if (!isBypassRoute && role === 'student') {
-    // Wait for the profile to load before deciding whether to redirect
     if (profileLoading) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#131314]">
@@ -93,13 +93,29 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
       );
     }
 
-    // Authenticated but profile not yet complete → start onboarding
     if (!profile?.isComplete && sessionStorage.getItem('onboarding_skipped') !== 'true') {
       return <Navigate to="/onboarding" replace />;
     }
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      {/* Policy Consent Gate Modal — Appears whenever active policy requires review and not yet accepted */}
+      {requiresReview && !dismissModalForSession && (
+        <FirstTimeConsentModal
+          isOpen={true}
+          isUpdate={!!consentStatus?.lastAcceptedVersion}
+          lastAcceptedVersion={consentStatus?.lastAcceptedVersion}
+          onConsentAccepted={() => {
+            setDismissModalForSession(true);
+            refetchConsent();
+          }}
+        />
+      )}
+    </>
+  );
 }
 
 export default ProtectedRoute;
+
