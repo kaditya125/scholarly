@@ -345,7 +345,7 @@ function AppRoutes() {
           />
           <Route path="/exam-center" element={<Navigate to="/tests" replace />} />
           <Route path="/tests" element={<TestCenter />} />
-          <Route path="/analytics" element={<Dashboard />} />
+          <Route path="/analytics" element={<Analytics />} />
           <Route path="/coverage" element={<SyllabusCoverage />} />
           <Route path="/plan" element={<StudyPlanToday />} />
           <Route path="/report" element={<Report />} />
