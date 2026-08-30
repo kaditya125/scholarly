@@ -36,6 +36,7 @@ const SOURCES = [
 const MODES = ['Explain', 'Revise', 'Quiz', 'Essay', 'Research'];
 
 export default function ProductPreview() {
+  const reduced = useReducedMotion();
   const done = true;
 
   return (
