@@ -51,7 +51,7 @@ import { KnowledgeGraphViewer } from 'shared-ui';
 import { AssetsTab } from '../components/assets/AssetsTab';
 import { AssetViewer } from '../components/assets/AssetViewer';
 import { LearningAsset, DocumentSource } from '../types';
-import { storage } from '../lib/firebase';
+import { storage } from '../lib/storage';
 import { ref, getDownloadURL } from 'firebase/storage';
 
 const LEARNING_MODES = [

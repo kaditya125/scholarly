@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { collection, doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { db } from '../../lib/firestore';
 import { useAuth } from '../../lib/AuthContext';
 import {
   groupChannelsApi,

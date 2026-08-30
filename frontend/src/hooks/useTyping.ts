@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { collection, deleteDoc, doc, onSnapshot, setDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '../lib/firestore';
 import { useAuth } from '../lib/AuthContext';
 
 const TYPING_TTL_MS = 6000; // treat as "typing" only if updated within this window

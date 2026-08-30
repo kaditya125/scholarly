@@ -19,7 +19,7 @@ import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../lib/AuthContext';
 import { api } from '../lib/api/client';
-import { db } from '../lib/firebase';
+import { db } from '../lib/firestore';
 import { collection, addDoc } from 'firebase/firestore';
 
 interface FeedbackModalProps {

@@ -5,7 +5,7 @@ import { cn } from '../../lib/utils';
 import { useNotebookSources } from '../../hooks/ai/useNotebook';
 import { notebooksApi } from '../../lib/api/notebooks';
 import { DocumentSource } from '../../types';
-import { storage } from '../../lib/firebase';
+import { storage } from '../../lib/storage';
 import { ref as storageRef, getDownloadURL } from 'firebase/storage';
 
 const PROCESSING = ['PENDING', 'UPLOADING', 'PROCESSING', 'OCR', 'EXTRACTING', 'CHUNKING', 'EMBEDDING', 'INDEXING', 'GENERATING_GRAPH'];

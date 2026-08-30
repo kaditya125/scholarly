@@ -35,7 +35,7 @@ import {
 import { FlashcardModal, PodcastPlayerDrawer } from './DocumentaryBlocks';
 import { PreparingChapter } from './PreparingChapter';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { db } from '../../lib/firestore';
 import { api } from '../../lib/api/client';
 
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl;

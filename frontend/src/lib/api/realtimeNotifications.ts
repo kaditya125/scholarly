@@ -9,7 +9,7 @@ import {
   where,
   serverTimestamp 
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { db } from "../firestore";
 import { NotificationPayload } from "./notifications";
 
 export interface CreateNotificationParams {

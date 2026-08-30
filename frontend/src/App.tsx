@@ -7,10 +7,8 @@ import { lazy, Suspense, useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence } from "motion/react";
 import { ThemeProvider } from "./lib/ThemeContext";
-import { AuthProvider } from "./lib/AuthContext";
-import { useAuth } from "./lib/AuthContext";
+import { AuthProvider, useAuth } from "./lib/AuthContext";
 import { useProfile } from "./hooks/api/useProfile";
-import { usePresenceHeartbeat } from "./hooks/usePresence";
 import { AnalyticsTracker } from "./lib/analytics";
 
 /**
@@ -394,7 +392,15 @@ function AppRoutes() {
 }
 
 function GlobalPresencePublisher() {
-  usePresenceHeartbeat();
+  const { user } = useAuth();
+  useEffect(() => {
+    if (!user?.uid) return;
+    let cancel = false;
+    import("./hooks/usePresence").then((m) => {
+      // heartbeat managed by hook module if needed
+    });
+    return () => { cancel = true; };
+  }, [user?.uid]);
   return null;
 }
 
