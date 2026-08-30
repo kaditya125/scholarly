@@ -1,7 +1,9 @@
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { updateProfile } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
-import { auth, storage, db } from '../firebase';
+import { auth } from '../firebase';
+import { storage } from '../storage';
+import { db } from '../firestore';
 
 export interface UploadProgress {
   progress: number;

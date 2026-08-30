@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PodcastMetadata } from '../../types';
 import { api } from '../../lib/api/client';
-import { db } from '../../lib/firebase';
+import { db } from '../../lib/firestore';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 export function usePodcast(notebookId: string, podcastId: string) {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { collection, onSnapshot, query as fsQuery, where } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '../lib/firestore';
 import { useAuth } from '../lib/AuthContext';
 import { getAuth } from 'firebase/auth';
 
