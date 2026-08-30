@@ -366,12 +366,6 @@ export default function Settings() {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  {!isTeacher && (
-                    <Link to="/analytics" className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                      <BarChart2 className="w-4 h-4 text-indigo-500" />
-                      Analytics
-                    </Link>
-                  )}
                   <Link to={homePath} className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                     View dashboard
                   </Link>
