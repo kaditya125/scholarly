@@ -345,51 +345,43 @@ export default function LandingPage() {
   };
 
   useEffect(() => {
-    let isMounted = true;
-    const fetchStats = async () => {
-      const endpoints = [
-        `${(import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')}/public/stats`,
-        'http://localhost:8080/api/public/stats',
-        'http://127.0.0.1:8080/api/public/stats',
-        '/api/public/stats',
-      ].filter(Boolean);
+    let timeoutId: number;
 
-      for (const endpoint of endpoints) {
-        try {
-          const res = await fetch(endpoint);
-          if (res.ok) {
-            const data = await res.json();
-            if (isMounted) {
-              if (typeof data.students === 'number') {
-                setStudentCount(data.students);
+    const fetchStats = async () => {
+      try {
+        const res = await fetch('/api/public/stats');
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) {
+            if (typeof data.students === 'number') {
+              setStudentCount(data.students);
+            }
+            if (typeof data.activeStudents === 'number') {
+              if (data.activeStudents !== prevActiveRef.current) {
+                prevActiveRef.current = data.activeStudents;
+                setActiveAnimKey(k => k + 1);
               }
-              if (typeof data.activeStudents === 'number') {
-                if (data.activeStudents !== prevActiveRef.current) {
-                  prevActiveRef.current = data.activeStudents;
-                  setActiveAnimKey(k => k + 1);
-                }
-                setActiveStudents(data.activeStudents);
-              }
-              if (data.recentStudentAvatars && Array.isArray(data.recentStudentAvatars)) {
-                setRecentAvatars(data.recentStudentAvatars);
-              }
-              break;
+              setActiveStudents(data.activeStudents);
+            }
+            if (data.recentStudentAvatars && Array.isArray(data.recentStudentAvatars)) {
+              setRecentAvatars(data.recentStudentAvatars);
             }
           }
-        } catch {
-          // try next fallback endpoint
         }
+      } catch {
+        // silent fallback
       }
     };
 
-    fetchStats();
+    // Defer initial telemetry to allow smooth FCP/LCP
+    timeoutId = window.setTimeout(fetchStats, 2000);
 
-    // Refresh active student presence every 5s when tab is visible (near-real-time like YouTube)
+    // Refresh active student presence every 10s when tab is visible
     const interval = window.setInterval(() => {
       if (document.visibilityState === 'visible') {
         fetchStats();
       }
-    }, 5000);
+    }, 10000);
 
     const onVisibility = () => {
       if (document.visibilityState === 'visible') {
@@ -400,13 +392,14 @@ export default function LandingPage() {
 
     return () => {
       isMounted = false;
+      clearTimeout(timeoutId);
       clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibility);
     };
   }, []);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased">
+    <div className="min-h-screen bg-white dark:bg-[#131314] text-slate-900 dark:text-white antialiased">
       <SiteHeader />
 
       <main>

@@ -61,7 +61,12 @@ interface ThemeContextType {
   toggleTheme: () => void;
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+const getInitialTheme = (): Theme => {
+  if (typeof window === 'undefined') return 'dark';
+  const saved = localStorage.getItem('app-theme-preference') || localStorage.getItem('app-theme');
+  if (saved === 'light' || saved === 'dark') return saved;
+  return 'dark';
+};
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [themePreference, setThemePreferenceState] = useState<ThemePreference>(() => {
@@ -77,7 +82,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return localStorage.getItem('app-theme-chatcolor') || 'none';
   });
 
-  const [theme, setTheme] = useState<Theme>('dark');
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
   // Compute theme when preference or system preference changes
   useEffect(() => {
