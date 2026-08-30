@@ -36,22 +36,7 @@ const SOURCES = [
 const MODES = ['Explain', 'Revise', 'Quiz', 'Essay', 'Research'];
 
 export default function ProductPreview() {
-  const reduced = useReducedMotion();
-  // `phase` walks the reveal forward: 0…5 light up the reasoning steps one at a time,
-  // 6 collapses them into the summary row and shows the answer. It never loops.
-  const [phase, setPhase] = useState(0);
-
-  // The jump-to-6 lives in the effect rather than in useState's initialiser because
-  // useReducedMotion() can report null on the first render and resolve a tick later —
-  // seeding from it would strand the preview mid-reveal for those users.
-  useEffect(() => {
-    if (reduced) { setPhase(6); return; }
-    if (phase >= 6) return;
-    const t = setTimeout(() => setPhase((p) => p + 1), phase === 0 ? 520 : 340);
-    return () => clearTimeout(t);
-  }, [phase, reduced]);
-
-  const done = phase >= 6;
+  const done = true;
 
   return (
     <div className="relative">
