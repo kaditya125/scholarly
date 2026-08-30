@@ -39,16 +39,18 @@ const ACCENT = '#c8e558';
 
 /* ── Primitives ───────────────────────────────────────────────────────────────────────── */
 
+const EASE = [0.22, 1, 0.36, 1] as const;
+
 function Reveal({ children, delay = 0, className }: { children: ReactNode; delay?: number; className?: string }) {
   const reduced = useReducedMotion();
   if (reduced) return <div className={className}>{children}</div>;
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-80px' }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay }}
+      initial={{ opacity: 0, y: 24, scale: 0.985 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{ duration: 0.65, ease: EASE, delay }}
     >
       {children}
     </motion.div>
@@ -87,55 +89,73 @@ const STATUS_STYLES: Record<FeatureStatus, string> = {
 
 function StatusPill({ status, className }: { status: FeatureStatus; className?: string }) {
   return (
-    <span
+    <motion.span
+      whileHover={{ scale: 1.05 }}
+      transition={{ type: 'spring', stiffness: 450, damping: 25 }}
       className={cn(
-        'inline-flex items-center h-[22px] px-2 rounded-full border text-[11px] font-semibold whitespace-nowrap',
+        'inline-flex items-center h-[22px] px-2.5 rounded-full border text-[11px] font-semibold whitespace-nowrap shadow-2xs cursor-default',
         STATUS_STYLES[status],
         className,
       )}
     >
       {STATUS_LABEL[status]}
-    </span>
+    </motion.span>
   );
 }
 
 /* ── Hero previews & CTAs ─────────────────────────────────────────────────────────────── */
 
 function TeacherCta({ className }: { className?: string }) {
+  const reduced = useReducedMotion();
   return (
-    <Link
-      to="/signup"
-      state={{ role: 'teacher' }}
-      className={cn(
-        'inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl bg-[#c8e558] hover:bg-[#bcd94c] active:bg-[#b0cd40] text-slate-900 text-[14.5px] font-semibold transition-colors',
-        className,
-      )}
+    <motion.div
+      whileHover={reduced ? undefined : { scale: 1.03, y: -2 }}
+      whileTap={reduced ? undefined : { scale: 0.97 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      className="inline-block"
     >
-      Create a teacher account
-      <ArrowRight className="w-4 h-4" strokeWidth={2.25} />
-    </Link>
+      <Link
+        to="/signup"
+        state={{ role: 'teacher' }}
+        className={cn(
+          'inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl bg-[#c8e558] hover:bg-[#bcd94c] active:bg-[#b0cd40] text-slate-900 text-[14.5px] font-semibold transition-colors shadow-sm hover:shadow-md',
+          className,
+        )}
+      >
+        Create a teacher account
+        <ArrowRight className="w-4 h-4" strokeWidth={2.25} />
+      </Link>
+    </motion.div>
   );
 }
 
 function GhostCta({ to, children }: { to: string; children: ReactNode }) {
-  if (to.startsWith('/')) {
-    return (
-      <Link
-        to={to}
-        className="inline-flex items-center justify-center h-12 px-6 rounded-xl border border-slate-200 dark:border-white/12 text-[14.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
-      >
-        {children}
-      </Link>
-    );
-  }
-  return (
-    <a
-      href={to}
-      className="inline-flex items-center justify-center h-12 px-6 rounded-xl border border-slate-200 dark:border-white/12 text-[14.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+  const reduced = useReducedMotion();
+  const inner = (
+    <motion.div
+      whileHover={reduced ? undefined : { scale: 1.03, y: -2 }}
+      whileTap={reduced ? undefined : { scale: 0.97 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      className="inline-block"
     >
-      {children}
-    </a>
+      {to.startsWith('/') ? (
+        <Link
+          to={to}
+          className="inline-flex items-center justify-center h-12 px-6 rounded-xl border border-slate-200 dark:border-white/12 text-[14.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors shadow-2xs hover:shadow-xs"
+        >
+          {children}
+        </Link>
+      ) : (
+        <a
+          href={to}
+          className="inline-flex items-center justify-center h-12 px-6 rounded-xl border border-slate-200 dark:border-white/12 text-[14.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors shadow-2xs hover:shadow-xs"
+        >
+          {children}
+        </a>
+      )}
+    </motion.div>
   );
+  return inner;
 }
 
 function DraftPreview() {
@@ -388,18 +408,20 @@ export default function ForTeachers() {
           <div className="mt-14 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {CAPABILITIES.map((c, i) => (
               <Reveal key={c.title} delay={(i % 3) * 0.05}>
-                <div
+                <motion.div
+                  whileHover={{ y: -6, scale: 1.015 }}
+                  transition={{ type: 'spring', stiffness: 350, damping: 25 }}
                   className={cn(
-                    'h-full rounded-2xl border p-6 flex flex-col',
+                    'h-full rounded-2xl border p-6 flex flex-col transition-shadow shadow-xs hover:shadow-lg',
                     c.status === 'available'
-                      ? 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416]'
+                      ? 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416] hover:border-[#c8e558]/60 dark:hover:border-[#c8e558]/40'
                       : 'border-dashed border-slate-300 dark:border-white/12 bg-slate-50/50 dark:bg-white/[0.015]',
                   )}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <span
                       className={cn(
-                        'inline-flex w-10 h-10 rounded-xl items-center justify-center shrink-0',
+                        'inline-flex w-10 h-10 rounded-xl items-center justify-center shrink-0 shadow-2xs',
                         c.status === 'available'
                           ? 'bg-slate-900 dark:bg-white'
                           : 'border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05]',
@@ -417,9 +439,9 @@ export default function ForTeachers() {
                     <StatusPill status={c.status} />
                   </div>
 
-                  <h3 className="mt-5 text-[16.5px] font-semibold tracking-[-0.015em]">{c.title}</h3>
+                  <h3 className="mt-5 text-[16.5px] font-semibold tracking-[-0.015em] text-slate-900 dark:text-white">{c.title}</h3>
                   <p className="mt-2 text-[13.5px] leading-relaxed text-slate-500 dark:text-gray-400 flex-1">{c.body}</p>
-                </div>
+                </motion.div>
               </Reveal>
             ))}
           </div>

@@ -1,10 +1,13 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, useReducedMotion } from 'motion/react';
 import { ArrowRight, Eye, Compass, Layers, ShieldCheck } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
 import SiteFooter from '../components/landing/SiteFooter';
 import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
+
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 /**
  * About page.
@@ -40,11 +43,14 @@ const PRINCIPLES = [
 ];
 
 export default function About() {
+  const reduced = useReducedMotion();
+
   useSeo({
     title: `About — ${SITE.name}`,
     description: `${SITE.name} (साध्य) is Sanskrit for "that which is to be attained" — an AI-first learning platform built around India's competitive exams, from NEET and JEE to UPSC, SSC and state teaching exams.`,
     url: `${SITE.url}/about`,
   });
+
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   return (
@@ -53,7 +59,12 @@ export default function About() {
 
       <main>
         <section className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-14 sm:pt-20 pb-16 sm:pb-20">
-          <div className="max-w-[42rem]">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, ease: EASE }}
+            className="max-w-[42rem]"
+          >
             <p className="text-[12px] font-semibold uppercase tracking-[0.13em] text-slate-500 dark:text-gray-400">
               About
             </p>
@@ -70,7 +81,7 @@ export default function About() {
               That is the whole of what Sadhya is trying to be — and the reason it insists on
               showing you where every answer came from.
             </p>
-          </div>
+          </motion.div>
         </section>
 
         <section className="border-y border-slate-100 dark:border-white/[0.07] bg-slate-50/60 dark:bg-white/[0.02]">
@@ -80,21 +91,40 @@ export default function About() {
             </h2>
 
             <div className="mt-10 grid sm:grid-cols-2 gap-8 sm:gap-x-12 sm:gap-y-10">
-              {PRINCIPLES.map((p) => (
-                <div key={p.title}>
-                  <span className="inline-flex w-10 h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] items-center justify-center">
+              {PRINCIPLES.map((p, i) => (
+                <motion.div
+                  key={p.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, ease: EASE, delay: i * 0.08 }}
+                  whileHover={reduced ? undefined : { x: 4 }}
+                  className="group cursor-default"
+                >
+                  <motion.span
+                    whileHover={{ rotate: [0, -6, 6, 0], scale: 1.1 }}
+                    className="inline-flex w-10 h-10 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] items-center justify-center shadow-2xs"
+                  >
                     <p.icon className="w-[18px] h-[18px] text-slate-700 dark:text-gray-300" strokeWidth={1.9} />
-                  </span>
-                  <h3 className="mt-4 text-[16.5px] font-semibold tracking-[-0.015em]">{p.title}</h3>
+                  </motion.span>
+                  <h3 className="mt-4 text-[16.5px] font-semibold tracking-[-0.015em] text-slate-900 dark:text-white group-hover:text-slate-950 dark:group-hover:text-white">
+                    {p.title}
+                  </h3>
                   <p className="mt-2 text-[14px] leading-relaxed text-slate-500 dark:text-gray-400">{p.body}</p>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
         </section>
 
         <section className="max-w-[1160px] mx-auto px-5 sm:px-8 py-16 sm:py-20">
-          <div className="max-w-[42rem]">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, ease: EASE }}
+            className="max-w-[42rem]"
+          >
             <h2 className="text-[24px] sm:text-[30px] leading-[1.15] font-semibold tracking-[-0.03em]">
               Where we are right now.
             </h2>
@@ -109,21 +139,33 @@ export default function About() {
             </p>
 
             <div className="mt-9 flex flex-col sm:flex-row gap-3">
-              <Link
-                to="/signup"
-                className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl bg-[#c8e558] hover:bg-[#bcd94c] text-slate-900 text-[14.5px] font-semibold transition-colors"
+              <motion.div
+                whileHover={{ scale: 1.03, y: -2 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               >
-                Start learning
-                <ArrowRight className="w-4 h-4" strokeWidth={2.25} />
-              </Link>
-              <Link
-                to="/contact"
-                className="inline-flex items-center justify-center h-12 px-6 rounded-xl border border-slate-200 dark:border-white/12 text-[14.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+                <Link
+                  to="/signup"
+                  className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl bg-[#c8e558] hover:bg-[#bcd94c] text-slate-900 text-[14.5px] font-semibold transition-colors shadow-sm hover:shadow-md"
+                >
+                  Start learning
+                  <ArrowRight className="w-4 h-4" strokeWidth={2.25} />
+                </Link>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.03, y: -2 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               >
-                Talk to us
-              </Link>
+                <Link
+                  to="/contact"
+                  className="inline-flex items-center justify-center h-12 px-6 rounded-xl border border-slate-200 dark:border-white/12 text-[14.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors shadow-2xs hover:shadow-xs"
+                >
+                  Get in touch
+                </Link>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
         </section>
       </main>
 
