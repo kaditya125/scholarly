@@ -98,17 +98,14 @@ export const FOUNDER: Person = {
   initials: 'AK',
   // Supplied by the founder, 354x472. Rendered unretouched; the avatar crops it square from the
   // top so the face survives the crop without the source needing to be pre-cropped.
-  photo: '/founder.jpg',
+  photo: '/founder.webp',
   /*
-   * Supplied by the founder as a 1024x1536 PNG (`public/founder hero.png`, 1.9 MB). These three
-   * are resamples of it, generated with sharp — same photograph, 85 KB instead of 1.9 MB at the
-   * size the page actually renders. The original stays in public/ as the master; nothing links
-   * to it, and its filename contains a space, which is the other reason nothing should.
+   * Supplied by the founder as a 1024x1536 PNG. These are optimized WebP resamples (80 KB).
    */
   heroPhoto: {
     webp1000: '/founder-hero-1000.webp',
     webp500: '/founder-hero-500.webp',
-    jpg1000: '/founder-hero-1000.jpg',
+    jpg1000: '/founder-hero-1000.webp',
     width: 1000,
     height: 1500,
     // Describes what is in the frame. Everything named here is visible in the photograph.
