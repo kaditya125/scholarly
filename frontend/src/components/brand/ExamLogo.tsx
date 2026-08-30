@@ -45,6 +45,7 @@ export function ExamLogo({ slug, className = 'w-5 h-5', size = 20 }: ExamLogoPro
           alt={`${slug} logo`}
           width={size}
           height={size}
+          decoding="async"
           onError={() => setError(true)}
           className="w-full h-full object-contain"
           loading="lazy"
