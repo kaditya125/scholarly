@@ -12,7 +12,7 @@ import SiteFooter from '../components/landing/SiteFooter';
 import AvatarStack from '../components/landing/AvatarStack';
 import { HandwrittenTagline } from '../components/brand/HandwrittenTagline';
 import { ExamLogo } from '../components/brand/ExamLogo';
-import { EXAM_CATALOG } from '../lib/examCatalog';
+import { EXAM_CHIPS } from '../lib/examChips';
 import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
 import { cn } from '../lib/utils';
@@ -444,7 +444,7 @@ export default function LandingPage() {
               {/* Brand signature */}
               <HandwrittenTagline
                 className="mt-3 flex text-[19px] sm:text-[21px] text-[#6ca855] dark:text-[#c8e558]"
-                delay={0.1}
+                animated={false}
               />
 
               <p className="mt-6 sm:mt-7 text-[16.5px] sm:text-[18px] leading-relaxed text-slate-500 dark:text-gray-400 max-w-[30rem]">
@@ -517,7 +517,7 @@ export default function LandingPage() {
                   actually sit.
                 </p>
                 <Stagger className="mt-6 lg:mt-0 flex flex-wrap gap-x-2 gap-y-2.5 items-center flex-1" gap={0.025}>
-                  {EXAM_CATALOG.map((e) => (
+                  {EXAM_CHIPS.map((e) => (
                     <Item key={e.slug} y={8}>
                       <motion.div
                         whileHover={{ scale: 1.07, y: -3 }}

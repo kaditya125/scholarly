@@ -27,6 +27,7 @@ export function HandwrittenTagline({
   delay = 0.2,
   duration = 2.0,
   showNib = true,
+  animated = true,
 }: {
   text?: string;
   className?: string;
@@ -35,6 +36,7 @@ export function HandwrittenTagline({
   delay?: number;
   duration?: number;
   showNib?: boolean;
+  animated?: boolean;
 }) {
   const reduced = useReducedMotion();
 
@@ -44,7 +46,7 @@ export function HandwrittenTagline({
      proportion across the 15px, 16px and 19px placements instead of needing a value each. */
   const rule = 'h-[1.5px] w-[1.4em] bg-current shrink-0 origin-left';
 
-  if (reduced) {
+  if (reduced || !animated) {
     return (
       <span className={cn('inline-flex items-center gap-2', base)} style={style}>
         <span className={cn(rule, 'opacity-70')} aria-hidden="true" />
