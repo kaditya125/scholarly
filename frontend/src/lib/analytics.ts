@@ -166,11 +166,25 @@ export function AnalyticsTracker() {
   const location = useLocation();
 
   useEffect(() => {
-    initAnalytics();
+    if (typeof window !== 'undefined') {
+      if ('requestIdleCallback' in window) {
+        const id = (window as any).requestIdleCallback(() => initAnalytics(), { timeout: 3000 });
+        return () => (window as any).cancelIdleCallback(id);
+      } else {
+        const timer = setTimeout(() => initAnalytics(), 2000);
+        return () => clearTimeout(timer);
+      }
+    }
   }, []);
 
   useEffect(() => {
-    trackPageView(location.pathname + location.search);
+    if (typeof window !== 'undefined') {
+      if ('requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(() => trackPageView(location.pathname + location.search), { timeout: 3000 });
+      } else {
+        trackPageView(location.pathname + location.search);
+      }
+    }
   }, [location.pathname, location.search]);
 
   return null;

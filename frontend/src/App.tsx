@@ -8,8 +8,8 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-route
 import { AnimatePresence } from "motion/react";
 import { ThemeProvider } from "./lib/ThemeContext";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
-import { useProfile } from "./hooks/api/useProfile";
 import { AnalyticsTracker } from "./lib/analytics";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 /**
  * Every route-level page is lazy-loaded so a visit to any one route only downloads that
@@ -122,111 +122,6 @@ function RouteFallback() {
       <span className="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-white/10 border-t-indigo-500 animate-spin" />
     </div>
   );
-}
-
-/**
- * ProtectedRoute — guards all authenticated application routes.
- *
- * Loading order:
- *   1. Wait for Firebase Auth to resolve (auth.loading)
- *   2. Wait for the profile query to settle (profile.isLoading)
- *   3. If not authenticated → /signin
- *   4. If profile.isComplete !== true → /onboarding
- *      (Exception: the /onboarding route itself bypasses this so the wizard
- *      doesn't redirect itself, as does /baseline-assessment and /welcome.)
- *   5. Otherwise → render the requested page
- *
- * Avoids redirect loops by:
- *   - Never redirecting while auth or profile are still loading.
- *   - Allowing /onboarding, /baseline-assessment, /welcome, and assessment
- *     report to render even for incomplete profiles (they ARE the completion path).
- *   - Checking sessionStorage if the user explicitly clicked "Skip for now".
- */
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading: authLoading, role, claimsLoading } = useAuth();
-  const { profile, isLoading: profileLoading } = useProfile();
-  const location = useLocation();
-
-  // Show nothing while auth initialises — prevents flash of /signin redirect
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#131314]">
-        <span className="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-white/10 border-t-indigo-500 animate-spin" />
-      </div>
-    );
-  }
-
-  // Not logged in → go to sign-in, preserving the intended destination
-  if (!user) {
-    return <Navigate to="/signin" state={{ from: location }} replace />;
-  }
-
-  // ── Mandatory Email Verification Gate for Email/Password accounts ───────────
-  // Google accounts have emailVerified: true automatically. Email/Password accounts
-  // must verify their email before accessing onboarding or any protected surface.
-  const isGoogleAccount = user.providerData?.some((p) => p.providerId === 'google.com');
-  const isPasswordAccount = user.providerData?.some((p) => p.providerId === 'password') || (!user.providerData?.length && !!user.email);
-  const isUnverifiedEmail = !user.emailVerified && isPasswordAccount && !isGoogleAccount;
-
-  if (isUnverifiedEmail) {
-    if (location.pathname !== '/verify-email') {
-      return <Navigate to="/verify-email" replace />;
-    }
-  }
-
-  // Authenticated but no product role → resolve it before anything else.
-  //
-  // Gated on claimsLoading: custom claims arrive with the ID token a beat after `user`
-  // resolves, so acting on `role` too early would bounce EVERY user to /select-role on
-  // first paint. /select-role itself is excluded or it would redirect to itself.
-  //
-  // Deliberately placed before the bypass-route check so a legacy account landing on
-  // /onboarding still establishes a role first — a missing role means "not yet
-  // established", never "assume student".
-  if (location.pathname !== '/select-role' && location.pathname !== '/verify-email') {
-    if (claimsLoading) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#131314]">
-          <span className="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-white/10 border-t-indigo-500 animate-spin" />
-        </div>
-      );
-    }
-    if (!role) {
-      return <Navigate to="/select-role" replace />;
-    }
-  }
-
-  // Routes that are part of the onboarding/assessment flow — always allow through
-  // even when the profile is incomplete, to avoid redirect loops.
-  const bypassRoutes = ['/onboarding', '/baseline-assessment', '/welcome', '/assessment', '/assessment/report', '/select-role', '/teacher/onboarding', '/verify-email'];
-  const isBypassRoute = bypassRoutes.some((r) => location.pathname.startsWith(r));
-
-  // Student-profile completeness is a STUDENT-ONLY gate.
-  //
-  // useProfile() fetches the *student* learning profile, so a teacher account never has one and
-  // `isComplete` stays falsy for them permanently. Without the role check, every teacher would be
-  // redirected into the student onboarding wizard on every non-bypass route — the bug this phase
-  // fixes. Teachers reach their own destination via /teacher/onboarding.
-  //
-  // The profileLoading wait is scoped the same way on purpose: that query polls (refetchInterval)
-  // and would never settle for a teacher, producing intermittent spinners on every route.
-  if (!isBypassRoute && role === 'student') {
-    // Wait for the profile to load before deciding whether to redirect
-    if (profileLoading) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#131314]">
-          <span className="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-white/10 border-t-indigo-500 animate-spin" />
-        </div>
-      );
-    }
-
-    // Authenticated but profile not yet complete → start onboarding
-    if (!profile?.isComplete && sessionStorage.getItem('onboarding_skipped') !== 'true') {
-      return <Navigate to="/onboarding" replace />;
-    }
-  }
-
-  return <>{children}</>;
 }
 
 function AppRoutes() {
