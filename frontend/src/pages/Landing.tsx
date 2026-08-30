@@ -417,101 +417,88 @@ export default function LandingPage() {
         {/* ══ Hero ═══════════════════════════════════════════════════════════ */}
         <section className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-14 sm:pt-20 lg:pt-24 pb-16 sm:pb-24">
           <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] gap-12 lg:gap-16 xl:gap-20 items-center">
-            {/* Sequenced on mount: the hero is already in view on arrival, so a scroll trigger
-                would fire everything at once. */}
-            <Stagger onLoad gap={0.09}>
-              <Item>
+            <div>
+              <motion.div
+                whileHover={{ scale: 1.03, y: -2 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-50/90 dark:bg-white/[0.04] backdrop-blur-sm mb-4 text-[13px] font-medium text-slate-700 dark:text-gray-300 shadow-xs hover:border-[#c8e558]/50"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#6ca855] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#6ca855]"></span>
+                </span>
+                <AvatarStack avatars={recentAvatars} />
+                <span>
+                  <strong className="font-semibold text-slate-900 dark:text-white">
+                    {studentCount.toLocaleString()} {studentCount === 1 ? 'student' : 'students'}
+                  </strong>{' '}
+                  registered &amp; learning
+                </span>
+                <span className="text-slate-300 dark:text-gray-600">·</span>
+                <Link to="/signup" className="text-slate-900 dark:text-white hover:text-[#6ca855] dark:hover:text-[#c8e558] font-semibold inline-flex items-center gap-0.5 transition-colors">
+                  Join now &rarr;
+                </Link>
+              </motion.div>
+
+              <h1 className="text-[38px] sm:text-[50px] lg:text-[58px] leading-[1.05] font-semibold tracking-[-0.035em]">
+                Ask anything from
+                <br />
+                your <Underline>syllabus</Underline>.
+              </h1>
+              {/* Brand signature */}
+              <HandwrittenTagline
+                className="mt-3 flex text-[19px] sm:text-[21px] text-[#6ca855] dark:text-[#c8e558]"
+                delay={0.1}
+              />
+
+              <p className="mt-6 sm:mt-7 text-[16.5px] sm:text-[18px] leading-relaxed text-slate-500 dark:text-gray-400 max-w-[30rem]">
+                An AI tutor built around your exam, your subjects and your level. It answers from
+                the curriculum, shows you the sources it used, and lets you check every step it
+                took to get there.
+              </p>
+
+              <div className="mt-9 flex flex-col sm:flex-row gap-3">
+                <PrimaryCta to="/signup">Start learning</PrimaryCta>
                 <motion.div
                   whileHover={{ scale: 1.03, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                  className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-50/90 dark:bg-white/[0.04] backdrop-blur-sm mb-4 text-[13px] font-medium text-slate-700 dark:text-gray-300 shadow-xs hover:border-[#c8e558]/50"
+                  className="inline-block"
                 >
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#6ca855] opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#6ca855]"></span>
-                  </span>
-                  <AvatarStack avatars={recentAvatars} />
-                  <span>
-                    <strong className="font-semibold text-slate-900 dark:text-white">
-                      {studentCount.toLocaleString()} {studentCount === 1 ? 'student' : 'students'}
-                    </strong>{' '}
-                    registered &amp; learning
-                  </span>
-                  <span className="text-slate-300 dark:text-gray-600">·</span>
-                  <Link to="/signup" className="text-slate-900 dark:text-white hover:text-[#6ca855] dark:hover:text-[#c8e558] font-semibold inline-flex items-center gap-0.5 transition-colors">
-                    Join now &rarr;
+                  <Link
+                    to="/how-it-works"
+                    className="inline-flex items-center justify-center h-12 px-6 rounded-xl border border-slate-200 dark:border-white/12 text-[14.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors shadow-2xs hover:shadow-xs"
+                  >
+                    See how it works
                   </Link>
                 </motion.div>
-              </Item>
+              </div>
 
-              <Item>
-                <h1 className="text-[38px] sm:text-[50px] lg:text-[58px] leading-[1.05] font-semibold tracking-[-0.035em]">
-                  Ask anything from
-                  <br />
-                  your <Underline>syllabus</Underline>.
-                </h1>
-                {/* Brand signature, written on as the hero settles. Delayed past the headline's
-                    own entrance so the two don't animate over each other. */}
-                <HandwrittenTagline
-                  className="mt-3 flex text-[19px] sm:text-[21px] text-[#6ca855] dark:text-[#c8e558]"
-                  delay={0.6}
-                />
-              </Item>
+              <p className="mt-5 text-[13px] text-slate-500 dark:text-gray-400">
+                Free to create an account · Set up takes about two minutes ·{' '}
+                <span className="font-semibold text-slate-700 dark:text-gray-200">
+                  {studentCount.toLocaleString()} {studentCount === 1 ? 'student' : 'students'}
+                </span>{' '}
+                already learning
+              </p>
 
-              <Item>
-                <p className="mt-6 sm:mt-7 text-[16.5px] sm:text-[18px] leading-relaxed text-slate-500 dark:text-gray-400 max-w-[30rem]">
-                  An AI tutor built around your exam, your subjects and your level. It answers from
-                  the curriculum, shows you the sources it used, and lets you check every step it
-                  took to get there.
-                </p>
-              </Item>
-
-              <Item>
-                <div className="mt-9 flex flex-col sm:flex-row gap-3">
-                  <PrimaryCta to="/signup">Start learning</PrimaryCta>
-                  <motion.div
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    whileTap={{ scale: 0.97 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                    className="inline-block"
-                  >
-                    <Link
-                      to="/how-it-works"
-                      className="inline-flex items-center justify-center h-12 px-6 rounded-xl border border-slate-200 dark:border-white/12 text-[14.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors shadow-2xs hover:shadow-xs"
-                    >
-                      See how it works
-                    </Link>
-                  </motion.div>
-                </div>
-              </Item>
-
-              <Item y={12}>
-                <p className="mt-5 text-[13px] text-slate-500 dark:text-gray-400">
-                  Free to create an account · Set up takes about two minutes ·{' '}
-                  <span className="font-semibold text-slate-700 dark:text-gray-200">
-                    {studentCount.toLocaleString()} {studentCount === 1 ? 'student' : 'students'}
-                  </span>{' '}
-                  already learning
-                </p>
-
-                <div className="mt-3 flex items-center">
-                  <Link
-                    to="/help"
-                    className="inline-flex items-center gap-1.5 text-[12.5px] sm:text-[13px] font-medium text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors group"
-                  >
-                    <Bot className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558] group-hover:scale-110 transition-transform" />
-                    <span>
-                      Have questions? Ask{' '}
-                      <span className="font-semibold text-slate-700 dark:text-gray-200 group-hover:text-[#8ba32b] dark:group-hover:text-[#c8e558] transition-colors">
-                        Sadhya
-                      </span>{' '}
-                      AI
-                    </span>
-                    <ArrowRight className="w-3 h-3 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:text-[#8ba32b] dark:group-hover:text-[#c8e558] transition-all" />
-                  </Link>
-                </div>
-              </Item>
-            </Stagger>
+              <div className="mt-3 flex items-center">
+                <Link
+                  to="/help"
+                  className="inline-flex items-center gap-1.5 text-[12.5px] sm:text-[13px] font-medium text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors group"
+                >
+                  <Bot className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558] group-hover:scale-110 transition-transform" />
+                  <span>
+                    Have questions? Ask{' '}
+                    <span className="font-semibold text-slate-700 dark:text-gray-200 group-hover:text-[#8ba32b] dark:group-hover:text-[#c8e558] transition-colors">
+                      Sadhya
+                    </span>{' '}
+                    AI
+                  </span>
+                  <ArrowRight className="w-3 h-3 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:text-[#8ba32b] dark:group-hover:text-[#c8e558] transition-all" />
+                </Link>
+              </div>
+            </div>
 
             <Reveal delay={0.22}>
               <motion.div
