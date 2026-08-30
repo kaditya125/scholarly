@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence } from "motion/react";
 import { ThemeProvider } from "./lib/ThemeContext";
@@ -401,9 +401,22 @@ function GlobalPresencePublisher() {
 function GlobalHelpdeskWidget() {
   const { user } = useAuth();
   const location = useLocation();
+  const [ready, setReady] = useState(false);
 
-  // Hide chatbot completely when user is logged in
-  if (user) return null;
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if ('requestIdleCallback' in window) {
+        const id = (window as any).requestIdleCallback(() => setReady(true), { timeout: 3500 });
+        return () => (window as any).cancelIdleCallback(id);
+      } else {
+        const timer = setTimeout(() => setReady(true), 2500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, []);
+
+  // Hide chatbot completely when user is logged in or before idle ready
+  if (!ready || user) return null;
 
   // Hide on full-screen timed exam engines to avoid blocking student answers
   const isExamEngine =

@@ -16,12 +16,15 @@ export default function AvatarStack({ className, avatars }: AvatarStackProps) {
           key={i}
           src={src}
           alt={`User ${i + 1}`}
+          width={16}
+          height={16}
+          loading="lazy"
+          decoding="async"
           referrerPolicy="no-referrer"
           className="w-4 h-4 rounded-full border border-slate-50 dark:border-[#141416] object-cover shadow-sm bg-slate-200 dark:bg-slate-800"
           style={{ zIndex: avatars.length - i }}
           onError={(e) => {
             // If a real profile pic fails to load, fallback to a dynamic initial-based one
-            // We use generic 'U' because we don't have the user's name here
             (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=U&background=random&color=000&rounded=true&bold=true`;
           }}
         />

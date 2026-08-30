@@ -1,4 +1,4 @@
-import { type ReactNode, useState, useEffect, useRef } from 'react';
+import { type ReactNode, useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import {
@@ -9,10 +9,6 @@ import {
 import ProductPreview from '../components/landing/ProductPreview';
 import SiteHeader from '../components/landing/SiteHeader';
 import SiteFooter from '../components/landing/SiteFooter';
-import PricingSection from '../components/landing/PricingSection';
-import ProcessChain from '../components/landing/ProcessChain';
-import VoiceOrbDemo from '../components/landing/VoiceOrbDemo';
-import BuiltWith from '../components/landing/BuiltWith';
 import AvatarStack from '../components/landing/AvatarStack';
 import { HandwrittenTagline } from '../components/brand/HandwrittenTagline';
 import { ExamLogo } from '../components/brand/ExamLogo';
@@ -20,6 +16,12 @@ import { EXAM_CATALOG } from '../lib/examCatalog';
 import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
 import { cn } from '../lib/utils';
+
+// Below-the-fold sections lazy-loaded to optimize initial mobile paint
+const PricingSection = lazy(() => import('../components/landing/PricingSection'));
+const ProcessChain = lazy(() => import('../components/landing/ProcessChain'));
+const VoiceOrbDemo = lazy(() => import('../components/landing/VoiceOrbDemo'));
+const BuiltWith = lazy(() => import('../components/landing/BuiltWith'));
 
 /**
  * The public landing page.
@@ -569,7 +571,9 @@ export default function LandingPage() {
             </div>
           </Reveal>
 
-          <ProcessChain />
+          <Suspense fallback={<div className="min-h-[280px]" />}>
+            <ProcessChain />
+          </Suspense>
         </section>
 
 
@@ -612,7 +616,9 @@ export default function LandingPage() {
             </Reveal>
 
             <Reveal delay={0.08}>
-              <VoiceOrbDemo />
+              <Suspense fallback={<div className="min-h-[300px]" />}>
+                <VoiceOrbDemo />
+              </Suspense>
             </Reveal>
           </div>
         </section>
@@ -902,7 +908,9 @@ export default function LandingPage() {
 
         {/* ══ Plans ══════════════════════════════════════════════════════════ */}
         <div className="border-t border-slate-100 dark:border-white/[0.07]">
-          <PricingSection showComparison={false} />
+          <Suspense fallback={<div className="min-h-[400px]" />}>
+            <PricingSection showComparison={false} />
+          </Suspense>
         </div>
 
         {/* ══ Final CTA ══════════════════════════════════════════════════════ */}
@@ -1013,7 +1021,9 @@ export default function LandingPage() {
         <section className="border-t border-slate-100 dark:border-white/[0.07]">
           <div className="max-w-[1160px] mx-auto px-5 sm:px-8 py-14 sm:py-16">
             <Reveal>
-              <BuiltWith />
+              <Suspense fallback={null}>
+                <BuiltWith />
+              </Suspense>
             </Reveal>
           </div>
         </section>
