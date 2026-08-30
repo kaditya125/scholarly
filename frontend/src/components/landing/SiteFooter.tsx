@@ -68,6 +68,7 @@ const COLUMNS: { title: string; links: { label: string; href: string; external?:
       { label: 'Terms of Service', href: '/terms' },
       { label: 'Privacy Policy', href: '/privacy' },
       { label: 'Refunds & Cancellation', href: '/refunds' },
+      { label: 'Platform Policies', href: '/policies' },
       { label: 'Security', href: '/security' },
     ],
   },
