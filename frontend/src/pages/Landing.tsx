@@ -116,28 +116,24 @@ const PROFILE_FIELDS: [string, string][] = [
 // ─── Primitives ──────────────────────────────────────────────────────────────
 
 /**
- * Motion system.
+ * Enhanced Motion system.
  *
- * One easing curve and one gesture — rise and fade — used everywhere, with the only variable
- * being WHEN each element takes its turn. That is what keeps a page this long feeling composed
- * rather than busy: nothing spins, nothing scales in, nothing parallaxes.
- *
- * Every primitive drops to a plain <div> under `prefers-reduced-motion`, so the page renders
- * fully formed rather than animating a shorter distance.
+ * Smooth cubic-bezier spring curves with interactive micro-interactions for
+ * cards, chips, buttons, and containers.
  */
-const EASE = [0.16, 1, 0.3, 1] as const;
+const EASE = [0.22, 1, 0.36, 1] as const;
 
-/** Scroll reveal for a single block. */
+/** Scroll reveal for a single block with subtle scale and y-translation. */
 function Reveal({ children, delay = 0, className }: { children: ReactNode; delay?: number; className?: string }) {
   const reduced = useReducedMotion();
   if (reduced) return <div className={className}>{children}</div>;
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-80px' }}
-      transition={{ duration: 0.5, ease: EASE, delay }}
+      initial={{ opacity: 0, y: 24, scale: 0.985 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{ duration: 0.65, ease: EASE, delay }}
     >
       {children}
     </motion.div>
@@ -145,15 +141,12 @@ function Reveal({ children, delay = 0, className }: { children: ReactNode; delay
 }
 
 /**
- * Reveals its <Item> descendants one after another instead of as a block.
- *
- * `onLoad` runs the sequence on mount rather than on scroll — correct for the hero, which is
- * already in view when the page arrives and would otherwise pop in fully formed.
+ * Reveals its <Item> descendants one after another with smooth spring stagger.
  */
 function Stagger({
   children,
   className,
-  gap = 0.07,
+  gap = 0.08,
   onLoad = false,
   as = 'div',
 }: {
@@ -173,11 +166,11 @@ function Stagger({
   return (
     <Tag
       className={className}
-      variants={{ hidden: {}, show: { transition: { staggerChildren: gap } } }}
+      variants={{ hidden: {}, show: { transition: { staggerChildren: gap, delayChildren: 0.05 } } }}
       initial="hidden"
       {...(onLoad
         ? { animate: 'show' }
-        : { whileInView: 'show', viewport: { once: true, margin: '-80px' } })}
+        : { whileInView: 'show', viewport: { once: true, margin: '-60px' } })}
     >
       {children}
     </Tag>
@@ -185,15 +178,15 @@ function Stagger({
 }
 
 /** A single step in a <Stagger>. Inherits its cue through motion's variant context. */
-function Item({ children, className, y = 18 }: { children: ReactNode; className?: string; y?: number }) {
+function Item({ children, className, y = 20 }: { children: ReactNode; className?: string; y?: number }) {
   const reduced = useReducedMotion();
   if (reduced) return <div className={className}>{children}</div>;
   return (
     <motion.div
       className={className}
       variants={{
-        hidden: { opacity: 0, y },
-        show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
+        hidden: { opacity: 0, y, scale: 0.98 },
+        show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.6, ease: EASE } },
       }}
     >
       {children}
@@ -202,8 +195,7 @@ function Item({ children, className, y = 18 }: { children: ReactNode; className?
 }
 
 /**
- * The hand-drawn arc under a word — the same gesture as FlourishLink in the auth shell,
- * which is where this brand's one bit of personality already lives.
+ * The hand-drawn arc under a word — the same gesture as FlourishLink in the auth shell.
  */
 function Underline({ children, delay = 0.5 }: { children: ReactNode; delay?: number }) {
   const reduced = useReducedMotion();
@@ -218,7 +210,6 @@ function Underline({ children, delay = 0.5 }: { children: ReactNode; delay?: num
         fill="none"
         aria-hidden
       >
-        {/* Drawn rather than faded in: it is a hand gesture, so it should arrive like one. */}
         <motion.path
           d="M1.5 5C18 8.8 44 9.6 98.5 2.6"
           stroke={ACCENT}
@@ -233,11 +224,7 @@ function Underline({ children, delay = 0.5 }: { children: ReactNode; delay?: num
   );
 }
 
-/**
- * Section label. Sits at slate-500/gray-400 rather than the lighter slate-400 the app
- * uses for incidental chrome — at 12px uppercase this is real text a visitor reads, and
- * slate-400 on white only reaches ~2.9:1.
- */
+/** Section label. */
 function Eyebrow({ children }: { children: ReactNode }) {
   return (
     <p className="text-[12px] font-semibold uppercase tracking-[0.13em] text-slate-500 dark:text-gray-400">
@@ -263,8 +250,7 @@ function Lede({ children }: { children: ReactNode }) {
 }
 
 /**
- * Lifts a little on hover. The border lightening does the work at rest; the lift only confirms
- * the card is a single object — these are not links, so it must not imply somewhere to click.
+ * Interactive Capability Card with spring lift, glowing border, and icon pulse.
  */
 function CapabilityCard({
   icon: Icon,
@@ -278,31 +264,46 @@ function CapabilityCard({
   const reduced = useReducedMotion();
   return (
     <motion.div
-      className="h-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416] p-6 sm:p-7 transition-colors hover:border-slate-300 dark:hover:border-white/20"
-      whileHover={reduced ? undefined : { y: -4 }}
-      transition={{ duration: 0.25, ease: EASE }}
+      className="group relative h-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416] p-6 sm:p-7 transition-colors hover:border-[#c8e558]/60 dark:hover:border-[#c8e558]/40 shadow-xs hover:shadow-lg"
+      whileHover={reduced ? undefined : { y: -6, scale: 1.015 }}
+      whileTap={reduced ? undefined : { scale: 0.99 }}
+      transition={{ type: 'spring', stiffness: 350, damping: 25 }}
     >
-      <span className="inline-flex w-10 h-10 rounded-xl bg-slate-900 dark:bg-white items-center justify-center">
+      <motion.span
+        className="inline-flex w-10 h-10 rounded-xl bg-slate-900 dark:bg-white items-center justify-center shadow-xs"
+        whileHover={{ rotate: [0, -8, 8, 0], scale: 1.1 }}
+        transition={{ duration: 0.4 }}
+      >
         <Icon className="w-[18px] h-[18px] text-white dark:text-slate-900" strokeWidth={1.9} />
-      </span>
-      <h3 className="mt-5 text-[17px] font-semibold tracking-[-0.015em]">{title}</h3>
+      </motion.span>
+      <h3 className="mt-5 text-[17px] font-semibold tracking-[-0.015em] text-slate-900 dark:text-white group-hover:text-slate-950 dark:group-hover:text-white transition-colors">
+        {title}
+      </h3>
       <p className="mt-2.5 text-[14px] leading-relaxed text-slate-500 dark:text-gray-400">{body}</p>
     </motion.div>
   );
 }
 
 function PrimaryCta({ to, children }: { to: string; children: ReactNode }) {
+  const reduced = useReducedMotion();
   return (
-    <Link
-      to={to}
-      className="group inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl bg-[#c8e558] hover:bg-[#bcd94c] active:bg-[#b0cd40] text-slate-900 text-[14.5px] font-semibold transition-colors"
+    <motion.div
+      whileHover={reduced ? undefined : { scale: 1.03, y: -2 }}
+      whileTap={reduced ? undefined : { scale: 0.97 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      className="inline-block"
     >
-      {children}
-      <ArrowRight
-        className="w-4 h-4 transition-transform duration-200 ease-out group-hover:translate-x-1"
-        strokeWidth={2.25}
-      />
-    </Link>
+      <Link
+        to={to}
+        className="group inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl bg-[#c8e558] hover:bg-[#bcd94c] active:bg-[#b0cd40] text-slate-900 text-[14.5px] font-semibold transition-colors shadow-sm hover:shadow-md"
+      >
+        {children}
+        <ArrowRight
+          className="w-4 h-4 transition-transform duration-200 ease-out group-hover:translate-x-1"
+          strokeWidth={2.25}
+        />
+      </Link>
+    </motion.div>
   );
 }
 
@@ -418,7 +419,11 @@ export default function LandingPage() {
                 would fire everything at once. */}
             <Stagger onLoad gap={0.09}>
               <Item>
-                <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-50/90 dark:bg-white/[0.04] backdrop-blur-sm mb-4 text-[13px] font-medium text-slate-700 dark:text-gray-300 shadow-sm">
+                <motion.div
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                  className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-50/90 dark:bg-white/[0.04] backdrop-blur-sm mb-4 text-[13px] font-medium text-slate-700 dark:text-gray-300 shadow-xs hover:border-[#c8e558]/50"
+                >
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#6ca855] opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-[#6ca855]"></span>
@@ -434,7 +439,7 @@ export default function LandingPage() {
                   <Link to="/signup" className="text-slate-900 dark:text-white hover:text-[#6ca855] dark:hover:text-[#c8e558] font-semibold inline-flex items-center gap-0.5 transition-colors">
                     Join now &rarr;
                   </Link>
-                </div>
+                </motion.div>
               </Item>
 
               <Item>
@@ -462,12 +467,19 @@ export default function LandingPage() {
               <Item>
                 <div className="mt-9 flex flex-col sm:flex-row gap-3">
                   <PrimaryCta to="/signup">Start learning</PrimaryCta>
-                  <Link
-                    to="/how-it-works"
-                    className="inline-flex items-center justify-center h-12 px-6 rounded-xl border border-slate-200 dark:border-white/12 text-[14.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+                  <motion.div
+                    whileHover={{ scale: 1.03, y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                    className="inline-block"
                   >
-                    See how it works
-                  </Link>
+                    <Link
+                      to="/how-it-works"
+                      className="inline-flex items-center justify-center h-12 px-6 rounded-xl border border-slate-200 dark:border-white/12 text-[14.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors shadow-2xs hover:shadow-xs"
+                    >
+                      See how it works
+                    </Link>
+                  </motion.div>
                 </div>
               </Item>
 
@@ -500,7 +512,12 @@ export default function LandingPage() {
             </Stagger>
 
             <Reveal delay={0.22}>
-              <ProductPreview />
+              <motion.div
+                whileHover={{ y: -4 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              >
+                <ProductPreview />
+              </motion.div>
             </Reveal>
           </div>
         </section>
@@ -517,13 +534,19 @@ export default function LandingPage() {
                 <Stagger className="mt-6 lg:mt-0 flex flex-wrap gap-x-2 gap-y-2.5 items-center flex-1" gap={0.025}>
                   {EXAM_CATALOG.map((e) => (
                     <Item key={e.slug} y={8}>
-                      <Link
-                        to={`/exams/${e.slug}`}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200/90 dark:border-white/10 bg-white dark:bg-white/[0.04] text-[13px] font-medium text-slate-800 dark:text-gray-200 hover:border-slate-300 dark:hover:border-white/25 hover:text-slate-950 dark:hover:text-white transition-all shadow-2xs hover:shadow-xs group"
+                      <motion.div
+                        whileHover={{ scale: 1.07, y: -3 }}
+                        whileTap={{ scale: 0.96 }}
+                        transition={{ type: 'spring', stiffness: 450, damping: 25 }}
                       >
-                        <ExamLogo slug={e.slug} className="w-5 h-5 shrink-0 object-contain transition-transform group-hover:scale-110" size={20} />
-                        <span>{e.name}</span>
-                      </Link>
+                        <Link
+                          to={`/exams/${e.slug}`}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200/90 dark:border-white/10 bg-white dark:bg-white/[0.04] text-[13px] font-medium text-slate-800 dark:text-gray-200 hover:border-[#c8e558]/60 dark:hover:border-[#c8e558]/40 hover:text-slate-950 dark:hover:text-white transition-colors shadow-2xs hover:shadow-xs group"
+                        >
+                          <ExamLogo slug={e.slug} className="w-5 h-5 shrink-0 object-contain transition-transform group-hover:scale-115" size={20} />
+                          <span>{e.name}</span>
+                        </Link>
+                      </motion.div>
                     </Item>
                   ))}
                 </Stagger>
@@ -570,15 +593,17 @@ export default function LandingPage() {
 
               <div className="mt-9 flex flex-wrap gap-2">
                 {SYLLABUS_LIVE.map((e) => (
-                  <span
+                  <motion.span
                     key={e.name}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-[13px] font-semibold text-slate-700 dark:text-gray-200"
+                    whileHover={{ scale: 1.06, y: -2 }}
+                    transition={{ type: 'spring', stiffness: 450, damping: 25 }}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 dark:border-white/10 hover:border-[#c8e558]/60 dark:hover:border-[#c8e558]/40 bg-white dark:bg-white/[0.04] text-[13px] font-semibold text-slate-700 dark:text-gray-200 shadow-2xs transition-colors cursor-default"
                   >
                     {e.name}
                     <span className="text-[11.5px] font-medium text-slate-400 dark:text-slate-500">
                       {e.source}
                     </span>
-                  </span>
+                  </motion.span>
                 ))}
               </div>
               <p className="mt-3 text-[12.5px] text-slate-400 dark:text-slate-500">
@@ -636,8 +661,12 @@ export default function LandingPage() {
               </p>
 
               <div className="mt-9 space-y-6">
-                <div className="flex gap-4">
-                  <span className="mt-0.5 w-9 h-9 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] flex items-center justify-center shrink-0">
+                <motion.div
+                  whileHover={{ x: 4 }}
+                  transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                  className="flex gap-4"
+                >
+                  <span className="mt-0.5 w-9 h-9 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] flex items-center justify-center shrink-0 shadow-2xs">
                     <Gauge className="w-[17px] h-[17px] text-slate-700 dark:text-gray-300" strokeWidth={1.9} />
                   </span>
                   <div>
@@ -649,10 +678,14 @@ export default function LandingPage() {
                       in far fewer questions than a fixed-length test would need.
                     </p>
                   </div>
-                </div>
+                </motion.div>
 
-                <div className="flex gap-4">
-                  <span className="mt-0.5 w-9 h-9 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] flex items-center justify-center shrink-0">
+                <motion.div
+                  whileHover={{ x: 4 }}
+                  transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                  className="flex gap-4"
+                >
+                  <span className="mt-0.5 w-9 h-9 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.05] flex items-center justify-center shrink-0 shadow-2xs">
                     <Languages className="w-[17px] h-[17px] text-slate-700 dark:text-gray-300" strokeWidth={1.9} />
                   </span>
                   <div>
@@ -664,12 +697,16 @@ export default function LandingPage() {
                       replies in the same one, and keeps formulae and exam terminology in English.
                     </p>
                   </div>
-                </div>
+                </motion.div>
               </div>
             </Reveal>
 
             <Reveal delay={0.1}>
-              <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416] overflow-hidden">
+              <motion.div
+                whileHover={{ y: -4 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416] overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+              >
                 <div className="px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-white/[0.07] flex items-center gap-2.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#c8e558]" aria-hidden />
                   <span className="text-[12.5px] font-medium text-slate-500 dark:text-gray-400">
@@ -682,14 +719,18 @@ export default function LandingPage() {
                 <Stagger as="dl" className="divide-y divide-slate-100 dark:divide-white/[0.06]" gap={0.05}>
                   {PROFILE_FIELDS.map(([k, v]) => (
                     <Item key={k} y={10}>
-                      <div className="flex items-baseline gap-4 px-5 sm:px-6 py-3">
+                      <motion.div
+                        whileHover={{ x: 4, backgroundColor: 'rgba(200, 229, 88, 0.05)' }}
+                        transition={{ duration: 0.15 }}
+                        className="flex items-baseline gap-4 px-5 sm:px-6 py-3 cursor-default"
+                      >
                         <dt className="w-[7.5rem] shrink-0 text-[13px] text-slate-500 dark:text-gray-400">{k}</dt>
                         <dd className="text-[13.5px] font-medium text-slate-800 dark:text-gray-100">{v}</dd>
-                      </div>
+                      </motion.div>
                     </Item>
                   ))}
                 </Stagger>
-              </div>
+              </motion.div>
             </Reveal>
           </div>
         </section>
@@ -714,26 +755,34 @@ export default function LandingPage() {
                 </p>
 
                 <div className="mt-8 flex flex-wrap items-center gap-3">
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.03, y: -2 }}
+                    whileTap={{ scale: 0.97 }}
                     onClick={() => handleOpenHelpWithQuestion("Tell me about Sadhya AI tutor features.")}
-                    className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13.5px] font-semibold hover:opacity-90 transition-opacity"
+                    className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13.5px] font-semibold hover:opacity-90 transition-all shadow-xs cursor-pointer"
                   >
                     <Bot className="w-4 h-4" />
                     Ask Sadhya AI Guide
                     <ArrowRight className="w-4 h-4" />
-                  </button>
-                  <button
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.03, y: -2 }}
+                    whileTap={{ scale: 0.97 }}
                     onClick={() => handleOpenHelpWithQuestion("I would like to talk with a live support specialist about Sadhya platform features.")}
-                    className="inline-flex items-center gap-2 h-11 px-5 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/5 text-slate-900 dark:text-white text-[13.5px] font-semibold hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                    className="inline-flex items-center gap-2 h-11 px-5 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/5 text-slate-900 dark:text-white text-[13.5px] font-semibold hover:bg-slate-100 dark:hover:bg-white/10 transition-all shadow-xs cursor-pointer"
                   >
                     <Headphones className="w-4 h-4 text-emerald-500" />
                     Talk to Live Specialist
-                  </button>
+                  </motion.button>
                 </div>
               </Reveal>
 
               <Reveal delay={0.1}>
-                <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416] p-5 sm:p-6 shadow-sm flex flex-col gap-3.5">
+                <motion.div
+                  whileHover={{ y: -3 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                  className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416] p-5 sm:p-6 shadow-sm flex flex-col gap-3.5"
+                >
                   <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-3">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -767,10 +816,13 @@ export default function LandingPage() {
                         tag: "Privacy & Security"
                       }
                     ].map((item, idx) => (
-                      <button
+                      <motion.button
                         key={idx}
+                        whileHover={{ x: 5, scale: 1.008 }}
+                        whileTap={{ scale: 0.99 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                         onClick={() => handleOpenHelpWithQuestion(item.q)}
-                        className="w-full text-left group p-3 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/60 dark:bg-white/[0.02] hover:bg-slate-100/80 dark:hover:bg-white/[0.06] hover:border-slate-300 dark:hover:border-white/20 transition-all flex items-center justify-between"
+                        className="w-full text-left group p-3 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/60 dark:bg-white/[0.02] hover:bg-slate-100/80 dark:hover:bg-white/[0.06] hover:border-slate-300 dark:hover:border-white/20 transition-colors flex items-center justify-between cursor-pointer"
                       >
                         <div className="flex flex-col pr-2">
                           <span className="text-[13px] font-medium text-slate-800 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white leading-snug">
@@ -781,10 +833,10 @@ export default function LandingPage() {
                         <div className="w-6 h-6 rounded-full bg-white dark:bg-white/5 flex items-center justify-center flex-shrink-0 group-hover:bg-[#c8e558]/20 transition-colors">
                           <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-slate-900 dark:group-hover:text-[#c8e558] transition-colors" />
                         </div>
-                      </button>
+                      </motion.button>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               </Reveal>
             </div>
           </div>
@@ -829,14 +881,20 @@ export default function LandingPage() {
               <Reveal delay={0.08}>
                 {/* Carries the chosen role into the existing signup wizard as navigation state.
                     It only preselects the card; the server still owns productRole. */}
-                <Link
-                  to="/signup"
-                  state={{ role: 'teacher' }}
-                  className="inline-flex items-center gap-2 h-12 px-6 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-transparent text-[14.5px] font-semibold text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors whitespace-nowrap"
+                <motion.div
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 >
-                  Create a teacher account
-                  <ArrowRight className="w-4 h-4" strokeWidth={2.25} />
-                </Link>
+                  <Link
+                    to="/signup"
+                    state={{ role: 'teacher' }}
+                    className="inline-flex items-center gap-2 h-12 px-6 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-transparent text-[14.5px] font-semibold text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors whitespace-nowrap shadow-2xs hover:shadow-xs"
+                  >
+                    Create a teacher account
+                    <ArrowRight className="w-4 h-4" strokeWidth={2.25} />
+                  </Link>
+                </motion.div>
               </Reveal>
             </div>
           </div>
@@ -861,10 +919,14 @@ export default function LandingPage() {
               {/* Checkmark perks */}
               <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
                 {['Start for free', 'No credit card required', 'Cancel anytime'].map((perk) => (
-                  <span key={perk} className="inline-flex items-center gap-1.5 text-[13.5px] text-slate-500 dark:text-gray-400">
+                  <motion.span
+                    key={perk}
+                    whileHover={{ scale: 1.05 }}
+                    className="inline-flex items-center gap-1.5 text-[13.5px] text-slate-500 dark:text-gray-400 cursor-default"
+                  >
                     <Check className="w-4 h-4 text-[#6ca855]" strokeWidth={2.5} />
                     {perk}
-                  </span>
+                  </motion.span>
                 ))}
               </div>
 
@@ -904,7 +966,12 @@ export default function LandingPage() {
                     stats.length === 4 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3 sm:grid-cols-3"
                   )}>
                     {stats.map((stat, idx) => (
-                      <div key={idx} className="text-center">
+                      <motion.div
+                        key={idx}
+                        whileHover={{ scale: 1.06, y: -2 }}
+                        transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                        className="text-center cursor-default"
+                      >
                         {stat.isLive ? (
                           <div className="flex items-center justify-center gap-2">
                             <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
@@ -932,7 +999,7 @@ export default function LandingPage() {
                         <p className="mt-1 text-[12.5px] sm:text-[13px] text-slate-500 dark:text-gray-400">
                           {stat.label}
                         </p>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 );
