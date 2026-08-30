@@ -328,6 +328,12 @@ const SYLLABUS_LIVE = [
   { name: 'BPSC CDPO', source: 'bpsc.bihar.gov.in' },
 ];
 
+const DEFAULT_AVATARS = [
+  'https://lh3.googleusercontent.com/a/ACg8ocKAzheBPpqS7hokGk7Jph2pxnHPxEp7flbqQQ5k-7pj9yp5rus=s96-c',
+  'https://lh3.googleusercontent.com/a/ACg8ocITomVr-Weu-QNw1_ZmRGs3EhmP_S7mQrbo916Hesp2yAf7WA=s96-c',
+  'https://lh3.googleusercontent.com/a/ACg8ocLiiLcQtN9TguBm8svmA4TvWAth2gVXvIT4l9DErvCmM_QSgQ=s96-c',
+];
+
 export default function LandingPage() {
   useSeo({
     title: `${SITE.name} — ${SITE.tagline}`,
@@ -335,11 +341,11 @@ export default function LandingPage() {
     url: SITE.url,
   });
 
-  const [studentCount, setStudentCount] = useState<number>(27);
+  const [studentCount, setStudentCount] = useState<number>(32);
   const [activeStudents, setActiveStudents] = useState<number | null>(null);
   const prevActiveRef = useRef<number | null>(null);
   const [activeAnimKey, setActiveAnimKey] = useState(0); // bumped on every change to trigger animation
-  const [recentAvatars, setRecentAvatars] = useState<string[]>([]);
+  const [recentAvatars, setRecentAvatars] = useState<string[]>(DEFAULT_AVATARS);
   const handleOpenHelpWithQuestion = (q: string) => {
     window.dispatchEvent(new CustomEvent('sadhya-open-helpdesk', { detail: { question: q } }));
   };
