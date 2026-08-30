@@ -71,7 +71,43 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div style="min-height:100vh;background:#ffffff;color:#0f172a;font-family:Inter,system-ui,-apple-system,sans-serif;box-sizing:border-box;">
+        <header style="max-width:1160px;margin:0 auto;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:18px;font-weight:700;letter-spacing:-0.02em;">
+            <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#c8e558"/><path d="M9 16.5L13.5 21L23 11" stroke="#0f172a" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Sadhya</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <a href="/signin" style="font-size:13.5px;font-weight:600;color:#0f172a;text-decoration:none;padding:6px 14px;">Sign in</a>
+            <a href="/signup" style="font-size:13.5px;font-weight:600;color:#0f172a;background:#c8e558;padding:7px 16px;border-radius:10px;text-decoration:none;">Get started</a>
+          </div>
+        </header>
+        <main style="max-width:1160px;margin:0 auto;padding:24px 20px 60px;">
+          <div style="display:inline-flex;align-items:center;gap:8px;padding:5px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:999px;font-size:12px;font-weight:500;color:#475569;margin-bottom:20px;">
+            <span style="width:6px;height:6px;border-radius:50%;background:#6ca855;display:inline-block;"></span>
+            <span><strong>26 students</strong> registered &amp; learning · <a href="/signup" style="color:#0f172a;font-weight:600;text-decoration:none;">Join now &rarr;</a></span>
+          </div>
+          <h1 style="font-size:clamp(36px, 7vw, 58px);font-weight:600;line-height:1.05;letter-spacing:-0.035em;color:#0f172a;margin:0 0 12px;">
+            Ask anything from<br/>your <span style="position:relative;display:inline-block;white-space:nowrap;">syllabus<svg style="position:absolute;bottom:-4px;left:0;width:100%;height:11px;overflow:visible;" viewBox="0 0 100 11" fill="none"><path d="M1.5 5C18 8.8 44 9.6 98.5 2.6" stroke="#c8e558" stroke-width="3" stroke-linecap="round"/></svg></span>.
+          </h1>
+          <p style="font-family:'Caveat',cursive;font-size:20px;color:#6ca855;margin:8px 0 20px;display:flex;align-items:center;gap:8px;">
+            <span style="height:1.5px;width:1.4em;background:currentColor;display:inline-block;"></span> Every goal, attainable.
+          </p>
+          <p style="font-size:clamp(15px, 2.5vw, 17.5px);line-height:1.6;color:#64748b;margin:0 0 28px;max-width:480px;">
+            An AI tutor built around your exam, your subjects and your level. It answers from the curriculum, shows you the sources it used, and lets you check every step it took to get there.
+          </p>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+            <a href="/signup" style="display:inline-flex;align-items:center;gap:8px;background:#c8e558;color:#0f172a;padding:12px 24px;border-radius:12px;font-weight:600;font-size:14px;text-decoration:none;">
+              Start learning &rarr;
+            </a>
+            <a href="#how" style="display:inline-flex;align-items:center;gap:8px;background:#f8fafc;color:#0f172a;padding:12px 24px;border-radius:12px;font-weight:600;font-size:14px;text-decoration:none;border:1px solid #e2e8f0;">
+              See how it works
+            </a>
+          </div>
+        </main>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
