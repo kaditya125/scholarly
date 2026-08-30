@@ -164,12 +164,12 @@ function AppRoutes() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/social" element={<SocialHub />} />
         <Route path="/community/social" element={<SocialHub />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/refunds" element={<Refunds />} />
+        <Route path="/security" element={<Security />} />
         <Route path="/policies" element={<PolicyHub />} />
         <Route path="/policies/:category" element={<PolicyHub />} />
-        <Route path="/terms" element={<PolicyHub />} />
-        <Route path="/privacy" element={<PolicyHub />} />
-        <Route path="/refunds" element={<PolicyHub />} />
-        <Route path="/security" element={<PolicyHub />} />
 
         {/* Role recovery — authenticated, product role not yet established. */}
         <Route path="/select-role" element={<ProtectedRoute><SelectRole /></ProtectedRoute>} />
