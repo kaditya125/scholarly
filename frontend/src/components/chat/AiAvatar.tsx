@@ -20,10 +20,6 @@ export default function AiAvatar({ className, src = AVATAR_SRC }: { className?: 
       <img
         src={src}
         alt="AI"
-        width={32}
-        height={32}
-        loading="lazy"
-        decoding="async"
         className={cn("inline-block object-contain rounded-full", className)}
         style={isRedAvatar ? { filter: 'hue-rotate(250deg)' } : undefined}
         onError={() => setImgFailed(true)}

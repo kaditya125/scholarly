@@ -228,7 +228,7 @@ function FounderPortrait({ person }: { person: Person }) {
             sizes="(min-width: 1024px) 340px, (min-width: 640px) 310px, 260px"
           />
           <img
-            src={hero.webp1000}
+            src={hero.jpg1000}
             alt={`${person.name}, ${person.role} at ${SITE.name}, ${hero.alt}`}
             width={hero.width}
             height={hero.height}
