@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { collection, query, onSnapshot, limit, doc } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
-import { db, auth } from '../firebase';
+import { auth } from '../firebase';
+import { db } from '../firestore';
 import { useNotificationStore } from '../store/useNotificationStore';
 import { NotificationPayload } from '../api/notifications';
 import { purgeMockNotifications } from '../api/realtimeNotifications';
