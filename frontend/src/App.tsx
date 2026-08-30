@@ -11,6 +11,7 @@ import { AuthProvider } from "./lib/AuthContext";
 import { useAuth } from "./lib/AuthContext";
 import { useProfile } from "./hooks/api/useProfile";
 import { usePresenceHeartbeat } from "./hooks/usePresence";
+import { AnalyticsTracker } from "./lib/analytics";
 
 /**
  * Every route-level page is lazy-loaded so a visit to any one route only downloads that
@@ -424,6 +425,7 @@ export default function App() {
       <AuthProvider>
         <GlobalPresencePublisher />
         <BrowserRouter>
+          <AnalyticsTracker />
           <AppRoutes />
           <GlobalHelpdeskWidget />
         </BrowserRouter>
