@@ -151,8 +151,8 @@ export function LearningVelocityWidget() {
       {/* Title with Current Month */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <Activity className="w-3.5 h-3.5 text-[#8ba32b] dark:text-[#c8e558]" />
-          <h2 className="text-[13px] font-semibold text-slate-800 dark:text-slate-300">
+          <Activity className="w-3.5 h-3.5 text-[#6ca855] dark:text-[#c8e558]" />
+          <h2 className="text-[13.5px] font-semibold text-slate-900 dark:text-white tracking-tight">
             Learning Velocity ({currentMonthName})
           </h2>
         </div>
