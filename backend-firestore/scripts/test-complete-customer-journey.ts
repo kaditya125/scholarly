@@ -73,10 +73,8 @@ async function runCustomerJourney() {
   // STAGE 2: 80% WARNING & 100% QUOTA EXHAUSTION
   // ────────────────────────────────────────────────────────────
   console.log('--- STAGE 2: 80% Warning & 100% Quota Exhaustion ---');
-  // Consume 80 messages
-  for (let i = 0; i < 80; i++) {
-    await usageService.consumeQuota(testUser, 'chatMessages', 1);
-  }
+  // Consume 80 messages in 1 atomic step
+  await usageService.consumeQuota(testUser, 'chatMessages', 80);
   const u80 = await usageService.getUsageSummary(testUser);
   assertStep(
     '3. 80% Warning Threshold Reached',
@@ -86,9 +84,7 @@ async function runCustomerJourney() {
   );
 
   // Consume 20 more messages to reach 100/100
-  for (let i = 0; i < 20; i++) {
-    await usageService.consumeQuota(testUser, 'chatMessages', 1);
-  }
+  await usageService.consumeQuota(testUser, 'chatMessages', 20);
   const u100 = await usageService.getUsageSummary(testUser);
   assertStep(
     '4. 100% Quota Exhausted',
