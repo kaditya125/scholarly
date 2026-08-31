@@ -198,9 +198,10 @@ function Item({ children, className, y = 20 }: { children: ReactNode; className?
 }
 
 /**
- * The hand-drawn arc under a word — the same gesture as FlourishLink in the auth shell.
+ * The hand-drawn arc under a word — animated left-to-right gesture as if drawn by hand.
  */
-function Underline({ children }: { children: ReactNode }) {
+function Underline({ children, delay = 0.35 }: { children: ReactNode; delay?: number }) {
+  const reduced = useReducedMotion();
   return (
     <span className="relative inline-block whitespace-nowrap">
       {children}
@@ -212,11 +213,17 @@ function Underline({ children }: { children: ReactNode }) {
         fill="none"
         aria-hidden
       >
-        <path
+        <motion.path
           d="M1.5 5C18 8.8 44 9.6 98.5 2.6"
           stroke={ACCENT}
           strokeWidth="3"
           strokeLinecap="round"
+          initial={reduced ? false : { pathLength: 0, opacity: 0 }}
+          animate={{ pathLength: 1, opacity: 1 }}
+          transition={{
+            pathLength: { duration: reduced ? 0 : 0.85, ease: EASE, delay: reduced ? 0 : delay },
+            opacity: { duration: reduced ? 0 : 0.2, delay: reduced ? 0 : delay },
+          }}
         />
       </svg>
     </span>
