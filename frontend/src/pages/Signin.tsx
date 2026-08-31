@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Github } from 'lucide-react';
+import { useAuth } from '../lib/AuthContext';
 import {
   auth,
   googleProvider,
@@ -25,9 +26,16 @@ import {
 export default function Signin() {
   const navigate = useNavigate();
   const location = useLocation() as any;
+  const { user, role, loading: authLoading } = useAuth();
   // ProtectedRoute stores the page the student was trying to reach, so a session that
   // expired mid-task returns there instead of dumping them on the dashboard.
-  const from = location.state?.from?.pathname || '/dashboard';
+  const from = location.state?.from?.pathname || (role === 'teacher' ? '/teach' : '/dashboard');
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate(from, { replace: true });
+    }
+  }, [user, role, authLoading, navigate, from]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

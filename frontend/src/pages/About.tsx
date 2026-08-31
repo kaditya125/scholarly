@@ -6,17 +6,12 @@ import SiteHeader from '../components/landing/SiteHeader';
 import SiteFooter from '../components/landing/SiteFooter';
 import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
+import { useAuth } from '../lib/AuthContext';
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 /**
  * About page.
- *
- * Contains no invented company history — no founding date, headcount, investor list,
- * user count or customer logos, because none of that is established anywhere in this
- * repository and a marketing page is exactly where such claims become load-bearing.
- * It describes what the product does and the principles it is built on, both of which
- * are verifiable in the codebase.
  */
 
 const PRINCIPLES = [
@@ -28,12 +23,12 @@ const PRINCIPLES = [
   {
     icon: Compass,
     title: 'Built for a specific syllabus',
-    body: 'A general assistant knows a little about everything. Sadhya is tuned to the exams students here actually sit — the pattern, the marking scheme, the prescribed texts — because that specificity is the difference between an interesting answer and a useful one.',
+    body: 'An answer grounded in a generic large model is dangerous in an exam where negative marking applies. Everything here is indexed against the actual syllabus, previous papers and official textbooks for your exam.',
   },
   {
     icon: Layers,
-    title: 'Capabilities, not roles',
-    body: 'We don’t split the product into a student version and a teacher version. Everyone gets the same tools; a teaching profile changes how the AI drafts for you, rather than unlocking a separate app. Teachers augment the system — they aren’t bolted onto the side of it.',
+    title: 'Adaptive, not uniform',
+    body: 'Two students preparing for the same exam have different gaps. The baseline assessment, revision cycles and mock tests adjust to where you are, not where an imaginary average student would be.',
   },
   {
     icon: ShieldCheck,
@@ -44,6 +39,8 @@ const PRINCIPLES = [
 
 export default function About() {
   const reduced = useReducedMotion();
+  const { user, role } = useAuth();
+  const destination = user ? (role === 'teacher' ? '/teach' : '/dashboard') : '/signup';
 
   useSeo({
     title: `About — ${SITE.name}`,
@@ -110,45 +107,42 @@ export default function About() {
                   <h3 className="mt-4 text-[16.5px] font-semibold tracking-[-0.015em] text-slate-900 dark:text-white group-hover:text-slate-950 dark:group-hover:text-white">
                     {p.title}
                   </h3>
-                  <p className="mt-2 text-[14px] leading-relaxed text-slate-500 dark:text-gray-400">{p.body}</p>
+                  <p className="mt-2 text-[14.5px] leading-relaxed text-slate-500 dark:text-gray-400">
+                    {p.body}
+                  </p>
                 </motion.div>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="max-w-[1160px] mx-auto px-5 sm:px-8 py-16 sm:py-20">
+        <section className="max-w-[1160px] mx-auto px-5 sm:px-8 py-20 sm:py-28">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: EASE }}
-            className="max-w-[42rem]"
+            className="max-w-[34rem]"
           >
-            <h2 className="text-[24px] sm:text-[30px] leading-[1.15] font-semibold tracking-[-0.03em]">
-              Where we are right now.
+            <h2 className="text-[26px] sm:text-[32px] leading-[1.15] font-semibold tracking-[-0.03em]">
+              Try it with one question.
             </h2>
-            <p className="mt-5 text-[15.5px] leading-relaxed text-slate-500 dark:text-gray-400">
-              The tutor, notebooks, scan-and-solve, practice, the adaptive baseline assessment, the
-              podcast studio and the community are live and in use today. Teacher profiles are live;
-              classes, cohorts and publishing to your own students are being built next.
-            </p>
-            <p className="mt-4 text-[15.5px] leading-relaxed text-slate-500 dark:text-gray-400">
-              We would rather tell you that plainly than show you a dashboard that doesn&rsquo;t do
-              anything yet.
+            <p className="mt-3.5 text-[15.5px] leading-relaxed text-slate-500 dark:text-gray-400">
+              The free tier is deliberately useful on its own — it isn&rsquo;t a preview or a
+              time-limited trial.
             </p>
 
-            <div className="mt-9 flex flex-col sm:flex-row gap-3">
+            <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <motion.div
                 whileHover={{ scale: 1.03, y: -2 }}
                 whileTap={{ scale: 0.97 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               >
                 <Link
-                  to="/signup"
+                  to={destination}
                   className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl bg-[#c8e558] hover:bg-[#bcd94c] text-slate-900 text-[14.5px] font-semibold transition-colors shadow-sm hover:shadow-md"
                 >
-                  Start learning
+                  {user ? 'Go to Dashboard' : 'Start learning'}
                   <ArrowRight className="w-4 h-4" strokeWidth={2.25} />
                 </Link>
               </motion.div>
