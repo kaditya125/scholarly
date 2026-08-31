@@ -1,6 +1,7 @@
 import { db } from '../config/firebase';
 import { eventBus } from '../core/events/EventBus';
 import { featureFlags } from '../config/featureFlags';
+import { isMasteryEnabledFor } from './masteryGate';
 import { logger } from '../utils/logger';
 
 /**
@@ -139,7 +140,7 @@ export class BaselineReconciliationService {
      * genuinely nothing to project and is settled as PROJECTED regardless of the flag. Those two
      * situations must not be conflated — one is "nothing to do", the other is "cannot do it yet".
      */
-    if (!featureFlags.mastery) {
+    if (!(await isMasteryEnabledFor(userId))) {
       logger.info('[BaselineReconcile] mastery disabled; evidence left PENDING and eligible', {
         userId, attemptId, questions: gradedQuestions.length,
       });

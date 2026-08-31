@@ -2,6 +2,7 @@ import { eventBus } from './EventBus';
 import { NotificationFactory } from '../notifications/NotificationEngine';
 import { logger } from '../../utils/logger';
 import { featureFlags } from '../../config/featureFlags';
+import { isMasteryEnabledFor } from '../../services/masteryGate';
 import { masteryEngine, slugifyConcept } from '../intelligence/MasteryEngine';
 import { masteryKeyForNode } from '../../services/learning/nodeMastery.service';
 
@@ -44,8 +45,10 @@ export function registerEventSubscribers(): { registered: boolean } {
   // well the student knows anything. The LLM's job is to explain this evidence later, never to
   // produce it.
   //
-  // Gated on featureFlags.mastery so the write path can be enabled independently of anything
-  // reading it, and so this is a no-op until the flag is deliberately turned on.
+  // Gated so the write path can be enabled independently of anything reading it, and so this is
+  // a no-op until deliberately turned on. The gate is now PER STUDENT (see masteryGate): the
+  // ENABLE_MASTERY env var still enables everyone, and with it unset only students named in the
+  // `mastery` flag document are written — which is what makes a first enablement containable.
   // Mastery is aggregated ONCE PER SUBMISSION, from test_completed's topicBreakdown — not once
   // per question. A submission already contains the complete result set, so folding a topic's
   // outcomes into a single atomic write is both correct and simpler than N writes racing on the
@@ -66,7 +69,14 @@ export function registerEventSubscribers(): { registered: boolean } {
   // The durable source of truth is the persisted attempt/graded-result document in Firestore.
   // Mastery is a PROJECTION rebuildable from that, which is what makes reconciliation possible.
   eventBus.subscribe('learning.test_completed', async (payload, meta) => {
-    if (!featureFlags.mastery) return;
+    /*
+     * Per-student gate, not just the process-wide env var. ENABLE_MASTERY=true still enables
+     * everyone; with it unset, only students named in the `mastery` flag document are written.
+     * That makes a first enablement containable — the write path has never run against real
+     * traffic, and mastery is cumulative evidence about real people. Shared with
+     * baselineReconciliation via one derivation so the two cannot disagree.
+     */
+    if (!(await isMasteryEnabledFor(payload.userId))) return;
     const breakdown = payload.topicBreakdown || [];
     if (breakdown.length === 0) return;
 
