@@ -76,6 +76,44 @@ export interface AttemptEvidence {
 /**
  * Record one graded attempt against its syllabus node.
  *
+ * ── SUPERSEDED. DO NOT WIRE THIS INTO THE QUIZ PATH. ──────────────────────────────────────
+ *
+ * It has no callers, and that is the intended state — not an oversight, and not missing wiring.
+ * Twice now the absence of callers has been read as a gap to be closed, so the reasoning is
+ * recorded here rather than left to be re-derived.
+ *
+ * The quiz path ALREADY writes node-keyed mastery, end to end:
+ *
+ *     quizAttempts.service   groups graded rows by q.syllabusNodeId
+ *     resultAnalysis:181     publishes topicBreakdown carrying syllabusNodeId + identityStatus
+ *     subscribers.ts:94      conceptKey = masteryKeyForNode(row.syllabusNodeId)
+ *     masteryEngine          → users/{uid}/mastery/{node-keyed}
+ *
+ * That path is dormant only because ENABLE_MASTERY defaults to false. Enabling the flag turns it
+ * on; adding a call to this function does not enable anything that is missing.
+ *
+ * Wiring it alongside that path would do two specific harms:
+ *
+ *   1. DOUBLE COUNTING. Both write the same store with the same masteryKeyForNode derivation, but
+ *      their idempotency keys differ — `ev.attemptId` here versus `${eventId}#${conceptKey}` in
+ *      the subscriber — so MasteryEngine's dedup cannot recognise them as the same evidence.
+ *      Every graded answer would move mastery twice.
+ *
+ *   2. A MEASURED DATA-LOSS BUG. This is the PER-QUESTION shape. The subscriber is per-submission
+ *      precisely because per-question was tried and measured to lose writes: "4 graded answers
+ *      persisted as 2 attempts, because concurrent transactions on one concept contended and the
+ *      losers were discarded." See the comment above the learning.test_completed subscriber.
+ *
+ * ── WHY IT IS KEPT ────────────────────────────────────────────────────────────────────────
+ * Three suites exercise it — nodeMastery, learningLoop.e2e and pyqEligibility — and they encode
+ * real behaviour about the mastery EMA and node-eligibility rules that is worth keeping under
+ * test. It is a single-attempt reference implementation and a test seam, not a production writer.
+ *
+ * If a genuine single-attempt use case ever appears (a one-off practice question outside a
+ * submission, say), it must first be reconciled with the subscriber's idempotency scheme, or the
+ * two will double-count the moment both are live.
+ *
+ * ── BEHAVIOUR ─────────────────────────────────────────────────────────────────────────────
  * Returns a structured outcome rather than throwing: an attempt with no canonical node is an
  * ordinary, expected situation — most content is not mapped yet — and the caller needs to store
  * the attempt regardless. Only the mastery contribution is withheld.

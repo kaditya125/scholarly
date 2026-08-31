@@ -52,6 +52,12 @@ export function registerEventSubscribers(): { registered: boolean } {
   // same document. Measured: the per-question approach persisted 4 graded answers as 2 attempts,
   // because concurrent transactions on one concept contended and the losers were discarded.
   //
+  // THIS SUBSCRIBER IS THE ONLY MASTERY WRITER. nodeMastery.service exports a per-attempt
+  // recordAttemptMastery() that writes the same store with the same masteryKeyForNode derivation
+  // but a different idempotency key, so the two cannot dedupe against each other. It is kept as a
+  // reference implementation and test seam and must not be wired alongside this — see the
+  // SUPERSEDED note above it, which records the measurement that made per-submission the choice.
+  //
   // learning.question_answered is still emitted for realtime consumers, but note carefully:
   // it is NOT durable and is NOT what makes mastery recomputable. It is a transient message on an
   // at-most-once bus with no persistence, replay or acknowledgement — if delivery fails it is gone.
