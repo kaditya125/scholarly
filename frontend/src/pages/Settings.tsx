@@ -694,7 +694,7 @@ export default function Settings() {
                   </div>
                 </div>
 
-                {/* 7-Day Money-Back Guarantee Banner (Aligned with Sadhya sleek theme) */}
+                {/* 7-Day 100% Refund Policy Banner */}
                 {isEligibleFor7DayRefund && (
                   <div className="mt-5 p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/90 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
                     <div className="flex items-start gap-3">
@@ -703,13 +703,16 @@ export default function Settings() {
                       </div>
                       <div>
                         <div className="text-[13.5px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                          <span>7-Day Money-Back Guarantee</span>
+                          <span>7-Day 100% Refund Policy</span>
                           <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#8ba32b]/15 dark:bg-[#c8e558]/15 text-[#6b7c25] dark:text-[#c8e558]">
                             {daysLeftInGuarantee} {daysLeftInGuarantee === 1 ? 'day' : 'days'} left
                           </span>
                         </div>
                         <div className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                          Not satisfied with your preparation? Claim a 100% full refund directly to your original payment method.
+                          Eligible Pro purchases can be refunded within 7 days directly to your original payment source.{' '}
+                          <Link to="/refunds" className="text-[#8ba32b] dark:text-[#c8e558] font-semibold underline hover:opacity-80">
+                            View Refund Terms
+                          </Link>
                         </div>
                       </div>
                     </div>
@@ -1223,10 +1226,10 @@ export default function Settings() {
                   </div>
                   <div>
                     <h3 className="text-[16px] font-bold text-slate-900 dark:text-white leading-tight">
-                      7-Day Money-Back Guarantee
+                      7-Day 100% Refund Policy
                     </h3>
                     <p className="text-[12px] text-slate-500 dark:text-gray-400">
-                      100% full refund to original payment source
+                      100% full refund directly to original payment source
                     </p>
                   </div>
                 </div>
