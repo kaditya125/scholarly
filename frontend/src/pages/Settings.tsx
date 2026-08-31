@@ -170,11 +170,16 @@ export default function Settings() {
   // 7-day money-back guarantee calculation
   const isEligibleFor7DayRefund = useMemo(() => {
     if (!isPro || !subInfo) return false;
+    // If order was already refunded or is an admin manual grant, do not show refund request button
+    if (subInfo.status === 'refunded' || subInfo.refundId) return false;
+    const matchingPayment = historyRows.find((h) => h.orderId === subInfo.orderId || h.paymentId === subInfo.paymentId);
+    if (matchingPayment && matchingPayment.status === 'refunded') return false;
+
     const activated = Number(subInfo.activatedAt || subInfo.createdAt || 0);
     if (!activated) return false;
     const diffMs = Date.now() - activated;
     return diffMs <= 7 * 24 * 60 * 60 * 1000;
-  }, [isPro, subInfo]);
+  }, [isPro, subInfo, historyRows]);
 
   const daysLeftInGuarantee = useMemo(() => {
     if (!subInfo) return 0;
