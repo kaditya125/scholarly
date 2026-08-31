@@ -443,7 +443,10 @@ export default function Checkout() {
           </div>
 
           <p className="text-[11.5px] text-slate-400 dark:text-slate-500 mt-3 text-right">
-            By checking out you agree to Sadhya terms and our 7-day money-back guarantee.
+            By checking out you agree to Sadhya terms and our{' '}
+            <Link to="/refunds" className="text-[#8ba32b] dark:text-[#c8e558] underline font-semibold hover:opacity-80">
+              7-Day 100% Refund Policy
+            </Link>.
           </p>
         </div>
 

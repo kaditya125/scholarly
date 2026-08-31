@@ -133,7 +133,7 @@ const TOPIC_CHIPS = [
   { label: 'All Questions', prompt: 'What is Sadhya and how does it help students and teachers?' },
   { label: 'For Students', prompt: 'What AI learning tools does Sadhya offer for students?' },
   { label: 'For Teachers', prompt: 'How can teachers create classes and earn on Sadhya?' },
-  { label: 'Pricing & Refunds', prompt: 'What is the pricing for Sadhya and what is the refund guarantee?' },
+  { label: 'Pricing & Refunds', prompt: 'What is the pricing for Sadhya and how does the 7-Day 100% Refund Policy work?' },
   { label: 'AI Features', prompt: 'Tell me about Sadhya OCR scanner and Podcast Studio.' }
 ];
 
@@ -754,7 +754,7 @@ export function FloatingHelpdeskWidget({
                     <div className="w-full flex flex-col gap-1.5">
                       {[
                         "How does AI tutoring reason through step-by-step math?",
-                        "What is the 7-day unconditional money-back guarantee?",
+                        "How does the 7-Day 100% Refund Policy work?",
                         "How do teachers create live classes and get paid?"
                       ].map((prompt, idx) => (
                         <button

@@ -645,9 +645,9 @@ export default function PricingSection({
 
       {/* ── Footer notes ── */}
       <p className="mt-8 text-[12px] sm:text-[12.5px] leading-relaxed text-slate-500 dark:text-gray-400">
-        Payments are processed by Razorpay — card details never touch our servers. Includes 7-day money back guarantee. See our{' '}
-        <Link to="/refunds" className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white">
-          refunds &amp; cancellation policy
+        Payments are processed by Razorpay — card details never touch our servers. Backed by our{' '}
+        <Link to="/refunds" className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white font-semibold">
+          7-Day 100% Refund Policy
         </Link>{' '}
         and{' '}
         <Link to="/terms" className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white">

@@ -332,20 +332,20 @@ export const SADHYA_POLICIES: PolicySection[] = [
     title: 'Payments, Subscriptions & Refunds',
     badge: 'Billing & Plans',
     category: 'billing',
-    summary: 'Transparent Indian Rupee pricing, Free vs Pro tiers, anytime cancellation, and 7-day refund guarantee.',
+    summary: 'Transparent Indian Rupee pricing, Free vs Pro tiers, anytime cancellation, and 7-Day 100% Refund Policy.',
     lastUpdated: 'August 31, 2026',
     paragraphs: [
       {
         heading: '1. Free Tier & Pro Upgrades',
-        text: 'Sadhya provides robust free access to core AI tutoring, syllabus coverage tracking, and practice questions. Learners who desire unlimited AI chat tokens, advanced voice audio podcasts, full-length timed PYQ exam simulations, and priority model speeds can upgrade to Sadhya Pro.',
+        text: 'Sadhya provides generous free access to AI tutoring (100 msgs/mo), realtime voice (15 min/mo), document uploads (5/mo), podcast studio preview (1/mo), mock tests (3/mo), and 100% free unlimited official PYQs and community discussions. Learners who need higher capacity (up to 2,000 chat messages, 300 voice minutes, 100 documents, 25 podcasts, and 1,000 mock tests) can upgrade to Sadhya Pro.',
       },
       {
         heading: '2. Transparent INR Pricing via Razorpay',
-        text: 'Subscriptions are billed in Indian Rupees (INR) with all applicable taxes clearly stated before checkout. Payments are securely processed via Razorpay supporting UPI, Cards, and Net Banking.',
+        text: 'Subscriptions are billed in Indian Rupees (INR) at ₹199/month (Launch Rate) or ₹1,788/year (equivalent to ₹149/month). Payments are securely processed via Razorpay supporting UPI, Cards, and Net Banking.',
       },
       {
-        heading: '3. Cancel Anytime & 7-Day Refund Policy',
-        text: 'You can cancel your subscription at any time from Settings with no questions asked. If you are unsatisfied with your Pro subscription, you may request a full refund within 7 days of your initial purchase by contacting support@sadhya.app.',
+        heading: '3. Cancel Anytime & 7-Day 100% Refund Policy',
+        text: 'You can cancel your subscription at any time from Settings → Plan & Billing. If you are unsatisfied with your Pro subscription, you can trigger an instant 1-click refund directly in Settings within 7 days of your purchase.',
       },
     ],
   },

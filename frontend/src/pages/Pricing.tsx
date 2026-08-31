@@ -40,7 +40,7 @@ const FAQS: { q: string; a: ReactNode }[] = [
     q: 'How does yearly billing work?',
     a: (
       <>
-        Yearly is charged once up front at ₹{PRO_YEARLY_TOTAL_INR.toLocaleString('en-IN')} (just ₹149/mo) — a <strong>70% saving</strong> against the regular price of ₹5,088/yr. It covers twelve months of unlimited access from the day you pay, with a full 7-day refund guarantee.
+        Yearly is charged once up front at ₹{PRO_YEARLY_TOTAL_INR.toLocaleString('en-IN')} (just ₹149/mo) — save ₹600/year against regular launch annual pricing. It covers twelve months of Pro access from the day you pay, backed by our 7-Day 100% Refund Policy.
       </>
     ),
   },
