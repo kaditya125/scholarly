@@ -587,6 +587,256 @@ https://sadhya.app
   }
 
   /**
+   * Generates and dispatches a comprehensive, official Tax Invoice & Payment Receipt with thank-you welcome.
+   */
+  async sendPaymentReceiptEmail(params: {
+    email: string;
+    displayName?: string;
+    planName: string;
+    amountRupees: number;
+    billing?: 'monthly' | 'yearly' | 'one-time' | string;
+    orderId: string;
+    paymentId?: string;
+    method?: string;
+    currentPeriodEnd?: number;
+    orderType?: 'subscription' | 'class_purchase';
+    classTitle?: string;
+  }): Promise<boolean> {
+    const name = params.displayName?.trim() || 'Learner';
+    const amountStr = `₹${Number(params.amountRupees || 0).toLocaleString('en-IN')}`;
+    const invNo = String(params.paymentId || params.orderId || 'INV').replace(/[^a-zA-Z0-9_]/g, '');
+    const isYearly = params.billing === 'yearly';
+    const billingText = params.orderType === 'class_purchase' ? 'One-Time Enrollment' : (isYearly ? 'Yearly Membership' : 'Monthly Membership');
+    const paymentMethodText = params.method ? params.method.toUpperCase() : 'Razorpay (UPI / NetBanking / Cards)';
+    
+    const issueDateStr = new Date().toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+
+    const validUntilStr = params.currentPeriodEnd
+      ? new Date(params.currentPeriodEnd).toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      : isYearly
+      ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const subject = `Payment Confirmation: Welcome to Sadhya Pro (Receipt #${invNo})`;
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0f172a; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; width: 100%;">
+    <tr>
+      <td align="center" style="padding: 32px 16px 48px;">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 620px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03); text-align: left;">
+          
+          <!-- Top Brand Header -->
+          <tr>
+            <td style="padding: 28px 32px 24px; border-bottom: 1px solid #f1f5f9; background-color: #ffffff;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td>
+                    <a href="https://sadhya.app" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                      <img src="${this.iconUrl}" alt="" width="32" height="32" style="border-radius: 6px; vertical-align: middle; border: 0; display: inline-block;" />
+                      <span style="font-size: 20px; font-weight: 700; color: #0f172a; letter-spacing: -0.4px; margin-left: 8px; vertical-align: middle;">Sadhya<span style="color: #65a30d;">.</span></span>
+                    </a>
+                  </td>
+                  <td align="right">
+                    <span style="font-size: 11.5px; font-weight: 700; color: #166534; background-color: #dcfce7; padding: 5px 12px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.6px;">
+                      ✓ PAID &amp; ACTIVE
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Thank You Banner -->
+          <tr>
+            <td style="padding: 32px 32px 0;">
+              <h1 style="margin: 0 0 12px; font-size: 22px; font-weight: 700; color: #0f172a; letter-spacing: -0.4px; line-height: 1.3;">
+                Thank you for subscribing to Sadhya Pro!
+              </h1>
+              <p style="margin: 0 0 16px; font-size: 15px; line-height: 1.6; color: #334155;">
+                Hello <strong>${name}</strong>,
+              </p>
+              <p style="margin: 0 0 24px; font-size: 14.5px; line-height: 1.6; color: #475569;">
+                Your payment was successfully verified. Your <strong>Sadhya Pro</strong> subscription is now active, giving you full access to unlimited curriculum-grounded AI reasoning, audio podcast studios, adaptive mock testing, and smart notebooks.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Official Invoice Table -->
+          <tr>
+            <td style="padding: 0 32px 28px;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px 24px;">
+                <tr>
+                  <td colspan="2" style="padding-bottom: 14px; border-bottom: 1px solid #e2e8f0;">
+                    <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b;">
+                      TAX INVOICE / RECEIPT
+                    </span>
+                    <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 4px;">
+                      #${invNo}
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 12px 0 6px; font-size: 13px; color: #64748b;">Plan / Item:</td>
+                  <td align="right" style="padding: 12px 0 6px; font-size: 13px; font-weight: 600; color: #0f172a;">${params.planName || 'Sadhya Pro'}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; font-size: 13px; color: #64748b;">Billing Cycle:</td>
+                  <td align="right" style="padding: 6px 0; font-size: 13px; font-weight: 600; color: #0f172a;">${billingText}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; font-size: 13px; color: #64748b;">Issue Date:</td>
+                  <td align="right" style="padding: 6px 0; font-size: 13px; font-weight: 600; color: #0f172a;">${issueDateStr}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; font-size: 13px; color: #64748b;">Active Through:</td>
+                  <td align="right" style="padding: 6px 0; font-size: 13px; font-weight: 600; color: #0f172a;">${validUntilStr}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; font-size: 13px; color: #64748b;">Payment Method:</td>
+                  <td align="right" style="padding: 6px 0; font-size: 13px; font-weight: 600; color: #0f172a;">${paymentMethodText}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; font-size: 13px; color: #64748b;">Payment ID:</td>
+                  <td align="right" style="padding: 6px 0; font-size: 12.5px; font-family: monospace; color: #475569;">${params.paymentId || params.orderId}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 14px 0 0; border-top: 1px solid #e2e8f0; font-size: 14px; font-weight: 700; color: #0f172a;">Total Amount Paid:</td>
+                  <td align="right" style="padding: 14px 0 0; border-top: 1px solid #e2e8f0; font-size: 18px; font-weight: 800; color: #0f172a;">${amountStr} <span style="font-size: 11px; font-weight: 500; color: #64748b;">(Incl. of taxes)</span></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Primary Actions -->
+          <tr>
+            <td style="padding: 0 32px 32px;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td>
+                    <a href="https://sadhya.app/dashboard" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 26px; border-radius: 8px; text-align: center;">
+                      Launch Sadhya Pro Workspace &rarr;
+                    </a>
+                  </td>
+                  <td align="right">
+                    <a href="https://sadhya.app/settings?tab=billing" target="_blank" rel="noopener noreferrer" style="font-size: 13px; font-weight: 600; color: #0284c7; text-decoration: underline;">
+                      View in Settings / Print Receipt &nearr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Pro Features Highlight -->
+          <tr>
+            <td style="padding: 0 32px 32px;">
+              <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; margin-bottom: 12px;">
+                Included With Your Membership:
+              </div>
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td style="padding: 6px 0; font-size: 13.5px; line-height: 1.5; color: #334155;">
+                    ⚡ <strong>Unlimited AI Tutoring:</strong> 6-step transparent reasoning traces with official syllabus grounding.
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; font-size: 13.5px; line-height: 1.5; color: #334155;">
+                    🎙️ <strong>Dual-Voice Podcast Studio:</strong> Turn any chapter, paper or notebook into two-voice audio discussions.
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; font-size: 13.5px; line-height: 1.5; color: #334155;">
+                    📸 <strong>Camera Snap &amp; Solve:</strong> Photo question derivations with step-by-step LaTeX math proofs.
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; font-size: 13.5px; line-height: 1.5; color: #334155;">
+                    🎯 <strong>Adaptive Mock Exams:</strong> Full-length baseline diagnostic assessments with mastery analysis.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Guarantee & Support Note -->
+          <tr>
+            <td style="padding: 0 32px 24px;">
+              <div style="background-color: #f1f5f9; border-radius: 8px; padding: 14px 18px; font-size: 12.5px; color: #475569; line-height: 1.5;">
+                🛡️ <strong>7-Day Money-Back Guarantee:</strong> We want you to love your preparation on Sadhya. If you ever need assistance or have billing inquiries, simply contact <a href="mailto:support@sadhya.app" style="color: #0f172a; font-weight: 600; text-decoration: underline;">support@sadhya.app</a>.
+              </div>
+            </td>
+          </tr>
+
+          <!-- Standard Compliance Footer -->
+          ${this.getStandardEmailFooter({
+            recipientEmail: params.email,
+            reason: `You received this payment confirmation and official receipt because a subscription purchase was completed for your account on Sadhya`,
+            showSecurityNotice: false,
+          })}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
+    const text = `
+Payment Confirmation — Sadhya Pro (Receipt #${invNo})
+=====================================================
+
+Hello ${name},
+
+Thank you for subscribing to Sadhya Pro! Your payment was verified and your Pro membership is now active.
+
+Invoice Details:
+- Receipt Number: #${invNo}
+- Plan: ${params.planName || 'Sadhya Pro'} (${billingText})
+- Amount Paid: ${amountStr} (Inclusive of taxes)
+- Issue Date: ${issueDateStr}
+- Active Through: ${validUntilStr}
+- Payment ID: ${params.paymentId || params.orderId}
+- Payment Method: ${paymentMethodText}
+
+Open your workspace: https://sadhya.app/dashboard
+Manage billing / print receipt: https://sadhya.app/settings?tab=billing
+
+Need help? Contact support@sadhya.app.
+
+Warm regards,
+Sadhya Team
+https://sadhya.app
+`;
+
+    const result = await this.sendEmail({
+      to: params.email,
+      toName: name,
+      subject,
+      html,
+      text,
+    });
+
+    return result.success;
+  }
+
+  /**
    * Forwards a contact form inquiry directly to the relevant internal alias (support, sales, etc.)
    */
   async sendContactInquiryEmail(inquiry: {

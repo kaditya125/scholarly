@@ -107,6 +107,40 @@ export class PaymentsController {
     }
   };
 
+  /** Dispatches or re-sends the payment receipt email for an order owned by the user. */
+  public resendReceipt = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+      const orderId = String(req.params.orderId);
+      const owned = await paymentsService.getOrderStatus(orderId, userId);
+      if (!owned.found) {
+        return res.status(404).json({ code: 'ORDER_NOT_FOUND', error: 'Order not found.' });
+      }
+
+      const snap = await paymentsService.getUserPlan(userId);
+      const history = await paymentsService.getHistory(userId);
+      const order = history.find((h) => h.orderId === orderId);
+
+      const sent = await paymentsService.dispatchPaymentReceipt({
+        userId,
+        orderId,
+        paymentId: order?.paymentId || (owned as any)?.paymentId,
+        planName: order?.planName || 'Sadhya Pro (Launch Offer)',
+        amountRupees: order?.amountRupees || 199,
+        billing: order?.billing || 'monthly',
+        method: order?.method || undefined,
+        currentPeriodEnd: snap.subscription?.currentPeriodEnd,
+        orderType: (order?.orderType as any) || 'subscription',
+        classTitle: order?.orderType === 'class_purchase' ? order.planName : undefined,
+      });
+
+      res.json({ success: sent });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   /**
    * Records that the user dismissed Razorpay checkout. Only moves `created` -> `cancelled`, so
    * it can never overwrite a payment that actually completed — a dismissal racing a real
