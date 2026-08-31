@@ -52,10 +52,11 @@ export class PaymentsService {
   private withUserLock<T>(userId: string, fn: () => Promise<T>): Promise<T> {
     const prev = this.orderLocks.get(userId) ?? Promise.resolve();
     const run = prev.catch(() => undefined).then(fn);
-    this.orderLocks.set(userId, run.catch(() => undefined));
-    void run.finally(() => {
+    const cleanup = () => {
       if (this.orderLocks.get(userId) === undefined) this.orderLocks.delete(userId);
-    });
+    };
+    this.orderLocks.set(userId, run.catch(() => undefined));
+    run.then(cleanup, cleanup);
     return run;
   }
 
