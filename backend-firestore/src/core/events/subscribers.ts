@@ -21,6 +21,115 @@ import { masteryKeyForNode } from '../../services/learning/nodeMastery.service';
 let subscribersRegistered = false;
 
 /**
+ * One topic's graded outcome, normalised.
+ *
+ * The two completion events report a topic row differently — quiz_completed mirrors the persisted
+ * QuizAttempt (`correct` / `incorrect` / `unattempted` / `total`), test_completed reports
+ * `attempted` / `correct` / `skipped`. Both are true to the record they were computed from, so
+ * neither is reshaped at its publisher; they are normalised to this one shape here instead.
+ *
+ * Getting that wrong is not a subtle bug: feeding a quiz row to the test-shaped reader yields
+ * `Array(undefined - correct)` → `Array(NaN)` → RangeError, and the student's evidence is dropped
+ * inside a catch. The normaliser at each subscribe site is what prevents that.
+ */
+interface MasteryEvidenceRow {
+  topic: string;
+  /** Questions the student actually answered. Skipped/unattempted are EXCLUDED by the caller. */
+  attempted: number;
+  correct: number;
+  syllabusNodeId?: string;
+  identityStatus?: 'CANONICAL' | 'UNANCHORED';
+}
+
+/**
+ * Applies one submission's graded evidence to mastery. THE single mastery write path.
+ *
+ * Extracted from the test_completed subscriber so quiz_completed can reuse it verbatim rather
+ * than growing a second implementation. Two copies of this logic would drift on the keying rule,
+ * on the skip rule, or on the idempotency scope — and mastery is cumulative, so a drift does not
+ * announce itself; it just quietly produces a different number for one path than the other.
+ */
+async function applyMasteryEvidence(params: {
+  userId: string;
+  subject?: string;
+  submissionId?: string;
+  source: 'quiz' | 'test';
+  rows: MasteryEvidenceRow[];
+  eventId?: string;
+}): Promise<void> {
+  const { userId, subject, submissionId, source, rows, eventId } = params;
+  if (rows.length === 0) return;
+
+  for (const row of rows) {
+    const label = row.topic;
+    if (!label) continue;
+    // Skipped questions are deliberately excluded: not attempting is an avoidance/time signal,
+    // not evidence about knowledge, and counting them as failures would understate mastery for
+    // a student who simply ran out of time. Both callers subtract them before arriving here.
+    const events: Array<'quiz_correct' | 'quiz_incorrect'> = [
+      ...Array(Math.max(0, row.correct)).fill('quiz_correct' as const),
+      ...Array(Math.max(0, row.attempted - row.correct)).fill('quiz_incorrect' as const),
+    ];
+    if (events.length === 0) continue;
+
+    try {
+      /*
+       * ONE keying scheme, shared with the Stage 2 node-mastery service.
+       *
+       * Key on the canonical node when the evidence carries one, so mastery aggregates by
+       * syllabus location rather than by an LLM-invented label ("Algebra" would otherwise collide
+       * across every exam). Falls back to the label slug for unanchored evidence, which keeps
+       * legacy records working and distinguishable.
+       *
+       * An ABSENT node id means the question was never anchored — the validator at generation
+       * time (quizGenerator → validateSyllabusNodeId) refuses to produce a question for an
+       * INVALID node rather than degrading it to an unanchored one, so nothing malformed reaches
+       * this point. The label fallback is therefore honest evidence about an unanchored question,
+       * never a guessed syllabus location.
+       *
+       * This previously used slugifyConcept(nodeId), which ends in .slice(0, 120) — and the
+       * disambiguating fingerprint is the LAST segment of a canonical id, so any id over the cap
+       * would lose exactly what makes it unique. masteryKeyForNode is lossless and is now the
+       * only derivation.
+       */
+      const conceptKey = row.syllabusNodeId
+        ? masteryKeyForNode(row.syllabusNodeId)
+        : slugifyConcept(label);
+      // Scoped per concept: one submission writes several concept documents, so each needs its
+      // own idempotency key or the second topic would look already-processed.
+      const perTopicEventId = eventId ? `${eventId}#${conceptKey}` : undefined;
+      const { deduplicated } = await masteryEngine.recordBatch(
+        userId,
+        {
+          id: conceptKey,
+          title: label,
+          subject,
+          topic: label,
+          syllabusNodeId: row.syllabusNodeId,
+        },
+        events,
+        perTopicEventId,
+      );
+      logger.info('[Mastery] submission evidence applied', {
+        studentId: userId, submissionId, source,
+        topic: label, attempts: row.attempted, correct: row.correct,
+        deduplicated, eventId,
+        // Lets us answer "what share of new evidence is canonical?" without trawling documents.
+        identityStatus: row.identityStatus || 'UNANCHORED',
+        syllabusNodeId: row.syllabusNodeId,
+      });
+    } catch (err: any) {
+      // Logged loudly (MasteryEngine already logged the underlying failure) but not rethrown:
+      // one topic failing to record must not fail the student's submission. Recovery comes from
+      // the durable Firestore evidence via reconciliation, NOT from the transient events.
+      logger.error('[EventBus] mastery batch failed for topic; evidence NOT recorded', {
+        userId, topic: label, submissionId, source, error: err?.message,
+      });
+    }
+  }
+}
+
+/**
  * Registers every domain event subscriber. Safe to call more than once: subsequent calls are
  * no-ops and report `registered: false`, so a second bootstrap path (or a stray import) cannot
  * silently double-deliver.
@@ -49,13 +158,14 @@ export function registerEventSubscribers(): { registered: boolean } {
   // a no-op until deliberately turned on. The gate is now PER STUDENT (see masteryGate): the
   // ENABLE_MASTERY env var still enables everyone, and with it unset only students named in the
   // `mastery` flag document are written — which is what makes a first enablement containable.
-  // Mastery is aggregated ONCE PER SUBMISSION, from test_completed's topicBreakdown — not once
-  // per question. A submission already contains the complete result set, so folding a topic's
+  // Mastery is aggregated ONCE PER SUBMISSION, from the completion event's topicBreakdown — not
+  // once per question. A submission already contains the complete result set, so folding a topic's
   // outcomes into a single atomic write is both correct and simpler than N writes racing on the
   // same document. Measured: the per-question approach persisted 4 graded answers as 2 attempts,
   // because concurrent transactions on one concept contended and the losers were discarded.
   //
-  // THIS SUBSCRIBER IS THE ONLY MASTERY WRITER. nodeMastery.service exports a per-attempt
+  // TWO SUBSCRIBERS, ONE WRITER. Both completion events below funnel into applyMasteryEvidence,
+  // which is the only function in the process that writes mastery. nodeMastery.service exports a per-attempt
   // recordAttemptMastery() that writes the same store with the same masteryKeyForNode derivation
   // but a different idempotency key, so the two cannot dedupe against each other. It is kept as a
   // reference implementation and test seam and must not be wired alongside this — see the
@@ -68,80 +178,73 @@ export function registerEventSubscribers(): { registered: boolean } {
   //
   // The durable source of truth is the persisted attempt/graded-result document in Firestore.
   // Mastery is a PROJECTION rebuildable from that, which is what makes reconciliation possible.
+  /*
+   * Per-student gate on BOTH paths, not just the process-wide env var. ENABLE_MASTERY=true still
+   * enables everyone; with it unset, only students named in the `mastery` flag document are
+   * written. That makes a first enablement containable — the write path has never run against
+   * real traffic, and mastery is cumulative evidence about real people. Shared with
+   * baselineReconciliation via one derivation so the three sites cannot disagree.
+   *
+   * The gate is checked per event, against the userId ON THE EVENT, which is itself derived from
+   * the authenticated submission (quiz: the verified token uid; test: the attempt's owner, now
+   * verified against the token uid before grading). Mastery is written to
+   * users/{that uid}/mastery/{key} — never a shared or global document — so one student's
+   * submission can only ever move their own record.
+   */
   eventBus.subscribe('learning.test_completed', async (payload, meta) => {
-    /*
-     * Per-student gate, not just the process-wide env var. ENABLE_MASTERY=true still enables
-     * everyone; with it unset, only students named in the `mastery` flag document are written.
-     * That makes a first enablement containable — the write path has never run against real
-     * traffic, and mastery is cumulative evidence about real people. Shared with
-     * baselineReconciliation via one derivation so the two cannot disagree.
-     */
     if (!(await isMasteryEnabledFor(payload.userId))) return;
-    const breakdown = payload.topicBreakdown || [];
-    if (breakdown.length === 0) return;
+    await applyMasteryEvidence({
+      userId: payload.userId,
+      subject: payload.subject,
+      submissionId: payload.attemptId,
+      source: 'test',
+      eventId: meta?.eventId,
+      // Already shaped as attempted/correct; `skipped` is excluded by construction.
+      rows: (payload.topicBreakdown || []).map((r) => ({
+        topic: r.topic,
+        attempted: r.attempted,
+        correct: r.correct,
+        syllabusNodeId: r.syllabusNodeId,
+        identityStatus: r.identityStatus,
+      })),
+    });
+  });
 
-    for (const row of breakdown) {
-      const label = row.topic;
-      if (!label) continue;
-      // Skipped questions are deliberately excluded: not attempting is an avoidance/time signal,
-      // not evidence about knowledge, and counting them as failures would understate mastery for
-      // a student who simply ran out of time.
-      const events: Array<'quiz_correct' | 'quiz_incorrect'> = [
-        ...Array(row.correct).fill('quiz_correct' as const),
-        ...Array(Math.max(0, row.attempted - row.correct)).fill('quiz_incorrect' as const),
-      ];
-      if (events.length === 0) continue;
-
-      try {
-        // Key on the canonical node when the evidence carries one, so mastery aggregates by
-        // syllabus location rather than by an LLM-invented label ("Algebra" would otherwise
-        // collide across every exam). Falls back to the label slug for unanchored evidence,
-        // which keeps legacy records working and distinguishable.
-        /*
-         * ONE keying scheme, shared with the Stage 2 node-mastery service.
-         *
-         * This previously used slugifyConcept(nodeId), which ends in .slice(0, 120) — and the
-         * disambiguating fingerprint is the LAST segment of a canonical id, so any id over the cap
-         * would lose exactly what makes it unique. More immediately, it produced a DIFFERENT
-         * document key than nodeMastery.service writes for the same node, so the same syllabus
-         * location could accumulate two separate mastery records depending on which path recorded
-         * the evidence. masteryKeyForNode is lossless and is now the only derivation.
-         */
-        const conceptKey = row.syllabusNodeId
-          ? masteryKeyForNode(row.syllabusNodeId)
-          : slugifyConcept(label);
-        // Scoped per concept: one submission writes several concept documents, so each needs its
-        // own idempotency key or the second topic would look already-processed.
-        const perTopicEventId = meta?.eventId ? `${meta.eventId}#${conceptKey}` : undefined;
-        const { deduplicated } = await masteryEngine.recordBatch(
-          payload.userId,
-          {
-            id: conceptKey,
-            title: label,
-            subject: payload.subject,
-            topic: label,
-            syllabusNodeId: row.syllabusNodeId,
-          },
-          events,
-          perTopicEventId,
-        );
-        logger.info('[Mastery] submission evidence applied', {
-          studentId: payload.userId, submissionId: payload.attemptId,
-          topic: label, attempts: row.attempted, correct: row.correct,
-          deduplicated, eventId: meta?.eventId,
-          // Lets us answer "what share of new evidence is canonical?" without trawling documents.
-          identityStatus: row.identityStatus || 'UNANCHORED',
-          syllabusNodeId: row.syllabusNodeId,
-        });
-      } catch (err: any) {
-        // Logged loudly (MasteryEngine already logged the underlying failure) but not rethrown:
-        // one topic failing to record must not fail the student's submission. Recovery comes from
-        // the durable Firestore evidence via reconciliation, NOT from the transient events.
-        logger.error('[EventBus] mastery batch failed for topic; evidence NOT recorded', {
-          userId: payload.userId, topic: label, attemptId: payload.attemptId, error: err?.message,
-        });
-      }
-    }
+  /*
+   * ── THE LIVE STUDENT PATH ────────────────────────────────────────────────────────────────
+   * This is the event a real student produces. The frontend submits to /quiz/attempts/:id/submit
+   * (frontend/src/lib/api/quiz.ts), which reaches quizAttempts.submitAttempt and publishes
+   * quiz_completed. Mastery previously subscribed ONLY to test_completed — an event published by
+   * the tests subsystem and by baseline reconciliation, neither of which is on the path a student
+   * actually walks. The consequence was silent and total: every real quiz produced an event that
+   * the mastery engine never saw, so enabling ENABLE_MASTERY would have looked like a clean
+   * rollout and written nothing for anyone.
+   *
+   * NO DOUBLE COUNTING. These two events are published from disjoint sources over disjoint
+   * attempt collections — quiz_completed only from quizAttempts.submitAttempt (quiz_attempts),
+   * test_completed only from resultAnalysis.processSubmission (test_attempts) and baseline
+   * reconciliation. One submission produces exactly one of them, never both. Should that ever
+   * change, the eventId prefixes keep the id spaces disjoint and recordBatch dedupes per
+   * (concept, eventId) inside the write transaction, so a redelivery of either is discarded.
+   */
+  eventBus.subscribe('learning.quiz_completed', async (payload, meta) => {
+    if (!(await isMasteryEnabledFor(payload.userId))) return;
+    await applyMasteryEvidence({
+      userId: payload.userId,
+      subject: payload.subject,
+      submissionId: payload.attemptId,
+      source: 'quiz',
+      eventId: meta?.eventId,
+      rows: (payload.topicBreakdown || []).map((r) => ({
+        topic: r.topic,
+        // attempted = answered questions only. `unattempted` is dropped here rather than inside
+        // applyMasteryEvidence, so the skip rule is applied identically to both shapes.
+        attempted: (r.correct || 0) + (r.incorrect || 0),
+        correct: r.correct,
+        syllabusNodeId: r.syllabusNodeId,
+        identityStatus: r.identityStatus,
+      })),
+    });
   });
 
   eventBus.subscribe('podcast.completed', async (payload) => {

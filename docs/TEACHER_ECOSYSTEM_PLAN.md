@@ -49,8 +49,14 @@ as designed when it does not exist).
    misleading.
 2. **`connections` has no rule at all** — also deny-all by default, but undocumented.
 3. **`studyGroup.addMember(groupId, ownerId, targetUserId, role)`** is a consent-free direct add.
-4. **`POST /tests/attempts/:attemptId/submit`** carries no `enforceSelf` or ownership guard in the
-   route definition, unlike its siblings. Worth confirming the controller checks it.
+4. ~~**`POST /tests/attempts/:attemptId/submit`** carries no `enforceSelf` or ownership guard in the
+   route definition, unlike its siblings.~~ **CLOSED.** The controller did NOT check it — confirmed
+   by reading it, not assumed. `enforceSelf` was inapplicable (the path parameter is an attempt id,
+   so there was no user id to compare), so ownership moved into
+   `resultAnalysisService.processSubmission`, which now takes the authenticated uid as a REQUIRED
+   argument and returns 404 — not 403 — when the attempt is missing or belongs to someone else.
+   404 both ways so the endpoint cannot be used as an existence oracle. Pinned by
+   `tests/unit/testAttemptOwnership.test.ts`.
 
 ---
 
@@ -209,7 +215,8 @@ Hard invariants:
   or any commission value. All are Admin-SDK only.
 - Class analytics aggregate **only over ACTIVE edges** — never a platform-wide query. This is the
   one place where an implementation slip becomes a privacy breach rather than a bug.
-- `submitTestAttempt` ownership must be confirmed before class tests ship (defect 4).
+- ~~`submitTestAttempt` ownership must be confirmed before class tests ship (defect 4).~~ Closed —
+  ownership is enforced in `processSubmission` against the authenticated uid. This unblocks class tests.
 
 ---
 

@@ -114,7 +114,7 @@ This unblocks all calls made through the shared `api` client — **Notebook** CR
 ## Residual items (documented, not silently ignored)
 
 - **`assets.controller` `updateAsset`/`deleteAsset`/`regenerateAsset`** authenticate (route-level `requireAuth`) but do not yet verify notebook ownership of the target asset. Recommend applying `requireNotebookAccess()` to `assets.routes.ts` (the `:notebookId` param is present) — deferred to avoid untested behavior change; noted for follow-up.
-- **`tests` `submitTestAttempt(:attemptId)`** is authenticated but not attempt-ownership-checked (needs an attempt→owner lookup).
+- ~~**`tests` `submitTestAttempt(:attemptId)`** is authenticated but not attempt-ownership-checked (needs an attempt→owner lookup).~~ **FIXED.** `processSubmission(attemptId, userId)` now requires the authenticated uid and rejects a non-owner with 404 (matching the quiz path's convention, which does not disclose existence). It was reachable: the route is mounted and documented, so any authenticated caller holding another student's attempt id could grade that attempt — and the completion event it publishes is stamped with the attempt owner's uid, so with mastery enabled the write would have landed on the victim's record.
 - **`users/:userId/stats`** is now self-scoped via `enforceSelf`. If a public-profile feature is intended, expose a separate sanitized endpoint rather than relaxing this one.
 - **No admin provisioning flow** (`setCustomUserClaims`) still exists (Finding A6) — admins must be granted the `role` claim out of band. Not a code-injection fix; flagged for the roadmap.
 - **Rate limiting** remains in-memory (Finding B5) — addressed in the roadmap, not this phase.
