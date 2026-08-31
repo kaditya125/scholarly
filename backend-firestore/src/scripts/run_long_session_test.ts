@@ -3,6 +3,15 @@ import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import * as path from 'path';
 
+/*
+ * DI bootstrap. This script runs application services outside server.ts, so nothing else would
+ * populate the container — and an empty container fails through the same quiet degradation path
+ * a genuinely missing provider does. See core/di/probeBootstrap for the incident this prevents.
+ */
+import { bootstrapForProbe } from '../core/di/probeBootstrap';
+bootstrapForProbe();
+
+
 process.env.NODE_ENV = 'staging';
 
 const TURNS = [1, 10, 50, 100, 500];

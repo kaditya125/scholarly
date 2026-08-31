@@ -5,6 +5,15 @@ import { logger } from '../utils/logger';
 import { env } from '../config/env';
 import { startNotificationWorker, notificationWorker } from '../core/workflow/jobs/NotificationWorker';
 
+/*
+ * DI bootstrap. This script runs application services outside server.ts, so nothing else would
+ * populate the container — and an empty container fails through the same quiet degradation path
+ * a genuinely missing provider does. See core/di/probeBootstrap for the incident this prevents.
+ */
+import { bootstrapForProbe } from '../core/di/probeBootstrap';
+bootstrapForProbe();
+
+
 const connection = { url: env.REDIS_URL || 'redis://localhost:6379' };
 const queueEvents = new QueueEvents('notification-jobs', { connection });
 

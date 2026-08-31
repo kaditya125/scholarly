@@ -2,6 +2,15 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { db } from '../config/firebase'; // Admin SDK
 import { logger } from '../utils/logger';
 
+/*
+ * DI bootstrap. This script runs application services outside server.ts, so nothing else would
+ * populate the container — and an empty container fails through the same quiet degradation path
+ * a genuinely missing provider does. See core/di/probeBootstrap for the incident this prevents.
+ */
+import { bootstrapForProbe } from '../core/di/probeBootstrap';
+bootstrapForProbe();
+
+
 // Note: To truly test client SDK rules, we'd need @firebase/rules-unit-testing.
 // But we can simulate the verification of the rules logically by ensuring the 
 // Admin API endpoints properly enforce RBAC.
