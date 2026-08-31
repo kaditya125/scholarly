@@ -5,6 +5,7 @@ import { env } from '../config/env';
 import { classRepository } from '../repositories/class.repository';
 import { enrollmentService } from './enrollment.service';
 import { earningsService } from './earnings.service';
+import { zeptoMailService } from './email/zeptoMail.service';
 
 type CodedError = Error & { code: string };
 const fail = (code: string, message: string): never => {
@@ -494,6 +495,20 @@ export class PaymentsService {
     });
 
     console.log(`[payments] ✅ Activated class purchase ${data.userId} → ${data.classId} (order ${orderId}, via ${source}).`);
+
+    // Asynchronously dispatch payment receipt email
+    void this.dispatchPaymentReceipt({
+      userId: data.userId,
+      orderId,
+      paymentId,
+      planName: data.className || 'Class Enrollment',
+      amountRupees: data.amountRupees || Math.round((data.amountPaise || 0) / 100),
+      billing: 'one-time',
+      method,
+      orderType: 'class_purchase',
+      classTitle: data.className,
+    });
+
     return { applied: true, userId: data.userId, classId: data.classId };
   }
 
@@ -592,7 +607,77 @@ export class PaymentsService {
       console.warn(`[payments] PRO_ENTITLEMENT_REPAIRED user=${data.userId} order=${orderId} (order was paid but entitlement was missing)`);
     }
     console.log(`[payments] PRO_ENTITLEMENT_ACTIVATED user=${data.userId} order=${orderId} via=${source}`);
+
+    // Asynchronously dispatch payment receipt and welcome email
+    void this.dispatchPaymentReceipt({
+      userId: data.userId,
+      orderId,
+      paymentId,
+      planName: data.planName || 'Sadhya Pro (Launch Offer)',
+      amountRupees: data.amountRupees || 199,
+      billing,
+      method,
+      currentPeriodEnd: now + periodMs,
+      orderType: 'subscription',
+    });
+
     return { upgraded: true, userId: data.userId };
+  }
+
+  /**
+   * Asynchronously dispatches a branded Tax Invoice & Payment Receipt email to the user.
+   * Catches errors so payment activation is never blocked if mail delivery fails.
+   */
+  async dispatchPaymentReceipt(params: {
+    userId: string;
+    orderId: string;
+    paymentId?: string;
+    planName: string;
+    amountRupees: number;
+    billing?: string;
+    method?: string;
+    currentPeriodEnd?: number;
+    orderType?: 'subscription' | 'class_purchase';
+    classTitle?: string;
+  }): Promise<boolean> {
+    try {
+      const userSnap = await db.collection('users').doc(params.userId).get();
+      if (!userSnap.exists) {
+        console.warn(`[payments] User ${params.userId} not found for receipt dispatch.`);
+        return false;
+      }
+      const userData = userSnap.data() as any;
+      const email = userData?.email;
+      if (!email) {
+        console.warn(`[payments] User ${params.userId} has no email on file; skipping receipt dispatch.`);
+        return false;
+      }
+
+      const displayName = userData?.displayName || userData?.name || email.split('@')[0];
+      const sent = await zeptoMailService.sendPaymentReceiptEmail({
+        email,
+        displayName,
+        planName: params.planName,
+        amountRupees: params.amountRupees,
+        billing: params.billing,
+        orderId: params.orderId,
+        paymentId: params.paymentId,
+        method: params.method,
+        currentPeriodEnd: params.currentPeriodEnd,
+        orderType: params.orderType,
+        classTitle: params.classTitle,
+      });
+
+      if (sent) {
+        console.log(`[payments] ✉️ Payment receipt email successfully sent to ${email} (order=${params.orderId})`);
+      } else {
+        console.warn(`[payments] ⚠️ Payment receipt dispatch returned false for ${email} (order=${params.orderId})`);
+      }
+      return sent;
+    } catch (err: any) {
+      console.error(`[payments] Failed to dispatch payment receipt email for user ${params.userId}:`, err?.message || err);
+      return false;
+    }
   }
 
   /** Returns the user's payment/invoice history (most recent first). */

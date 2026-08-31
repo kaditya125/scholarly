@@ -21,6 +21,7 @@ router.post('/create-order', requireAuth, controller.createOrder);
 // definite state instead of leaving the user guessing whether they were charged.
 router.get('/order/:orderId/status', requireAuth, controller.getOrderStatus);
 router.post('/order/:orderId/cancel', requireAuth, controller.cancelOrder);
+router.post('/resend-receipt/:orderId', requireAuth, controller.resendReceipt);
 
 router.post('/verify', requireAuth, controller.verifyPayment);
 router.post('/verify-payment', requireAuth, controller.verifyPayment);
