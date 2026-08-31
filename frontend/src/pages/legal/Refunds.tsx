@@ -1,22 +1,17 @@
 import { Link } from 'react-router-dom';
 import LegalPage, { P, UL, H3 } from '../../components/landing/LegalPage';
-import { SITE, PRO_MONTHLY_INR } from '../../lib/siteConfig';
+import { SITE, PRO_MONTHLY_INR, PRO_YEARLY_TOTAL_INR } from '../../lib/siteConfig';
 
 /**
  * Refunds & Cancellation policy.
- *
- * Razorpay's merchant-activation review requires a publicly reachable cancellation and
- * refund policy, so this page is a prerequisite for taking live payments, not a nicety.
- *
- * ⚠ The 7-day window and the "no pro-rata on partial periods" rule below are business
- * decisions, not facts read out of the codebase. Confirm both before launch — whatever is
- * published here is what you are bound to honour.
+ * Transparent, student-first terms covering self-service in-app refunds,
+ * Razorpay timelines (UPI vs Cards), and data preservation guarantees.
  */
 export default function Refunds() {
   return (
     <LegalPage
       title="Refunds & Cancellation"
-      intro="When you can cancel, when you can get your money back, and how long it takes."
+      intro="When you can cancel, when you can get your money back, how to trigger 1-click refunds, and how long it takes."
       sections={[
         {
           id: 'summary',
@@ -25,19 +20,21 @@ export default function Refunds() {
             <>
               <UL
                 items={[
-                  'Cancel whenever you like — you keep access until the end of the period you already paid for.',
-                  'New to Pro? If it isn’t for you, ask for a full refund within 7 days of your first payment.',
+                  'Cancel whenever you like — you retain complete Pro access until the end of the billing cycle you already paid for.',
+                  '7-Day 100% Refund Policy: If you are new to Pro and decide it isn’t right for you, request a 100% full refund within 7 days of your purchase.',
+                  'Self-Service 1-Click Refund: Trigger instant automated refunds directly from Settings → Plan & Billing without waiting for email support.',
+                  'Fast UPI & Card Refund Timelines: UPI refunds typically credit within 1–3 business days; Cards and Netbanking within 5–7 working days.',
+                  '100% Study Data Preserved: Refunding or cancelling never deletes your notebooks, study circles, community posts, or chat history. You simply revert to the generous Free tier.',
                   'Charged twice, or charged after cancelling? We refund that in full, always.',
-                  'Refunds go back to the method you paid with, typically within 5–7 working days.',
                 ]}
               />
               <P>
-                The rest of this page sets out the detail. If your situation isn&rsquo;t covered,
-                write to{' '}
-                <a href={`mailto:${SITE.email.support}`} className="underline underline-offset-2">
+                The rest of this page sets out the detailed terms and self-service procedures. If your situation is unique,
+                contact our support team at{' '}
+                <a href={`mailto:${SITE.email.support}`} className="underline underline-offset-2 font-semibold">
                   {SITE.email.support}
                 </a>{' '}
-                — we would rather sort it out than argue about it.
+                and we will resolve it promptly.
               </P>
             </>
           ),
@@ -48,113 +45,122 @@ export default function Refunds() {
           body: (
             <>
               <P>
-                You can cancel at any time from <strong className="font-semibold">Settings →
-                Billing</strong>, or by emailing{' '}
+                You can cancel your subscription at any time directly from <strong className="font-semibold">Settings → Plan &amp; Billing</strong>,
+                or by emailing{' '}
                 <a href={`mailto:${SITE.email.support}`} className="underline underline-offset-2">
                   {SITE.email.support}
                 </a>{' '}
-                from the address on your account.
+                from your registered account email.
               </P>
               <P>
-                Cancelling stops the next renewal. It does not end your current period — if you
-                cancel a monthly subscription on day 3, you keep Pro for the remaining days you paid
-                for, and are not charged again.
+                Cancelling stops all future recurring charges immediately. It does not prematurely terminate your active period — if you
+                cancel a monthly subscription on day 3, you keep your full Pro allowances (up to 2,000 AI Chat messages, 300 minutes of Voice,
+                100 document uploads, 25 podcasts, and 1,000 mock tests) for the remaining 27 days you already paid for.
               </P>
               <P>
-                Your account is not deleted when you cancel. You drop back to the free tier and keep
-                your notebooks, history and progress.
+                <strong className="font-semibold">Data Preservation Guarantee:</strong> Your account, study materials, smart notebooks,
+                saved flashcards, and community discussions are never deleted upon cancellation. You automatically drop back to the Free plan
+                (100 AI Chat messages/mo, 15 min Voice Tutoring/mo, 5 documents, 1 podcast, 3 AI mock tests, and unlimited PYQs).
               </P>
             </>
           ),
         },
         {
           id: 'refunds',
-          title: '3. When we refund',
+          title: '3. When we refund (7-Day 100% Refund Policy)',
           body: (
             <>
               <H3>First-time Pro purchase — 7 days</H3>
               <P>
-                If you are subscribing to Pro for the first time and decide within{' '}
-                <strong className="font-semibold">7 days</strong> of the payment that it isn&rsquo;t
-                right for you, tell us and we will refund it in full. You don&rsquo;t need to explain
-                why. This applies once per account.
+                If you subscribe to Sadhya Pro (Monthly at ₹{PRO_MONTHLY_INR} or Annual at ₹{PRO_YEARLY_TOTAL_INR.toLocaleString('en-IN')})
+                and decide within <strong className="font-semibold">7 calendar days</strong> of the transaction that it doesn’t meet your study needs,
+                you can claim a 100% full refund. No questions asked. This applies once per student account.
               </P>
 
-              <H3>Always refunded</H3>
+              <H3>Always refunded in full</H3>
               <UL
                 items={[
-                  'Duplicate charges for the same period.',
-                  'Any amount taken after you cancelled.',
-                  'A payment that was debited but where Pro was never activated on your account.',
-                  'Charges you did not authorise, once verified with the payment gateway.',
+                  'Duplicate charges resulting from gateway latency or multiple checkout submissions.',
+                  'Any automatic charge billed after you requested cancellation.',
+                  'Any payment successfully debited from your bank where Pro was not activated on your account.',
+                  'Unauthorized or fraudulent transactions, verified in coordination with Razorpay.',
                 ]}
               />
 
-              <H3>Service failure</H3>
+              <H3>Extended outage or service failure</H3>
               <P>
-                If a paid feature is unavailable for a prolonged period because of a fault on our
-                side, write to us. We will extend your subscription for the lost time or refund a
-                proportionate amount, whichever you prefer.
+                If core AI study tools or tutoring gateways experience extended downtime due to platform infrastructure faults,
+                we will automatically extend your subscription duration or issue a proportionate refund, based on your preference.
               </P>
             </>
           ),
         },
         {
           id: 'no-refund',
-          title: '4. When we don’t refund',
+          title: '4. When refunds are not applicable',
           body: (
             <>
               <UL
                 items={[
-                  'Part-used periods outside the 7-day window — we don’t pro-rate a month or a year you chose to buy, though you keep access to the end of it.',
-                  'Renewals you forgot to cancel where we gave notice before charging, beyond the correction window in section 3.',
-                  'Accounts terminated for a breach of our terms — for example sharing credentials or misusing the service.',
-                  'Dissatisfaction with an examination result, rank or admission outcome. Sadhya is a study aid and makes no promise about results.',
+                  'Refund requests submitted after the 7-day guarantee window from the transaction timestamp.',
+                  'Subsequent renewal cycles after the initial 7-day trial period.',
+                  'Accounts terminated due to severe violations of our Terms of Service (e.g., unauthorized scraping, commercial credential sharing, or abusive conduct).',
+                  'Dissatisfaction with an official competitive exam result, cutoff, or ranking. Sadhya is an AI-powered preparation companion and makes no guarantee of examination results.',
                 ]}
               />
               <P>
-                Annual plans bought at the discounted rate are covered by the same 7-day window as
-                monthly plans.
+                Annual subscriptions bought during promotional events are covered by the exact same 7-day refund window as monthly plans.
               </P>
             </>
           ),
         },
         {
           id: 'how',
-          title: '5. How to ask for a refund',
+          title: '5. How to claim a refund (Self-Service & Support)',
           body: (
             <>
+              <H3>Method 1: Instant Self-Service in Settings (Recommended)</H3>
               <P>
-                Email{' '}
-                <a href={`mailto:${SITE.email.support}`} className="underline underline-offset-2">
-                  {SITE.email.support}
-                </a>{' '}
-                from the address registered on your account, with:
+                For any purchase within the 7-day window, you do not need to wait for email replies:
               </P>
               <UL
                 items={[
-                  'the payment or order reference from your receipt,',
-                  'the date of the charge, and',
-                  'a line on what went wrong, if anything did.',
+                  'Go to Settings → Plan & Billing tab.',
+                  'Under your active subscription card, click the "Request 100% Refund" button.',
+                  'Confirm the refund dialog — the system automatically verifies eligibility, communicates with Razorpay, and triggers the refund transfer immediately.',
                 ]}
               />
+
+              <H3>Method 2: Support Email</H3>
               <P>
-                We acknowledge within 2 working days and decide within 7. If we approve it, the
-                refund is issued to the original payment method through Razorpay and normally
-                appears within 5–7 working days, depending on your bank. We do not refund to a
-                different account or by any other route.
+                Alternatively, email{' '}
+                <a href={`mailto:${SITE.email.support}`} className="underline underline-offset-2 font-semibold">
+                  {SITE.email.support}
+                </a>{' '}
+                with your registered account email and Razorpay payment ID (from your email receipt). We process email requests within 24–48 business hours.
+              </P>
+
+              <H3>Refund Processing Timelines</H3>
+              <UL
+                items={[
+                  'UPI (Google Pay, PhonePe, Paytm, BHIM): Typically credited to your bank account within 1–3 business days.',
+                  'Debit & Credit Cards: Typically reflects on your card statement within 5–7 working days, subject to your card issuer’s billing cycle.',
+                  'Netbanking: Credited to your bank account within 3–5 working days.',
+                ]}
+              />
+              <P className="text-xs text-slate-500 dark:text-gray-400">
+                All refunds are routed strictly through Razorpay back to the original source account. We never ask for your debit card PIN, OTP, or CVV.
               </P>
             </>
           ),
         },
         {
           id: 'institution',
-          title: '6. Institutional plans',
+          title: '6. Institutional & Coaching Batch plans',
           body: (
             <P>
-              Bulk and institutional subscriptions are governed by the signed agreement or purchase
-              order between us, which takes precedence over this page. For anything related to an
-              institutional invoice, contact{' '}
+              Bulk educator licenses, coaching centre batches, and school deployments are governed by their respective institutional contracts
+              or purchase orders. For billing adjustments or seat reallocations, please contact{' '}
               <a href={`mailto:${SITE.email.sales}`} className="underline underline-offset-2">
                 {SITE.email.sales}
               </a>
@@ -164,14 +170,13 @@ export default function Refunds() {
         },
         {
           id: 'prices',
-          title: '7. Prices and currency',
+          title: '7. Pricing, currency & taxes',
           body: (
             <P>
-              Pro is ₹{PRO_MONTHLY_INR} per month, with a discount for annual billing — the current
-              figures are always on the{' '}
-              <Link to="/pricing" className="underline underline-offset-2">pricing page</Link>. All
-              charges are in Indian Rupees and are collected by Razorpay. Your bank may apply its own
-              conversion or transaction fees, which we cannot refund.
+              Sadhya Pro is offered at <strong className="font-semibold">₹{PRO_MONTHLY_INR} per month</strong> (Launch Special rate)
+              or <strong className="font-semibold">₹{PRO_YEARLY_TOTAL_INR.toLocaleString('en-IN')} per year</strong> (equivalent to ₹149/month, saving ₹600/year).
+              All prices are in Indian Rupees (INR) and processed securely through Razorpay. Complete plan details and allowances are always accessible on the{' '}
+              <Link to="/pricing" className="underline underline-offset-2 font-semibold">pricing page</Link>.
             </P>
           ),
         },
