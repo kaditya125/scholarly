@@ -19,10 +19,7 @@ const FAQS: { q: string; a: ReactNode }[] = [
     q: 'Is the free plan actually usable, or is it a trial?',
     a: (
       <>
-        It&rsquo;s a real plan, not a countdown. The AI tutor, scan-and-solve, your notebooks,
-        practice quizzes and the adaptive baseline assessment are all available on Free, within
-        fair-use limits that exist to keep the service up for everyone. There is no expiry and no
-        card required.
+        It&rsquo;s a permanent free tier, not an expiring trial. Every month, free students receive <strong>100 AI Chat messages</strong>, <strong>15 minutes of Realtime Voice AI Tutoring</strong>, <strong>5 Document / PDF uploads</strong> (up to 10MB/file), <strong>1 AI Podcast Studio episode preview</strong>, and <strong>3 AI adaptive mock tests</strong>. In addition, official Past Year Questions (PYQs), Community forums, and Study Circles are <strong>100% Free and Unlimited</strong>. No credit card is required.
       </>
     ),
   },
@@ -30,9 +27,7 @@ const FAQS: { q: string; a: ReactNode }[] = [
     q: 'What exactly changes when I go Pro?',
     a: (
       <>
-        The fair-use ceiling lifts, the Podcast Studio and generated video lessons open up,
-        full-length adaptive mock tests with deep analytics are included, your jobs get priority
-        when the queue is busy, and support comes from a person rather than a help article.
+        Sadhya Pro expands your monthly allowance to <strong>up to 2,000 AI Chat messages</strong>, <strong>up to 300 minutes (5 full hours) of Realtime Voice Tutoring</strong>, <strong>up to 100 Document uploads</strong> (up to 50MB/file with full OCR), <strong>25 dual-voice AI Podcast Studio episodes</strong> with MP3 export, and <strong>up to 1,000 adaptive mock tests</strong> with deep diagnostic heatmaps. You also get GPU priority fast-lane routing and priority human support.
       </>
     ),
   },
@@ -48,7 +43,7 @@ const FAQS: { q: string; a: ReactNode }[] = [
     q: 'Can I cancel whenever I want?',
     a: (
       <>
-        Yes, directly from Settings → Billing, with zero hassle or emails. Cancelling stops the next renewal and you keep Pro until the end of the paid billing cycle. Your notes, notebooks, and test analytics remain safely saved on your Free account. The full detail is in our{' '}
+        Yes, directly from Settings → Plan &amp; Billing with a single click — zero emails or calls needed. Cancelling stops future renewals and you keep your Pro entitlements until the end of your paid billing period. All your notebooks, study history, and test analytics remain 100% safe on your Free account. Read our full{' '}
         <Link to="/refunds" className="underline underline-offset-2">refunds &amp; cancellation policy</Link>.
       </>
     ),
@@ -65,7 +60,7 @@ const FAQS: { q: string; a: ReactNode }[] = [
     q: 'What if I subscribe and don’t get on with it?',
     a: (
       <>
-        Ask us within 7 days of your payment and we&rsquo;ll refund it in full — no questions asked. Duplicate charges or accidental renewals are also refunded promptly upon request.
+        Under our <strong>7-Day 100% Refund Policy</strong>, you can request a full refund within 7 days of purchase directly in 1 click from <code>Settings → Plan &amp; Billing</code> or by emailing <a href="mailto:support@sadhya.app" className="underline">support@sadhya.app</a>. 100% of your payment is returned to your original payment method (UPI within 1–3 business days, cards/netbanking within 5–7 business days).
       </>
     ),
   },

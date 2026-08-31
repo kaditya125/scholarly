@@ -99,25 +99,32 @@ interface ComparisonCategory {
 
 const COMPARISON_CATEGORIES: ComparisonCategory[] = [
   {
-    title: 'AI Tutoring & Core Intelligence',
+    title: 'AI Tutoring, Voice & Core Intelligence',
     rows: [
       {
-        feature: 'Daily AI Tutoring Queries',
-        hint: 'Context-rich conversational turns with memory profile grounding',
-        free: '25 / day',
-        pro: 'Unlimited',
-        institution: 'Unlimited',
+        feature: 'Monthly AI Chat & Doubt Solving',
+        hint: 'Context-rich conversational turns with multi-stage reasoning traces',
+        free: '100 / month',
+        pro: 'Up to 2,000 / month',
+        institution: 'Custom Cohort Volume',
+      },
+      {
+        feature: 'Realtime Voice AI Tutoring',
+        hint: 'Live spoken conversation with instant spoken explanations and doubt resolution',
+        free: '15 min / month',
+        pro: 'Up to 300 min (5 hrs) / month',
+        institution: 'Unlimited Voice Seats',
       },
       {
         feature: 'Multi-Stage Reasoning Traces',
-        hint: 'Step-by-step transparent thought process showing logic and SCERT graph traversal',
+        hint: 'Step-by-step transparent thought process showing logic and formula derivations',
         free: true,
         pro: true,
         institution: true,
       },
       {
         feature: 'Official Syllabus Grounding',
-        hint: 'RAG verification against official gazette notices (SSC, UPSC, JEE, NEET, Banking, State PSCs)',
+        hint: 'RAG verification against official exam notices (SSC, UPSC, JEE, NEET, Banking, State PSCs)',
         free: true,
         pro: true,
         institution: 'Canonical + Custom Bank',
@@ -125,9 +132,9 @@ const COMPARISON_CATEGORIES: ComparisonCategory[] = [
       {
         feature: 'Camera Snap & Solve OCR',
         hint: 'Photo-to-solution for printed or handwritten questions with LaTeX math',
-        free: '10 / day',
-        pro: 'Unlimited',
-        institution: 'Unlimited',
+        free: true,
+        pro: true,
+        institution: true,
       },
       {
         feature: 'Multi-LLM Flagship Routing',
@@ -151,9 +158,9 @@ const COMPARISON_CATEGORIES: ComparisonCategory[] = [
       {
         feature: 'Dual-Voice AI Podcast Studio',
         hint: 'Turns any topic, syllabus module, or uploaded PDF into 2-speaker audio conversations',
-        free: '3 preview / mo',
-        pro: 'Unlimited Studio',
-        institution: 'Unlimited + Voice Cloning',
+        free: '1 episode / month (preview)',
+        pro: '25 episodes / month',
+        institution: 'Custom Cohort Volume',
       },
       {
         feature: 'MP3 Podcast Download & Offline Play',
@@ -165,7 +172,7 @@ const COMPARISON_CATEGORIES: ComparisonCategory[] = [
       {
         feature: 'AI Video Lesson Generator',
         hint: 'Synthesizes structured animated video lessons with voice narration and slides',
-        free: 'Preview only',
+        free: 'Preview mode',
         pro: 'Full Generator',
         institution: 'Full + Batch Export',
       },
@@ -189,17 +196,17 @@ const COMPARISON_CATEGORIES: ComparisonCategory[] = [
     title: 'Adaptive Mock Tests & Assessment',
     rows: [
       {
-        feature: 'Topic-wise PYQ Practice Sets',
+        feature: 'Official Topic-wise PYQ Practice Sets',
         hint: 'Official past year question bank with instant detailed solutions',
-        free: '5 tests / day',
-        pro: 'Unlimited',
-        institution: 'Unlimited',
+        free: 'Unlimited Free',
+        pro: 'Unlimited Free',
+        institution: 'Unlimited Free',
       },
       {
-        feature: 'Full-Length Adaptive Mock Tests',
-        hint: 'Exact exam interface, timed sections, negative marking, and real-time difficulty adaptation',
-        free: '1 baseline mock',
-        pro: 'Unlimited Mocks',
+        feature: 'Full-Length Adaptive AI Mock Tests',
+        hint: 'Exam interface, timed sections, negative marking, and real-time difficulty adaptation',
+        free: '3 AI tests / month',
+        pro: 'Up to 1,000 / month',
         institution: 'Custom Test Series',
       },
       {
@@ -222,18 +229,18 @@ const COMPARISON_CATEGORIES: ComparisonCategory[] = [
     title: 'Smart Notebooks & Document Hub',
     rows: [
       {
-        feature: 'Smart Document Notebooks',
+        feature: 'Monthly Document / PDF Uploads',
         hint: 'Dedicated RAG workspaces grounded strictly in your syllabus or notes',
-        free: '3 Notebooks',
-        pro: 'Unlimited',
+        free: '5 documents / month',
+        pro: 'Up to 100 documents / month',
         institution: 'Unlimited Shared',
       },
       {
-        feature: 'Max PDF Upload Size',
+        feature: 'Max PDF Upload File Size',
         hint: 'Upload coaching modules, handwritten scans, or standard reference books',
-        free: '25 MB / file',
-        pro: '200 MB / file',
-        institution: '500 MB / file',
+        free: '10 MB / file',
+        pro: '50 MB / file (with OCR)',
+        institution: '100 MB / file',
       },
       {
         feature: 'Exact Document Citations & Page Jump',
@@ -252,8 +259,15 @@ const COMPARISON_CATEGORIES: ComparisonCategory[] = [
     ],
   },
   {
-    title: 'Automation & Productivity Workflows',
+    title: 'Community, Study Circles & Automation',
     rows: [
+      {
+        feature: 'Community Forums & Peer Chat',
+        hint: 'Discussion boards, doubt groups, study circles, and national leaderboards',
+        free: 'Unlimited Free',
+        pro: 'Unlimited Free',
+        institution: 'Custom Cohort Circles',
+      },
       {
         feature: 'Automation Studio Revision Workflows',
         hint: 'Scheduled daily spaced-repetition quizzes delivered automatically to your dashboard',
@@ -267,13 +281,6 @@ const COMPARISON_CATEGORIES: ComparisonCategory[] = [
         free: 'Static plan',
         pro: 'Adaptive Real-Time',
         institution: 'Batch Calendar Sync',
-      },
-      {
-        feature: 'Private Study Rooms & Collaborative Notes',
-        hint: 'Host real-time study sessions with friends with shared AI notes and whiteboard',
-        free: 'Join only',
-        pro: 'Host & Manage',
-        institution: 'Virtual Classrooms',
       },
     ],
   },
@@ -290,15 +297,15 @@ const COMPARISON_CATEGORIES: ComparisonCategory[] = [
       {
         feature: 'Customer Support',
         hint: 'Direct assistance for questions, study guidance, and platform help',
-        free: 'Community & Guide',
+        free: 'Community & AI Guide',
         pro: 'Priority Human Support',
         institution: 'Dedicated Account Lead',
       },
       {
-        feature: 'Refund Guarantee',
-        hint: 'No questions asked money-back window',
+        feature: 'Refund Policy',
+        hint: '100% full refund directly to original payment source with 1-click self-service',
         free: '—',
-        pro: '7-Day Full Refund',
+        pro: '7-Day 100% Refund Policy',
         institution: 'Custom SLA Contract',
       },
     ],
