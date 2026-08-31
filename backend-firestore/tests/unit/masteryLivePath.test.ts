@@ -101,11 +101,13 @@ import { masteryKeyForNode } from '../../src/services/learning/nodeMastery.servi
 import { slugifyConcept } from '../../src/core/intelligence/MasteryEngine';
 
 /*
- * The first submission pays a one-off module-load cost (firebase-admin, the syllabus graph chain
- * pulled in by nodeMastery.service) that exceeds jest's 5s default. Every later test in the file
- * runs in milliseconds; this raises the ceiling rather than masking a slow code path.
+ * The first submission pays a one-off warm-up cost (firebase-admin init and the syllabus graph
+ * chain pulled in by nodeMastery.service) that exceeds jest's 5s default, and grows further when
+ * this file runs in parallel with other suites on a loaded machine. beforeAll absorbs that cost
+ * on a throwaway attempt so no `it` is measuring module load, and the ceiling is generous enough
+ * to survive worker contention. Warm, every test here runs in milliseconds.
  */
-jest.setTimeout(30000);
+jest.setTimeout(120000);
 
 const STUDENT_A = 'student-a-uid';
 const STUDENT_B = 'student-b-uid';
@@ -153,9 +155,17 @@ const flush = async () => {
 
 const record = (userId: string, key: string) => mockRecords.get(mockRecordKey(userId, key));
 
-beforeAll(() => {
+beforeAll(async () => {
   // The real bootstrap registration — the same call server.ts makes.
   registerEventSubscribers();
+
+  // Warm-up on a throwaway user/attempt, then discard its state. Not an assertion — it exists so
+  // the first real test is not the one paying for module initialisation.
+  mockQuizAttempts.set('warmup', buildAttempt('warmup', 'warmup-uid'));
+  await quizAttemptsService.submitAttempt('warmup-uid', 'warmup', { answers: ANSWERS }).catch(() => {});
+  await flush();
+  mockRecords.clear();
+  mockQuizAttempts.clear();
 });
 
 beforeEach(() => {
