@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { paymentsService } from '../services/payments.service';
+import { usageService } from '../services/usage.service';
 
 export class PaymentsController {
   /** Public config so the frontend knows whether payments are enabled + the public key id. */
@@ -269,6 +270,20 @@ export class PaymentsController {
       // Log but still 200 so Razorpay doesn't hammer retries on a transient error we've recorded.
       console.error('[payments] webhook handling error:', error?.message || error);
       res.status(200).json({ received: true });
+    }
+  };
+
+  /** Returns user's monthly usage, limits, and reset dates across all metered features. */
+  public getUsage = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const summary = await usageService.getUsageSummary(userId);
+      res.json(summary);
+    } catch (error: any) {
+      console.error('[payments] getUsage failed:', error?.message || error);
+      next(error);
     }
   };
 }

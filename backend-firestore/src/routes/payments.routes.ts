@@ -13,6 +13,7 @@ router.post('/webhook', controller.webhook);
 
 // Authenticated user actions.
 router.get('/subscription', requireAuth, controller.getSubscription);
+router.get('/usage', requireAuth, controller.getUsage);
 router.get('/history', requireAuth, controller.getHistory);
 router.post('/order', requireAuth, controller.createOrder);
 router.post('/create-order', requireAuth, controller.createOrder);

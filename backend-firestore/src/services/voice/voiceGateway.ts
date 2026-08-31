@@ -23,6 +23,7 @@ import { env } from '../../config/env';
 import { paymentsService } from '../payments.service';
 import { VOICE_TOOL_DECLARATIONS, executeVoiceTool } from './voiceTools';
 import { beginSession, accrue, endSession, voiceQuotaLimits } from './voiceQuota';
+import { usageService } from '../usage.service';
 import { SADHYA_FOUNDER_KNOWLEDGE_VOICE } from '../knowledge/founderKnowledge';
 
 /** Verified against this project on 2026-08-25 by enumerating models.list(). */
@@ -181,7 +182,7 @@ export function attachVoiceGateway(server: Server) {
   const limits = voiceQuotaLimits();
   log('GATEWAY_ATTACHED', {
     path: '/voice', model: VOICE_MODEL, accessMode: ACCESS_MODE,
-    dailySeconds: limits.dailySeconds, dailySessions: limits.dailySessions,
+    minStartGapMs: limits.minStartGapMs,
   });
 
   wss.on('connection', (ws: WebSocket) => {
@@ -340,6 +341,9 @@ export function attachVoiceGateway(server: Server) {
                     inputSampleRate: INPUT_SAMPLE_RATE,
                     // Lets the UI show time remaining instead of cutting the student off unheralded.
                     remainingSeconds: decision.remaining,
+                    plan: decision.plan || 'free',
+                    limitSeconds: decision.limit || 900,
+                    usedSeconds: decision.used || 0,
                   });
 
                   // Trigger warm initial voice greeting so the tutor speaks immediately upon activation
@@ -362,11 +366,30 @@ export function attachVoiceGateway(server: Server) {
                     teardown('max-duration');
                   }, MAX_SESSION_MS);
 
-                  state.accrualTimer = setInterval(() => {
+                  state.accrualTimer = setInterval(async () => {
                     const now = Date.now();
                     const elapsed = (now - state.lastAccrualAt) / 1000;
                     state.lastAccrualAt = now;
                     void accrue(state.userId, elapsed);
+
+                    // Check remaining monthly allowance
+                    try {
+                      const q = await usageService.checkQuota(state.userId, 'voiceSeconds', 10);
+                      if (q.remaining <= 120 && q.remaining > 0) {
+                        send(ws, {
+                          type: 'quota_warning',
+                          remainingSeconds: q.remaining,
+                          message: `You have approximately ${Math.ceil(q.remaining / 60)} minute(s) of Voice Chat remaining this month.`,
+                        });
+                      } else if (q.remaining <= 0) {
+                        send(ws, {
+                          type: 'quota_exhausted',
+                          code: 'VOICE_MONTHLY_LIMIT',
+                          message: 'Your monthly Voice Chat allowance has been reached.',
+                        });
+                        teardown('quota-exhausted');
+                      }
+                    } catch {}
                   }, ACCRUAL_INTERVAL_MS);
                   return;
                 }

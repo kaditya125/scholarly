@@ -3,6 +3,7 @@ import { testSeriesService } from '../services/tests/testSeries.service';
 import { adaptiveTestService } from '../services/tests/adaptiveTest.service';
 import { resultAnalysisService } from '../services/tests/resultAnalysis.service';
 import { Subject, Difficulty } from '../types';
+import { usageService } from '../services/usage.service';
 
 export class TestsController {
   public getFeaturedSeries = async (req: Request, res: Response, next: NextFunction) => {
@@ -38,6 +39,26 @@ export class TestsController {
     try {
       const { userId } = req.params;
       const { subject, topic, difficulty, questionCount, timeLimitMins } = req.body;
+
+      // ── Server-Side Quota Enforcement ──
+      try {
+        await usageService.consumeQuota(userId, 'mockTestsGenerated', 1);
+      } catch (err: any) {
+        if (err.code === 'QUOTA_EXHAUSTED') {
+          return res.status(403).json({
+            code: 'QUOTA_EXHAUSTED',
+            feature: 'mockTests',
+            error: err.message,
+            used: err.used,
+            limit: err.limit,
+            remaining: err.remaining,
+            resetsAt: err.resetsAt,
+            plan: err.plan,
+          });
+        }
+        throw err;
+      }
+
       const test = await adaptiveTestService.generateAdaptiveTest(
           userId, 
           subject as Subject, 

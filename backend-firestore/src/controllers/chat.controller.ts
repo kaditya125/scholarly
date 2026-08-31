@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { ChatService } from '../services/chat.service';
 import { FileParserService } from '../services/fileParser.service';
 import { PRODUCT_ROLE_CLAIM, ProductRole, isProductRole } from '../types/roles';
+import { usageService } from '../services/usage.service';
+import { entitlementService, PLAN_LIMITS } from '../services/entitlement.service';
 
 /** Same claim capability.ts's middleware reads — decoded from the verified Firebase token. */
 function productRoleOf(req: Request): ProductRole | undefined {
@@ -25,6 +27,25 @@ export class ChatController {
         return res.status(400).json({ error: "Missing required fields: sessionId, message, model, topicType" });
       }
 
+      // ── Server-Side Quota Enforcement ──
+      try {
+        await usageService.consumeQuota(userId, 'chatMessages', 1);
+      } catch (err: any) {
+        if (err.code === 'QUOTA_EXHAUSTED') {
+          return res.status(403).json({
+            code: 'QUOTA_EXHAUSTED',
+            feature: 'chat',
+            error: err.message,
+            used: err.used,
+            limit: err.limit,
+            remaining: err.remaining,
+            resetsAt: err.resetsAt,
+            plan: err.plan,
+          });
+        }
+        throw err;
+      }
+
       const response = await this.service.processChat(userId, sessionId, message, model, topicType, productRoleOf(req));
 
       res.json(response);
@@ -43,6 +64,42 @@ export class ChatController {
 
       if (!sessionId || (!message && (!attachments || attachments.length === 0)) || !model || !topicType) {
         return res.status(400).json({ error: "Missing required fields: sessionId, message, model, topicType" });
+      }
+
+      // ── Server-Side Quota & Document Size Enforcement ──
+      try {
+        if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+          const { plan } = await entitlementService.getUserPlan(userId);
+          const maxMb = PLAN_LIMITS[plan].maxDocumentSizeMB;
+          for (const att of attachments) {
+            if (att.data && typeof att.data === 'string') {
+              const approxSizeMb = (att.data.length * 0.75) / (1024 * 1024);
+              if (approxSizeMb > maxMb) {
+                return res.status(400).json({
+                  code: 'FILE_TOO_LARGE',
+                  error: `File ${att.name || 'attachment'} exceeds your plan maximum allowed size of ${maxMb}MB.`,
+                });
+              }
+            }
+          }
+          await usageService.consumeQuota(userId, 'documentsUploaded', attachments.length);
+        }
+
+        await usageService.consumeQuota(userId, 'chatMessages', 1);
+      } catch (err: any) {
+        if (err.code === 'QUOTA_EXHAUSTED') {
+          return res.status(403).json({
+            code: 'QUOTA_EXHAUSTED',
+            feature: err.feature || 'chat',
+            error: err.message,
+            used: err.used,
+            limit: err.limit,
+            remaining: err.remaining,
+            resetsAt: err.resetsAt,
+            plan: err.plan,
+          });
+        }
+        throw err;
       }
 
       let finalMessage = message || '';

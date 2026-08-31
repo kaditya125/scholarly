@@ -7,6 +7,7 @@ import { liveInteractionService } from '../services/podcast/liveInteraction.serv
 import { PodcastGenerateRequest, PodcastSourceKind } from '../core/workflow/podcast/types';
 import { PODCAST_STYLE_IDS, isPodcastStyleId } from '../core/workflow/podcast/podcastStyles';
 import { featureFlags, cinematicTracks, cinematicIntensity } from '../config/featureFlags';
+import { usageService } from '../services/usage.service';
 
 const AUDIO_URL_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 
@@ -42,6 +43,25 @@ export class PodcastController {
         return res.status(400).json({
           error: `podcastStyle must be one of: ${PODCAST_STYLE_IDS.join(' | ')}.`,
         });
+      }
+
+      // ── Server-Side Quota Enforcement ──
+      try {
+        await usageService.consumeQuota(userId, 'podcastsGenerated', 1);
+      } catch (err: any) {
+        if (err.code === 'QUOTA_EXHAUSTED') {
+          return res.status(403).json({
+            code: 'QUOTA_EXHAUSTED',
+            feature: 'podcasts',
+            error: err.message,
+            used: err.used,
+            limit: err.limit,
+            remaining: err.remaining,
+            resetsAt: err.resetsAt,
+            plan: err.plan,
+          });
+        }
+        throw err;
       }
 
       const { podcastId, jobId } = await podcastEngineService.startGeneration(userId, body);

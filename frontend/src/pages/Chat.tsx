@@ -59,6 +59,8 @@ import { api } from '../lib/api/client';
 import { useAuth } from '../lib/AuthContext';
 import { useTheme } from '../lib/ThemeContext';
 import { useWorkflowStream } from '../hooks/ai/useWorkflowStream';
+import { useEntitlements } from '../hooks/useEntitlements';
+import { UpgradeModal } from '../components/monetization/UpgradeModal';
 import 'katex/dist/katex.min.css';
 import { OpenAI, Groq, Nvidia } from '@lobehub/icons';
 
@@ -237,6 +239,9 @@ export default function Chat() {
   const [loadingHistory, setLoadingHistory] = useState(false);
   
   const stream = useWorkflowStream();
+  const { isPro, usage, resetsAt, refresh: refreshEntitlements } = useEntitlements();
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [upgradeSource, setUpgradeSource] = useState<'chat_limit' | 'voice_limit' | 'doc_limit'>('chat_limit');
   
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem('selectedModel') || 'gemini');
@@ -854,16 +859,30 @@ export default function Chat() {
       setTimeout(() => {
         fetchSessions();
       }, 3000);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chat API error:", error);
-      const message = error instanceof Error && error.message
-        ? error.message
-        : 'An error occurred while communicating with the AI.';
+      const isQuota =
+        error?.code === 'QUOTA_EXHAUSTED' ||
+        error?.response?.data?.code === 'QUOTA_EXHAUSTED' ||
+        String(error?.message || '').includes('QUOTA_EXHAUSTED') ||
+        String(error?.message || '').includes('allowance exhausted');
+
+      if (isQuota) {
+        refreshEntitlements();
+        setUpgradeSource('chat_limit');
+        setIsUpgradeModalOpen(true);
+      }
+
+      const message = isQuota
+        ? `You have reached your monthly Free AI Chat allowance (100 messages). Upgrade to Pro for up to 2,000 messages each month.`
+        : error instanceof Error && error.message
+          ? error.message
+          : 'An error occurred while communicating with the AI.';
       setMessages(prev => [...prev, {
         role: 'error',
         content: message,
-        retryQuery: userMessage,
-        retryAttachments: sentAttachments,
+        retryQuery: isQuota ? undefined : userMessage,
+        retryAttachments: isQuota ? undefined : sentAttachments,
       }]);
     }
   };
@@ -1447,6 +1466,45 @@ export default function Chat() {
               </div>
 
               
+              {/* Quota warning banner (80% used) */}
+              {!isPro && usage.chat.used >= 80 && usage.chat.remaining > 0 && (
+                <div className="flex items-center justify-between mx-3 mt-3 px-3 py-1.5 rounded-xl bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/20 text-[12px] text-amber-800 dark:text-amber-300">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <span>You're getting close to your monthly AI Chat allowance ({usage.chat.used}/{usage.chat.limit} used).</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setUpgradeSource('chat_limit'); setIsUpgradeModalOpen(true); }}
+                    className="font-semibold text-amber-700 dark:text-amber-300 hover:underline cursor-pointer ml-2 shrink-0"
+                  >
+                    View Pro
+                  </button>
+                </div>
+              )}
+
+              {/* Quota exhausted card (100% used) */}
+              {!isPro && usage.chat.remaining <= 0 && (
+                <div className="mx-3 mt-3 p-3.5 rounded-2xl bg-[#8ba32b]/10 dark:bg-[#8ba32b]/15 border border-[#8ba32b]/30 text-center space-y-1.5">
+                  <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-[#8ba32b]/20 text-[#60721c] dark:text-[#c8e558] uppercase">
+                    <Sparkles className="w-3 h-3" />
+                    Free AI Chat Allowance Reached
+                  </div>
+                  <p className="text-[12.5px] text-slate-700 dark:text-slate-200 leading-snug">
+                    You've used your 100 free AI Chat messages this month (resets on {new Date(resetsAt).toLocaleDateString()}). Upgrade to Pro for up to 2,000 messages/mo.
+                  </p>
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => { setUpgradeSource('chat_limit'); setIsUpgradeModalOpen(true); }}
+                      className="px-3.5 py-1.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12px] font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-sm cursor-pointer"
+                    >
+                      Upgrade to Pro (₹199/mo)
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Quoted reply */}
               {quotedText && (
                 <div className="flex items-start gap-2 mx-3 mt-3 px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.04] border-l-2 border-[#8ba32b] dark:border-[#c8e558]">
@@ -1705,6 +1763,7 @@ export default function Chat() {
       />
 
       <ShareModal isOpen={isShareOpen} onClose={() => setIsShareOpen(false)} />
+      <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} source={upgradeSource} />
     </div>
   );
 }
