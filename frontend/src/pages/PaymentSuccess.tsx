@@ -60,36 +60,49 @@ export default function PaymentSuccess() {
       : new Date().toLocaleString();
     const esc = (s: string) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c] as string));
     const barsHtml = bars.map((bw, i) => `<span style="display:inline-block;width:${bw}px;height:${i % 6 === 0 ? "100%" : "82%"};background:#0f172a"></span>`).join("");
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Receipt</title>
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Payment Receipt</title>
       <style>
-        *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif}
-        body{background:#eef2f7;padding:28px;display:flex;justify-content:center}
-        .t{background:#fff;width:360px;border-radius:22px;padding:32px 28px;box-shadow:0 10px 40px rgba(0,0,0,.08)}
-        .h{text-align:center;margin-bottom:22px}
-        .emoji{font-size:34px}
-        .h h1{font-size:20px;font-weight:700;color:#0f172a;margin-top:8px}
-        .h p{font-size:13px;color:#94a3b8;margin-top:4px}
-        .sep{border-top:2px dashed #e2e8f0;margin:18px 0}
-        .row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
-        .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;font-weight:600;margin-bottom:4px}
-        .val{font-size:15px;font-weight:700;color:#0f172a;word-break:break-all}
-        .amt{font-size:15px;font-weight:700;color:#0f172a;text-align:right}
-        .pm{display:flex;align-items:center;gap:12px;background:#f1f5f9;border-radius:14px;padding:12px 14px;margin-top:6px}
-        .pm .ic{width:36px;height:36px;border-radius:9px;background:#0f172a;color:#c8e558;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
-        .pm .nm{font-size:14px;font-weight:600;color:#0f172a}
-        .pm .sub{font-size:12px;color:#64748b}
-        .bc{display:flex;align-items:flex-end;justify-content:center;gap:2px;height:56px;margin-top:24px}
-        .cap{text-align:center;font-size:11px;color:#94a3b8;letter-spacing:.2em;margin-top:8px}
+        *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif}
+        body{background:#f1f5f9;padding:28px;display:flex;justify-content:center}
+        .t{background:#fff;width:380px;border-radius:24px;padding:32px 28px;box-shadow:0 12px 40px rgba(0,0,0,.08);border:1px solid #e2e8f0}
+        .h{text-align:center;margin-bottom:20px}
+        .logo-img{width:44px;height:44px;border-radius:10px;object-fit:contain;margin-bottom:12px;border:1px solid #e2e8f0}
+        .h h1{font-size:20px;font-weight:800;color:#0f172a;letter-spacing:-0.4px}
+        .h h1 span{color:#65a30d}
+        .h p{font-size:13px;color:#64748b;margin-top:4px}
+        .badge{display:inline-block;background:#dcfce7;color:#166534;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:999px;margin-top:8px;text-transform:uppercase;letter-spacing:0.5px}
+        .sep{border-top:1.5px dashed #e2e8f0;margin:18px 0}
+        .row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+        .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;font-weight:700;margin-bottom:3px}
+        .val{font-size:14px;font-weight:700;color:#0f172a;word-break:break-all}
+        .amt{font-size:15px;font-weight:800;color:#0f172a;text-align:right}
+        .pm{display:flex;align-items:center;gap:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:12px 14px;margin-top:6px}
+        .pm .ic{width:36px;height:36px;border-radius:9px;background:#0f172a;color:#c8e558;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+        .pm .nm{font-size:14px;font-weight:700;color:#0f172a}
+        .pm .sub{font-size:11.5px;color:#64748b}
+        .bc{display:flex;align-items:flex-end;justify-content:center;gap:2px;height:44px;margin-top:20px}
+        .cap{text-align:center;font-size:10.5px;color:#94a3b8;letter-spacing:.15em;margin-top:8px;font-weight:600}
       </style></head><body>
       <div class="t">
-        <div class="h"><div class="emoji">🎉</div><h1>Payment successful</h1><p>Your Sadhya Pro subscription is active</p></div>
+        <div class="h">
+          <img src="https://sadhya.app/sadhya-logo-512x512.png" class="logo-img" alt="Sadhya" onerror="this.style.display='none'" />
+          <h1>Sadhya<span>.</span></h1>
+          <p>Official Payment Receipt &amp; Confirmation</p>
+          <span class="badge">✓ Paid &amp; Active</span>
+        </div>
         <div class="sep"></div>
-        <div class="row"><div><div class="lbl">Payment ID</div><div class="val">${esc(receipt?.paymentId || "—")}</div></div><div><div class="lbl">Amount</div><div class="amt">${esc(amountStr)}</div></div></div>
-        <div class="row"><div><div class="lbl">Date &amp; time</div><div class="val" style="font-size:14px">${esc(dateStr)}</div></div><div><div class="lbl">Billing</div><div class="amt" style="text-transform:capitalize">${esc(receipt?.billing || "monthly")}</div></div></div>
-        <div class="pm"><div class="ic">S</div><div><div class="nm">${esc(receipt?.planName || "Sadhya Pro")}</div><div class="sub">Razorpay${receipt?.method ? " · " + esc(String(receipt.method).toUpperCase()) : ""} · ${esc(email)}</div></div></div>
+        <div class="row"><div><div class="lbl">Payment ID</div><div class="val" style="font-family:monospace;font-size:12.5px">${esc(receipt?.paymentId || "—")}</div></div><div><div class="lbl">Total Paid</div><div class="amt">${esc(amountStr)}</div></div></div>
+        <div class="row"><div><div class="lbl">Date &amp; Time</div><div class="val" style="font-size:13px">${esc(dateStr)}</div></div><div><div class="lbl">Billing</div><div class="amt" style="text-transform:capitalize;font-size:13px">${esc(receipt?.billing || "monthly")}</div></div></div>
+        <div class="pm">
+          <div class="ic">⚡</div>
+          <div>
+            <div class="nm">${esc(receipt?.planName || "Sadhya Pro")}</div>
+            <div class="sub">Razorpay${receipt?.method ? " · " + esc(String(receipt.method).toUpperCase()) : ""} · ${esc(email)}</div>
+          </div>
+        </div>
         <div class="sep"></div>
         <div class="bc">${barsHtml}</div>
-        <div class="cap">SADHYA · ${esc(name.toUpperCase())}</div>
+        <div class="cap">SADHYA TECHNOLOGIES · ${esc(name.toUpperCase())}</div>
       </div>
       <script>window.onload=function(){window.print();}</script>
       </body></html>`);

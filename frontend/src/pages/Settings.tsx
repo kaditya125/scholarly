@@ -180,47 +180,63 @@ export default function Settings() {
     w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${esc(invNo)}</title>
       <style>
         *{box-sizing:border-box;margin:0;padding:0}
-        body{font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f172a;padding:48px;max-width:760px;margin:0 auto}
-        .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:40px}
-        .brand{display:flex;align-items:center;gap:10px}
-        .logo{width:40px;height:40px;border-radius:10px;background:#4f46e5;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px}
-        .brand h1{font-size:20px;font-weight:700}
-        .brand span{display:block;font-size:12px;color:#64748b;font-weight:500}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f172a;padding:48px 32px;max-width:720px;margin:0 auto;background:#ffffff}
+        .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:36px;padding-bottom:24px;border-bottom:1px solid #f1f5f9}
+        .brand{display:flex;align-items:center;gap:12px}
+        .logo-img{width:42px;height:42px;border-radius:10px;object-fit:contain;border:1px solid #e2e8f0;background:#ffffff}
+        .brand h1{font-size:22px;font-weight:800;color:#0f172a;letter-spacing:-0.5px}
+        .brand h1 span{color:#65a30d}
+        .brand span.entity{display:block;font-size:12px;color:#64748b;font-weight:500;margin-top:2px}
         .inv-title{text-align:right}
-        .inv-title h2{font-size:24px;font-weight:700}
-        .inv-title .no{color:#64748b;font-size:13px;margin-top:2px}
-        .meta{display:flex;justify-content:space-between;gap:24px;margin-bottom:36px;font-size:13px;color:#475569}
-        .meta .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;margin-bottom:4px;font-weight:600}
-        .meta strong{color:#0f172a}
+        .inv-title h2{font-size:22px;font-weight:800;letter-spacing:-0.5px;color:#0f172a}
+        .inv-title .no{color:#64748b;font-size:13px;font-family:monospace;margin-top:3px}
+        .badge{display:inline-block;background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;margin-top:6px}
+        .meta{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:32px;background:#f8fafc;padding:18px 20px;border-radius:12px;border:1px solid #e2e8f0;font-size:13px}
+        .meta .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;margin-bottom:4px;font-weight:700}
+        .meta strong{color:#0f172a;font-weight:600}
         table{width:100%;border-collapse:collapse;margin-bottom:24px;font-size:14px}
-        th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;border-bottom:1px solid #e2e8f0;padding:0 0 10px}
-        td{padding:14px 0;border-bottom:1px solid #f1f5f9}
+        th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:1px solid #e2e8f0;padding:0 0 10px;font-weight:700}
+        td{padding:14px 0;border-bottom:1px solid #f1f5f9;color:#334155}
         .right{text-align:right}
         .totals{margin-left:auto;width:260px;font-size:14px}
-        .totals .row{display:flex;justify-content:space-between;padding:8px 0}
-        .totals .grand{border-top:2px solid #0f172a;margin-top:6px;padding-top:12px;font-weight:700;font-size:16px}
-        .badge{display:inline-block;background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px}
-        .foot{margin-top:48px;padding-top:20px;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;line-height:1.6}
+        .totals .row{display:flex;justify-content:space-between;padding:8px 0;color:#64748b}
+        .totals .row span:last-child{color:#0f172a;font-weight:600}
+        .totals .grand{border-top:2px solid #0f172a;margin-top:6px;padding-top:12px;font-weight:800;font-size:16px;color:#0f172a}
+        .totals .grand span:last-child{color:#0f172a;font-weight:800}
+        .foot{margin-top:40px;padding-top:20px;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;line-height:1.6}
       </style></head><body>
       <div class="top">
-        <div class="brand"><div class="logo">S</div><div><h1>Sadhya</h1><span>Sadhya Education</span></div></div>
-        <div class="inv-title"><h2>Invoice</h2><div class="no">#${esc(invNo)}</div><div style="margin-top:8px"><span class="badge">${p.status === 'paid' ? 'PAID' : esc(String(p.status || '').toUpperCase())}</span></div></div>
+        <div class="brand">
+          <img src="https://sadhya.app/sadhya-logo-512x512.png" class="logo-img" alt="Sadhya Logo" onerror="this.style.display='none'" />
+          <div>
+            <h1>Sadhya<span>.</span></h1>
+            <span class="entity">Sadhya Technologies Pvt. Ltd.</span>
+          </div>
+        </div>
+        <div class="inv-title">
+          <h2>Tax Invoice</h2>
+          <div class="no">#${esc(invNo)}</div>
+          <div><span class="badge">${p.status === 'paid' ? 'PAID' : esc(String(p.status || '').toUpperCase())}</span></div>
+        </div>
       </div>
       <div class="meta">
         <div><div class="lbl">Issue date</div><strong>${esc(dateStr)}</strong></div>
-        <div><div class="lbl">Billed to</div><strong>${esc(name)}</strong><div>${esc(email)}</div></div>
-        <div><div class="lbl">Payment</div><strong>Razorpay${p.method ? ' \u00b7 ' + esc(String(p.method).toUpperCase()) : ''}</strong>${p.paymentId ? `<div>${esc(p.paymentId)}</div>` : ''}</div>
+        <div><div class="lbl">Billed to</div><strong>${esc(name)}</strong><div style="color:#64748b;font-size:12px;margin-top:2px">${esc(email)}</div></div>
+        <div><div class="lbl">Payment</div><strong>Razorpay${p.method ? ' \u00b7 ' + esc(String(p.method).toUpperCase()) : ''}</strong>${p.paymentId ? `<div style="font-family:monospace;font-size:11.5px;color:#64748b;margin-top:2px">${esc(p.paymentId)}</div>` : ''}</div>
       </div>
       <table>
         <thead><tr><th>Description</th><th class="right">Billing</th><th class="right">Amount</th></tr></thead>
-        <tbody><tr><td>${esc(p.planName || 'Sadhya Pro')}${p.orderType === 'class_purchase' ? '' : ' subscription'}</td><td class="right">${billing}</td><td class="right">${amount}</td></tr></tbody>
+        <tbody><tr><td><strong style="color:#0f172a">${esc(p.planName || 'Sadhya Pro')}</strong>${p.orderType === 'class_purchase' ? '' : ' Subscription'}</td><td class="right" style="text-transform:capitalize">${billing}</td><td class="right"><strong style="color:#0f172a">${amount}</strong></td></tr></tbody>
       </table>
       <div class="totals">
         <div class="row"><span>Subtotal</span><span>${amount}</span></div>
         <div class="row"><span>Tax</span><span>Inclusive</span></div>
         <div class="row grand"><span>Total paid</span><span>${amount}</span></div>
       </div>
-      <div class="foot">Thank you for subscribing to Sadhya Pro. This is a computer-generated invoice and does not require a signature.<br/>For any billing questions, contact support@sadhya.app.</div>
+      <div class="foot">
+        <strong>Sadhya Technologies Pvt. Ltd.</strong> · Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India<br/>
+        This is a computer-generated tax invoice and receipt. For any billing inquiries, contact <a href="mailto:support@sadhya.app" style="color:#0f172a;font-weight:600">support@sadhya.app</a>.
+      </div>
       <script>window.onload=function(){window.print();}</script>
       </body></html>`);
     w.document.close();
