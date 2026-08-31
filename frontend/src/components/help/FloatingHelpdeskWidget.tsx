@@ -150,7 +150,8 @@ function AssistantWidgetMessage({
   onCopy,
   copiedMsgId,
   onFeedback,
-  onEscalate
+  onEscalate,
+  onRetry
 }: {
   msg: HelpMessage;
   isLatest: boolean;
@@ -159,6 +160,7 @@ function AssistantWidgetMessage({
   copiedMsgId: string | null;
   onFeedback: (id: string, fb: 'helpful' | 'not_helpful') => void;
   onEscalate: (summary?: string) => void;
+  onRetry?: () => void;
 }) {
   const res = msg.structuredResponse;
   const fullText = res?.text || msg.content || '';
@@ -285,10 +287,19 @@ function AssistantWidgetMessage({
           {/* Primary CTA */}
           {res?.cta && (
             <div className="pt-1">
-              {res.cta.url === '#live-agent' ? (
+              {res.cta.url === '#retry' ? (
+                <button
+                  type="button"
+                  onClick={() => (onRetry ? onRetry() : onSend(msg.content))}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12px] font-semibold hover:opacity-90 transition-all cursor-pointer active:scale-95 shadow-xs"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  {res.cta.label}
+                </button>
+              ) : res.cta.url === '#live-agent' ? (
                 <button
                   onClick={() => onEscalate(res?.keyHighlight || msg.content)}
-                  className="px-3.5 py-1.5 rounded-xl bg-[#c8e558] text-slate-900 text-[12px] font-semibold hover:bg-[#b8d44e] transition-colors flex items-center gap-1.5"
+                  className="px-3.5 py-1.5 rounded-xl bg-[#c8e558] text-slate-900 text-[12px] font-semibold hover:bg-[#b8d44e] transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   <Headphones className="w-3.5 h-3.5" />
                   {res.cta.label}
@@ -431,6 +442,7 @@ export function FloatingHelpdeskWidget({
     messages,
     isLoading,
     sendMessage,
+    retryLastMessage,
     sendFeedback,
     clearChat,
     latestTopicSummary
@@ -794,6 +806,7 @@ export function FloatingHelpdeskWidget({
                       copiedMsgId={copiedMsgId}
                       onFeedback={sendFeedback}
                       onEscalate={handleEscalateToSpecialist}
+                      onRetry={retryLastMessage}
                     />
                   );
                 })}
