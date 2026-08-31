@@ -261,7 +261,7 @@ Query: "${query}"`;
     if (q.includes('price') || q.includes('cost') || q.includes('plan') || q.includes('subscription') || q.includes('refund') || intent.includes('PRICING')) {
       return [
         "What is the difference between Free and Pro tiers?",
-        "How does the 7-day money-back guarantee work?",
+        "How does the 7-Day 100% Refund Policy work?",
         "Can I cancel my subscription anytime?",
         "Do you offer annual discounts or group plans?"
       ];

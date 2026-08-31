@@ -78,40 +78,51 @@ const KNOWLEDGE_BODY = `
 
 ---
 
-## 4. Plans, Pricing & Launch Event Offer
+## 4. Plans, Pricing, Allowances & Refund Policy
 ### A. Sadhya 1.0 Launch Celebration Offer (Limited Time)
-- **Special Early-Adopter Pricing**: Flat 60% discount on Sadhya Pro during the launch celebration.
-- **Grandfathered Lifetime Rate**: Early adopters who subscribe during the launch event lock in their promotional rate (₹199/month or ₹1,788/year = ₹149/month) for as long as their subscription remains active, even after public prices revert to regular rates.
-- **7-Day Money-Back Guarantee**: 100% full refund within 7 days, no questions asked.
+- **Special Early-Adopter Pricing**: Flat 60% launch discount on Sadhya Pro.
+- **Grandfathered Lifetime Rate**: Early adopters who subscribe during the launch event lock in their promotional rate (₹199/month or ₹1,788/year = ₹149/month) for as long as their subscription remains active.
+- **7-Day 100% Refund Policy**: 100% full refund within 7 calendar days directly to the original payment source. Self-service 1-click refund available under Settings → Plan & Billing.
+- **100% Study Data Preservation**: Cancelling or refunding never deletes notebooks, notes, community posts, or chat history; the account simply reverts to the Free tier.
 
 ### B. Free Plan (Student Starter — ₹0 / forever)
-- **Cost**: 100% Free forever, no credit card required.
-- **Included Features**:
-  - 25 AI tutoring queries per day with transparent multi-stage reasoning traces.
-  - Official syllabus grounding (SSC CGL/CHSL, UPSC CSE, JEE Main/Advanced, NEET-UG, IBPS/SBI, State PSCs).
-  - 10 Camera Snap & Solve OCR questions per day with LaTeX mathematical derivations.
-  - 3 Smart Notebooks (upload up to 25MB per document with exact source citations).
-  - Topic-wise PYQ practice quizzes & adaptive baseline assessments.
-  - Community study groups, discussion boards, and national leaderboards.
+- **Cost**: 100% Free forever, no payment card required.
+- **Included Monthly Allowances**:
+  - **AI Chat & Doubt Solving**: 100 messages / month with transparent multi-stage reasoning traces.
+  - **Realtime Voice AI Tutoring**: 15 minutes / month of spoken voice tutoring and spoken concept explanations.
+  - **Document & Note Uploads**: 5 documents / month (up to 10MB per file with OCR).
+  - **AI Podcast Studio**: 1 episode / month (preview mode).
+  - **AI Mock Tests**: 3 AI-generated adaptive mock tests / month.
+- **100% Free & Unlimited for All Students**:
+  - Official topic-wise PYQ practice quizzes across all major competitive exams (SSC, UPSC, JEE, NEET, Banking, State PSCs).
+  - Community study circles, peer chat, group problem solving, and national leaderboards.
   - Multilingual support: English, Hindi, and natural Hinglish.
 
 ### C. Pro Plan (Launch Event: ₹199/mo or ₹1,788/yr = ₹149/mo)
 - **Regular Price**: ₹499/month or ₹5,088/year.
 - **Launch Offer Price**:
   - **Monthly**: ₹199 / month (Billed monthly, cancel anytime).
-  - **Yearly**: ₹1,788 / year (**₹149 / month**, Save 70% against regular annual price).
-- **Included Pro Capabilities**:
-  - **Unlimited AI Tutoring & Reasoning**: No daily caps across all covered competitive exams.
-  - **Multi-Voice AI Podcast Studio**: Convert any topic, syllabus module, or uploaded PDF into a cinematic 2-speaker conversational podcast with MP3 export for offline listening.
-  - **Unlimited Camera Snap & Solve**: Instant OCR and step-by-step solutions for printed and handwritten questions.
-  - **Unlimited Smart Notebooks**: Upload documents up to 200MB per file with high-accuracy OCR and page-jump citations.
-  - **Full-Length Adaptive Mock Tests**: Timed exam-simulated mocks with real-time National Percentile ranking, accuracy velocity metrics, and diagnostic weak-topic heatmaps.
-  - **Generative Media Studio**: AI Video Lesson generator, interactive concept Mind Maps, and presentation slide deck exports.
-  - **Automation Studio**: Scheduled daily spaced-repetition revision sets delivered automatically.
-  - **Priority Processing**: Fast-lane GPU compute queue with access to flagship Gemini 2.5 Pro and high-throughput Groq models.
-  - **Priority Support**: 24/7 dedicated assistance from human specialists.
+  - **Yearly**: ₹1,788 / year (**₹149 / month**, Save ₹600/year against regular launch annual price).
+- **Included Monthly Pro Allowances**:
+  - **AI Chat & Doubts**: Up to 2,000 AI Chat messages / month with GraphRAG knowledge grounding.
+  - **Realtime Voice AI Tutoring**: Up to 300 minutes (5 hours) / month of live spoken AI tutoring.
+  - **Document & Note Uploads**: Up to 100 documents / month (up to 50MB per file with OCR).
+  - **AI Podcast Studio**: 25 full multi-speaker podcast episodes / month with cinematic mix and SFX.
+  - **Adaptive Mock Tests**: Up to 1,000 AI adaptive mock tests / month with diagnostic weakness heatmaps and percentile ranking.
+  - **Priority Processing**: Fast-lane queue compute with flagship AI routing.
+  - **Priority Support**: Direct human specialist support.
 
-### D. Institutional & Academy Tier
+### D. 7-Day 100% Refund Policy & Cancellation Terms
+- **Eligibility**: Any first-time Pro purchase within 7 calendar days of the transaction timestamp.
+- **How to claim**:
+  - **Self-Service**: Go to Settings → Plan & Billing and click "Request 100% Refund" for instant processing.
+  - **Email**: Email support@sadhya.app with your payment ID.
+- **Refund Timelines**:
+  - UPI (Google Pay, PhonePe, Paytm, BHIM): Credited in 1–3 business days.
+  - Debit/Credit Cards & Netbanking: Credited in 5–7 working days.
+- **Cancellation**: Cancel anytime from Settings → Plan & Billing. Access continues until the end of the paid billing period.
+
+### E. Institutional & Academy Tier
 - **Target Audience**: Coaching institutes, schools, colleges, and batch educators.
 - **Cost**: Custom per-seat pricing based on cohort size. Contact sales@sadhya.app.
 - **Included Capabilities**:
@@ -122,7 +133,7 @@ const KNOWLEDGE_BODY = `
   - Custom institutional branding on podcasts, notes, and video lessons.
   - Dedicated Account Manager, custom SLAs, invoicing, and PO support.
 
-### E. Payment Methods & Security
+### F. Payment Methods & Security
 - 256-Bit SSL encrypted payments processed securely via Razorpay.
 - Supports UPI (Google Pay, PhonePe, Paytm, BHIM), Credit/Debit Cards (Visa, Mastercard, RuPay), and Netbanking.
 - Card details never touch Sadhya servers.

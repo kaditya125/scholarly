@@ -737,7 +737,7 @@ export default function LandingPage() {
                 </div>
                 <SectionHeading>Have questions before starting? Ask Sadhya.</SectionHeading>
                 <Lede>
-                  Whether you want to understand how our 24/7 AI tutor reasons, verify syllabus coverage for your exam, or check our 7-day money-back guarantee — get immediate answers with cited explanations.
+                  Whether you want to understand how our 24/7 AI tutor reasons, verify syllabus coverage for your exam, or check our 7-Day 100% Refund Policy — get immediate answers with cited explanations.
                 </Lede>
                 <p className="mt-4 text-[14.5px] leading-relaxed text-slate-500 dark:text-gray-400">
                   Need personalized guidance? Chat instantly with our senior support specialists with response times under 30 seconds.
@@ -793,7 +793,7 @@ export default function LandingPage() {
                         tag: "Podcast Studio"
                       },
                       {
-                        q: "What is the 7-day unconditional money-back guarantee?",
+                        q: "How does the 7-Day 100% Refund Policy work?",
                         tag: "Pricing & Plans"
                       },
                       {
