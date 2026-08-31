@@ -87,7 +87,6 @@ export default function Signup() {
    * Validated against the union rather than cast, so an unexpected value falls back to the
    * normal role-selection step instead of entering step 2 with a bad role.
    */
-  const location = useLocation();
   /** A referral link (Phase 3L) arrives as `?ref=<referrerUid>`. Forwarded to bootstrap once, on account creation — see identity.ts. */
   const [searchParams] = useSearchParams();
   const referredBy = searchParams.get('ref');
