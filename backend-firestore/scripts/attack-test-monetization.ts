@@ -310,7 +310,7 @@ async function runAttackSuite() {
   );
 
   // 8b. Verify payment callback signature check
-  const fakePaymentSig = paymentsService.verifyPaymentSignature(
+  const fakePaymentSig = paymentsService.verifyCheckoutSignature(
     'order_fake_order_123',
     'pay_fake_payment_456',
     'invalid_user_supplied_signature',
