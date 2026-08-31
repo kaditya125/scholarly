@@ -16,6 +16,8 @@ import { uploadAvatar, UploadProgress } from '../lib/api/avatar';
 import { cn } from '../lib/utils';
 import { api } from '../lib/api/client';
 import { notifyEntitlementChanged } from '../hooks/usePlan';
+import { useEntitlements } from '../hooks/useEntitlements';
+import { UpgradeModal } from '../components/monetization/UpgradeModal';
 import { NotificationsPanel } from '../components/settings/NotificationsPanel';
 import { LearningProfileSettings } from '../components/settings/LearningProfileSettings';
 import { usePolicyConsent } from '../lib/hooks/usePolicyConsent';
@@ -150,6 +152,8 @@ export default function Settings() {
     api.get('/payments/subscription').then((r) => setSub(r.data)).catch(() => {});
     api.get('/payments/history').then((r) => setPayments(r.data?.payments || [])).catch(() => {});
   }, [user]);
+  const entitlements = useEntitlements();
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const isPro = !!sub?.isPro;
   const subInfo = sub?.subscription || null;
   const fmtDate = (ms?: number | null) =>
@@ -745,6 +749,123 @@ export default function Settings() {
               </div>
             )}
 
+            {/* Monthly Allowances & Usage */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h2 className="text-[16px] font-bold text-slate-900 dark:text-white">Monthly Allowances & Usage</h2>
+                  <p className="text-[12px] text-slate-500 dark:text-gray-400 mt-0.5">
+                    Usage cycle resets on {fmtDate(entitlements.resetsAt)}
+                  </p>
+                </div>
+                {!isPro && (
+                  <button
+                    onClick={() => setIsUpgradeModalOpen(true)}
+                    className="text-[13px] font-semibold text-[#8ba32b] dark:text-[#c8e558] hover:underline cursor-pointer"
+                  >
+                    Upgrade for higher limits
+                  </button>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1a1a1b] p-6 space-y-5">
+                {/* AI Chat Messages */}
+                <div>
+                  <div className="flex items-center justify-between text-[13px] font-semibold mb-1.5">
+                    <span className="text-slate-800 dark:text-slate-200">AI Chat Messages</span>
+                    <span className="text-slate-600 dark:text-slate-400 font-mono">
+                      {entitlements.usage.chat.used} / {entitlements.usage.chat.limit}
+                    </span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-all duration-500',
+                        entitlements.usage.chat.percent >= 80 ? 'bg-amber-500' : 'bg-[#8ba32b] dark:bg-[#c8e558]'
+                      )}
+                      style={{ width: `${Math.min(100, entitlements.usage.chat.percent)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Realtime Voice Chat */}
+                <div>
+                  <div className="flex items-center justify-between text-[13px] font-semibold mb-1.5">
+                    <span className="text-slate-800 dark:text-slate-200">Realtime Voice Tutoring</span>
+                    <span className="text-slate-600 dark:text-slate-400 font-mono">
+                      {entitlements.usage.voice.usedMinutes} / {entitlements.usage.voice.limitMinutes} mins
+                    </span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-all duration-500',
+                        entitlements.usage.voice.percent >= 80 ? 'bg-amber-500' : 'bg-[#8ba32b] dark:bg-[#c8e558]'
+                      )}
+                      style={{ width: `${Math.min(100, entitlements.usage.voice.percent)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Document / PDF Uploads */}
+                <div>
+                  <div className="flex items-center justify-between text-[13px] font-semibold mb-1.5">
+                    <span className="text-slate-800 dark:text-slate-200">Document & PDF Uploads</span>
+                    <span className="text-slate-600 dark:text-slate-400 font-mono">
+                      {entitlements.usage.documents.used} / {entitlements.usage.documents.limit}
+                    </span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-all duration-500',
+                        entitlements.usage.documents.percent >= 80 ? 'bg-amber-500' : 'bg-[#8ba32b] dark:bg-[#c8e558]'
+                      )}
+                      style={{ width: `${Math.min(100, entitlements.usage.documents.percent)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* AI Podcast Studio */}
+                <div>
+                  <div className="flex items-center justify-between text-[13px] font-semibold mb-1.5">
+                    <span className="text-slate-800 dark:text-slate-200">AI Podcast Studio Generations</span>
+                    <span className="text-slate-600 dark:text-slate-400 font-mono">
+                      {entitlements.usage.podcasts.used} / {entitlements.usage.podcasts.limit} episodes
+                    </span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-all duration-500',
+                        entitlements.usage.podcasts.percent >= 80 ? 'bg-amber-500' : 'bg-[#8ba32b] dark:bg-[#c8e558]'
+                      )}
+                      style={{ width: `${Math.min(100, entitlements.usage.podcasts.percent)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* AI Mock Tests */}
+                <div>
+                  <div className="flex items-center justify-between text-[13px] font-semibold mb-1.5">
+                    <span className="text-slate-800 dark:text-slate-200">AI Mock Tests Generated</span>
+                    <span className="text-slate-600 dark:text-slate-400 font-mono">
+                      {entitlements.usage.mockTests.used} / {entitlements.usage.mockTests.limit}
+                    </span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-all duration-500',
+                        entitlements.usage.mockTests.percent >= 80 ? 'bg-amber-500' : 'bg-[#8ba32b] dark:bg-[#c8e558]'
+                      )}
+                      style={{ width: `${Math.min(100, entitlements.usage.mockTests.percent)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Payment Info */}
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -1191,6 +1312,12 @@ export default function Settings() {
             </div>
           </div>
         )}
+
+        <UpgradeModal
+          isOpen={isUpgradeModalOpen}
+          onClose={() => setIsUpgradeModalOpen(false)}
+          source="settings"
+        />
       </div>
     </div>
   );

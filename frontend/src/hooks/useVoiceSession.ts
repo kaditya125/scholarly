@@ -340,8 +340,17 @@ export function useVoiceSession() {
         const m = JSON.parse(ev.data);
         switch (m.type) {
           case 'ready':
+          case 'session_ready':
             setRemainingSeconds(typeof m.remainingSeconds === 'number' ? m.remainingSeconds : null);
             setVoiceState('LISTENING');
+            break;
+          case 'quota_warning':
+            setRemainingSeconds(typeof m.remainingSeconds === 'number' ? m.remainingSeconds : null);
+            break;
+          case 'quota_exhausted':
+            setError({ code: m.code || 'VOICE_MONTHLY_LIMIT', message: m.message || 'Monthly voice allowance reached.' });
+            cleanup();
+            setVoiceState('ENDED');
             break;
           case 'status':
             if (m.status === 'SEARCHING') {

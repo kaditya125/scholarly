@@ -1,16 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, MessageSquare, AlertCircle } from 'lucide-react';
+import { X, MessageSquare, AlertCircle, Sparkles, ArrowRight } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useVoiceSession, type VoiceState } from '../../hooks/useVoiceSession';
 import VoiceWaveform from './VoiceWaveform';
+import { UpgradeModal } from '../monetization/UpgradeModal';
 
 /**
- * Full-screen voice conversation surface.
- *
- * The waveform is the primary affordance and the transcript is deliberately secondary — this is a
- * conversation, not a recorder. Every visual cue is derived from the session state machine, so
- * the UI can never claim to be listening while the socket is actually down.
+ * Full-screen voice conversation surface with monthly plan quota integration.
  */
 
 const COPY: Record<VoiceState, { title: string; hint?: string }> = {
@@ -36,6 +33,7 @@ export function VoiceMode({ open, onClose, onFallbackToText }: {
   onFallbackToText: () => void;
 }) {
   const { state, transcript, error, remainingSeconds, start, end, readSpectrum } = useVoiceSession();
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const startedRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -53,20 +51,9 @@ export function VoiceMode({ open, onClose, onFallbackToText }: {
   if (!open) return null;
   const copy = COPY[state];
   const failed = state === 'ERROR' || (state === 'ENDED' && !!error);
+  const isQuotaExhausted = error?.code === 'VOICE_MONTHLY_LIMIT' || error?.code === 'VOICE_REQUIRES_PRO' || error?.code === 'VOICE_DAILY_LIMIT';
 
-  /*
-   * Retrying only helps when the failure was transient.
-   *
-   * Voice being switched off, gated to Pro, a rejected token, or a spent daily budget are settled
-   * facts about the account or the deployment — pressing a button cannot change any of them.
-   * Offering "Try again" for those invites someone to keep hitting a control that is guaranteed to
-   * fail, which is exactly what a disabled gateway looked like from the outside.
-   *
-   * The other two quota refusals are deliberately NOT here. VOICE_SESSION_ALREADY_ACTIVE clears as
-   * soon as the other tab is closed and VOICE_STARTING_TOO_FAST clears within seconds, so for both
-   * of them retrying is the correct next action and the message says as much.
-   */
-  const canRetry = !['VOICE_DISABLED', 'VOICE_REQUIRES_PRO', 'UNAUTHENTICATED', 'VOICE_DAILY_LIMIT']
+  const canRetry = !['VOICE_DISABLED', 'VOICE_REQUIRES_PRO', 'UNAUTHENTICATED', 'VOICE_MONTHLY_LIMIT', 'VOICE_DAILY_LIMIT']
     .includes(error?.code ?? '');
 
   return (
@@ -98,11 +85,6 @@ export function VoiceMode({ open, onClose, onFallbackToText }: {
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6 -mt-6">
-          {/*
-            No panel and no background of its own: the canvas is transparent and draws with
-            straight alpha, so it sits on whatever the page is. It carries its own shape — an orb
-            at rest, a ribbon while anyone speaks — and a box around that only fought it.
-          */}
           <VoiceWaveform
             state={state}
             readSpectrum={readSpectrum}
@@ -123,7 +105,15 @@ export function VoiceMode({ open, onClose, onFallbackToText }: {
           )}
 
           {failed && (
-            <div className="mt-6 flex items-center gap-3">
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              {isQuotaExhausted && (
+                <button
+                  onClick={() => setIsUpgradeModalOpen(true)}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-slate-950 text-white dark:bg-[#c8e558] dark:text-slate-950 text-[13.5px] font-bold hover:opacity-90 transition-all shadow-md cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4" /> Upgrade to Pro (300 min/mo)
+                </button>
+              )}
               {canRetry && (
                 <button
                   onClick={() => { startedRef.current = true; start(); }}
@@ -132,12 +122,9 @@ export function VoiceMode({ open, onClose, onFallbackToText }: {
                   Try again
                 </button>
               )}
-              {/* Promoted to the primary action when it is the only one that can help. */}
               <button
                 onClick={() => { end(); onFallbackToText(); }}
-                className={canRetry
-                  ? 'inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-slate-200 dark:border-white/15 text-[13px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors'
-                  : 'inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-950 text-[13.5px] font-bold hover:opacity-90 transition-all'}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-slate-200 dark:border-white/15 text-[13px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
               >
                 <MessageSquare className="w-4 h-4" /> Continue with text chat
               </button>
@@ -145,7 +132,7 @@ export function VoiceMode({ open, onClose, onFallbackToText }: {
           )}
         </div>
 
-        {/* Transcript stays visually quiet: the conversation is the product, this is a record of it. */}
+        {/* Transcript */}
         <div
           ref={scrollRef}
           className="max-h-[34vh] overflow-y-auto px-6 pb-2 w-full max-w-2xl mx-auto space-y-3"
@@ -178,22 +165,24 @@ export function VoiceMode({ open, onClose, onFallbackToText }: {
               Back to chat
             </button>
           )}
-          {/*
-            Surfaced only when the day's budget is genuinely close to spent. Shown always, it is
-            noise on a ten-minute session; shown never, the student is cut off with no warning and
-            no idea why. Ten minutes is one full session's worth of warning.
-          */}
-          {remainingSeconds !== null && remainingSeconds < 600 && (
-            <p className="text-[11.5px] font-semibold text-amber-600 dark:text-amber-400">
+          
+          {remainingSeconds !== null && (
+            <p className="text-[11.5px] font-semibold text-slate-600 dark:text-slate-400">
               {remainingSeconds < 60
-                ? 'Less than a minute of voice time left today'
-                : `About ${Math.floor(remainingSeconds / 60)} min of voice time left today`}
+                ? '⏳ Less than a minute of Voice Chat remaining this month'
+                : `⏳ About ${Math.ceil(remainingSeconds / 60)} min of Voice Chat remaining this month`}
             </p>
           )}
           <p className="text-[11.5px] text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-            <AlertCircle className="w-3 h-3" /> Prototype — audio isn't recorded or stored
+            <AlertCircle className="w-3 h-3" /> Live conversational AI Tutor with syllabus grounding
           </p>
         </div>
+
+        <UpgradeModal
+          isOpen={isUpgradeModalOpen}
+          onClose={() => setIsUpgradeModalOpen(false)}
+          source="voice_limit"
+        />
       </motion.div>
     </AnimatePresence>
   );
