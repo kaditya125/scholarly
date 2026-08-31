@@ -52,15 +52,6 @@ export async function beginSession(userId: string): Promise<QuotaDecision> {
     };
   }
 
-  const since = Date.now() - (lastStart.get(userId) ?? 0);
-  if (since < MIN_START_GAP_MS) {
-    return {
-      ok: false,
-      code: 'VOICE_STARTING_TOO_FAST',
-      message: 'Give it a moment before starting voice chat again.',
-    };
-  }
-
   try {
     const quota = await usageService.checkQuota(userId, 'voiceSeconds', 10);
     if (!quota.allowed || quota.remaining <= 0) {
@@ -75,6 +66,15 @@ export async function beginSession(userId: string): Promise<QuotaDecision> {
         used: quota.used,
         plan: quota.plan,
         resetsAt: quota.resetsAt,
+      };
+    }
+
+    const since = Date.now() - (lastStart.get(userId) ?? 0);
+    if (since < MIN_START_GAP_MS) {
+      return {
+        ok: false,
+        code: 'VOICE_STARTING_TOO_FAST',
+        message: 'Give it a moment before starting voice chat again.',
       };
     }
 
