@@ -872,6 +872,7 @@ export class PaymentsService {
 
   /**
    * Processes a 7-Day Money-Back Guarantee self-service refund (Method 2).
+   * Serialized per user via withUserLock to eliminate double-submit concurrency attacks.
    */
   async requestSelfServiceRefund(params: {
     userId: string;
@@ -883,14 +884,15 @@ export class PaymentsService {
     amountRupees: number;
     message: string;
   }> {
-    const { userId, orderId, reason } = params;
-    const paymentRef = db.collection('payments').doc(orderId);
-    const userRef = db.collection('users').doc(userId);
+    return this.withUserLock(params.userId, async () => {
+      const { userId, orderId, reason } = params;
+      const paymentRef = db.collection('payments').doc(orderId);
+      const userRef = db.collection('users').doc(userId);
 
-    const snap = await paymentRef.get();
-    if (!snap.exists) {
-      fail('ORDER_NOT_FOUND', 'Payment record not found.');
-    }
+      const snap = await paymentRef.get();
+      if (!snap.exists) {
+        fail('ORDER_NOT_FOUND', 'Payment record not found.');
+      }
 
     const orderData = snap.data() as any;
     if (orderData.userId !== userId) {
@@ -993,12 +995,13 @@ export class PaymentsService {
       method: orderData.method || 'UPI',
     });
 
-    return {
-      success: true,
-      refundId,
-      amountRupees,
-      message: `₹${amountRupees} full refund initiated successfully to your original payment method.`,
-    };
+      return {
+        success: true,
+        refundId,
+        amountRupees,
+        message: `₹${amountRupees} full refund initiated successfully to your original payment method.`,
+      };
+    });
   }
 
   /**
