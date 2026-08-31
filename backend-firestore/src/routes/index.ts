@@ -43,6 +43,7 @@ import webhooksRoutes from './webhooks.routes';
 import helpRoutes from './help.routes';
 import examRoutes from './exam.routes';
 import coverageRoutes from './coverage.routes';
+import learningStateRoutes from './learningState.routes';
 import studyPlanRoutes from './studyPlan.routes';
 import pyqRoutes from './pyq.routes';
 import canonicalAssessmentRoutes from './canonicalAssessment.routes';
@@ -56,6 +57,8 @@ const router = Router();
 router.use('/policies', policiesRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/coverage', coverageRoutes);
+// Gate 8 — the measured learning state. Read-only; see learningState.routes.
+router.use('/learning-state', learningStateRoutes);
 router.use('/study-plan', studyPlanRoutes);
 router.use('/briefing', briefingRoutes);
 router.use('/questions', questionsRoutes);
