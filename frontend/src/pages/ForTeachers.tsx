@@ -15,6 +15,7 @@ import {
   DAY, COMPARISON, FAQS, STATUS_BOARD, STATUS_LABEL, type FeatureStatus,
 } from '../components/landing/teacherPageData';
 import AvatarStack from '../components/landing/AvatarStack';
+import { useAuth } from '../lib/AuthContext';
 
 /**
  * /for-teachers — the public teacher marketing page.
