@@ -657,13 +657,13 @@ export default function Settings() {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-[16px] font-bold text-slate-900 dark:text-white">Subscription</h2>
-                <button onClick={() => setShowPlans(true)} className="text-[13px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">View plans</button>
+                <button onClick={() => setShowPlans(true)} className="text-[13px] font-semibold text-[#8ba32b] dark:text-[#c8e558] hover:underline cursor-pointer">View plans</button>
               </div>
               <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1a1a1b] p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-[15px] font-bold text-slate-900 dark:text-white">{isPro ? 'Pro' : 'Free'}</span>
-                    <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400">Active</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-[#8ba32b]/15 dark:bg-[#c8e558]/15 text-[#8ba32b] dark:text-[#c8e558] border border-[#8ba32b]/20 dark:border-[#c8e558]/20">Active</span>
                   </div>
                   <div className="text-[12.5px] text-slate-500 dark:text-gray-400">
                     {isPro ? `Valid till ${fmtDate(subInfo?.currentPeriodEnd)}` : 'No expiry'}
@@ -671,7 +671,7 @@ export default function Settings() {
                 </div>
                 <div className="flex items-center justify-between mt-5">
                   <div className="flex items-center gap-4">
-                    <div className={cn('w-14 h-14 rounded-full border-4 -rotate-45', isPro ? 'border-emerald-500/80 border-t-transparent' : 'border-indigo-500/70 border-t-transparent')} />
+                    <div className={cn('w-14 h-14 rounded-full border-4 -rotate-45', isPro ? 'border-[#8ba32b] dark:border-[#c8e558] border-t-transparent' : 'border-slate-300 dark:border-white/20 border-t-transparent')} />
                     <div>
                       <div className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">{isPro ? 'Sadhya Pro' : 'Free plan'}</div>
                       <div className="text-[13px] text-slate-500 dark:text-gray-400">
@@ -684,28 +684,29 @@ export default function Settings() {
                     {isPro && <div className="text-[12px] text-slate-400">{subInfo?.billing === 'yearly' ? 'per year' : 'per month'}</div>}
                   </div>
                 </div>
-                {/* 7-Day Money-Back Guarantee Banner (Method 2: Self-Service in UI) */}
+
+                {/* 7-Day Money-Back Guarantee Banner (Aligned with Sadhya sleek theme) */}
                 {isEligibleFor7DayRefund && (
-                  <div className="mt-4 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div className="flex items-start gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0 mt-0.5">
-                        <ShieldCheck className="w-4 h-4" />
+                  <div className="mt-5 p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/90 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-[#8ba32b]/15 dark:bg-[#c8e558]/15 text-[#8ba32b] dark:text-[#c8e558] flex items-center justify-center shrink-0 mt-0.5">
+                        <ShieldCheck className="w-4 h-4 stroke-[2.2]" />
                       </div>
                       <div>
-                        <div className="text-[13.5px] font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
-                          7-Day Full Refund Guarantee Active
-                          <span className="text-[11px] font-medium px-2 py-0.2 rounded-full bg-amber-200/70 dark:bg-amber-800/40 text-amber-900 dark:text-amber-200">
+                        <div className="text-[13.5px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                          <span>7-Day Money-Back Guarantee</span>
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#8ba32b]/15 dark:bg-[#c8e558]/15 text-[#6b7c25] dark:text-[#c8e558]">
                             {daysLeftInGuarantee} {daysLeftInGuarantee === 1 ? 'day' : 'days'} left
                           </span>
                         </div>
-                        <div className="text-[12px] text-amber-800/80 dark:text-amber-300/70 mt-0.5 leading-relaxed">
+                        <div className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
                           Not satisfied with your preparation? Claim a 100% full refund directly to your original payment method.
                         </div>
                       </div>
                     </div>
                     <button
                       onClick={() => openRefundModal()}
-                      className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 active:scale-98 text-white font-semibold text-[12.5px] shrink-0 transition-all shadow-xs cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-xl border border-slate-300/80 dark:border-white/15 bg-white dark:bg-white/[0.06] hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-slate-200 font-semibold text-[12.5px] shrink-0 transition-all shadow-2xs cursor-pointer active:scale-98"
                     >
                       Request 100% Refund
                     </button>
@@ -716,10 +717,10 @@ export default function Settings() {
                   <span className="text-[13px] text-slate-500 dark:text-gray-400">
                     {isPro
                       ? <>Renews on {fmtDate(subInfo?.currentPeriodEnd)} · billed {subInfo?.billing === 'yearly' ? 'yearly' : 'monthly'}</>
-                      : <>Questions? Check out the <button onClick={() => navigate('/pricing')} className="text-indigo-600 dark:text-indigo-400 font-medium hover:underline">Billing FAQ</button></>}
+                      : <>Questions? Check out the <button onClick={() => navigate('/pricing')} className="text-[#8ba32b] dark:text-[#c8e558] font-medium hover:underline">Billing FAQ</button></>}
                   </span>
                   {!isPro && (
-                    <button onClick={() => navigate('/checkout?plan=pro')} className="shrink-0 px-4 py-2 text-[12.5px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">Upgrade to Pro</button>
+                    <button onClick={() => navigate('/checkout?plan=pro')} className="shrink-0 px-4 py-2 text-[12.5px] font-semibold text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-[#c8e558] dark:text-neutral-950 rounded-lg transition-colors">Upgrade to Pro</button>
                   )}
                 </div>
               </div>
@@ -743,7 +744,7 @@ export default function Settings() {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-[16px] font-bold text-slate-900 dark:text-white">Payment Information</h2>
-                <button onClick={() => navigate('/pricing')} className="text-[13px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Edit</button>
+                <button onClick={() => navigate('/pricing')} className="text-[13px] font-semibold text-[#8ba32b] dark:text-[#c8e558] hover:underline cursor-pointer">Edit</button>
               </div>
               <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1a1a1b] divide-y divide-slate-100 dark:divide-white/10">
                 <div className="flex items-center justify-between px-5 py-4">
@@ -799,12 +800,12 @@ export default function Settings() {
                         </span>
                         <span className="text-right flex items-center justify-end gap-3">
                           {p.status === 'paid' && (
-                            <button onClick={() => printInvoice(p)} className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">
+                            <button onClick={() => printInvoice(p)} className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-[#8ba32b] dark:text-[#c8e558] hover:underline cursor-pointer">
                               <Printer className="w-3.5 h-3.5" /> Print
                             </button>
                           )}
                           {rowEligibleForRefund && (
-                            <button onClick={() => openRefundModal(p)} className="text-[12px] font-medium text-amber-600 dark:text-amber-400 hover:underline cursor-pointer">
+                            <button onClick={() => openRefundModal(p)} className="text-[12px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:underline cursor-pointer">
                               Refund
                             </button>
                           )}
@@ -1088,18 +1089,18 @@ export default function Settings() {
         {/* ── 7-Day Refund Request Modal ── */}
         {refundModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 font-sans">
-            <div className="w-full max-w-md bg-white dark:bg-[#18181b] border border-slate-200 dark:border-white/10 rounded-2xl p-6 shadow-2xl">
+            <div className="w-full max-w-md bg-white dark:bg-[#18181b] border border-slate-200/90 dark:border-white/10 rounded-3xl p-6 shadow-2xl">
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                    <ShieldCheck className="w-5 h-5" />
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-[#8ba32b]/15 dark:bg-[#c8e558]/15 text-[#8ba32b] dark:text-[#c8e558] flex items-center justify-center">
+                    <ShieldCheck className="w-5 h-5 stroke-[2.2]" />
                   </div>
                   <div>
                     <h3 className="text-[16px] font-bold text-slate-900 dark:text-white leading-tight">
-                      7-Day Full Refund Guarantee
+                      7-Day Money-Back Guarantee
                     </h3>
                     <p className="text-[12px] text-slate-500 dark:text-gray-400">
-                      100% money back to your original payment source
+                      100% full refund to original payment source
                     </p>
                   </div>
                 </div>
@@ -1112,20 +1113,20 @@ export default function Settings() {
               </div>
 
               <div className="space-y-3.5 py-2">
-                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 text-[13px] space-y-1.5">
-                  <div className="flex justify-between">
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 text-[13px] space-y-2">
+                  <div className="flex justify-between items-center">
                     <span className="text-slate-500 dark:text-gray-400">Plan / Item:</span>
                     <span className="font-semibold text-slate-900 dark:text-white">
                       {selectedRefundOrder?.planName || subInfo?.planName || 'Sadhya Pro'}
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-slate-500 dark:text-gray-400">Refund Amount:</span>
-                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                    <span className="font-bold text-[#8ba32b] dark:text-[#c8e558] text-[14px]">
                       ₹{selectedRefundOrder?.amountRupees || subInfo?.amountRupees || 199} (100% Full Refund)
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-slate-500 dark:text-gray-400">Destination:</span>
                     <span className="font-medium text-slate-700 dark:text-gray-300">
                       Original Payment Source (UPI / Card)
@@ -1150,7 +1151,7 @@ export default function Settings() {
                   </select>
                 </div>
 
-                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11.5px] text-amber-800 dark:text-amber-300 leading-relaxed">
+                <div className="p-3.5 rounded-xl bg-slate-100/70 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/10 text-[12px] text-slate-600 dark:text-slate-400 leading-relaxed">
                   Upon confirmation, your Sadhya Pro access will be cancelled, and Razorpay will instantly initiate your transfer back to your UPI or bank account.
                 </div>
               </div>
@@ -1160,7 +1161,7 @@ export default function Settings() {
                   type="button"
                   onClick={() => setRefundModalOpen(false)}
                   disabled={isRefunding}
-                  className="px-4 py-2 text-[13px] font-semibold text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
+                  className="px-4 py-2 text-[13px] font-semibold text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1168,7 +1169,7 @@ export default function Settings() {
                   type="button"
                   onClick={handleProcessRefund}
                   disabled={isRefunding}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-[13px] font-semibold text-white bg-amber-600 hover:bg-amber-700 active:scale-98 rounded-lg shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-[13px] font-bold text-white bg-neutral-900 hover:bg-neutral-800 dark:bg-[#c8e558] dark:text-neutral-950 rounded-xl shadow-xs transition-all active:scale-98 disabled:opacity-50 cursor-pointer"
                 >
                   {isRefunding ? (
                     <>
