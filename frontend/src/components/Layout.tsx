@@ -846,20 +846,34 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
           <div className="relative" ref={profileMenuRef}>
             <div 
               onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-              className={cn("flex justify-between items-center transition-colors duration-200 cursor-pointer pt-2 border-t border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-[#1a1a1a]", isRail ? "justify-center w-8 h-8 rounded-full mt-1 mx-auto" : "px-3 py-2 rounded-lg")}
+              className={cn("flex justify-between items-center transition-colors duration-200 cursor-pointer pt-2 border-t border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-[#1a1a1a]", isRail ? "justify-center w-8 h-8 rounded-full mt-1 mx-auto relative" : "px-3 py-2 rounded-lg")}
             >
                {isRail ? (
-                 <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-sm shrink-0 uppercase overflow-hidden">
-                   {user?.photoURL ? <img src={user.photoURL} alt="User" className="w-full h-full object-cover" /> : (user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U')}
+                 <div className="relative">
+                   <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-sm shrink-0 uppercase overflow-hidden ring-2 ring-transparent">
+                     {user?.photoURL ? <img src={user.photoURL} alt="User" className="w-full h-full object-cover" /> : (user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U')}
+                   </div>
+                   {isPro && (
+                     <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[#c8e558] text-slate-900 rounded-full flex items-center justify-center text-[8px] font-black border-2 border-white dark:border-[#141416] shadow-xs" title="Pro Member">
+                       ★
+                     </span>
+                   )}
                  </div>
                ) : (
                  <>
-                   <div className="flex items-center gap-3 overflow-hidden">
+                   <div className="flex items-center gap-2.5 overflow-hidden min-w-0">
                      <div className="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-sm shrink-0 uppercase overflow-hidden">
                        {user?.photoURL ? <img src={user.photoURL} alt="User" className="w-full h-full object-cover" /> : (user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U')}
                      </div>
-                     <div className="text-[13.5px] font-medium text-slate-700 dark:text-gray-200 truncate pr-2">
-                       {user?.displayName || user?.email || 'User'}
+                     <div className="flex items-center gap-1.5 min-w-0 pr-1">
+                       <span className="text-[13.5px] font-medium text-slate-700 dark:text-gray-200 truncate">
+                         {user?.displayName || user?.email || 'User'}
+                       </span>
+                       {isPro && (
+                         <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9.5px] font-bold bg-[#c8e558] text-slate-900 shrink-0 shadow-2xs">
+                           <Sparkles className="w-2.5 h-2.5 fill-current" /> PRO
+                         </span>
+                       )}
                      </div>
                    </div>
                    <ChevronDown className={cn("w-4 h-4 text-slate-400 dark:text-gray-500 shrink-0 transition-transform", isProfileMenuOpen && "rotate-180")} />
@@ -872,8 +886,15 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
               <div className="absolute bottom-full left-0 mb-2 w-full min-w-[200px] bg-white dark:bg-[#1f1f1f] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg p-1 z-50 overflow-hidden">
                 {!isRail && (
                   <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1">
-                    <div className="text-sm font-medium text-slate-900 dark:text-gray-100 truncate">{user?.displayName || 'User'}</div>
-                    <div className="text-xs text-slate-500 dark:text-gray-400 truncate">{user?.email}</div>
+                    <div className="flex items-center justify-between gap-1.5">
+                      <div className="text-sm font-semibold text-slate-900 dark:text-gray-100 truncate">{user?.displayName || 'User'}</div>
+                      {isPro && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#c8e558] text-slate-900 shrink-0 shadow-2xs">
+                          PRO
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-gray-400 truncate mt-0.5">{user?.email}</div>
                   </div>
                 )}
                 <button 
@@ -881,7 +902,7 @@ export function AppLayout({ children }: { children?: React.ReactNode } = {}) {
                     await logout();
                     navigate('/signin');
                   }}
-                  className="w-full flex items-center justify-start gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors font-medium"
+                  className="w-full flex items-center justify-start gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors font-medium cursor-pointer"
                 >
                   <LogOut className="w-4 h-4 shrink-0" />
                   {!isRail && "Sign out"}

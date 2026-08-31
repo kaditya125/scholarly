@@ -33,6 +33,7 @@ import { updateProfile, sendPasswordResetEmail, sendEmailVerification } from 'fi
 import { auth } from '../lib/firebase';
 import { useAuth } from '../lib/AuthContext';
 import { useProfile } from '../hooks/api/useProfile';
+import { usePlan } from '../hooks/usePlan';
 import { useTheme } from '../lib/ThemeContext';
 import { uploadAvatar, UploadProgress } from '../lib/api/avatar';
 import { ShareProfileModal } from '../components/profile/ShareProfileModal';
@@ -54,6 +55,7 @@ type ProfileTab = 'profile' | 'account' | 'academic';
 export default function Profile() {
   const { user, refreshUser, logout } = useAuth();
   const { profile, updateProfile: updateAcademicProfile, isUpdating: isUpdatingAcademic } = useProfile();
+  const { isPro } = usePlan();
   const { themePreference, setThemePreference } = useTheme();
   const navigate = useNavigate();
 
@@ -337,9 +339,16 @@ export default function Profile() {
             </div>
 
             {/* User Identity Info */}
-            <h2 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight">
-              {user?.displayName || 'Scholar Student'}
-            </h2>
+            <div className="flex items-center justify-center gap-1.5 flex-wrap">
+              <h2 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight">
+                {user?.displayName || 'Scholar Student'}
+              </h2>
+              {isPro && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-[#c8e558] text-slate-950 shadow-2xs shrink-0">
+                  <Sparkles className="w-2.5 h-2.5 fill-current" /> PRO
+                </span>
+              )}
+            </div>
             <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 truncate max-w-full">
               {user?.email}
             </p>

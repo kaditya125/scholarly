@@ -16,12 +16,14 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
 import { useProfile } from '../../hooks/api/useProfile';
+import { usePlan } from '../../hooks/usePlan';
 import { ShareProfileModal } from '../profile/ShareProfileModal';
 import { cn } from '../../lib/utils';
 
 export function TopProfileDropdown() {
   const { user, logout } = useAuth();
   const { profile } = useProfile();
+  const { isPro } = usePlan();
   const navigate = useNavigate();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -65,11 +67,18 @@ export function TopProfileDropdown() {
         aria-expanded={isOpen}
         className="group relative flex items-center p-0.5 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[#c8e558] cursor-pointer"
       >
-        <div className="w-9 h-9 rounded-full bg-slate-900 dark:bg-white/10 text-white flex items-center justify-center text-[13px] font-bold uppercase overflow-hidden ring-2 ring-slate-200/90 dark:ring-white/10 group-hover:ring-[#8ba32b] dark:group-hover:ring-[#c8e558] transition-all shadow-xs">
-          {user?.photoURL ? (
-            <img src={user.photoURL} alt="" className="w-full h-full object-cover" />
-          ) : (
-            user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'
+        <div className="relative">
+          <div className="w-9 h-9 rounded-full bg-slate-900 dark:bg-white/10 text-white flex items-center justify-center text-[13px] font-bold uppercase overflow-hidden ring-2 ring-slate-200/90 dark:ring-white/10 group-hover:ring-[#8ba32b] dark:group-hover:ring-[#c8e558] transition-all shadow-xs">
+            {user?.photoURL ? (
+              <img src={user.photoURL} alt="" className="w-full h-full object-cover" />
+            ) : (
+              user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'
+            )}
+          </div>
+          {isPro && (
+            <span className="absolute -bottom-1 -right-1 px-1.5 py-0.2 bg-[#c8e558] text-slate-950 rounded-full text-[8px] font-black tracking-wider border-2 border-white dark:border-[#131314] shadow-xs" title="Pro Member">
+              PRO
+            </span>
           )}
         </div>
       </button>
@@ -86,19 +95,33 @@ export function TopProfileDropdown() {
           >
             {/* 1. Header Profile Summary */}
             <div className="flex items-center gap-3 pb-3.5 border-b border-slate-100 dark:border-white/[0.06]">
-              <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-100 dark:bg-[#222227] border-2 border-slate-200 dark:border-white/10 flex items-center justify-center text-lg font-bold text-[#8ba32b] dark:text-[#c8e558] shrink-0">
-                {user?.photoURL ? (
-                  <img src={user.photoURL} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'
+              <div className="relative">
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-100 dark:bg-[#222227] border-2 border-slate-200 dark:border-white/10 flex items-center justify-center text-lg font-bold text-[#8ba32b] dark:text-[#c8e558] shrink-0">
+                  {user?.photoURL ? (
+                    <img src={user.photoURL} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'
+                  )}
+                </div>
+                {isPro && (
+                  <span className="absolute -bottom-1 -right-1 px-1.5 py-0.2 bg-[#c8e558] text-slate-950 rounded-full text-[8px] font-black tracking-wider border-2 border-white dark:border-[#1a1a1e] shadow-xs">
+                    PRO
+                  </span>
                 )}
               </div>
 
               <div className="flex-1 min-w-0">
-                <div className="text-[14.5px] font-bold text-slate-900 dark:text-white truncate">
-                  {user?.displayName || 'Scholar Student'}
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <div className="text-[14.5px] font-bold text-slate-900 dark:text-white truncate">
+                    {user?.displayName || 'Scholar Student'}
+                  </div>
+                  {isPro && (
+                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9.5px] font-bold bg-[#c8e558] text-slate-900 shrink-0 shadow-2xs">
+                      <Sparkles className="w-2.5 h-2.5 fill-current" /> PRO
+                    </span>
+                  )}
                 </div>
-                <div className="text-[11.5px] text-slate-500 dark:text-slate-400 truncate">
+                <div className="text-[11.5px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                   {user?.email}
                 </div>
                 <div className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#8ba32b]/15 text-[#8ba32b] dark:bg-[#c8e558]/15 dark:text-[#c8e558]">
