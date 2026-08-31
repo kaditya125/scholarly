@@ -64,10 +64,14 @@ export const VOICE_TOOL_DECLARATIONS = [
   {
     name: 'getStudentContext',
     description:
-      "Get who you are speaking with: their name, current exam, level and recent study activity. " +
-      'Use it to address them properly and to pitch explanations at the right level, and whenever ' +
-      'they ask anything about themselves — their name, their exam, what they have been studying. ' +
-      'Takes no arguments; it always refers to the student in this conversation.',
+      'Get who you are speaking with. Returns: name, exam, subjects, goal, level; recentNotebooks ' +
+      '(titles of the study material they have been working with most recently); todayPlan (tasks ' +
+      'still outstanding on their plan for today); weakTopics and strongTopics. ' +
+      'Use it to address them properly, to pitch explanations at the right level, and whenever they ' +
+      'ask about themselves — their name, their exam, what they have been studying or should do next. ' +
+      'Takes no arguments; it always refers to the student in this conversation. ' +
+      'Say only what the fields actually contain: recentNotebooks is the material they opened, not a ' +
+      'log of hours studied, and an empty list means you do not know — say so rather than guessing.',
     parameters: { type: 'OBJECT', properties: {} },
   },
 ] as const;
@@ -165,8 +169,27 @@ export async function executeVoiceTool(
           subjects: (sc?.profile?.subjects || []).slice(0, 8),
           goal: sc?.profile?.goal || null,
           level: sc?.profile?.classLevel || sc?.profile?.level || null,
-          recentTopics: (sc?.memory?.recentTopics || []).slice(0, 5),
-          weakAreas: (sc?.analytics?.weakAreas || []).slice(0, 5),
+          /*
+           * ── THESE TWO USED TO READ FIELDS THAT EXIST ON NO SCHEMA ──────────────────────
+           * `memory.recentTopics` appears nowhere else in this codebase — StudentContext's
+           * memory block has exactly five fields and that is not one of them. `analytics
+           * .weakAreas` was equally wrong: weakAreas is a real field, but it lives on the
+           * PROFILE document, and the analytics block returns null in normal operation anyway.
+           *
+           * Both silently resolved to [] on every call. The tool's own description promises the
+           * model "recent study activity" and tells it to answer "what they have been studying",
+           * so the model asked, received nothing, and had to improvise an answer about a real
+           * student. Same class of bug as the targetExam fallback above, which is documented a
+           * few lines up — one wrong field name, no error, an empty answer.
+           */
+          recentNotebooks: (sc?.notebooks?.recentNotebookNames || []).slice(0, 5),
+          todayPlan: (sc?.planner?.todayTasks || [])
+            .filter((t: any) => t && !t.completed)
+            .map((t: any) => t.title)
+            .filter(Boolean)
+            .slice(0, 5),
+          weakTopics: (sc?.memory?.weakTopics?.length ? sc.memory.weakTopics : sc?.profile?.weakAreas || []).slice(0, 5),
+          strongTopics: (sc?.memory?.strongTopics || []).slice(0, 5),
         };
       }
 
