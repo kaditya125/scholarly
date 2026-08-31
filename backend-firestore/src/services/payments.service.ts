@@ -797,7 +797,251 @@ export class PaymentsService {
       }
     }
 
+    // Handle refunds created or processed from Razorpay Dashboard (Admin-assisted / Method 1)
+    if (type === 'payment.refund.created' || type === 'refund.processed' || type === 'refund.created') {
+      const refundEntity = event?.payload?.refund?.entity;
+      const paymentEntity = event?.payload?.payment?.entity;
+      const paymentId = refundEntity?.payment_id || paymentEntity?.id;
+      const refundId = refundEntity?.id;
+      const refundAmountPaise = refundEntity?.amount;
+      const refundAmountRupees = refundAmountPaise ? Math.round(refundAmountPaise / 100) : 199;
+
+      if (paymentId) {
+        // Find the payment document by paymentId
+        const snap = await db.collection('payments').where('paymentId', '==', paymentId).limit(1).get();
+        if (!snap.empty) {
+          const doc = snap.docs[0];
+          const orderData = doc.data() as any;
+          const orderId = doc.id;
+          const userId = orderData.userId;
+          const now = Date.now();
+
+          await db.runTransaction(async (tx) => {
+            tx.set(
+              doc.ref,
+              {
+                status: 'refunded',
+                refundId: refundId || `ref_${now}`,
+                refundAmountRupees,
+                refundedAt: now,
+                updatedAt: now,
+              },
+              { merge: true },
+            );
+
+            if (userId && orderData.orderType !== 'class_purchase') {
+              tx.set(
+                db.collection('users').doc(userId),
+                {
+                  plan: 'free',
+                  isPro: false,
+                  subscription: {
+                    status: 'refunded',
+                    refundId: refundId || `ref_${now}`,
+                    refundedAt: now,
+                    currentPeriodEnd: now,
+                    planName: 'Free',
+                    updatedAt: now,
+                  },
+                },
+                { merge: true },
+              );
+            }
+          });
+
+          console.log(`[payments] PAYMENT_REFUND_PROCESSED order=${orderId} payment=${paymentId} refund=${refundId}`);
+          
+          if (userId) {
+            void this.dispatchRefundConfirmation({
+              userId,
+              orderId,
+              paymentId,
+              refundId: refundId || `ref_${now}`,
+              amountRupees: refundAmountRupees,
+              planName: orderData.planName || 'Sadhya Pro',
+              method: orderData.method || paymentEntity?.method || 'UPI',
+            });
+          }
+          return { handled: true };
+        }
+      }
+    }
+
     return { handled: false };
+  }
+
+  /**
+   * Processes a 7-Day Money-Back Guarantee self-service refund (Method 2).
+   */
+  async requestSelfServiceRefund(params: {
+    userId: string;
+    orderId: string;
+    reason?: string;
+  }): Promise<{
+    success: boolean;
+    refundId?: string;
+    amountRupees: number;
+    message: string;
+  }> {
+    const { userId, orderId, reason } = params;
+    const paymentRef = db.collection('payments').doc(orderId);
+    const userRef = db.collection('users').doc(userId);
+
+    const snap = await paymentRef.get();
+    if (!snap.exists) {
+      fail('ORDER_NOT_FOUND', 'Payment record not found.');
+    }
+
+    const orderData = snap.data() as any;
+    if (orderData.userId !== userId) {
+      fail('UNAUTHORIZED', 'You do not have permission to refund this transaction.');
+    }
+
+    if (orderData.status === 'refunded') {
+      fail('ALREADY_REFUNDED', 'This order has already been refunded.');
+    }
+
+    if (orderData.status !== 'paid') {
+      fail('INVALID_STATUS', 'Only completed, paid transactions can be refunded.');
+    }
+
+    // 7-day refund guarantee window check (7 days = 7 * 24 * 60 * 60 * 1000 ms)
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const paidAt = Number(orderData.paidAt || orderData.activatedAt || orderData.createdAt || 0);
+    const now = Date.now();
+    if (paidAt > 0 && now - paidAt > SEVEN_DAYS_MS) {
+      fail(
+        'GUARANTEE_EXPIRED',
+        'The 7-day money-back guarantee period for this transaction has expired. For assistance, contact support@sadhya.app.',
+      );
+    }
+
+    const paymentId = orderData.paymentId;
+    if (!paymentId) {
+      fail('MISSING_PAYMENT_ID', 'Payment reference ID is missing for this transaction.');
+    }
+
+    const amountRupees = Number(orderData.amountRupees || 199);
+    const amountPaise = amountRupees * 100;
+
+    let rzpRefund: any;
+    try {
+      rzpRefund = await this.client().payments.refund(paymentId, {
+        amount: amountPaise,
+        notes: {
+          reason: reason || '7-day guarantee refund',
+          userId,
+          orderId,
+          refundedBy: 'student_self_service',
+        },
+      });
+    } catch (err: any) {
+      console.error(`[payments] Razorpay refund API failed for order ${orderId}:`, err?.message || err);
+      const detail = err?.error?.description || err?.message || 'Payment gateway refund failed';
+      fail('GATEWAY_REFUND_FAILED', `Refund processing error: ${detail}`);
+    }
+
+    const refundId = rzpRefund?.id || `ref_${now}`;
+
+    // Atomic update in Firestore: mark payment refunded and reset user subscription to free
+    await db.runTransaction(async (tx) => {
+      tx.set(
+        paymentRef,
+        {
+          status: 'refunded',
+          refundId,
+          refundAmountRupees: amountRupees,
+          refundReason: reason || '7-Day Guarantee Refund',
+          refundedAt: now,
+          updatedAt: now,
+        },
+        { merge: true },
+      );
+
+      // If this was a subscription order, reset user plan to free
+      if (orderData.orderType !== 'class_purchase') {
+        tx.set(
+          userRef,
+          {
+            plan: 'free',
+            isPro: false,
+            subscription: {
+              status: 'refunded',
+              refundId,
+              refundedAt: now,
+              cancelledAt: now,
+              currentPeriodEnd: now,
+              planName: 'Free',
+              updatedAt: now,
+            },
+          },
+          { merge: true },
+        );
+      }
+    });
+
+    console.log(`[payments] 💸 Self-service refund processed: user=${userId} order=${orderId} refund=${refundId}`);
+
+    // Send Refund Confirmation Email via ZeptoMail
+    void this.dispatchRefundConfirmation({
+      userId,
+      orderId,
+      paymentId,
+      refundId,
+      amountRupees,
+      planName: orderData.planName || 'Sadhya Pro',
+      method: orderData.method || 'UPI',
+    });
+
+    return {
+      success: true,
+      refundId,
+      amountRupees,
+      message: `₹${amountRupees} full refund initiated successfully to your original payment method.`,
+    };
+  }
+
+  /**
+   * Helper that fetches user email and dispatches the refund confirmation credit note.
+   */
+  async dispatchRefundConfirmation(params: {
+    userId: string;
+    orderId: string;
+    paymentId?: string;
+    refundId?: string;
+    planName: string;
+    amountRupees: number;
+    method?: string;
+  }): Promise<boolean> {
+    try {
+      const userDoc = await db.collection('users').doc(params.userId).get();
+      const userData = userDoc.data();
+      const email = userData?.email;
+      if (!email) {
+        console.warn(`[payments] User ${params.userId} has no email on file; skipping refund confirmation dispatch.`);
+        return false;
+      }
+
+      const displayName = userData?.displayName || userData?.name || email.split('@')[0];
+      const sent = await zeptoMailService.sendRefundConfirmationEmail({
+        email,
+        displayName,
+        planName: params.planName,
+        amountRupees: params.amountRupees,
+        orderId: params.orderId,
+        paymentId: params.paymentId,
+        refundId: params.refundId,
+        method: params.method,
+      });
+
+      if (sent) {
+        console.log(`[payments] ✉️ Refund confirmation email sent to ${email} (order=${params.orderId})`);
+      }
+      return sent;
+    } catch (err: any) {
+      console.error(`[payments] Failed to dispatch refund confirmation email:`, err?.message || err);
+      return false;
+    }
   }
 }
 

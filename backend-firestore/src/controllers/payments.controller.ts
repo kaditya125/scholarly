@@ -142,6 +142,43 @@ export class PaymentsController {
   };
 
   /**
+   * Processes a 7-Day Money-Back Guarantee self-service refund (Method 2).
+   */
+  public requestRefund = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const { orderId, reason } = req.body;
+      if (!orderId) {
+        return res.status(400).json({ code: 'MISSING_ORDER_ID', error: 'orderId is required.' });
+      }
+
+      const result = await paymentsService.requestSelfServiceRefund({
+        userId,
+        orderId: String(orderId),
+        reason: typeof reason === 'string' ? reason.trim().slice(0, 500) : undefined,
+      });
+
+      res.json(result);
+    } catch (error: any) {
+      const statusMap: Record<string, number> = {
+        ORDER_NOT_FOUND: 404,
+        UNAUTHORIZED: 403,
+        ALREADY_REFUNDED: 400,
+        INVALID_STATUS: 400,
+        GUARANTEE_EXPIRED: 400,
+        GATEWAY_REFUND_FAILED: 502,
+      };
+      const status = statusMap[error?.code] || (error?.statusCode ?? 500);
+      res.status(status).json({
+        code: error?.code || 'REFUND_FAILED',
+        error: error?.message || 'Failed to process refund request.',
+      });
+    }
+  };
+
+  /**
    * Records that the user dismissed Razorpay checkout. Only moves `created` -> `cancelled`, so
    * it can never overwrite a payment that actually completed — a dismissal racing a real
    * capture leaves the `paid` state intact.

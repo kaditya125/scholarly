@@ -824,6 +824,197 @@ https://sadhya.app
   }
 
   /**
+   * Generates and dispatches a minimalist, official Refund Confirmation Receipt.
+   */
+  async sendRefundConfirmationEmail(params: {
+    email: string;
+    displayName?: string;
+    planName: string;
+    amountRupees: number;
+    orderId: string;
+    paymentId?: string;
+    refundId?: string;
+    method?: string;
+    refundReason?: string;
+  }): Promise<boolean> {
+    const name = params.displayName?.trim() || 'Learner';
+    const amountStr = `₹${Number(params.amountRupees || 0).toLocaleString('en-IN')}`;
+    const refundNo = String(params.refundId || 'REF').replace(/[^a-zA-Z0-9_]/g, '');
+    const paymentMethodText = params.method ? params.method.toUpperCase() : 'UPI / Original Payment Source';
+    
+    const refundDateStr = new Date().toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+
+    const subject = `Refund Confirmation: ${amountStr} for Sadhya Pro (Receipt #${refundNo})`;
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #111827; -webkit-font-smoothing: antialiased;">
+  <div style="width: 100%; background-color: #ffffff; padding: 32px 36px 48px; box-sizing: border-box;">
+    
+    <!-- Top Header -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-bottom: 1px solid #e5e7eb; padding-bottom: 20px; margin-bottom: 32px;">
+      <tr>
+        <td style="vertical-align: middle;">
+          <a href="https://sadhya.app" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+            <img src="${this.iconUrl}" alt="" width="26" height="26" style="border-radius: 5px; vertical-align: middle; border: 0;" />
+            <span style="font-size: 19px; font-weight: 700; color: #111827; letter-spacing: -0.3px; margin-left: 8px; vertical-align: middle;">Sadhya<span style="color: #65a30d;">.</span></span>
+          </a>
+        </td>
+        <td align="right" style="vertical-align: middle;">
+          <span style="font-size: 11.5px; font-weight: 700; color: #b45309; background-color: #fef3c7; padding: 4px 10px; border-radius: 4px; letter-spacing: 0.5px; text-transform: uppercase;">
+            REFUNDED
+          </span>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Refund Main Title & Hero -->
+    <div style="margin-bottom: 28px;">
+      <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: #6b7280; margin-bottom: 4px;">
+        Refund Credit Note &middot; 7-Day Guarantee
+      </div>
+      <h1 style="margin: 0 0 6px; font-size: 22px; font-weight: 700; color: #111827; letter-spacing: -0.4px;">
+        Refund #${refundNo}
+      </h1>
+      <p style="margin: 0; font-size: 14px; color: #4b5563;">
+        ${refundDateStr} &middot; Sadhya Technologies Pvt. Ltd.
+      </p>
+    </div>
+
+    <!-- Amount Hero Banner -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 32px;">
+      <tr>
+        <td style="padding: 20px 24px;">
+          <div style="font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">
+            Total Refund Amount
+          </div>
+          <div style="font-size: 28px; font-weight: 800; color: #111827; margin: 4px 0 2px;">
+            ${amountStr}
+          </div>
+          <div style="font-size: 13px; color: #4b5563;">
+            Returned to ${paymentMethodText} &middot; 100% Full Refund
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Greeting & Note -->
+    <div style="margin-bottom: 28px; font-size: 14.5px; line-height: 1.6; color: #374151;">
+      <p style="margin: 0 0 12px;">Hello <strong>${name}</strong>,</p>
+      <p style="margin: 0 0 12px;">
+        Your refund request under our 7-Day Money-Back Guarantee has been approved and processed. We have initiated a 100% full refund of <strong>${amountStr}</strong> to your original payment method (${paymentMethodText}).
+      </p>
+      <p style="margin: 0; font-size: 13.5px; color: #6b7280;">
+        💡 <em>Timeline:</em> For UPI payments, refunds typically credit instantly or within a few hours. For debit/credit cards or netbanking, your bank will reflect the credit in 2&ndash;5 working days.
+      </p>
+    </div>
+
+    <!-- Metadata Grid (Billed To / Payment Details) -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 18px 20px; margin-bottom: 32px; font-size: 13px;">
+      <tr>
+        <td width="50%" style="vertical-align: top; padding-right: 16px;">
+          <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7280; margin-bottom: 4px;">
+            Refund Recipient
+          </div>
+          <div style="font-weight: 600; color: #111827;">${name}</div>
+          <div style="color: #4b5563; margin-top: 2px;">${params.email}</div>
+        </td>
+        <td width="50%" style="vertical-align: top;">
+          <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7280; margin-bottom: 4px;">
+            Refund Reference
+          </div>
+          <div style="font-weight: 600; color: #111827;">ID: ${params.refundId || refundNo}</div>
+          <div style="color: #6b7280; font-family: monospace; font-size: 12px; margin-top: 2px;">Orig. Payment: ${params.paymentId || params.orderId}</div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Action Buttons -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 36px;">
+      <tr>
+        <td style="padding-right: 14px;">
+          <a href="https://sadhya.app/dashboard" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 13.5px; font-weight: 600; text-decoration: none; padding: 10px 20px; border-radius: 6px;">
+            Continue on Free Workspace &rarr;
+          </a>
+        </td>
+        <td>
+          <a href="https://sadhya.app/settings?tab=billing" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #ffffff; color: #374151; font-size: 13.5px; font-weight: 600; text-decoration: none; padding: 9px 18px; border: 1px solid #d1d5db; border-radius: 6px;">
+            View Billing History
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Support Note -->
+    <div style="font-size: 12.5px; color: #6b7280; line-height: 1.5; margin-bottom: 28px;">
+      If you did not request this refund or have questions regarding your transaction, please contact <a href="mailto:support@sadhya.app" style="color: #111827; text-decoration: underline;">support@sadhya.app</a>.
+    </div>
+
+    <!-- Minimalist Compliance Footer -->
+    <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; font-size: 11.5px; color: #9ca3af; line-height: 1.6;">
+      <p style="margin: 0 0 4px;">
+        <strong>Sadhya Technologies Pvt. Ltd.</strong> &middot; Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India
+      </p>
+      <p style="margin: 0;">
+        This refund credit receipt was generated for transaction #${params.paymentId || params.orderId}. &middot; <a href="https://sadhya.app/terms" style="color: #6b7280; text-decoration: underline;">Terms</a> &middot; <a href="https://sadhya.app/privacy" style="color: #6b7280; text-decoration: underline;">Privacy</a>
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>
+`;
+
+    const text = `
+Refund Confirmation — Sadhya Technologies Pvt. Ltd.
+===================================================
+
+Hello ${name},
+
+Your 100% full refund under our 7-Day Money-Back Guarantee has been initiated.
+
+Refund Details:
+- Refund Reference: #${refundNo}
+- Plan: ${params.planName || 'Sadhya Pro'}
+- Amount Refunded: ${amountStr}
+- Date: ${refundDateStr}
+- Original Payment ID: ${params.paymentId || params.orderId}
+- Destination: ${paymentMethodText}
+
+UPI transfers typically credit within a few hours. Card/Netbanking transfers reflect in 2-5 working days.
+
+Access your workspace: https://sadhya.app/dashboard
+Manage billing: https://sadhya.app/settings?tab=billing
+
+Need assistance? Write to support@sadhya.app.
+
+Sadhya Technologies Pvt. Ltd.
+Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India
+https://sadhya.app
+`;
+
+    const result = await this.sendEmail({
+      to: params.email,
+      toName: name,
+      subject,
+      html,
+      text,
+    });
+
+    return result.success;
+  }
+
+  /**
    * Forwards a contact form inquiry directly to the relevant internal alias (support, sales, etc.)
    */
   async sendContactInquiryEmail(inquiry: {

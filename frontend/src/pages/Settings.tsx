@@ -5,7 +5,7 @@ import {
   Check, X, Loader2, Camera, Monitor, Sun, Moon, ShieldCheck, ShieldAlert,
   Mail, KeyRound, LogOut, Trash2, CreditCard, Github,
   BadgeCheck, MapPin, Globe, Pencil, ArrowUpRight, Bot, BookOpen, FileText, Layers, GraduationCap,
-  ChevronLeft, Printer, BarChart2, TrendingUp, Sparkles, Target
+  ChevronLeft, Printer, BarChart2, TrendingUp, Sparkles, Target, RotateCcw, AlertCircle, HelpCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { updateProfile, sendPasswordResetEmail, sendEmailVerification, deleteUser } from 'firebase/auth';
@@ -15,6 +15,7 @@ import { useTheme } from '../lib/ThemeContext';
 import { uploadAvatar, UploadProgress } from '../lib/api/avatar';
 import { cn } from '../lib/utils';
 import { api } from '../lib/api/client';
+import { notifyEntitlementChanged } from '../hooks/usePlan';
 import { NotificationsPanel } from '../components/settings/NotificationsPanel';
 import { LearningProfileSettings } from '../components/settings/LearningProfileSettings';
 import { usePolicyConsent } from '../lib/hooks/usePolicyConsent';
@@ -165,6 +166,59 @@ export default function Settings() {
         status: 'paid', method: subInfo.method, paymentId: subInfo.paymentId,
         createdAt: subInfo.activatedAt, paidAt: subInfo.activatedAt,
       }] : []);
+
+  // 7-day money-back guarantee calculation
+  const isEligibleFor7DayRefund = useMemo(() => {
+    if (!isPro || !subInfo) return false;
+    const activated = Number(subInfo.activatedAt || subInfo.createdAt || 0);
+    if (!activated) return false;
+    const diffMs = Date.now() - activated;
+    return diffMs <= 7 * 24 * 60 * 60 * 1000;
+  }, [isPro, subInfo]);
+
+  const daysLeftInGuarantee = useMemo(() => {
+    if (!subInfo) return 0;
+    const activated = Number(subInfo.activatedAt || subInfo.createdAt || 0);
+    if (!activated) return 0;
+    const msRemaining = (7 * 24 * 60 * 60 * 1000) - (Date.now() - activated);
+    return Math.max(1, Math.ceil(msRemaining / (24 * 60 * 60 * 1000)));
+  }, [subInfo]);
+
+  const [refundModalOpen, setRefundModalOpen] = useState(false);
+  const [selectedRefundOrder, setSelectedRefundOrder] = useState<any | null>(null);
+  const [refundReason, setRefundReason] = useState('Change of study preparation plans');
+  const [isRefunding, setIsRefunding] = useState(false);
+
+  const openRefundModal = (order?: any) => {
+    const target = order || subInfo || historyRows.find((h) => h.status === 'paid');
+    setSelectedRefundOrder(target);
+    setRefundModalOpen(true);
+  };
+
+  const handleProcessRefund = async () => {
+    const targetOrderId = selectedRefundOrder?.orderId || subInfo?.orderId;
+    if (!targetOrderId) {
+      showToast('err', 'No active order ID found to refund.');
+      return;
+    }
+    setIsRefunding(true);
+    try {
+      const res = await api.post('/payments/refund', {
+        orderId: targetOrderId,
+        reason: refundReason,
+      });
+      showToast('ok', res.data?.message || '100% full refund initiated successfully.');
+      setRefundModalOpen(false);
+      notifyEntitlementChanged();
+      // Reload subscription & history
+      api.get('/payments/subscription').then((r) => setSub(r.data)).catch(() => {});
+      api.get('/payments/history').then((r) => setPayments(r.data?.payments || [])).catch(() => {});
+    } catch (err: any) {
+      showToast('err', err?.response?.data?.error || err?.message || 'Failed to process refund.');
+    } finally {
+      setIsRefunding(false);
+    }
+  };
 
   /** Opens a printable, self-contained invoice for a paid payment. */
   const printInvoice = (p: any) => {
@@ -630,6 +684,34 @@ export default function Settings() {
                     {isPro && <div className="text-[12px] text-slate-400">{subInfo?.billing === 'yearly' ? 'per year' : 'per month'}</div>}
                   </div>
                 </div>
+                {/* 7-Day Money-Back Guarantee Banner (Method 2: Self-Service in UI) */}
+                {isEligibleFor7DayRefund && (
+                  <div className="mt-4 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0 mt-0.5">
+                        <ShieldCheck className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-[13.5px] font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                          7-Day Full Refund Guarantee Active
+                          <span className="text-[11px] font-medium px-2 py-0.2 rounded-full bg-amber-200/70 dark:bg-amber-800/40 text-amber-900 dark:text-amber-200">
+                            {daysLeftInGuarantee} {daysLeftInGuarantee === 1 ? 'day' : 'days'} left
+                          </span>
+                        </div>
+                        <div className="text-[12px] text-amber-800/80 dark:text-amber-300/70 mt-0.5 leading-relaxed">
+                          Not satisfied with your preparation? Claim a 100% full refund directly to your original payment method.
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => openRefundModal()}
+                      className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 active:scale-98 text-white font-semibold text-[12.5px] shrink-0 transition-all shadow-xs cursor-pointer"
+                    >
+                      Request 100% Refund
+                    </button>
+                  </div>
+                )}
+
                 <div className="mt-5 pt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-between gap-3">
                   <span className="text-[13px] text-slate-500 dark:text-gray-400">
                     {isPro
@@ -689,30 +771,47 @@ export default function Settings() {
               <h2 className="text-[16px] font-bold text-slate-900 dark:text-white mb-3">Billing History</h2>
               <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1a1a1b] overflow-hidden">
                 <div className="grid grid-cols-6 px-5 py-3 bg-slate-50 dark:bg-white/[0.03] text-[12px] font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wide">
-                  <span className="col-span-2">Invoice</span><span>Date</span><span>Amount</span><span>Status</span><span className="text-right">Invoice</span>
+                  <span className="col-span-2">Invoice</span><span>Date</span><span>Amount</span><span>Status</span><span className="text-right">Action</span>
                 </div>
                 {historyRows.length > 0 ? (
-                  historyRows.map((p) => (
-                    <div key={p.orderId || p.paymentId} className="grid grid-cols-6 px-5 py-4 text-[13px] text-slate-700 dark:text-gray-200 items-center border-t border-slate-100 dark:border-white/5">
-                      <span className="col-span-2 font-medium truncate pr-2">
-                        {p.planName || 'Sadhya Pro'} · {p.orderType === 'class_purchase' ? 'One-time' : (p.billing === 'yearly' ? 'Yearly' : 'Monthly')}
-                      </span>
-                      <span className="text-slate-500 dark:text-gray-400">{fmtDate(p.paidAt || p.createdAt)}</span>
-                      <span className="text-slate-700 dark:text-gray-200">{p.amountRupees != null ? `₹${Number(p.amountRupees).toLocaleString('en-IN')}` : '—'}</span>
-                      <span>
-                        {p.status === 'paid'
-                          ? <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><Check className="w-3.5 h-3.5" /> Paid</span>
-                          : <span className="text-amber-600 dark:text-amber-400 capitalize">{p.status}</span>}
-                      </span>
-                      <span className="text-right">
-                        {p.status === 'paid' && (
-                          <button onClick={() => printInvoice(p)} className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
-                            <Printer className="w-3.5 h-3.5" /> Print
-                          </button>
-                        )}
-                      </span>
-                    </div>
-                  ))
+                  historyRows.map((p) => {
+                    const rowPaidAt = Number(p.paidAt || p.createdAt || 0);
+                    const rowEligibleForRefund = p.status === 'paid' && rowPaidAt > 0 && (Date.now() - rowPaidAt <= 7 * 24 * 60 * 60 * 1000);
+                    return (
+                      <div key={p.orderId || p.paymentId} className="grid grid-cols-6 px-5 py-4 text-[13px] text-slate-700 dark:text-gray-200 items-center border-t border-slate-100 dark:border-white/5">
+                        <span className="col-span-2 font-medium truncate pr-2">
+                          {p.planName || 'Sadhya Pro'} · {p.orderType === 'class_purchase' ? 'One-time' : (p.billing === 'yearly' ? 'Yearly' : 'Monthly')}
+                        </span>
+                        <span className="text-slate-500 dark:text-gray-400">{fmtDate(p.paidAt || p.createdAt)}</span>
+                        <span className="text-slate-700 dark:text-gray-200">{p.amountRupees != null ? `₹${Number(p.amountRupees).toLocaleString('en-IN')}` : '—'}</span>
+                        <span>
+                          {p.status === 'paid' ? (
+                            <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                              <Check className="w-3.5 h-3.5" /> Paid
+                            </span>
+                          ) : p.status === 'refunded' ? (
+                            <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium bg-amber-500/10 px-2 py-0.5 rounded-md text-[11.5px]">
+                              <RotateCcw className="w-3 h-3" /> Refunded
+                            </span>
+                          ) : (
+                            <span className="text-amber-600 dark:text-amber-400 capitalize">{p.status}</span>
+                          )}
+                        </span>
+                        <span className="text-right flex items-center justify-end gap-3">
+                          {p.status === 'paid' && (
+                            <button onClick={() => printInvoice(p)} className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">
+                              <Printer className="w-3.5 h-3.5" /> Print
+                            </button>
+                          )}
+                          {rowEligibleForRefund && (
+                            <button onClick={() => openRefundModal(p)} className="text-[12px] font-medium text-amber-600 dark:text-amber-400 hover:underline cursor-pointer">
+                              Refund
+                            </button>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })
                 ) : (
                   <div className="grid grid-cols-6 px-5 py-4 text-[13px] text-slate-700 dark:text-gray-200 items-center border-t border-slate-100 dark:border-white/5">
                     <span className="col-span-2 font-medium">Free Plan</span>
@@ -723,8 +822,9 @@ export default function Settings() {
                   </div>
                 )}
               </div>
-              <p className="text-[12px] text-slate-400 mt-2">
-                {historyRows.length > 0 ? 'Showing your Razorpay payments. Click Print to download an invoice.' : "You're on the Free plan — no paid invoices yet."}
+              <p className="text-[12px] text-slate-400 mt-2 flex items-center justify-between">
+                <span>{historyRows.length > 0 ? 'Showing your Razorpay payments. Click Print to download an invoice.' : "You're on the Free plan — no paid invoices yet."}</span>
+                <span>7-Day Return Policy: Contact <a href="mailto:support@sadhya.app" className="underline hover:text-slate-600 dark:hover:text-slate-200">support@sadhya.app</a></span>
               </p>
             </div>
           </div>
@@ -982,6 +1082,104 @@ export default function Settings() {
                 </div>
               </div>
             </Section>
+          </div>
+        )}
+
+        {/* ── 7-Day Refund Request Modal ── */}
+        {refundModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 font-sans">
+            <div className="w-full max-w-md bg-white dark:bg-[#18181b] border border-slate-200 dark:border-white/10 rounded-2xl p-6 shadow-2xl">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-[16px] font-bold text-slate-900 dark:text-white leading-tight">
+                      7-Day Full Refund Guarantee
+                    </h3>
+                    <p className="text-[12px] text-slate-500 dark:text-gray-400">
+                      100% money back to your original payment source
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setRefundModalOpen(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-3.5 py-2">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 text-[13px] space-y-1.5">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 dark:text-gray-400">Plan / Item:</span>
+                    <span className="font-semibold text-slate-900 dark:text-white">
+                      {selectedRefundOrder?.planName || subInfo?.planName || 'Sadhya Pro'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 dark:text-gray-400">Refund Amount:</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                      ₹{selectedRefundOrder?.amountRupees || subInfo?.amountRupees || 199} (100% Full Refund)
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 dark:text-gray-400">Destination:</span>
+                    <span className="font-medium text-slate-700 dark:text-gray-300">
+                      Original Payment Source (UPI / Card)
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[12px] font-bold text-slate-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">
+                    Reason for Refund (Optional)
+                  </label>
+                  <select
+                    value={refundReason}
+                    onChange={(e) => setRefundReason(e.target.value)}
+                    className={inputCls}
+                  >
+                    <option value="Change of study preparation plans">Change of study preparation plans / exam</option>
+                    <option value="Features differed from expectations">Features differed from expectations</option>
+                    <option value="Technical difficulty">Encountered technical difficulty</option>
+                    <option value="Purchased by mistake">Purchased by mistake</option>
+                    <option value="Other">Other reason</option>
+                  </select>
+                </div>
+
+                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11.5px] text-amber-800 dark:text-amber-300 leading-relaxed">
+                  Upon confirmation, your Sadhya Pro access will be cancelled, and Razorpay will instantly initiate your transfer back to your UPI or bank account.
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-100 dark:border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setRefundModalOpen(false)}
+                  disabled={isRefunding}
+                  className="px-4 py-2 text-[13px] font-semibold text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleProcessRefund}
+                  disabled={isRefunding}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-[13px] font-semibold text-white bg-amber-600 hover:bg-amber-700 active:scale-98 rounded-lg shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  {isRefunding ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Processing Refund...
+                    </>
+                  ) : (
+                    'Confirm & Process 100% Refund'
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
