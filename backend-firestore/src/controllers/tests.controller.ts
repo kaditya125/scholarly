@@ -76,9 +76,16 @@ export class TestsController {
   public submitTestAttempt = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { attemptId } = req.params;
-      // In a real scenario, the attempt updates would be pushed first, then submit is called.
-      // Assuming attempt is already saved in DB with answers.
-      const result = await resultAnalysisService.processSubmission(attemptId);
+      /*
+       * The uid comes from the VERIFIED token, never from the request body or a path parameter.
+       * The route cannot use enforceSelf here (its parameter is an attempt id, not a user id), so
+       * ownership is enforced inside processSubmission against this uid — see the note there.
+       */
+      const userId = (req as any).user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+      // The attempt's answers are expected to already be persisted; this grades and finalises it.
+      const result = await resultAnalysisService.processSubmission(attemptId, userId);
       res.json(result);
     } catch (error) {
       next(error);

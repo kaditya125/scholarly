@@ -4,12 +4,55 @@ import { PlannerService } from '../planner.service';
 import { UserStatsService } from '../userStats.service';
 import { v4 as uuidv4 } from 'uuid';
 
+/**
+ * Carries an HTTP status the error middleware already understands (`err.status || err.statusCode
+ * || 500`). Same shape as QuizAttemptError on the quiz path, so both attempt families reject
+ * identically rather than one 500-ing where the other 404s.
+ */
+export class TestAttemptError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+    this.name = 'TestAttemptError';
+  }
+}
+
 export class ResultAnalysisService {
   private plannerService = new PlannerService();
   private statsService = new UserStatsService();
-  async processSubmission(attemptId: string): Promise<TestAttempt> {
+  /**
+   * Grade and finalise one test attempt.
+   *
+   * ── WHY userId IS REQUIRED AND POSITIONAL ─────────────────────────────────────────────────
+   * This used to take the attemptId alone. Its route (`POST /tests/attempts/:attemptId/submit`)
+   * carries `requireAuth` but cannot carry `enforceSelf`, because the path parameter is an
+   * attempt id and not a user id — so authentication proved the caller was *someone*, never that
+   * they owned this attempt. Any authenticated user holding another student's attemptId could
+   * grade that student's attempt, and the completion event it publishes is stamped with
+   * `attempt.userId` — so once mastery is enabled, the write would land on the victim's record.
+   *
+   * The check lives HERE rather than in the controller or a middleware because this is the last
+   * point every caller must pass through: making the parameter required and positional means a
+   * future caller that forgets it fails to compile, instead of silently reopening the hole. The
+   * defect was recorded but unfixed in two places — SECURITY_FIX_REPORT.md ("authenticated but
+   * not attempt-ownership-checked") and docs/TEACHER_ECOSYSTEM_PLAN.md defect 4, which requires
+   * it closed before class tests ship.
+   */
+  async processSubmission(attemptId: string, userId: string): Promise<TestAttempt> {
+    if (!userId) throw new TestAttemptError(401, 'Unauthorized');
+
     const attempt = await testsRepository.getTestAttempt(attemptId);
-    if (!attempt) throw new Error('Attempt not found');
+    /*
+     * ONE branch for "no such attempt" and "not your attempt", deliberately.
+     *
+     * Splitting them — 404 for missing, 403 for someone else's — would turn this endpoint into an
+     * existence oracle: an attacker probing ids learns which ones are real attempts belonging to
+     * other students, which is exactly the information the guard exists to withhold. 404 for both
+     * matches quizAttempts.getAttempt, which already rejects a non-owner with
+     * `QuizAttemptError(404, 'Test not found')` rather than a 403.
+     */
+    if (!attempt || attempt.userId !== userId) {
+      throw new TestAttemptError(404, 'Attempt not found');
+    }
     if (attempt.status === 'completed') return attempt; // Already processed
 
     const test = await testsRepository.getTestById(attempt.testId);

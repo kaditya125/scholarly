@@ -62,7 +62,7 @@ Auth column: **Auth** = valid token required · **Self** = token + `enforceSelf`
 | GET | `/tests/featured`, `/tests/categories` | Auth |
 | POST | `/tests/adaptive/:userId/generate` | Self |
 | GET | `/tests/attempts/:userId/incomplete` | Self |
-| POST | `/tests/attempts/:attemptId/submit` | Auth |
+| POST | `/tests/attempts/:attemptId/submit` | Owner |
 
 ## Users / Briefing / Questions / Leaderboard / Discussions / Rooms
 | Method | Path | Auth |

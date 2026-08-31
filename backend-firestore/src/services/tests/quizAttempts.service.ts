@@ -211,7 +211,18 @@ export class QuizAttemptsService {
       this.addRevisionTask(userId, attempt, weakTopics).catch(e => console.error('[QuizAttempts] planner task failed', e));
     }
 
-    // Publish domain event for Closed-Loop Automation Engine
+    /*
+     * Publish domain event for the Closed-Loop Automation Engine AND for mastery.
+     *
+     * ── WHY topicBreakdown IS HERE ────────────────────────────────────────────────────────────
+     * This is the live student quiz path — the one the frontend actually calls. It previously
+     * published only aggregates plus a single free-form `topic` string, while the per-topic
+     * breakdown (which already carries the validated syllabusNodeId from the Stage 5 fix) was
+     * computed right above, persisted to the attempt, and then dropped from the event. Mastery
+     * cannot be derived from an aggregate: it needs to know WHICH syllabus node each correct and
+     * incorrect answer belongs to. Sending the same rows that are persisted keeps the event and
+     * the durable record in agreement, which is what makes mastery rebuildable from Firestore.
+     */
     void eventBus.publish('learning.quiz_completed', {
       userId,
       attemptId: id,
@@ -222,7 +233,25 @@ export class QuizAttemptsService {
       skippedCount: unattempted,
       accuracy,
       totalTimeSeconds: patch.timeSpentSeconds,
+      topicBreakdown,
       occurredAt: Date.now(),
+    }, {
+      /*
+       * DETERMINISTIC identity, derived from the domain rather than random — the same convention
+       * resultAnalysis uses for test_completed.
+       *
+       * An attempt can be completed exactly once (submitAttempt returns early above when the
+       * status is already 'completed'), so the attempt id uniquely names this logical event. That
+       * matters for mastery: the subscriber dedupes on eventId inside the write transaction, so a
+       * republish after a retry, a restart, or a duplicate delivery carries the SAME id and is
+       * discarded. With the randomly-generated fallback id this used to get, every redelivery
+       * would have looked like fresh evidence and double-counted the student's answers.
+       *
+       * The `learning.quiz_completed:` prefix also keeps this id space disjoint from
+       * `learning.test_completed:{attemptId}`, so a quiz attempt and a test attempt that happen
+       * to share an id can never dedupe against each other.
+       */
+      eventId: `learning.quiz_completed:${id}`,
     });
 
     return { ...attempt, ...patch };

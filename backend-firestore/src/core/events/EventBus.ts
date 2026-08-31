@@ -85,6 +85,27 @@ export interface EventPayloads {
     skippedCount: number;
     accuracy: number; // 0..100
     totalTimeSeconds?: number;
+    /**
+     * Per-topic rollup, carrying canonical identity per row so mastery keys on the syllabus node
+     * rather than a label.
+     *
+     * NOTE THE SHAPE DIFFERENCE from test_completed below, which is deliberate and load-bearing:
+     * this mirrors the persisted QuizAttempt.topicBreakdown exactly (correct / incorrect /
+     * unattempted / total), while test_completed uses attempted / correct / skipped. Both are
+     * normalised at the mastery subscriber rather than being reshaped here, so each event stays
+     * faithful to the record it was computed from. Reading `attempted` off one of these rows
+     * yields undefined — the two shapes must never be consumed interchangeably.
+     */
+    topicBreakdown?: Array<{
+      topic: string;
+      correct: number;
+      incorrect: number;
+      unattempted: number;
+      total: number;
+      accuracy: number;
+      syllabusNodeId?: string;
+      identityStatus?: 'CANONICAL' | 'UNANCHORED';
+    }>;
     occurredAt: number;
   };
 
