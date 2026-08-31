@@ -1151,8 +1151,11 @@ export default function Settings() {
                   </select>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-slate-100/70 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/10 text-[12px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Upon confirmation, your Sadhya Pro access will be cancelled, and Razorpay will instantly initiate your transfer back to your UPI or bank account.
+                <div className="p-3.5 rounded-2xl bg-slate-100/70 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/10 text-[12px] text-slate-600 dark:text-slate-400 leading-relaxed space-y-1">
+                  <div>Upon confirmation, your Sadhya Pro access will be cancelled and a 100% full refund initiated.</div>
+                  <div className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium">
+                    ⏳ <strong>Timeline:</strong> UPI refunds usually credit within <strong>1–3 days</strong>; Netbanking/Cards reflect within <strong>5–7 working days</strong> as per banking cycles.
+                  </div>
                 </div>
               </div>
 

@@ -912,12 +912,37 @@ https://sadhya.app
     <div style="margin-bottom: 28px; font-size: 14.5px; line-height: 1.6; color: #374151;">
       <p style="margin: 0 0 12px;">Hello <strong>${name}</strong>,</p>
       <p style="margin: 0 0 12px;">
-        Your refund request under our 7-Day Money-Back Guarantee has been approved and processed. We have initiated a 100% full refund of <strong>${amountStr}</strong> to your original payment method (${paymentMethodText}).
-      </p>
-      <p style="margin: 0; font-size: 13.5px; color: #6b7280;">
-        💡 <em>Timeline:</em> For UPI payments, refunds typically credit instantly or within a few hours. For debit/credit cards or netbanking, your bank will reflect the credit in 2&ndash;5 working days.
+        Your refund request under our <strong>7-Day Money-Back Guarantee</strong> has been approved and processed. We have initiated a 100% full refund of <strong>${amountStr}</strong> to your original payment method (${paymentMethodText}).
       </p>
     </div>
+
+    <!-- Processing Timeline Callout Box -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 28px;">
+      <tr>
+        <td style="padding: 18px 20px;">
+          <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #475569; margin-bottom: 8px;">
+            ⏳ Estimated Credit Timeline
+          </div>
+          <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 13px; color: #334155; line-height: 1.6;">
+            <tr>
+              <td style="padding-bottom: 6px; width: 140px; font-weight: 600;">• UPI / VPA:</td>
+              <td style="padding-bottom: 6px;">Usually credits within <strong>1 to 3 working days</strong> (or instantaneous depending on bank).</td>
+            </tr>
+            <tr>
+              <td style="padding-bottom: 6px; font-weight: 600;">• Debit / Credit Card:</td>
+              <td style="padding-bottom: 6px;"><strong>3 to 5 working days</strong> (reflects on your bank card statement).</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 600;">• Net Banking / Others:</td>
+              <td><strong>5 to 7 working days</strong> as per standard RBI banking clearing cycles.</td>
+            </tr>
+          </table>
+          <div style="margin-top: 10px; font-size: 12px; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
+            💡 <em>Note:</em> The amount is credited directly to the source account used for payment. Razorpay and your bank will send an SMS notification once the settlement completes.
+          </div>
+        </td>
+      </tr>
+    </table>
 
     <!-- Metadata Grid (Billed To / Payment Details) -->
     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 18px 20px; margin-bottom: 32px; font-size: 13px;">
@@ -986,12 +1011,15 @@ Your 100% full refund under our 7-Day Money-Back Guarantee has been initiated.
 Refund Details:
 - Refund Reference: #${refundNo}
 - Plan: ${params.planName || 'Sadhya Pro'}
-- Amount Refunded: ${amountStr}
+- Amount Refunded: ${amountStr} (100% Full Refund)
 - Date: ${refundDateStr}
 - Original Payment ID: ${params.paymentId || params.orderId}
 - Destination: ${paymentMethodText}
 
-UPI transfers typically credit within a few hours. Card/Netbanking transfers reflect in 2-5 working days.
+Estimated Credit Timeline:
+- UPI / VPA: Usually 1 to 3 working days
+- Debit / Credit Card: 3 to 5 working days
+- Net Banking / Other: 5 to 7 working days (as per RBI clearing cycles)
 
 Access your workspace: https://sadhya.app/dashboard
 Manage billing: https://sadhya.app/settings?tab=billing
