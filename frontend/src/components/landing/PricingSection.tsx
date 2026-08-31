@@ -2,6 +2,7 @@ import { useState, Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import { Check, ArrowRight, Sparkles, ChevronDown } from 'lucide-react';
+import { useAuth } from '../../lib/AuthContext';
 import { cn } from '../../lib/utils';
 import {
   SITE,
@@ -376,6 +377,7 @@ export default function PricingSection({
   headingAs?: 'h1' | 'h2';
   showComparison?: boolean;
 }) {
+  const { user, role } = useAuth();
   const [billing, setBilling] = useState<Billing>('yearly');
   const [isTableExpanded, setIsTableExpanded] = useState(true);
   const reduced = useReducedMotion();
@@ -450,7 +452,12 @@ export default function PricingSection({
       {/* ── Tiers Grid ── */}
       <div className="mt-8 grid gap-5 lg:grid-cols-3 items-stretch">
         {TIERS.map((tier) => {
-          const to = tier.cta.to && tier.id === 'pro' ? `${tier.cta.to}&billing=${billing}` : tier.cta.to;
+          let to = tier.cta.to && tier.id === 'pro' ? `${tier.cta.to}&billing=${billing}` : tier.cta.to;
+          let label = tier.cta.label;
+          if (tier.id === 'free' && user) {
+            to = role === 'teacher' ? '/teach' : '/dashboard';
+            label = 'Go to Dashboard';
+          }
           return (
             <motion.div
               key={tier.id}
@@ -470,12 +477,14 @@ export default function PricingSection({
                 </span>
               )}
 
-              <h3 className="text-[17px] font-semibold tracking-[-0.015em] text-slate-900 dark:text-white">
-                {tier.name}
-              </h3>
-              <p className="mt-1.5 text-[13.5px] leading-relaxed text-slate-500 dark:text-gray-400">
-                {tier.tagline}
-              </p>
+              <div>
+                <h3 className="text-[18px] sm:text-[20px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">
+                  {tier.name}
+                </h3>
+                <p className="mt-1.5 text-[13.5px] text-slate-500 dark:text-gray-400 leading-relaxed min-h-[2.5rem]">
+                  {tier.tagline}
+                </p>
+              </div>
 
               <div className="mt-4 sm:mt-5">
                 <Price tier={tier} billing={billing} />
@@ -491,7 +500,7 @@ export default function PricingSection({
                       : 'border border-slate-200 dark:border-white/12 text-slate-800 dark:text-gray-100 hover:bg-slate-50 dark:hover:bg-white/[0.05]',
                   )}
                 >
-                  {tier.cta.label}
+                  {label}
                   <ArrowRight className="w-4 h-4" strokeWidth={2.25} />
                 </Link>
               ) : (
@@ -499,7 +508,7 @@ export default function PricingSection({
                   href={tier.cta.href}
                   className="mt-5 sm:mt-6 inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-slate-200 dark:border-white/12 text-[14px] font-semibold text-slate-800 dark:text-gray-100 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors touch-manipulation"
                 >
-                  {tier.cta.label}
+                  {label}
                   <ArrowRight className="w-4 h-4" strokeWidth={2.25} />
                 </a>
               )}

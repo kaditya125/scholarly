@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Github, GraduationCap, Presentation, ArrowLeft } from 'lucide-react';
 import {
@@ -65,7 +65,14 @@ function bootstrapErrorMessage(err: any, chosen: ProductRole): string {
 
 export default function Signup() {
   const navigate = useNavigate();
-  const { refreshClaims } = useAuth();
+  const { refreshClaims, user, role: currentRole, loading: authLoading } = useAuth();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate(currentRole === 'teacher' ? '/teach' : '/dashboard', { replace: true });
+    }
+  }, [user, currentRole, authLoading, navigate]);
 
   /**
    * A marketing page may hand us the role the visitor has already chosen — /for-teachers'

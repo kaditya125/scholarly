@@ -107,6 +107,9 @@ function StatusPill({ status, className }: { status: FeatureStatus; className?: 
 
 function TeacherCta({ className }: { className?: string }) {
   const reduced = useReducedMotion();
+  const { user, role } = useAuth();
+  const destination = user ? (role === 'teacher' ? '/teach' : '/dashboard') : '/signup';
+  const label = user ? (role === 'teacher' ? 'Go to Teacher Dashboard' : 'Go to Dashboard') : 'Create a teacher account';
   return (
     <motion.div
       whileHover={reduced ? undefined : { scale: 1.03, y: -2 }}
@@ -115,14 +118,14 @@ function TeacherCta({ className }: { className?: string }) {
       className="inline-block"
     >
       <Link
-        to="/signup"
-        state={{ role: 'teacher' }}
+        to={destination}
+        state={user ? undefined : { role: 'teacher' }}
         className={cn(
           'inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl bg-[#c8e558] hover:bg-[#bcd94c] active:bg-[#b0cd40] text-slate-900 text-[14.5px] font-semibold transition-colors shadow-sm hover:shadow-md',
           className,
         )}
       >
-        Create a teacher account
+        {label}
         <ArrowRight className="w-4 h-4" strokeWidth={2.25} />
       </Link>
     </motion.div>

@@ -342,7 +342,8 @@ export default function LandingPage() {
     url: SITE.url,
   });
 
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const destination = user ? (role === 'teacher' ? '/teach' : '/dashboard') : '/signup';
   const [studentCount, setStudentCount] = useState<number>(32);
   const [activeStudents, setActiveStudents] = useState<number | null>(null);
   const prevActiveRef = useRef<number | null>(null);
@@ -440,8 +441,8 @@ export default function LandingPage() {
                   registered &amp; learning
                 </span>
                 <span className="text-slate-300 dark:text-gray-600">·</span>
-                <Link to="/signup" className="text-slate-900 dark:text-white hover:text-[#6ca855] dark:hover:text-[#c8e558] font-semibold inline-flex items-center gap-0.5 transition-colors">
-                  Join now &rarr;
+                <Link to={destination} className="text-slate-900 dark:text-white hover:text-[#6ca855] dark:hover:text-[#c8e558] font-semibold inline-flex items-center gap-0.5 transition-colors">
+                  {user ? 'Dashboard →' : 'Join now →'}
                 </Link>
               </motion.div>
 
@@ -463,7 +464,7 @@ export default function LandingPage() {
               </p>
 
               <div className="mt-9 flex flex-col sm:flex-row gap-3">
-                <PrimaryCta to="/signup">Start learning</PrimaryCta>
+                <PrimaryCta to={destination}>{user ? 'Go to Dashboard' : 'Start learning'}</PrimaryCta>
                 <motion.div
                   whileHover={{ scale: 1.03, y: -2 }}
                   whileTap={{ scale: 0.97 }}
@@ -875,11 +876,11 @@ export default function LandingPage() {
                   transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 >
                   <Link
-                    to="/signup"
-                    state={{ role: 'teacher' }}
+                    to={user ? (role === 'teacher' ? '/teach' : '/dashboard') : '/signup'}
+                    state={user ? undefined : { role: 'teacher' }}
                     className="inline-flex items-center gap-2 h-12 px-6 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-transparent text-[14.5px] font-semibold text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors whitespace-nowrap shadow-2xs hover:shadow-xs"
                   >
-                    Create a teacher account
+                    {user ? (role === 'teacher' ? 'Go to Teacher Dashboard' : 'Go to Dashboard') : 'Create a teacher account'}
                     <ArrowRight className="w-4 h-4" strokeWidth={2.25} />
                   </Link>
                 </motion.div>
@@ -922,7 +923,7 @@ export default function LandingPage() {
 
               {/* CTA button */}
               <div className="mt-8">
-                <PrimaryCta to="/signup">Start learning &mdash; it&rsquo;s free</PrimaryCta>
+                <PrimaryCta to={destination}>{user ? 'Resume Learning — Go to Dashboard' : 'Start learning — it’s free'}</PrimaryCta>
               </div>
 
               {/* Divider */}

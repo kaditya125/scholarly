@@ -12,6 +12,7 @@ import SiteHeader from '../components/landing/SiteHeader';
 import SiteFooter from '../components/landing/SiteFooter';
 import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
+import { useAuth } from '../lib/AuthContext';
 
 /** Video Chapters Definition */
 interface VideoChapter {
@@ -117,6 +118,7 @@ export default function HowItWorks() {
     url: `${SITE.url}/how-it-works`,
   });
 
+  const { user, role } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const roleParam = searchParams.get('role');
   const [activeRole, setActiveRole] = useState<'student' | 'teacher'>(
@@ -1013,11 +1015,11 @@ export default function HowItWorks() {
 
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5">
               <Link
-                to="/signup"
-                state={activeRole === 'teacher' ? { role: 'teacher' } : undefined}
+                to={user ? (role === 'teacher' ? '/teach' : '/dashboard') : '/signup'}
+                state={user ? undefined : (activeRole === 'teacher' ? { role: 'teacher' } : undefined)}
                 className="w-full sm:w-auto inline-flex items-center justify-center h-12 px-7 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 font-semibold text-[14.5px] active:scale-95 transition-all shadow-md"
               >
-                {activeRole === 'teacher' ? 'Create a teacher account' : 'Start learning free'}
+                {user ? (role === 'teacher' ? 'Go to Teacher Dashboard' : 'Go to Dashboard') : (activeRole === 'teacher' ? 'Create a teacher account' : 'Start learning free')}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
               <Link
