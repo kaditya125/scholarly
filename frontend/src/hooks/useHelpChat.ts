@@ -113,6 +113,27 @@ export function useHelpChat(initialQuery?: string) {
     }
   }, [initialQuery, sendMessage]);
 
+  const retryLastMessage = useCallback(() => {
+    // Find the last user query
+    const lastUser = [...messages].reverse().find(m => m.role === 'user');
+    if (!lastUser || isLoading) return;
+
+    const queryToRetry = lastUser.content;
+    // Remove the error assistant message
+    setMessages(prev => {
+      const copy = [...prev];
+      if (copy.length > 0 && copy[copy.length - 1].role === 'assistant' && copy[copy.length - 1].structuredResponse?.type === 'error') {
+        copy.pop();
+      }
+      if (copy.length > 0 && copy[copy.length - 1].role === 'user') {
+        copy.pop();
+      }
+      return copy;
+    });
+
+    sendMessage(queryToRetry);
+  }, [messages, isLoading, sendMessage]);
+
   return {
     sessionId,
     messages,
@@ -121,6 +142,7 @@ export function useHelpChat(initialQuery?: string) {
     isEscalated,
     latestTopicSummary,
     sendMessage,
+    retryLastMessage,
     sendFeedback,
     clearChat,
     setIsEscalated
