@@ -22,6 +22,7 @@ import {
   AuthError,
   FlourishLink,
 } from '../components/auth/AuthShell';
+import { Underline } from '../components/landing/Annotate';
 
 export default function Signin() {
   const navigate = useNavigate();
@@ -117,7 +118,7 @@ export default function Signin() {
 
   return (
     <AuthShell
-      title="Welcome back"
+      title={<>Welcome <Underline>back</Underline></>}
       subtitle="Welcome back! Please enter your details."
       footer={
         <>

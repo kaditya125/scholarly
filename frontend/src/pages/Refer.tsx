@@ -3,6 +3,7 @@ import { Gift, Copy, Check, Loader2, Users } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import { useMyReferrals } from '../hooks/api/useReferrals';
 import { cn } from '../lib/utils';
+import { Underline } from '../components/landing/Annotate';
 
 /**
  * /refer — Phase 3L. A referral grants nothing on the class/enrolment side (that's still only
@@ -46,7 +47,7 @@ export default function Refer() {
   return (
     <div className="max-w-[720px] mx-auto px-5 sm:px-6 py-8 space-y-6">
       <header>
-        <h1 className="text-[24px] sm:text-[28px] font-semibold tracking-[-0.03em]">Invite friends</h1>
+        <h1 className="text-[24px] sm:text-[28px] font-semibold tracking-[-0.03em]">Invite <Underline>friends</Underline></h1>
         <p className="mt-1.5 text-[14px] text-slate-500 dark:text-gray-400">
           Share your link. When someone signs up with it, you both get Pro access.
         </p>

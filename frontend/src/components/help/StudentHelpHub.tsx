@@ -47,6 +47,7 @@ import {
 } from '../../lib/api/support';
 import { cn } from '../../lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import { Underline } from '../landing/Annotate';
 
 interface ChatMessage {
   id: string;
@@ -357,7 +358,7 @@ export function StudentHelpHub() {
                 <LifeBuoy className="w-5 h-5" />
               </div>
               <h1 className="text-2xl sm:text-[28px] font-bold text-slate-900 dark:text-white tracking-tight">
-                Help &amp; Grievance Center
+                <Underline>Help</Underline> &amp; Grievance Center
               </h1>
               {openTicketsCount > 0 && (
                 <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
