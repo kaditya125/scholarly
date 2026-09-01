@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { SITE, formatAddress, type SocialIcon } from '../../lib/siteConfig';
 import { LogoMark as Mark } from '../brand/Logo';
@@ -73,6 +74,47 @@ const COLUMNS: { title: string; links: { label: string; href: string; external?:
     ],
   },
 ];
+
+/**
+ * Discreet administrative entry point (§31).
+ *
+ * The copyright year. Three clicks inside two seconds opens /admin/login.
+ *
+ * WHY THIS SHAPE. The requirement is an entry that operators can reach but that is not
+ * advertised to students, so:
+ *   - it renders as a <span>, not a link. There is no href, so it does not appear in the
+ *     DOM as a navigable target, is not followed by crawlers, and does not show in
+ *     "copy link" or link-preview tooling.
+ *   - it carries no hover, cursor or focus affordance — visually it is the year.
+ *   - three clicks in a short window means it cannot be triggered by a stray click on a
+ *     footer that people do click around in.
+ *
+ * ─── THIS IS NOT SECURITY ────────────────────────────────────────────────────────────
+ * Obscuring the entrance protects nothing, and §30 says so explicitly. /admin/login is a
+ * normal reachable route and anyone may type it. What actually guards the admin area is
+ * the role claim checked by AdminGuard for routing and, authoritatively, by
+ * requireRoles() on every admin endpoint. This exists only to keep an operator door out
+ * of a student's way.
+ */
+function AdminEntry() {
+  const navigate = useNavigate();
+  const clicks = useRef<number[]>([]);
+
+  const onClick = () => {
+    const now = Date.now();
+    clicks.current = [...clicks.current, now].filter((t) => now - t < 2000);
+    if (clicks.current.length >= 3) {
+      clicks.current = [];
+      navigate('/admin/login');
+    }
+  };
+
+  return (
+    <span onClick={onClick} className="select-none">
+      {new Date().getFullYear()}
+    </span>
+  );
+}
 
 export default function SiteFooter() {
   return (
@@ -180,7 +222,7 @@ export default function SiteFooter() {
         {/* ── Bottom bar ───────────────────────────────────────────────── */}
         <div className="border-t border-slate-200/70 dark:border-white/[0.07] py-7 flex flex-col-reverse sm:flex-row sm:items-center gap-4">
           <div className="text-[12.5px] text-slate-500 dark:text-gray-400 space-y-1">
-            <p>© {new Date().getFullYear()} {SITE.legalEntity}. All rights reserved.</p>
+            <p>© <AdminEntry />{' '}{SITE.legalEntity}. All rights reserved.</p>
             {/* States the entity behind the brand. Verifiers for the cloud startup
                 programmes check the site against the registered name, and the two
                 do not match on their face. */}

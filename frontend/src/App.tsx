@@ -108,6 +108,9 @@ const Privacy = lazy(() => import("./pages/legal/Privacy"));
 const Refunds = lazy(() => import("./pages/legal/Refunds"));
 const Security = lazy(() => import("./pages/legal/Security"));
 const SocialHub = lazy(() => import("./pages/SocialHub"));
+/* Admin control centre. One lazy boundary for the whole area, so the guard, shell and
+   pages stay out of the bundle every student downloads. */
+const AdminRoutes = lazy(() => import("./pages/admin/AdminRoutes"));
 const AutomationDashboard = lazy(() => import("./pages/admin/AutomationDashboard"));
 const AutomationStudio = lazy(() => import("./pages/admin/AutomationStudio"));
 const ExecutionDetail = lazy(() => import("./pages/admin/ExecutionDetail"));
@@ -222,6 +225,18 @@ function AppRoutes() {
         <Route path="/baseline-assessment/report" element={<ProtectedRoute><AssessmentReportDashboard /></ProtectedRoute>} />
         <Route path="/welcome" element={<ProtectedRoute><WelcomeBriefing /></ProtectedRoute>} />
         <Route path="/read" element={<ProtectedRoute><Reader /></ProtectedRoute>} />
+        {/*
+          Admin control centre (student administration).
+
+          Guarded by AdminGuard, not ProtectedRoute: ProtectedRoute redirects to the
+          STUDENT sign-in and runs the student consent/verification gates, neither of
+          which belongs in an admin session (§30). AdminGuard sends unauthenticated
+          visitors to /admin/login instead, and checks the admin claim.
+
+          AdminGuard is a routing convenience only — every admin endpoint re-verifies the
+          caller's role server-side, so a forged client role yields an empty shell.
+        */}
+        <Route path="/admin/*" element={<AdminRoutes />} />
         <Route path="/admin/automations" element={<ProtectedRoute><AutomationDashboard /></ProtectedRoute>} />
         <Route path="/admin/automations/:id" element={<ProtectedRoute><AutomationStudio /></ProtectedRoute>} />
         <Route path="/admin/automations/:workflowId/executions" element={<ProtectedRoute><ExecutionDetail /></ProtectedRoute>} />
