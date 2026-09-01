@@ -21,8 +21,27 @@ import { isAdmin } from '../middlewares/auth';
  * so the response size no longer grows with history.
  */
 async function sumCostUsd(query: Query): Promise<number> {
-  const snap = await query.aggregate({ total: AggregateField.sum('estimatedCostUSD') }).get();
-  return snap.data().total ?? 0;
+  try {
+    const snap = await query.aggregate({ total: AggregateField.sum('estimatedCostUSD') }).get();
+    return snap.data().total ?? 0;
+  } catch (error: any) {
+    // The per-user split filters on (userId, operation) and needs a composite index. If the
+    // code reaches production before `firebase deploy --only firestore:indexes` does,
+    // Firestore answers FAILED_PRECONDITION and this endpoint would 500 for every
+    // non-admin caller. Falling back keeps it correct while the index builds — but the
+    // fallback IS the expensive scan this commit exists to remove, so it shouts.
+    if (error?.code !== 9 && error?.code !== 'failed-precondition') throw error;
+    console.error(
+      '[analytics] Aggregation unavailable — the (userId, operation) composite index on ' +
+      'cost_records is missing or still building. Falling back to a FULL COLLECTION SCAN, ' +
+      'which is the read-unit cost this endpoint was rewritten to avoid. ' +
+      'Fix: firebase deploy --only firestore:indexes',
+    );
+    let total = 0;
+    const snap = await query.select('estimatedCostUSD').get();
+    snap.forEach((doc) => { total += doc.data().estimatedCostUSD || 0; });
+    return total;
+  }
 }
 
 export const getCostAnalytics = async (req: Request, res: Response) => {
