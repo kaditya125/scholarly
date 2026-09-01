@@ -1,5 +1,6 @@
 import { auth, db } from '../config/firebase';
 import { zeptoMailService } from '../services/email/zeptoMail.service';
+import { COMPANY, emailCopyrightLine } from '../config/company';
 
 interface RecipientInfo {
   uid: string;
@@ -132,8 +133,8 @@ function generateWelcomeEmail(user: RecipientInfo): { subject: string; html: str
                 </tr>
                 <tr>
                   <td style="padding-bottom: 12px; font-size: 12px; line-height: 1.6; color: #475569;">
-                    <strong style="color: #0f172a;">Sadhya Technologies Pvt. Ltd.</strong><br>
-                    Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
+                    <strong style="color: #0f172a;">${COMPANY.legalEntity}</strong><br>
+                    ${COMPANY.address} • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
                   </td>
                 </tr>
                 <tr>
@@ -147,7 +148,7 @@ function generateWelcomeEmail(user: RecipientInfo): { subject: string; html: str
                 </tr>
                 <tr>
                   <td style="font-size: 11px; color: #94a3b8; line-height: 1.4;">
-                    © 2026 Sadhya Technologies Pvt. Ltd. All rights reserved. • Sadhya is a registered trademark of Sadhya Technologies Pvt. Ltd.
+                    ${emailCopyrightLine()}
                   </td>
                 </tr>
               </table>
@@ -181,7 +182,7 @@ If you ever need any support, reach out to us anytime at support@sadhya.app or t
 
 Warm regards,
 The Sadhya Team
-Sadhya Technologies Pvt. Ltd., Tech Zone, Sector 135, Noida, UP 201304, India
+${COMPANY.legalEntity}, ${COMPANY.address}
 Terms: https://sadhya.app/terms | Privacy: https://sadhya.app/privacy
 `;
 
