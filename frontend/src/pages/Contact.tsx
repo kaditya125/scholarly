@@ -6,6 +6,7 @@ import SiteFooter from '../components/landing/SiteFooter';
 import { SITE } from '../lib/siteConfig';
 import { useSeo } from '../lib/useSeo';
 import { api } from '../lib/api/client';
+import { Underline } from '../components/landing/Annotate';
 
 const CHANNELS = [
   {
@@ -305,7 +306,7 @@ export default function Contact() {
             Direct Support Channels
           </div>
           <h1 className="text-[28px] sm:text-[42px] leading-[1.1] font-semibold tracking-[-0.035em]">
-            Talk to us
+            Talk to <Underline>us</Underline>
           </h1>
           <p className="mt-3 max-w-[34rem] text-[14.5px] sm:text-[15.5px] leading-relaxed text-slate-500 dark:text-gray-400">
             A real person reads every one of these. Select a department to view details, or send a message directly below.

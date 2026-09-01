@@ -12,6 +12,7 @@ import {
   PRO_REGULAR_MONTHLY_INR,
   PRO_REGULAR_YEARLY_TOTAL_INR,
 } from '../../lib/siteConfig';
+import { Underline } from './Annotate';
 
 type Billing = 'monthly' | 'yearly';
 
@@ -414,7 +415,7 @@ export default function PricingSection({
           Plans
         </p>
         <Heading className="mt-3 text-[26px] sm:text-[34px] lg:text-[40px] leading-[1.15] font-semibold tracking-[-0.03em]">
-          Start free. Upgrade when it&rsquo;s carrying real weight.
+          Start <Underline>free</Underline>. Upgrade when it&rsquo;s carrying real weight.
         </Heading>
         <p className="mt-3 sm:mt-4 text-[14.5px] sm:text-[16.5px] leading-relaxed text-slate-500 dark:text-gray-400">
           The tutor, your notebooks and the practice engine are free to use. Pro lifts the limits

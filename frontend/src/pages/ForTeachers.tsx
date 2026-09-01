@@ -1,6 +1,7 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
+import { Underline as HeroUnderline, Arrow } from '../components/landing/Annotate';
 import {
   ArrowRight, Check, ChevronDown, Lock, ShieldCheck, Eye, UserCheck,
   Sparkles, Users, GraduationCap, Quote,
@@ -36,42 +37,10 @@ import { useAuth } from '../lib/AuthContext';
  * the server remains the only authority on productRole.
  */
 
-const ACCENT = '#c8e558';
 
 /* ── Primitives ───────────────────────────────────────────────────────────────────────── */
 
 const EASE = [0.22, 1, 0.36, 1] as const;
-
-/** Hand-drawn arc that animates left-to-right on mount — mirrors the Landing hero flourish. */
-function HeroUnderline({ children }: { children: ReactNode }) {
-  const reduced = useReducedMotion();
-  return (
-    <span className="relative inline-block whitespace-nowrap">
-      {children}
-      <svg
-        className="absolute -bottom-1 sm:-bottom-1.5 left-0 w-full overflow-visible pointer-events-none"
-        height="11"
-        viewBox="0 0 100 11"
-        preserveAspectRatio="none"
-        fill="none"
-        aria-hidden
-      >
-        <motion.path
-          d="M1.5 5C18 8.8 44 9.6 98.5 2.6"
-          stroke={ACCENT}
-          strokeWidth="3"
-          strokeLinecap="round"
-          initial={reduced ? false : { pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{
-            pathLength: { duration: reduced ? 0 : 0.85, ease: EASE, delay: reduced ? 0 : 0.35 },
-            opacity: { duration: reduced ? 0 : 0.2, delay: reduced ? 0 : 0.35 },
-          }}
-        />
-      </svg>
-    </span>
-  );
-}
 
 function Reveal({ children, delay = 0, className }: { children: ReactNode; delay?: number; className?: string }) {
   const reduced = useReducedMotion();

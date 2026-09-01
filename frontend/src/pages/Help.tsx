@@ -14,6 +14,7 @@ import { askHelpQuery, sendSupportAgentMessage, StructuredResponse } from '../li
 import { useAuth } from '../lib/AuthContext';
 import { StudentHelpHub } from '../components/help/StudentHelpHub';
 import { AppLayout } from '../components/Layout';
+import { Underline } from '../components/landing/Annotate';
 
 // --- Constants ---
 const ACCENT = '#c8e558';
@@ -920,7 +921,7 @@ function PublicHelpView() {
                   <MessageCircleQuestion className="w-5 h-5 text-slate-700 dark:text-slate-300" />
                 </div>
                 <h1 className="text-[30px] sm:text-[36px] font-semibold tracking-[-0.03em] mb-2 text-center leading-[1.12]">
-                  Ask Sadhya
+                  Ask <Underline>Sadhya</Underline>
                 </h1>
                 <p className="text-[14px] sm:text-[14.5px] text-slate-500 dark:text-slate-400 text-center max-w-[420px] mb-6 leading-relaxed">
                   Curious about how Sadhya works? Ask anything about the platform, learning, teaching, AI, or connect with our support team.
