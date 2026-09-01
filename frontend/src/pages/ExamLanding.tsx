@@ -104,6 +104,20 @@ export default function ExamLanding() {
     return <Navigate to="/" replace />;
   }
 
+  /*
+   * The "Other exams covered" strip at the bottom of the page.
+   *
+   * This line was deleted by 0c75581e (the landing-animation refactor) while BOTH of its usages
+   * were left in place, so every render threw `ReferenceError: others is not defined` before any
+   * markup was produced — all 19 /exams/:slug pages served a blank white document in production.
+   * A ReferenceError in the component body cannot be caught by anything downstream; there is no
+   * partial render to fall back to.
+   *
+   * Declared AFTER the `!exam` guard on purpose: it reads `exam.slug`, and above the guard
+   * `exam` is legitimately undefined for an unknown slug.
+   */
+  const others = EXAM_CATALOG.filter((e) => e.slug !== exam.slug).slice(0, 8);
+
   return (
     <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased">
       <SiteHeader />

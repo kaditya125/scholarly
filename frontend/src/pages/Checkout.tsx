@@ -1,5 +1,7 @@
 import React, { useState, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+// `Link` is used by the refund-policy line under the Pay button. It was missing from this
+// import, so that JSX threw `ReferenceError: Link is not defined` — on the checkout page.
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "motion/react";
 import {
   Check, CreditCard, ArrowRight, ArrowLeft, ShieldCheck, Smartphone,
