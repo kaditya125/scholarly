@@ -18,6 +18,7 @@ import { titleForPath } from './shell/adminNav';
 
 const AdminLogin = lazy(() => import('./AdminLogin'));
 const AdminDashboard = lazy(() => import('./AdminDashboard'));
+const AdminStudents = lazy(() => import('./AdminStudents'));
 
 function Loading() {
   return (
@@ -44,6 +45,7 @@ export default function AdminRoutes() {
       <Routes>
         <Route path="login" element={<AdminLogin />} />
         <Route index element={<Screen path=""><AdminDashboard /></Screen>} />
+        <Route path="students" element={<Screen path="students"><AdminStudents /></Screen>} />
         {/*
           Unknown /admin/* paths fall through to the dashboard rather than the app's
           global 404, so a mistyped admin URL keeps the operator inside the admin shell.
