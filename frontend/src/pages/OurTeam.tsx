@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import { ArrowRight, Mail, MessageSquare, Linkedin } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
+import NightSky from '../components/landing/NightSky';
 import SiteFooter from '../components/landing/SiteFooter';
 import { cn } from '../lib/utils';
 import { useSeo } from '../lib/useSeo';
@@ -377,8 +378,9 @@ export default function OurTeam() {
   return (
     <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased selection:bg-[#c8e558] selection:text-slate-900">
       <SiteHeader />
+      <NightSky />
 
-      <main>
+      <main className="relative z-10">
         {/* ══ 1 · Hero ═══════════════════════════════════════════════════════════════ */}
         <section className="relative overflow-hidden">
           {/* Soft brand wash, the same treatment the other public pages use. Decorative. */}
@@ -806,7 +808,9 @@ export default function OurTeam() {
         </section>
       </main>
 
-      <SiteFooter />
+      <div className="relative z-10">
+        <SiteFooter />
+      </div>
     </div>
   );
 }

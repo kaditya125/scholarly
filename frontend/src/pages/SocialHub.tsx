@@ -7,6 +7,7 @@ import {
   Sparkles, Bookmark, Send, ThumbsUp, MessageSquare
 } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
+import NightSky from '../components/landing/NightSky';
 import SiteFooter from '../components/landing/SiteFooter';
 import { SITE, type SocialIcon } from '../lib/siteConfig';
 import { LogoMark as Mark } from '../components/brand/Logo';
@@ -137,8 +138,9 @@ export default function SocialHub() {
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-gray-100 selection:bg-[#c8e558]/30">
       <SiteHeader />
+      <NightSky />
 
-      <main className="flex-1">
+      <main className="relative z-10 flex-1">
         {/* ══ Hero Header ════════════════════════════════════════════════════ */}
         <section className="border-b border-slate-100 dark:border-white/[0.07] bg-slate-50/70 dark:bg-white/[0.02]">
           <div className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-14 sm:pt-20 pb-12 sm:pb-16 text-center">
@@ -270,7 +272,9 @@ export default function SocialHub() {
         </section>
       </main>
 
-      <SiteFooter />
+      <div className="relative z-10">
+        <SiteFooter />
+      </div>
     </div>
   );
 }

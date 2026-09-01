@@ -5,6 +5,7 @@ import {
   Clock, Sparkles, Scale, ExternalLink
 } from 'lucide-react';
 import SiteHeader from '../../components/landing/SiteHeader';
+import NightSky from '../../components/landing/NightSky';
 import SiteFooter from '../../components/landing/SiteFooter';
 import {
   SADHYA_POLICIES,
@@ -67,8 +68,9 @@ export default function PolicyHub() {
   return (
     <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased selection:bg-[#c8e558]/30">
       <SiteHeader />
+      <NightSky />
 
-      <main className="max-w-[1160px] mx-auto px-5 sm:px-8">
+      <main className="relative z-10 max-w-[1160px] mx-auto px-5 sm:px-8">
         {/* ── Document Header ────────────────────────────────────────────── */}
         <header className="pt-14 sm:pt-20 pb-10 border-b border-slate-100 dark:border-white/[0.07]">
           <nav aria-label="Breadcrumb" className="mb-5 flex items-center justify-between">
@@ -305,7 +307,9 @@ export default function PolicyHub() {
         </div>
       </main>
 
-      <SiteFooter />
+      <div className="relative z-10">
+        <SiteFooter />
+      </div>
     </div>
   );
 }
