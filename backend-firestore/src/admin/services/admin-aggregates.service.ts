@@ -333,8 +333,11 @@ export class AdminAggregatesService {
   async getVectorDBStats(): Promise<any> {
     const stats = await pineconeService.getIndexStats();
     
-    // Aggregate curriculum metadata to get distribution
-    const curriculumSnap = await db.collection('curriculum').get();
+    // Aggregate curriculum metadata to get distribution.
+    // `.select()` projects only the two fields this loop reads. Firestore Enterprise bills
+    // read units by the VOLUME of data scanned, not the document count, so pulling whole
+    // curriculum documents to look at two fields was paying for the rest of each document.
+    const curriculumSnap = await db.collection('curriculum').select('subject', 'vectorsCount').get();
     const subjectDistribution: Record<string, number> = {};
     
     curriculumSnap.docs.forEach(doc => {
@@ -402,8 +405,13 @@ export class AdminAggregatesService {
       costUSD: +v.cost.toFixed(4),
     }));
 
-    // Real A/B experiments
-    const expSnap = await db.collection('prompt_experiments').get();
+    // Real A/B experiments. Projected to the fields rendered below, and capped: this feeds
+    // an admin list, so an unbounded scan of every experiment ever created is never needed.
+    const expSnap = await db
+      .collection('prompt_experiments')
+      .select('name', 'status', 'variants', 'createdAt')
+      .limit(100)
+      .get();
     const experiments = expSnap.docs.map(d => {
       const e: any = d.data();
       return {

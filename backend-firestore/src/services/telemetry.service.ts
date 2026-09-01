@@ -1,4 +1,4 @@
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { logger } from '../utils/logger';
 import { 
   TelemetryRecord, 
@@ -44,11 +44,37 @@ export class TelemetryService {
 
   // ─── Cost Recording ─────────────────────────────────────────────────
 
+  /**
+   * Retention for cost_records, in days.
+   *
+   * WHY THIS EXISTS. One document is written here per AI call, so this collection grows
+   * for as long as the product runs and never shrinks. That is what made the Aug 2026
+   * bill 81,731,965 Firestore read units (₹770 of ₹773): the readers scanned a
+   * collection whose size only ever went up.
+   *
+   * The readers are now aggregation queries, but an unbounded collection still costs
+   * more to aggregate every month. `expiresAt` below is a real Firestore Timestamp so a
+   * TTL policy can delete old records automatically:
+   *
+   *   gcloud firestore fields ttls update expiresAt \
+   *     --collection-group=cost_records --enable-ttl --project=schaolarly
+   *
+   * The policy is NOT created by this code — enable it once, per environment. Until it
+   * is enabled the field is simply inert, so shipping this is safe on its own.
+   */
+  private static readonly COST_RECORD_TTL_DAYS = 90;
+
   async recordCost(cost: CostRecord): Promise<void> {
     try {
+      const now = Date.now();
       await this.db.collection('cost_records').add({
         ...cost,
-        timestamp: Date.now(),
+        timestamp: now,
+        // Firestore TTL policies require a Timestamp field; `timestamp` above is a number
+        // kept as-is because existing queries and documents depend on that shape.
+        expiresAt: Timestamp.fromMillis(
+          now + TelemetryService.COST_RECORD_TTL_DAYS * 24 * 60 * 60 * 1000,
+        ),
       });
     } catch (error) {
       logger.error('Failed to record cost', { error });
