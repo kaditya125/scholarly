@@ -2,6 +2,7 @@ import axios from 'axios';
 import nodemailer from 'nodemailer';
 import { env } from '../../config/env';
 import { logger } from '../../utils/logger';
+import { COMPANY, emailCopyrightLine } from '../../config/company';
 
 export interface EmailOptions {
   to: string;
@@ -166,8 +167,8 @@ export class ZeptoMailService {
             </tr>
             <tr>
               <td style="padding-bottom: 14px; font-size: 12px; line-height: 1.6; color: #475569;">
-                <strong style="color: #0f172a;">Sadhya Technologies Pvt. Ltd.</strong><br>
-                Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
+                <strong style="color: #0f172a;">${COMPANY.legalEntity}</strong><br>
+                ${COMPANY.address} • <a href="https://sadhya.app" style="color: #64748b; text-decoration: underline;">sadhya.app</a>
               </td>
             </tr>
             <tr>
@@ -181,7 +182,7 @@ export class ZeptoMailService {
             </tr>
             <tr>
               <td style="font-size: 11px; color: #94a3b8; line-height: 1.4;">
-                © 2026 Sadhya Technologies Pvt. Ltd. All rights reserved. • Sadhya is a registered trademark of Sadhya Technologies Pvt. Ltd.
+                ${emailCopyrightLine()}
               </td>
             </tr>
           </table>
@@ -625,7 +626,7 @@ https://sadhya.app
       ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
       : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
 
-    const subject = `Receipt #${invNo} from Sadhya Technologies Pvt. Ltd.`;
+    const subject = `Receipt #${invNo} from ${COMPANY.legalEntity}`;
 
     const html = `
 <!DOCTYPE html>
@@ -664,7 +665,7 @@ https://sadhya.app
         Receipt #${invNo}
       </h1>
       <p style="margin: 0; font-size: 14px; color: #4b5563;">
-        ${issueDateStr} &middot; Sadhya Technologies Pvt. Ltd.
+        ${issueDateStr} &middot; ${COMPANY.legalEntity}
       </p>
     </div>
 
@@ -772,7 +773,7 @@ https://sadhya.app
     <!-- Minimalist Compliance Footer -->
     <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; font-size: 11.5px; color: #9ca3af; line-height: 1.6;">
       <p style="margin: 0 0 4px;">
-        <strong>Sadhya Technologies Pvt. Ltd.</strong> &middot; Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India
+        <strong>${COMPANY.legalEntity}</strong> &middot; ${COMPANY.address}
       </p>
       <p style="margin: 0;">
         This receipt was sent to ${params.email} for transaction #${invNo}. &middot; <a href="https://sadhya.app/terms" style="color: #6b7280; text-decoration: underline;">Terms</a> &middot; <a href="https://sadhya.app/privacy" style="color: #6b7280; text-decoration: underline;">Privacy</a>
@@ -785,7 +786,7 @@ https://sadhya.app
 `;
 
     const text = `
-Receipt #${invNo} from Sadhya Technologies Pvt. Ltd.
+Receipt #${invNo} from ${COMPANY.legalEntity}
 ===================================================
 
 Hello ${name},
@@ -807,8 +808,8 @@ Manage billing: https://sadhya.app/settings?tab=billing
 
 Need help? Contact support@sadhya.app.
 
-Sadhya Technologies Pvt. Ltd.
-Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India
+${COMPANY.legalEntity}
+${COMPANY.address}
 https://sadhya.app
 `;
 
@@ -887,7 +888,7 @@ https://sadhya.app
         Refund #${refundNo}
       </h1>
       <p style="margin: 0; font-size: 14px; color: #4b5563;">
-        ${refundDateStr} &middot; Sadhya Technologies Pvt. Ltd.
+        ${refundDateStr} &middot; ${COMPANY.legalEntity}
       </p>
     </div>
 
@@ -988,7 +989,7 @@ https://sadhya.app
     <!-- Minimalist Compliance Footer -->
     <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; font-size: 11.5px; color: #9ca3af; line-height: 1.6;">
       <p style="margin: 0 0 4px;">
-        <strong>Sadhya Technologies Pvt. Ltd.</strong> &middot; Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India
+        <strong>${COMPANY.legalEntity}</strong> &middot; ${COMPANY.address}
       </p>
       <p style="margin: 0;">
         This refund credit receipt was generated for transaction #${params.paymentId || params.orderId}. &middot; <a href="https://sadhya.app/terms" style="color: #6b7280; text-decoration: underline;">Terms</a> &middot; <a href="https://sadhya.app/privacy" style="color: #6b7280; text-decoration: underline;">Privacy</a>
@@ -1001,7 +1002,7 @@ https://sadhya.app
 `;
 
     const text = `
-Refund Confirmation — Sadhya Technologies Pvt. Ltd.
+Refund Confirmation — ${COMPANY.legalEntity}
 ===================================================
 
 Hello ${name},
@@ -1026,8 +1027,8 @@ Manage billing: https://sadhya.app/settings?tab=billing
 
 Need assistance? Write to support@sadhya.app.
 
-Sadhya Technologies Pvt. Ltd.
-Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India
+${COMPANY.legalEntity}
+${COMPANY.address}
 https://sadhya.app
 `;
 
@@ -1207,7 +1208,7 @@ Thank you for reaching out to Sadhya. We have received your message and will get
 
 Warm regards,
 Sadhya Support Team
-Tech Zone, Sector 135, Noida
+${COMPANY.legalEntity} · ${COMPANY.address}
 https://sadhya.app
 `;
 
