@@ -7,6 +7,7 @@ import SiteFooter from '../components/landing/SiteFooter';
 import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
 import { useAuth } from '../lib/AuthContext';
+import { Underline } from '../components/landing/Annotate';
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -66,7 +67,7 @@ export default function About() {
               About
             </p>
             <h1 className="mt-3 text-[34px] sm:text-[46px] lg:text-[52px] leading-[1.07] font-semibold tracking-[-0.035em]">
-              Most students don&rsquo;t need more content. They need someone to explain it.
+              Most students don&rsquo;t need more content. They need someone to <Underline>explain</Underline> it.
             </h1>
             <p className="mt-6 text-[16.5px] leading-relaxed text-slate-500 dark:text-gray-400">
               There is no shortage of material for NEET, JEE, UPSC or a Class 12 board paper. There

@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { Sparkles, Mic, FileText, Youtube, File, ArrowRight, Headphones, Globe, Users, Languages, Check, Play } from 'lucide-react';
+import { Underline } from '../components/landing/Annotate';
 
 interface PodcastLandingProps {
   onGetStarted: () => void;
@@ -31,7 +32,7 @@ export default function PodcastLanding({ onGetStarted }: PodcastLandingProps) {
             className="text-center mb-5"
           >
             <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-3 leading-tight">
-              Create studio-quality podcasts<br className="hidden md:block" />with AI in minutes
+              Create studio-quality podcasts<br className="hidden md:block" />with AI in <Underline>minutes</Underline>
             </h1>
           </motion.div>
 

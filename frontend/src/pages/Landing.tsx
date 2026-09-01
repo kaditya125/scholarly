@@ -1,6 +1,7 @@
 import { type ReactNode, useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
+import { Underline, Circle, Arrow } from '../components/landing/Annotate';
 import {
   ArrowRight, Camera, NotebookPen, Headphones,
   SlidersHorizontal, Gauge, Languages, Presentation, Check, Users, Radio, ClipboardCheck,
@@ -50,7 +51,6 @@ const BuiltWith = lazy(() => import('../components/landing/BuiltWith'));
  * amber layered mark, rounded-xl controls, hairline borders. Nothing new was introduced.
  */
 
-const ACCENT = '#c8e558';
 
 // ─── Content ─────────────────────────────────────────────────────────────────
 
@@ -197,39 +197,6 @@ function Item({ children, className, y = 20 }: { children: ReactNode; className?
   );
 }
 
-/**
- * The hand-drawn arc under a word — animated left-to-right gesture as if drawn by hand.
- */
-function Underline({ children, delay = 0.35 }: { children: ReactNode; delay?: number }) {
-  const reduced = useReducedMotion();
-  return (
-    <span className="relative inline-block whitespace-nowrap">
-      {children}
-      <svg
-        className="absolute -bottom-1 sm:-bottom-1.5 left-0 w-full overflow-visible pointer-events-none"
-        height="11"
-        viewBox="0 0 100 11"
-        preserveAspectRatio="none"
-        fill="none"
-        aria-hidden
-      >
-        <motion.path
-          d="M1.5 5C18 8.8 44 9.6 98.5 2.6"
-          stroke={ACCENT}
-          strokeWidth="3"
-          strokeLinecap="round"
-          initial={reduced ? false : { pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{
-            pathLength: { duration: reduced ? 0 : 0.85, ease: EASE, delay: reduced ? 0 : delay },
-            opacity: { duration: reduced ? 0 : 0.2, delay: reduced ? 0 : delay },
-          }}
-        />
-      </svg>
-    </span>
-  );
-}
-
 /** Section label. */
 function Eyebrow({ children }: { children: ReactNode }) {
   return (
@@ -239,9 +206,13 @@ function Eyebrow({ children }: { children: ReactNode }) {
   );
 }
 
-function SectionHeading({ children }: { children: ReactNode }) {
+/**
+ * `className` exists for one reason: a heading carrying a <Circle> needs looser leading than
+ * 1.12, or the loop crosses the line below once the heading wraps. Pass `leading-[1.32]` there.
+ */
+function SectionHeading({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <h2 className="mt-3 text-[28px] sm:text-[34px] lg:text-[40px] leading-[1.12] font-semibold tracking-[-0.03em] text-slate-900 dark:text-white">
+    <h2 className={`mt-3 text-[28px] sm:text-[34px] lg:text-[40px] leading-[1.12] font-semibold tracking-[-0.03em] text-slate-900 dark:text-white ${className ?? ''}`}>
       {children}
     </h2>
   );
@@ -557,7 +528,7 @@ export default function LandingPage() {
           <Reveal>
             <div className="max-w-[36rem]">
               <Eyebrow>Behind every answer</Eyebrow>
-              <SectionHeading>You can watch it think.</SectionHeading>
+              <SectionHeading>You can watch it <Underline>think</Underline>.</SectionHeading>
               <Lede>
                 A general chatbot hands you a paragraph and asks you to trust it. Sadhya shows
                 the six steps it runs before it writes a word, and the sources each answer rests
@@ -650,7 +621,7 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <Reveal>
               <Eyebrow>Set up once</Eyebrow>
-              <SectionHeading>It knows who it&rsquo;s teaching.</SectionHeading>
+              <SectionHeading className="!leading-[1.32]">It knows <Circle>who</Circle> it&rsquo;s teaching.</SectionHeading>
               <Lede>
                 A short setup asks what you&rsquo;re working towards. After that, every answer is
                 written for that — no re-explaining your situation at the top of each conversation.
@@ -908,7 +879,7 @@ export default function LandingPage() {
           <Reveal>
             <div className="flex flex-col items-center text-center">
               <h2 className="text-[32px] sm:text-[42px] lg:text-[48px] leading-[1.1] font-semibold tracking-[-0.03em] max-w-[36rem]">
-                Start with the thing you&rsquo;re stuck on, today
+                Start with the thing you&rsquo;re stuck on, <Underline>today</Underline>
               </h2>
               <p className="mt-5 text-[16.5px] sm:text-[17.5px] leading-relaxed text-slate-500 dark:text-gray-400 max-w-[32rem]">
                 Tell Sadhya what you&rsquo;re preparing for, then ask it one real question and see what comes back.
@@ -929,7 +900,11 @@ export default function LandingPage() {
               </div>
 
               {/* CTA button */}
-              <div className="mt-8">
+              <div className="mt-8 relative">
+                <Arrow
+                  variant="from-left"
+                  className="hidden md:block absolute right-full top-1/2 -translate-y-[70%] mr-1 w-[76px] h-[58px]"
+                />
                 <PrimaryCta to={destination}>{user ? 'Resume Learning — Go to Dashboard' : 'Start learning — it’s free'}</PrimaryCta>
               </div>
 

@@ -13,6 +13,7 @@ import SiteFooter from '../components/landing/SiteFooter';
 import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
 import { useAuth } from '../lib/AuthContext';
+import { Underline } from '../components/landing/Annotate';
 
 /** Video Chapters Definition */
 interface VideoChapter {
@@ -247,33 +248,13 @@ export default function HowItWorks() {
               {activeRole === 'student' ? (
                 <>
                   See how Sadhya <br className="hidden sm:block" />
-                  <span className="relative inline-block">
-                    transforms
-                    <svg
-                      className="absolute -bottom-1 sm:-bottom-1.5 left-0 w-full text-[#c8e558]/80 dark:text-[#c8e558]"
-                      viewBox="0 0 100 12"
-                      preserveAspectRatio="none"
-                      height="6"
-                    >
-                      <path d="M0 7 Q 50 12 100 7" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />
-                    </svg>
-                  </span>{' '}
+                  <Underline>transforms</Underline>{' '}
                   your exam preparation.
                 </>
               ) : (
                 <>
                   Less time preparing. <br className="hidden sm:block" />
-                  <span className="relative inline-block">
-                    More time teaching.
-                    <svg
-                      className="absolute -bottom-1 sm:-bottom-1.5 left-0 w-full text-[#c8e558]/80 dark:text-[#c8e558]"
-                      viewBox="0 0 100 12"
-                      preserveAspectRatio="none"
-                      height="6"
-                    >
-                      <path d="M0 7 Q 50 12 100 7" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />
-                    </svg>
-                  </span>
+                  <Underline>More time teaching.</Underline>
                 </>
               )}
             </motion.h1>

@@ -8,6 +8,7 @@ import { SITE } from '../lib/siteConfig';
 import ReferralBackground from '../components/landing/ReferralBackground';
 import { cn } from '../lib/utils';
 import { useReducedMotion, motion } from 'motion/react';
+import { Underline } from '../components/landing/Annotate';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -52,7 +53,7 @@ export default function ReferralProgram() {
                 Refer & Earn
               </span>
               <h1 className="text-[34px] sm:text-[42px] leading-[1.12] font-semibold tracking-[-0.03em]">
-                Learn together. <br className="hidden sm:block" /> Earn together.
+                Learn together. <br className="hidden sm:block" /> Earn <Underline>together</Underline>.
               </h1>
               <p className="mt-5 text-[16px] sm:text-[17.5px] leading-relaxed text-slate-500 dark:text-gray-400">
                 Whether you're a student looking for free Pro access or a teacher building your

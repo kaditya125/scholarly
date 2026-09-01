@@ -11,6 +11,7 @@ import {
   FOUNDER, TEAM, ADVISORS, BUILDING, BUILD_STATUS_LABEL, LEARNING_CHAIN,
   PHILOSOPHY_QUESTIONS, CONTRIBUTION_AREAS, type Person, type BuildStatus,
 } from '../components/landing/founderPageData';
+import { Underline } from '../components/landing/Annotate';
 
 /**
  * /our-team — "Meet the Founder".
@@ -398,7 +399,7 @@ export default function OurTeam() {
               >
                 <Eyebrow>Our team</Eyebrow>
                 <h1 className="mt-3 text-[34px] sm:text-[46px] lg:text-[54px] leading-[1.06] font-semibold tracking-[-0.035em]">
-                  Meet the Founder
+                  Meet the <Underline>Founder</Underline>
                 </h1>
 
                 {/* Identity beside the photograph. The passport headshot and the contact card

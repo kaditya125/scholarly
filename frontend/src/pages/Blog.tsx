@@ -5,6 +5,7 @@ import SiteHeader from '../components/landing/SiteHeader';
 import SiteFooter from '../components/landing/SiteFooter';
 import { useSeo } from '../lib/useSeo';
 import { BLOG_POSTS, CATEGORIES } from '../content/blogPosts';
+import { Underline } from '../components/landing/Annotate';
 
 /**
  * Blog index.
@@ -83,7 +84,7 @@ export default function Blog() {
           Engineering blog
         </p>
         <h1 className="mt-3 text-[34px] sm:text-[42px] leading-[1.1] font-bold tracking-tight text-slate-900 dark:text-white">
-          How Sadhya is built
+          How Sadhya is <Underline>built</Underline>
         </h1>
         <p className="mt-5 text-[16px] leading-relaxed text-slate-600 dark:text-slate-300 max-w-2xl">
           Long-form notes on the parts of this product that were hard: getting a syllabus from the
