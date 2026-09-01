@@ -10,6 +10,7 @@ import { PromptStudioController } from '../controllers/prompt-studio.controller'
 import { LearningAssetsController } from '../controllers/learning-assets.controller';
 import { NotebooksController } from '../controllers/notebooks.controller';
 import { UsersController } from '../controllers/users.controller';
+import { StudentsController } from '../controllers/students.controller';
 import { SecurityController } from '../controllers/security.controller';
 import { LogsController } from '../controllers/logs.controller';
 import { NotificationsController } from '../controllers/notifications.controller';
@@ -30,6 +31,7 @@ const promptStudioCtrl = new PromptStudioController();
 const learningAssetsCtrl = new LearningAssetsController();
 const notebooksCtrl = new NotebooksController();
 const usersCtrl = new UsersController();
+const studentsCtrl = new StudentsController();
 const securityCtrl = new SecurityController();
 const logsCtrl = new LogsController();
 const notificationsCtrl = new NotificationsController();
@@ -86,6 +88,17 @@ router.patch('/feature-flags/:name', featureFlagsCtrl.updateFlag);
 
 // Users
 router.get('/users', usersCtrl.getUsers);
+
+/**
+ * Student directory. Supersedes `/users` for student administration: that route calls
+ * auth.listUsers(), which caps at 1000 accounts and supports no search, filter or sort.
+ * `/users` is left in place because the existing admin-dashboard app still calls it.
+ *
+ * Inherits `router.use(requireAdmin)` above — the token signature and role claim are
+ * verified before this handler runs.
+ */
+router.get('/students', studentsCtrl.list);
+router.get('/students/stats', studentsCtrl.stats);
 
 // Security
 router.get('/security/threats', securityCtrl.getThreats);
