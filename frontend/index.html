@@ -31,9 +31,18 @@
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#4f46e5" />
     <!-- Fonts Preconnect & Optimized Load -->
+    <!--
+      display=swap, NOT optional. `optional` gives the browser a ~100ms block period and
+      NO swap period: if the font file has not arrived by then it uses the fallback and
+      never swaps for that page load. That made rendering non-deterministic between
+      refreshes — the tagline came up in Caveat on a warm cache and in Segoe Script on a
+      cold one, and Inter likewise fell back to system-ui, which reflowed body copy.
+      `swap` shows the fallback immediately and then always swaps to the real font, so
+      the page settles in the same place every time.
+    -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Caveat:wght@400;600&display=optional" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Caveat:wght@400;600&display=swap" />
     <!-- Google Analytics 4 (Deferred) -->
     <script>
       window.dataLayer = window.dataLayer || [];
