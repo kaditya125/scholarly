@@ -174,7 +174,17 @@ function resolveCache(): CacheService {
 
   const restUrl = env.REDIS_REST_URL;
   const token = env.REDIS_TOKEN;
-  if (!restUrl || !token) return memory;   // not configured: in-memory only, which is fine
+  if (!restUrl || !token) {
+    // Say so. This branch returned silently, so production ran with an in-memory-only
+    // cache — which is per-process and dies on every restart (309 of them by Sep 2026) —
+    // and nothing in the logs indicated it. Every miss became a Firestore read, and the
+    // first sign was the bill. A cache tier being off is a fact worth one log line.
+    console.warn(
+      `[cache] Redis cache tier DISABLED: ${!restUrl ? 'REDIS_REST_URL' : 'REDIS_TOKEN'} is not set. ` +
+      'Running in-memory only — this cache is per-process and is lost on every restart.',
+    );
+    return memory;
+  }
 
   if (!/^https?:\/\//i.test(restUrl)) {
     console.warn(
