@@ -1,6 +1,4 @@
-import { useEffect, useState } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
-import { Check, ChevronDown, BookText, NotebookPen, Camera, Paperclip, ArrowUp } from 'lucide-react';
+import { ChevronDown, BookText, NotebookPen, Camera, Paperclip, ArrowUp } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { LogoMark } from '../brand/Logo';
 
@@ -8,24 +6,27 @@ import { LogoMark } from '../brand/Logo';
  * The hero product visual — a faithful recreation of the real /chat surface.
  *
  * Every element here mirrors something that actually ships:
- *   · the six reasoning steps are the verbatim titles from
- *     components/chat/ReasoningTimeline.tsx → DEFAULT_STEP_DEFS
  *   · the "N results" source list matches components/chat/AssistantReply.tsx
  *   · the composer modes are the real prompt modes in the backend's buildModeInstructions()
  *
  * Deliberately hand-built rather than a screenshot: no network request, nothing to
  * re-export whenever the product UI moves, crisp at any DPI, and correct in both themes.
+ *
+ * ── FULLY STATIC, AND THAT IS THE POINT ───────────────────────────────────────────────────
+ * This used to branch on `const done = true`, so one arm rendered the finished answer and the
+ * other animated six reasoning steps through a `phase` counter. `phase` was never declared —
+ * it survived only because the hardcoded `true` made its branch unreachable. TypeScript had
+ * been reporting it as an error the whole time.
+ *
+ * That is the same shape as the bug that blanked all 19 /exams/:slug pages and the checkout
+ * page (an identifier used but never declared), except this one was one edit away from firing:
+ * the moment anyone made `done` real state, the LANDING PAGE would have thrown on first render,
+ * before `done` ever flipped true. Deleting the dead arm removes that trap rather than leaving
+ * a live grenade behind a constant.
+ *
+ * If the stepping animation is wanted later, add it deliberately with `phase` actually declared
+ * — do not restore the branch from history.
  */
-
-/** Verbatim from DEFAULT_STEP_DEFS, with the detail lines trimmed to one clause. */
-const STEPS = [
-  { title: 'Understanding the question', detail: 'Intent, core concept, entities' },
-  { title: 'Loading memory & profile', detail: 'Target exam, level, weak topics' },
-  { title: 'Mapping concept relationships', detail: 'Prerequisites and related nodes' },
-  { title: 'Retrieving knowledge', detail: 'Semantic search, then reranked' },
-  { title: 'Reasoning & planning', detail: 'Ordering it into an explanation' },
-  { title: 'Composing the answer', detail: 'Grounded, then claim-checked' },
-];
 
 const SOURCES = [
   { icon: BookText, label: 'NCERT Physics XII — Current Electricity' },
@@ -36,9 +37,6 @@ const SOURCES = [
 const MODES = ['Explain', 'Revise', 'Quiz', 'Essay', 'Research'];
 
 export default function ProductPreview() {
-  const reduced = useReducedMotion();
-  const done = true;
-
   return (
     <div className="relative">
       {/* A single soft wash behind the panel to lift it off the page. No blobs, no glow.
@@ -68,94 +66,53 @@ export default function ProductPreview() {
           </div>
 
           {/* ── Reasoning ─────────────────────────────────────────────────── */}
-          {done ? (
-            <div className="flex items-center gap-1.5 text-[12px] text-slate-500 dark:text-gray-400">
-              <ChevronDown className="w-3.5 h-3.5" strokeWidth={2} />
-              <span>Thought for 6 steps</span>
-              <span className="text-slate-400 dark:text-gray-600">·</span>
-              <span className="tabular-nums">4.1s</span>
-            </div>
-          ) : (
-            <ul className="space-y-2 pl-0.5">
-              {STEPS.map((s, i) => {
-                const state = i < phase ? 'done' : i === phase ? 'active' : 'idle';
-                return (
-                  <li
-                    key={s.title}
-                    className={cn(
-                      'flex items-start gap-2.5 transition-opacity duration-300',
-                      state === 'idle' ? 'opacity-25' : 'opacity-100'
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'mt-[3px] w-3.5 h-3.5 rounded-full shrink-0 flex items-center justify-center transition-colors',
-                        state === 'done'
-                          ? 'bg-[#c8e558]'
-                          : state === 'active'
-                            ? 'border-2 border-[#c8e558] border-t-transparent animate-spin'
-                            : 'border border-slate-300 dark:border-white/20'
-                      )}
-                      aria-hidden
-                    >
-                      {state === 'done' && <Check className="w-2.5 h-2.5 text-slate-900" strokeWidth={3.5} />}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-[12.5px] font-medium text-slate-700 dark:text-gray-200 leading-tight">
-                        {s.title}
-                      </span>
-                      <span className="hidden sm:block text-[11.5px] text-slate-400 dark:text-gray-500 leading-tight mt-0.5">
-                        {s.detail}
-                      </span>
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+          <div className="flex items-center gap-1.5 text-[12px] text-slate-500 dark:text-gray-400">
+            <ChevronDown className="w-3.5 h-3.5" strokeWidth={2} />
+            <span>Thought for 6 steps</span>
+            <span className="text-slate-400 dark:text-gray-600">·</span>
+            <span className="tabular-nums">4.1s</span>
+          </div>
 
           {/* ── Answer ────────────────────────────────────────────────────── */}
-          {done && (
-            <div className="space-y-3.5">
-              <div className="space-y-2.5 text-[13px] leading-[1.65] text-slate-700 dark:text-gray-300">
-                <p>
-                  Current in a metal is carried by free electrons drifting through a lattice of
-                  positive ions. Heat the metal and those ions vibrate harder, so a drifting
-                  electron collides with them more often.
-                </p>
-                <p>
-                  That shortens the average time between collisions, <em>τ</em>. Since resistivity{' '}
-                  <span className="font-medium text-slate-900 dark:text-white">ρ = m / (n e² τ)</span>,
-                  a smaller <em>τ</em> means larger ρ — so the resistance rises.
-                </p>
-              </div>
+          <div className="space-y-3.5">
+            <div className="space-y-2.5 text-[13px] leading-[1.65] text-slate-700 dark:text-gray-300">
+              <p>
+                Current in a metal is carried by free electrons drifting through a lattice of
+                positive ions. Heat the metal and those ions vibrate harder, so a drifting
+                electron collides with them more often.
+              </p>
+              <p>
+                That shortens the average time between collisions, <em>τ</em>. Since resistivity{' '}
+                <span className="font-medium text-slate-900 dark:text-white">ρ = m / (n e² τ)</span>,
+                a smaller <em>τ</em> means larger ρ — so the resistance rises.
+              </p>
+            </div>
 
-              <div className="rounded-xl border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/70 dark:bg-amber-400/[0.07] px-3.5 py-2.5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-amber-700 dark:text-amber-400/90">
-                  Common mistake
-                </p>
-                <p className="mt-1 text-[12.5px] leading-relaxed text-slate-700 dark:text-gray-300">
-                  Semiconductors do the opposite — heating frees far more carriers than it costs in
-                  collisions, so their resistance falls.
-                </p>
-              </div>
+            <div className="rounded-xl border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/70 dark:bg-amber-400/[0.07] px-3.5 py-2.5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-amber-700 dark:text-amber-400/90">
+                Common mistake
+              </p>
+              <p className="mt-1 text-[12.5px] leading-relaxed text-slate-700 dark:text-gray-300">
+                Semiconductors do the opposite — heating frees far more carriers than it costs in
+                collisions, so their resistance falls.
+              </p>
+            </div>
 
-              {/* Source list — same treatment as AssistantReply's "N results". */}
-              <div>
-                <p className="text-[11.5px] text-slate-500 dark:text-gray-400 mb-1.5">3 results</p>
-                <div className="space-y-1">
-                  {SOURCES.map((s) => (
-                    <div key={s.label} className="flex items-center gap-2 text-[12.5px] text-slate-600 dark:text-gray-300">
-                      <s.icon className="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-gray-500" strokeWidth={1.75} />
-                      <span className="truncate underline decoration-slate-200 dark:decoration-white/15 underline-offset-[3px]">
-                        {s.label}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+            {/* Source list — same treatment as AssistantReply's "N results". */}
+            <div>
+              <p className="text-[11.5px] text-slate-500 dark:text-gray-400 mb-1.5">3 results</p>
+              <div className="space-y-1">
+                {SOURCES.map((s) => (
+                  <div key={s.label} className="flex items-center gap-2 text-[12.5px] text-slate-600 dark:text-gray-300">
+                    <s.icon className="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-gray-500" strokeWidth={1.75} />
+                    <span className="truncate underline decoration-slate-200 dark:decoration-white/15 underline-offset-[3px]">
+                      {s.label}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* ── Composer ────────────────────────────────────────────────────── */}
