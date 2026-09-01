@@ -156,7 +156,7 @@ Please confirm receipt so we can coordinate safe resolution.`,
     {
       label: 'Grievance / DPDP Escalation',
       subject: 'Statutory Grievance / DPDP Notice: [Topic]',
-      body: `To the Grievance Officer, Sadhya Technologies Pvt. Ltd.,
+      body: `To the Grievance Officer, ${SITE.legalEntity},
 
 I am submitting a formal grievance regarding my user data / platform services as per the Digital Personal Data Protection Act, 2023.
 

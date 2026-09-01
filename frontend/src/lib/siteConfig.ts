@@ -35,13 +35,18 @@ export const SITE = {
   /**
    * The registered legal entity that contracts with users and receives payments.
    * This MUST match the name registered with Razorpay or settlements will be held.
-   * TODO: replace with the registered company name.
+   *
+   * TechLoom Innovations is a sole proprietorship (Udyam UDYAM-BR-26-0135079,
+   * registered 30 Jun 2024). Sadhya is its product, not a separate company — so
+   * this is the name that appears in the Terms, the Privacy Policy and the
+   * copyright line, and the one Razorpay settles against.
    */
-  legalEntity: 'Sadhya Technologies Private Limited',
+  legalEntity: 'TechLoom Innovations',
 
-  /** TODO: replace with the CIN / GSTIN you want shown publicly (or set to ''). */
+  /** Public business registration. No CIN/GSTIN — not incorporated, not GST-registered. */
   cin: '',
   gstin: '',
+  udyam: 'UDYAM-BR-26-0135079',
 
   /**
    * Where disputes are heard. Used in the Terms' governing-law clause.

@@ -22,6 +22,7 @@ import { NotificationsPanel } from '../components/settings/NotificationsPanel';
 import { LearningProfileSettings } from '../components/settings/LearningProfileSettings';
 import { usePolicyConsent } from '../lib/hooks/usePolicyConsent';
 import { CURRENT_POLICY_METADATA } from '../content/policies/policyData';
+import { SITE } from '../lib/siteConfig';
 
 type TabId = 'profile' | 'learning' | 'analytics' | 'general' | 'billing' | 'notifications' | 'apps' | 'security' | 'policies';
 
@@ -273,7 +274,7 @@ export default function Settings() {
           <img src="https://sadhya.app/sadhya-logo-512x512.png" class="logo-img" alt="Sadhya Logo" onerror="this.style.display='none'" />
           <div>
             <h1>Sadhya<span>.</span></h1>
-            <span class="entity">Sadhya Technologies Pvt. Ltd.</span>
+            <span class="entity">${esc(SITE.legalEntity)}</span>
           </div>
         </div>
         <div class="inv-title">
@@ -297,7 +298,7 @@ export default function Settings() {
         <div class="row grand"><span>Total paid</span><span>${amount}</span></div>
       </div>
       <div class="foot">
-        <strong>Sadhya Technologies Pvt. Ltd.</strong> · Tech Zone, Sector 135, Noida, Uttar Pradesh 201304, India<br/>
+        <strong>${esc(SITE.legalEntity)}</strong> · ${esc([SITE.address.line1, SITE.address.line2, SITE.address.city, SITE.address.state, SITE.address.postalCode, SITE.address.country].filter(Boolean).join(', '))}<br/>
         This is a computer-generated tax invoice and receipt. For any billing inquiries, contact <a href="mailto:support@sadhya.app" style="color:#0f172a;font-weight:600">support@sadhya.app</a>.
       </div>
       <script>window.onload=function(){window.print();}</script>

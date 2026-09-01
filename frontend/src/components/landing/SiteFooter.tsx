@@ -179,9 +179,16 @@ export default function SiteFooter() {
 
         {/* ── Bottom bar ───────────────────────────────────────────────── */}
         <div className="border-t border-slate-200/70 dark:border-white/[0.07] py-7 flex flex-col-reverse sm:flex-row sm:items-center gap-4">
-          <p className="text-[12.5px] text-slate-500 dark:text-gray-400">
-            © {new Date().getFullYear()} {SITE.legalEntity}. All rights reserved.
-          </p>
+          <div className="text-[12.5px] text-slate-500 dark:text-gray-400 space-y-1">
+            <p>© {new Date().getFullYear()} {SITE.legalEntity}. All rights reserved.</p>
+            {/* States the entity behind the brand. Verifiers for the cloud startup
+                programmes check the site against the registered name, and the two
+                do not match on their face. */}
+            <p>
+              Sadhya is a product of {SITE.legalEntity}
+              {SITE.udyam ? <> · Udyam {SITE.udyam}</> : null}
+            </p>
+          </div>
 
           <div className="sm:ml-auto flex flex-wrap items-center gap-x-5 gap-y-2">
             <span className="inline-flex items-center gap-2 text-[12.5px] text-slate-500 dark:text-gray-400">
