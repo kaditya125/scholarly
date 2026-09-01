@@ -58,7 +58,8 @@ export function AuthShell({
   children,
   footer,
 }: {
-  title: string;
+  /** ReactNode, not string, so a caller can mark a word in it — see the auth pages. */
+  title: React.ReactNode;
   subtitle: string;
   children: React.ReactNode;
   footer: React.ReactNode;

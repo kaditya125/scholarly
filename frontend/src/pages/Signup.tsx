@@ -24,6 +24,7 @@ import {
   FlourishLink,
   RoleCard,
 } from '../components/auth/AuthShell';
+import { Underline } from '../components/landing/Annotate';
 
 /**
  * Two-step signup, matching the reference: choose who you are, then create the account.
@@ -189,7 +190,7 @@ export default function Signup() {
   if (step === 'role') {
     return (
       <AuthShell
-        title="Create your account"
+        title={<>Create your <Underline>account</Underline></>}
         subtitle="First — tell us how you'll be using Sadhya."
         footer={
           <>

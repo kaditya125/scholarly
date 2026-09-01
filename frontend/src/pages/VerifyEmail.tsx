@@ -16,6 +16,7 @@ import {
   SubmitButton,
   AuthError,
 } from '../components/auth/AuthShell';
+import { Underline } from '../components/landing/Annotate';
 
 function maskEmail(rawEmail?: string | null): string {
   if (!rawEmail) return 'your email';
@@ -159,7 +160,7 @@ export default function VerifyEmail() {
 
   return (
     <AuthShell
-      title="Verify your email"
+      title={<>Verify your <Underline>email</Underline></>}
       subtitle="One quick step to activate your account."
       footer={
         <div className="flex items-center justify-between w-full text-[13px]">

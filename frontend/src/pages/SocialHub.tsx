@@ -11,6 +11,7 @@ import SiteFooter from '../components/landing/SiteFooter';
 import { SITE, type SocialIcon } from '../lib/siteConfig';
 import { LogoMark as Mark } from '../components/brand/Logo';
 import { cn } from '../lib/utils';
+import { Underline } from '../components/landing/Annotate';
 
 type PlatformKey = 'x' | 'linkedin' | 'instagram' | 'facebook' | 'youtube' | 'github';
 
@@ -147,7 +148,7 @@ export default function SocialHub() {
             </div>
 
             <h1 className="text-[34px] sm:text-[48px] lg:text-[54px] font-semibold tracking-[-0.035em] leading-[1.08] max-w-[46rem] mx-auto">
-              Follow Sadhya across your favorite networks.
+              Follow Sadhya across your favorite <Underline>networks</Underline>.
             </h1>
 
             <p className="mt-4 text-[15px] sm:text-[17px] leading-relaxed text-slate-500 dark:text-gray-400 max-w-[38rem] mx-auto">
