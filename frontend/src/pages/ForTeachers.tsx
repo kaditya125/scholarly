@@ -7,6 +7,7 @@ import {
   Sparkles, Users, GraduationCap, Quote,
 } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
+import SkyAmbience from '../components/landing/sky';
 import SiteFooter from '../components/landing/SiteFooter';
 import { cn } from '../lib/utils';
 import { useSeo } from '../lib/useSeo';
@@ -297,8 +298,9 @@ export default function ForTeachers() {
   return (
     <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased">
       <SiteHeader />
+      <SkyAmbience />
 
-      <main>
+      <main className="relative z-10">
         {/* ══ 1 · Hero ═══════════════════════════════════════════════════════════════ */}
         <section className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-14 sm:pt-20 lg:pt-24 pb-16 sm:pb-24">
           <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.02fr)] gap-12 lg:gap-16 xl:gap-20 items-center">
@@ -1098,7 +1100,9 @@ export default function ForTeachers() {
         </section>
       </main>
 
-      <SiteFooter />
+      <div className="relative z-10">
+        <SiteFooter />
+      </div>
     </div>
   );
 }
