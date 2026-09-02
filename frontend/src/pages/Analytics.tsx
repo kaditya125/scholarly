@@ -32,6 +32,7 @@ import {
   ResponsiveContainer
 } from "recharts";
 import { useUserStats } from "../hooks/api/useUserStats";
+import { useAuth } from '../lib/AuthContext';
 import { useProfile } from "../hooks/api/useProfile";
 import { useAdaptiveAssessment } from "../hooks/api/useAdaptiveAssessment";
 import { DashboardSkeleton } from "../components/ui/SkeletonLoader";
@@ -40,12 +41,22 @@ export default function Analytics() {
   const navigate = useNavigate();
   const { stats, isLoading } = useUserStats();
   const { profile } = useProfile();
+  const { user } = useAuth();
   const { digitalTwin } = useAdaptiveAssessment();
 
   const [searchQuery, setSearchQuery] = useState("");
 
   const targetExam = profile?.targetExam || "SSC CGL";
-  const studentName = profile?.name || "Scholar";
+  /*
+   * The name comes from the Firebase Auth user, NOT the learning profile.
+   *
+   * This read `profile?.name`, but LearningProfile has no `name` and the backend cannot ever
+   * give it one: userProfile.controller sanitises every patch against a fixed whitelist
+   * (STRING_FIELDS / STRING_ARRAY_FIELDS / preparationLevel) and `name` is in none of them.
+   * So the expression was always undefined and every student on this page was greeted as
+   * "Scholar" — the fallback was doing all the work. TypeScript had been flagging it.
+   */
+  const studentName = user?.displayName || "Scholar";
 
   // Compute Authentic Overall Readiness & Grade
   const rawReadiness = stats?.examReadiness ?? digitalTwin?.overallReadinessScore ?? stats?.averageAccuracy ?? 76;

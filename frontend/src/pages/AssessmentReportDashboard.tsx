@@ -31,7 +31,8 @@ export default function AssessmentReportDashboard() {
 
   // Dynamic student diagnostic values
   const targetExam = profile?.targetExam || 'Competitive Exam';
-  const studentName = profile?.name || user?.displayName || 'Student';
+  // `profile.name` never exists — the backend profile whitelist has no such field. See Analytics.
+  const studentName = user?.displayName || 'Student';
 
   const rawReadiness = digitalTwin?.overallReadinessScore ?? stats?.averageAccuracy ?? 88.5;
   const readinessNumber = typeof rawReadiness === 'number' && rawReadiness > 0 ? rawReadiness : 88.5;
