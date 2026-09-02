@@ -1,4 +1,4 @@
-import { eventBus } from './EventBus';
+import { eventBus, EventMeta } from './EventBus';
 import { NotificationFactory } from '../notifications/NotificationEngine';
 import { logger } from '../../utils/logger';
 import { featureFlags } from '../../config/featureFlags';
@@ -17,6 +17,32 @@ import { masteryEngine, slugifyConcept } from '../intelligence/MasteryEngine';
  * references are identical, which closures never are.
  */
 let subscribersRegistered = false;
+
+/**
+ * Identity for a notification that is CAUSED BY another domain event.
+ *
+ * Every subscriber below reacts to a broadcast event by publishing notification.created. Redis
+ * pub/sub delivers that broadcast to EVERY instance, so with N instances this runs N times for one
+ * logical event. Left to itself each run would mint its own random eventId, the queue-routing in
+ * EventBus.publish() would see N unrelated events, and the student would get N copies of one
+ * notification.
+ *
+ * Chaining the CAUSING event's `meta.eventId` is what removes the duplication: that id is assigned
+ * once in the process that created the logical event and is carried verbatim through Redis to every
+ * subscriber, so all N instances derive an identical id here and the enqueues collapse to one.
+ * A payload-derived key would not do: two genuinely distinct events can carry identical payloads.
+ *
+ * `type` is included so one cause that legitimately produces SEVERAL different notifications keeps
+ * them distinct instead of silently collapsing them into one.
+ *
+ * Returns undefined when there is no causal identity to chain — publish() then falls back to a
+ * random id, i.e. exactly today's behaviour. In practice meta is always present (publish always
+ * builds it, and it survives serialization); the fallback exists so an un-metaed delivery degrades
+ * to the old behaviour rather than throwing.
+ */
+function causedNotificationEventId(meta: EventMeta | undefined, type: string): string | undefined {
+  return meta?.eventId ? `notification.created:${meta.eventId}:${type}` : undefined;
+}
 
 /**
  * Registers every domain event subscriber. Safe to call more than once: subsequent calls are
@@ -115,17 +141,20 @@ export function registerEventSubscribers(): { registered: boolean } {
     }
   });
 
-  eventBus.subscribe('podcast.completed', async (payload) => {
+  eventBus.subscribe('podcast.completed', async (payload, meta) => {
     const notification = NotificationFactory.createLearningAlert(
       payload.userId,
       'Podcast Ready',
       `Your podcast has been successfully generated (${Math.round(payload.durationMs / 60000)} mins).`,
       `/podcast/${payload.podcastId}`
     );
-    await eventBus.publish('notification.created', notification);
+    await eventBus.publish('notification.created', notification, {
+      eventId: causedNotificationEventId(meta, notification.type),
+      correlationId: meta?.correlationId,
+    });
   });
 
-  eventBus.subscribe('podcast.failed', async (payload) => {
+  eventBus.subscribe('podcast.failed', async (payload, meta) => {
     const notification = {
       userId: payload.userId,
       category: 'system' as const,
@@ -134,10 +163,13 @@ export function registerEventSubscribers(): { registered: boolean } {
       body: `We couldn't generate your podcast. Reason: ${payload.error}`,
       priority: 'high' as const
     };
-    await eventBus.publish('notification.created', notification);
+    await eventBus.publish('notification.created', notification, {
+      eventId: causedNotificationEventId(meta, notification.type),
+      correlationId: meta?.correlationId,
+    });
   });
 
-  eventBus.subscribe('user.registered', async (payload) => {
+  eventBus.subscribe('user.registered', async (payload, meta) => {
     const notification = {
       userId: payload.userId,
       category: 'administrative' as const,
@@ -146,10 +178,13 @@ export function registerEventSubscribers(): { registered: boolean } {
       body: 'Get started by creating your first AI Notebook.',
       priority: 'low' as const
     };
-    await eventBus.publish('notification.created', notification);
+    await eventBus.publish('notification.created', notification, {
+      eventId: causedNotificationEventId(meta, notification.type),
+      correlationId: meta?.correlationId,
+    });
   });
 
-  eventBus.subscribe('notebook.ingested', async (payload) => {
+  eventBus.subscribe('notebook.ingested', async (payload, meta) => {
     const notification = {
       userId: payload.userId,
       category: 'learning' as const,
@@ -159,7 +194,10 @@ export function registerEventSubscribers(): { registered: boolean } {
       actionUrl: `/notebooks/${payload.notebookId}`,
       priority: 'medium' as const
     };
-    await eventBus.publish('notification.created', notification);
+    await eventBus.publish('notification.created', notification, {
+      eventId: causedNotificationEventId(meta, notification.type),
+      correlationId: meta?.correlationId,
+    });
   });
 
   // More subscribers can be added here as we wire up gamification, notebooks, etc.
