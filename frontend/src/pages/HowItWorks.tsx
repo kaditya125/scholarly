@@ -9,7 +9,7 @@ import {
   BarChart3, ShieldCheck
 } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
-import NightSky from '../components/landing/NightSky';
+import SkyAmbience from '../components/landing/sky';
 import SiteFooter from '../components/landing/SiteFooter';
 import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
@@ -200,7 +200,7 @@ export default function HowItWorks() {
   return (
     <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-gray-100 font-sans antialiased selection:bg-[#c8e558] selection:text-slate-900">
       <SiteHeader />
-      <NightSky />
+      <SkyAmbience />
 
       <main className="relative z-10">
         {/* ══ Hero Section ══════════════════════════════════════════════════ */}

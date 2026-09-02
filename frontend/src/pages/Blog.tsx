@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowRight, ArrowLeft, Clock } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
-import NightSky from '../components/landing/NightSky';
+import SkyAmbience from '../components/landing/sky';
 import SiteFooter from '../components/landing/SiteFooter';
 import { useSeo } from '../lib/useSeo';
 import { BLOG_POSTS, CATEGORIES } from '../content/blogPosts';
@@ -79,7 +79,7 @@ export default function Blog() {
   return (
     <div className="min-h-screen bg-white dark:bg-[#0b0b0c]">
       <SiteHeader />
-      <NightSky />
+      <SkyAmbience />
 
       <main className="relative z-10 max-w-3xl mx-auto px-6 pt-16 pb-24">
         <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">

@@ -7,7 +7,7 @@ import {
   Sparkles, Users, GraduationCap, Quote,
 } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
-import NightSky from '../components/landing/NightSky';
+import SkyAmbience from '../components/landing/sky';
 import SiteFooter from '../components/landing/SiteFooter';
 import { cn } from '../lib/utils';
 import { useSeo } from '../lib/useSeo';
@@ -298,7 +298,7 @@ export default function ForTeachers() {
   return (
     <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased">
       <SiteHeader />
-      <NightSky />
+      <SkyAmbience />
 
       <main className="relative z-10">
         {/* ══ 1 · Hero ═══════════════════════════════════════════════════════════════ */}

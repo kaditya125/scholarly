@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ArrowLeft, Clock } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
-import NightSky from '../components/landing/NightSky';
+import SkyAmbience from '../components/landing/sky';
 import SiteFooter from '../components/landing/SiteFooter';
 import { useSeo } from '../lib/useSeo';
 import { getPost, BLOG_POSTS } from '../content/blogPosts';
@@ -37,7 +37,7 @@ export default function BlogPost() {
   return (
     <div className="min-h-screen bg-white dark:bg-[#0b0b0c]">
       <SiteHeader />
-      <NightSky />
+      <SkyAmbience />
 
       <main className="relative z-10 max-w-3xl mx-auto px-6 pt-12 pb-24">
         <Link

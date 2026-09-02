@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, Clock, ShieldAlert, Building2, ArrowRight, Scale, Copy, Check, Send, Sparkles, MessageSquare, Loader2 } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
-import NightSky from '../components/landing/NightSky';
+import SkyAmbience from '../components/landing/sky';
 import SiteFooter from '../components/landing/SiteFooter';
 import { SITE } from '../lib/siteConfig';
 import { useSeo } from '../lib/useSeo';
@@ -299,7 +299,7 @@ export default function Contact() {
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased selection:bg-[#c8e558]/30">
       <SiteHeader />
-      <NightSky />
+      <SkyAmbience />
 
       <main className="relative z-10 w-full max-w-[1160px] mx-auto px-4 sm:px-6 lg:px-8">
         <header className="pt-12 sm:pt-20 pb-6 sm:pb-8">

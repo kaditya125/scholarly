@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import ProductPreview from '../components/landing/ProductPreview';
 import SiteHeader from '../components/landing/SiteHeader';
-import NightSky from '../components/landing/NightSky';
+import SkyAmbience from '../components/landing/sky';
 import SiteFooter from '../components/landing/SiteFooter';
 import AvatarStack from '../components/landing/AvatarStack';
 import { HandwrittenTagline } from '../components/brand/HandwrittenTagline';
@@ -397,7 +397,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-[#131314] text-slate-900 dark:text-white antialiased">
       <SiteHeader />
-      <NightSky />
+      <SkyAmbience />
 
       <main className="relative z-10">
         {/* ══ Hero ═══════════════════════════════════════════════════════════ */}

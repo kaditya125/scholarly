@@ -2,7 +2,7 @@ import { type ReactNode, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Gift, Users, IndianRupee, ArrowRight, Sparkles } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
-import NightSky from '../components/landing/NightSky';
+import SkyAmbience from '../components/landing/sky';
 import SiteFooter from '../components/landing/SiteFooter';
 import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
@@ -41,7 +41,7 @@ export default function ReferralProgram() {
 
   return (
     <div className="relative min-h-screen bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased flex flex-col overflow-hidden">
-      <NightSky />
+      <SkyAmbience />
       <ReferralBackground />
       <div className="relative z-10 flex flex-col flex-1">
         <SiteHeader />
