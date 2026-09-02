@@ -76,9 +76,16 @@ export default function SkyClock({ pinnedPhase }: Props) {
     <div
       className="sky-clock"
       style={{ ['--phase-tint' as string]: tint }}
-      title={`${moment.window.label} — ${moment.window.note}. Runs ${formatBoundary(moment.window.start)}–${formatBoundary(moment.window.end)}.`}
+      /*
+       * The timezone moved in here from a third readout line. On a visitor's own device the
+       * local clock already implies the zone, so it was the one line of the three carrying
+       * nothing — and dropping it is what lets the readout sit on two tight lines instead of
+       * three. Still available on hover for anyone who wants it.
+       */
+      title={`${zoneLabel(now)} — ${moment.window.label}: ${moment.window.note}. Runs ${formatBoundary(moment.window.start)}–${formatBoundary(moment.window.end)}.`}
     >
-      <svg className="sky-clock-dial" width="38" height="38" viewBox="0 0 36 36" aria-hidden>
+      {/* 26px, down from 38. At the old size the dial read as an icon badge rather than a mark. */}
+      <svg className="sky-clock-dial" width="26" height="26" viewBox="0 0 36 36" aria-hidden>
         {/* 0h at the top, clockwise through the day. */}
         <g transform="rotate(-90 18 18)">
           <circle cx="18" cy="18" r={R} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="3.4" />
@@ -116,7 +123,6 @@ export default function SkyClock({ pinnedPhase }: Props) {
 
       <div className="sky-clock-read">
         <span className="sky-clock-time">{time}</span>
-        <span className="sky-clock-zone">{zoneLabel(now)}</span>
         <span className="sky-clock-phase">
           {shown.label}
           <span className="sky-clock-note">
