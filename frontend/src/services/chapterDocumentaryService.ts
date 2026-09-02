@@ -125,7 +125,17 @@ export async function getDocumentaryChapter(
   };
 
   try {
-    const { db } = await import('../lib/firebase');
+    /*
+     * `db` lives in lib/firestore, NOT lib/firebase.
+     *
+     * This imported it from lib/firebase, which exports app/auth/providers and no Firestore
+     * handle at all — so `db` was undefined and the first `collection(db, ...)` below threw on
+     * every call. Because this function is contractually non-throwing (see the doc comment
+     * above: it returns null so the reader can show its "Preparing" state), the failure was
+     * swallowed and the documentary article silently never loaded — the reader just sat on
+     * "Preparing" forever. Every other consumer in the app already imports from lib/firestore.
+     */
+    const { db } = await import('../lib/firestore');
     const { collection, query, where, getDocs, orderBy, limit } = await import('firebase/firestore');
 
     // Phase 3: Query for DOCUMENTARY_ARTICLE that matches this specific chapter.

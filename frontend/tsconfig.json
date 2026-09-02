@@ -22,5 +22,11 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  // Without these tsc defaults to `**/*` and type-checks the BUILD OUTPUT — 324 emitted .js
+  // files in dist/ — which made a full check slow and, worse, non-deterministic: files that
+  // vite replaced mid-run surfaced as spurious `TS6053: File ... not found`. A gate that fails
+  // at random is a gate people learn to ignore, so the source tree is scoped explicitly.
+  "include": ["src", "server.ts", "vite.config.ts"],
+  "exclude": ["node_modules", "dist"]
 }

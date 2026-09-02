@@ -130,13 +130,13 @@ export default function Leaderboard() {
                   {user.photoURL ? (
                     <img src={user.photoURL} alt="" className="w-full h-full object-cover rounded-xl" />
                   ) : (
-                    <span>{(profile?.name || user.displayName || user.email || 'S')[0].toUpperCase()}</span>
+                    <span>{(user.displayName || user.email || 'S')[0].toUpperCase()}</span>
                   )}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-[15px] text-slate-900 dark:text-white">
-                      {profile?.name || user.displayName || 'You'}
+                      {user.displayName || 'You'}
                     </h3>
                     <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-gray-400">
                       {profile?.targetExam || 'General'}

@@ -5,6 +5,7 @@ import SkyAmbience from './sky';
 import SiteFooter from './SiteFooter';
 import { SITE } from '../../lib/siteConfig';
 import { useSeo } from '../../lib/useSeo';
+import { cn } from '../../lib/utils';
 
 /**
  * Shared chrome for the policy pages (/terms, /privacy, /refunds, /security).
@@ -20,9 +21,21 @@ export interface LegalSectionDef {
   body: ReactNode;
 }
 
-/** Paragraph. Kept as a component so every policy page shares one measure and rhythm. */
-export function P({ children }: { children: ReactNode }) {
-  return <p className="text-[14.5px] leading-[1.75] text-slate-600 dark:text-gray-300">{children}</p>;
+/**
+ * Body paragraph for a policy page.
+ *
+ * `className` is merged through `cn` (clsx + tailwind-merge) rather than concatenated, because
+ * an override here conflicts with the defaults — Refunds passes `text-xs text-slate-500` over
+ * this `text-[14.5px] text-slate-600`. Plain concatenation would leave both in the attribute and
+ * let stylesheet order decide, which is not what the caller asked for; twMerge drops the losing
+ * class outright so the override actually applies.
+ */
+export function P({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <p className={cn('text-[14.5px] leading-[1.75] text-slate-600 dark:text-gray-300', className)}>
+      {children}
+    </p>
+  );
 }
 
 /** Bulleted list with the same rhythm as <P>. */
