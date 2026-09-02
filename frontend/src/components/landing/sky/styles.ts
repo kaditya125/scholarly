@@ -51,6 +51,18 @@ export const SKY_CSS = `
 
 @keyframes sky-rise { from { opacity: 0; } to { opacity: 1; } }
 
+/*
+ * The clock needs its own, because the shared one ends at opacity 1 and fill:both makes an
+ * animation's final value persist at animation priority — which outranks a plain declaration
+ * AND a :hover rule. Reusing sky-rise would therefore have pinned the readout at full opacity
+ * forever and silently made both the 0.55 resting state and the hover lift dead code.
+ *
+ * Ends on the resting value instead, with fill:backwards rather than both: it holds opacity 0
+ * before the animation starts, then hands control back to the stylesheet when it finishes, so
+ * hover works and there is no jump at the handover.
+ */
+@keyframes sky-clock-rise { from { opacity: 0; } to { opacity: 0.55; } }
+
 /* ── Stars ───────────────────────────────────────────────────────────────── */
 
 /* One opacity for the whole star system, so a phase can fade them in or out as a unit. */
@@ -233,67 +245,78 @@ export const SKY_CSS = `
 
 /* ── Clock ───────────────────────────────────────────────────────────────── */
 
+/*
+ * No card. The readout sits directly on the sky.
+ *
+ * It used to be a 200x60 panel — 1px border, rgba(10,10,12,0.55) fill, 14px backdrop blur — and
+ * a frosted rectangle is precisely the thing you notice instead of the sky behind it. Since the
+ * whole point of this component is the backdrop, the instrument reading it should recede.
+ *
+ * What replaces the panel for legibility is a text-shadow rather than a fill: the sky runs from
+ * a washed pale blue at noon to near-black at 21:00, so the readout needs to survive a light
+ * ground without ever drawing an edge of its own. A shadow does that and has no shape.
+ *
+ * It also rests at 55% opacity and comes up to full on hover — present when looked for, quiet
+ * when not.
+ */
 .sky-clock {
   position: fixed;
-  left: 20px;
-  bottom: 20px;
+  left: 18px;
+  bottom: 16px;
   z-index: 20;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px 8px 9px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(10,10,12,0.55);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  color: rgba(255,255,255,0.86);
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: rgba(255,255,255,0.9);
   font-variant-numeric: tabular-nums;
   pointer-events: auto;
-  animation: sky-rise 3s ease-out both;
-  transition: border-color 0.25s, background 0.25s;
+  opacity: 0.55;
+  text-shadow: 0 1px 10px rgba(0,0,0,0.85), 0 0 2px rgba(0,0,0,0.6);
+  animation: sky-clock-rise 3s ease-out backwards;
+  transition: opacity 0.4s ease;
 }
 
-.sky-clock:hover { border-color: rgba(255,255,255,0.2); background: rgba(10,10,12,0.72); }
+.sky-clock:hover { opacity: 1; }
 
-.sky-clock-dial { display: block; flex: none; }
+/* The dial gets the same lift as the type, since it has no fill to sit on either. */
+.sky-clock-dial {
+  display: block;
+  flex: none;
+  filter: drop-shadow(0 1px 6px rgba(0,0,0,0.8));
+}
 
 .sky-clock-read {
   display: flex;
   flex-direction: column;
   gap: 1px;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
 .sky-clock-time {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.sky-clock-zone {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 9.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.45);
+  letter-spacing: 0.01em;
 }
 
 .sky-clock-phase {
-  font-size: 10px;
-  letter-spacing: 0.09em;
+  font-size: 9px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   font-weight: 600;
   color: var(--phase-tint, rgba(255,255,255,0.7));
+  white-space: nowrap;
 }
 
-.sky-clock-note { font-size: 10px; color: rgba(255,255,255,0.42); }
+.sky-clock-note { font-size: 9px; font-weight: 500; color: rgba(255,255,255,0.5); }
 
 /* Below sm the readout drops to the dial and the time — the rest is not worth the width. */
 @media (max-width: 640px) {
-  .sky-clock { left: 12px; bottom: 12px; padding: 6px 10px 6px 7px; gap: 8px; }
-  .sky-clock-zone, .sky-clock-note { display: none; }
+  .sky-clock { left: 12px; bottom: 12px; gap: 7px; }
+  .sky-clock-note { display: none; }
 }
 
 /* ── Reach ───────────────────────────────────────────────────────────────── */
