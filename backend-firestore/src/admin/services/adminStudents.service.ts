@@ -298,6 +298,130 @@ export class AdminStudentsService {
 
     return rows;
   }
+
+  /**
+   * Everything the admin needs about one student.
+   *
+   * Composed from the existing sources rather than a new denormalised record (§34):
+   *   identity + account   users/{uid} + Firebase Auth
+   *   plan + subscription  users/{uid}.plan / .subscription
+   *   usage                usageService.getUsageSummary() — the student app's own call
+   *   billing              payments where userId == uid
+   *   gamification         user_stats/{uid}
+   *   documents            notebooks where userId == uid  (COUNT only)
+   *
+   * Each section is fetched independently and may come back null. A student with no
+   * payments is not an error, and one failing section must not blank the whole profile —
+   * §37's partial-failure rule. `null` means "could not load"; the UI distinguishes that
+   * from an empty list, because "no payments" and "payments unavailable" are different
+   * facts and conflating them is how an operator ends up misreading an account.
+   */
+  async getStudentDetail(userId: string): Promise<StudentDetail | null> {
+    const doc = await db.collection('users').doc(userId).get();
+    if (!doc.exists) return null;
+
+    const [row] = await this.hydrate([doc], false);
+    const data = (doc.data() || {}) as Record<string, any>;
+
+    const [usage, payments, stats, documentCount] = await Promise.all([
+      usageService.getUsageSummary(userId).catch(() => null),
+      this.getPayments(userId).catch(() => null),
+      db.collection('user_stats').doc(userId).get()
+        .then((s) => (s.exists ? (s.data() as Record<string, any>) : null))
+        .catch(() => null),
+      db.collection('notebooks').where('userId', '==', userId).count().get()
+        .then((s) => s.data().count)
+        .catch(() => null),
+    ]);
+
+    return {
+      ...row,
+      subscription: data.subscription ?? null,
+      usage,
+      billing: payments,
+      stats,
+      documentCount,
+      /**
+       * Deliberately empty. There is no event/audit collection in this database — the
+       * activity timeline has no source to read from, so the API reports the absence
+       * instead of assembling a plausible-looking history out of createdAt and
+       * lastSignInTime. Building the event model is its own slice (§11).
+       */
+      activity: { available: false, reason: 'No event collection exists yet — activity is not recorded.' },
+    };
+  }
+
+  /**
+   * A student's payment history.
+   *
+   * Capped at 50 and ordered newest-first: this feeds a profile panel, not an accounting
+   * export, and an unbounded query on a collection that grows per transaction is the
+   * pattern that produced the Firestore bill.
+   *
+   * Returns only administrative metadata. Razorpay never gives us card data and none is
+   * stored, but the field list here is explicit so it stays that way (§9).
+   */
+  private async getPayments(userId: string): Promise<PaymentSummary> {
+    const snap = await db.collection('payments')
+      .where('userId', '==', userId)
+      .orderBy('createdAt', 'desc')
+      .limit(50)
+      .get();
+
+    const records = snap.docs.map((d) => {
+      const p = d.data() as Record<string, any>;
+      return {
+        orderId: p.orderId ?? d.id,
+        paymentId: p.paymentId ?? null,
+        planName: p.planName ?? null,
+        billing: p.billing ?? null,
+        amountRupees: typeof p.amountRupees === 'number' ? p.amountRupees : null,
+        currency: p.currency ?? 'INR',
+        status: p.status ?? 'unknown',
+        method: p.method ?? null,
+        createdAt: p.createdAt ? new Date(p.createdAt).toISOString() : null,
+      };
+    });
+
+    const paid = records.filter((r) => r.status === 'paid');
+    return {
+      records,
+      totalPaidRupees: paid.reduce((sum, r) => sum + (r.amountRupees || 0), 0),
+      paidCount: paid.length,
+      failedCount: records.filter((r) => r.status === 'failed').length,
+      refundedCount: records.filter((r) => r.status === 'refunded').length,
+      truncated: records.length === 50,
+    };
+  }
+}
+
+export interface PaymentSummary {
+  records: Array<{
+    orderId: string;
+    paymentId: string | null;
+    planName: string | null;
+    billing: string | null;
+    amountRupees: number | null;
+    currency: string;
+    status: string;
+    method: string | null;
+    createdAt: string | null;
+  }>;
+  totalPaidRupees: number;
+  paidCount: number;
+  failedCount: number;
+  refundedCount: number;
+  /** True when the 50-record cap was hit, so the UI can say the list is partial. */
+  truncated: boolean;
+}
+
+export interface StudentDetail extends AdminStudentRow {
+  subscription: Record<string, any> | null;
+  usage: Awaited<ReturnType<typeof usageService.getUsageSummary>> | null;
+  billing: PaymentSummary | null;
+  stats: Record<string, any> | null;
+  documentCount: number | null;
+  activity: { available: false; reason: string };
 }
 
 export const adminStudentsService = new AdminStudentsService();
