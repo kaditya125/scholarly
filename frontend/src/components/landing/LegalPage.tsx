@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import SiteHeader from './SiteHeader';
-import NightSky from './NightSky';
+import SkyAmbience from './sky';
 import SiteFooter from './SiteFooter';
 import { SITE } from '../../lib/siteConfig';
 import { useSeo } from '../../lib/useSeo';
@@ -81,7 +81,7 @@ export default function LegalPage({
   return (
     <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased">
       <SiteHeader />
-      <NightSky />
+      <SkyAmbience />
 
       <main className="relative z-10 max-w-[1160px] mx-auto px-5 sm:px-8">
         <header className="pt-14 sm:pt-20 pb-10 border-b border-slate-100 dark:border-white/[0.07]">

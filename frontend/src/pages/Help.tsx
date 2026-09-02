@@ -8,7 +8,7 @@ import {
   Copy, Check, Camera, Brain
 } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
-import NightSky from '../components/landing/NightSky';
+import SkyAmbience from '../components/landing/sky';
 import { cn } from '../lib/utils';
 import { Link, useSearchParams } from 'react-router-dom';
 import { askHelpQuery, sendSupportAgentMessage, StructuredResponse } from '../lib/api/help';
@@ -879,7 +879,7 @@ function PublicHelpView() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0c0c0e] text-slate-900 dark:text-white flex flex-col font-sans transition-colors duration-300">
       <SiteHeader />
-      <NightSky />
+      <SkyAmbience />
 
       <div className="relative z-10 flex-1 flex flex-col w-full overflow-hidden">
         {/* Main Content Area */}

@@ -5,7 +5,7 @@ import {
   Clock, Sparkles, Scale, ExternalLink
 } from 'lucide-react';
 import SiteHeader from '../../components/landing/SiteHeader';
-import NightSky from '../../components/landing/NightSky';
+import SkyAmbience from '../../components/landing/sky';
 import SiteFooter from '../../components/landing/SiteFooter';
 import {
   SADHYA_POLICIES,
@@ -68,7 +68,7 @@ export default function PolicyHub() {
   return (
     <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased selection:bg-[#c8e558]/30">
       <SiteHeader />
-      <NightSky />
+      <SkyAmbience />
 
       <main className="relative z-10 max-w-[1160px] mx-auto px-5 sm:px-8">
         {/* ── Document Header ────────────────────────────────────────────── */}
