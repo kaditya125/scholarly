@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, Clock, ShieldAlert, Building2, ArrowRight, Scale, Copy, Check, Send, Sparkles, MessageSquare, Loader2 } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
+import SkyAmbience from '../components/landing/sky';
 import SiteFooter from '../components/landing/SiteFooter';
 import { SITE } from '../lib/siteConfig';
 import { useSeo } from '../lib/useSeo';
@@ -298,8 +299,9 @@ export default function Contact() {
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased selection:bg-[#c8e558]/30">
       <SiteHeader />
+      <SkyAmbience />
 
-      <main className="w-full max-w-[1160px] mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="relative z-10 w-full max-w-[1160px] mx-auto px-4 sm:px-6 lg:px-8">
         <header className="pt-12 sm:pt-20 pb-6 sm:pb-8">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 mb-3 sm:mb-4">
             <Sparkles className="w-3 h-3 text-[#8ba32b] dark:text-[#c8e558]" />
@@ -643,7 +645,9 @@ export default function Contact() {
         </div>
       </main>
 
-      <SiteFooter />
+      <div className="relative z-10">
+        <SiteFooter />
+      </div>
     </div>
   );
 }

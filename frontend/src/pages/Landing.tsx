@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import ProductPreview from '../components/landing/ProductPreview';
 import SiteHeader from '../components/landing/SiteHeader';
+import SkyAmbience from '../components/landing/sky';
 import SiteFooter from '../components/landing/SiteFooter';
 import AvatarStack from '../components/landing/AvatarStack';
 import { HandwrittenTagline } from '../components/brand/HandwrittenTagline';
@@ -396,8 +397,9 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-[#131314] text-slate-900 dark:text-white antialiased">
       <SiteHeader />
+      <SkyAmbience />
 
-      <main>
+      <main className="relative z-10">
         {/* ══ Hero ═══════════════════════════════════════════════════════════ */}
         <section className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-14 sm:pt-20 lg:pt-24 pb-16 sm:pb-24">
           <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] gap-12 lg:gap-16 xl:gap-20 items-center">
@@ -983,7 +985,7 @@ export default function LandingPage() {
       </main>
 
         {/* ══ Attribution ════════════════════════════════════════════════════ */}
-        <section className="border-t border-slate-100 dark:border-white/[0.07]">
+        <section className="relative z-10 border-t border-slate-100 dark:border-white/[0.07]">
           <div className="max-w-[1160px] mx-auto px-5 sm:px-8 py-14 sm:py-16">
             <Reveal>
               <Suspense fallback={null}>
@@ -993,7 +995,9 @@ export default function LandingPage() {
           </div>
         </section>
 
-      <SiteFooter />
+      <div className="relative z-10">
+        <SiteFooter />
+      </div>
     </div>
   );
 }

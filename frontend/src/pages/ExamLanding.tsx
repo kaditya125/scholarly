@@ -21,6 +21,7 @@ import {
   GraduationCap
 } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
+import SkyAmbience from '../components/landing/sky';
 import SiteFooter from '../components/landing/SiteFooter';
 import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
@@ -121,8 +122,9 @@ export default function ExamLanding() {
   return (
     <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased">
       <SiteHeader />
+      <SkyAmbience />
 
-      <main className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-10 sm:pt-14 pb-20 sm:pb-28">
+      <main className="relative z-10 max-w-[1160px] mx-auto px-5 sm:px-8 pt-10 sm:pt-14 pb-20 sm:pb-28">
         {/* ══ Breadcrumbs ═════════════════════════════════════════════════ */}
         <Reveal>
           <nav className="flex items-center gap-2 text-[13px] text-slate-500 dark:text-gray-400 mb-6">
@@ -555,7 +557,9 @@ export default function ExamLanding() {
         )}
       </main>
 
-      <SiteFooter />
+      <div className="relative z-10">
+        <SiteFooter />
+      </div>
     </div>
   );
 }

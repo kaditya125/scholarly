@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
+import SkyAmbience from '../components/landing/sky';
 import SiteFooter from '../components/landing/SiteFooter';
 import PricingSection from '../components/landing/PricingSection';
 import { cn } from '../lib/utils';
@@ -139,8 +140,9 @@ export default function Pricing() {
   return (
     <div className="min-h-screen bg-white dark:bg-[#0b0b0c] text-slate-900 dark:text-white antialiased overflow-x-hidden">
       <SiteHeader />
+      <SkyAmbience />
 
-      <main className="w-full">
+      <main className="relative z-10 w-full">
         <PricingSection id="plans" headingAs="h1" />
 
         <section className="border-t border-slate-100 dark:border-white/[0.07]">
@@ -179,7 +181,9 @@ export default function Pricing() {
         </section>
       </main>
 
-      <SiteFooter />
+      <div className="relative z-10">
+        <SiteFooter />
+      </div>
     </div>
   );
 }
