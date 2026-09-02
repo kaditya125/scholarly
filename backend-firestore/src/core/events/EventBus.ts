@@ -286,9 +286,39 @@ export class EventBus extends EventEmitter {
         await this.executeHandlers(event, payload, meta);
       }
       
-      // Route specific high-level events to the BullMQ background queue for reliable asynchronous processing.
+      // Route specific high-level events to the BullMQ background queue for reliable asynchronous
+      // processing, keyed on the event's own identity so the routing is idempotent.
+      //
+      // ── Why this needs a key at all ──────────────────────────────────────────────────────
+      // This enqueue happens inside publish(), and publish() runs in whichever process created
+      // the event. For an event published directly by a request handler that is one process, so
+      // one job. But a notification.created published FROM A SUBSCRIBER is different: Redis
+      // pub/sub broadcasts the causing event (podcast.completed, notebook.ingested, ...) to
+      // EVERY subscribed instance, so with N instances all N run the subscriber, all N publish
+      // notification.created, and all N reach this line — producing N distinct jobs for one
+      // logical event. BullMQ then processes each exactly once, as designed, and the student
+      // receives N copies.
+      //
+      // None of the existing protections cover that: job locking stops one job being processed
+      // twice but not N jobs being created; the NODE_APP_INSTANCE election in server.ts only
+      // picks which instance runs the WORKERS, and this is the publish side; and the
+      // NotificationWorker anti-spam limiter only suppresses the 4th identical event in 60s, so
+      // a duplicate pair passes straight through.
+      //
+      // The fix is at the identity layer rather than by electing a special publisher: meta.eventId
+      // is assigned ONCE where the logical event is created and travels through Redis unchanged,
+      // so every instance derives the SAME dedupe id here and the N enqueues collapse to one.
+      // That requires the causing event's identity to be carried into the notification it
+      // produces — see causedNotificationEventId() in subscribers.ts, which is the half that makes
+      // this line's id identical across instances rather than N random ones.
       if (event === 'notification.created') {
-        await backgroundQueue.enqueueNotification(payload as NotificationPayload);
+        await backgroundQueue.enqueueNotification(
+          payload as NotificationPayload,
+          3,
+          1000,
+          0,
+          `notif:${meta.eventId}`,
+        );
       }
 
       return true;

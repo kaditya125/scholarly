@@ -166,7 +166,13 @@ class NotificationWorker {
       );
       
       if (delayMs > 0) {
-        // Re-enqueue job with delay offset
+        // Re-enqueue job with delay offset.
+        //
+        // Deliberately passes NO dedupe id (the 5th argument). This is a reschedule of the job
+        // currently being processed, so any id derived from it would still match the live
+        // deduplication key of that very job — the re-add would be swallowed and the student would
+        // never receive the notification at all. Quiet-hours delivery must stay outside the
+        // idempotency guard; see enqueueNotification's contract.
         const { backgroundQueue } = require('./BackgroundQueue');
         await backgroundQueue.enqueueNotification(payload, 3, 1000, delayMs);
         logger.info(`[NotificationWorker] Rescheduled notification ${payload.type} for user ${payload.userId} in ${delayMs}ms due to quiet hours.`);

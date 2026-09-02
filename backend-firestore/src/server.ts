@@ -312,15 +312,21 @@ const server = app.listen(env.PORT, () => {
      * LLM classification, FCM multicast, email and SMS, which is real work to isolate from
      * request serving.
      *
-     * ⚠ BEFORE RE-ENABLING CLUSTER MODE: there is a latent duplicate-notification bug that this
-     * election does NOT cover, because it is on the publish side, not the worker side.
-     * EventBus.publish() enqueues to BullMQ inside publish() itself. Redis pub/sub broadcasts a
-     * domain event to EVERY instance, so with N instances each one runs the podcast.completed /
-     * notebook.ingested / user.registered subscriber, each publishes notification.created, and
-     * each enqueues its own job — N distinct jobs, which BullMQ then correctly processes once
-     * each, yielding N notifications. The anti-spam limiter only suppresses the 4th identical
-     * event in 60s, so it would not catch a duplicate pair. Latent today only because
-     * instances is pinned at 1.
+     * NOTE ON CLUSTER MODE: there used to be a duplicate-notification bug that this election did
+     * NOT cover, because it sat on the publish side rather than the worker side. EventBus.publish()
+     * enqueues to BullMQ inside publish() itself, and Redis pub/sub broadcasts a domain event to
+     * EVERY instance — so with N instances each one ran the podcast.completed / notebook.ingested /
+     * user.registered subscriber, each published notification.created, and each enqueued its own
+     * job. N distinct jobs, which BullMQ then correctly processed once each, yielding N
+     * notifications for one logical event. Measured with two instances against one Redis: one
+     * podcast.completed produced 2 jobs.
+     *
+     * FIXED at the identity layer, not by electing a publisher: the causing event's meta.eventId is
+     * chained into the notification it produces (causedNotificationEventId in events/subscribers.ts)
+     * and used as a BullMQ deduplication id at the enqueue (EventBus.publish →
+     * BackgroundQueue.enqueueNotification). All N instances therefore derive the SAME id and the
+     * enqueues collapse to one — re-measured at 1 job. Duplicate delivery is no longer a blocker
+     * for cluster mode; the tsx/PM2 cluster crash-loop noted in ecosystem.config.js still is.
      */
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
