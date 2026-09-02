@@ -99,6 +99,9 @@ router.get('/users', usersCtrl.getUsers);
  */
 router.get('/students', studentsCtrl.list);
 router.get('/students/stats', studentsCtrl.stats);
+// AFTER /students/stats: Express matches in order, so a `:id` route declared first would
+// swallow "stats" as an id.
+router.get('/students/:id', studentsCtrl.detail);
 
 // Security
 router.get('/security/threats', securityCtrl.getThreats);

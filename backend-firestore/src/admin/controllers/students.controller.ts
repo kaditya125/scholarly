@@ -88,4 +88,32 @@ export class StudentsController {
       res.status(500).json({ error: 'Failed to load student totals' });
     }
   };
+
+  /**
+   * GET /api/admin/students/:id
+   *
+   * The full administrative view of one student. 404 when no user document exists —
+   * distinct from a 403, so an operator can tell "no such student" from "not allowed".
+   */
+  detail = async (req: Request, res: Response) => {
+    try {
+      const id = String(req.params.id || '').trim();
+      if (!id) return res.status(400).json({ error: 'A student id is required' });
+
+      const student = await adminStudentsService.getStudentDetail(id);
+      if (!student) return res.status(404).json({ error: 'No student with that id' });
+
+      res.json(student);
+    } catch (error) {
+      const message = (error as Error).message;
+      logger.error('admin.students.detail failed', { message, id: req.params.id });
+      if (/FAILED_PRECONDITION|requires an index/i.test(message)) {
+        return res.status(503).json({
+          error: 'Loading this student needs a Firestore index that does not exist yet.',
+          detail: message,
+        });
+      }
+      res.status(500).json({ error: 'Failed to load student' });
+    }
+  };
 }
