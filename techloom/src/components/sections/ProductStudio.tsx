@@ -20,11 +20,12 @@ export default function ProductStudio() {
           </div>
           <div className="md:col-span-9" {...revealProps(60)}>
             <h2 id="studio-heading" className="display-3 max-w-[16ch]">
-              Building beyond services.
+              Building beyond client work.
             </h2>
             <p className="lede mt-7 max-w-[56ch]">
-              Alongside client-focused technology work, Srijya develops its own products and
-              experiments with new ways technology can solve meaningful problems.
+              Srijya doesn&rsquo;t only build technology for others. We build and evolve
+              products of our own — which is also the fastest way to stay honest about what
+              running one actually costs.
             </p>
           </div>
         </div>

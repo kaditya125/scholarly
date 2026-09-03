@@ -8,7 +8,7 @@ import { revealProps } from '@/lib/reveal';
  * Capabilities as an index, not a grid of cards.
  *
  * A numbered list on hairlines reads as a table of contents for the company —
- * which is what it is — and it scales down to a phone without five boxes
+ * which is what it is — and it scales down to a phone without six boxes
  * stacking into a column of noise. Each row links through to the section on the
  * capabilities page that describes it properly.
  */
@@ -20,7 +20,7 @@ export default function Capabilities() {
           id="capabilities-heading"
           label="Capabilities"
           title="What we build"
-          lede="Five areas of work. Most engagements draw on more than one of them."
+          lede="From early concepts to production systems, we combine product thinking with engineering to build technology that is useful, maintainable and ready for the real world."
         />
 
         <ul className="mt-14 md:mt-20">
