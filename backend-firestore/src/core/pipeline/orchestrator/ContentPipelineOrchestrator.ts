@@ -30,6 +30,7 @@ import { KnowledgeGraphService } from '../graph/KnowledgeGraphService';
 import { ContentQualityValidationService } from '../validation/ContentQualityValidationService';
 import { generateJobId } from '../idGenerator';
 import { notebookRepository } from '../../../repositories/notebook.repository';
+import * as admin from 'firebase-admin';
 import { db } from '../../../config/firebase';
 
 export interface IngestionInput {
@@ -508,6 +509,14 @@ export class ContentPipelineOrchestrator {
               passedInvariants: qualityReport?.summary?.passedInvariants ?? 10,
               totalInvariants: qualityReport?.summary?.totalInvariants ?? 10,
             },
+            // Same fix as ContentSourceService.transitionState: a document that failed once
+            // and was later retried to a genuine READY here must not still carry
+            // failedAt/failureReason/errorDetails from the dead attempt - {merge:true}
+            // preserves whatever isn't listed, so without this a successful retry looks
+            // permanently failed to anyone reading the raw record.
+            failedAt: admin.firestore.FieldValue.delete(),
+            failureReason: admin.firestore.FieldValue.delete(),
+            errorDetails: admin.firestore.FieldValue.delete(),
           }, { merge: true });
       } catch {
         // Non-fatal
