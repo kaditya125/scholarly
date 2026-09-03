@@ -3,6 +3,7 @@
  * Manages exams, cycles, verified official sources, versioned syllabi, and audit logs.
  */
 
+import * as admin from 'firebase-admin';
 import { db } from '../config/firebase';
 import { canTransition, assertPublishable } from '../services/exam/syllabusLifecycle';
 import {
@@ -324,6 +325,12 @@ export class ExamRepository {
         status: 'CURRENT',
         publishedAt: now,
         updatedAt: now,
+        // Defense in depth alongside the same fix in updateSyllabusStatus: a CURRENT record —
+        // the one presented as authoritative — must never carry invalidation metadata from an
+        // earlier failed attempt, regardless of which path got it here.
+        invalidatedAt: admin.firestore.FieldValue.delete(),
+        invalidationReason: admin.firestore.FieldValue.delete(),
+        invalidationDetail: admin.firestore.FieldValue.delete(),
       });
 
       // 5. Update cycle active pointer
@@ -387,7 +394,21 @@ export class ExamRepository {
         throw new Error(`[Syllabus] cannot move '${syllabusId}' to ${next}: ${t.reason}`);
       }
 
-      transaction.update(ref, { ...extra, status: next, updatedAt: Date.now() });
+      const update: Record<string, unknown> = { ...extra, status: next, updatedAt: Date.now() };
+      // INVALID -> FETCHED / VALIDATING is a real, live recovery path (syllabusLifecycle.ts's
+      // ALLOWED_TRANSITIONS) — a version that failed once can be re-fetched and re-validated
+      // all the way to VERIFIED and eventually CURRENT. invalidateSyllabus() is the only writer
+      // of invalidatedAt/invalidationReason/invalidationDetail, and nothing ever cleared them on
+      // the way back out, so a since-recovered version could carry a stale "this was invalidated"
+      // marker forever. Harmless to always include here: FieldValue.delete() on an absent field
+      // is a no-op, so a version that was never invalidated is unaffected.
+      if (next !== 'INVALID') {
+        update.invalidatedAt = admin.firestore.FieldValue.delete();
+        update.invalidationReason = admin.firestore.FieldValue.delete();
+        update.invalidationDetail = admin.firestore.FieldValue.delete();
+      }
+
+      transaction.update(ref, update);
       return { previousStatus: data.status };
     });
   }
