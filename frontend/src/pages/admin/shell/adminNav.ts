@@ -48,8 +48,8 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     domain: 'student',
     items: [
       { path: 'students', label: 'Students', title: 'Students', icon: 'Users' },
-      { path: 'performance', label: 'Performance', title: 'Student performance', icon: 'TrendingUp', planned: true },
-      { path: 'engagement', label: 'Engagement', title: 'Engagement', icon: 'Activity', planned: true },
+      { path: 'performance', label: 'Performance', title: 'Student performance', icon: 'TrendingUp' },
+      { path: 'engagement', label: 'Engagement', title: 'Engagement', icon: 'Activity' },
     ],
   },
   {
