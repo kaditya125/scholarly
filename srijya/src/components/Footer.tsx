@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowUpRight } from '@/components/Icons';
 import { LoomRule } from '@/components/LoomField';
 import { LoomMark } from '@/components/Logo';
+import { hasShipped } from '@/content/shipped';
 import { hasTeam } from '@/content/team';
 import { COMPANY, SADHYA } from '@/site.config';
 
@@ -13,6 +14,7 @@ const COLUMNS = [
       { label: 'Capabilities', to: '/capabilities' },
       // Appears on its own once src/content/team.ts has an entry.
       ...(hasTeam ? [{ label: 'Team', to: '/team' }] : []),
+      ...(hasShipped ? [{ label: 'Shipped', to: '/shipped' }] : []),
       { label: 'Products', to: '/products' },
       { label: 'Start a project', to: '/start' },
       { label: 'Help', to: '/help' },
@@ -30,6 +32,7 @@ const COLUMNS = [
     heading: 'Legal',
     links: [
       { label: 'Privacy', to: '/privacy' },
+      { label: 'Data & security', to: '/security' },
       { label: 'Terms', to: '/terms' },
       { label: 'Company information', to: '/company' },
     ],
