@@ -1,5 +1,5 @@
 /**
- * What Srijya does.
+ * What Srijya builds.
  *
  * One canonical list, used by both the home page (title + summary) and the
  * capabilities page (everything). Keeping it in one place is what stops the two
@@ -28,42 +28,24 @@ export const CAPABILITIES: Capability[] = [
     id: 'digital-product-engineering',
     index: '01',
     title: 'Digital Product Engineering',
-    summary:
-      'Designing and developing modern web and software products from concept to implementation.',
+    summary: 'Building complete digital products, from concept through to production.',
     detail:
       'End-to-end product work: interface design, front-end and back-end engineering, and the integration work that sits between them. The emphasis is on products that hold up after launch — clear structure, sensible dependencies, and code someone else can read six months later.',
     engagement:
       'A defined scope with an agreed set of outcomes, or continuous product development alongside an in-house team.',
     helpWith: [
-      'Web applications and internal tools',
+      'Products taken from concept to a first release',
       'Interface design and design systems',
       'Front-end architecture and performance',
       'APIs, data models and service integration',
     ],
   },
   {
-    id: 'technology-consulting',
-    index: '02',
-    title: 'Technology Consulting',
-    summary:
-      'Helping organisations evaluate technology choices, architecture, digital workflows and implementation approaches.',
-    detail:
-      'Advisory work for teams deciding what to build, what to buy, and what to leave alone. Useful when a technology decision is expensive to reverse and the options are hard to compare from the inside.',
-    engagement:
-      'A short, scoped review ending in a written recommendation, or an ongoing advisory arrangement.',
-    helpWith: [
-      'Architecture and platform review',
-      'Build, buy or integrate decisions',
-      'Digital workflow and process design',
-      'Implementation planning and sequencing',
-    ],
-  },
-  {
     id: 'software-development',
-    index: '03',
+    index: '02',
     title: 'Software Development',
     summary:
-      'Building practical software solutions tailored to specific operational and business requirements.',
+      'Web applications, platforms, backend systems, APIs and software built for a specific operation.',
     detail:
       'Software written for a particular operation rather than a general market: the workflow that a spreadsheet has outgrown, the process that three systems half-cover, the reporting nobody can produce without a manual step.',
     engagement:
@@ -77,10 +59,10 @@ export const CAPABILITIES: Capability[] = [
   },
   {
     id: 'ai-and-intelligent-experiences',
-    index: '04',
+    index: '03',
     title: 'AI & Intelligent Experiences',
     summary:
-      'Exploring and integrating AI-driven capabilities into useful digital experiences and workflows.',
+      'AI assistants, knowledge systems, intelligent workflows and practical applications of AI.',
     detail:
       'Applied AI work — retrieval over a body of source material, assistive interfaces, and automation of judgement-light steps in a process. The starting question is whether a model improves a specific outcome, and how the result is checked when it does not.',
     engagement:
@@ -93,19 +75,52 @@ export const CAPABILITIES: Capability[] = [
     ],
   },
   {
-    id: 'product-discovery-and-prototyping',
-    index: '05',
-    title: 'Product Discovery & Prototyping',
-    summary: 'Turning early ideas into validated concepts, prototypes and buildable directions.',
+    id: 'product-design',
+    index: '04',
+    title: 'Product Design',
+    summary: 'Turning complex requirements into clear, intuitive product experiences.',
     detail:
-      'The work before the build: framing the problem, mapping who it affects, and putting something in front of people early enough that being wrong is still cheap. The output is a direction that can be committed to, or the evidence not to.',
+      'The work before and around the build: framing the problem, mapping who it affects, and putting something in front of people early enough that being wrong is still cheap. Complexity in a business rarely justifies complexity in the interface — most of this is deciding what the person using it never has to see.',
     engagement:
       'A fixed, short engagement ending in a prototype and a written direction, whoever builds it afterwards.',
     helpWith: [
       'Problem framing and scoping',
       'Concept and interaction prototypes',
-      'Technical feasibility assessment',
+      'Interface and information design',
       'Roadmap and phasing for a first release',
+    ],
+  },
+  {
+    id: 'technology-consulting',
+    index: '05',
+    title: 'Technology Consulting',
+    summary: 'Architecture, technology decisions, modernisation and technical strategy.',
+    detail:
+      'Advisory work for teams deciding what to build, what to buy, and what to leave alone. Useful when a technology decision is expensive to reverse and the options are hard to compare from the inside.',
+    engagement:
+      'A short, scoped review ending in a written recommendation, or an ongoing advisory arrangement.',
+    helpWith: [
+      'Architecture and platform review',
+      'Build, buy or integrate decisions',
+      'Modernising systems already in production',
+      'Implementation planning and sequencing',
+    ],
+  },
+  {
+    id: 'digital-platforms',
+    index: '06',
+    title: 'Digital Platforms',
+    summary:
+      'Scalable web and application platforms designed around real users and real business needs.',
+    detail:
+      'Platforms rather than single applications: shared accounts, permissions, content and billing that several surfaces depend on. The hard part is rarely the first feature — it is keeping the second and third from making the first unmaintainable.',
+    engagement:
+      'Built in stages against a defined first release, so the platform is carrying real usage before it is extended.',
+    helpWith: [
+      'Multi-surface products on shared foundations',
+      'Accounts, roles and permission models',
+      'Scaling systems already carrying real load',
+      'Making a platform others can build on',
     ],
   },
 ];
