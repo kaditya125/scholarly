@@ -41,6 +41,7 @@ import uploadsRoutes from './uploads.routes';
 import videoLessonRoutes from './video-lesson.routes';
 import webhooksRoutes from './webhooks.routes';
 import helpRoutes from './help.routes';
+import srijyaRoutes from './srijya.routes';
 import examRoutes from './exam.routes';
 import coverageRoutes from './coverage.routes';
 import learningStateRoutes from './learningState.routes';
@@ -104,6 +105,9 @@ router.use('/uploads', uploadsRoutes);
 router.use('/video-lesson', videoLessonRoutes);
 router.use('/webhooks', webhooksRoutes);
 router.use('/help', helpRoutes);
+// Public assistant for the Srijya corporate site. Separate from /help, which
+// serves Sadhya's helpdesk.
+router.use('/srijya', srijyaRoutes);
 router.use('/exams', examRoutes);
 router.use('/pyq', pyqRoutes);
 // J.7.1 — the only syllabus-backed assessment surface. See canonicalAssessment.routes.
