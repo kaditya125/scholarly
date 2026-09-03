@@ -11,6 +11,7 @@ import { LearningAssetsController } from '../controllers/learning-assets.control
 import { NotebooksController } from '../controllers/notebooks.controller';
 import { UsersController } from '../controllers/users.controller';
 import { StudentsController } from '../controllers/students.controller';
+import { quotasController } from '../controllers/quotas.controller';
 import { SecurityController } from '../controllers/security.controller';
 import { LogsController } from '../controllers/logs.controller';
 import { NotificationsController } from '../controllers/notifications.controller';
@@ -102,6 +103,13 @@ router.get('/students/stats', studentsCtrl.stats);
 // AFTER /students/stats: Express matches in order, so a `:id` route declared first would
 // swallow "stats" as an id.
 router.get('/students/:id', studentsCtrl.detail);
+
+/*
+ * Quota and entitlement reporting. Placed after the /students routes so the more specific
+ * paths above are matched first - '/quotas' cannot collide with '/students/:id', but keeping
+ * the ordering explicit means a future '/quotas/:something' will not either.
+ */
+router.get('/quotas', quotasController.overview);
 
 // Security
 router.get('/security/threats', securityCtrl.getThreats);
