@@ -130,7 +130,7 @@ export default function Footer() {
 
       <div className="container-tl flex flex-wrap items-center justify-between gap-3 pb-10 pt-6">
         <p className="text-[0.8125rem] text-ink-3">
-          © {year} {COMPANY.name}. All rights reserved.
+          © {year} {COMPANY.legalEntity}. All rights reserved.
         </p>
         <p className="font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-ink-3">
           Udyam {COMPANY.registration.udyam}

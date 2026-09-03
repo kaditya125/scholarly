@@ -31,7 +31,7 @@ export default function Hero() {
             </h1>
 
             <p className="lede mt-8 max-w-[54ch]" {...revealProps(120)}>
-              TechLoom Innovations is a technology and digital solutions company focused on
+              Srijya is a technology and digital solutions company focused on
               building practical software, digital products and technology experiences.
             </p>
 

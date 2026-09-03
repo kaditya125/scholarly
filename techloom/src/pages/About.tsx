@@ -12,7 +12,7 @@ export default function About() {
   useSeo({
     title: `About — ${COMPANY.name}`,
     description:
-      'TechLoom Innovations is a technology and digital solutions company working across consulting, product engineering and its own products.',
+      `${COMPANY.name} is a technology and digital solutions company working across consulting, product engineering and its own products.`,
     path: '/about',
   });
 
@@ -45,9 +45,9 @@ export default function About() {
       />
 
       <div className="container-tl">
-        <TextSection label="01 / The company" title="What TechLoom is">
+        <TextSection label="01 / The company" title={`What ${COMPANY.name} is`}>
           <p className="body-text">
-            TechLoom Innovations is a technology and digital solutions company. We help
+            Srijya is a technology and digital solutions company. We help
             organisations turn complex ideas into practical digital products and technology
             solutions — sometimes by advising on a decision, more often by designing and building
             the thing itself.
@@ -121,14 +121,14 @@ export default function About() {
             learn from the outside.
           </p>
           <p className="body-text">
-            Products are developed under the TechLoom name and kept distinct from client work.
+            Products are developed under the Srijya name and kept distinct from client work.
             When one is ready to be public, it appears on this site. Until then it does not.
           </p>
         </TextSection>
 
         <TextSection label="06 / Flagship" title={SADHYA.name}>
           <p className="body-text">
-            {SADHYA.summary} It is built and operated by TechLoom Innovations — a product of the
+            {SADHYA.summary} It is built and operated by Srijya — a product of the
             company, not a client project — and it is where our work on retrieval-grounded AI,
             content pipelines and learning interfaces is applied end to end.
           </p>

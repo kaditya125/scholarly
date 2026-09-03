@@ -31,7 +31,7 @@ export default function Privacy() {
         <TextSection label="Scope" title="What this covers" size="small">
           <p className="body-text">
             This notice covers this website only — the pages under this domain, operated by{' '}
-            {COMPANY.name}. Our products have their own policies: if you use {SADHYA.name}, the
+            {COMPANY.legalEntity}. Our products have their own policies: if you use {SADHYA.name}, the
             notice that applies to you is the one published at {SADHYA.domain}.
           </p>
         </TextSection>

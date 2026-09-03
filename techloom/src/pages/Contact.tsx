@@ -26,7 +26,7 @@ export default function Contact() {
   useSeo({
     title: `Contact — ${COMPANY.name}`,
     description:
-      'Tell us what you are working on. TechLoom Innovations works on technology consulting, digital product engineering and software solutions.',
+      `Tell us what you are working on. ${COMPANY.name} works on technology consulting, digital product engineering and software solutions.`,
     path: '/contact',
   });
 
@@ -94,7 +94,7 @@ export default function Contact() {
         const response = await fetch(COMPANY.contactEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...values, source: 'techloom-site' }),
+          body: JSON.stringify({ ...values, source: 'tantu-site' }),
         });
         if (!response.ok) throw new Error(`Request failed: ${response.status}`);
         setStatus('sent');

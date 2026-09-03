@@ -9,7 +9,7 @@ import { COMPANY, SADHYA } from '@/site.config';
 export default function Products() {
   useSeo({
     title: `Products — ${COMPANY.name}`,
-    description: `TechLoom Innovations develops its own products alongside client work. ${SADHYA.name} is the first.`,
+    description: `${COMPANY.name} develops its own products alongside client work. ${SADHYA.name} is the first.`,
     path: '/products',
   });
 
@@ -18,7 +18,7 @@ export default function Products() {
       <PageHeader
         label="Products"
         title="Building beyond services."
-        lede="Alongside client-focused technology work, TechLoom develops its own products and experiments with new ways technology can solve meaningful problems."
+        lede="Alongside client-focused technology work, Srijya develops its own products and experiments with new ways technology can solve meaningful problems."
       />
 
       {/* The flagship, given the whole width it deserves. */}
@@ -58,7 +58,7 @@ export default function Products() {
             </h2>
             <p className="lede mt-7 max-w-[46ch]">{SADHYA.summary}</p>
             <p className="body-text mt-5 max-w-[48ch]">
-              Built and operated by TechLoom Innovations. It is our own product rather than a
+              Built and operated by Srijya. It is our own product rather than a
               client project, which makes it the clearest available answer to what this company
               can design, build and run.
             </p>

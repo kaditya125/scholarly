@@ -24,7 +24,7 @@ export default function Positioning() {
 
           <div className="md:col-span-4" {...revealProps(120)}>
             <p className="body-text">
-              TechLoom Innovations brings together technology, product thinking and practical
+              Srijya brings together technology, product thinking and practical
               problem solving to create digital solutions designed around real needs.
             </p>
             <p className="body-text mt-5">
