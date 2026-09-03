@@ -596,3 +596,99 @@ textarea.field-input {
     transition: none;
   }
 }
+
+/* ── Ask Srijya ──────────────────────────────────────────────────────────────
+   The site assistant: a launcher pinned to the corner, and the panel it opens.
+
+   Kept deliberately quiet. A pulsing bubble that follows you down the page is
+   the house style of software that interrupts; this one sits still, states what
+   it is, and waits to be asked. */
+.ask-launcher {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.625rem 1rem;
+  border: 1px solid var(--color-line-2);
+  border-radius: 999px;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px rgb(0 0 0 / 0.06);
+  transition:
+    border-color 0.25s ease,
+    transform 0.25s ease;
+}
+
+.ask-launcher:hover {
+  border-color: var(--color-ink-3);
+  transform: translateY(-1px);
+}
+
+.ask-panel {
+  position: fixed;
+  right: 1rem;
+  bottom: 4.75rem;
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  width: min(24rem, calc(100vw - 2rem));
+  border: 1px solid var(--color-line-2);
+  border-radius: 6px;
+  background: var(--color-paper);
+  box-shadow: 0 2px 4px rgb(0 0 0 / 0.04), 0 16px 48px rgb(0 0 0 / 0.12);
+}
+
+.ask-close,
+.ask-send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  color: var(--color-ink-3);
+  transition: color 0.25s ease;
+}
+
+.ask-close:hover,
+.ask-send:hover {
+  color: var(--color-ink);
+}
+
+/* Suggested and follow-up questions. Left-aligned and full width, because they
+   are things to read, not buttons to aim at. */
+.ask-suggestion {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-line);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: var(--color-ink-2);
+  transition:
+    border-color 0.25s ease,
+    color 0.25s ease;
+}
+
+.ask-suggestion:hover {
+  border-color: var(--color-ink-3);
+  color: var(--color-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ask-launcher,
+  .ask-close,
+  .ask-send,
+  .ask-suggestion {
+    transition: none;
+  }
+  .ask-launcher:hover {
+    transform: none;
+  }
+}
