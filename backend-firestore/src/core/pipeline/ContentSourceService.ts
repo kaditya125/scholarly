@@ -6,6 +6,7 @@
  * Enforces validation, authorization, user isolation, idempotency, storage integration, and state transitions.
  */
 
+import * as admin from 'firebase-admin';
 import { db } from '../../config/firebase';
 import {
   ContentSource,
@@ -431,6 +432,19 @@ export class ContentSourceService {
 
     if (nextState === 'FAILED') {
       updates.failedAt = Date.now();
+    } else {
+      // FAILED -> QUEUED -> PROCESSING -> READY is a valid, live retry path (see
+      // stateMachine.ts's VALID_TRANSITIONS). Without this, a source that failed once and
+      // was later retried successfully keeps failedAt/failureReason/errorDetails from the
+      // dead attempt forever - recordProcessingError() below is the only writer of those
+      // three, and nothing ever cleared them on the way back out of FAILED. Same bug class
+      // as the one fixed in payments.service.ts/referral.service.ts: no live code was ever
+      // fooled by it (ContentQualityValidationService only reads failureReason after
+      // already confirming status === 'FAILED' some other way), but the record itself
+      // contradicted its own current status to anyone reading it raw.
+      (updates as Record<string, unknown>).failedAt = admin.firestore.FieldValue.delete();
+      (updates as Record<string, unknown>).failureReason = admin.firestore.FieldValue.delete();
+      (updates as Record<string, unknown>).errorDetails = admin.firestore.FieldValue.delete();
     }
 
     await sourceRepository.updateSource(collectionId, sourceId, updates as any);
