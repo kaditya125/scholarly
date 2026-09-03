@@ -94,7 +94,7 @@ export default function Contact() {
         const response = await fetch(COMPANY.contactEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...values, source: 'tantu-site' }),
+          body: JSON.stringify({ ...values, source: 'srijya-site' }),
         });
         if (!response.ok) throw new Error(`Request failed: ${response.status}`);
         setStatus('sent');
