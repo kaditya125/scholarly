@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAdmin, requireSuperAdmin } from '../middleware/rbac.middleware';
+import { requireAdmin, requireSuperAdmin, requireFinanceAdmin } from '../middleware/rbac.middleware';
 import { AIMonitoringController } from '../controllers/ai-monitoring.controller';
 import { SystemHealthController } from '../controllers/system-health.controller';
 import { ContinuousEvalController } from '../controllers/continuous-eval.controller';
@@ -14,6 +14,8 @@ import { StudentsController } from '../controllers/students.controller';
 import { quotasController } from '../controllers/quotas.controller';
 import { performanceController } from '../controllers/performance.controller';
 import { engagementController } from '../controllers/engagement.controller';
+import { revenueController } from '../controllers/revenue.controller';
+import { paymentsController } from '../controllers/payments.controller';
 import { SecurityController } from '../controllers/security.controller';
 import { LogsController } from '../controllers/logs.controller';
 import { NotificationsController } from '../controllers/notifications.controller';
@@ -119,6 +121,14 @@ router.get('/quotas', quotasController.overview);
  */
 router.get('/performance', performanceController.overview);
 router.get('/engagement', engagementController.overview);
+
+/*
+ * Revenue and payments. requireFinanceAdmin narrows to super_admin/admin - moderator has
+ * requireAdmin's broader access to everything above but not to financial data, matching
+ * adminNav.ts's minRole on these two entries.
+ */
+router.get('/revenue', requireFinanceAdmin, revenueController.overview);
+router.get('/payments', requireFinanceAdmin, paymentsController.list);
 
 // Security
 router.get('/security/threats', securityCtrl.getThreats);

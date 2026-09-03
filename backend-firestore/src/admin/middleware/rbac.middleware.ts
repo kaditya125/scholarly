@@ -35,3 +35,7 @@ export const requireRoles = (allowedRoles: AdminRole[]) => {
 // Admin API access is granted to super_admin, admin, and moderator roles.
 export const requireAdmin = requireRoles(['super_admin', 'admin', 'moderator']);
 export const requireSuperAdmin = requireRoles(['super_admin']);
+// Financial data (revenue, payments, subscriptions) - moderator excluded. Matches
+// adminNav.ts's `minRole: ['super_admin', 'admin']` on those entries; that value is
+// presentation only (it hides the nav link), so this is what actually enforces it.
+export const requireFinanceAdmin = requireRoles(['super_admin', 'admin']);
