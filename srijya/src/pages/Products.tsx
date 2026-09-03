@@ -107,7 +107,7 @@ export default function Products() {
         <div className="container-tl py-14 md:py-16">
           <div className="grid gap-y-6 md:grid-cols-12 md:gap-x-10" {...revealProps()}>
             <div className="md:col-span-3">
-              <p className="label">Selected work</p>
+              <p className="label">Built by Srijya</p>
             </div>
             <div className="md:col-span-8">
               <h2 id="work-heading" className="display-3 max-w-[18ch]">
