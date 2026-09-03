@@ -20,3 +20,8 @@ backend-firestore/vtc.txt
 backend-firestore/tc.txt
 backend-firestore/test_elevenlabs_key.js
 backend-firestore/test-asset-gen.js
+
+# Business/private material — never belongs in git, and pitch-deck/ was previously untracked
+# clutter sitting at repo root. Keep it local; do not commit.
+/pitch-deck/
+/private/
