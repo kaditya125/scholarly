@@ -50,24 +50,48 @@ by name.
 
 ## Deploying
 
-The build is a static SPA — any static host works, with one requirement: **unknown
-paths must fall back to `index.html`**, or a deep link like `/products/sadhya` will
-404 at the server before React ever sees it.
-
 ```bash
-SITE_URL=https://your-domain npm run build
+npm run build      # -> dist/, ready to upload
 ```
 
-`SITE_URL` is not optional for a production build. It is the origin used for:
+The output is a static SPA. Any static host works, with **one hard requirement:
+unknown paths must fall back to `index.html`**. Without it a deep link like
+`/products/sadhya` — every link in the sitemap except `/` — returns the host's own
+404 before React ever runs. Per host:
 
-- the canonical link and `og:url` in `index.html`
-- `og:image` / `twitter:image` (`/og.png`)
-- the Organization JSON-LD
-- `dist/sitemap.xml` and `dist/robots.txt`
+| Host | What to set |
+| --- | --- |
+| nginx | `location / { try_files $uri $uri/ /index.html; }` |
+| Apache | `FallbackResource /index.html` |
+| Caddy | `try_files {path} /index.html` |
+| Netlify | `/*  /index.html  200` in `_redirects` |
+| Vercel / Cloudflare Pages | SPA fallback is the default |
+| S3 + CloudFront | Error document `index.html`, or a 404→200 function |
 
-Without it the build still succeeds, but those are **omitted rather than guessed**
-and the build prints a warning saying so. A canonical tag pointing at a domain the
-site is not served from is worse than no canonical tag at all.
+Recommended cache headers: `assets/*` is content-hashed, so
+`Cache-Control: public, max-age=31536000, immutable`. Everything else —
+`index.html`, `sitemap.xml`, `robots.txt`, `og.png` — should be revalidated:
+`no-cache` is the safe choice.
+
+### SITE_URL
+
+The origin is set in `.env.production`, which is committed on purpose — it is the
+public address of the site, not a credential, and a build that silently forgets it
+is worse than one that has it wrong. Change the domain there.
+
+It is the origin used for the canonical link and `og:url`, `og:image` /
+`twitter:image`, the Organization JSON-LD, and `sitemap.xml` / `robots.txt`. To
+build for somewhere else without editing the file, the real environment wins:
+
+```bash
+SITE_URL=https://staging.example.com npm run build
+```
+
+If no origin is set anywhere, the build still succeeds — those five things are
+**omitted rather than guessed**, and the build says so loudly. A canonical tag
+pointing at a domain the site is not served from is worse than no canonical tag at
+all: it tells search engines the real page is a duplicate of one that does not
+exist.
 
 Optional: `VITE_CONTACT_ENDPOINT` — a URL that accepts a JSON `POST` from the
 contact form. With it unset, submitting the form opens the visitor's own mail
@@ -94,7 +118,9 @@ Copy that is longer than a line lives in `src/content/`.
 
 ### Before launch
 
-- [ ] `SITE_URL` set in the deploy environment.
+- [x] `SITE_URL` — `https://techloom.sadhya.app`, set in `.env.production`.
+- [ ] DNS: a CNAME or A record for `techloom.sadhya.app` pointing at wherever the
+      site is hosted, plus a TLS certificate covering that name.
 - [ ] `COMPANY.email` in `src/site.config.ts` — currently the entity's existing
       monitored inbox (`support@sadhya.app`). Replace it with a TechLoom-domain
       address once mail is configured for one, or set it to `''` to hide the email

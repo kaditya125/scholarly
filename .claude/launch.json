@@ -23,6 +23,14 @@
       "cwd": "techloom",
       "url": "http://localhost:4300",
       "port": 4300
+    },
+    {
+      "name": "techloom-dist",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "preview"],
+      "cwd": "techloom",
+      "url": "http://localhost:4301",
+      "port": 4301
     }
   ]
 }
