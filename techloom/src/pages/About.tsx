@@ -154,7 +154,7 @@ export default function About() {
             <div className="md:col-span-3">
               <p className="label">07 / Principles</p>
             </div>
-            <div className="grid gap-8 md:col-span-8 md:grid-cols-3">
+            <div className="grid gap-8 sm:grid-cols-2 md:col-span-8">
               {PRINCIPLES.map((principle) => (
                 <div key={principle.title}>
                   <h3 className="heading-4 text-ink">{principle.title}</h3>
