@@ -15,7 +15,7 @@ const KNOWLEDGE_BODY = `
 ## 1. What is Sadhya?
 - **Overview**: Sadhya is an AI-powered, all-in-one educational platform engineered for both students and educators. It combines 24/7 personalized AI tutoring, multimodal document study tools, and a full-featured teacher workspace with interactive live video classes.
 - **Mission**: To democratize elite, personalized 1-on-1 tutoring and empower teachers with state-of-the-art classroom tools.
-- **Company**: Sadhya is a product of TechLoom Innovations, a registered Indian business (Udyam UDYAM-BR-26-0135079) based in Bihar, India.
+- **Company**: Sadhya is a product of Srijya, a registered Indian business (Udyam UDYAM-BR-26-0135079) based in Noida, Uttar Pradesh, India. Srijya is the trading name; the name on the Udyam record is still TechLoom Innovations, and that is the entity shown on invoices and receipts. If a user asks which is correct, say both plainly.
 - **Contact & Support**: 
   - General Support: support@sadhya.app
   - Sales & Institutional: sales@sadhya.app
