@@ -1,10 +1,12 @@
 import { useRef, useState } from 'react';
-import type { ChangeEvent, FormEvent } from 'react';
+import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from '@/components/Icons';
+import Field from '@/components/Field';
 import PageHeader from '@/components/PageHeader';
 import { revealProps } from '@/lib/reveal';
 import { useSeo } from '@/lib/useSeo';
+import { submitEnquiry } from '@/lib/submitEnquiry';
 import { COMPANY } from '@/site.config';
 
 type FieldName = 'name' | 'email' | 'company' | 'message' | 'budget';
@@ -41,11 +43,14 @@ export default function Contact() {
   const [status, setStatus] = useState<Status>('idle');
   const formRef = useRef<HTMLFormElement>(null);
 
-  const setField = (field: FieldName, value: string) => {
-    setValues((current) => ({ ...current, [field]: value }));
+  // Widened to `string` because the shared Field component is not tied to this
+  // page's union — the names it can emit are exactly the ones rendered below.
+  const setField = (field: string, value: string) => {
+    const key = field as FieldName;
+    setValues((current) => ({ ...current, [key]: value }));
     // Clear an error as soon as the visitor starts fixing it, rather than making
     // them submit again to find out whether they have.
-    setErrors((current) => (current[field] ? { ...current, [field]: undefined } : current));
+    setErrors((current) => (current[key] ? { ...current, [key]: undefined } : current));
   };
 
   const validate = (): Errors => {
@@ -88,35 +93,11 @@ export default function Contact() {
        1. A configured endpoint, if the deployment has one.
        2. The visitor's own mail client, pre-filled. This works with no backend at
           all and sends nothing anywhere the visitor cannot see. */
-    if (COMPANY.contactEndpoint) {
-      setStatus('sending');
-      try {
-        const response = await fetch(COMPANY.contactEndpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...values, source: 'srijya-site' }),
-        });
-        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
-        setStatus('sent');
-        return;
-      } catch {
-        setStatus('error');
-        return;
-      }
-    }
-
-    if (COMPANY.email) {
-      const subject = `New enquiry — ${values.name.trim()}${
-        values.company.trim() ? ` (${values.company.trim()})` : ''
-      }`;
-      window.location.href = `mailto:${COMPANY.email}?subject=${encodeURIComponent(
-        subject
-      )}&body=${encodeURIComponent(composeBody())}`;
-      setStatus('handoff');
-      return;
-    }
-
-    setStatus('error');
+    setStatus('sending');
+    const subject = `New enquiry — ${values.name.trim()}${
+      values.company.trim() ? ` (${values.company.trim()})` : ''
+    }`;
+    setStatus(await submitEnquiry({ subject, body: composeBody(), payload: values }));
   };
 
   if (status === 'sent') {
@@ -191,6 +172,7 @@ export default function Contact() {
             <form ref={formRef} noValidate onSubmit={handleSubmit} className="space-y-9">
               <Field
                 name="name"
+                label={FIELD_LABELS.name}
                 value={values.name}
                 error={errors.name}
                 required
@@ -199,6 +181,7 @@ export default function Contact() {
               />
               <Field
                 name="email"
+                label={FIELD_LABELS.email}
                 type="email"
                 value={values.email}
                 error={errors.email}
@@ -208,6 +191,7 @@ export default function Contact() {
               />
               <Field
                 name="company"
+                label={FIELD_LABELS.company}
                 value={values.company}
                 error={errors.company}
                 autoComplete="organization"
@@ -216,6 +200,7 @@ export default function Contact() {
               />
               <Field
                 name="message"
+                label={FIELD_LABELS.message}
                 value={values.message}
                 error={errors.message}
                 required
@@ -225,6 +210,7 @@ export default function Contact() {
               />
               <Field
                 name="budget"
+                label={FIELD_LABELS.budget}
                 value={values.budget}
                 error={errors.budget}
                 hint="Optional — a range or a rough timeline both help."
@@ -270,69 +256,3 @@ export default function Contact() {
  * site goes through this so the accessible names, the `aria-describedby` chain
  * and the invalid state cannot drift apart between fields.
  */
-function Field({
-  name,
-  value,
-  error,
-  onChange,
-  type = 'text',
-  required = false,
-  multiline = false,
-  hint,
-  autoComplete,
-}: {
-  name: FieldName;
-  value: string;
-  error?: string;
-  onChange: (field: FieldName, value: string) => void;
-  type?: string;
-  required?: boolean;
-  multiline?: boolean;
-  hint?: string;
-  autoComplete?: string;
-}) {
-  const hintId = hint ? `${name}-hint` : undefined;
-  const errorId = error ? `${name}-error` : undefined;
-  const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
-
-  const shared = {
-    id: name,
-    name,
-    value,
-    required,
-    autoComplete,
-    'aria-invalid': error ? (true as const) : undefined,
-    'aria-describedby': describedBy,
-    onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-      onChange(name, event.target.value),
-  };
-
-  return (
-    <div>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-        <label htmlFor={name} className="label">
-          {FIELD_LABELS[name]}
-          {required ? <span aria-hidden="true"> *</span> : null}
-          {required ? <span className="sr-only"> (required)</span> : null}
-        </label>
-        {hint ? (
-          <span id={hintId} className="text-[0.75rem] text-ink-3">
-            {hint}
-          </span>
-        ) : null}
-      </div>
-
-      {multiline ? (
-        <textarea {...shared} rows={5} className="field-input mt-2" />
-      ) : (
-        <input {...shared} type={type} className="field-input mt-2" />
-      )}
-
-      {error ? (
-        <p id={errorId} className="mt-2 text-[0.8125rem] text-danger">
-          {error}
-        </p>
-      ) : null}
-    </div>
-  );
-}
