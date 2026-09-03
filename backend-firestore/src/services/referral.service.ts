@@ -106,6 +106,16 @@ export class ReferralService {
             status: 'active',
             currentPeriodEnd: newEnd,
             ...(hadSubscription ? {} : { plan: 'pro', planName: 'Sadhya Pro (referral)', provider: 'referral', source: 'referral' }),
+            // The `...(data.subscription || {})` spread above carries the WHOLE prior
+            // object forward, on purpose - that's how provider/source/planName survive
+            // for an existing subscriber. But it also means refundedAt/cancelledAt/refundId
+            // from a prior refunded cycle (written by the two refund handlers below) would
+            // ride along too, producing the same 'active' + 'refunded' contradiction fixed
+            // in markPaidAndUpgrade. This function only ever grants or extends time, never
+            // refunds, so clearing these three is always correct here.
+            refundedAt: admin.firestore.FieldValue.delete(),
+            cancelledAt: admin.firestore.FieldValue.delete(),
+            refundId: admin.firestore.FieldValue.delete(),
           },
         },
         { merge: true },
