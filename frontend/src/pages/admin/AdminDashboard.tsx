@@ -82,7 +82,7 @@ export default function AdminDashboard() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get<UsersResponse>('/api/admin/users', { params: { limit: 1000 } });
+      const res = await api.get<UsersResponse>('/admin/users', { params: { limit: 1000 } });
       setData(res.data);
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
