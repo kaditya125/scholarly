@@ -3,19 +3,19 @@ import { PRINCIPLES } from '@/content/approach';
 import { COMPANY } from '@/site.config';
 import { revealProps } from '@/lib/reveal';
 
-/** Why Srijya, expressed as three commitments rather than three adjectives. */
+/** How the company thinks, expressed as commitments rather than adjectives. */
 export default function Principles() {
   return (
     <section className="section bg-paper-2" aria-labelledby="principles-heading">
       <div className="container-tl">
         <SectionHeading
           id="principles-heading"
-          label={`Why ${COMPANY.name}`}
+          label={`How ${COMPANY.name} thinks`}
           title="Built with intent."
-          lede="Three things we hold to, on every engagement and in our own products."
+          lede="Four things we hold to, on every engagement and in our own products."
         />
 
-        <div className="mt-14 grid gap-y-10 md:mt-20 md:grid-cols-3 md:gap-x-10">
+        <div className="mt-14 grid gap-y-10 md:mt-20 md:grid-cols-2 md:gap-x-10 lg:grid-cols-4">
           {PRINCIPLES.map((principle, index) => (
             <div
               key={principle.title}
