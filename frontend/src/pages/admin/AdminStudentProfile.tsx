@@ -143,7 +143,7 @@ export default function AdminStudentProfile() {
     if (!id) return;
     setLoading(true); setError(null);
     try {
-      const res = await api.get<StudentDetail>(`/api/admin/students/${id}`);
+      const res = await api.get<StudentDetail>(`/admin/students/${id}`);
       setData(res.data);
     } catch (err: unknown) {
       const r = (err as { response?: { status?: number; data?: { error?: string } } }).response;

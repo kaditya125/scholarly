@@ -220,7 +220,7 @@ export default function Contact() {
     setAiError(null);
     try {
       setAiGenerating(true);
-      const res = await api.post('/api/contact/ai-draft', {
+      const res = await api.post('/contact/ai-draft', {
         channel: selectedChannel,
         prompt: aiPrompt.trim(),
         senderName: name.trim() || undefined,
@@ -275,7 +275,7 @@ export default function Contact() {
 
     try {
       setSubmitting(true);
-      await api.post('/api/contact/send-inquiry', {
+      await api.post('/contact/send-inquiry', {
         name: name.trim(),
         email: email.trim(),
         channel: selectedChannel,
