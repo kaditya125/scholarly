@@ -35,13 +35,28 @@ export default function AdminLogin() {
   const [error, setError] = useState<string | null>(null);
   /** Set when sign-in succeeded but the account turned out to hold no admin role. */
   const [notAnAdmin, setNotAnAdmin] = useState(false);
+  /**
+   * Set when the claim read itself FAILED, as distinct from succeeding and finding no role.
+   *
+   * `adminRole` cannot tell those apart — both leave it non-admin — so without this the
+   * "Not an administrator" screen below would assert that an account holds no role when the
+   * truth is that we never managed to read one. That is the same class of lie the credential
+   * message used to tell, one step further along.
+   */
+  const [claimReadFailed, setClaimReadFailed] = useState(false);
 
   const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
 
   // Claims only appear in a freshly minted ID token, so a role granted after this
   // session started would otherwise stay invisible until the token expired.
   useEffect(() => {
-    if (user) void refreshClaims();
+    if (!user) return;
+    // Record the outcome, not just fire and forget: a later successful read means the role is
+    // genuinely known, and the failure state must stop suppressing the no-role screen.
+    void refreshClaims().then(
+      () => setClaimReadFailed(false),
+      () => setClaimReadFailed(true),
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
@@ -55,6 +70,7 @@ export default function AdminLogin() {
     if (submitting) return;
     setError(null);
     setNotAnAdmin(false);
+    setClaimReadFailed(false);
     setSubmitting(true);
     /*
      * Authentication and everything after it are reported separately, because they fail for
@@ -92,14 +108,22 @@ export default function AdminLogin() {
       await refreshClaims();
       navigate(from && from.startsWith('/admin') ? from : '/admin', { replace: true });
     } catch {
+      setClaimReadFailed(true);
       setError('Signed in, but your administrator role could not be read. Check your connection and try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Signed in, claims resolved, no admin role. Offer a way out rather than a dead end.
-  if (user && !claimsLoading && !canEnterAdminArea(adminRole) && !submitting) {
+  /*
+   * Signed in, claims RESOLVED, no admin role. Offer a way out rather than a dead end.
+   *
+   * `claimReadFailed` is the guard that keeps this honest. Without it a failed claim read
+   * lands here too — signed in, not admin — and the screen would tell the operator their
+   * account holds no role, when nobody has actually established that. In that case the form
+   * stays up instead, showing the retryable error the catch above set.
+   */
+  if (user && !claimsLoading && !claimReadFailed && !canEnterAdminArea(adminRole) && !submitting) {
     if (!notAnAdmin) setNotAnAdmin(true);
   }
 
