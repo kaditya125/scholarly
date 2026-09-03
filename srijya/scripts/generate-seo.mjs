@@ -60,6 +60,8 @@ const ROUTES = [
   { path: '/products/sadhya', priority: '0.7', changefreq: 'monthly' },
   { path: '/start', priority: '0.8', changefreq: 'monthly' },
   { path: '/help', priority: '0.6', changefreq: 'monthly' },
+  { path: '/shipped', priority: '0.5', changefreq: 'monthly' },
+  { path: '/security', priority: '0.4', changefreq: 'yearly' },
   { path: '/contact', priority: '0.6', changefreq: 'yearly' },
   { path: '/company', priority: '0.4', changefreq: 'yearly' },
   { path: '/privacy', priority: '0.2', changefreq: 'yearly' },
