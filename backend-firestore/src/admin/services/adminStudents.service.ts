@@ -34,6 +34,7 @@
 import * as admin from 'firebase-admin';
 import { db, auth } from '../../config/firebase';
 import { usageService } from '../../services/usage.service';
+import { paymentsService } from '../../services/payments.service';
 
 /** Firestore caps `in`/`getUsers` batches; Auth's batch lookup takes at most 100. */
 const AUTH_BATCH = 100;
@@ -126,6 +127,18 @@ export class AdminStudentsService {
    * `FieldValue.serverTimestamp()`), so the range bounds must be Timestamps too — a `where`
    * comparison against a raw number silently matches nothing rather than erroring, which is
    * exactly how newLast7Days/newLast30Days were reporting 0 regardless of reality.
+   *
+   * `pro` is NOT a `.count()` aggregation on `plan === 'pro'`, unlike the others here — it
+   * can't be, because `plan` alone is not reliable. Nothing in this app demotes `plan` back
+   * to `'free'` when a subscription lapses naturally (only an explicit refund does, in
+   * payments.service.ts's two refund handlers) — there is no cron or job that checks
+   * `currentPeriodEnd` and downgrades an expired subscriber. So `plan === 'pro'` can be
+   * permanently stale for anyone who simply doesn't renew. This reads the (small) set of
+   * plan-pro documents and recomputes real entitlement via the same
+   * `paymentsService.evaluateEntitlement` the app itself authorizes against — the same fix
+   * already applied to the admin Subscriptions page. Proportionate at today's scale (one
+   * pro account); revisit with a real aggregation if the pro base grows enough to make a
+   * per-document read expensive.
    */
   async getStats(): Promise<StudentStats> {
     const users = db.collection('users');
@@ -134,15 +147,18 @@ export class AdminStudentsService {
     const since7 = admin.firestore.Timestamp.fromMillis(now - 7 * day);
     const since30 = admin.firestore.Timestamp.fromMillis(now - 30 * day);
 
-    const [total, pro, new7, new30] = await Promise.all([
+    const [total, planProSnap, new7, new30] = await Promise.all([
       users.count().get(),
-      users.where('plan', '==', 'pro').count().get(),
+      users.where('plan', '==', 'pro').get(),
       users.where('createdAt', '>=', since7).count().get(),
       users.where('createdAt', '>=', since30).count().get(),
     ]);
 
     const totalCount = total.data().count;
-    const proCount = pro.data().count;
+    const proCount = planProSnap.docs.filter((d) => {
+      const data = d.data();
+      return paymentsService.evaluateEntitlement(String(data.plan || ''), data.subscription).active;
+    }).length;
 
     return {
       total: totalCount,
@@ -210,6 +226,15 @@ export class AdminStudentsService {
       searchNote = `Prefix match on ${field === 'email' ? 'email' : 'name'} — matches from the start of the value, not anywhere within it.`;
     }
 
+    // KNOWN LIMITATION: filters on the raw stored `plan` field, same gap the display badge
+    // and getStats() pro count just got fixed for — `plan` can be stale 'pro' for a lapsed,
+    // non-renewing subscriber (see getStats()'s comment). Left as-is here because Firestore
+    // can only filter server-side on a stored field, not a computed one, and filtering the
+    // already-paginated page in code would silently return fewer than `limit` rows without
+    // fetching more, breaking the page-size contract every caller relies on. So "Free" can
+    // under-return by omitting a lapsed pro account, and "Pro" can over-return by including
+    // one — narrow, and only visible once a subscription actually lapses unrefunded, which
+    // has not happened yet at today's scale (one pro account, currently genuinely active).
     if (params.plan) query = query.where('plan', '==', params.plan);
     if (params.subscriptionStatus) {
       query = query.where('subscription.status', '==', params.subscriptionStatus);
@@ -290,7 +315,11 @@ export class AdminStudentsService {
         id: d.id,
         name: data.displayName || (data.email ? String(data.email).split('@')[0] : d.id),
         email: data.email || authUser?.email || '—',
-        plan: data.plan === 'pro' ? 'pro' : 'free',
+        // Recomputed, not read off `data.plan` directly: nothing demotes `plan` back to
+        // 'free' on natural expiry (only an explicit refund does), so the stored field can
+        // be permanently stale for a lapsed, non-renewing subscriber. evaluateEntitlement
+        // is pure and data.subscription is already in hand, so this costs nothing extra.
+        plan: paymentsService.evaluateEntitlement(String(data.plan || ''), data.subscription).active ? 'pro' : 'free',
         subscriptionStatus: data.subscription?.status ?? null,
         createdAt: toIso(data.createdAt) ?? authUser?.metadata?.creationTime ?? null,
         onboardingStatus: data.onboardingStatus ?? null,
