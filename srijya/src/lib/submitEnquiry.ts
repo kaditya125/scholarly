@@ -11,12 +11,15 @@ import { COMPANY } from '@/site.config';
 export type EnquiryOutcome = 'sent' | 'handoff' | 'error';
 
 export type Enquiry = {
-  /** Subject line, used only by the mail-client fallback. */
+  /** Who to reply to. Sent as a top-level field: most inbox APIs require it. */
+  name: string;
+  email: string;
+  /** Subject line. Used by the mail-client fallback and sent to the endpoint. */
   subject: string;
-  /** Human-readable body. The fallback sends this; the endpoint receives it too. */
+  /** Human-readable body — the whole enquiry, readable without parsing. */
   body: string;
-  /** Structured fields, for an endpoint that would rather parse than read. */
-  payload: Record<string, unknown>;
+  /** Structured extras, for an endpoint that would rather parse than read. */
+  payload?: Record<string, unknown>;
 };
 
 /**
@@ -36,10 +39,23 @@ export async function submitEnquiry(enquiry: Enquiry): Promise<EnquiryOutcome> {
       const response = await fetch(COMPANY.contactEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        /* Field names match the inbox API this site is meant to post to:
+           name, email, channel, subject, message. They are written explicitly
+           and placed AFTER the spread so a key in `payload` cannot quietly
+           shadow one of them — a form that renames `message` to something the
+           endpoint ignores fails by delivering nothing, and a 200 response
+           makes that look like success.
+
+           `channel` is 'sales' because these are project enquiries rather than
+           support requests. An unrecognised value would be silently coerced to
+           'support' at the other end, which is the wrong inbox, not an error. */
         body: JSON.stringify({
           ...enquiry.payload,
+          name: enquiry.name,
+          email: enquiry.email,
+          channel: 'sales',
           subject: enquiry.subject,
-          body: enquiry.body,
+          message: enquiry.body,
           source: 'srijya-site',
         }),
       });
