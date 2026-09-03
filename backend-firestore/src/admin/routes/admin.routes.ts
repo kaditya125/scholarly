@@ -12,6 +12,8 @@ import { NotebooksController } from '../controllers/notebooks.controller';
 import { UsersController } from '../controllers/users.controller';
 import { StudentsController } from '../controllers/students.controller';
 import { quotasController } from '../controllers/quotas.controller';
+import { performanceController } from '../controllers/performance.controller';
+import { engagementController } from '../controllers/engagement.controller';
 import { SecurityController } from '../controllers/security.controller';
 import { LogsController } from '../controllers/logs.controller';
 import { NotificationsController } from '../controllers/notifications.controller';
@@ -110,6 +112,13 @@ router.get('/students/:id', studentsCtrl.detail);
  * the ordering explicit means a future '/quotas/:something' will not either.
  */
 router.get('/quotas', quotasController.overview);
+
+/*
+ * Student performance and engagement reporting. Same placement rule as /quotas above -
+ * after /students so nothing collides with '/students/:id'.
+ */
+router.get('/performance', performanceController.overview);
+router.get('/engagement', engagementController.overview);
 
 // Security
 router.get('/security/threats', securityCtrl.getThreats);

@@ -10,11 +10,13 @@ import Company from '@/pages/Company';
 import Contact from '@/pages/Contact';
 import Help from '@/pages/Help';
 import Home from '@/pages/Home';
+import { hasTeam } from '@/content/team';
 import NotFound from '@/pages/NotFound';
 import Privacy from '@/pages/Privacy';
 import ProductSadhya from '@/pages/ProductSadhya';
 import Products from '@/pages/Products';
 import StartWithYourIdea from '@/pages/StartWithYourIdea';
+import Team from '@/pages/Team';
 import Terms from '@/pages/Terms';
 
 /*
@@ -135,6 +137,9 @@ function Shell() {
           <Route path="/products" element={<Products />} />
           <Route path="/products/sadhya" element={<ProductSadhya />} />
           <Route path="/help" element={<Help />} />
+          {/* Routed only once there is a real person to show, so /team is a 404
+              rather than an empty page while the list is empty. */}
+          {hasTeam ? <Route path="/team" element={<Team />} /> : null}
           <Route path="/start" element={<StartWithYourIdea />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/company" element={<Company />} />
