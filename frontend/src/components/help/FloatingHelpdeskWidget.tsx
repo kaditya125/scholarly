@@ -601,7 +601,7 @@ export function FloatingHelpdeskWidget({
 
     try {
       setContactSubmitting(true);
-      await api.post('/api/contact/send-inquiry', {
+      await api.post('/contact/send-inquiry', {
         name: contactName.trim(),
         email: contactEmail.trim(),
         channel: contactChannel,

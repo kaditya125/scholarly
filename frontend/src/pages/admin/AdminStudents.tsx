@@ -98,7 +98,7 @@ export default function AdminStudents() {
     setError(null);
     try {
       const [sortField, dir] = sort.split(':');
-      const res = await api.get<ListResponse>('/api/admin/students', {
+      const res = await api.get<ListResponse>('/admin/students', {
         params: {
           cursor: cursor || undefined,
           limit: 25,
@@ -129,7 +129,7 @@ export default function AdminStudents() {
   }, [load]);
 
   useEffect(() => {
-    api.get<Stats>('/api/admin/students/stats')
+    api.get<Stats>('/admin/students/stats')
       .then((r) => setStats(r.data))
       .catch(() => setStatsError(true));
   }, []);
