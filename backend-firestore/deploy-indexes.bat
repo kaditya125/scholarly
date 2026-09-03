@@ -7,6 +7,11 @@ REM authDomain baked into the built frontend. It is NOT `schaolarly-65fa0`, whic
 REM script pointed at until 2026-09-02 and which appears nowhere else in the repo; a
 REM deploy sent there would have silently missed the live database entirely.
 REM
+REM
+REM DATABASE: this project has TWO Firestore databases - `default` (the one the app uses,
+REM 54 collections) and `(default)` (holds only platform/presence). firebase.json had no
+REM `database` key until 2026-09-03, so every index deploy landed on `(default)` and the
+REM live database got none. firebase.json now names `default` explicitly; do not remove it.
 REM This deploy is additive only so long as firestore.indexes.json stays a superset of
 REM what is live. If the CLI ever offers to DELETE indexes, say no and reconcile by hand
 REM - never pass --force here.
