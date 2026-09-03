@@ -40,6 +40,11 @@ export type TeamMember = {
 };
 
 export const TEAM: TeamMember[] = [
+  {
+    id: 'aditya-kumar',
+    name: 'Aditya Kumar',
+    role: 'Founder',
+  },
   // Add people here. Example of the shape, kept commented so nothing is
   // published by accident:
   //
