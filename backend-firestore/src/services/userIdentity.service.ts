@@ -110,6 +110,13 @@ export class UserIdentityService {
    * `role` and `organizationId` are written ONCE at creation and never updated here, so a
    * later call can never mutate them. Identity fields come from the Firebase Auth record,
    * not from any request body.
+   *
+   * `plan` and `createdAt` are backfilled opportunistically on the merge path when a legacy
+   * document is missing them, but only then — this must never overwrite a real `plan: 'pro'`
+   * written by payments.service.ts. Their absence broke `where('plan', ==)` and
+   * `orderBy('createdAt')` in the admin directory: Firestore excludes any document missing a
+   * field a query filters or orders on, so free users (no `plan`) were invisible to the
+   * "Free" filter and anyone missing `createdAt` was invisible to the default sort.
    */
   private async ensureCanonicalProfile(
     uid: string,
@@ -121,12 +128,15 @@ export class UserIdentityService {
     const now = admin.firestore.FieldValue.serverTimestamp();
 
     if (snap.exists) {
+      const data = snap.data() ?? {};
       await ref.set(
         {
           email: userRecord.email ?? null,
           displayName: userRecord.displayName ?? null,
           photoURL: userRecord.photoURL ?? null,
           updatedAt: now,
+          ...(data.plan === undefined ? { plan: 'free' } : {}),
+          ...(data.createdAt === undefined ? { createdAt: now } : {}),
         },
         { merge: true }
       );
@@ -141,6 +151,9 @@ export class UserIdentityService {
       photoURL: userRecord.photoURL ?? null,
       // Denormalised mirror of the custom claim. NOT the authorization authority.
       role,
+      // Denormalised mirror of entitlement.service.ts's default. Kept in sync going forward
+      // by payments.service.ts on upgrade; NOT the authorization authority for entitlement checks.
+      plan: 'free',
       // Reserved for a future organisation/institution model. Present from day one so
       // adding multi-tenancy later is a backfill, not a schema migration.
       organizationId: null,
