@@ -61,7 +61,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { path: 'usage/documents', label: 'Documents', title: 'Documents', icon: 'FileText', planned: true },
       { path: 'usage/podcasts', label: 'Podcasts', title: 'Podcasts', icon: 'Radio', planned: true },
       { path: 'usage/tests', label: 'Tests', title: 'Tests & exams', icon: 'ClipboardCheck', planned: true },
-      { path: 'quotas', label: 'Quotas', title: 'Quotas & entitlements', icon: 'Gauge', planned: true },
+      { path: 'quotas', label: 'Quotas', title: 'Quotas & entitlements', icon: 'Gauge' },
     ],
   },
   {
