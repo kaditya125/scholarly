@@ -160,6 +160,21 @@ export default function ProductSadhya() {
           </div>
         </section>
 
+        <TextSection label="05 / Outcome" title="What came of it">
+          <p className="body-text">
+            Sadhya is live and in public use. It handles accounts, subscriptions and payments,
+            serves generated answers anchored to source material, and carries the ordinary
+            operational load of a product people rely on — which is a different thing from a
+            prototype that demonstrates the same ideas.
+          </p>
+          <p className="body-text">
+            There are no user counts, growth figures or performance claims on this page, and that
+            is deliberate. Numbers a company reports about its own product cannot be checked by
+            the person reading them. What can be checked is the product itself: it is at{' '}
+            {SADHYA.domain}, and it is the same system described above.
+          </p>
+        </TextSection>
+
         <section className="border-t border-line py-12 md:py-16" {...revealProps()}>
           <div className="grid gap-y-6 md:grid-cols-12 md:gap-x-10">
             <div className="md:col-span-3">
