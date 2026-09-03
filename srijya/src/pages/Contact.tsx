@@ -97,7 +97,15 @@ export default function Contact() {
     const subject = `New enquiry — ${values.name.trim()}${
       values.company.trim() ? ` (${values.company.trim()})` : ''
     }`;
-    setStatus(await submitEnquiry({ subject, body: composeBody(), payload: values }));
+    setStatus(
+      await submitEnquiry({
+        name: values.name.trim(),
+        email: values.email.trim(),
+        subject,
+        body: composeBody(),
+        payload: values,
+      })
+    );
   };
 
   if (status === 'sent') {

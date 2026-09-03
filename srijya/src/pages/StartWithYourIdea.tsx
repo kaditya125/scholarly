@@ -120,9 +120,11 @@ export default function StartWithYourIdea() {
     const suffix = contact.company.trim() ? ` (${contact.company.trim()})` : '';
     setStatus(
       await submitEnquiry({
+        name: contact.name.trim(),
+        email: contact.email.trim(),
         subject: `Project brief — ${contact.name.trim()}${suffix}`,
         body: composeBrief(),
-        payload: { ...contact, building, stage, help, about: about.trim() },
+        payload: { building, stage, help, about: about.trim(), company: contact.company.trim() },
       })
     );
   };
