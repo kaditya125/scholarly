@@ -3,3 +3,5 @@ dist/
 *.log
 .env*
 !.env.example
+# The public origin, not a credential - committed so builds are reproducible.
+!.env.production

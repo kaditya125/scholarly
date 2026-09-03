@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite --port 4300",
     "build": "vite build && node scripts/generate-seo.mjs",
-    "preview": "vite preview --port 4300",
+    "preview": "vite preview --port 4301",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "tsc --noEmit -p tsconfig.json",
     "og": "node scripts/generate-og.mjs"
