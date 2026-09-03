@@ -16,6 +16,7 @@ import { performanceController } from '../controllers/performance.controller';
 import { engagementController } from '../controllers/engagement.controller';
 import { revenueController } from '../controllers/revenue.controller';
 import { paymentsController } from '../controllers/payments.controller';
+import { subscriptionsController } from '../controllers/subscriptions.controller';
 import { SecurityController } from '../controllers/security.controller';
 import { LogsController } from '../controllers/logs.controller';
 import { NotificationsController } from '../controllers/notifications.controller';
@@ -129,6 +130,7 @@ router.get('/engagement', engagementController.overview);
  */
 router.get('/revenue', requireFinanceAdmin, revenueController.overview);
 router.get('/payments', requireFinanceAdmin, paymentsController.list);
+router.get('/subscriptions', requireFinanceAdmin, subscriptionsController.overview);
 
 // Security
 router.get('/security/threats', securityCtrl.getThreats);
