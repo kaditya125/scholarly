@@ -44,6 +44,8 @@ export const TEAM: TeamMember[] = [
     id: 'aditya-kumar',
     name: 'Aditya Kumar',
     role: 'Founder',
+    focus:
+      'Works across product, engineering and operations — from framing the problem to keeping the result running. Sadhya is the clearest example of that end to end.',
   },
   // Add people here. Example of the shape, kept commented so nothing is
   // published by accident:
