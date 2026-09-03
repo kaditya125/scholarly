@@ -51,15 +51,15 @@ export const COMPANY = {
    */
   legalEntity: 'TechLoom Innovations',
 
-  tagline: 'Technology, thoughtfully built.',
+  tagline: 'Turning ideas into real technology.',
 
   /** One line, used for meta descriptions and any place that needs a summary. */
   descriptor:
-    'Srijya builds practical digital products, software solutions and technology experiences.',
+    'Srijya is a technology and product engineering company turning complex ideas into practical digital products, applications and intelligent technology experiences.',
 
   /** The longer positioning line, used on the About page and in structured data. */
   positioning:
-    'A technology and digital solutions company helping organisations turn complex ideas into practical digital products and technology solutions.',
+    'A technology and product engineering company helping organisations move from an idea to a real, working product — through the clarity, design and engineering in between.',
 
   /**
    * Public business registration.

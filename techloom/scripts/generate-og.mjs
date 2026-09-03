@@ -110,13 +110,13 @@ const ogSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"
   <text x="136" y="84" font-family="${FONT}" font-size="21" font-weight="600" letter-spacing="1.5" fill="${INK}">SRIJYA</text>
   <text x="137" y="105" font-family="${FONT}" font-size="11" font-weight="500" letter-spacing="4.6" fill="${INK_3}">SYSTEMS</text>
 
-  <text x="80" y="330" font-family="${FONT}" font-size="78" font-weight="500" letter-spacing="-2.6" fill="${INK}">Technology,</text>
-  <text x="80" y="414" font-family="${FONT}" font-size="78" font-weight="500" letter-spacing="-2.6" fill="${INK}">thoughtfully built.</text>
+  <text x="80" y="330" font-family="${FONT}" font-size="78" font-weight="500" letter-spacing="-2.6" fill="${INK}">Turning ideas</text>
+  <text x="80" y="414" font-family="${FONT}" font-size="78" font-weight="500" letter-spacing="-2.6" fill="${INK}">into real technology.</text>
 
   <line x1="80" y1="486" x2="1120" y2="486" stroke="${LINE}" stroke-width="1"/>
 
-  <text x="80" y="530" font-family="${FONT}" font-size="22" font-weight="400" letter-spacing="-0.3" fill="${INK_2}">Practical digital products, software solutions</text>
-  <text x="80" y="562" font-family="${FONT}" font-size="22" font-weight="400" letter-spacing="-0.3" fill="${INK_2}">and technology experiences.</text>
+  <text x="80" y="530" font-family="${FONT}" font-size="22" font-weight="400" letter-spacing="-0.3" fill="${INK_2}">Practical digital products, applications</text>
+  <text x="80" y="562" font-family="${FONT}" font-size="22" font-weight="400" letter-spacing="-0.3" fill="${INK_2}">and intelligent technology.</text>
 
   <text x="1120" y="562" text-anchor="end" font-family="${FONT}" font-size="13" font-weight="500" letter-spacing="2.2" fill="${INK_3}">CONSULTING · PRODUCT ENGINEERING</text>
 </svg>`;

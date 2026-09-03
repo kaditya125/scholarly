@@ -46,7 +46,7 @@ function seoMeta(siteUrl: string): Plugin {
           url: `${origin}/`,
           logo: `${origin}/icon-512.png`,
           description:
-            'Srijya is a technology and digital solutions company building practical software, digital products and technology experiences.',
+            'Srijya is a technology and product engineering company turning complex ideas into practical digital products, applications and intelligent technology experiences.',
           foundingDate: '2024-06-30',
           address: { '@type': 'PostalAddress', addressCountry: 'IN' },
           owns: {

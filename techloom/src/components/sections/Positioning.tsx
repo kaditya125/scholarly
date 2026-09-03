@@ -3,9 +3,11 @@ import { ArrowRight } from '@/components/Icons';
 import { revealProps } from '@/lib/reveal';
 
 /**
- * The company introduction. Deliberately short, and deliberately makes no claim
- * about years, clients, offices or scale — the section earns its place by saying
- * what the company is for, not how big it is.
+ * The section directly under the hero, and the one that has to earn the scroll.
+ *
+ * It makes no claim about years, clients, offices or scale. Its whole job is to
+ * name the gap the company exists to close — the distance between having an idea
+ * and having a product — because that gap is the reason anyone reads further.
  */
 export default function Positioning() {
   return (
@@ -13,24 +15,25 @@ export default function Positioning() {
       <div className="container-tl">
         <div className="grid gap-y-10 md:grid-cols-12 md:gap-x-10">
           <div className="md:col-span-3" {...revealProps()}>
-            <p className="label">About</p>
+            <p className="label">The work</p>
           </div>
 
           <div className="md:col-span-5" {...revealProps(60)}>
             <h2 id="positioning-heading" className="display-3 max-w-[18ch]">
-              Technology is most valuable when it solves something real.
+              An idea is only the beginning.
             </h2>
           </div>
 
           <div className="md:col-span-4" {...revealProps(120)}>
             <p className="body-text">
-              Srijya brings together technology, product thinking and practical
-              problem solving to create digital solutions designed around real needs.
+              Good ideas need clarity, structure, design and engineering before they become
+              useful technology. Srijya works across that whole distance — from understanding
+              the problem to designing, building, launching and evolving the product.
             </p>
             <p className="body-text mt-5">
-              We work across two sides of the same discipline: advising on technology decisions,
-              and building the software that follows from them. Sadhya, our own learning platform,
-              is where that approach is applied to a product we run ourselves.
+              Most of what decides whether a product is any good happens before the interesting
+              engineering starts: what problem is being solved, for whom, and what is deliberately
+              left out of the first version.
             </p>
             <Link to="/about" className="link-arrow mt-8">
               More about the company
