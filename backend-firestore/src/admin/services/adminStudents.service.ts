@@ -31,6 +31,7 @@
  * `usageService.getUsageSummary()` — the same call the student app uses — so the admin
  * view cannot drift from what the student sees.
  */
+import * as admin from 'firebase-admin';
 import { db, auth } from '../../config/firebase';
 import { usageService } from '../../services/usage.service';
 
@@ -38,6 +39,25 @@ import { usageService } from '../../services/usage.service';
 const AUTH_BATCH = 100;
 const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 100;
+
+/**
+ * Normalises a Firestore `createdAt`-shaped value to an ISO string, whatever it actually
+ * is on disk. `users.createdAt` is a Firestore Timestamp (userIdentity.service.ts writes
+ * it via `FieldValue.serverTimestamp()`); `payments.createdAt` is a raw epoch number
+ * (payments.service.ts writes it as `Date.now()`). Both go through this so neither write
+ * path can silently break the other's reader — `new Date(<Timestamp>)` is an Invalid Date
+ * and `.toISOString()` on it throws, which is exactly what was crashing GET
+ * /api/admin/students before this. An unparseable value returns null rather than 500ing
+ * the whole page over one row.
+ */
+function toIso(value: unknown): string | null {
+  if (value == null) return null;
+  if (typeof (value as { toDate?: unknown }).toDate === 'function') {
+    return (value as FirebaseFirestore.Timestamp).toDate().toISOString();
+  }
+  const d = new Date(value as string | number);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
 
 export type StudentSort = 'createdAt' | 'email' | 'displayName';
 export type SortDir = 'asc' | 'desc';
@@ -102,20 +122,23 @@ export class AdminStudentsService {
    * grows — the same reason the analytics endpoint was rewritten after full-collection
    * scans produced 81.7M read units in a month.
    *
-   * `createdAt` is stored as an epoch number by the write paths, so the range bounds are
-   * numbers rather than Timestamps. Reading it wrong would silently return 0 rather than
-   * error, which is why the bounds are derived here and not passed in.
+   * `createdAt` is a Firestore Timestamp (userIdentity.service.ts writes it via
+   * `FieldValue.serverTimestamp()`), so the range bounds must be Timestamps too — a `where`
+   * comparison against a raw number silently matches nothing rather than erroring, which is
+   * exactly how newLast7Days/newLast30Days were reporting 0 regardless of reality.
    */
   async getStats(): Promise<StudentStats> {
     const users = db.collection('users');
     const now = Date.now();
     const day = 86400000;
+    const since7 = admin.firestore.Timestamp.fromMillis(now - 7 * day);
+    const since30 = admin.firestore.Timestamp.fromMillis(now - 30 * day);
 
     const [total, pro, new7, new30] = await Promise.all([
       users.count().get(),
       users.where('plan', '==', 'pro').count().get(),
-      users.where('createdAt', '>=', now - 7 * day).count().get(),
-      users.where('createdAt', '>=', now - 30 * day).count().get(),
+      users.where('createdAt', '>=', since7).count().get(),
+      users.where('createdAt', '>=', since30).count().get(),
     ]);
 
     const totalCount = total.data().count;
@@ -269,9 +292,7 @@ export class AdminStudentsService {
         email: data.email || authUser?.email || '—',
         plan: data.plan === 'pro' ? 'pro' : 'free',
         subscriptionStatus: data.subscription?.status ?? null,
-        createdAt: data.createdAt
-          ? new Date(data.createdAt).toISOString()
-          : authUser?.metadata?.creationTime || null,
+        createdAt: toIso(data.createdAt) ?? authUser?.metadata?.creationTime ?? null,
         onboardingStatus: data.onboardingStatus ?? null,
         accountStatus: authUser?.disabled ? 'suspended' : lastSignInTime ? 'active' : 'pending',
         lastSignInAt: lastSignInTime,
@@ -379,7 +400,7 @@ export class AdminStudentsService {
         currency: p.currency ?? 'INR',
         status: p.status ?? 'unknown',
         method: p.method ?? null,
-        createdAt: p.createdAt ? new Date(p.createdAt).toISOString() : null,
+        createdAt: toIso(p.createdAt),
       };
     });
 
