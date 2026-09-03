@@ -11,6 +11,7 @@ const COLUMNS = [
       { label: 'About', to: '/about' },
       { label: 'Capabilities', to: '/capabilities' },
       { label: 'Products', to: '/products' },
+      { label: 'Start a project', to: '/start' },
       { label: 'Contact', to: '/contact' },
     ],
   },
