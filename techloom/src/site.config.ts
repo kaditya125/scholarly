@@ -1,5 +1,5 @@
 /**
- * TechLoom Innovations — site configuration.
+ * Srijya — site configuration.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  *  The single source of truth for every factual claim this website makes about
@@ -24,15 +24,38 @@
  */
 
 export const COMPANY = {
-  name: 'TechLoom Innovations',
+  /**
+   * The brand — what the wordmark, the copy and the metadata call the company.
+   *
+   * Srijya derives from सृज् (sṛj), the Sanskrit root meaning to create or bring
+   * forth. It is the same gerundive construction as Sadhya (साध्य, "that which
+   * is to be attained"), so the parent and the product read as one house: the
+   * company creates, the product is attained. The loom motif that runs through
+   * this site stays as the metaphor for making, which is what weaving is.
+   */
+  name: 'Srijya',
   /** Rendered as two stacked words in the wordmark. */
-  nameParts: ['TechLoom', 'Innovations'] as const,
+  nameParts: ['Srijya', 'Systems'] as const,
+
+  /**
+   * The registered legal entity, which is deliberately NOT the same as `name`.
+   *
+   * The Udyam record still reads "TechLoom Innovations" — the registration has
+   * not been amended yet, and neither has the name Razorpay settles against.
+   * Until both are, the site says so plainly rather than implying a registration
+   * that does not exist: `/company` and the Terms carry a "trading name of" line
+   * driven by `brandDiffersFromEntity` below.
+   *
+   * When the Udyam record is updated, set this to 'Srijya Systems'. The line
+   * disappears on its own and nothing else needs touching.
+   */
+  legalEntity: 'TechLoom Innovations',
 
   tagline: 'Technology, thoughtfully built.',
 
   /** One line, used for meta descriptions and any place that needs a summary. */
   descriptor:
-    'TechLoom Innovations builds practical digital products, software solutions and technology experiences.',
+    'Srijya builds practical digital products, software solutions and technology experiences.',
 
   /** The longer positioning line, used on the About page and in structured data. */
   positioning:
@@ -45,6 +68,8 @@ export const COMPANY = {
    * a Micro enterprise and records its activity under computer programming,
    * consultancy and related IT services. Both facts, and the registration number,
    * are public — the number already appears in the Sadhya site footer.
+   *
+   * The certificate is still in the name of `legalEntity` above, not the brand.
    *
    * There is no CIN or GSTIN: the enterprise is not incorporated and is not GST
    * registered. Those fields stay empty so the UI omits them.
@@ -70,10 +95,10 @@ export const COMPANY = {
   /**
    * Public contact inbox.
    *
-   * TODO: replace with a TechLoom-domain address once mail is configured for it.
-   * Until then this is the entity's existing monitored inbox — TechLoom
-   * Innovations is the legal entity behind sadhya.app, so mail to it reaches the
-   * same people. Set to '' to hide the email row site-wide.
+   * TODO: replace with a Srijya-domain address once mail is configured for it.
+   * Until then this is the entity's existing monitored inbox — the same legal
+   * entity is behind sadhya.app, so mail to it reaches the same people. Set to
+   * '' to hide the email row site-wide.
    */
   email: 'support@sadhya.app',
 
@@ -98,7 +123,22 @@ export const COMPANY = {
 } as const;
 
 /**
- * The flagship product. Sadhya is built by TechLoom, not a client project, and
+ * True while the brand and the registered entity are different names.
+ *
+ * Drives the "trading name of" line on /company and in the Terms. It is a
+ * derived value rather than a hand-maintained boolean so it cannot go stale:
+ * correcting `legalEntity` is the only edit needed once Udyam is amended.
+ */
+export const brandDiffersFromEntity: boolean =
+  // Widened to `string` on purpose. `COMPANY` is `as const`, so both sides are
+  // literal types and TypeScript rejects the comparison as statically decidable
+  // (TS2367) — correctly, since today it is. The runtime check is still the
+  // thing we want: it must keep working after `legalEntity` is edited to match
+  // the brand, without anyone remembering to also flip a hand-written boolean.
+  (COMPANY.legalEntity as string) !== (COMPANY.name as string);
+
+/**
+ * The flagship product. Sadhya is built by Srijya, not a client project, and
  * everything stated here is checkable on the product itself.
  */
 export const SADHYA = {

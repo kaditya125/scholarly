@@ -23,7 +23,7 @@ export default function ProductStudio() {
               Building beyond services.
             </h2>
             <p className="lede mt-7 max-w-[56ch]">
-              Alongside client-focused technology work, TechLoom develops its own products and
+              Alongside client-focused technology work, Srijya develops its own products and
               experiments with new ways technology can solve meaningful problems.
             </p>
           </div>

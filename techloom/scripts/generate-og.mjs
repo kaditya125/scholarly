@@ -107,8 +107,8 @@ const ogSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"
   ${loomField()}
 
   ${mark(80, 64, 40, INK, 1.9)}
-  <text x="136" y="84" font-family="${FONT}" font-size="21" font-weight="600" letter-spacing="1.5" fill="${INK}">TECHLOOM</text>
-  <text x="137" y="105" font-family="${FONT}" font-size="11" font-weight="500" letter-spacing="4.6" fill="${INK_3}">INNOVATIONS</text>
+  <text x="136" y="84" font-family="${FONT}" font-size="21" font-weight="600" letter-spacing="1.5" fill="${INK}">SRIJYA</text>
+  <text x="137" y="105" font-family="${FONT}" font-size="11" font-weight="500" letter-spacing="4.6" fill="${INK_3}">SYSTEMS</text>
 
   <text x="80" y="330" font-family="${FONT}" font-size="78" font-weight="500" letter-spacing="-2.6" fill="${INK}">Technology,</text>
   <text x="80" y="414" font-family="${FONT}" font-size="78" font-weight="500" letter-spacing="-2.6" fill="${INK}">thoughtfully built.</text>
@@ -141,4 +141,4 @@ for (const size of [192, 512]) {
     .toFile(path.join(PUBLIC_DIR, `icon-${size}.png`));
 }
 
-console.log('[techloom] Wrote public/og.png, public/icon-192.png, public/icon-512.png');
+console.log('[srijya] Wrote public/og.png, public/icon-192.png, public/icon-512.png');

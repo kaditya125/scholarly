@@ -4,7 +4,7 @@ import PageHeader from '@/components/PageHeader';
 import TextSection from '@/components/TextSection';
 import { revealProps } from '@/lib/reveal';
 import { useSeo } from '@/lib/useSeo';
-import { COMPANY, SADHYA } from '@/site.config';
+import { brandDiffersFromEntity, COMPANY, SADHYA } from '@/site.config';
 
 /**
  * Company information.
@@ -27,7 +27,8 @@ export default function Company() {
   });
 
   const rows: Array<{ term: string; value: string }> = [
-    { term: 'Registered name', value: COMPANY.name },
+    { term: 'Registered name', value: COMPANY.legalEntity },
+    ...(brandDiffersFromEntity ? [{ term: 'Trading as', value: COMPANY.name }] : []),
     { term: 'Constitution', value: COMPANY.registration.constitution },
     { term: 'Enterprise classification', value: COMPANY.registration.classification },
     { term: 'Udyam registration number', value: COMPANY.registration.udyam },
@@ -66,7 +67,7 @@ export default function Company() {
                 ))}
               </dl>
               <p className="mt-6 text-[0.8125rem] text-ink-3">
-                TechLoom Innovations is registered as a micro enterprise under the Government of
+                {COMPANY.legalEntity} is registered as a micro enterprise under the Government of
                 India&rsquo;s Udyam registration for MSMEs. It is not incorporated as a company
                 and is not GST registered, so it has no CIN or GSTIN to publish.
               </p>
@@ -74,9 +75,9 @@ export default function Company() {
           </div>
         </section>
 
-        <TextSection label="Products" title="Products operated by TechLoom">
+        <TextSection label="Products" title={`Products operated by ${COMPANY.name}`}>
           <p className="body-text">
-            {SADHYA.name} ({SADHYA.domain}) is a product of TechLoom Innovations. Purchases,
+            {SADHYA.name} ({SADHYA.domain}) is a product of {COMPANY.name}. Purchases,
             subscriptions and support for {SADHYA.name} are handled on its own site, under its own
             terms and privacy policy — this website does not sell anything.
           </p>

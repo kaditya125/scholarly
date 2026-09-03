@@ -1,5 +1,5 @@
 /**
- * What TechLoom does.
+ * What Srijya does.
  *
  * One canonical list, used by both the home page (title + summary) and the
  * capabilities page (everything). Keeping it in one place is what stops the two

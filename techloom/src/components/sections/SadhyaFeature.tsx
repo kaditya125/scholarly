@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, ArrowUpRight } from '@/components/Icons';
 import { LoomMark } from '@/components/Logo';
 import { revealProps } from '@/lib/reveal';
-import { SADHYA } from '@/site.config';
+import { COMPANY, SADHYA } from '@/site.config';
 
 /**
  * The flagship product.
@@ -10,8 +10,8 @@ import { SADHYA } from '@/site.config';
  * This is the one section that does not use the site's colour tokens. Sadhya has
  * its own identity — a near-black surface and a lime accent — and the point of
  * the section is that the visitor can see it is a different brand living inside
- * TechLoom's neutral page. Hard-coding those colours is what makes the panel
- * read as "another brand, our product" rather than as another TechLoom section,
+ * Srijya's neutral page. Hard-coding those colours is what makes the panel
+ * read as "another brand, our product" rather than as another Srijya section,
  * and it keeps the panel identical in light and dark mode, which is how Sadhya
  * actually presents itself.
  *
@@ -41,7 +41,7 @@ export default function SadhyaFeature() {
 
               <p className="mt-3 inline-flex items-center gap-2 text-[0.8125rem] text-white/55">
                 <LoomMark size={15} className="text-white/70" />
-                A TechLoom product
+                A {COMPANY.name} product
               </p>
 
               <p className="mt-7 max-w-[46ch] text-[1.0313rem] leading-relaxed text-white/70">

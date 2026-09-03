@@ -169,7 +169,7 @@ export default function ProductSadhya() {
               <h2 className="display-3 max-w-[18ch]">See it for yourself.</h2>
               <p className="body-text mt-6 max-w-[52ch]">
                 Sadhya runs at {SADHYA.domain}. It has its own brand, its own site and its own
-                terms — this page is TechLoom&rsquo;s account of building it.
+                terms — this page is {COMPANY.name}&rsquo;s account of building it.
               </p>
               <div className="mt-9">
                 <a

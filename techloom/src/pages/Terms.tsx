@@ -28,7 +28,7 @@ export default function Terms() {
       <div className="container-tl">
         <TextSection label="01" title="Who these terms are with" size="small">
           <p className="body-text">
-            This website is operated by {COMPANY.name}, a proprietorship registered in India
+            This website is operated by {COMPANY.legalEntity}, a proprietorship registered in India
             (Udyam {COMPANY.registration.udyam}). Using the site means accepting the terms on this
             page.
           </p>
@@ -53,9 +53,9 @@ export default function Terms() {
 
         <TextSection label="04" title="Content and marks" size="small">
           <p className="body-text">
-            The text, design, code and graphics on this site belong to {COMPANY.name} unless
+            The text, design, code and graphics on this site belong to {COMPANY.legalEntity} unless
             stated otherwise. You are welcome to read, quote and link to it. Reproducing
-            substantial parts of it, or using the TechLoom or {SADHYA.name} names and marks in a
+            substantial parts of it, or using the {COMPANY.name} or {SADHYA.name} names and marks in a
             way that suggests association or endorsement, requires our permission.
           </p>
         </TextSection>

@@ -1,10 +1,10 @@
-# TechLoom Innovations — corporate website
+# Srijya — corporate website
 
-The public site for **TechLoom Innovations**, the parent company. Sadhya
+The public site for **Srijya**, the parent company. Sadhya
 (`sadhya.app`) is presented here as its flagship product, not as the company.
 
 ```
-TechLoom Innovations          ← this site
+Srijya                        ← this site
 ├── Consulting & engineering   /capabilities
 └── Product studio             /products
     └── Sadhya                 /products/sadhya → sadhya.app
@@ -17,7 +17,7 @@ TechLoom Innovations          ← this site
 It sits beside `frontend/` (the Sadhya product SPA) rather than inside it, for two
 reasons:
 
-1. **Brand.** TechLoom reads neutral and corporate; Sadhya has its own, more
+1. **Brand.** Srijya reads neutral and corporate; Sadhya has its own, more
    expressive identity. Sharing a bundle would mean sharing a design system, a
    theme root and a favicon — and the whole point of the Sadhya section on the home
    page is that you can see it is a different brand.
@@ -118,11 +118,17 @@ Copy that is longer than a line lives in `src/content/`.
 
 ### Before launch
 
-- [x] `SITE_URL` — `https://techloom.sadhya.app`, set in `.env.production`.
-- [ ] DNS: a CNAME or A record for `techloom.sadhya.app` pointing at wherever the
-      site is hosted, plus a TLS certificate covering that name.
+- [ ] **Register `srijya.in`.** Verified available, not yet bought. `SITE_URL`
+      in `.env.production` already names it, so the build is correct the moment
+      the domain is.
+- [ ] DNS: an A or CNAME record for `srijya.in` pointing at wherever the site is
+      hosted, plus a TLS certificate covering that name.
+- [ ] Trademark: search ipindia.gov.in for "Srijya" in classes 42 and 41 before
+      filing anything. Srijay Software Solutions Pvt Ltd (Hyderabad, IT services)
+      is phonetically close, and Indian trademark law weighs deceptive
+      similarity within a class.
 - [ ] `COMPANY.email` in `src/site.config.ts` — currently the entity's existing
-      monitored inbox (`support@sadhya.app`). Replace it with a TechLoom-domain
+      monitored inbox (`support@sadhya.app`). Replace it with a Srijya-domain
       address once mail is configured for one, or set it to `''` to hide the email
       row site-wide.
 - [ ] `COMPANY.social` is an empty array. Add entries only for profiles that exist;

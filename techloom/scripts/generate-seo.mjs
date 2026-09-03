@@ -68,7 +68,7 @@ const raw = resolveSiteUrl();
 
 if (!raw) {
   console.warn(
-    '\n[techloom] SITE_URL is not set — dist/robots.txt and dist/sitemap.xml were not written.\n' +
+    '\n[srijya] SITE_URL is not set — dist/robots.txt and dist/sitemap.xml were not written.\n' +
       '           Production deploy: SITE_URL=https://your-domain npm run build\n'
   );
   process.exit(0);
@@ -99,4 +99,4 @@ Sitemap: ${origin}/sitemap.xml
 await writeFile(path.join(DIST, 'sitemap.xml'), sitemap, 'utf8');
 await writeFile(path.join(DIST, 'robots.txt'), robots, 'utf8');
 
-console.log(`[techloom] Wrote dist/sitemap.xml (${ROUTES.length} routes) and dist/robots.txt for ${origin}`);
+console.log(`[srijya] Wrote dist/sitemap.xml (${ROUTES.length} routes) and dist/robots.txt for ${origin}`);

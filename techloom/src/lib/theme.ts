@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 export type Theme = 'light' | 'dark';
 
-const STORAGE_KEY = 'techloom-theme';
+const STORAGE_KEY = 'srijya-theme';
 
 /** What the page is actually showing right now, including the system default. */
 function resolveTheme(): Theme {

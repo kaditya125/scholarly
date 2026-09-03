@@ -1,15 +1,16 @@
 import SectionHeading from '@/components/SectionHeading';
 import { PRINCIPLES } from '@/content/approach';
+import { COMPANY } from '@/site.config';
 import { revealProps } from '@/lib/reveal';
 
-/** Why TechLoom, expressed as three commitments rather than three adjectives. */
+/** Why Srijya, expressed as three commitments rather than three adjectives. */
 export default function Principles() {
   return (
     <section className="section bg-paper-2" aria-labelledby="principles-heading">
       <div className="container-tl">
         <SectionHeading
           id="principles-heading"
-          label="Why TechLoom"
+          label={`Why ${COMPANY.name}`}
           title="Built with intent."
           lede="Three things we hold to, on every engagement and in our own products."
         />

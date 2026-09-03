@@ -19,13 +19,13 @@ import { defineConfig, loadEnv, type HtmlTagDescriptor, type Plugin } from 'vite
  */
 function seoMeta(siteUrl: string): Plugin {
   return {
-    name: 'techloom-seo-meta',
+    name: 'srijya-seo-meta',
     transformIndexHtml: {
       order: 'post',
       handler() {
         if (!siteUrl) {
           console.warn(
-            '\n[techloom] SITE_URL is not set — canonical, og:url, og:image and the\n' +
+            '\n[srijya] SITE_URL is not set — canonical, og:url, og:image and the\n' +
               '           Organization JSON-LD were left out of index.html.\n' +
               '           Set it before a production deploy: SITE_URL=https://example.com npm run build\n'
           );
@@ -39,11 +39,14 @@ function seoMeta(siteUrl: string): Plugin {
         const organization = {
           '@context': 'https://schema.org',
           '@type': 'Organization',
-          name: 'TechLoom Innovations',
+          name: 'Srijya',
+          /* The registered entity, which is not yet the brand. Mirrors
+             COMPANY.legalEntity in src/site.config.ts — change both together. */
+          legalName: 'TechLoom Innovations',
           url: `${origin}/`,
           logo: `${origin}/icon-512.png`,
           description:
-            'TechLoom Innovations is a technology and digital solutions company building practical software, digital products and technology experiences.',
+            'Srijya is a technology and digital solutions company building practical software, digital products and technology experiences.',
           foundingDate: '2024-06-30',
           address: { '@type': 'PostalAddress', addressCountry: 'IN' },
           owns: {
@@ -87,12 +90,12 @@ function seoMeta(siteUrl: string): Plugin {
 }
 
 /**
- * TechLoom Innovations — corporate site.
+ * Srijya — corporate site.
  *
  * Deliberately a separate Vite app from `frontend/` (the Sadhya product SPA) rather
  * than a route inside it. Two reasons:
  *
- *  1. Brand. TechLoom is the parent company and reads as neutral and corporate;
+ *  1. Brand. Srijya is the parent company and reads as neutral and corporate;
  *     Sadhya is a product with its own, more expressive identity. Sharing a bundle
  *     would mean sharing a design system, a theme root and a favicon.
  *  2. Weight. The Sadhya app ships auth, Firebase, KaTeX, charts and a router with
