@@ -10,6 +10,9 @@ import Company from '@/pages/Company';
 import Contact from '@/pages/Contact';
 import Help from '@/pages/Help';
 import Home from '@/pages/Home';
+import InsightArticle from '@/pages/InsightArticle';
+import Insights from '@/pages/Insights';
+import { hasInsights } from '@/content/insights';
 import { hasShipped } from '@/content/shipped';
 import { hasTeam } from '@/content/team';
 import NotFound from '@/pages/NotFound';
@@ -146,6 +149,12 @@ function Shell() {
           {/* Same gate as /team: no entries, no page. */}
           {hasShipped ? <Route path="/shipped" element={<Shipped />} /> : null}
           <Route path="/security" element={<Security />} />
+          {hasInsights ? (
+            <>
+              <Route path="/insights" element={<Insights />} />
+              <Route path="/insights/:slug" element={<InsightArticle />} />
+            </>
+          ) : null}
           <Route path="/start" element={<StartWithYourIdea />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/company" element={<Company />} />
