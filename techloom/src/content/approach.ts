@@ -22,21 +22,31 @@ export const APPROACH = [
   },
 ] as const;
 
-/** The three commitments the work is judged against. */
+/**
+ * How Srijya thinks — the commitments the work is judged against.
+ *
+ * Four, not three: responsibility was added when AI became a real part of what
+ * gets built. A principle that only appears once it is convenient is not one.
+ */
 export const PRINCIPLES = [
   {
     index: '01',
     title: 'Clarity',
-    body: 'We simplify complex technology decisions and focus on what matters. A recommendation you cannot explain to your own team is not finished.',
+    body: 'Understand the problem before choosing the technology. A recommendation you cannot explain to your own team is not finished, and a decision made before the problem is understood is a guess wearing a roadmap.',
   },
   {
     index: '02',
     title: 'Practicality',
-    body: 'We build solutions around real needs rather than technology for its own sake. The interesting choice and the right choice are often not the same one.',
+    body: 'Build what creates real value, not technology for its own sake. The interesting choice and the right choice are often not the same one, and only one of them is still working in two years.',
   },
   {
     index: '03',
     title: 'Continuity',
-    body: 'We think beyond launch — designing systems and products that can be handed over, extended and changed without being rebuilt.',
+    body: 'Products should keep evolving after launch. Most of a system’s life happens after the first release, so it is designed to be handed over, extended and changed without being rebuilt.',
+  },
+  {
+    index: '04',
+    title: 'Responsibility',
+    body: 'Technology, and AI in particular, should be built thoughtfully. That means knowing where a system can be wrong, saying so, and designing the step that catches it — not asserting confidence the software has not earned.',
   },
 ] as const;
