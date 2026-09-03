@@ -45,7 +45,7 @@ Other scripts:
 | `npm run typecheck` | `tsc --noEmit` (also aliased as `npm run lint`)              |
 | `npm run og`        | Regenerates `public/og.png` and the app icons from SVG       |
 
-`.claude/launch.json` has a `techloom` entry, so the browser preview can start it
+`.claude/launch.json` has a `srijya` entry, so the browser preview can start it
 by name.
 
 ## Deploying
