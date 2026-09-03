@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- TechLoom Innovations. A plain weave: two warp threads, two weft, each with a
+       break where it passes underneath. Same mark as the navigation lockup, drawn
+       heavier so it survives a 16px tab. -->
+  <rect width="32" height="32" rx="7" fill="#14161a"/>
+  <g stroke="#fbfaf8" stroke-width="2.4" stroke-linecap="square" fill="none">
+    <path d="M12 6v12.2M12 23.8V26"/>
+    <path d="M20 6v2.2M20 13.8V26"/>
+    <path d="M6 11h3.2M14.8 11H26"/>
+    <path d="M6 21h11.2M22.8 21H26"/>
+  </g>
+</svg>

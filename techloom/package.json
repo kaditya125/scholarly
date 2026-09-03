@@ -1,0 +1,30 @@
+{
+  "name": "techloom-site",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Corporate website for TechLoom Innovations — the parent company behind Sadhya.",
+  "scripts": {
+    "dev": "vite --port 4300",
+    "build": "vite build && node scripts/generate-seo.mjs",
+    "preview": "vite preview --port 4300",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "og": "node scripts/generate-og.mjs"
+  },
+  "dependencies": {
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
+    "react-router-dom": "^7.18.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.14",
+    "@types/node": "^22.14.0",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^5.0.4",
+    "tailwindcss": "^4.1.14",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.3"
+  }
+}

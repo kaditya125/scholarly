@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <meta name="theme-color" content="#fbfaf8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0d0e11" media="(prefers-color-scheme: dark)" />
+
+    <title>TechLoom Innovations | Technology &amp; Digital Solutions</title>
+    <meta
+      name="description"
+      content="TechLoom Innovations builds practical digital products, software solutions and technology experiences."
+    />
+    <meta name="robots" content="index, follow" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="TechLoom Innovations" />
+    <meta property="og:title" content="TechLoom Innovations | Technology &amp; Digital Solutions" />
+    <meta
+      property="og:description"
+      content="TechLoom Innovations builds practical digital products, software solutions and technology experiences."
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="TechLoom Innovations — technology, thoughtfully built." />
+    <meta property="og:locale" content="en_IN" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="TechLoom Innovations | Technology &amp; Digital Solutions" />
+    <meta
+      name="twitter:description"
+      content="TechLoom Innovations builds practical digital products, software solutions and technology experiences."
+    />
+
+    <!--
+      Absolute-URL metadata (canonical, og:url, og:image, and the Organization
+      JSON-LD) is injected at build time by the `seoMeta` plugin in vite.config.ts,
+      and only when SITE_URL is set. A canonical tag pointing at a guessed domain is
+      worse than no canonical tag, so nothing is hard-coded here.
+    -->
+
+    <script>
+      /* Theme, resolved before first paint so there is no flash of the wrong one.
+         No stored preference means no attribute, which leaves the decision to the
+         prefers-color-scheme media query in styles.css. */
+      (function () {
+        try {
+          var t = localStorage.getItem('techloom-theme');
+          if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {
+          /* Storage can throw in private mode; the media query still applies. */
+        }
+      })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- One variable family, one request. `swap` so text is never invisible. -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..700&display=swap"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
