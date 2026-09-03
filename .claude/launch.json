@@ -17,18 +17,18 @@
       "port": 8080
     },
     {
-      "name": "techloom",
+      "name": "srijya",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
-      "cwd": "techloom",
+      "cwd": "srijya",
       "url": "http://localhost:4300",
       "port": 4300
     },
     {
-      "name": "techloom-dist",
+      "name": "srijya-dist",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "preview"],
-      "cwd": "techloom",
+      "cwd": "srijya",
       "url": "http://localhost:4301",
       "port": 4301
     }
