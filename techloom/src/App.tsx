@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
+import AskSrijya from '@/components/AskSrijya';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/Navbar';
 import { useRevealObserver } from '@/lib/reveal';
@@ -7,6 +8,7 @@ import About from '@/pages/About';
 import CapabilitiesPage from '@/pages/CapabilitiesPage';
 import Company from '@/pages/Company';
 import Contact from '@/pages/Contact';
+import Help from '@/pages/Help';
 import Home from '@/pages/Home';
 import NotFound from '@/pages/NotFound';
 import Privacy from '@/pages/Privacy';
@@ -132,6 +134,7 @@ function Shell() {
           <Route path="/capabilities" element={<CapabilitiesPage />} />
           <Route path="/products" element={<Products />} />
           <Route path="/products/sadhya" element={<ProductSadhya />} />
+          <Route path="/help" element={<Help />} />
           <Route path="/start" element={<StartWithYourIdea />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/company" element={<Company />} />
@@ -141,6 +144,7 @@ function Shell() {
         </Routes>
       </main>
       <Footer />
+      <AskSrijya />
     </>
   );
 }
