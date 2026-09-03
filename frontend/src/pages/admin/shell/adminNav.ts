@@ -69,7 +69,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     domain: 'student',
     items: [
       { path: 'billing', label: 'Revenue', title: 'Revenue', icon: 'IndianRupee', minRole: ['super_admin', 'admin'] },
-      { path: 'billing/subscriptions', label: 'Subscriptions', title: 'Subscriptions', icon: 'RefreshCw', minRole: ['super_admin', 'admin'], planned: true },
+      { path: 'billing/subscriptions', label: 'Subscriptions', title: 'Subscriptions', icon: 'RefreshCw', minRole: ['super_admin', 'admin'] },
       { path: 'billing/payments', label: 'Payments', title: 'Payments', icon: 'CreditCard', minRole: ['super_admin', 'admin'] },
     ],
   },
