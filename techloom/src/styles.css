@@ -552,3 +552,47 @@ textarea.field-input {
   font-size: 0.875rem;
   font-weight: 600;
 }
+
+/* ── Choice chips ────────────────────────────────────────────────────────────
+   The selectable answers in the project discovery flow.
+
+   The real <input> stays in the DOM and is only visually hidden, so arrow-key
+   navigation within a radio group, the checked state and the accessible name
+   all come from the browser. This class styles the sibling that is actually
+   seen; the focus ring is applied by the caller via `peer-focus-visible`,
+   because a visually hidden input cannot show one itself.
+
+   Selection is marked by fill and weight, never by colour alone. */
+.choice-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-line-2);
+  border-radius: 3px;
+  font-size: 0.9375rem;
+  color: var(--color-ink-2);
+  background: transparent;
+  transition:
+    border-color 0.25s ease,
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+.choice-chip:hover {
+  border-color: var(--color-ink-3);
+  color: var(--color-ink);
+}
+
+.peer:checked + .choice-chip {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: var(--color-paper);
+  font-weight: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .choice-chip {
+    transition: none;
+  }
+}

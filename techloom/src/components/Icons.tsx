@@ -35,6 +35,15 @@ export function ArrowRight({ className, size = 16 }: IconProps) {
   );
 }
 
+export function ArrowLeft({ className, size = 16 }: IconProps) {
+  return (
+    <svg {...base(size)} className={className}>
+      <path d="M20 12H5" />
+      <path d="m11 18-6-6 6-6" />
+    </svg>
+  );
+}
+
 export function ArrowUpRight({ className, size = 16 }: IconProps) {
   return (
     <svg {...base(size)} className={className}>

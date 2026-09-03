@@ -12,6 +12,7 @@ import NotFound from '@/pages/NotFound';
 import Privacy from '@/pages/Privacy';
 import ProductSadhya from '@/pages/ProductSadhya';
 import Products from '@/pages/Products';
+import StartWithYourIdea from '@/pages/StartWithYourIdea';
 import Terms from '@/pages/Terms';
 
 /*
@@ -131,6 +132,7 @@ function Shell() {
           <Route path="/capabilities" element={<CapabilitiesPage />} />
           <Route path="/products" element={<Products />} />
           <Route path="/products/sadhya" element={<ProductSadhya />} />
+          <Route path="/start" element={<StartWithYourIdea />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/company" element={<Company />} />
           <Route path="/privacy" element={<Privacy />} />
