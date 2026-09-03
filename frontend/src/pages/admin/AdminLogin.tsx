@@ -56,11 +56,16 @@ export default function AdminLogin() {
     setError(null);
     setNotAnAdmin(false);
     setSubmitting(true);
+    /*
+     * Authentication and everything after it are reported separately, because they fail for
+     * unrelated reasons and only the first is about the credential.
+     *
+     * These were one try/catch. A refreshClaims() failure — a network blip, a slow token mint —
+     * therefore told the operator "Those credentials were not accepted" when Firebase had just
+     * accepted them, sending them off to reset a password that was never wrong.
+     */
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      // The claim lives on the token, not the credential — force a refresh before reading.
-      await refreshClaims();
-      navigate(from && from.startsWith('/admin') ? from : '/admin', { replace: true });
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code ?? '';
       // Deliberately identical copy for wrong-password and unknown-account: distinguishing
@@ -70,6 +75,24 @@ export default function AdminLogin() {
           ? 'Too many attempts. Wait a moment and try again.'
           : 'Those credentials were not accepted.',
       );
+      setSubmitting(false);
+      return;
+    }
+
+    /*
+     * Past this point the credential was accepted and the session exists. Anything failing here
+     * is a post-authentication fault, so it must not be described as a credential problem — and
+     * it is recoverable by retrying rather than by changing anything about the account.
+     *
+     * No account-existence concern applies now: the caller has already proved they hold this
+     * account, so a specific message leaks nothing.
+     */
+    try {
+      // The claim lives on the token, not the credential — force a refresh before reading.
+      await refreshClaims();
+      navigate(from && from.startsWith('/admin') ? from : '/admin', { replace: true });
+    } catch {
+      setError('Signed in, but your administrator role could not be read. Check your connection and try again.');
     } finally {
       setSubmitting(false);
     }
