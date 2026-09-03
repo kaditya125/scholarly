@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import Razorpay from 'razorpay';
+import * as admin from 'firebase-admin';
 import { db } from '../config/firebase';
 import { env } from '../config/env';
 import { classRepository } from '../repositories/class.repository';
@@ -594,6 +595,18 @@ export class PaymentsService {
           currentPeriodEnd: now + periodMs,
           provider: 'razorpay',
           source,
+          // This is `{merge: true}` at the document level, and Firestore's merge is
+          // recursive into nested maps — it only overwrites the sub-fields listed here,
+          // it does not clear ones it wasn't told about. Without these three, a refund
+          // from a PRIOR subscription cycle (refundedAt/cancelledAt/refundId, written by
+          // the refund handlers below) survives untouched on a fresh reactivation,
+          // producing a subscription that reads as both 'active' and 'refunded' at once.
+          // evaluateEntitlement() ignores these fields, so nothing was ever granted or
+          // denied access incorrectly from this — it is a data-hygiene bug, not a security
+          // one — but anyone reading the raw record sees a contradiction that isn't real.
+          refundedAt: admin.firestore.FieldValue.delete(),
+          cancelledAt: admin.firestore.FieldValue.delete(),
+          refundId: admin.firestore.FieldValue.delete(),
         },
       }, { merge: true });
 
