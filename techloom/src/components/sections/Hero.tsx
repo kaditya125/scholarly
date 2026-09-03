@@ -4,12 +4,16 @@ import LoomField from '@/components/LoomField';
 import { revealProps } from '@/lib/reveal';
 import { COMPANY } from '@/site.config';
 
-/** The four areas the company works across. Read as positioning, not as a menu. */
+/**
+ * The four areas the company works across. Read as positioning, not as a menu —
+ * the full list lives in src/content/capabilities.ts, and this is deliberately
+ * shorter than it. Four labels on a hairline scan; six become a table.
+ */
 const PILLARS = [
-  'Technology consulting',
-  'Digital product engineering',
-  'Software solutions',
-  'Emerging technology',
+  'Product engineering',
+  'Software development',
+  'Applied AI',
+  'Product design',
 ];
 
 export default function Hero() {
@@ -27,12 +31,13 @@ export default function Hero() {
               className="display-1 mt-6 max-w-[15ch]"
               {...revealProps(60)}
             >
-              From complex ideas to useful technology.
+              From ideas to real technology.
             </h1>
 
             <p className="lede mt-8 max-w-[54ch]" {...revealProps(120)}>
-              Srijya is a technology and digital solutions company focused on
-              building practical software, digital products and technology experiences.
+              Srijya is a technology and product engineering company helping
+              organisations turn complex ideas into practical digital products,
+              applications and intelligent technology experiences.
             </p>
 
             {/* Content-width, left-aligned — a full-bleed pair of buttons on a phone
@@ -43,11 +48,11 @@ export default function Hero() {
               {...revealProps(180)}
             >
               <Link to="/capabilities" className="btn btn-primary">
-                Explore our capabilities
+                Explore what we build
                 <ArrowRight />
               </Link>
               <Link to="/contact" className="btn btn-ghost">
-                Talk to us
+                Have an idea? Let&rsquo;s talk
                 <ArrowRight />
               </Link>
             </div>
