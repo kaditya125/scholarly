@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, ArrowUpRight } from '@/components/Icons';
+import HeaderMotif from '@/components/HeaderMotif';
 import PageHeader from '@/components/PageHeader';
 import ContactCTA from '@/components/sections/ContactCTA';
 import { revealProps } from '@/lib/reveal';
@@ -19,6 +20,7 @@ export default function Products() {
         label="Products"
         title="Building beyond services."
         lede="Alongside client-focused technology work, Srijya develops its own products and experiments with new ways technology can solve meaningful problems."
+        aside={<HeaderMotif name="studio" className="mx-auto max-w-[180px] text-accent" />}
       />
 
       {/* The flagship, given the whole width it deserves. */}
@@ -26,15 +28,40 @@ export default function Products() {
         <div className="grid gap-10 lg:grid-cols-12 lg:gap-14" {...revealProps()}>
           <div className="lg:col-span-6">
             <Link to="/products/sadhya" className="group block">
-              <div className="overflow-hidden rounded-[5px] border border-line bg-[#0f1013] transition-transform duration-500 ease-out group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0">
+              <div className="overflow-hidden rounded-[5px] border border-line bg-surface shadow-[0_16px_40px_-20px_rgba(0,0,0,0.3)] transition-transform duration-500 ease-out group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0">
+                <div className="flex items-center gap-3 border-b border-line bg-surface px-4 py-2.5">
+                  <span aria-hidden="true" className="flex gap-1.5">
+                    <span className="h-[7px] w-[7px] rounded-full bg-ink-4" />
+                    <span className="h-[7px] w-[7px] rounded-full bg-ink-4" />
+                    <span className="h-[7px] w-[7px] rounded-full bg-ink-4" />
+                  </span>
+                  <span className="flex min-w-0 flex-1 items-center gap-2 rounded-[3px] bg-canvas px-3 py-1 text-ink-3">
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      className="shrink-0 text-ink-4"
+                      aria-hidden="true"
+                    >
+                      <rect x="4" y="10" width="16" height="11" rx="2" />
+                      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                    </svg>
+                    <span className="truncate font-mono text-[0.6875rem] tracking-[0.02em]">
+                      {SADHYA.domain}
+                    </span>
+                  </span>
+                </div>
                 <img
-                  src="/sadhya-og.jpg"
-                  width={1200}
-                  height={630}
+                  src="/sadhya-hero.png"
+                  width={1024}
+                  height={521}
                   loading="lazy"
                   decoding="async"
-                  alt="Sadhya's brand banner: “Every goal, attainable.” — AI-powered prep for UPSC, SSC, JEE, NEET and BPSC."
-                  className="block aspect-[1200/630] w-full object-cover"
+                  alt="Sadhya's live hero landing page: “Ask anything from your syllabus.” — AI-powered exam preparation."
+                  className="block aspect-[1024/521] w-full object-cover"
                 />
               </div>
             </Link>
@@ -62,6 +89,25 @@ export default function Products() {
               client project, which makes it the clearest available answer to what this company
               can design, build and run.
             </p>
+
+            <div className="mt-6 flex flex-wrap gap-2">
+              <span className="rounded-full border border-line bg-surface px-3 py-1 font-mono text-[0.75rem] text-ink-2">
+                TypeScript & React 19
+              </span>
+              <span className="rounded-full border border-line bg-surface px-3 py-1 font-mono text-[0.75rem] text-ink-2">
+                Google Gemini & Vertex AI
+              </span>
+              <span className="rounded-full border border-line bg-surface px-3 py-1 font-mono text-[0.75rem] text-ink-2">
+                Pinecone 768-dim Vector RAG
+              </span>
+              <span className="rounded-full border border-line bg-surface px-3 py-1 font-mono text-[0.75rem] text-ink-2">
+                Real-Time Voice AI
+              </span>
+              <span className="rounded-full border border-line bg-surface px-3 py-1 font-mono text-[0.75rem] text-ink-2">
+                Razorpay Billing & Refunds
+              </span>
+            </div>
+
             <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
               <Link to="/products/sadhya" className="btn btn-primary">
                 How it was built

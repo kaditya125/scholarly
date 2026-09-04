@@ -3,6 +3,7 @@ import type { RefObject } from 'react';
 import { Link } from 'react-router-dom';
 import Field from '@/components/Field';
 import { ArrowLeft, ArrowRight } from '@/components/Icons';
+import HeaderMotif from '@/components/HeaderMotif';
 import PageHeader from '@/components/PageHeader';
 import { BUILDING, DISCOVERY_STEPS, HELP, STAGE } from '@/content/discovery';
 import type { ChoiceQuestion } from '@/content/discovery';
@@ -142,7 +143,7 @@ export default function StartWithYourIdea() {
               ? 'A person reads it. If it is something we can help with, you will hear back with questions about the problem rather than a proposal.'
               : 'Your mail client is open with the brief composed. Nothing has been sent until you send it.'
           }
-        />
+      />
         <div className="container-tl py-16">
           <Link to="/" className="link-arrow">
             Back to the home page
@@ -165,6 +166,7 @@ export default function StartWithYourIdea() {
         label="Start with your idea"
         title="Tell us what you're trying to build."
         lede={"Five short questions. There are no wrong answers, and “not sure yet” is one of them."}
+        aside={<HeaderMotif name="transform" className="mx-auto max-w-[180px] text-accent" />}
       />
 
       <div className="container-tl py-14 md:py-20">
