@@ -47,6 +47,7 @@ import { api } from "../lib/api/client";
 import { useAdaptiveAssessment } from "../hooks/api/useAdaptiveAssessment";
 import { OnboardingChecklist } from "../components/dashboard/OnboardingChecklist";
 import { LearningVelocityWidget } from "../components/dashboard/LearningVelocityWidget";
+import { FocusAreasWidget } from "../components/dashboard/FocusAreasWidget";
 import { AiRecommendedDrills } from "../components/dashboard/AiRecommendedDrills";
 import { AchievementsMilestones } from "../components/dashboard/AchievementsMilestones";
 
@@ -493,6 +494,10 @@ export default function StudentDashboard() {
         >
           <LearningVelocityWidget />
         </motion.div>
+
+        {/* 6b. Focus Areas — evidence-graded from MasteryEngine + quiz history, distinct from the
+             heuristic recommendations below: nothing here appears without enough graded evidence. */}
+        <FocusAreasWidget />
 
         {/* 7. AI-Recommended Tests (Dynamic & Adaptive to Student Course & Subjects) */}
         <motion.div 
