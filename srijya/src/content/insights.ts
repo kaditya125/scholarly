@@ -40,6 +40,97 @@ export type Insight = {
 
 export const INSIGHTS: Insight[] = [
   {
+    slug: 'we-gave-the-model-a-workflow-engine-not-a-keyboard',
+    title: 'We gave the model a workflow engine, not a keyboard',
+    standfirst:
+      'Everyone grades agentic AI by how much reasoning it does. The question that decides whether you can sleep is a different one: what can it actually reach?',
+    published: 'September 2026',
+    blocks: [
+      {
+        kind: 'p',
+        text: 'There is a ladder that appears in almost every discussion of agentic AI. Level one assists. Level two acts on a single step. Level three chains steps together. Level four plans. Level five runs unsupervised. It is a tidy framing and we think it measures the wrong thing.',
+      },
+      {
+        kind: 'p',
+        text: 'It grades a system on how much reasoning happens before an action. What determines whether that system is safe to run is the action itself — specifically, the set of things it is physically able to do. A model that plans elaborately and can only send one kind of notification is far less dangerous than a shallow one holding a database credential.',
+      },
+      { kind: 'h', text: 'The axis we actually care about' },
+      {
+        kind: 'p',
+        text: 'So the question we ask of anything agentic is not how many levels of planning it does. It is: what is the worst thing this can do without a human involved?',
+      },
+      {
+        kind: 'p',
+        text: 'That reframing has a practical consequence. It moves the design effort away from prompt engineering and toward the boundary — what the system can reach, and how that set is defined.',
+      },
+      { kind: 'h', text: 'What we built' },
+      {
+        kind: 'p',
+        text: 'Inside Sadhya there is an automation engine. Domain events flow into it — a quiz gets completed, a mastery threshold gets crossed — and workflows run in response. Some of those workflows call a language model. It is agentic by any reasonable definition: it observes, decides and acts without a person in the loop.',
+      },
+      {
+        kind: 'p',
+        text: 'The part that matters is that it composes from a registry. Every action it can take is a typed node that somebody wrote, reviewed and registered: nodes for assessment, for data, for messaging, for mastery, for control flow. The engine can arrange those nodes. It cannot invent one.',
+      },
+      {
+        kind: 'p',
+        text: 'This is a deliberate limitation and it is the whole design. A registered node has a signature, a test, and a known blast radius. When something misbehaves, the question is which node ran with what input — not what the model decided to try.',
+      },
+      { kind: 'h', text: 'The alternative, and why we did not take it' },
+      {
+        kind: 'p',
+        text: 'The fashionable approach is to hand a model a set of tools and let it work out the sequence — often tools that are thin wrappers over an API or a shell. It is genuinely more flexible, and demos beautifully.',
+      },
+      {
+        kind: 'p',
+        text: 'The cost is that your action space becomes "whatever that API permits", which is almost never what you meant. You will not enumerate it, you cannot test it, and the first time you fully understand it is while reading logs after something happened. Flexibility at the tool layer is flexibility in the failure modes too, and those you inherit whether you wanted them or not.',
+      },
+      {
+        kind: 'quote',
+        text: 'An action space you cannot enumerate is one you cannot review. If nobody can list what the system is able to do, nobody can say what it should not.',
+      },
+      { kind: 'h', text: 'Where the determinism goes' },
+      {
+        kind: 'p',
+        text: 'A useful pattern has emerged from building this: put the model where judgement is genuinely required, and keep everything downstream of that judgement deterministic.',
+      },
+      {
+        kind: 'p',
+        text: 'Deciding that a student has misunderstood a concept is a judgement call, and a model is good at it. Deciding what happens next — which content is surfaced, what is recorded, whether a message is sent — is a rule. Rules can be read, tested and changed by someone who was not there when they were written. Pushing that decision into the model buys nothing and costs you the ability to explain the outcome.',
+      },
+      {
+        kind: 'p',
+        text: 'The same shape appears on this website. The assistant retrieves and phrases; whether it is allowed to answer at all is a deterministic gate that runs first. The interesting reasoning sits inside a boundary that does not reason.',
+      },
+      { kind: 'h', text: 'The honest trade' },
+      {
+        kind: 'p',
+        text: 'This approach is less capable in the short term. There are things a free-form agent would handle that ours cannot, because nobody has written the node yet. When a new capability is needed, someone writes and reviews it — which is slower than a model improvising, and that is the point rather than a limitation we plan to remove.',
+      },
+      {
+        kind: 'p',
+        text: 'For a product where a wrong action reaches a student preparing for an exam that decides their next several years, we will take that trade every time. For a prototype nobody depends on, we might not. Worth being explicit that this is a judgement about consequences, not a universal law.',
+      },
+      { kind: 'h', text: 'What to ask' },
+      {
+        kind: 'p',
+        text: 'If you are evaluating an agentic system — yours or someone else’s — the levels ladder will not tell you much. Three questions will.',
+      },
+      {
+        kind: 'list',
+        items: [
+          'Can someone list everything this system is able to do, without reading a model prompt?',
+          'What is the worst of those things, and what stands between it and a user?',
+          'When it does something unexpected, will the logs say which action ran, or only what the model said?',
+        ],
+      },
+      {
+        kind: 'p',
+        text: 'If the answers are uncomfortable, the fix is rarely a better prompt. It is a smaller, more explicit set of things the system can reach.',
+      },
+    ],
+  },
+  {
     slug: 'what-to-do-when-the-model-provider-says-no',
     title: 'What to do when the model provider says no',
     standfirst:
