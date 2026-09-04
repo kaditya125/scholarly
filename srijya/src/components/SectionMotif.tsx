@@ -28,7 +28,14 @@
  * nothing that fails to fire can subtract the shape.
  */
 
-export type MotifName = 'process' | 'build' | 'technology' | 'measure';
+export type MotifName =
+  | 'process'
+  | 'build'
+  | 'technology'
+  | 'measure'
+  | 'studio'
+  | 'converge'
+  | 'transform';
 
 export default function SectionMotif({
   name,
@@ -84,6 +91,38 @@ export default function SectionMotif({
           <circle cx="12" cy="6.5" r="1.6" className="motif-node motif-node-1" />
           <circle cx="6" cy="17.5" r="1.6" className="motif-node motif-node-2" />
           <circle cx="18" cy="17.5" r="1.6" className="motif-node motif-node-3" />
+        </>
+      ) : null}
+
+      {name === 'studio' ? (
+        <>
+          {/* A frame with something of our own inside it. The frame draws
+              first — you build the place before the thing that lives in it. */}
+          <path d="M4.5 6.5h15v11h-15z" className="motif-edge" pathLength={1} />
+          <circle cx="12" cy="12" r="2.1" className="motif-node motif-node-1" />
+        </>
+      ) : null}
+
+      {name === 'converge' ? (
+        <>
+          {/* Separate considerations resolving into one decision. Three strokes
+              in, one node where they meet — which is what the section claims
+              the company does before choosing a technology. */}
+          <path d="M3.5 6.5 10.4 11" className="motif-edge" pathLength={1} />
+          <path d="M3.5 17.5 10.4 13" className="motif-edge motif-edge-2" pathLength={1} />
+          <path d="M20.5 12h-6.4" className="motif-edge motif-edge-3" pathLength={1} />
+          <circle cx="12" cy="12" r="1.8" className="motif-node motif-node-1" />
+        </>
+      ) : null}
+
+      {name === 'transform' ? (
+        <>
+          {/* Idea to product, literally: a point becomes a made thing. The
+              section beside it says the same in two words and a rule. */}
+          <circle cx="4.8" cy="12" r="1.7" className="motif-node motif-node-1" />
+          <path d="M8.4 12h5.2" className="motif-edge" pathLength={1} />
+          <path d="M11.9 9.9 14 12l-2.1 2.1" className="motif-edge motif-edge-2" pathLength={1} />
+          <path d="M16.4 8.9h3.9v6.2h-3.9z" className="motif-edge motif-edge-3" pathLength={1} />
         </>
       ) : null}
 
