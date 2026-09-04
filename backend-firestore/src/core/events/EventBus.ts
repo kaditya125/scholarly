@@ -295,6 +295,12 @@ export class EventBus extends EventEmitter {
    * refused to retry it, because the status said the work was already done. Durable evidence
    * survived, but it was permanently orphaned: exactly the fabricated-state failure this
    * programme exists to eliminate, arriving through a path where nothing downstream could tell.
+   *
+   * UPDATE: the Redis publish attempt below now falls back to local delivery on failure instead
+   * of just returning false — see the comment at that catch block. That closes the gap above at
+   * its source rather than only reporting it: for this single-process deployment, a failed Redis
+   * publish no longer means a lost event, so a caller that never checks the boolean (most don't)
+   * still gets correct delivery, not silent loss.
    */
   async publish<T extends EventType>(
     event: T,
@@ -315,8 +321,34 @@ export class EventBus extends EventEmitter {
       };
 
       if (this.isRedisConnected && this.pubClient) {
-        // Publish to distributed Redis channel
-        await this.pubClient.publish(this.redisChannel, JSON.stringify({ event, payload, meta }));
+        try {
+          // Publish to distributed Redis channel
+          await this.pubClient.publish(this.redisChannel, JSON.stringify({ event, payload, meta }));
+        } catch (redisError: any) {
+          /*
+           * isRedisConnected said yes, but the actual command failed — quota exhaustion
+           * ("ERR max requests limit exceeded", confirmed happening in production) and an idle
+           * socket drop both land here, and isRedisConnected has no way to notice either: it is
+           * only ever reset by close() (see the field's own comment). Falling through to local
+           * delivery, rather than treating this as lost, is what THIS DEPLOYMENT'S topology makes
+           * correct — sadhya-api runs as a single PM2 process (fork mode, not cluster), so this
+           * process's own subscribers ARE the complete set of consumers Redis pub/sub would have
+           * reached anyway. Local delivery here is not a degraded substitute for the distributed
+           * path; for a single-process deployment it is the same delivery.
+           *
+           * This is the mechanism that was silently losing mastery evidence for ordinary quiz/test
+           * completions: quizAttempts.service.ts and resultAnalysis.service.ts publish
+           * fire-and-forget (`void eventBus.publish(...)`), so the honest `false` this method
+           * already returned on a Redis failure was never looked at, and — unlike the one-time
+           * baseline assessment — there is no reconciliation job that replays an ordinary
+           * completed quiz or test, so the loss was permanent and silent. Falling back to local
+           * delivery here closes that gap at its root, for every event type, not just mastery's.
+           */
+          logger.warn(`[EventBus] Redis publish failed for ${event}; delivering to local subscribers instead`, {
+            error: redisError?.message,
+          });
+          await this.executeHandlers(event, payload, meta);
+        }
       } else {
         // Fallback to local execution
         await this.executeHandlers(event, payload, meta);

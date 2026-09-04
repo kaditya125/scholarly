@@ -48,8 +48,15 @@ interface MasteryEvidenceRow {
  * than growing a second implementation. Two copies of this logic would drift on the keying rule,
  * on the skip rule, or on the idempotency scope — and mastery is cumulative, so a drift does not
  * announce itself; it just quietly produces a different number for one path than the other.
+ *
+ * Exported (not just used by the two subscribers below) so a one-off reconciliation script can
+ * replay a completed submission's durable evidence directly — the same shape baselineReconcili
+ * -ation.service.ts already does for the one-time baseline assessment, but ordinary quiz/test
+ * completions have no standing reconciliation job, so a manual replay is the only way to recover
+ * evidence an EventBus failure already lost before EventBus.publish()'s local-delivery fallback
+ * shipped.
  */
-async function applyMasteryEvidence(params: {
+export async function applyMasteryEvidence(params: {
   userId: string;
   subject?: string;
   submissionId?: string;
