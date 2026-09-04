@@ -3,6 +3,10 @@ import { env } from '../../config/env';
 import { withRetry } from '../../utils/retry';
 import { classifyProviderError, isRateLimit } from '../../core/errors/providerErrors';
 import { logger } from '../../utils/logger';
+import { getSecret } from '../runtimeSecrets.service';
+
+/** The effective Gemini key: an admin-rotated override if one is set, else .env. */
+const geminiApiKey = (): string | undefined => getSecret('GEMINI_API_KEY') || env.GEMINI_API_KEY;
 
 /**
  * Central factory for the Google Gen AI SDK client.
@@ -43,7 +47,8 @@ export function createGoogleGenAIClient(): GoogleGenAI {
     });
   }
 
-  if (!env.GEMINI_API_KEY) {
+  const apiKey = geminiApiKey();
+  if (!apiKey) {
     throw new Error(
       'No AI credential configured. Set GEMINI_API_KEY (Developer API) or ' +
       'GOOGLE_GENAI_USE_VERTEXAI=true with GOOGLE_VERTEX_API_KEY (Vertex AI).'
@@ -51,7 +56,7 @@ export function createGoogleGenAIClient(): GoogleGenAI {
   }
   // Explicit vertexai:false so the ambient GOOGLE_GENAI_USE_VERTEXAI env var (which
   // the SDK auto-reads) can't accidentally flip a Developer-API client into Vertex mode.
-  return new GoogleGenAI({ vertexai: false, apiKey: env.GEMINI_API_KEY });
+  return new GoogleGenAI({ vertexai: false, apiKey });
 }
 
 /**
@@ -62,9 +67,10 @@ export function createGoogleGenAIClient(): GoogleGenAI {
  * distinct fallback (not in Vertex mode, or no Developer key configured).
  */
 export function createFallbackGoogleGenAIClient(): GoogleGenAI | null {
-  if (!useVertexAI()) return null;         // primary is already the Developer API
-  if (!env.GEMINI_API_KEY) return null;    // no fallback credential available
-  return new GoogleGenAI({ vertexai: false, apiKey: env.GEMINI_API_KEY });
+  if (!useVertexAI()) return null;   // primary is already the Developer API
+  const apiKey = geminiApiKey();
+  if (!apiKey) return null;          // no fallback credential available
+  return new GoogleGenAI({ vertexai: false, apiKey });
 }
 
 /** True for rate-limit / resource-exhausted errors (429). Also recognizes the typed error. */

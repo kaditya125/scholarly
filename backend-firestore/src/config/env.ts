@@ -33,6 +33,13 @@ const envSchema = z.object({
   PINECONE_NAMESPACE: z.string().default('production'),
   TAVILY_API_KEY: z.string().optional(),
   COHERE_API_KEY: z.string().optional(),
+
+  // Encrypts admin-rotated API-key overrides at rest in Firestore (runtime_secrets — see
+  // services/runtimeSecrets.service.ts). 64 hex characters (32 bytes), generated
+  // once per deployment and never itself manageable through that feature. Absent means the
+  // feature degrades to read-only: existing keys keep working from .env exactly as before,
+  // an admin just can't rotate one through the Settings page yet.
+  SECRETS_ENCRYPTION_KEY: z.string().optional(),
   
   /*
    * Caching / queues.

@@ -1,5 +1,6 @@
 import { Pinecone, RecordMetadata } from '@pinecone-database/pinecone';
 import { env } from '../../config/env';
+import { getSecret } from '../runtimeSecrets.service';
 
 export interface VectorDocument {
   id: string;
@@ -8,21 +9,27 @@ export interface VectorDocument {
 }
 
 export class PineconeService {
-  private client: Pinecone;
   private indexName: string;
 
   constructor() {
-    if (!env.PINECONE_API_KEY) {
-      console.warn('PINECONE_API_KEY is not defined. Vector operations will fail.');
-    }
-    this.client = new Pinecone({
-      apiKey: env.PINECONE_API_KEY || 'dummy_key',
-    });
     this.indexName = env.PINECONE_INDEX_NAME;
   }
 
+  /**
+   * Built fresh on every call rather than cached on `this`. `pineconeService` below is a
+   * module-load-time singleton used everywhere, so caching the client in the constructor
+   * (the previous behaviour) would have baked in whatever PINECONE_API_KEY was effective at
+   * process start for the rest of its life — exactly what an admin rotating the key through
+   * Settings needs to NOT happen. Constructing the SDK wrapper is cheap (no network round
+   * trip; it just holds config until a request is made), so there is no cost to this per call.
+   */
   private getIndex() {
-    return this.client.index(this.indexName);
+    const apiKey = getSecret('PINECONE_API_KEY') || env.PINECONE_API_KEY;
+    if (!apiKey) {
+      console.warn('PINECONE_API_KEY is not defined. Vector operations will fail.');
+    }
+    const client = new Pinecone({ apiKey: apiKey || 'dummy_key' });
+    return client.index(this.indexName);
   }
 
   /**

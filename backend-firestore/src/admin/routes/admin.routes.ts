@@ -20,6 +20,7 @@ import { paymentsController } from '../controllers/payments.controller';
 import { subscriptionsController } from '../controllers/subscriptions.controller';
 import { usageController } from '../controllers/usage.controller';
 import { auditController } from '../controllers/audit.controller';
+import { secretsController } from '../controllers/secrets.controller';
 import { SecurityController } from '../controllers/security.controller';
 import { LogsController } from '../controllers/logs.controller';
 import { NotificationsController } from '../controllers/notifications.controller';
@@ -168,6 +169,16 @@ router.get('/backups', backupsCtrl.getBackups);
 
 // Settings
 router.get('/settings', settingsCtrl.getSettings);
+
+/*
+ * Admin-rotatable third-party API keys (services/runtimeSecrets.service.ts).
+ * requireSuperAdmin — one step stricter than every other route in this file, because a
+ * write here changes which credential the running server authenticates to an external
+ * provider with. GET never returns plaintext; see SecretStatus.
+ */
+router.get('/secrets', requireSuperAdmin, secretsController.list);
+router.post('/secrets/:key', requireSuperAdmin, secretsController.set);
+router.delete('/secrets/:key', requireSuperAdmin, secretsController.clear);
 
 // Teacher verification (Phase 3A).
 //

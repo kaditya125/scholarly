@@ -10,9 +10,17 @@ import { errorHandler } from './middlewares/errorHandler';
 import { bootstrapDI } from './core/di/registry';
 import { checkReadiness } from './lib/health';
 import { isTransientRedisDisconnect } from './utils/redisErrors';
+import { loadRuntimeSecrets } from './services/runtimeSecrets.service';
 
 // Initialize DI container before routing.
 bootstrapDI();
+
+// Repopulate any admin-rotated API-key overrides (services/runtimeSecrets.service.ts)
+// from Firestore. Fire-and-forget and safe to run late: every provider that consults an
+// override resolves it lazily at call time, not at DI-registration time above, so a request
+// served before this resolves simply falls through to .env, same as if this feature were
+// absent.
+void loadRuntimeSecrets();
 
 /*
  * Register domain event subscribers.

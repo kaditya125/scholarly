@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import * as crypto from 'crypto';
-import { env, assertAIEnabled } from '../../../config/env';
+import { assertAIEnabled } from '../../../config/env';
 import { EmbeddingProvider } from '../embedding.provider.interface';
 import { withRetry, withTimeout } from '../../../utils/retry';
 import { cacheService } from '../../cache.service';
@@ -39,16 +39,25 @@ const EMBEDDING_CACHE_MAX_TEXT = Number(process.env.EMBEDDING_CACHE_MAX_TEXT || 
 const EMBEDDING_CACHE_ENABLED = process.env.EMBEDDING_CACHE_DISABLED !== 'true';
 
 export class GoogleEmbeddingProvider implements EmbeddingProvider {
-  private ai: GoogleGenAI;
   private modelName: string;
 
   constructor(modelName: string = 'gemini-embedding-001') {
     this.modelName = modelName;
-    if (!env.GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not defined in environment.');
-    }
+  }
+
+  /**
+   * Built fresh on every call rather than cached on `this` at construction time. This
+   * instance is registered once at boot as the DI-wide EmbeddingProvider singleton
+   * (core/di/registry.ts), so caching the client here would have baked in whatever
+   * GEMINI_API_KEY was effective at that one moment for the lifetime of the process —
+   * exactly what an admin rotating the key through Settings needs to NOT happen.
+   * createGoogleGenAIClient() itself already re-resolves the key on each call (including
+   * an admin-set override — see runtimeSecrets.service.ts) and constructing the SDK
+   * wrapper is cheap (no network round trip), so there is no cost to doing this per call.
+   */
+  private getClient(): GoogleGenAI {
     const { createGoogleGenAIClient } = require('../googleGenAIClient');
-    this.ai = createGoogleGenAIClient();
+    return createGoogleGenAIClient();
   }
 
   /**
@@ -112,7 +121,7 @@ export class GoogleEmbeddingProvider implements EmbeddingProvider {
     // Resilience: 20s timeout + retry with backoff on transient errors.
     const response: any = await withRetry(
       () => withTimeout(
-        this.ai.models.embedContent({
+        this.getClient().models.embedContent({
           model: this.modelName,
           contents: text,
           config: { outputDimensionality: EMBEDDING_DIM },
