@@ -3,6 +3,7 @@ import Capabilities from '@/components/sections/Capabilities';
 import ContactCTA from '@/components/sections/ContactCTA';
 import EngineeringPrinciples from '@/components/sections/EngineeringPrinciples';
 import Hero from '@/components/sections/Hero';
+import LatestWriting from '@/components/sections/LatestWriting';
 import IdeaToProduct from '@/components/sections/IdeaToProduct';
 import Positioning from '@/components/sections/Positioning';
 import Principles from '@/components/sections/Principles';
@@ -22,6 +23,7 @@ import { COMPANY } from '@/site.config';
  *   the invitation have an idea?
  *   the proof      a product we run ourselves
  *   the company    how we think
+ *   the evidence   something we learned, in our own words
  *
  * Process sits immediately under the core message on purpose: naming a gap and
  * then not saying how it gets closed is the shape of an advertisement.
@@ -45,6 +47,7 @@ export default function Home() {
       <SadhyaFeature />
       <ProductStudio />
       <Principles />
+      <LatestWriting />
       <ContactCTA />
     </>
   );
