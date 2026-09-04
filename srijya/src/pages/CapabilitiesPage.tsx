@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import HeaderMotif from '@/components/HeaderMotif';
 import PageHeader from '@/components/PageHeader';
 import ContactCTA from '@/components/sections/ContactCTA';
 import { CAPABILITIES } from '@/content/capabilities';
@@ -20,6 +21,7 @@ export default function CapabilitiesPage() {
         label="Capabilities"
         title="What we build, and how the work is usually shaped."
         lede="Five areas of capability. Most engagements draw on more than one — a consulting question tends to become a build, and a build tends to raise a question worth answering properly."
+        aside={<HeaderMotif name="build" className="mx-auto max-w-[180px] text-accent" />}
       />
 
       {/* An in-page index. On a page of five long sections it is faster than
