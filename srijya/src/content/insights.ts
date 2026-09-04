@@ -16,6 +16,9 @@
  *  - Publish the failure, not the triumph. A post that says "we built X and it
  *    worked" teaches nobody anything and reads as marketing.
  *  - No posts that exist to hit a publishing cadence.
+ *  - NEWEST FIRST. The home page surfaces INSIGHTS[0] and the index renders in
+ *    array order. Nothing sorts by date, because "September 2026" is a month,
+ *    not a date, and parsing it would be inventing precision to throw away.
  *
  * Gated like /team and /shipped: no articles, no route, no footer link.
  */
