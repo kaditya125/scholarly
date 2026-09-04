@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowDown, ArrowRight } from '@/components/Icons';
 import LoomField from '@/components/LoomField';
+import Sprout from '@/components/Sprout';
 import { revealProps } from '@/lib/reveal';
 import { COMPANY } from '@/site.config';
 
@@ -22,7 +23,12 @@ export default function Hero() {
       <div className="container-tl pb-16 pt-12 md:pb-24 md:pt-20 lg:pt-24">
         <div className="grid items-center gap-12 lg:grid-cols-12 lg:gap-10">
           <div className="lg:col-span-7">
-            <p className="label" {...revealProps()}>
+            {/* The company name, with the seed beside it. Srijya is "that which
+                is to be created" — the sprout is that, in four strokes, and it
+                sits next to the name rather than in the hero visual so the two
+                are read together. */}
+            <p className="label flex items-center gap-2.5" {...revealProps()}>
+              <Sprout size={34} className="-my-2 text-accent" />
               {COMPANY.name}
             </p>
 
