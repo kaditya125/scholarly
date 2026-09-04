@@ -43,6 +43,21 @@ export const SITE = {
    */
   legalEntity: 'TechLoom Innovations',
 
+  /**
+   * The brand the company trades under, and the parent of this product.
+   *
+   * Deliberately separate from `legalEntity` above. Srijya is what the company
+   * calls itself; TechLoom Innovations is what the Udyam register calls it, what
+   * Razorpay settles against, and what has to appear in the Terms, the Privacy
+   * Policy and the copyright line. Those are different jobs and conflating them
+   * is how a settlement gets held.
+   *
+   * Use this wherever the sentence is about who makes Sadhya. Use legalEntity
+   * wherever the sentence has legal or financial weight. When the Udyam record
+   * is amended the two become the same string and nothing else has to move.
+   */
+  parentBrand: 'Srijya',
+
   /** Public business registration. No CIN/GSTIN — not incorporated, not GST-registered. */
   cin: '',
   gstin: '',

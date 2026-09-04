@@ -223,11 +223,13 @@ export default function SiteFooter() {
         <div className="border-t border-slate-200/70 dark:border-white/[0.07] py-7 flex flex-col-reverse sm:flex-row sm:items-center gap-4">
           <div className="text-[12.5px] text-slate-500 dark:text-gray-400 space-y-1">
             <p>© <AdminEntry />{' '}{SITE.legalEntity}. All rights reserved.</p>
-            {/* States the entity behind the brand. Verifiers for the cloud startup
-                programmes check the site against the registered name, and the two
-                do not match on their face. */}
+              {/* Both names, on purpose. Srijya is who makes Sadhya; TechLoom
+                  Innovations is the registered entity, and verifiers for the cloud
+                  startup programmes check this page against the register. Naming
+                  only the brand would break that check, and naming only the entity
+                  is now out of date. */}
             <p>
-              Sadhya is a product of {SITE.legalEntity}
+              Sadhya is a product of {SITE.parentBrand}, operated by {SITE.legalEntity}
               {SITE.udyam ? <> · Udyam {SITE.udyam}</> : null}
             </p>
           </div>
