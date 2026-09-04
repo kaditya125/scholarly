@@ -17,6 +17,7 @@ export default function TechnologyPurpose() {
         <SectionHeading
           id="technology-heading"
           label="Technology"
+          motif="technology"
           title="Technology with purpose."
           lede="Chosen for what a product needs, not for what is currently interesting. Each area below is in use in something already running."
         />

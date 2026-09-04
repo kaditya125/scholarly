@@ -1,3 +1,4 @@
+import SectionMotif from '@/components/SectionMotif';
 import { ENGINEERING_QUALITIES } from '@/content/engineering';
 import { revealProps } from '@/lib/reveal';
 
@@ -15,7 +16,10 @@ export default function EngineeringPrinciples() {
       <div className="container-tl">
         <div className="grid gap-y-10 md:grid-cols-12 md:gap-x-10">
           <div className="md:col-span-4" {...revealProps()}>
-            <p className="label">Engineering</p>
+            <p className="label flex items-center gap-2.5">
+              <SectionMotif name="measure" size={20} className="shrink-0 text-accent" />
+              Engineering
+            </p>
             <h2 id="engineering-heading" className="display-3 mt-6 max-w-[12ch]">
               Good technology should be&hellip;
             </h2>

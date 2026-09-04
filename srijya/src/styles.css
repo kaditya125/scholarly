@@ -799,3 +799,79 @@ textarea.field-input {
     transform: scale(1) rotate(0deg);
   }
 }
+
+/* ── Section motifs ──────────────────────────────────────────────────────────
+   Small line drawings beside the sections that carry the argument.
+
+   Driven by `data-revealed`, which the one existing IntersectionObserver
+   already sets when a section scrolls into view — no second observer and no
+   scroll listener for this.
+
+   Same rule as the seedling: the resting state is the finished drawing. The
+   animation lives inside `prefers-reduced-motion: no-preference`, runs hidden
+   -> drawn, and uses `backwards` fill so the hidden start applies only during a
+   delay. An animation that never fires leaves the motif drawn, not missing. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal] .motif-rail,
+  [data-reveal] .motif-course,
+  [data-reveal] .motif-edge,
+  [data-reveal] .motif-tick {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+
+  [data-reveal] .motif-node {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  /* Nothing moves until the section is actually on screen. */
+  [data-revealed] .motif-rail,
+  [data-revealed] .motif-course,
+  [data-revealed] .motif-edge,
+  [data-revealed] .motif-tick {
+    animation: motif-draw 0.5s ease-out backwards;
+  }
+
+  [data-revealed] .motif-node {
+    animation: motif-land 0.34s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+
+  /* Stages arrive left to right, after the rail they sit on. */
+  [data-revealed] .motif-node-1 { animation-delay: 0.3s; }
+  [data-revealed] .motif-node-2 { animation-delay: 0.42s; }
+  [data-revealed] .motif-node-3 { animation-delay: 0.54s; }
+  [data-revealed] .motif-node-4 { animation-delay: 0.66s; }
+
+  /* Courses are laid bottom up. */
+  [data-revealed] .motif-course-1 { animation-delay: 0.05s; }
+  [data-revealed] .motif-course-2 { animation-delay: 0.2s; }
+  [data-revealed] .motif-course-3 { animation-delay: 0.35s; }
+  [data-revealed] .motif-course-4 { animation-delay: 0.5s; }
+
+  [data-revealed] .motif-edge-2 { animation-delay: 0.18s; }
+
+  [data-revealed] .motif-tick-1 { animation-delay: 0.22s; }
+  [data-revealed] .motif-tick-2 { animation-delay: 0.34s; }
+  [data-revealed] .motif-tick-3 { animation-delay: 0.46s; }
+}
+
+@keyframes motif-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes motif-land {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
