@@ -39,3 +39,8 @@ export const requireSuperAdmin = requireRoles(['super_admin']);
 // adminNav.ts's `minRole: ['super_admin', 'admin']` on those entries; that value is
 // presentation only (it hides the nav link), so this is what actually enforces it.
 export const requireFinanceAdmin = requireRoles(['super_admin', 'admin']);
+// Same role set as requireFinanceAdmin - a separate export because the call site (the
+// audit log, which records every admin's actions including moderators') reads oddly
+// under a name that says "finance". Not a second requireRoles(): one underlying check,
+// so the two names can never drift apart.
+export const requireElevatedAdmin = requireFinanceAdmin;

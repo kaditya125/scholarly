@@ -26,6 +26,11 @@ const AdminEngagement = lazy(() => import('./AdminEngagement'));
 const AdminRevenue = lazy(() => import('./AdminRevenue'));
 const AdminPayments = lazy(() => import('./AdminPayments'));
 const AdminSubscriptions = lazy(() => import('./AdminSubscriptions'));
+const AdminUsageDetail = lazy(() => import('./AdminUsageDetail'));
+const AdminErrors = lazy(() => import('./AdminErrors'));
+const AdminAlerts = lazy(() => import('./AdminAlerts'));
+const AdminAuditLog = lazy(() => import('./AdminAuditLog'));
+const AdminSettings = lazy(() => import('./AdminSettings'));
 
 function Loading() {
   return (
@@ -60,6 +65,20 @@ export default function AdminRoutes() {
         <Route path="billing" element={<Screen path="billing"><AdminRevenue /></Screen>} />
         <Route path="billing/payments" element={<Screen path="billing/payments"><AdminPayments /></Screen>} />
         <Route path="billing/subscriptions" element={<Screen path="billing/subscriptions"><AdminSubscriptions /></Screen>} />
+        {/*
+          One component, five routes: adminNav.ts gives each usage metric its own literal
+          path (rather than a single usage/:metric route) so the sidebar and titleForPath
+          stay simple flat lookups, matching every other entry in ADMIN_NAV.
+        */}
+        <Route path="usage/chat" element={<Screen path="usage/chat"><AdminUsageDetail metric="chatMessages" /></Screen>} />
+        <Route path="usage/voice" element={<Screen path="usage/voice"><AdminUsageDetail metric="voiceSeconds" /></Screen>} />
+        <Route path="usage/documents" element={<Screen path="usage/documents"><AdminUsageDetail metric="documentsUploaded" /></Screen>} />
+        <Route path="usage/podcasts" element={<Screen path="usage/podcasts"><AdminUsageDetail metric="podcastsGenerated" /></Screen>} />
+        <Route path="usage/tests" element={<Screen path="usage/tests"><AdminUsageDetail metric="mockTestsGenerated" /></Screen>} />
+        <Route path="errors" element={<Screen path="errors"><AdminErrors /></Screen>} />
+        <Route path="alerts" element={<Screen path="alerts"><AdminAlerts /></Screen>} />
+        <Route path="audit" element={<Screen path="audit"><AdminAuditLog /></Screen>} />
+        <Route path="settings" element={<Screen path="settings"><AdminSettings /></Screen>} />
         {/*
           Unknown /admin/* paths fall through to the dashboard rather than the app's
           global 404, so a mistyped admin URL keeps the operator inside the admin shell.

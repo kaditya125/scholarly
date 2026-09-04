@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { requireAdmin, requireSuperAdmin, requireFinanceAdmin } from '../middleware/rbac.middleware';
+import { requireAdmin, requireSuperAdmin, requireFinanceAdmin, requireElevatedAdmin } from '../middleware/rbac.middleware';
+import { auditLogMiddleware } from '../middleware/auditLog.middleware';
 import { AIMonitoringController } from '../controllers/ai-monitoring.controller';
 import { SystemHealthController } from '../controllers/system-health.controller';
 import { ContinuousEvalController } from '../controllers/continuous-eval.controller';
@@ -17,6 +18,8 @@ import { engagementController } from '../controllers/engagement.controller';
 import { revenueController } from '../controllers/revenue.controller';
 import { paymentsController } from '../controllers/payments.controller';
 import { subscriptionsController } from '../controllers/subscriptions.controller';
+import { usageController } from '../controllers/usage.controller';
+import { auditController } from '../controllers/audit.controller';
 import { SecurityController } from '../controllers/security.controller';
 import { LogsController } from '../controllers/logs.controller';
 import { NotificationsController } from '../controllers/notifications.controller';
@@ -49,6 +52,10 @@ const featureFlagsCtrl = new FeatureFlagsController();
 // Each controller will use the existing backend services for business logic.
 
 router.use(requireAdmin);
+// Records every mutating (non-GET) admin request to admin_audit_log. Placed immediately
+// after requireAdmin so req.user is always populated by the time it runs, and before every
+// route below so nothing bypasses it.
+router.use(auditLogMiddleware);
 
 // Health Check
 router.get('/health', (req, res) => {
@@ -124,6 +131,13 @@ router.get('/performance', performanceController.overview);
 router.get('/engagement', engagementController.overview);
 
 /*
+ * Per-feature usage detail (AI Chat, Voice, Documents, Podcasts, Tests) - the drill-down
+ * behind /quotas' summary cards. :metric is validated against USAGE_METRIC_KEYS inside the
+ * controller, so an unknown metric is a 404, not a crash.
+ */
+router.get('/usage/:metric', usageController.detail);
+
+/*
  * Revenue and payments. requireFinanceAdmin narrows to super_admin/admin - moderator has
  * requireAdmin's broader access to everything above but not to financial data, matching
  * adminNav.ts's minRole on these two entries.
@@ -131,6 +145,13 @@ router.get('/engagement', engagementController.overview);
 router.get('/revenue', requireFinanceAdmin, revenueController.overview);
 router.get('/payments', requireFinanceAdmin, paymentsController.list);
 router.get('/subscriptions', requireFinanceAdmin, subscriptionsController.overview);
+
+/*
+ * Admin audit log - who did what, when. requireElevatedAdmin (same role set as
+ * requireFinanceAdmin) matches adminNav.ts's minRole on the Audit log entry: moderators can
+ * use everything above but not see the oversight trail of admin actions.
+ */
+router.get('/audit', requireElevatedAdmin, auditController.overview);
 
 // Security
 router.get('/security/threats', securityCtrl.getThreats);

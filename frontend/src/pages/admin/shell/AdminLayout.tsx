@@ -26,6 +26,17 @@ import { useAuth } from '../../../lib/AuthContext';
 import { ADMIN_NAV } from './adminNav';
 import { ADMIN_ROLE_LABEL, isAdminRole } from './adminRoles';
 
+/**
+ * True when the current admin's role is allowed to see this nav entry. Absent `minRole`
+ * means every admin role can. `adminRole` comes straight from the ID token's custom claim
+ * (see adminRoles.ts's header) — the visibility this decides is presentation only, exactly
+ * like adminNav.ts's own `minRole` doc comment says; the server independently re-checks the
+ * role on every request the entry links to.
+ */
+function canSeeNavItem(minRole: string[] | undefined, adminRole: unknown): boolean {
+  return !minRole || (isAdminRole(adminRole) && minRole.includes(adminRole));
+}
+
 /** Explicit registry — the only icons the sidebar can resolve. */
 const ICONS = {
   Activity, AlertTriangle, Bell, ClipboardCheck, CreditCard, FileText, Gauge,
@@ -80,64 +91,70 @@ export function AdminLayout({ title, children }: { title: string; children: Reac
         </div>
 
         <nav className="flex-1 overflow-y-auto py-3 px-2.5 space-y-5">
-          {ADMIN_NAV.map((group) => (
-            <div key={group.label}>
-              {!collapsed && (
-                <div className="px-2.5 pb-1.5 text-[10px] font-semibold tracking-[0.08em] text-slate-400 dark:text-gray-500 uppercase">
-                  {group.label}
-                </div>
-              )}
-              <div className="space-y-0.5">
-                {group.items.map((item) => {
-                  const to = item.path ? `/admin/${item.path}` : '/admin';
-                  const active = item.path
-                    ? location.pathname.startsWith(to)
-                    : location.pathname === '/admin';
+          {ADMIN_NAV.map((group) => {
+            const items = group.items.filter((item) => canSeeNavItem(item.minRole, adminRole));
+            // A group whose every entry is hidden from this role would otherwise render as
+            // a bare, item-less heading.
+            if (items.length === 0) return null;
+            return (
+              <div key={group.label}>
+                {!collapsed && (
+                  <div className="px-2.5 pb-1.5 text-[10px] font-semibold tracking-[0.08em] text-slate-400 dark:text-gray-500 uppercase">
+                    {group.label}
+                  </div>
+                )}
+                <div className="space-y-0.5">
+                  {items.map((item) => {
+                    const to = item.path ? `/admin/${item.path}` : '/admin';
+                    const active = item.path
+                      ? location.pathname.startsWith(to)
+                      : location.pathname === '/admin';
 
-                  // Planned sections render disabled rather than linking to a blank page —
-                  // the IA stays visible so the shape of the tool is legible, without
-                  // pretending a screen exists.
-                  if (item.planned) {
+                    // Planned sections render disabled rather than linking to a blank page —
+                    // the IA stays visible so the shape of the tool is legible, without
+                    // pretending a screen exists.
+                    if (item.planned) {
+                      return (
+                        <div
+                          key={to}
+                          title={collapsed ? `${item.label} — coming soon` : 'Coming soon'}
+                          className="flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[13px] text-slate-300 dark:text-gray-600 cursor-not-allowed select-none"
+                        >
+                          <NavIcon name={item.icon} className="w-[15px] h-[15px] shrink-0" />
+                          {!collapsed && (
+                            <>
+                              <span className="truncate">{item.label}</span>
+                              <span className="ml-auto text-[9.5px] font-medium text-slate-300 dark:text-gray-600">soon</span>
+                            </>
+                          )}
+                        </div>
+                      );
+                    }
+
                     return (
-                      <div
+                      <NavLink
                         key={to}
-                        title={collapsed ? `${item.label} — coming soon` : 'Coming soon'}
-                        className="flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[13px] text-slate-300 dark:text-gray-600 cursor-not-allowed select-none"
+                        to={to}
+                        end={!item.path}
+                        title={collapsed ? item.label : undefined}
+                        className={`flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[13px] font-medium transition-colors ${
+                          active
+                            ? 'bg-[#f2f7e3] dark:bg-[#1e2416] text-slate-900 dark:text-white'
+                            : 'text-slate-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-white'
+                        }`}
                       >
                         <NavIcon name={item.icon} className="w-[15px] h-[15px] shrink-0" />
-                        {!collapsed && (
-                          <>
-                            <span className="truncate">{item.label}</span>
-                            <span className="ml-auto text-[9.5px] font-medium text-slate-300 dark:text-gray-600">soon</span>
-                          </>
+                        {!collapsed && <span className="truncate">{item.label}</span>}
+                        {active && !collapsed && (
+                          <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#c8e558]" aria-hidden />
                         )}
-                      </div>
+                      </NavLink>
                     );
-                  }
-
-                  return (
-                    <NavLink
-                      key={to}
-                      to={to}
-                      end={!item.path}
-                      title={collapsed ? item.label : undefined}
-                      className={`flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[13px] font-medium transition-colors ${
-                        active
-                          ? 'bg-[#f2f7e3] dark:bg-[#1e2416] text-slate-900 dark:text-white'
-                          : 'text-slate-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-white'
-                      }`}
-                    >
-                      <NavIcon name={item.icon} className="w-[15px] h-[15px] shrink-0" />
-                      {!collapsed && <span className="truncate">{item.label}</span>}
-                      {active && !collapsed && (
-                        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#c8e558]" aria-hidden />
-                      )}
-                    </NavLink>
-                  );
-                })}
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
 
         <button

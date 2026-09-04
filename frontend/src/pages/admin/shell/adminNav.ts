@@ -56,11 +56,11 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     label: 'Usage',
     domain: 'student',
     items: [
-      { path: 'usage/chat', label: 'AI Chat', title: 'AI Chat usage', icon: 'MessageSquare', planned: true },
-      { path: 'usage/voice', label: 'Voice', title: 'Voice usage', icon: 'Mic', planned: true },
-      { path: 'usage/documents', label: 'Documents', title: 'Documents', icon: 'FileText', planned: true },
-      { path: 'usage/podcasts', label: 'Podcasts', title: 'Podcasts', icon: 'Radio', planned: true },
-      { path: 'usage/tests', label: 'Tests', title: 'Tests & exams', icon: 'ClipboardCheck', planned: true },
+      { path: 'usage/chat', label: 'AI Chat', title: 'AI Chat usage', icon: 'MessageSquare' },
+      { path: 'usage/voice', label: 'Voice', title: 'Voice usage', icon: 'Mic' },
+      { path: 'usage/documents', label: 'Documents', title: 'Documents', icon: 'FileText' },
+      { path: 'usage/podcasts', label: 'Podcasts', title: 'Podcasts', icon: 'Radio' },
+      { path: 'usage/tests', label: 'Tests', title: 'Tests & exams', icon: 'ClipboardCheck' },
       { path: 'quotas', label: 'Quotas', title: 'Quotas & entitlements', icon: 'Gauge' },
     ],
   },
@@ -77,16 +77,16 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     label: 'Operations',
     domain: 'platform',
     items: [
-      { path: 'errors', label: 'Errors', title: 'Errors', icon: 'AlertTriangle', planned: true },
-      { path: 'alerts', label: 'Alerts', title: 'Alert centre', icon: 'Bell', planned: true },
-      { path: 'audit', label: 'Audit log', title: 'Admin audit log', icon: 'ScrollText', minRole: ['super_admin', 'admin'], planned: true },
+      { path: 'errors', label: 'Errors', title: 'Errors', icon: 'AlertTriangle' },
+      { path: 'alerts', label: 'Alerts', title: 'Alert centre', icon: 'Bell' },
+      { path: 'audit', label: 'Audit log', title: 'Admin audit log', icon: 'ScrollText', minRole: ['super_admin', 'admin'] },
     ],
   },
   {
     label: 'System',
     domain: 'platform',
     items: [
-      { path: 'settings', label: 'Settings', title: 'Admin settings', icon: 'Settings', planned: true },
+      { path: 'settings', label: 'Settings', title: 'Admin settings', icon: 'Settings' },
     ],
   },
 ];
