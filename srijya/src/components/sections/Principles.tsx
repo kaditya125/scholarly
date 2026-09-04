@@ -11,6 +11,7 @@ export default function Principles() {
         <SectionHeading
           id="principles-heading"
           label={`How ${COMPANY.name} thinks`}
+          motif="converge"
           title="Built with intent."
           lede="Four things we hold to, on every engagement and in our own products."
         />

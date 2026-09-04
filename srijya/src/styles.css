@@ -850,6 +850,7 @@ textarea.field-input {
   [data-revealed] .motif-course-4 { animation-delay: 0.5s; }
 
   [data-revealed] .motif-edge-2 { animation-delay: 0.18s; }
+  [data-revealed] .motif-edge-3 { animation-delay: 0.32s; }
 
   [data-revealed] .motif-tick-1 { animation-delay: 0.22s; }
   [data-revealed] .motif-tick-2 { animation-delay: 0.34s; }

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from '@/components/Icons';
+import SectionMotif from '@/components/SectionMotif';
 import { revealProps } from '@/lib/reveal';
 import { SADHYA } from '@/site.config';
 
@@ -16,7 +17,10 @@ export default function ProductStudio() {
       <div className="container-tl">
         <div className="grid gap-y-8 md:grid-cols-12 md:gap-x-10">
           <div className="md:col-span-3" {...revealProps()}>
-            <p className="label">Product studio</p>
+            <p className="label flex items-center gap-2.5">
+              <SectionMotif name="studio" size={20} className="shrink-0 text-accent" />
+              Product studio
+            </p>
           </div>
           <div className="md:col-span-9" {...revealProps(60)}>
             <h2 id="studio-heading" className="display-3 max-w-[16ch]">

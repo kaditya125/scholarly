@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from '@/components/Icons';
+import SectionMotif from '@/components/SectionMotif';
 import { revealProps } from '@/lib/reveal';
 
 /**
@@ -23,7 +24,10 @@ export default function IdeaToProduct() {
       <div className="container-tl">
         <div className="grid gap-y-12 md:grid-cols-12 md:gap-x-10">
           <div className="md:col-span-5" {...revealProps()}>
-            <p className="label">Start here</p>
+            <p className="label flex items-center gap-2.5">
+              <SectionMotif name="transform" size={20} className="shrink-0 text-accent" />
+              Start here
+            </p>
             <h2 id="idea-to-product-heading" className="display-2 mt-6 max-w-[10ch]">
               Have an idea?
             </h2>
