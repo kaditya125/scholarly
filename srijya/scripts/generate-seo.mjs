@@ -61,6 +61,7 @@ const ROUTES = [
   { path: '/start', priority: '0.8', changefreq: 'monthly' },
   { path: '/help', priority: '0.6', changefreq: 'monthly' },
   { path: '/insights', priority: '0.6', changefreq: 'monthly' },
+  { path: '/insights/your-cache-is-not-free-and-it-might-not-be-a-cache', priority: '0.6', changefreq: 'yearly' },
   { path: '/insights/we-gave-the-model-a-workflow-engine-not-a-keyboard', priority: '0.6', changefreq: 'yearly' },
   { path: '/insights/what-to-do-when-the-model-provider-says-no', priority: '0.6', changefreq: 'yearly' },
   { path: '/insights/your-retrieval-is-not-broken-it-is-returning-nothing', priority: '0.6', changefreq: 'yearly' },
