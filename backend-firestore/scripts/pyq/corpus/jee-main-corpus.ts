@@ -13,9 +13,17 @@ import { buildCompleteApr04FullPapers } from './jee-main-2024-apr04-shifts';
 import { buildCompleteApr05FullPapers } from './jee-main-2024-apr05-shifts';
 import { buildCompleteApr06FullPapers } from './jee-main-2024-apr06-shifts';
 import { buildCompleteApr08FullPapers } from './jee-main-2024-apr08-shifts';
+import { buildCompleteApr09FullPapers } from './jee-main-2024-apr09-shifts';
+import { buildCompleteApr12FullPapers } from './jee-main-2024-apr12-shifts';
+import { buildCompleteJan24FullPapers as buildComplete2023Jan24FullPapers } from './jee-main-2023-jan24-shifts';
+import { buildCompleteJan25FullPapers as buildComplete2023Jan25FullPapers } from './jee-main-2023-jan25-shifts';
+import { buildCompleteJan29FullPapers as buildComplete2023Jan29FullPapers } from './jee-main-2023-jan29-shifts';
+import { buildCompleteJan30FullPapers as buildComplete2023Jan30FullPapers } from './jee-main-2023-jan30-shifts';
+import { buildCompleteJan31FullPapers as buildComplete2023Jan31FullPapers } from './jee-main-2023-jan31-shifts';
+import { buildCompleteFeb01FullPapers as buildComplete2023Feb01FullPapers } from './jee-main-2023-feb01-shifts';
 
 export function buildJEEMainCorpus(): CanonicalPYQQuestion[] {
-  // Start with full complete papers for 2024 Session 1 (750 Qs) + Session 2 (600 Qs from 04, 05, 06, 08 Apr) = 1350 questions
+  // 2024 Complete (21 shifts: 1575 Qs) + 2023 Session 1 Complete (12 shifts: 900 Qs) = 2475 questions
   const questions: CanonicalPYQQuestion[] = [
     ...buildCompleteJan27FullPapers(),
     ...buildCompleteJan29FullPapers(),
@@ -26,6 +34,14 @@ export function buildJEEMainCorpus(): CanonicalPYQQuestion[] {
     ...buildCompleteApr05FullPapers(),
     ...buildCompleteApr06FullPapers(),
     ...buildCompleteApr08FullPapers(),
+    ...buildCompleteApr09FullPapers(),
+    ...buildCompleteApr12FullPapers(),
+    ...buildComplete2023Jan24FullPapers(),
+    ...buildComplete2023Jan25FullPapers(),
+    ...buildComplete2023Jan29FullPapers(),
+    ...buildComplete2023Jan30FullPapers(),
+    ...buildComplete2023Jan31FullPapers(),
+    ...buildComplete2023Feb01FullPapers(),
   ];
   const now = Date.now();
 
