@@ -43,6 +43,92 @@ export type Insight = {
 
 export const INSIGHTS: Insight[] = [
   {
+    slug: 'your-cache-is-not-free-and-it-might-not-be-a-cache',
+    title: 'Your cache is not free, and it might not be a cache',
+    standfirst:
+      'Two things managed infrastructure taught us the hard way: per-request billing inverts the economics of caching, and a cache can fail so quietly it reports nothing at all.',
+    published: 'September 2026',
+    blocks: [
+      {
+        kind: 'p',
+        text: 'Managed services are sold on not having to think about infrastructure. In practice they replace one set of things to think about with another, and the new set is less familiar because it is commercial rather than technical.',
+      },
+      {
+        kind: 'p',
+        text: 'Two examples from the same file in our codebase. Both are the kind of thing you only learn by running something.',
+      },
+      { kind: 'h', text: 'One: the bill is per lookup, not per byte' },
+      {
+        kind: 'p',
+        text: 'The mental model most of us carry for a cache is about memory. You trade space for time; the cost is how much you store. Every instinct built on that model — cache aggressively, cache anything repeated, a cache hit is free — assumes the read costs nothing.',
+      },
+      {
+        kind: 'p',
+        text: 'A hosted key-value service billed per request breaks that assumption completely. The cost of the cache is measured in lookups, not bytes. Which means caching something cheap that is read constantly can cost more than simply recomputing it.',
+      },
+      {
+        kind: 'p',
+        text: 'Our hot path is retrieval for a grounded AI feature, where the same query text recurs constantly. Every one of those repeats was a network round trip to a paid service purely to be told something the process already knew a moment earlier. It was working exactly as designed. It was also the single largest source of requests against a quota.',
+      },
+      {
+        kind: 'p',
+        text: 'The fix is not exotic: an in-process cache in front of the remote one. Local answers the repeats for nothing. The remote tier stays, because it is what makes cached work survive a restart and what would let a second instance share it — it just stops being asked questions the current process can already answer.',
+      },
+      {
+        kind: 'quote',
+        text: 'When reads are billed, a cache in front of your cache is not over-engineering. It is the part that makes the first one affordable.',
+      },
+      { kind: 'h', text: 'Two: the cache that could never have worked' },
+      {
+        kind: 'p',
+        text: 'The second lesson was worse, and it had been sitting in the code for some time.',
+      },
+      {
+        kind: 'p',
+        text: 'The hosted service in question exposes two different endpoints: a native protocol endpoint, and an HTTP one. They are the same service, addressed two entirely different ways. Our client was the HTTP kind — it builds a URL and calls fetch on it. It had been handed the native protocol endpoint.',
+      },
+      {
+        kind: 'p',
+        text: 'fetch cannot speak that protocol. Every read and every write would have thrown. And because each cache operation sensibly wraps itself in a try/catch — a cache should not take down a request when it is unavailable — every one of those errors would have been swallowed on the way out.',
+      },
+      {
+        kind: 'p',
+        text: 'The result would have been a cache with a permanent zero percent hit rate, doing a full round trip of work on every call to achieve nothing, logging nothing anybody would look at, and reporting no error to anyone. It would have looked like a cache that was simply not helping very much.',
+      },
+      {
+        kind: 'p',
+        text: 'It never actually fired, and the reason is the uncomfortable part: an unrelated credential was unset in production, so the whole branch was dead code. The bug was not fixed by anything. It was waiting for whoever eventually tried to turn caching on.',
+      },
+      { kind: 'h', text: 'What we changed' },
+      {
+        kind: 'p',
+        text: 'The endpoint is now a separate, differently named variable, so the two cannot be confused by someone reaching for the obvious one. And the client checks at startup that what it has been given is actually an HTTP URL, refusing to start if it is not.',
+      },
+      {
+        kind: 'code',
+        code: `// A misconfiguration should announce itself at boot,
+// not degrade into a silent no-op that costs money
+// and returns nothing.
+if (!/^https?:\\/\\//.test(restUrl)) {
+  throw new Error('Cache endpoint must be an HTTP URL');
+}`,
+      },
+      {
+        kind: 'p',
+        text: 'That is the same move as asserting an embedding dimension at startup rather than discovering a mismatch at query time. Both convert a silent, permanent, expensive wrongness into a loud failure at the one moment somebody is watching.',
+      },
+      { kind: 'h', text: 'The pattern underneath' },
+      {
+        kind: 'p',
+        text: 'Every serious problem we have written about here has the same shape. A retrieval system returning nothing while the model answers anyway. An assistant answering a question nobody asked. A cache that was never a cache. None of them threw. All of them looked, from the outside, like the system working.',
+      },
+      {
+        kind: 'p',
+        text: 'Managed infrastructure raises the stakes on this, because it moves the consequence of a silent failure from a crash you would notice to a bill you would not. The defence is unglamorous and always the same: validate the contract at boot, and make sure the number that would reveal the problem — hit rate, retrieval count, provider fallbacks — is a number somebody can actually see.',
+      },
+    ],
+  },
+  {
     slug: 'we-gave-the-model-a-workflow-engine-not-a-keyboard',
     title: 'We gave the model a workflow engine, not a keyboard',
     standfirst:
