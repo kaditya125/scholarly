@@ -40,6 +40,148 @@ export type Insight = {
 
 export const INSIGHTS: Insight[] = [
   {
+    slug: 'what-to-do-when-the-model-provider-says-no',
+    title: 'What to do when the model provider says no',
+    standfirst:
+      'An AI feature has a dependency profile ordinary code does not. Rate limits are not an exceptional case to handle later — they are Tuesday.',
+    published: 'September 2026',
+    blocks: [
+      {
+        kind: 'p',
+        text: 'Most of the writing about building with language models is about choosing one. Almost none of it is about what your product does during the ninety seconds when that model is returning 429s and a person is sitting in front of a loading spinner.',
+      },
+      {
+        kind: 'p',
+        text: 'That gap matters, because an AI feature has a dependency profile ordinary code does not. A database you run will fail in ways you caused and can fix. A hosted model will fail because of demand you did not create, on a schedule you do not control, at a rate that changes without notice. Treating that as an exceptional case to handle later is how you ship a feature that works in development and is unreliable in front of users.',
+      },
+      { kind: 'h', text: 'Four layers, cheapest first' },
+      {
+        kind: 'p',
+        text: 'What we run in production is not clever. It is four layers, and each exists because the one above it is insufficient alone.',
+      },
+      {
+        kind: 'p',
+        text: 'The first is a timeout. Without one, a provider that accepts your connection and then stalls will hold the request open until something else in the stack gives up — and the thing that gives up is usually the user. A bounded wait turns an unbounded hang into a failure you can handle.',
+      },
+      {
+        kind: 'p',
+        text: 'The second is a retry with backoff, and only for transient conditions: 429s, 5xx responses, network errors. Retrying a 400 just sends the same malformed request twice. The backoff matters more than the retry — retrying immediately against a rate limit is how a brief throttle becomes a sustained one.',
+      },
+      {
+        kind: 'p',
+        text: 'The third is a different provider. Retries help with a busy minute and do nothing for a provider-wide outage, because every retry lands in the same place. Our assistants try one model and fall back to another from a different vendor. The two are not identical and phrasing differs slightly — but a slightly differently worded correct answer is worth far more than an error page.',
+      },
+      {
+        kind: 'code',
+        code: `try {
+  return await this.primary.generateResponse(msg, prompt);
+} catch (e) {
+  // Not a silent catch. This line is the only thing
+  // that tells you a whole provider went away.
+  console.warn('Primary failed, falling back...', e);
+  return await this.fallback.generateResponse(msg, prompt);
+}`,
+      },
+      {
+        kind: 'p',
+        text: 'The fourth layer is the one people skip: what the product does when every provider has failed. Not a stack trace, and not a cheerful message implying the request succeeded. On this site the assistant returns exactly the sentence it uses when a question is outside its knowledge — it says it does not have enough verified information, and points at a person. The visitor gets a next step rather than an apology for infrastructure they do not care about.',
+      },
+      { kind: 'h', text: 'The parts that are easy to get wrong' },
+      {
+        kind: 'p',
+        text: 'If two surfaces in your product use models, they should degrade the same way. It is tempting to let each handle failure however suits it. Do not. At three in the morning you want one mental model of what the system does under failure, not two that diverge in ways nobody remembers.',
+      },
+      {
+        kind: 'p',
+        text: 'The other trap is silent fallback. Falling back is correct behaviour; hiding it is not. If a provider switch never appears in your logs, you will learn the primary has been failing for a week from your invoice rather than from your monitoring.',
+      },
+      { kind: 'h', text: 'The question worth asking' },
+      {
+        kind: 'p',
+        text: 'When someone asks which model they should use, the more useful question is usually a different one: what does this feature do when the model is not there? If the honest answer is that it breaks, the feature is not finished — whichever model is behind it.',
+      },
+    ],
+  },
+  {
+    slug: 'your-retrieval-is-not-broken-it-is-returning-nothing',
+    title: 'Your retrieval is not broken. It is returning nothing.',
+    standfirst:
+      'Three ways a grounded AI system quietly stops being grounded — and why the model keeps answering, fluently, either way.',
+    published: 'September 2026',
+    blocks: [
+      {
+        kind: 'p',
+        text: 'Retrieval-augmented generation has a failure mode that does not look like a failure. The pipeline runs. Nothing throws. The endpoint returns 200. The model produces a confident, well-written answer. And not one word of it came from your documents.',
+      },
+      {
+        kind: 'p',
+        text: 'This happens because an empty retrieval result is indistinguishable, from the model’s point of view, from a question that needed no context. It answers from its own weights instead, and it does so fluently. In a product whose entire value is that answers are grounded in a specific syllabus, that is worse than an outright error — an error you would have noticed.',
+      },
+      { kind: 'h', text: 'Three causes, one symptom' },
+      {
+        kind: 'p',
+        text: 'We have hit three separate versions of this. They present identically.',
+      },
+      {
+        kind: 'p',
+        text: 'The first is a dimension mismatch. An embedding model produces vectors of a particular size and the vector index expects that size. Change the model, or change its output dimensionality, and you have vectors the index will not take. Nothing downstream announces it. Retrieval simply comes back empty.',
+      },
+      {
+        kind: 'p',
+        text: 'The second is a namespace mismatch. Writes go to one namespace, queries read from another. Both operations succeed. Both report success. The data is there, correctly embedded, and permanently invisible to the thing that needs it.',
+      },
+      {
+        kind: 'p',
+        text: 'The third is ingestion that never finished. A document is uploaded, processing starts, something fails partway, and the source sits in a non-ready state indefinitely. The user sees their file listed and reasonably assumes the system has read it.',
+      },
+      {
+        kind: 'p',
+        text: 'Three unrelated bugs in three different parts of the system, producing exactly the same observable behaviour: an answer with no citations that nobody looks at twice.',
+      },
+      { kind: 'h', text: 'What actually helps' },
+      {
+        kind: 'p',
+        text: 'The fix is not better retrieval. It is refusing to let "no context" pass as a normal condition.',
+      },
+      {
+        kind: 'p',
+        text: 'Assert the contract at boot rather than discovering it at query time. An embedding dimension and an index dimension are a contract between two systems, and a process that starts happily with them mismatched will lie to users for as long as it runs.',
+      },
+      {
+        kind: 'code',
+        code: `// Fail at startup, loudly, rather than at query time,
+// silently. A number that must equal another number is
+// a contract, and contracts get checked.
+if (index.dimension !== EMBEDDING_DIMENSIONS) {
+  throw new Error(
+    'Index dimension does not match embedding dimension'
+  );
+}`,
+      },
+      {
+        kind: 'p',
+        text: 'Then make retrieval count a first-class signal. How many chunks came back is the most diagnostic number in the whole pipeline and it costs nothing to log. A sudden run of zero-result retrievals is the earliest possible warning that something upstream has quietly detached.',
+      },
+      {
+        kind: 'p',
+        text: 'And expose ingestion state to the person who uploaded the document. "Processing failed" is a worse experience than "ready" and a far better one than a document that appears present and is not.',
+      },
+      { kind: 'h', text: 'The general shape of it' },
+      {
+        kind: 'quote',
+        text: 'In a grounded system, absence of evidence looks exactly like evidence — unless you build something that can tell the difference.',
+      },
+      {
+        kind: 'p',
+        text: 'This is the same lesson as the assistant on this site answering a question nobody asked. The dangerous failures in AI systems are rarely the ones that throw. They are the ones that produce a plausible output through a path you did not intend, and keep producing it until somebody checks by hand.',
+      },
+      {
+        kind: 'p',
+        text: 'Which is the argument for building the check — not more evaluation harnesses than the product warrants, just the one number that tells you whether the thing you claim is happening is actually happening.',
+      },
+    ],
+  },
+  {
     slug: 'the-assistant-answered-a-question-nobody-asked',
     title: 'The assistant answered a question nobody asked',
     standfirst:

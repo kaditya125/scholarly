@@ -61,6 +61,8 @@ const ROUTES = [
   { path: '/start', priority: '0.8', changefreq: 'monthly' },
   { path: '/help', priority: '0.6', changefreq: 'monthly' },
   { path: '/insights', priority: '0.6', changefreq: 'monthly' },
+  { path: '/insights/what-to-do-when-the-model-provider-says-no', priority: '0.6', changefreq: 'yearly' },
+  { path: '/insights/your-retrieval-is-not-broken-it-is-returning-nothing', priority: '0.6', changefreq: 'yearly' },
   { path: '/insights/the-assistant-answered-a-question-nobody-asked', priority: '0.6', changefreq: 'yearly' },
   { path: '/shipped', priority: '0.5', changefreq: 'monthly' },
   { path: '/security', priority: '0.4', changefreq: 'yearly' },
