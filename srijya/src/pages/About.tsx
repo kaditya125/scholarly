@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, ArrowUpRight } from '@/components/Icons';
+import GrowingPlant from '@/components/GrowingPlant';
 import PageHeader from '@/components/PageHeader';
 import ContactCTA from '@/components/sections/ContactCTA';
 import TextSection from '@/components/TextSection';
@@ -42,6 +43,7 @@ export default function About() {
             </div>
           </dl>
         }
+        aside={<GrowingPlant className="mx-auto max-w-[190px] text-accent" />}
       />
 
       <div className="container-tl">

@@ -11,12 +11,15 @@ export default function PageHeader({
   title,
   lede,
   meta,
+  aside,
 }: {
   label: string;
   title: ReactNode;
   lede?: ReactNode;
   /** Optional right-hand column — a short standfirst or a fact, never a stat. */
   meta?: ReactNode;
+  /** Optional artwork, in the column the lede leaves empty. Decorative only. */
+  aside?: ReactNode;
 }) {
   return (
     <header className="border-b border-line">
@@ -34,11 +37,24 @@ export default function PageHeader({
             </div>
           ) : null}
         </div>
-        {lede ? (
+        {lede || aside ? (
           <div className="mt-10 md:grid md:grid-cols-12 md:gap-x-10">
-            <p className="lede md:col-span-7 md:col-start-1" {...revealProps(160)}>
-              {lede}
-            </p>
+            {lede ? (
+              <p className="lede md:col-span-7 md:col-start-1" {...revealProps(160)}>
+                {lede}
+              </p>
+            ) : null}
+            {aside ? (
+              /* Columns 9-12, which the lede leaves empty. Hidden below md
+                 rather than stacked: on a phone it would push the first real
+                 section a screen further down to say nothing. */
+              <div
+                className="hidden md:col-span-4 md:col-start-9 md:block"
+                {...revealProps(220)}
+              >
+                {aside}
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
