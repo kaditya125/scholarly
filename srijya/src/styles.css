@@ -692,3 +692,110 @@ textarea.field-input {
     transform: none;
   }
 }
+
+/* ── The seedling ────────────────────────────────────────────────────────────
+   A growth sequence in the order a seedling actually grows: the seed settles,
+   the root goes down, the stem rises, the seed leaves open, and only then do the
+   true leaves unfurl. Roughly two and a half seconds, once, on load.
+
+   THE RESTING STATE IS A FULLY DRAWN SEEDLING.
+
+   The obvious way to write a draw-on effect parks the stroke at
+   `stroke-dashoffset: 1` and animates to 0, which makes the element's resting
+   state invisible — so a throttled tab, a partial stylesheet or an animation
+   that simply never fires leaves a seed and no plant. Here the resting values
+   are the finished ones, the keyframes run hidden -> drawn, and `backwards` fill
+   supplies the hidden start only during each delay. Nothing going wrong can
+   subtract the plant.
+
+   That is also why there is no `prefers-reduced-motion: reduce` override to keep
+   in step: not animating is already the default, and the whole effect is opted
+   into rather than out of. */
+@media (prefers-reduced-motion: no-preference) {
+  .sprout-grow .sprout-soil,
+  .sprout-grow .sprout-root,
+  .sprout-grow .sprout-stem {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+    animation: sprout-draw 0.7s ease-out backwards;
+  }
+
+  .sprout-grow .sprout-soil {
+    animation-duration: 0.45s;
+  }
+
+  .sprout-grow .sprout-seed {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: sprout-settle 0.45s ease-out 0.15s backwards;
+  }
+
+  /* Down before up. */
+  .sprout-grow .sprout-root-1 {
+    animation-delay: 0.45s;
+  }
+  .sprout-grow .sprout-root-2 {
+    animation-delay: 0.62s;
+  }
+
+  .sprout-grow .sprout-stem {
+    animation-duration: 0.95s;
+    animation-delay: 0.8s;
+  }
+
+  /* Leaves unfurl from where they meet the stem, not from their own middle —
+     a leaf that scales about its centre reads as a sticker fading in. */
+  .sprout-grow .sprout-cot,
+  .sprout-grow .sprout-leaf {
+    transform-box: fill-box;
+    animation: sprout-unfurl 0.55s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+
+  .sprout-grow .sprout-cot-1 {
+    transform-origin: 100% 100%;
+    animation-delay: 1.35s;
+  }
+  .sprout-grow .sprout-cot-2 {
+    transform-origin: 0% 100%;
+    animation-delay: 1.5s;
+  }
+  .sprout-grow .sprout-leaf-1 {
+    transform-origin: 100% 100%;
+    animation-delay: 1.75s;
+  }
+  .sprout-grow .sprout-leaf-2 {
+    transform-origin: 0% 100%;
+    animation-delay: 1.92s;
+  }
+}
+
+@keyframes sprout-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes sprout-settle {
+  from {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes sprout-unfurl {
+  from {
+    opacity: 0;
+    transform: scale(0.05) rotate(-16deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
