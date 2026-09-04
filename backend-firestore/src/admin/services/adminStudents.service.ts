@@ -373,7 +373,7 @@ export class AdminStudentsService {
     const [row] = await this.hydrate([doc], false);
     const data = (doc.data() || {}) as Record<string, any>;
 
-    const [usage, payments, stats, documentCount] = await Promise.all([
+    const [usage, payments, stats, documentCount, mastery] = await Promise.all([
       usageService.getUsageSummary(userId).catch(() => null),
       this.getPayments(userId).catch(() => null),
       db.collection('user_stats').doc(userId).get()
@@ -382,6 +382,7 @@ export class AdminStudentsService {
       db.collection('notebooks').where('userId', '==', userId).count().get()
         .then((s) => s.data().count)
         .catch(() => null),
+      this.getMastery(userId).catch(() => null),
     ]);
 
     return {
@@ -391,6 +392,7 @@ export class AdminStudentsService {
       billing: payments,
       stats,
       documentCount,
+      mastery,
       /**
        * Deliberately empty. There is no event/audit collection in this database — the
        * activity timeline has no source to read from, so the API reports the absence
@@ -398,6 +400,62 @@ export class AdminStudentsService {
        * lastSignInTime. Building the event model is its own slice (§11).
        */
       activity: { available: false, reason: 'No event collection exists yet — activity is not recorded.' },
+    };
+  }
+
+  /**
+   * A student's per-concept mastery, as written by core/intelligence/MasteryEngine.ts to
+   * `users/{uid}/mastery/{conceptId}`. Small per student (tens of concepts, not thousands),
+   * so a straight collection read is fine — no pagination needed, only a defensive cap.
+   *
+   * Sorted weakest-first: for an operator looking at one student, "what do they need help
+   * with" is the actionable question, matching the same worst-first convention
+   * adminQuotas.service.ts uses for "who is running out".
+   */
+  private async getMastery(userId: string): Promise<MasterySummary> {
+    const snap = await db.collection('users').doc(userId).collection('mastery').limit(200).get();
+
+    const concepts: MasteryConceptRow[] = snap.docs
+      .map((d) => d.data() as Record<string, any>)
+      .map((m) => {
+        const masteryScore = typeof m.masteryScore === 'number' ? m.masteryScore : 0;
+        const masteryPercent = Math.round(masteryScore * 100);
+        return {
+          conceptId: m.conceptId ?? '',
+          title: m.title || m.conceptId || 'Untitled concept',
+          subject: m.subject ?? null,
+          topic: m.topic ?? null,
+          masteryScore,
+          masteryPercent,
+          // Same weak/developing/strong bands admin-aggregates.service.ts already uses for
+          // the knowledge-graph view, so "weak" means the same thing everywhere in the admin.
+          level: (masteryPercent < 40 ? 'weak' : masteryPercent < 75 ? 'developing' : 'strong') as MasteryLevel,
+          trend: (m.masteryTrend as MasteryTrend) || 'steady',
+          attempts: typeof m.attempts === 'number' ? m.attempts : 0,
+          successRate: typeof m.successRate === 'number' ? m.successRate : 0,
+          lastPracticed: m.lastPracticed ? new Date(m.lastPracticed).toISOString() : null,
+        };
+      })
+      .sort((a, b) => a.masteryScore - b.masteryScore);
+
+    const withScore = concepts.length;
+    const averageMasteryPercent = withScore > 0
+      ? Math.round(concepts.reduce((sum, c) => sum + c.masteryPercent, 0) / withScore)
+      : null;
+    const lastPracticed = concepts.reduce<string | null>((latest, c) => {
+      if (!c.lastPracticed) return latest;
+      return !latest || c.lastPracticed > latest ? c.lastPracticed : latest;
+    }, null);
+
+    return {
+      concepts,
+      totalConcepts: concepts.length,
+      averageMasteryPercent,
+      weakCount: concepts.filter((c) => c.level === 'weak').length,
+      developingCount: concepts.filter((c) => c.level === 'developing').length,
+      strongCount: concepts.filter((c) => c.level === 'strong').length,
+      lastPracticed,
+      truncated: snap.size === 200,
     };
   }
 
@@ -465,12 +523,44 @@ export interface PaymentSummary {
   truncated: boolean;
 }
 
+export type MasteryLevel = 'weak' | 'developing' | 'strong';
+export type MasteryTrend = 'improving' | 'declining' | 'steady';
+
+export interface MasteryConceptRow {
+  conceptId: string;
+  title: string;
+  subject: string | null;
+  topic: string | null;
+  masteryScore: number; // 0..1, as stored
+  masteryPercent: number; // 0..100, rounded, for display
+  level: MasteryLevel;
+  trend: MasteryTrend;
+  attempts: number;
+  successRate: number; // 0..1
+  lastPracticed: string | null; // ISO
+}
+
+export interface MasterySummary {
+  concepts: MasteryConceptRow[];
+  totalConcepts: number;
+  averageMasteryPercent: number | null;
+  weakCount: number;
+  developingCount: number;
+  strongCount: number;
+  lastPracticed: string | null;
+  /** True when the 200-concept cap was hit, so the UI can say the list is partial. */
+  truncated: boolean;
+}
+
 export interface StudentDetail extends AdminStudentRow {
   subscription: Record<string, any> | null;
   usage: Awaited<ReturnType<typeof usageService.getUsageSummary>> | null;
   billing: PaymentSummary | null;
   stats: Record<string, any> | null;
   documentCount: number | null;
+  /** null means the read failed (§37's partial-failure rule); distinct from a student with
+   *  zero concepts tracked, which returns a MasterySummary with an empty `concepts` array. */
+  mastery: MasterySummary | null;
   activity: { available: false; reason: string };
 }
 

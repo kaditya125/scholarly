@@ -20,7 +20,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
-  AlertCircle, ArrowLeft, CheckCircle2, CreditCard, Gauge, RefreshCw, ShieldAlert, User,
+  AlertCircle, ArrowLeft, Brain, CheckCircle2, CreditCard, Gauge, RefreshCw, ShieldAlert,
+  TrendingDown, TrendingUp, User,
 } from 'lucide-react';
 import { api } from '../../lib/api/client';
 
@@ -51,6 +52,31 @@ interface PaymentRecord {
   createdAt: string | null;
 }
 
+interface MasteryConceptRow {
+  conceptId: string;
+  title: string;
+  subject: string | null;
+  topic: string | null;
+  masteryScore: number;
+  masteryPercent: number;
+  level: 'weak' | 'developing' | 'strong';
+  trend: 'improving' | 'declining' | 'steady';
+  attempts: number;
+  successRate: number;
+  lastPracticed: string | null;
+}
+
+interface MasterySummary {
+  concepts: MasteryConceptRow[];
+  totalConcepts: number;
+  averageMasteryPercent: number | null;
+  weakCount: number;
+  developingCount: number;
+  strongCount: number;
+  lastPracticed: string | null;
+  truncated: boolean;
+}
+
 interface StudentDetail {
   id: string; name: string; email: string;
   plan: 'free' | 'pro';
@@ -68,10 +94,11 @@ interface StudentDetail {
   } | null;
   stats: Record<string, unknown> | null;
   documentCount: number | null;
+  mastery: MasterySummary | null;
   activity: { available: false; reason: string };
 }
 
-const TABS = ['Overview', 'Usage', 'Billing', 'Activity'] as const;
+const TABS = ['Overview', 'Usage', 'Billing', 'Mastery', 'Activity'] as const;
 type Tab = (typeof TABS)[number];
 
 const fmtDate = (iso: string | null) =>
@@ -260,7 +287,7 @@ export default function AdminStudentProfile() {
       </div>
 
       {tab === 'Overview' && (
-        <div className="grid sm:grid-cols-2 gap-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <div className="rounded-xl border border-slate-200/80 dark:border-white/[0.07] bg-white dark:bg-[#171719] p-4 space-y-3">
             <h3 className="text-[13px] font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
               <CreditCard className="w-4 h-4 text-slate-400" strokeWidth={1.9} /> Billing
@@ -289,6 +316,28 @@ export default function AdminStudentProfile() {
               </Field>
               <Field label="Usage period">{data.usage?.periodKey ?? '—'}</Field>
             </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200/80 dark:border-white/[0.07] bg-white dark:bg-[#171719] p-4 space-y-3">
+            <h3 className="text-[13px] font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <Brain className="w-4 h-4 text-slate-400" strokeWidth={1.9} /> Mastery
+            </h3>
+            {data.mastery === null ? <Unavailable what="Mastery" /> : data.mastery.totalConcepts === 0 ? (
+              <p className="text-[12.5px] text-slate-500 dark:text-gray-400">
+                No concepts tracked yet.
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Average mastery">{data.mastery.averageMasteryPercent ?? '—'}%</Field>
+                <Field label="Concepts tracked">{data.mastery.totalConcepts}</Field>
+                <Field label="Weak">
+                  <span className={data.mastery.weakCount > 0 ? 'text-amber-600 dark:text-amber-400' : ''}>
+                    {data.mastery.weakCount}
+                  </span>
+                </Field>
+                <Field label="Last practiced">{relative(data.mastery.lastPracticed)}</Field>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -365,6 +414,129 @@ export default function AdminStudentProfile() {
                 Showing the 50 most recent payments — this student has more.
               </p>
             )}
+          </div>
+        )
+      )}
+
+      {tab === 'Mastery' && (
+        data.mastery === null ? <Unavailable what="Mastery" /> :
+        data.mastery.totalConcepts === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-200 dark:border-white/[0.09] px-5 py-10 text-center">
+            <Brain className="w-5 h-5 mx-auto text-slate-400" strokeWidth={1.9} />
+            <p className="mt-2.5 text-[13px] font-medium text-slate-700 dark:text-gray-200">No mastery evidence yet</p>
+            <p className="mt-1.5 text-[12.5px] text-slate-500 dark:text-gray-400 max-w-md mx-auto">
+              This fills in the first time the student completes a graded quiz or test. Nothing
+              is wrong — most students simply haven't yet.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-xl border border-slate-200/80 dark:border-white/[0.07] bg-white dark:bg-[#171719] p-3.5">
+                <div className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500">Average</div>
+                <div className="mt-1 text-[20px] font-semibold text-slate-900 dark:text-white tabular-nums">
+                  {data.mastery.averageMasteryPercent ?? '—'}%
+                </div>
+              </div>
+              <div className="rounded-xl border border-slate-200/80 dark:border-white/[0.07] bg-white dark:bg-[#171719] p-3.5">
+                <div className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500">Concepts</div>
+                <div className="mt-1 text-[20px] font-semibold text-slate-900 dark:text-white tabular-nums">
+                  {data.mastery.totalConcepts}
+                </div>
+              </div>
+              <div className="rounded-xl border border-slate-200/80 dark:border-white/[0.07] bg-white dark:bg-[#171719] p-3.5">
+                <div className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500">Weak · Developing · Strong</div>
+                <div className="mt-1 text-[13px] font-medium tabular-nums">
+                  <span className="text-amber-600 dark:text-amber-400">{data.mastery.weakCount}</span>
+                  <span className="text-slate-300 dark:text-gray-600"> · </span>
+                  <span className="text-slate-600 dark:text-gray-300">{data.mastery.developingCount}</span>
+                  <span className="text-slate-300 dark:text-gray-600"> · </span>
+                  <span className="text-[#5A7410] dark:text-[#c8e558]">{data.mastery.strongCount}</span>
+                </div>
+              </div>
+              <div className="rounded-xl border border-slate-200/80 dark:border-white/[0.07] bg-white dark:bg-[#171719] p-3.5">
+                <div className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500">Last practiced</div>
+                <div className="mt-1 text-[13px] font-medium text-slate-700 dark:text-gray-200">
+                  {relative(data.mastery.lastPracticed)}
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200/80 dark:border-white/[0.07] bg-white dark:bg-[#171719] overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-slate-100 dark:border-white/[0.06]">
+                <p className="text-[12px] text-slate-500 dark:text-gray-400">
+                  Weakest first — this is what an operator can actually act on.
+                </p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left min-w-[720px]">
+                  <thead>
+                    <tr className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500 border-b border-slate-200/70 dark:border-white/[0.07]">
+                      <th className="px-4 py-2.5 font-semibold">Concept</th>
+                      <th className="px-4 py-2.5 font-semibold">Mastery</th>
+                      <th className="px-4 py-2.5 font-semibold">Trend</th>
+                      <th className="px-4 py-2.5 font-semibold">Attempts</th>
+                      <th className="px-4 py-2.5 font-semibold">Success rate</th>
+                      <th className="px-4 py-2.5 font-semibold">Last practiced</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-white/[0.05]">
+                    {data.mastery.concepts.map((c) => (
+                      <tr key={c.conceptId} className="hover:bg-slate-50/70 dark:hover:bg-white/[0.03]">
+                        <td className="px-4 py-2.5">
+                          <div className="text-[12.5px] font-medium text-slate-800 dark:text-gray-100">{c.title}</div>
+                          {(c.subject || c.topic) && (
+                            <div className="text-[11px] text-slate-400 dark:text-gray-500">
+                              {[c.subject, c.topic].filter(Boolean).join(' · ')}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center gap-2">
+                            <div className="h-1.5 w-16 rounded-full bg-slate-100 dark:bg-white/[0.08] overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${
+                                  c.level === 'weak' ? 'bg-amber-500'
+                                  : c.level === 'developing' ? 'bg-slate-400 dark:bg-gray-500'
+                                  : 'bg-[#8FAE2B]'
+                                }`}
+                                style={{ width: `${Math.min(c.masteryPercent, 100)}%` }}
+                              />
+                            </div>
+                            <span className="text-[12px] font-medium tabular-nums text-slate-700 dark:text-gray-200">
+                              {c.masteryPercent}%
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <span className={`inline-flex items-center gap-1 text-[11.5px] font-medium ${
+                            c.trend === 'improving' ? 'text-[#5A7410] dark:text-[#c8e558]'
+                            : c.trend === 'declining' ? 'text-red-600 dark:text-red-400'
+                            : 'text-slate-500 dark:text-gray-400'
+                          }`}>
+                            {c.trend === 'improving' && <TrendingUp className="w-3.5 h-3.5" strokeWidth={2} />}
+                            {c.trend === 'declining' && <TrendingDown className="w-3.5 h-3.5" strokeWidth={2} />}
+                            {c.trend === 'improving' ? 'Improving' : c.trend === 'declining' ? 'Declining' : 'Steady'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-[12.5px] text-slate-600 dark:text-gray-300 tabular-nums">{c.attempts}</td>
+                        <td className="px-4 py-2.5 text-[12.5px] text-slate-600 dark:text-gray-300 tabular-nums">
+                          {Math.round(c.successRate * 100)}%
+                        </td>
+                        <td className="px-4 py-2.5 text-[12px] text-slate-400 dark:text-gray-500 whitespace-nowrap">
+                          {relative(c.lastPracticed)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {data.mastery.truncated && (
+                <p className="px-4 py-2.5 text-[11.5px] text-amber-600 dark:text-amber-400 border-t border-slate-200/70 dark:border-white/[0.07]">
+                  Showing the first 200 concepts — this student has more.
+                </p>
+              )}
+            </div>
           </div>
         )
       )}
