@@ -1,8 +1,8 @@
 import { env } from '../../../config/env';
 import { RerankerProvider, RerankedDocument } from '../reranker.provider.interface';
+import { getSecret } from '../../runtimeSecrets.service';
 
 export class CohereRerankerProvider implements RerankerProvider {
-  private apiKey: string;
   private model: string;
 
   /**
@@ -29,13 +29,24 @@ export class CohereRerankerProvider implements RerankerProvider {
    */
   constructor(model: string = 'rerank-multilingual-v3.0') {
     this.model = model;
-    this.apiKey = env.COHERE_API_KEY || '';
-    if (!this.apiKey) {
-      console.warn('COHERE_API_KEY is missing. Cohere Reranking will fail.');
-    }
+  }
+
+  /**
+   * Resolved fresh on every call rather than cached on `this` at construction time. This
+   * instance is registered once at boot as the DI-wide RerankerProvider singleton
+   * (core/di/registry.ts), so a cached field would have baked in whatever COHERE_API_KEY
+   * was effective at that one moment for the rest of the process's life — exactly what an
+   * admin rotating the key through Settings needs to NOT happen. A plain string lookup
+   * costs nothing, so there is no reason to cache it.
+   */
+  private get apiKey(): string {
+    return getSecret('COHERE_API_KEY') || env.COHERE_API_KEY || '';
   }
 
   async rerank(query: string, documents: string[], topN?: number): Promise<RerankedDocument[]> {
+    if (!this.apiKey) {
+      console.warn('COHERE_API_KEY is missing. Cohere Reranking will fail.');
+    }
     if (!this.apiKey || documents.length === 0) return [];
     
     // Cohere limits top_n to the number of documents

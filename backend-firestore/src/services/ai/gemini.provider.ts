@@ -5,6 +5,7 @@ import { ChatMessage } from '../../types';
 import { Telemetry } from '../../lib/telemetry';
 import { TelemetryService } from '../telemetry.service';
 import { withRetry } from '../../utils/retry';
+import { getSecret } from '../runtimeSecrets.service';
 
 // Lazily-created cost recorder (only needs Firestore). Shared across GeminiProvider instances.
 let _costRecorder: TelemetryService | null = null;
@@ -14,36 +15,47 @@ const getCostRecorder = (): TelemetryService => {
 };
 
 export class GeminiProvider implements AIProvider {
-  private ai: GoogleGenAI;
   private modelName: string;
 
   constructor(modelName: string = env.GEMINI_MODEL || 'gemini-2.5-flash') {
     this.modelName = modelName;
+  }
 
-    // Vertex AI routing — when GOOGLE_GENAI_USE_VERTEXAI is "true" the SDK
-    // must be constructed in Vertex mode with the service-account project +
-    // location. In that mode the SDK picks up GOOGLE_APPLICATION_CREDENTIALS
-    // automatically. Passing an apiKey alongside vertexai:true makes the SDK
-    // send the API key as a bearer token to the Vertex endpoint, which
-    // Vertex rejects with 401 ACCESS_TOKEN_TYPE_UNSUPPORTED — the exact
-    // symptom we hit after the July revert.
+  /**
+   * Built fresh on every call rather than cached on `this` at construction time. This
+   * instance is registered once at boot as a DI-wide singleton (TOKENS.AIProvider /
+   * TOKENS.ReasoningProvider — core/di/registry.ts) as well as constructed ad hoc as a
+   * fallback elsewhere, so caching the client here would bake in whatever GEMINI_API_KEY
+   * was effective at that one moment for the rest of the process's life — exactly what an
+   * admin rotating the key through Settings needs to NOT happen. Constructing the SDK
+   * wrapper is cheap (no network round trip), so there is no cost to doing this per call.
+   *
+   * Vertex AI routing — when GOOGLE_GENAI_USE_VERTEXAI is "true" the SDK
+   * must be constructed in Vertex mode with the service-account project +
+   * location. In that mode the SDK picks up GOOGLE_APPLICATION_CREDENTIALS
+   * automatically. Passing an apiKey alongside vertexai:true makes the SDK
+   * send the API key as a bearer token to the Vertex endpoint, which
+   * Vertex rejects with 401 ACCESS_TOKEN_TYPE_UNSUPPORTED — the exact
+   * symptom we hit after the July revert.
+   */
+  private buildClient(): GoogleGenAI {
     if (env.GOOGLE_GENAI_USE_VERTEXAI === 'true') {
       if (!env.GOOGLE_VERTEX_PROJECT || !env.GOOGLE_VERTEX_LOCATION) {
         throw new Error(
           'Vertex AI mode is enabled but GOOGLE_VERTEX_PROJECT or GOOGLE_VERTEX_LOCATION is missing.'
         );
       }
-      this.ai = new GoogleGenAI({
+      return new GoogleGenAI({
         vertexai: true,
         project: env.GOOGLE_VERTEX_PROJECT,
         location: env.GOOGLE_VERTEX_LOCATION,
       });
-    } else {
-      if (!env.GEMINI_API_KEY) {
-        throw new Error('GEMINI_API_KEY is not defined in environment.');
-      }
-      this.ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
     }
+    const apiKey = getSecret('GEMINI_API_KEY') || env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY is not defined in environment.');
+    }
+    return new GoogleGenAI({ apiKey });
   }
 
   async generateResponse(
@@ -91,7 +103,7 @@ export class GeminiProvider implements AIProvider {
     // A transient RESOURCE_EXHAUSTED/5xx throws before any content exists, so retrying the
     // whole call is always safe here (unlike the streaming variant below).
     const response = await withRetry(
-      () => this.ai.models.generateContent({
+      () => this.buildClient().models.generateContent({
         model: modelToUse,
         contents: contents,
         config: config
@@ -138,7 +150,7 @@ export class GeminiProvider implements AIProvider {
 
   async extractTextFromPdf(base64Data: string, mimeType: string = 'application/pdf'): Promise<string> {
     assertAIEnabled('Gemini extractTextFromPdf');
-    const response = await this.ai.models.generateContent({
+    const response = await this.buildClient().models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [
         {
@@ -195,7 +207,7 @@ export class GeminiProvider implements AIProvider {
     // Once real content starts flowing we stop retrying entirely: re-attempting after that
     // would duplicate output the client has already started rendering.
     const acquireFirstChunk = async () => {
-      const stream = await this.ai.models.generateContentStream({
+      const stream = await this.buildClient().models.generateContentStream({
         model: modelToUse,
         contents: contents,
         config: config

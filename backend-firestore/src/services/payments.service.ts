@@ -3,6 +3,7 @@ import Razorpay from 'razorpay';
 import * as admin from 'firebase-admin';
 import { db } from '../config/firebase';
 import { env } from '../config/env';
+import { getSecret } from './runtimeSecrets.service';
 import { classRepository } from '../repositories/class.repository';
 import { enrollmentService } from './enrollment.service';
 import { earningsService } from './earnings.service';
@@ -36,6 +37,8 @@ const PLANS: Record<string, PlanDef> = {
 
 export class PaymentsService {
   private _client: Razorpay | null = null;
+  /** The RAZORPAY_KEY_ID/SECRET the cached `_client` above was built with — see client(). */
+  private _clientKeyId: string | null = null;
 
   /**
    * Serialises order creation per user.
@@ -61,13 +64,22 @@ export class PaymentsService {
     return run;
   }
 
+  /** The effective RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET: an admin-rotated override if one is
+   *  set (services/runtimeSecrets.service.ts), else .env. */
+  private get keyId(): string | undefined {
+    return getSecret('RAZORPAY_KEY_ID') || env.RAZORPAY_KEY_ID;
+  }
+  private get keySecret(): string | undefined {
+    return getSecret('RAZORPAY_KEY_SECRET') || env.RAZORPAY_KEY_SECRET;
+  }
+
   /** Payments are only available when both Razorpay keys are configured. */
   isEnabled(): boolean {
-    return !!(env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET);
+    return !!(this.keyId && this.keySecret);
   }
 
   get publicKeyId(): string | undefined {
-    return env.RAZORPAY_KEY_ID;
+    return this.keyId;
   }
 
   /**
@@ -80,7 +92,7 @@ export class PaymentsService {
    * (a `rzp_test_` payment wrote `plan: 'pro'` because payment docs carried no environment at all).
    */
   get environment(): 'live' | 'test' {
-    return (env.RAZORPAY_KEY_ID || '').startsWith('rzp_live_') ? 'live' : 'test';
+    return (this.keyId || '').startsWith('rzp_live_') ? 'live' : 'test';
   }
 
   /**
@@ -137,10 +149,18 @@ export class PaymentsService {
     return candidates[0] ?? null;
   }
 
+  /**
+   * Cached, but rebuilt the moment the effective key differs from what it was built with —
+   * so an admin rotating RAZORPAY_KEY_ID/SECRET through Settings takes effect on the very
+   * next order/refund, not on the next restart, while an untouched deployment still only
+   * ever constructs this once.
+   */
   private client(): Razorpay {
     if (!this.isEnabled()) throw new Error('Razorpay is not configured');
-    if (!this._client) {
-      this._client = new Razorpay({ key_id: env.RAZORPAY_KEY_ID!, key_secret: env.RAZORPAY_KEY_SECRET! });
+    const keyId = this.keyId!;
+    if (!this._client || this._clientKeyId !== keyId) {
+      this._client = new Razorpay({ key_id: keyId, key_secret: this.keySecret! });
+      this._clientKeyId = keyId;
     }
     return this._client;
   }
@@ -516,9 +536,10 @@ export class PaymentsService {
 
   /** Verifies the client-side checkout callback signature: HMAC_SHA256(order_id|payment_id, secret). */
   verifyCheckoutSignature(orderId: string, paymentId: string, signature: string): boolean {
-    if (!env.RAZORPAY_KEY_SECRET || !orderId || !paymentId || !signature) return false;
+    const secret = this.keySecret;
+    if (!secret || !orderId || !paymentId || !signature) return false;
     const expected = crypto
-      .createHmac('sha256', env.RAZORPAY_KEY_SECRET)
+      .createHmac('sha256', secret)
       .update(`${orderId}|${paymentId}`)
       .digest('hex');
     return this.safeEqual(expected, signature);
@@ -526,7 +547,7 @@ export class PaymentsService {
 
   /** Verifies a webhook payload signature: HMAC_SHA256(rawBody, webhookSecret). */
   verifyWebhookSignature(rawBody: Buffer | string, signature?: string): boolean {
-    const secret = env.RAZORPAY_WEBHOOK_SECRET;
+    const secret = getSecret('RAZORPAY_WEBHOOK_SECRET') || env.RAZORPAY_WEBHOOK_SECRET;
     if (!secret || !signature || !rawBody) return false;
     const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
     return this.safeEqual(expected, signature);

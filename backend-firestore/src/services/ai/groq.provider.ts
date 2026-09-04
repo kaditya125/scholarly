@@ -3,6 +3,7 @@ import { env, assertAIEnabled } from '../../config/env';
 import { AIProvider, AIProviderResponse } from './ai.provider.interface';
 import { ChatMessage } from '../../types';
 import { GeminiProvider } from './gemini.provider';
+import { getSecret } from '../runtimeSecrets.service';
 
 import { logger } from '../../utils/logger';
 import { Telemetry } from '../../lib/telemetry';
@@ -14,10 +15,15 @@ export class GroqProvider implements AIProvider {
 
   constructor(modelName: string = env.GROQ_MODEL || 'openai/gpt-oss-20b') {
     this.modelName = modelName;
-    if (!env.GROQ_API_KEY) {
+    // Every call site constructs a GroqProvider fresh (there is no long-lived DI
+    // singleton for it), so resolving the effective key here — an admin-rotated
+    // override if one is set, else .env — already makes rotation live with no
+    // further change needed.
+    const apiKey = getSecret('GROQ_API_KEY') || env.GROQ_API_KEY;
+    if (!apiKey) {
       throw new Error('GROQ_API_KEY is not defined in environment.');
     }
-    this.groq = new Groq({ apiKey: env.GROQ_API_KEY });
+    this.groq = new Groq({ apiKey });
   }
 
   /**
