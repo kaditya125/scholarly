@@ -19,6 +19,7 @@ export default function Capabilities() {
         <SectionHeading
           id="capabilities-heading"
           label="Capabilities"
+          motif="build"
           title="What we build"
           lede="From early concepts to production systems, we combine product thinking with engineering to build technology that is useful, maintainable and ready for the real world."
         />

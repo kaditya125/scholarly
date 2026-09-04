@@ -20,6 +20,7 @@ export default function ApproachTimeline() {
         <SectionHeading
           id="approach-heading"
           label="Approach"
+          motif="process"
           title="How we work"
           lede="The same four stages, whether the engagement is a two-week review or a product built over months."
         />

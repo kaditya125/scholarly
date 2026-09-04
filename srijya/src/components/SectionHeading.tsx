@@ -1,3 +1,5 @@
+import SectionMotif from '@/components/SectionMotif';
+import type { MotifName } from '@/components/SectionMotif';
 import type { ReactNode } from 'react';
 import { revealProps } from '@/lib/reveal';
 
@@ -11,6 +13,7 @@ import { revealProps } from '@/lib/reveal';
  */
 export default function SectionHeading({
   label,
+  motif,
   title,
   lede,
   action,
@@ -18,6 +21,8 @@ export default function SectionHeading({
   as: Heading = 'h2',
 }: {
   label?: string;
+  /** Optional line motif, shown beside the label. See SectionMotif.tsx. */
+  motif?: MotifName;
   title: ReactNode;
   lede?: ReactNode;
   /** A link or button that belongs to the section, placed under the lede. */
@@ -29,7 +34,10 @@ export default function SectionHeading({
     <div className="grid gap-y-5 md:grid-cols-12 md:gap-x-10" {...revealProps()}>
       {label ? (
         <div className="md:col-span-3">
-          <p className="label">{label}</p>
+          <p className="label flex items-center gap-2.5">
+            {motif ? <SectionMotif name={motif} size={20} className="shrink-0 text-accent" /> : null}
+            {label}
+          </p>
         </div>
       ) : null}
       <div className={label ? 'md:col-span-9' : 'md:col-span-12'}>
