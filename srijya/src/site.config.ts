@@ -102,6 +102,10 @@ export const COMPANY = {
    */
   email: 'support@sadhya.app',
 
+  /** Direct WhatsApp channel for rapid discovery conversations. */
+  phone: '+91 91022 02267',
+  whatsapp: 'https://wa.me/919102202267?text=Hi%20Srijya%20Systems%2C%20I%27d%20like%20to%20discuss%20a%20project.',
+
   /**
    * Where the contact form posts.
    *
@@ -112,14 +116,13 @@ export const COMPANY = {
    */
   contactEndpoint: import.meta.env.VITE_CONTACT_ENDPOINT ?? '',
 
-  /**
-   * Social profiles. Every entry renders a link, so an entry that does not exist
-   * is a dead link — add a row only when the profile is real.
-   */
-  social: [] as ReadonlyArray<{ name: string; href: string }>,
+  social: [
+    { name: 'LinkedIn', href: 'https://www.linkedin.com/in/aditya-kumar-122370267/' },
+    { name: 'WhatsApp', href: 'https://wa.me/919102202267?text=Hi%20Srijya%20Systems%2C%20I%27d%20like%20to%20discuss%20a%20project.' },
+  ] as ReadonlyArray<{ name: string; href: string }>,
 
   /** Bump when the site notices below are revised. */
-  legalLastUpdated: '2 September 2026',
+  legalLastUpdated: '4 September 2026',
 } as const;
 
 /**
