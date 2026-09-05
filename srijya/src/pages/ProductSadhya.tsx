@@ -3,6 +3,7 @@ import { ArrowRight, ArrowUpRight } from '@/components/Icons';
 import { LoomMark } from '@/components/Logo';
 import PageHeader from '@/components/PageHeader';
 import ContactCTA from '@/components/sections/ContactCTA';
+import QuestionPath from '@/components/sections/QuestionPath';
 import TextSection from '@/components/TextSection';
 import { CAPABILITIES } from '@/content/capabilities';
 import { revealProps } from '@/lib/reveal';
@@ -49,6 +50,10 @@ export default function ProductSadhya() {
               </dd>
             </div>
             <div>
+              <dt className="label">Stack</dt>
+              <dd className="mt-2 text-ink">TypeScript, React 19, Vertex AI, Pinecone</dd>
+            </div>
+            <div>
               <dt className="label">Website</dt>
               <dd className="mt-2">
                 <a
@@ -65,25 +70,6 @@ export default function ProductSadhya() {
           </dl>
         }
       />
-
-      <section className="container-tl py-12 md:py-16" aria-label="Sadhya brand banner">
-        <figure {...revealProps()}>
-          <div className="overflow-hidden rounded-[5px] border border-line bg-[#0f1013]">
-            <img
-              src="/sadhya-og.jpg"
-              width={1200}
-              height={630}
-              loading="lazy"
-              decoding="async"
-              alt="Sadhya's brand banner: “Every goal, attainable.” — AI-powered prep for UPSC, SSC, JEE, NEET and BPSC."
-              className="block aspect-[1200/630] w-full object-cover"
-            />
-          </div>
-          <figcaption className="label mt-4">
-            Sadhya — {SADHYA.domain} · A {COMPANY.name} product
-          </figcaption>
-        </figure>
-      </section>
 
       <div className="container-tl">
         <TextSection label="01 / The product" title="What Sadhya is">
@@ -128,10 +114,96 @@ export default function ProductSadhya() {
           </p>
         </TextSection>
 
+        <QuestionPath />
+
+        <TextSection label="05 / Architecture" title="Systems and engineering">
+          <p className="body-text">
+            Sadhya operates four foundational subsystems engineered for accuracy, responsiveness and operational reliability:
+          </p>
+          <div className="mt-8 grid gap-6 sm:grid-cols-2">
+            <div className="rounded-[5px] border border-line bg-surface p-6">
+              <p className="font-mono text-[0.6875rem] font-medium uppercase tracking-[0.16em] text-ink-3">
+                01 · Grounding & Retrieval
+              </p>
+              <h3 className="mt-3 text-[1.0625rem] font-medium text-ink">Curriculum Vector Engine</h3>
+              <p className="mt-3 text-[0.875rem] leading-relaxed text-ink-2">
+                High-dimensional vector embeddings with strict source provenance and 100% boundary isolation across national competitive exams (UPSC, SSC, JEE, NEET).
+              </p>
+            </div>
+            <div className="rounded-[5px] border border-line bg-surface p-6">
+              <p className="font-mono text-[0.6875rem] font-medium uppercase tracking-[0.16em] text-ink-3">
+                02 · Multi-Modal AI
+              </p>
+              <h3 className="mt-3 text-[1.0625rem] font-medium text-ink">AI Tutor & Real-Time Voice</h3>
+              <p className="mt-3 text-[0.875rem] leading-relaxed text-ink-2">
+                Multi-turn reasoning via Google Gemini, low-latency streaming voice interactions, and adaptive difficulty mock tests drawn directly from verified past papers.
+              </p>
+            </div>
+            <div className="rounded-[5px] border border-line bg-surface p-6">
+              <p className="font-mono text-[0.6875rem] font-medium uppercase tracking-[0.16em] text-ink-3">
+                03 · Ingestion Reliability
+              </p>
+              <h3 className="mt-3 text-[1.0625rem] font-medium text-ink">Dual-Flush Persistence</h3>
+              <p className="mt-3 text-[0.875rem] leading-relaxed text-ink-2">
+                Atomic vector batches synchronized to Pinecone and Firestore with automated backoff on upstream provider rate limits, guaranteeing zero data loss during large corpus ingestion.
+              </p>
+            </div>
+            <div className="rounded-[5px] border border-line bg-surface p-6">
+              <p className="font-mono text-[0.6875rem] font-medium uppercase tracking-[0.16em] text-ink-3">
+                04 · Self-Service Monetization
+              </p>
+              <h3 className="mt-3 text-[1.0625rem] font-medium text-ink">Autonomous Entitlements</h3>
+              <p className="mt-3 text-[0.875rem] leading-relaxed text-ink-2">
+                Automated Razorpay recurring billing, webhook-reconciled quota allocations, and a one-click 7-day money-back guarantee built into student account settings.
+              </p>
+            </div>
+          </div>
+
+          {/* Architecture Pipeline Map */}
+          <div className="mt-10 overflow-hidden rounded-[5px] border border-line bg-surface p-6 md:p-8">
+            <p className="font-mono text-[0.6875rem] font-medium uppercase tracking-[0.16em] text-ink-3">
+              Data & Execution Pipeline
+            </p>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-[4px] border border-line bg-paper-2 p-4">
+                <span className="font-mono text-[0.6875rem] text-ink-3">LAYER 01</span>
+                <p className="mt-1 text-[0.9375rem] font-medium text-ink">Client Experience</p>
+                <p className="mt-2 text-[0.8125rem] leading-relaxed text-ink-2">
+                  React 19 SPA, low-latency Web Audio voice streaming, and accessible KaTeX math rendering.
+                </p>
+              </div>
+
+              <div className="rounded-[4px] border border-line bg-paper-2 p-4">
+                <span className="font-mono text-[0.6875rem] text-ink-3">LAYER 02</span>
+                <p className="mt-1 text-[0.9375rem] font-medium text-ink">API & Auth Gateway</p>
+                <p className="mt-2 text-[0.8125rem] leading-relaxed text-ink-2">
+                  Node.js Express microservices, quota rate limiters, and secure Razorpay webhook handlers.
+                </p>
+              </div>
+
+              <div className="rounded-[4px] border border-line bg-paper-2 p-4">
+                <span className="font-mono text-[0.6875rem] text-ink-3">LAYER 03</span>
+                <p className="mt-1 text-[0.9375rem] font-medium text-ink">AI & Vector RAG</p>
+                <p className="mt-2 text-[0.8125rem] leading-relaxed text-ink-2">
+                  768-dim Pinecone vector indexing with zero-leakage cross-exam metadata filtering.
+                </p>
+              </div>
+
+              <div className="rounded-[4px] border border-line bg-paper-2 p-4">
+                <span className="font-mono text-[0.6875rem] text-ink-3">LAYER 04</span>
+                <p className="mt-1 text-[0.9375rem] font-medium text-ink">Persistent State</p>
+                <p className="mt-2 text-[0.8125rem] leading-relaxed text-ink-2">
+                  Atomic Firestore transactions, session caching, and automated cloud backup pipelines.
+                </p>
+              </div>
+            </div>
+          </div>
+        </TextSection>
+
         <section className="border-t border-line py-12 md:py-16" {...revealProps()}>
           <div className="grid gap-y-6 md:grid-cols-12 md:gap-x-10">
             <div className="md:col-span-3">
-              <p className="label">04 / Capabilities</p>
+              <p className="label">06 / Capabilities</p>
             </div>
             <div className="md:col-span-8">
               <h2 className="display-3 max-w-[20ch]">The capabilities it draws on</h2>
@@ -160,7 +232,7 @@ export default function ProductSadhya() {
           </div>
         </section>
 
-        <TextSection label="05 / Outcome" title="What came of it">
+        <TextSection label="07 / Outcome" title="What came of it">
           <p className="body-text">
             Sadhya is live and in public use. It handles accounts, subscriptions and payments,
             serves generated answers anchored to source material, and carries the ordinary
