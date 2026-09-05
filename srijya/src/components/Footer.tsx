@@ -68,9 +68,20 @@ export default function Footer() {
             {COMPANY.email ? (
               <a
                 href={`mailto:${COMPANY.email}`}
-                className="mt-1 inline-block text-[0.8125rem] text-ink-2 underline decoration-line-2 underline-offset-4 transition-colors duration-300 hover:text-ink hover:decoration-ink"
+                className="mt-1 block text-[0.8125rem] text-ink-2 underline decoration-line-2 underline-offset-4 transition-colors duration-300 hover:text-ink hover:decoration-ink"
               >
                 {COMPANY.email}
+              </a>
+            ) : null}
+            {COMPANY.whatsapp ? (
+              <a
+                href={COMPANY.whatsapp}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1.5 inline-flex items-center gap-1 text-[0.8125rem] text-ink-2 underline decoration-line-2 underline-offset-4 transition-colors duration-300 hover:text-ink hover:decoration-ink"
+              >
+                WhatsApp {COMPANY.phone}
+                <ArrowUpRight size={11} />
               </a>
             ) : null}
           </div>

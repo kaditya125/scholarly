@@ -111,6 +111,15 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: { '@': path.resolve(__dirname, './src') },
     },
+    server: {
+      port: 4300,
+      proxy: {
+        '/api': {
+          target: env.VITE_BACKEND_URL || 'http://localhost:8080',
+          changeOrigin: true,
+        },
+      },
+    },
     define: {
       /* Mirrored to the client so useSeo() can emit per-route canonicals with the
          same origin the build used. */

@@ -27,17 +27,32 @@ export default function ContactCTA({ className = '' }: { className?: string }) {
               Start a conversation
               <ArrowRight />
             </Link>
-            {COMPANY.email ? (
-              <p className="mt-6 text-[0.875rem] text-ink-2 md:text-right">
-                Or write to{' '}
-                <a
-                  href={`mailto:${COMPANY.email}`}
-                  className="underline decoration-line-2 underline-offset-4 transition-colors duration-300 hover:text-ink hover:decoration-ink"
-                >
-                  {COMPANY.email}
-                </a>
-              </p>
-            ) : null}
+            <div className="mt-6 flex flex-col gap-1 text-[0.875rem] text-ink-2 md:text-right">
+              {COMPANY.email ? (
+                <p>
+                  Or write to{' '}
+                  <a
+                    href={`mailto:${COMPANY.email}`}
+                    className="underline decoration-line-2 underline-offset-4 transition-colors duration-300 hover:text-ink hover:decoration-ink"
+                  >
+                    {COMPANY.email}
+                  </a>
+                </p>
+              ) : null}
+              {COMPANY.whatsapp ? (
+                <p>
+                  Quick questions?{' '}
+                  <a
+                    href={COMPANY.whatsapp}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline decoration-line-2 underline-offset-4 transition-colors duration-300 hover:text-ink hover:decoration-ink"
+                  >
+                    WhatsApp us
+                  </a>
+                </p>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>

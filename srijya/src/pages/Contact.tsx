@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from '@/components/Icons';
+import { ArrowRight, ArrowUpRight } from '@/components/Icons';
 import Field from '@/components/Field';
 import PageHeader from '@/components/PageHeader';
 import { revealProps } from '@/lib/reveal';
@@ -149,6 +149,25 @@ export default function Contact() {
                     >
                       {COMPANY.email}
                     </a>
+                  </dd>
+                </div>
+              ) : null}
+              {COMPANY.whatsapp ? (
+                <div>
+                  <dt className="label">Instant chat</dt>
+                  <dd className="mt-3">
+                    <a
+                      href={COMPANY.whatsapp}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-[1.0313rem] text-ink underline decoration-line-2 underline-offset-4 transition-colors duration-300 hover:decoration-ink"
+                    >
+                      WhatsApp {COMPANY.phone}
+                      <ArrowUpRight size={13} />
+                    </a>
+                    <p className="body-text mt-1 text-[0.875rem] text-ink-3">
+                      Fastest route for exploratory discussions and brief questions.
+                    </p>
                   </dd>
                 </div>
               ) : null}
