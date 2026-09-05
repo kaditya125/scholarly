@@ -55,11 +55,11 @@ export const COMPANY = {
 
   /** One line, used for meta descriptions and any place that needs a summary. */
   descriptor:
-    'Srijya is a technology and product engineering company turning complex ideas into practical digital products, applications and intelligent technology experiences.',
+    'Srijya turns ideas into working products for people who do not build software themselves — choosing and wiring in the AI tools that actually fit the problem.',
 
   /** The longer positioning line, used on the About page and in structured data. */
   positioning:
-    'A technology and product engineering company helping organisations move from an idea to a real, working product — through the clarity, design and engineering in between.',
+    'A technology and product engineering company helping people move from an idea to a real, working product — through the clarity, design and engineering in between.',
 
   /**
    * Public business registration.

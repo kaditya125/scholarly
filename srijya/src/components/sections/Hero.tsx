@@ -40,10 +40,15 @@ export default function Hero() {
               From ideas to real technology.
             </h1>
 
+            {/* The lede names who this is for before it names what we do. The
+                previous version addressed "organisations", which is the wrong
+                reader: the person with the idea and no way to build it is
+                usually one person, and they are the reason the company exists. */}
             <p className="lede mt-8 max-w-[54ch]" {...revealProps(120)}>
-              Srijya is a technology and product engineering company helping
-              organisations turn complex ideas into practical digital products,
-              applications and intelligent technology experiences.
+              The tools are changing faster than anyone can learn them, and the best ideas
+              often belong to the people with no way to build them. Srijya is for those
+              people &mdash; we turn the idea into something real, and put the right AI to
+              work inside it.
             </p>
 
             {/* Content-width, left-aligned — a full-bleed pair of buttons on a phone
