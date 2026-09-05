@@ -274,6 +274,48 @@ export default function Contact() {
           </div>
         </div>
       </div>
+
+      <section className="border-t border-line py-16 md:py-20" aria-labelledby="client-faq-heading">
+        <div className="container-tl">
+          <div className="grid gap-y-8 md:grid-cols-12 md:gap-x-10" {...revealProps()}>
+            <div className="md:col-span-4">
+              <p className="label">How we work</p>
+              <h2 id="client-faq-heading" className="display-3 mt-4 max-w-[16ch]">
+                Common questions before starting.
+              </h2>
+              <p className="body-text mt-5 max-w-[34ch]">
+                Clarity upfront prevents friction later. Here is how we handle intellectual property, project pacing, and billing.
+              </p>
+            </div>
+            <div className="md:col-span-7 md:col-start-6 space-y-8">
+              <div className="border-b border-line pb-6">
+                <h3 className="text-[1.0625rem] font-medium text-ink">Who owns the intellectual property and source code?</h3>
+                <p className="body-text mt-3">
+                  You do. 100% of all software, architecture documents, design systems, and repository ownership are transferred directly to your organization upon project completion. We sign standard IP assignment and NDA agreements prior to kickoff.
+                </p>
+              </div>
+              <div className="border-b border-line pb-6">
+                <h3 className="text-[1.0625rem] font-medium text-ink">What is a typical engagement timeline?</h3>
+                <p className="body-text mt-3">
+                  We build in tight, outcome-driven sprints. A clickable prototype or technical proof-of-concept takes 2 weeks; a full, production-ready MVP typically takes 4 to 8 weeks.
+                </p>
+              </div>
+              <div className="border-b border-line pb-6">
+                <h3 className="text-[1.0625rem] font-medium text-ink">How do milestone payments work?</h3>
+                <p className="body-text mt-3">
+                  Payments are transparent and milestone-based (typically 50% project deposit, 30% staging demo review, and 20% final production handover). You never pay for unverified work.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-[1.0625rem] font-medium text-ink">Can you work alongside our existing engineering team?</h3>
+                <p className="body-text mt-3">
+                  Yes. We can operate as an autonomous sprint team delivering a standalone product, or embed directly with your in-house engineers to accelerate AI architecture, vector pipelines, and platform scaling.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </>
   );
 }

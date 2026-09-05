@@ -124,6 +124,20 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         keywords: ['sadhya', 'product', 'learning', 'platform', 'flagship', 'edtech'],
       },
       {
+        id: 'sadhya-technology-stack',
+        question: 'What technology stack and architecture does Sadhya use?',
+        answer:
+          'Sadhya is engineered with a modern full-stack TypeScript architecture: React 19 on the front end, Node.js and Express services, Google Vertex AI (Gemini 2.0 Flash and 768-dimensional embeddings), Pinecone vector database for curriculum-grounded retrieval, Firebase Firestore for realtime state, and Razorpay for recurring billing and automated refunds.',
+        keywords: ['tech stack', 'architecture', 'technology', 'technologies', 'gemini', 'vertex ai', 'pinecone', 'database', 'stack', 'how does sadhya work'],
+      },
+      {
+        id: 'sadhya-ai-approach',
+        question: 'How does Sadhya use AI and prevent hallucinations?',
+        answer:
+          'Sadhya uses retrieval-augmented generation (RAG) strictly grounded in official competitive examination syllabi and authentic previous years’ questions. Answers must cite verified curriculum sources, with 100% boundary isolation across exam domains (UPSC, SSC, JEE, NEET). Unverified material is quarantined rather than served, making reasoning checkable step-by-step.',
+        keywords: ['hallucination', 'hallucinations', 'grounding', 'rag', 'retrieval', 'accuracy', 'ai', 'ai tutor', 'syllabus', 'provenance'],
+      },
+      {
         id: 'why-own-products',
         question: 'Why does Srijya build its own products?',
         answer:
