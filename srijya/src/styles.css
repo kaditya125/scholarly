@@ -1020,3 +1020,57 @@ textarea.field-input {
   from { opacity: 0; transform: scale(0.15); }
   to { opacity: 1; transform: scale(1); }
 }
+
+/* ── The question-path frames on the Sadhya product page ─────────────────────
+   Each frame's resting state is the finished artefact; the motion below only
+   replays how it got there. Same rule as the marks: the animation runs hidden ->
+   shown with `backwards` fill inside a no-preference block, so a frame whose
+   animation never fires is complete rather than empty.
+
+   The vector bars and the funnel bars stagger off an inline `--i` rather than
+   sixty-four hand-written rules — the index is the only thing that varies. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-revealed] .qp-bar {
+    transform-origin: bottom;
+    animation: qp-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: calc(var(--i) * 9ms);
+  }
+
+  [data-revealed] .qp-funnel {
+    transform-origin: left;
+    animation: qp-extend 0.65s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: calc(0.12s + var(--i) * 0.14s);
+  }
+
+  /* The rewrite is the point of stage one, so it arrives after the raw question
+     rather than with it. */
+  [data-revealed] .qp-rewrite {
+    animation: qp-settle 0.5s ease-out 0.45s backwards;
+  }
+
+  /* The floor being applied: the candidates all arrive, then the ones underneath
+     it get their line drawn through them. */
+  [data-revealed] .qp-drop {
+    animation: qp-cut 0.4s ease-out 0.75s backwards;
+  }
+}
+
+@keyframes qp-rise {
+  from { opacity: 0; transform: scaleY(0.04); }
+  to { opacity: 1; transform: scaleY(1); }
+}
+
+@keyframes qp-extend {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes qp-settle {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes qp-cut {
+  from { text-decoration-color: transparent; }
+  to { text-decoration-color: var(--color-line-2); }
+}
