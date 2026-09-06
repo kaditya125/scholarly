@@ -1,0 +1,62 @@
+{
+  "paperKey": "UPSC-CSE-PRELIMS-GS1-2024",
+  "examId": "UPSC_CSE",
+  "examName": "Union Public Service Commission — Civil Services Examination",
+  "year": 2024,
+  "paper": "General Studies Paper I",
+  "stage": "PRELIMS",
+  "series": "A",
+
+  "source": {
+    "authority": "Union Public Service Commission",
+    "pageUrl": "https://www.upsc.gov.in/examinations/answer-key",
+    "url": "https://www.upsc.gov.in/sites/default/files/AnsKey-CivilServicesPExam-2024-GeneralStudies-I-210525.pdf",
+    "sha256": "920d4abdd01508f62569e5a8de623fa9f2d5c860da50e57be7285019d342fb84",
+    "bytes": 499914,
+    "pages": 4,
+    "retrievedAt": "2026-09-06"
+  },
+
+  "transcription": {
+    "method": "manual read of the scanned page",
+    "why": "UPSC publishes the final key as a 1-bit TIFF inside the PDF with no text layer. There is no OCR dependency in this repository, and guessing an answer key is the one thing this pipeline must never do. So the key is transcribed once, by eye, and pinned to the SHA-256 above: if UPSC replaces the file, the hash stops matching and the run aborts rather than silently keying questions off a superseded revision.",
+    "transcribedAt": "2026-09-06",
+    "confidence": "high — the three X marks agree with the sheet's own declared 'Questions Dropped: 3', and 100 − 3 = 97 agrees with 'taken for Scoring'"
+  },
+
+  "declared": {
+    "totalQuestions": 100,
+    "maximumMarks": 200,
+    "dropped": 3,
+    "takenForScoring": 97
+  },
+
+  "notes": [
+    "X marks a question UPSC dropped from scoring. Ingest these with the question text but no correctAnswer, never with a guessed one.",
+    "Q71 is handwritten on the scan rather than typeset — read as D. Lower confidence than the rest of the sheet; worth a second pair of eyes before it is served to students.",
+    "Rows 101–120 read 0 throughout. The key is printed on a 120-question template; GS Paper I has 100. They are not answers and are not included below."
+  ],
+
+  "answers": {
+    "1": "D",  "2": "A",  "3": "D",  "4": "A",  "5": "C",
+    "6": "B",  "7": "A",  "8": "B",  "9": "A",  "10": "B",
+    "11": "A", "12": "A", "13": "D", "14": "C", "15": "D",
+    "16": "B", "17": "D", "18": "B", "19": "C", "20": "X",
+    "21": "C", "22": "A", "23": "D", "24": "A", "25": "A",
+    "26": "A", "27": "D", "28": "A", "29": "C", "30": "A",
+    "31": "B", "32": "D", "33": "A", "34": "B", "35": "D",
+    "36": "A", "37": "D", "38": "C", "39": "D", "40": "C",
+    "41": "D", "42": "C", "43": "D", "44": "D", "45": "B",
+    "46": "C", "47": "B", "48": "C", "49": "D", "50": "A",
+    "51": "A", "52": "X", "53": "D", "54": "B", "55": "B",
+    "56": "A", "57": "X", "58": "B", "59": "A", "60": "C",
+    "61": "D", "62": "A", "63": "C", "64": "C", "65": "B",
+    "66": "D", "67": "A", "68": "C", "69": "D", "70": "A",
+    "71": "D", "72": "A", "73": "B", "74": "D", "75": "C",
+    "76": "D", "77": "D", "78": "C", "79": "A", "80": "C",
+    "81": "C", "82": "D", "83": "C", "84": "B", "85": "C",
+    "86": "D", "87": "B", "88": "A", "89": "C", "90": "D",
+    "91": "A", "92": "D", "93": "A", "94": "B", "95": "C",
+    "96": "C", "97": "D", "98": "D", "99": "B", "100": "B"
+  }
+}
