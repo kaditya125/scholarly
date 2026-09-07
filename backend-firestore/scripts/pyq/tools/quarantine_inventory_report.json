@@ -1,0 +1,581 @@
+{
+  "totalQuarantined": 5653,
+  "totalActiveJee": 10970,
+  "byExam": {
+    "SSC_CGL": {
+      "total": 2171,
+      "uniqueNormalizedTexts": 1359,
+      "duplicateGroupsCount": 272,
+      "years": {
+        "2021": 545,
+        "2022": 505,
+        "2023": 565,
+        "2024": 556
+      },
+      "papers": {
+        "Tier 1 Combined Paper": 2155,
+        "Shift 1": 9,
+        "Shift 3": 2,
+        "Shift 2": 5
+      },
+      "subjects": {
+        "English Comprehension": 374,
+        "Quantitative Aptitude": 927,
+        "General Intelligence & Reasoning": 492,
+        "General Awareness": 378
+      },
+      "quarantineReasons": {
+        "TEMPLATE_GENERATED": 2171
+      },
+      "origins": {
+        "template": 2171
+      },
+      "sourceTypes": {
+        "TIER_A_OFFICIAL": 2171
+      },
+      "verificationStatuses": {
+        "OFFICIAL_CONFIRMED": 2171
+      },
+      "overlapWithActiveJeeCount": 0,
+      "multiPaperReplayCount": 1084
+    },
+    "NEET_UG": {
+      "total": 2600,
+      "uniqueNormalizedTexts": 287,
+      "duplicateGroupsCount": 271,
+      "years": {
+        "2013": 211,
+        "2014": 211,
+        "2015": 214,
+        "2016": 212,
+        "2017": 215,
+        "2018": 214,
+        "2019": 214,
+        "2020": 217,
+        "2021": 223,
+        "2022": 224,
+        "2023": 224,
+        "2024": 221
+      },
+      "papers": {
+        "NEET UG 2020 Question Paper Code F (Phase 1)": 5,
+        "NEET UG 2013 Question Paper Code W": 200,
+        "NEET UG 2018 Question Paper Code DD": 4,
+        "NEET UG 2024 Question Paper Code Q": 200,
+        "NEET UG 2021 Question Paper Code M": 200,
+        "AIPMT 2015 Re-Test Paper Code A": 200,
+        "NEET UG 2020 Question Paper Code E (Phase 1)": 200,
+        "NEET UG 2018 Question Paper Code AA": 200,
+        "NEET UG 2019 Question Paper Code P": 200,
+        "NEET UG 2016 Phase 2 Paper Code P": 2,
+        "NEET UG 2016 Phase 1 Paper Code A": 200,
+        "NEET UG 2022 Question Paper Code Q": 200,
+        "NEET UG 2023 Question Paper Code E": 200,
+        "NEET UG 2013 Question Paper Code X": 5,
+        "NEET UG 2017 Question Paper Code ARA": 200,
+        "AIPMT 2014 Question Paper Code P": 200,
+        "AIPMT 2015 Re-Test Paper Code D": 4,
+        "NEET UG 2019 Question Paper Code R": 5,
+        "NEET UG 2018 Question Paper Code BB": 5,
+        "NEET UG 2020 Question Paper Code H (Phase 1)": 4,
+        "NEET UG 2020 Question Paper Code G (Phase 1)": 5,
+        "NEET UG 2022 Question Paper Code R": 6,
+        "NEET UG 2022 Question Paper Code S": 10,
+        "AIPMT 2015 Re-Test Paper Code B": 5,
+        "NEET UG 2021 Question Paper Code P": 11,
+        "NEET UG 2017 Question Paper Code ARB": 6,
+        "AIPMT 2014 Question Paper Code Q": 6,
+        "NEET UG Main Paper": 4,
+        "NEET UG 2016 Phase 1 Paper Code C": 4,
+        "NEET UG 2024 Question Paper Code S": 4,
+        "NEET UG 2021 Question Paper Code O": 5,
+        "NEET UG 2024 Re-Test Paper (23 June 2024)": 2,
+        "NEET UG 2022 Re-Test Paper (04 Sep 2022)": 2,
+        "NEET UG 2024 Question Paper Code R": 6,
+        "NEET UG 2019 Question Paper Code Q": 6,
+        "NEET UG 2020 Covid Special Paper Code X (Phase 2)": 3,
+        "NEET UG 2017 Question Paper Code ARC": 4,
+        "NEET UG 2016 Phase 1 Paper Code B": 6,
+        "NEET UG 2022 Question Paper Code T": 4,
+        "NEET UG 2023 Question Paper Code F": 11,
+        "NEET UG 2019 Question Paper Code S": 3,
+        "NEET UG 2017 Question Paper Code ARD": 5,
+        "NEET UG Paper Code F": 3,
+        "AIPMT 2015 Re-Test Paper Code C": 5,
+        "NEET UG 2018 Question Paper Code CC": 5,
+        "AIPMT 2014 Question Paper Code R": 5,
+        "NEET UG 2021 Question Paper Code N": 5,
+        "NEET UG 2024 Question Paper Code T": 4,
+        "NEET UG 2023 Question Paper Code H": 4,
+        "NEET UG 2013 Question Paper Code Y": 4,
+        "NEET UG 2013 Karnataka Special Paper Code K": 2,
+        "NEET UG 2023 Question Paper Code G": 6,
+        "NEET UG Paper Code Q": 5
+      },
+      "subjects": {
+        "Physics": 767,
+        "Biology": 1208,
+        "Chemistry": 625
+      },
+      "quarantineReasons": {
+        "TEMPLATE_GENERATED": 2600
+      },
+      "origins": {
+        "template": 2600
+      },
+      "sourceTypes": {
+        "TIER_A_OFFICIAL": 2600
+      },
+      "verificationStatuses": {
+        "OFFICIAL_CONFIRMED": 2600
+      },
+      "overlapWithActiveJeeCount": 24,
+      "multiPaperReplayCount": 2584
+    },
+    "BPSC_CCE": {
+      "total": 255,
+      "uniqueNormalizedTexts": 51,
+      "duplicateGroupsCount": 51,
+      "years": {
+        "2019": 51,
+        "2020": 51,
+        "2022": 51,
+        "2023": 51,
+        "2024": 51
+      },
+      "papers": {
+        "BPSC 66th Combined Competitive Examination (Preliminary) General Studies": 51,
+        "BPSC 69th Combined Competitive Examination (Preliminary) General Studies": 51,
+        "BPSC 70th Combined Competitive Examination (Preliminary) General Studies": 51,
+        "BPSC 67th Combined Competitive Examination (Preliminary) General Studies": 51,
+        "BPSC 65th Combined Competitive Examination (Preliminary) General Studies": 51
+      },
+      "subjects": {
+        "General Studies": 255
+      },
+      "quarantineReasons": {
+        "TEMPLATE_GENERATED": 255
+      },
+      "origins": {
+        "template": 255
+      },
+      "sourceTypes": {
+        "TIER_A_OFFICIAL": 255
+      },
+      "verificationStatuses": {
+        "OFFICIAL_CONFIRMED": 255
+      },
+      "overlapWithActiveJeeCount": 0,
+      "multiPaperReplayCount": 255
+    },
+    "UPSC_CSE": {
+      "total": 565,
+      "uniqueNormalizedTexts": 145,
+      "duplicateGroupsCount": 142,
+      "years": {
+        "2021": 139,
+        "2022": 142,
+        "2023": 143,
+        "2024": 141
+      },
+      "papers": {
+        "UPSC CSE Prelims 2021 CSAT Paper 2": 39,
+        "UPSC CSE Prelims 2022 General Studies Paper 1": 100,
+        "UPSC CSE Prelims 2021 General Studies Paper 1": 99,
+        "UPSC CSE Prelims 2024 General Studies Paper 1": 99,
+        "UPSC CSE Prelims 2023 CSAT Paper 2": 39,
+        "UPSC CSE Prelims 2023 General Studies Paper 1": 100,
+        "UPSC CSE Prelims 2024 CSAT Paper 2": 39,
+        "UPSC CSE Prelims 2022 CSAT Paper 2": 39,
+        "CSAT Paper 2": 3,
+        "GS Paper 1": 8
+      },
+      "subjects": {
+        "General Studies I": 565
+      },
+      "quarantineReasons": {
+        "TEMPLATE_GENERATED": 565
+      },
+      "origins": {
+        "template": 565
+      },
+      "sourceTypes": {
+        "TIER_A_OFFICIAL": 565
+      },
+      "verificationStatuses": {
+        "OFFICIAL_CONFIRMED": 565
+      },
+      "overlapWithActiveJeeCount": 0,
+      "multiPaperReplayCount": 562
+    },
+    "JEE_ADVANCED": {
+      "total": 42,
+      "uniqueNormalizedTexts": 24,
+      "duplicateGroupsCount": 13,
+      "years": {
+        "2020": 7,
+        "2021": 6,
+        "2022": 6,
+        "2023": 10,
+        "2024": 13
+      },
+      "papers": {
+        "Paper 1": 25,
+        "Paper 2": 17
+      },
+      "subjects": {
+        "Chemistry": 11,
+        "Physics": 16,
+        "Mathematics": 15
+      },
+      "quarantineReasons": {
+        "UNVERIFIED_OFFICIAL_SOURCE": 42
+      },
+      "origins": {
+        "authored": 42
+      },
+      "sourceTypes": {
+        "TIER_A_OFFICIAL": 42
+      },
+      "verificationStatuses": {
+        "OFFICIAL_CONFIRMED": 42
+      },
+      "overlapWithActiveJeeCount": 2,
+      "multiPaperReplayCount": 31
+    },
+    "RRB_NTPC": {
+      "total": 10,
+      "uniqueNormalizedTexts": 7,
+      "duplicateGroupsCount": 3,
+      "years": {
+        "2019": 3,
+        "2021": 3,
+        "2022": 4
+      },
+      "papers": {
+        "Shift 2": 4,
+        "Shift 1": 6
+      },
+      "subjects": {
+        "General Awareness": 3,
+        "General Intelligence & Reasoning": 3,
+        "Quantitative Aptitude": 4
+      },
+      "quarantineReasons": {
+        "UNVERIFIED_OFFICIAL_SOURCE": 10
+      },
+      "origins": {
+        "authored": 10
+      },
+      "sourceTypes": {
+        "TIER_A_OFFICIAL": 10
+      },
+      "verificationStatuses": {
+        "OFFICIAL_CONFIRMED": 10
+      },
+      "overlapWithActiveJeeCount": 0,
+      "multiPaperReplayCount": 6
+    },
+    "IBPS_PO": {
+      "total": 9,
+      "uniqueNormalizedTexts": 6,
+      "duplicateGroupsCount": 3,
+      "years": {
+        "2021": 1,
+        "2022": 2,
+        "2023": 3,
+        "2024": 3
+      },
+      "papers": {
+        "UNSPECIFIED_PAPER": 9
+      },
+      "subjects": {
+        "Quantitative Aptitude": 6,
+        "General Intelligence & Reasoning": 2,
+        "English Comprehension": 1
+      },
+      "quarantineReasons": {
+        "UNVERIFIED_OFFICIAL_SOURCE": 9
+      },
+      "origins": {
+        "authored": 9
+      },
+      "sourceTypes": {
+        "TIER_A_OFFICIAL": 9
+      },
+      "verificationStatuses": {
+        "OFFICIAL_CONFIRMED": 9
+      },
+      "overlapWithActiveJeeCount": 0,
+      "multiPaperReplayCount": 6
+    },
+    "UNKNOWN": {
+      "total": 1,
+      "uniqueNormalizedTexts": 0,
+      "duplicateGroupsCount": 0,
+      "years": {
+        "0": 1
+      },
+      "papers": {
+        "UNSPECIFIED_PAPER": 1
+      },
+      "subjects": {
+        "UNSPECIFIED_SUBJECT": 1
+      },
+      "quarantineReasons": {
+        "UNKNOWN_ORIGIN": 1
+      },
+      "origins": {
+        "unknown": 1
+      },
+      "sourceTypes": {
+        "UNSPECIFIED": 1
+      },
+      "verificationStatuses": {
+        "UNVERIFIED": 1
+      },
+      "overlapWithActiveJeeCount": 0,
+      "multiPaperReplayCount": 0
+    }
+  },
+  "duplicateHistogram": {
+    "1x (Unique)": 1122,
+    "2x": 62,
+    "3x-4x": 422,
+    "5x-9x": 78,
+    "10x+": 194
+  },
+  "crossExamOverlap": {},
+  "sampleJeeOverlaps": [
+    {
+      "quarantinedId": "pyq:neet_ug:2020:code_e:q57:4279b094",
+      "quarantinedExam": "NEET_UG",
+      "activeJeeId": "pyq:jee_main:2024:session_2:12_apr_shift_1:q50:6faeb71c",
+      "textSnippet": "the oxidation state of chromium in potassium dichromate textk_2textcr_2texto_7 is"
+    },
+    {
+      "quarantinedId": "pyq:neet_ug:2018:code_aa:q57:4279b094",
+      "quarantinedExam": "NEET_UG",
+      "activeJeeId": "pyq:jee_main:2024:session_2:12_apr_shift_1:q50:6faeb71c",
+      "textSnippet": "the oxidation state of chromium in potassium dichromate textk_2textcr_2texto_7 is"
+    },
+    {
+      "quarantinedId": "pyq:neet_ug:2022:code_q:q40:b718e1e0",
+      "quarantinedExam": "NEET_UG",
+      "activeJeeId": "pyq:jee_main:2024:session_1:29_jan_shift_2:q17:367cd3c2",
+      "textSnippet": "the binding energy per nucleon is maximum for which of the following nuclei"
+    },
+    {
+      "quarantinedId": "pyq:neet_ug:2021:code_m:q40:b718e1e0",
+      "quarantinedExam": "NEET_UG",
+      "activeJeeId": "pyq:jee_main:2024:session_1:29_jan_shift_2:q17:367cd3c2",
+      "textSnippet": "the binding energy per nucleon is maximum for which of the following nuclei"
+    },
+    {
+      "quarantinedId": "pyq:neet_ug:2015:code_a:q40:b718e1e0",
+      "quarantinedExam": "NEET_UG",
+      "activeJeeId": "pyq:jee_main:2024:session_1:29_jan_shift_2:q17:367cd3c2",
+      "textSnippet": "the binding energy per nucleon is maximum for which of the following nuclei"
+    },
+    {
+      "quarantinedId": "pyq:neet_ug:2013:code_w:q40:b718e1e0",
+      "quarantinedExam": "NEET_UG",
+      "activeJeeId": "pyq:jee_main:2024:session_1:29_jan_shift_2:q17:367cd3c2",
+      "textSnippet": "the binding energy per nucleon is maximum for which of the following nuclei"
+    },
+    {
+      "quarantinedId": "pyq:neet_ug:2014:code_p:q40:b718e1e0",
+      "quarantinedExam": "NEET_UG",
+      "activeJeeId": "pyq:jee_main:2024:session_1:29_jan_shift_2:q17:367cd3c2",
+      "textSnippet": "the binding energy per nucleon is maximum for which of the following nuclei"
+    },
+    {
+      "quarantinedId": "pyq:neet_ug:2016:code_a:q40:b718e1e0",
+      "quarantinedExam": "NEET_UG",
+      "activeJeeId": "pyq:jee_main:2024:session_1:29_jan_shift_2:q17:367cd3c2",
+      "textSnippet": "the binding energy per nucleon is maximum for which of the following nuclei"
+    },
+    {
+      "quarantinedId": "pyq:jee_advanced:2023:paper_2:q14:72d14dad",
+      "quarantinedExam": "JEE_ADVANCED",
+      "activeJeeId": "pyq:jee_main:2024:session_1:27_jan_shift_1:q7:68823dc5",
+      "textSnippet": "an equilateral glass prism has refractive index mu sqrt3 the angle of minimum deviation de"
+    },
+    {
+      "quarantinedId": "pyq:neet_ug:2019:code_p:q57:4279b094",
+      "quarantinedExam": "NEET_UG",
+      "activeJeeId": "pyq:jee_main:2024:session_2:12_apr_shift_1:q50:6faeb71c",
+      "textSnippet": "the oxidation state of chromium in potassium dichromate textk_2textcr_2texto_7 is"
+    }
+  ],
+  "sampleMultiPaperReplays": [
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "if x frac1x 5 find the value of x3 frac1x3",
+      "occurrencesCount": 5,
+      "papersClaimed": [
+        "Tier 1 Combined Paper"
+      ],
+      "yearsClaimed": [
+        2024,
+        2022,
+        2023,
+        2021
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "select the number that can replace the question mark in the following series 6 9 14 21 30",
+      "occurrencesCount": 4,
+      "papersClaimed": [
+        "Tier 1 Combined Paper"
+      ],
+      "yearsClaimed": [
+        2024,
+        2022,
+        2023,
+        2021
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "two numbers are in the ratio 3 4 and their hcf is 18 find their lcm",
+      "occurrencesCount": 4,
+      "papersClaimed": [
+        "Tier 1 Combined Paper"
+      ],
+      "yearsClaimed": [
+        2024,
+        2022,
+        2023,
+        2021
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "a trader marks his goods 45 above the cost price and allows a discount of 20 on the marked",
+      "occurrencesCount": 4,
+      "papersClaimed": [
+        "Tier 1 Combined Paper"
+      ],
+      "yearsClaimed": [
+        2022,
+        2023,
+        2024,
+        2021
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "select the most appropriate meaning of the given idiom to bite the bullet",
+      "occurrencesCount": 5,
+      "papersClaimed": [
+        "Tier 1 Combined Paper"
+      ],
+      "yearsClaimed": [
+        2022,
+        2024,
+        2021,
+        2023
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "a train running at a speed of 108text kmh crosses a telegraph pole in 15 seconds find the ",
+      "occurrencesCount": 4,
+      "papersClaimed": [
+        "Tier 1 Combined Paper"
+      ],
+      "yearsClaimed": [
+        2022,
+        2023,
+        2021,
+        2024
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "two numbers are in the ratio 3 4 and their hcf is 12 find their lcm",
+      "occurrencesCount": 4,
+      "papersClaimed": [
+        "Tier 1 Combined Paper"
+      ],
+      "yearsClaimed": [
+        2024,
+        2023,
+        2022,
+        2021
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "directive principles of state policy dpsp contained in part iv of the indian constitution ",
+      "occurrencesCount": 4,
+      "papersClaimed": [
+        "Tier 1 Combined Paper"
+      ],
+      "yearsClaimed": [
+        2023,
+        2021,
+        2022,
+        2024
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "a can complete a piece of work in 21 days and b can complete the same work in 18 days work",
+      "occurrencesCount": 4,
+      "papersClaimed": [
+        "Tier 1 Combined Paper"
+      ],
+      "yearsClaimed": [
+        2023,
+        2022,
+        2024,
+        2021
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "pointing to a photograph of a boy suresh said he is the only son of my mothers only daught",
+      "occurrencesCount": 4,
+      "papersClaimed": [
+        "Tier 1 Combined Paper"
+      ],
+      "yearsClaimed": [
+        2024,
+        2022,
+        2023,
+        2021
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "the average weight of 14 students is 49text kg if the teachers weight is included the aver",
+      "occurrencesCount": 4,
+      "papersClaimed": [
+        "Tier 1 Combined Paper"
+      ],
+      "yearsClaimed": [
+        2022,
+        2021,
+        2023,
+        2024
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "the speed of a boat in still water is 13text kmh and the speed of the stream is 4text kmh ",
+      "occurrencesCount": 4,
+      "papersClaimed": [
+        "Tier 1 Combined Paper"
+      ],
+      "yearsClaimed": [
+        2024,
+        2023,
+        2022,
+        2021
+      ]
+    }
+  ]
+}

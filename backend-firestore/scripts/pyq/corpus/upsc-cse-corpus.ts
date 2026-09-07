@@ -5,8 +5,9 @@
 
 import { CanonicalPYQQuestion } from '../../../src/types/pyq.types';
 import { pyqExtractorService } from '../../../src/services/pyq/pyqExtractor.service';
+import { buildAllUPSCPapers } from '../tools/generate-upsc-paper-corpus';
 
-export function buildUPSCCSECorpus(): CanonicalPYQQuestion[] {
+export function buildUPSCCSECorpus(targetYear?: number): CanonicalPYQQuestion[] {
   const questions: CanonicalPYQQuestion[] = [];
   const now = Date.now();
 
@@ -220,5 +221,10 @@ export function buildUPSCCSECorpus(): CanonicalPYQQuestion[] {
     diff: 'EASY',
   });
 
-  return questions;
+  const generated = buildAllUPSCPapers(targetYear);
+  const baseline = targetYear
+    ? questions.filter((q) => q.year === targetYear)
+    : questions;
+
+  return [...baseline, ...generated];
 }

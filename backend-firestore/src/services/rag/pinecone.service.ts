@@ -69,9 +69,10 @@ export class PineconeService {
    * Delete vectors by IDs
    */
   async deleteVectors(ids: string[], namespace?: string) {
+    if (!ids || ids.length === 0) return;
     const index = this.getIndex();
     const target = namespace ? index.namespace(namespace) : index;
-    await target.deleteMany(ids);
+    await (target as any).deleteMany({ ids });
   }
 
   /**

@@ -21,10 +21,11 @@ import { pyqVectorIngestionService } from '../../src/services/pyq/pyqVectorInges
 import { pyqAnalyticsService } from '../../src/services/pyq/pyqAnalytics.service';
 import { pyqCorpusIngestionService } from '../../src/services/pyq/pyqCorpusIngestion.service';
 import { buildJEEAdvancedCorpus } from './corpus/jee-advanced-corpus';
-import { buildJEEMainCorpus } from './corpus/jee-main-corpus';
+import { buildAuthenticJEEMainCorpus } from './corpus/authentic-jee-main-corpus';
 import { buildNEETCorpus } from './corpus/neet-ug-corpus';
 import { buildSSCCGLCorpus } from './corpus/ssc-cgl-corpus';
 import { buildUPSCCSECorpus } from './corpus/upsc-cse-corpus';
+import { buildBPSCCCECorpus } from './corpus/bpsc-cce-corpus';
 import { buildRRBNTPCCorpus } from './corpus/rrb-ntpc-corpus';
 import { buildIBPSPOCorpus } from './corpus/ibps-po-corpus';
 import { CanonicalPYQQuestion } from '../../src/types/pyq.types';
@@ -32,12 +33,13 @@ import { CanonicalPYQQuestion } from '../../src/types/pyq.types';
 const args = process.argv.slice(2);
 const command = args[0];
 
-const CORPUS_REGISTRY: Record<string, () => CanonicalPYQQuestion[]> = {
+const CORPUS_REGISTRY: Record<string, (targetYear?: number) => CanonicalPYQQuestion[]> = {
   JEE_ADVANCED: buildJEEAdvancedCorpus,
-  JEE_MAIN: buildJEEMainCorpus,
+  JEE_MAIN: buildAuthenticJEEMainCorpus,
   NEET_UG: buildNEETCorpus,
   SSC_CGL: buildSSCCGLCorpus,
   UPSC_CSE: buildUPSCCSECorpus,
+  BPSC_CCE: buildBPSCCCECorpus,
   RRB_NTPC: buildRRBNTPCCorpus,
   IBPS_PO: buildIBPSPOCorpus,
 };
@@ -211,6 +213,13 @@ Sadhya PYQ Intelligence CLI:
     case 'ingest': {
       const examFlagIdx = args.indexOf('--exam');
       const targetExam = examFlagIdx !== -1 ? args[examFlagIdx + 1]?.toUpperCase() : undefined;
+      const yearFlagIdx = args.indexOf('--year');
+      const targetYear = yearFlagIdx !== -1 ? parseInt(args[yearFlagIdx + 1], 10) : undefined;
+      const pacingIdx = args.indexOf('--pacing');
+      const pacingMs = pacingIdx !== -1 ? parseInt(args[pacingIdx + 1], 10) : 300;
+      const skipVector = args.includes('--skip-vector');
+      const indexLimitIdx = args.indexOf('--index-limit');
+      const indexLimit = indexLimitIdx !== -1 ? parseInt(args[indexLimitIdx + 1], 10) : undefined;
 
       if (!targetExam) {
         console.error('Error: --exam <examId|ALL> required. Example: npx tsx scripts/pyq/pyq-cli.ts ingest --exam JEE_MAIN');
@@ -220,7 +229,7 @@ Sadhya PYQ Intelligence CLI:
       const targets = targetExam === 'ALL' ? Object.keys(CORPUS_REGISTRY) : [targetExam];
 
       console.log('\n======================================================');
-      console.log(`🚀 STARTING PRODUCTION PYQ CORPUS INGESTION (${targets.join(', ')})`);
+      console.log(`🚀 STARTING PRODUCTION PYQ CORPUS INGESTION (${targets.join(', ')})${targetYear ? ` [Year: ${targetYear}]` : ''}`);
       console.log('======================================================');
 
       for (const ex of targets) {
@@ -230,12 +239,14 @@ Sadhya PYQ Intelligence CLI:
           continue;
         }
 
-        const questions = builder();
+        const questions = builder(targetYear);
         console.log(`\n📦 [${ex}] Extracted ${questions.length} canonical questions from multi-year archive`);
 
         const res = await pyqCorpusIngestionService.ingestExamCorpus(ex, questions, {
-          forceVectorIndex: true, // indexer is clear now
-          pacingMs: 1500,
+          forceVectorIndex: !skipVector,
+          skipVectorIndex: skipVector,
+          indexLimit,
+          pacingMs,
         });
 
         console.log(`\n✅ Ingestion Report for ${ex}:`);
@@ -258,6 +269,12 @@ Sadhya PYQ Intelligence CLI:
     case 'index': {
       const examFlagIdx = args.indexOf('--exam');
       const targetExam = examFlagIdx !== -1 ? args[examFlagIdx + 1]?.toUpperCase() : undefined;
+      const yearFlagIdx = args.indexOf('--year');
+      const targetYear = yearFlagIdx !== -1 ? parseInt(args[yearFlagIdx + 1], 10) : undefined;
+      const pacingIdx = args.indexOf('--pacing');
+      const pacingMs = pacingIdx !== -1 ? parseInt(args[pacingIdx + 1], 10) : 300;
+      const limitIdx = args.indexOf('--limit');
+      const limitCount = limitIdx !== -1 ? parseInt(args[limitIdx + 1], 10) : undefined;
 
       if (!targetExam) {
         console.error('Error: --exam <examId|ALL> required. Example: npx tsx scripts/pyq/pyq-cli.ts index --exam JEE_MAIN');
@@ -265,14 +282,21 @@ Sadhya PYQ Intelligence CLI:
       }
 
       const targets = targetExam === 'ALL' ? Object.keys(CORPUS_REGISTRY) : [targetExam];
-      const pacingIdx = args.indexOf('--pacing');
-      const pacingMs = pacingIdx !== -1 ? parseInt(args[pacingIdx + 1], 10) : 1500;
 
       console.log(`\n🌲 Indexing Approved PYQ Questions into Pinecone (Pacing: ${pacingMs}ms)...`);
 
       for (const ex of targets) {
-        const questions = await pyqRepository.listQuestions({ examId: ex, limit: 1000 });
-        const unindexed = questions.filter((q) => !q.vectorIndexed && (q.ingestionState === 'RIGHTS_APPROVED' || q.ingestionState === 'READY_FOR_INDEX'));
+        const questions = await pyqRepository.listQuestions({ examId: ex, year: targetYear, limit: 50000 });
+        let unindexed = questions.filter(
+          (q) =>
+            !q.vectorIndexed &&
+            (q.ingestionState === 'RIGHTS_APPROVED' ||
+              q.ingestionState === 'READY_FOR_INDEX' ||
+              q.ingestionState === 'ACTIVE')
+        );
+        if (limitCount && limitCount > 0) {
+          unindexed = unindexed.slice(0, limitCount);
+        }
 
         console.log(`\n[${ex}] Found ${unindexed.length} unindexed questions ready for embedding...`);
         if (unindexed.length > 0) {
@@ -293,7 +317,7 @@ Sadhya PYQ Intelligence CLI:
         process.exit(1);
       }
       console.log(`\n⚖️ Reviewing and approving rights for ${examId}...`);
-      const questions = await pyqRepository.listQuestions({ examId, limit: 1000 });
+      const questions = await pyqRepository.listQuestions({ examId, limit: 50000 });
       const result = pyqRightsGovernanceService.applyRightsApproval(questions, 'admin_cli');
       await pyqRepository.saveCanonicalQuestionsBatch(result.processedQuestions);
       console.log(`✅ Approved: ${result.approvedCount}, Quarantined: ${result.quarantinedCount}`);
@@ -345,14 +369,10 @@ Sadhya PYQ Intelligence CLI:
           console.log(`  [${idx + 1}] (${(r.score * 100).toFixed(1)}%) ${r.examId} | ${r.subject} > ${r.topic}: ${r.text.slice(0, 80)}...`);
         });
 
-        // Mark retrieval tested in Firestore
+        // Safely mark retrieval tested in Firestore without creating stub documents
         for (const r of res.results) {
           if (r.questionId) {
-            await pyqRepository.saveCanonicalQuestion({
-              questionId: r.questionId,
-              retrievalTested: true,
-              retrievalTestedAt: Date.now(),
-            } as any);
+            await pyqRepository.markRetrievalTested(r.questionId);
           }
         }
       }
@@ -442,6 +462,29 @@ Sadhya PYQ Intelligence CLI:
       console.log('\n======================================================');
       console.log(`Isolation Test Summary: ${totalPassed}/${testCases.length} Tests Passed`);
       console.log('======================================================\n');
+      break;
+    }
+
+    case 'sample-vectors': {
+      const targetExam = args[1]?.toUpperCase() || 'NEET_UG';
+      const year = args[2] ? parseInt(args[2], 10) : undefined;
+      const limit = args[3] ? parseInt(args[3], 10) : 10;
+      
+      const qs = await pyqRepository.listQuestions({ examId: targetExam, year, limit: 50000 });
+      const indexed = qs.filter((q) => q.vectorIndexed).slice(0, limit);
+
+      console.log(`\n======================================================`);
+      console.log(`🔍 [${targetExam}] SAMPLE PINECONE VECTOR IDs (${indexed.length} shown)`);
+      console.log(`======================================================`);
+      console.log(`Namespace: production | Index: edtech-ai-rag\n`);
+
+      indexed.forEach((q, i) => {
+        const vecId = `vec_${q.questionId.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+        console.log(`[${i + 1}] ID to paste in Pinecone Console:`);
+        console.log(`    ${vecId}`);
+        console.log(`    Year: ${q.year} | Subject: ${q.subject} | Topic: ${q.topic}`);
+        console.log(`    Text: "${q.questionText.slice(0, 100)}..."\n`);
+      });
       break;
     }
 

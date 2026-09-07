@@ -48,32 +48,30 @@ export class PYQDeduplicationEngine {
 
   /**
    * Merges multiple candidate questions into a deduplicated canonical question set with combined provenance.
+   * Uses cross-year content identity so duplicate templates do not artificially inflate the corpus,
+   * while preserving legitimate historical paper occurrences in provenance records.
    */
   public deduplicateQuestions(incomingQuestions: CanonicalPYQQuestion[]): CanonicalPYQQuestion[] {
     const canonicalMap = new Map<string, CanonicalPYQQuestion>();
     let duplicateCount = 0;
 
     for (const q of incomingQuestions) {
-      // 1. Primary check: Exact Content Hash Match
-      if (canonicalMap.has(q.contentHash)) {
-        this.mergeProvenance(canonicalMap.get(q.contentHash)!, q);
+      // Cross-year content identity: examId + contentHash (ignoring paper/year/shift in hash)
+      const contentKey = `${q.examId}:${q.contentHash}`;
+
+      // 1. Primary check: Exact Content Hash Match within same exam
+      if (canonicalMap.has(contentKey)) {
+        this.mergeProvenance(canonicalMap.get(contentKey)!, q);
         duplicateCount++;
         continue;
       }
 
-      // 2. Secondary check: Match by Exam + Year + Shift/Session with High Text Similarity
+      // 2. Secondary check: Text similarity >= 90% within same exam
       let matchedKey: string | null = null;
       for (const [hashKey, existing] of canonicalMap.entries()) {
-        const isSameExamYear =
-          existing.examId === q.examId &&
-          existing.year === q.year &&
-          (existing.session || '') === (q.session || '') &&
-          (existing.shift || '') === (q.shift || '');
-
-        if (isSameExamYear) {
-          // Fuzzy textual similarity match (>= 85% similarity)
+        if (existing.examId === q.examId) {
           const similarity = this.computeTextSimilarity(existing.questionText, q.questionText);
-          if (similarity >= 0.85) {
+          if (similarity >= 0.90) {
             matchedKey = hashKey;
             break;
           }
@@ -84,7 +82,7 @@ export class PYQDeduplicationEngine {
         this.mergeProvenance(canonicalMap.get(matchedKey)!, q);
         duplicateCount++;
       } else {
-        canonicalMap.set(q.contentHash, q);
+        canonicalMap.set(contentKey, q);
       }
     }
 

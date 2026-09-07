@@ -43,7 +43,11 @@ export class PYQVectorIngestionService {
       lines.push(`Reference Passage: ${q.passageText}`);
     }
 
-    lines.push(`Content Type: Official Previous Year Question (PYQ)`);
+    if (q.corpusBucket === 'PRACTICE_MOCK') {
+      lines.push(`Content Type: Practice & Concept Mock Question`);
+    } else {
+      lines.push(`Content Type: Official Previous Year Question (PYQ)`);
+    }
     return lines.join('\n');
   }
 
@@ -79,7 +83,8 @@ export class PYQVectorIngestionService {
         !q.vectorIndexed &&
         (q.ingestionState === 'RIGHTS_APPROVED' ||
           q.ingestionState === 'READY_FOR_INDEX' ||
-          q.ingestionState === 'VERIFIED')
+          q.ingestionState === 'VERIFIED' ||
+          q.ingestionState === 'ACTIVE')
     );
 
     skippedCount = questions.length - approvedQuestions.length;
@@ -133,8 +138,9 @@ export class PYQVectorIngestionService {
 
         // STRICT METADATA CONTRACT
         const metadata = {
-          content_type: 'pyq', // Explicit distinction from 'generated_practice'
-          vectorKind: 'CANONICAL_PYQ_QUESTION',
+          content_type: 'pyq', // Explicit distinction from textbook
+          corpusBucket: q.corpusBucket || 'OFFICIAL_PYQ',
+          vectorKind: q.corpusBucket === 'PRACTICE_MOCK' ? 'PRACTICE_QUESTION' : 'CANONICAL_PYQ_QUESTION',
           public: true,        // Public examination record
           owner: 'sadhya-exam-intel',
           userId: '',          // Zero private user ID contamination
@@ -171,17 +177,19 @@ export class PYQVectorIngestionService {
           metadata,
         });
 
-        // Flush incrementally
+        q.vectorIndexed = true;
+        q.vectorIndexedAt = Date.now();
+        q.ingestionState = 'INDEXED';
+
+        // Flush incrementally to Pinecone and Firestore checkpoint
         if (vectorsBuffer.length >= batchSize) {
           const toUpsert = vectorsBuffer.splice(0);
           await pineconeService.upsertVectors(toUpsert, namespace);
           indexedCount += toUpsert.length;
-          logger.info(`[PYQVectorIngestion] Flushed ${indexedCount}/${approvedQuestions.length} vectors to Pinecone`);
+          const flushedBatch = approvedQuestions.slice(indexedCount - toUpsert.length, indexedCount);
+          await pyqRepository.saveCanonicalQuestionsBatch(flushedBatch);
+          logger.info(`[PYQVectorIngestion] Flushed and persisted ${indexedCount}/${approvedQuestions.length} vectors`);
         }
-
-        q.vectorIndexed = true;
-        q.vectorIndexedAt = Date.now();
-        q.ingestionState = 'INDEXED';
       } catch (err: any) {
         failedCount++;
         logger.error(`[PYQVectorIngestion] Failed to embed question ${q.questionId}:`, err);
@@ -189,12 +197,13 @@ export class PYQVectorIngestionService {
     }
 
     if (vectorsBuffer.length > 0) {
+      const remainingCount = vectorsBuffer.length;
       await pineconeService.upsertVectors(vectorsBuffer, namespace);
-      indexedCount += vectorsBuffer.length;
+      indexedCount += remainingCount;
+      const remainingFlushed = approvedQuestions.slice(indexedCount - remainingCount, indexedCount);
+      await pyqRepository.saveCanonicalQuestionsBatch(remainingFlushed);
+      logger.info(`[PYQVectorIngestion] Final flush: ${indexedCount}/${approvedQuestions.length} vectors persisted`);
     }
-
-    // Persist updated question statuses in Firestore
-    await pyqRepository.saveCanonicalQuestionsBatch(approvedQuestions);
 
     logger.info(
       `[PYQVectorIngestion] Completed indexing: ${indexedCount} indexed, ${skippedCount} skipped, ${failedCount} failed`
@@ -211,6 +220,7 @@ export class PYQVectorIngestionService {
     expectedExamId: string;
     expectedSubject?: string;
     expectedTopic?: string;
+    corpusBucket?: 'OFFICIAL_PYQ' | 'PRACTICE_MOCK';
     topK?: number;
   }): Promise<{
     passed: boolean;
@@ -220,7 +230,7 @@ export class PYQVectorIngestionService {
     isolationVerified: boolean;
     diagnostics: string;
   }> {
-    const { query, expectedExamId, expectedSubject, expectedTopic, topK = 5 } = params;
+    const { query, expectedExamId, expectedSubject, expectedTopic, corpusBucket, topK = 5 } = params;
 
     const queryEmbedding = await this.embeddingProvider.generateEmbedding(query);
     const namespace = env.PINECONE_NAMESPACE;
@@ -231,6 +241,11 @@ export class PYQVectorIngestionService {
       content_type: 'pyq',
     };
     if (expectedSubject) filter.subject = expectedSubject;
+    if (corpusBucket === 'PRACTICE_MOCK') {
+      filter.corpusBucket = 'PRACTICE_MOCK';
+    } else if (corpusBucket === 'OFFICIAL_PYQ') {
+      filter.corpusBucket = { $ne: 'PRACTICE_MOCK' };
+    }
 
     const matches = await pineconeService.queryVectors(queryEmbedding, topK, filter, namespace);
 

@@ -54,6 +54,8 @@ export class PYQCorpusIngestionService {
     questionsToIngest: CanonicalPYQQuestion[],
     options: {
       forceVectorIndex?: boolean;
+      skipVectorIndex?: boolean;
+      indexLimit?: number;
       pacingMs?: number;
     } = {}
   ): Promise<BatchIngestionResult> {
@@ -79,6 +81,18 @@ export class PYQCorpusIngestionService {
     // 5. Rights Review Gate
     const rightsResult = pyqRightsGovernanceService.applyRightsApproval(deduped, 'production_ingestion_engine');
 
+    // 5.5 Preserve state of already indexed questions in Firestore
+    const existing = await pyqRepository.listQuestions({ examId, limit: 50000 });
+    const existingMap = new Map(existing.map((e) => [e.questionId, e]));
+    for (const q of rightsResult.processedQuestions) {
+      const match = existingMap.get(q.questionId);
+      if (match && match.vectorIndexed) {
+        q.vectorIndexed = true;
+        q.vectorIndexedAt = match.vectorIndexedAt;
+        q.ingestionState = match.ingestionState || 'INDEXED';
+      }
+    }
+
     // 6. Persist to Firestore DAL
     await pyqRepository.saveCanonicalQuestionsBatch(rightsResult.processedQuestions);
 
@@ -100,14 +114,21 @@ export class PYQCorpusIngestionService {
     let indexedCount = 0;
     let skippedIndexDueToLock = false;
 
-    if (lock && !options.forceVectorIndex) {
+    if (options.skipVectorIndex) {
+      logger.info(
+        `[PYQCorpusIngestion] Vector indexing skipped (--skip-vector). ${rightsResult.processedQuestions.length} questions persisted as RIGHTS_APPROVED in Firestore.`
+      );
+    } else if (lock && !options.forceVectorIndex) {
       logger.warn(
         `[PYQCorpusIngestion] Active background indexer running (PID: ${lock.pid}, "${lock.label}"). Deferring vector embeddings to avoid 429 quota conflict. Questions marked as RIGHTS_APPROVED in Firestore.`
       );
       skippedIndexDueToLock = true;
     } else {
       try {
-        const indexRes = await pyqVectorIngestionService.indexQuestions(rightsResult.processedQuestions, {
+        const questionsToIndex = options.indexLimit
+          ? rightsResult.processedQuestions.slice(0, options.indexLimit)
+          : rightsResult.processedQuestions;
+        const indexRes = await pyqVectorIngestionService.indexQuestions(questionsToIndex, {
           bypassIndexerLock: options.forceVectorIndex,
           pacingMs: options.pacingMs ?? 4000,
         });

@@ -62,8 +62,8 @@ interface PaperSpec {
   year: number;
   paper: string;
   series: string;
-  /** Official question paper PDF, from upsc.gov.in. */
-  paperUrl: string;
+  /** Official question paper PDF, from upsc.gov.in. `null` when unavailable/delisted. */
+  paperUrl: string | null;
   /** Official final answer key PDF. `null` until UPSC publishes it. */
   answerKeyUrl: string | null;
   /** Transcribed key in ./keys, or `null` when there is nothing to transcribe yet. */
@@ -82,32 +82,30 @@ const TEXT_MIRROR =
   'https://raw.githubusercontent.com/secretedoc/upsc-prelims-gs1-2011-2025/main/UPSC_Papers';
 
 const PAPERS: PaperSpec[] = [
-  {
-    paperKey: 'UPSC-CSE-PRELIMS-GS1-2024',
-    examId: 'UPSC_CSE',
-    examName: 'Union Public Service Commission — Civil Services Examination',
-    year: 2024,
-    paper: 'General Studies Paper I',
-    series: 'A',
-    paperUrl: `${UPSC_FILES}/QP-CSP-24-GENERAL-STUDIES-PAPER-I-180624.pdf`,
-    answerKeyUrl: `${UPSC_FILES}/AnsKey-CivilServicesPExam-2024-GeneralStudies-I-210525.pdf`,
-    keyFile: 'upsc_cse_2024_gs1.json',
-    textUrl: `${TEXT_MIRROR}/Prelims_GS1_2024.txt`,
-    expectedQuestions: 100,
-  },
-  {
-    paperKey: 'UPSC-CSE-PRELIMS-GS1-2025',
-    examId: 'UPSC_CSE',
-    examName: 'Union Public Service Commission — Civil Services Examination',
-    year: 2025,
-    paper: 'General Studies Paper I',
-    series: 'A',
-    paperUrl: `${UPSC_FILES}/QP-CSP-25-GENERAL-STUDIES-PAPER-I-26052025.pdf`,
-    answerKeyUrl: null, // not published as of 2026-09-06
-    keyFile: null,
-    textUrl: `${TEXT_MIRROR}/Prelims_GS1_2025.txt`,
-    expectedQuestions: 100,
-  },
+  ...Array.from({ length: 15 }, (_, i) => {
+    const year = 2011 + i;
+    const is2024 = year === 2024;
+    const is2025 = year === 2025;
+    return {
+      paperKey: `UPSC-CSE-PRELIMS-GS1-${year}`,
+      examId: 'UPSC_CSE',
+      examName: 'Union Public Service Commission — Civil Services Examination',
+      year,
+      paper: 'General Studies Paper I',
+      series: 'A',
+      paperUrl: is2024
+        ? `${UPSC_FILES}/QP-CSP-24-GENERAL-STUDIES-PAPER-I-180624.pdf`
+        : is2025
+        ? `${UPSC_FILES}/QP-CSP-25-GENERAL-STUDIES-PAPER-I-26052025.pdf`
+        : null,
+      answerKeyUrl: is2024
+        ? `${UPSC_FILES}/AnsKey-CivilServicesPExam-2024-GeneralStudies-I-210525.pdf`
+        : null,
+      keyFile: is2024 ? 'upsc_cse_2024_gs1.json' : null,
+      textUrl: `${TEXT_MIRROR}/Prelims_GS1_${year}.txt`,
+      expectedQuestions: 100,
+    };
+  }),
   {
     paperKey: 'UPSC-CSE-PRELIMS-GS1-2026',
     examId: 'UPSC_CSE',
@@ -116,7 +114,7 @@ const PAPERS: PaperSpec[] = [
     paper: 'General Studies Paper I',
     series: 'A',
     paperUrl: `${UPSC_FILES}/QP_CSP_2026_GENERAL_STUDIES_PAPER-I_25052026.pdf`,
-    answerKeyUrl: null, // UPSC publishes ~1 year after the cycle closes
+    answerKeyUrl: null,
     keyFile: null,
     textUrl: null,
     expectedQuestions: 100,
@@ -170,13 +168,15 @@ interface Receipt {
   series: string;
   sourceName: string;
   sourcePageUrl: string;
-  paperUrl: string;
+  paperUrl: string | null;
   paperSha256: string | null;
   paperBytes: number | null;
   answerKeyUrl: string | null;
   answerKeySha256: string | null;
   answerKeyBytes: number | null;
   answerKeyHashMatchesTranscription: boolean | null;
+  textUrl: string | null;
+  textSha256: string | null;
   downloadedAt: string;
   fetcher: string;
 }
@@ -373,90 +373,152 @@ function buildRecords(
   const sessionSlug = spec.paper.toLowerCase().replace(/\s+/g, '_');
   const shiftSlug = `set_${spec.series.toLowerCase()}`;
 
+  const isClassA = spec.year === 2024 && Boolean(receipt.paperSha256) && Boolean(receipt.answerKeySha256);
+
   return questions.map((q, idx) => {
     const contentHash = questionHash(spec.examId, q.stem, q.options);
     // No number, or a paper whose numbering did not verify, means no answer.
     const answer = aligned && q.number !== null ? (key?.answers[String(q.number)] ?? null) : null;
     const dropped = answer === 'X';
 
-    /*
-     * Two gates decide what this record is allowed to claim.
-     *
-     * OFFICIAL_CONFIRMED requires an answer that came out of a key PDF whose
-     * hash we verified. Anything else is UNVERIFIED — including a question we
-     * are confident about, because confidence is not provenance.
-     *
-     * A question with any extraction defect is never OFFICIAL_CONFIRMED either.
-     * If the statement order is wrong, the official answer is an answer to a
-     * different question.
-     */
     const clean = q.defects.length === 0;
-    const keyed = Boolean(answer) && !dropped && receipt.answerKeyHashMatchesTranscription === true;
+    const keyed = isClassA && Boolean(answer) && !dropped && receipt.answerKeyHashMatchesTranscription === true;
 
-    return {
-      questionId: `pyq:${spec.examId.toLowerCase()}:${spec.year}:${sessionSlug}:${shiftSlug}:q${q.number ?? `pos${idx + 1}`}:${contentHash.slice(0, 8)}`,
-      examId: spec.examId,
-      examName: spec.examName,
-      year: spec.year,
-      session: spec.paper,
-      paper: spec.paper,
-      shift: `Set ${spec.series}`,
-      subject: 'General Studies',
-      questionNumber: q.number ?? idx + 1,
-      questionText: q.stem,
-      questionType: 'MCQ_SINGLE',
-      options: q.options,
-      correctAnswer: keyed ? answer : '',
-      correctAnswerSource: keyed
-        ? `UPSC Official Final Answer Key ${spec.year} (Series ${spec.series})`
-        : '',
-      language: 'en',
-      marks: 2,
-      negativeMarks: 0.66,
+    if (isClassA) {
+      return {
+        questionId: `pyq:${spec.examId.toLowerCase()}:${spec.year}:${sessionSlug}:${shiftSlug}:q${q.number ?? `pos${idx + 1}`}:${contentHash.slice(0, 8)}`,
+        examId: spec.examId,
+        examName: spec.examName,
+        year: spec.year,
+        session: spec.paper,
+        paper: spec.paper,
+        shift: `Set ${spec.series}`,
+        subject: 'General Studies',
+        chapter: '',
+        topic: '',
+        questionNumber: q.number ?? idx + 1,
+        questionText: q.stem,
+        questionType: 'MCQ_SINGLE',
+        options: q.options,
+        correctAnswer: keyed ? answer : '',
+        correctAnswerSource: keyed
+          ? `UPSC Official Final Answer Key ${spec.year} (Series ${spec.series})`
+          : '',
+        language: 'en',
+        marks: 2,
+        negativeMarks: 0.66,
 
-      contentHash,
-      sourceId: `src_upsc_cse_${spec.year}_gs1_official`,
-      sourceUrl: spec.paperUrl,
-      sourceType: 'TIER_A_OFFICIAL',
+        contentHash,
+        sourceId: `src_upsc_cse_${spec.year}_gs1_official`,
+        sourceUrl: spec.paperUrl || '',
+        sourceType: 'TIER_A_OFFICIAL',
 
-      provenanceRecords: [
-        {
-          sourceTier: 'TIER_A_OFFICIAL',
-          sourceName: `UPSC official question paper — CSP ${spec.year} GS Paper I`,
-          sourceUrl: spec.paperUrl,
-          sourceDomain: 'upsc.gov.in',
-          retrievedAt: Date.parse(receipt.downloadedAt),
-          isOfficial: true,
-          extractedAnswer: answer ?? undefined,
-          contentHash,
-          notes: [
-            `paper sha256=${receipt.paperSha256}`,
-            receipt.answerKeySha256 ? `key sha256=${receipt.answerKeySha256}` : 'key not published',
-            'question text transcribed from an OCR mirror; answer from the official key only',
-          ].join(' | '),
+        provenanceRecords: [
+          {
+            sourceTier: 'TIER_A_OFFICIAL',
+            sourceName: `UPSC official question paper — CSP ${spec.year} GS Paper I`,
+            sourceUrl: spec.paperUrl || '',
+            sourceDomain: 'upsc.gov.in',
+            retrievedAt: Date.parse(receipt.downloadedAt),
+            isOfficial: true,
+            extractedAnswer: answer ?? undefined,
+            contentHash,
+            notes: [
+              `paper sha256=${receipt.paperSha256}`,
+              receipt.answerKeySha256 ? `key sha256=${receipt.answerKeySha256}` : 'key not published',
+              'question text transcribed from an OCR mirror; answer from the official key only',
+            ].join(' | '),
+          },
+        ],
+
+        verificationStatus: keyed && clean ? 'OFFICIAL_CONFIRMED' : 'UNVERIFIED',
+        ingestionState: keyed && clean ? 'VERIFIED' : 'QUARANTINED',
+        rightsStatus: 'OFFICIAL_SOURCE_REVIEWED',
+        redistributionAllowed: false,
+
+        questionNumberVerified: aligned,
+
+        extractionQualityScore: clean ? 0.95 : Math.max(0.3, 0.95 - 0.2 * q.defects.length),
+        vectorIndexed: false,
+        retrievalTested: false,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+
+        _review: {
+          defects: q.defects,
+          dropped,
+          printedNumber: q.number,
+          paperAligned: aligned,
+          needsHumanReview: !clean || dropped || !keyed,
         },
-      ],
+      };
+    } else {
+      // Class B — every other year
+      return {
+        questionId: `pyq:${spec.examId.toLowerCase()}:${spec.year}:${sessionSlug}:${shiftSlug}:q${q.number ?? `pos${idx + 1}`}:${contentHash.slice(0, 8)}`,
+        examId: spec.examId,
+        examName: spec.examName,
+        year: spec.year,
+        session: spec.paper,
+        paper: spec.paper,
+        shift: `Set ${spec.series}`,
+        subject: 'General Studies',
+        chapter: '',
+        topic: '',
+        questionNumber: q.number ?? idx + 1,
+        questionText: q.stem,
+        questionType: 'MCQ_SINGLE',
+        options: q.options,
+        correctAnswer: '',
+        correctAnswerSource: '',
+        language: 'en',
+        marks: 2,
+        negativeMarks: 0.66,
 
-      verificationStatus: keyed && clean ? 'OFFICIAL_CONFIRMED' : 'UNVERIFIED',
-      ingestionState: keyed && clean ? 'VERIFIED' : 'QUARANTINED',
-      rightsStatus: 'OFFICIAL_SOURCE_REVIEWED',
-      redistributionAllowed: false,
+        contentHash,
+        sourceId: `src_upsc_cse_${spec.year}_gs1_mirror`,
+        sourceUrl: spec.textUrl || '',
+        sourceType: 'TIER_C_SECONDARY',
 
-      extractionQualityScore: clean ? 0.95 : Math.max(0.3, 0.95 - 0.2 * q.defects.length),
-      vectorIndexed: false,
-      retrievalTested: false,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+        provenanceRecords: [
+          {
+            sourceTier: 'TIER_C_SECONDARY',
+            sourceName: 'GitHub secretedoc/upsc-prelims-gs1-2011-2025 OCR mirror',
+            sourceUrl: spec.textUrl || '',
+            sourceDomain: 'raw.githubusercontent.com',
+            retrievedAt: Date.parse(receipt.downloadedAt),
+            isOfficial: false,
+            contentHash,
+            notes: [
+              receipt.textSha256 ? `text sha256=${receipt.textSha256}` : '',
+              'source=github:secretedoc/upsc-prelims-gs1-2011-2025',
+              'unkeyed secondary mirror',
+            ].filter(Boolean).join(' | '),
+          },
+        ],
 
-      /* Not part of CanonicalPYQQuestion. Carried so a reviewer can sort by it. */
-      _review: {
-        defects: q.defects,
-        dropped,
-        printedNumber: q.number,
-        paperAligned: aligned,
-        needsHumanReview: !clean || dropped || !keyed,
-      },
-    };
+        verificationStatus: 'UNVERIFIED',
+        ingestionState: 'QUARANTINED',
+        rightsStatus: 'UNKNOWN',
+        redistributionAllowed: false,
+
+        questionNumberVerified: aligned,
+
+        extractionQualityScore: clean ? 0.90 : Math.max(0.3, 0.90 - 0.2 * q.defects.length),
+        vectorIndexed: false,
+        retrievalTested: false,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+
+        _review: {
+          defects: q.defects,
+          dropped: false,
+          printedNumber: q.number,
+          paperAligned: aligned,
+          needsHumanReview: !clean || !aligned,
+        },
+      };
+    }
   });
 }
 
@@ -487,8 +549,8 @@ async function processPaper(spec: PaperSpec, withText: boolean): Promise<Summary
     year: spec.year,
     paper: spec.paper,
     series: spec.series,
-    sourceName: 'UPSC official previous question papers',
-    sourcePageUrl: 'https://www.upsc.gov.in/examinations/previous-question-papers',
+    sourceName: spec.paperUrl ? 'UPSC official previous question papers' : 'GitHub secretedoc/upsc-prelims-gs1-2011-2025 OCR mirror',
+    sourcePageUrl: spec.paperUrl ? 'https://www.upsc.gov.in/examinations/previous-question-papers' : 'https://github.com/secretedoc/upsc-prelims-gs1-2011-2025',
     paperUrl: spec.paperUrl,
     paperSha256: null,
     paperBytes: null,
@@ -496,20 +558,29 @@ async function processPaper(spec: PaperSpec, withText: boolean): Promise<Summary
     answerKeySha256: null,
     answerKeyBytes: null,
     answerKeyHashMatchesTranscription: null,
+    textUrl: spec.textUrl,
+    textSha256: null,
     downloadedAt: new Date().toISOString(),
     fetcher: 'scripts/pyq/official/fetch-verify-upsc-prelims.ts',
   };
 
   // 1. The question paper.
-  const paper = await download(spec.paperUrl);
-  if (paper.status !== 200) {
-    problems.push(`paper HTTP ${paper.status}`);
-    fs.writeFileSync(path.join(dir, 'receipt.json'), JSON.stringify(receipt, null, 2));
-    return { paperKey: spec.paperKey, state: 'PAPER_UNAVAILABLE', parsed: 0, clean: 0, keyed: 0, dropped: 0, defective: 0, emitted: 0, problems };
+  if (spec.paperUrl) {
+    const paper = await download(spec.paperUrl);
+    if (paper.status === 200) {
+      receipt.paperSha256 = sha256(paper.body);
+      receipt.paperBytes = paper.body.length;
+      fs.writeFileSync(path.join(dir, `${spec.paperKey}.pdf`), paper.body);
+    } else {
+      problems.push(`paper HTTP ${paper.status}`);
+      if (!spec.textUrl) {
+        fs.writeFileSync(path.join(dir, 'receipt.json'), JSON.stringify(receipt, null, 2));
+        return { paperKey: spec.paperKey, state: 'PAPER_UNAVAILABLE', parsed: 0, clean: 0, keyed: 0, dropped: 0, defective: 0, emitted: 0, problems };
+      }
+    }
+  } else {
+    problems.push('no official question paper PDF published by UPSC for this year');
   }
-  receipt.paperSha256 = sha256(paper.body);
-  receipt.paperBytes = paper.body.length;
-  fs.writeFileSync(path.join(dir, `${spec.paperKey}.pdf`), paper.body);
 
   // 2. The answer key, and the hash gate.
   let key: KeyFile | null = null;
@@ -557,8 +628,11 @@ async function processPaper(spec: PaperSpec, withText: boolean): Promise<Summary
   const text = await download(spec.textUrl);
   if (text.status !== 200) {
     problems.push(`question text HTTP ${text.status}`);
+    fs.writeFileSync(path.join(dir, 'receipt.json'), JSON.stringify(receipt, null, 2));
     return { paperKey: spec.paperKey, state: 'NO_TEXT', parsed: 0, clean: 0, keyed: 0, dropped: 0, defective: 0, emitted: 0, problems };
   }
+  receipt.textSha256 = sha256(text.body);
+  fs.writeFileSync(path.join(dir, 'receipt.json'), JSON.stringify(receipt, null, 2));
   fs.writeFileSync(path.join(dir, 'questions.txt'), text.body);
 
   const questions = parseQuestions(text.body.toString('utf-8'));
@@ -580,9 +654,22 @@ async function processPaper(spec: PaperSpec, withText: boolean): Promise<Summary
   const dropped = records.filter((r) => r._review.dropped).length;
   const emitted = records.filter((r) => r.verificationStatus === 'OFFICIAL_CONFIRMED').length;
 
+  let state = 'BLOCKED_NO_KEY';
+  if (questions.length === 0) {
+    state = 'NO_QUESTIONS';
+  } else if (key && align.aligned) {
+    state = 'COMPLETE';
+  } else if (key && !align.aligned) {
+    state = 'NUMBERING_GAP';
+  } else if (align.aligned) {
+    state = 'UNKEYED_ALIGNED';
+  } else {
+    state = 'UNKEYED_UNALIGNED';
+  }
+
   return {
     paperKey: spec.paperKey,
-    state: key ? 'COMPLETE' : 'BLOCKED_NO_KEY',
+    state,
     parsed: questions.length,
     clean,
     keyed,

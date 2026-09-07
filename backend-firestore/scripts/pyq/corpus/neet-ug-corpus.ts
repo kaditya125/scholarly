@@ -5,8 +5,9 @@
 
 import { CanonicalPYQQuestion } from '../../../src/types/pyq.types';
 import { pyqExtractorService } from '../../../src/services/pyq/pyqExtractor.service';
+import { buildAllNEETPapers } from '../tools/generate-neet-paper-corpus';
 
-export function buildNEETCorpus(): CanonicalPYQQuestion[] {
+export function buildNEETCorpus(targetYear?: number): CanonicalPYQQuestion[] {
   const questions: CanonicalPYQQuestion[] = [];
   const now = Date.now();
 
@@ -266,5 +267,10 @@ export function buildNEETCorpus(): CanonicalPYQQuestion[] {
     diff: 'MEDIUM',
   });
 
-  return questions;
+  const generated = buildAllNEETPapers(targetYear);
+  const baseline = targetYear
+    ? questions.filter((q) => q.year === targetYear)
+    : questions;
+
+  return [...baseline, ...generated];
 }

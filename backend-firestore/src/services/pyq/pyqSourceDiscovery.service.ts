@@ -99,7 +99,7 @@ export const EXAM_DISCOVERY_REGISTRY: Record<string, ExamDiscoveryConfig> = {
     officialAuthority: 'National Testing Agency',
     officialArchiveBaseUrl: 'https://exams.nta.ac.in/NEET',
     officialDomains: ['exams.nta.ac.in', 'neet.nta.nic.in', 'nta.ac.in', 'cdnbbsr.s3waas.gov.in'],
-    supportedYears: [2025, 2024, 2023, 2022, 2021, 2020, 2019],
+    supportedYears: [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013],
     secondaryFallbacks: [
       {
         platformName: 'Testbook',
@@ -208,6 +208,29 @@ export const EXAM_DISCOVERY_REGISTRY: Record<string, ExamDiscoveryConfig> = {
         baseUrlTemplate: 'https://testbook.com/rrb-ntpc/previous-year-papers',
         sourceTier: 'TIER_B_REPUTABLE_PLATFORM',
         reputationScore: 0.89,
+      },
+    ],
+  },
+  BPSC_CCE: {
+    examId: 'BPSC_CCE',
+    officialAuthority: 'Bihar Public Service Commission',
+    officialArchiveBaseUrl: 'https://bpsc.bihar.gov.in',
+    officialDomains: ['bpsc.bihar.gov.in', 'bpsc.bih.nic.in', 'onlinebpsc.bihar.gov.in'],
+    supportedYears: [2024, 2023, 2022, 2021, 2020, 2019],
+    secondaryFallbacks: [
+      {
+        platformName: 'Drishti IAS BPSC',
+        domain: 'drishtiias.com',
+        baseUrlTemplate: 'https://www.drishtiias.com/state-pcs/bpsc-previous-year-papers',
+        sourceTier: 'TIER_B_REPUTABLE_PLATFORM',
+        reputationScore: 0.94,
+      },
+      {
+        platformName: 'Testbook BPSC',
+        domain: 'testbook.com',
+        baseUrlTemplate: 'https://testbook.com/bpsc/previous-year-papers',
+        sourceTier: 'TIER_B_REPUTABLE_PLATFORM',
+        reputationScore: 0.90,
       },
     ],
   },
