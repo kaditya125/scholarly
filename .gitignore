@@ -25,3 +25,12 @@ backend-firestore/test-asset-gen.js
 # clutter sitting at repo root. Keep it local; do not commit.
 /pitch-deck/
 /private/
+
+# ── PYQ pipeline: large derived and source data ─────────────────────────────
+# Re-derivable, or too large for git. The scripts that produce and consume these
+# are committed; the payloads are not.
+dataset_staging/
+backend-firestore/scripts/pyq/corpus/authentic/
+backend-firestore/scripts/pyq/tools/backup_before_quarantine.json
+backend-firestore/scripts/pyq/tools/quarantined_vector_ids.json
+backend-firestore/scripts/practice/data/
