@@ -1,0 +1,662 @@
+{
+  "totalRecords": 16691,
+  "recordsByExam": {
+    "SSC_CGL": 2171,
+    "JEE_MAIN": 11035,
+    "NEET_UG": 2600,
+    "BPSC_CCE": 255,
+    "UPSC_CSE": 565,
+    "JEE_ADVANCED": 42,
+    "RRB_NTPC": 10,
+    "IBPS_PO": 9,
+    "UNKNOWN_EXAM": 4
+  },
+  "uniqueNormalizedTextsByExam": {
+    "SSC_CGL": 1359,
+    "JEE_MAIN": 10970,
+    "NEET_UG": 287,
+    "BPSC_CCE": 51,
+    "UPSC_CSE": 145,
+    "JEE_ADVANCED": 24,
+    "RRB_NTPC": 7,
+    "IBPS_PO": 6,
+    "UNKNOWN_EXAM": 0
+  },
+  "globalUniqueNormalizedTexts": 12844,
+  "duplicateGroupCountByExam": {
+    "SSC_CGL": 272,
+    "JEE_MAIN": 64,
+    "NEET_UG": 271,
+    "BPSC_CCE": 51,
+    "UPSC_CSE": 142,
+    "JEE_ADVANCED": 13,
+    "RRB_NTPC": 3,
+    "IBPS_PO": 3,
+    "UNKNOWN_EXAM": 0
+  },
+  "globalDuplicateGroupsCount": 822,
+  "duplicateGroupSizeHistogram": {
+    "2x": 127,
+    "3x-4x": 423,
+    "5x-9x": 78,
+    "10x-19x": 194,
+    "20x+": 0
+  },
+  "provenanceDistribution": {
+    "TIER_A_OFFICIAL": 16687,
+    "UNSPECIFIED": 4
+  },
+  "originDistribution": {
+    "template": 5591,
+    "authentic_import": 11035,
+    "authored": 61,
+    "unknown_legacy": 3,
+    "unknown": 1
+  },
+  "officialProvenanceUnverifiedCount": 8459,
+  "constructedUrlCount": 2584,
+  "constructedUrlsByExam": {
+    "NEET_UG": 2584
+  },
+  "missingAnswersCount": 4,
+  "missingAnswersByExam": {
+    "UNKNOWN_EXAM": 4
+  },
+  "missingSolutionsCount": 6,
+  "missingSolutionsByExam": {
+    "NEET_UG": 2,
+    "UNKNOWN_EXAM": 4
+  },
+  "missingExplanationsCount": 8471,
+  "missingExplanationsByExam": {
+    "SSC_CGL": 2171,
+    "JEE_MAIN": 2815,
+    "NEET_UG": 2600,
+    "BPSC_CCE": 255,
+    "UPSC_CSE": 565,
+    "JEE_ADVANCED": 42,
+    "RRB_NTPC": 10,
+    "IBPS_PO": 9,
+    "UNKNOWN_EXAM": 4
+  },
+  "missingExamYearPaperShiftCount": 13,
+  "weakOrMissingTaxonomyCount": 14368,
+  "weakOrMissingTaxonomyByExam": {
+    "SSC_CGL": 1776,
+    "JEE_MAIN": 10458,
+    "NEET_UG": 1530,
+    "BPSC_CCE": 255,
+    "UPSC_CSE": 284,
+    "JEE_ADVANCED": 42,
+    "RRB_NTPC": 10,
+    "IBPS_PO": 9,
+    "UNKNOWN_EXAM": 4
+  },
+  "pineconeStats": {
+    "indexName": "edtech-ai-rag",
+    "dimension": 768,
+    "totalVectorCount": 30368,
+    "indexFullness": 0,
+    "namespaces": [
+      {
+        "name": "production",
+        "vectorCount": 30368
+      }
+    ]
+  },
+  "firestorePineconeConsistency": {
+    "firestoreMarkedIndexed": 4796,
+    "firestoreMarkedIndexedByExam": {
+      "JEE_MAIN": 4796
+    },
+    "quarantinedCount": 5653,
+    "quarantinedByExam": {
+      "SSC_CGL": 2171,
+      "NEET_UG": 2600,
+      "BPSC_CCE": 255,
+      "UPSC_CSE": 565,
+      "JEE_ADVANCED": 42,
+      "RRB_NTPC": 10,
+      "IBPS_PO": 9,
+      "UNKNOWN_EXAM": 1
+    }
+  },
+  "sampleConstructedUrls": [
+    "https://exams.nta.ac.in/NEET/archive/neet_ug_2020_codef.pdf",
+    "https://exams.nta.ac.in/NEET/archive/neet_ug_2013_codew.pdf",
+    "https://exams.nta.ac.in/NEET/archive/neet_ug_2018_codedd.pdf",
+    "https://exams.nta.ac.in/NEET/archive/neet_ug_2024_codeq.pdf",
+    "https://exams.nta.ac.in/NEET/archive/neet_ug_2021_codem.pdf",
+    "https://exams.nta.ac.in/NEET/archive/neet_ug_2015_codea.pdf",
+    "https://exams.nta.ac.in/NEET/archive/neet_ug_2020_codee.pdf",
+    "https://exams.nta.ac.in/NEET/archive/neet_ug_2018_codeaa.pdf",
+    "https://exams.nta.ac.in/NEET/archive/neet_ug_2019_codep.pdf",
+    "https://exams.nta.ac.in/NEET/archive/neet_ug_2016_codep.pdf"
+  ],
+  "sampleDuplicateGroups": [
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "if x frac1x 5 find the value of x3 frac1x3",
+      "occurrences": [
+        {
+          "id": "pyq:ssc_cgl:2024:tier_1:10_sep_shift_1:q11:dc0a9496",
+          "year": 2024,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "10 Sep Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2024_tier1_10sepshift1.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2022:tier_1:02_dec_shift_2:q11:dc0a9496",
+          "year": 2022,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "02 Dec Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2022_tier1_02decshift2.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2023:tier_1:15_jul_shift_3:q11:dc0a9496",
+          "year": 2023,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "15 Jul Shift 3",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2023_tier1_15julshift3.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2024:tier_1:09_sep_shift_3:q13:cc210f47",
+          "year": 2024,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "09 Sep Shift 3",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2024_tier1_09sepshift3.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2021:tier_1:16_aug_shift_1:q11:dc0a9496",
+          "year": 2021,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "16 Aug Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2021_tier1_16augshift1.pdf"
+        }
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "select the number that can replace the question mark in the following series 6 9 14 21 30",
+      "occurrences": [
+        {
+          "id": "pyq:ssc_cgl:2024:tier_1:10_sep_shift_2:q27:a8a402fe",
+          "year": 2024,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "10 Sep Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2024_tier1_10sepshift2.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2022:tier_1:02_dec_shift_2:q27:a8a402fe",
+          "year": 2022,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "02 Dec Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2022_tier1_02decshift2.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2023:tier_1:15_jul_shift_2:q27:a8a402fe",
+          "year": 2023,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "15 Jul Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2023_tier1_15julshift2.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2021:tier_1:16_aug_shift_2:q27:a8a402fe",
+          "year": 2021,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "16 Aug Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2021_tier1_16augshift2.pdf"
+        }
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "two numbers are in the ratio 3 4 and their hcf is 18 find their lcm",
+      "occurrences": [
+        {
+          "id": "pyq:ssc_cgl:2024:tier_1:10_sep_shift_3:q25:06ff53ad",
+          "year": 2024,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "10 Sep Shift 3",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2024_tier1_10sepshift3.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2022:tier_1:05_dec_shift_1:q25:06ff53ad",
+          "year": 2022,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "05 Dec Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2022_tier1_05decshift1.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2023:tier_1:19_jul_shift_1:q25:06ff53ad",
+          "year": 2023,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "19 Jul Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2023_tier1_19julshift1.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2021:tier_1:16_aug_shift_3:q25:06ff53ad",
+          "year": 2021,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "16 Aug Shift 3",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2021_tier1_16augshift3.pdf"
+        }
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "a trader marks his goods 45 above the cost price and allows a discount of 20 on the marked price fin",
+      "occurrences": [
+        {
+          "id": "pyq:ssc_cgl:2022:tier_1:02_dec_shift_2:q2:a12554a8",
+          "year": 2022,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "02 Dec Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2022_tier1_02decshift2.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2023:tier_1:19_jul_shift_2:q2:a12554a8",
+          "year": 2023,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "19 Jul Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2023_tier1_19julshift2.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2024:tier_1:12_sep_shift_2:q2:a12554a8",
+          "year": 2024,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "12 Sep Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2024_tier1_12sepshift2.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2021:tier_1:18_aug_shift_2:q2:a12554a8",
+          "year": 2021,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "18 Aug Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2021_tier1_18augshift2.pdf"
+        }
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "select the most appropriate meaning of the given idiom to bite the bullet",
+      "occurrences": [
+        {
+          "id": "pyq:ssc_cgl:2022:tier_1:02_dec_shift_1:q56:8cc1a27c",
+          "year": 2022,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "02 Dec Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2022_tier1_02decshift1.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2024:tier_1:10_sep_shift_1:q56:8cc1a27c",
+          "year": 2024,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "10 Sep Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2024_tier1_10sepshift1.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2021:tier_1:16_aug_shift_1:q56:8cc1a27c",
+          "year": 2021,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "16 Aug Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2021_tier1_16augshift1.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2023:tier_1:15_jul_shift_1:q56:8cc1a27c",
+          "year": 2023,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "15 Jul Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2023_tier1_15julshift1.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2024:tier_1:09_sep_shift_1:q56:6176b6a6",
+          "year": 2024,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "09 Sep Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2024_tier1_09sepshift1.pdf"
+        }
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "a train running at a speed of 108text kmh crosses a telegraph pole in 15 seconds find the length of ",
+      "occurrences": [
+        {
+          "id": "pyq:ssc_cgl:2022:tier_1:02_dec_shift_3:q6:f186cbcf",
+          "year": 2022,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "02 Dec Shift 3",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2022_tier1_02decshift3.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2023:tier_1:18_jul_shift_3:q6:f186cbcf",
+          "year": 2023,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "18 Jul Shift 3",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2023_tier1_18julshift3.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2021:tier_1:16_aug_shift_3:q6:f186cbcf",
+          "year": 2021,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "16 Aug Shift 3",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2021_tier1_16augshift3.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2024:tier_1:10_sep_shift_3:q6:f186cbcf",
+          "year": 2024,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "10 Sep Shift 3",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2024_tier1_10sepshift3.pdf"
+        }
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "two numbers are in the ratio 3 4 and their hcf is 12 find their lcm",
+      "occurrences": [
+        {
+          "id": "pyq:ssc_cgl:2024:tier_1:11_sep_shift_2:q25:a1342f00",
+          "year": 2024,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "11 Sep Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2024_tier1_11sepshift2.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2023:tier_1:15_jul_shift_2:q25:a1342f00",
+          "year": 2023,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "15 Jul Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2023_tier1_15julshift2.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2022:tier_1:07_dec_shift_2:q25:a1342f00",
+          "year": 2022,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "07 Dec Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2022_tier1_07decshift2.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2021:tier_1:17_aug_shift_2:q25:a1342f00",
+          "year": 2021,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "17 Aug Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2021_tier1_17augshift2.pdf"
+        }
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "directive principles of state policy dpsp contained in part iv of the indian constitution were borro",
+      "occurrences": [
+        {
+          "id": "pyq:ssc_cgl:2023:tier_1:15_jul_shift_1:q77:162831ac",
+          "year": 2023,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "15 Jul Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2023_tier1_15julshift1.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2021:tier_1:16_aug_shift_1:q77:162831ac",
+          "year": 2021,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "16 Aug Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2021_tier1_16augshift1.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2022:tier_1:02_dec_shift_1:q77:162831ac",
+          "year": 2022,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "02 Dec Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2022_tier1_02decshift1.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2024:tier_1:10_sep_shift_1:q77:162831ac",
+          "year": 2024,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "10 Sep Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2024_tier1_10sepshift1.pdf"
+        }
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "a can complete a piece of work in 21 days and b can complete the same work in 18 days working togeth",
+      "occurrences": [
+        {
+          "id": "pyq:ssc_cgl:2023:tier_1:15_jul_shift_1:q5:1ac2fa27",
+          "year": 2023,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "15 Jul Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2023_tier1_15julshift1.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2022:tier_1:02_dec_shift_3:q5:1ac2fa27",
+          "year": 2022,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "02 Dec Shift 3",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2022_tier1_02decshift3.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2024:tier_1:11_sep_shift_1:q5:1ac2fa27",
+          "year": 2024,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "11 Sep Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2024_tier1_11sepshift1.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2021:tier_1:17_aug_shift_1:q5:1ac2fa27",
+          "year": 2021,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "17 Aug Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2021_tier1_17augshift1.pdf"
+        }
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "pointing to a photograph of a boy suresh said he is the only son of my mothers only daughter how is ",
+      "occurrences": [
+        {
+          "id": "pyq:ssc_cgl:2024:tier_1:10_sep_shift_1:q30:2bbee0ce",
+          "year": 2024,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "10 Sep Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2024_tier1_10sepshift1.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2022:tier_1:02_dec_shift_1:q30:2bbee0ce",
+          "year": 2022,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "02 Dec Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2022_tier1_02decshift1.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2023:tier_1:15_jul_shift_1:q30:2bbee0ce",
+          "year": 2023,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "15 Jul Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2023_tier1_15julshift1.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2021:tier_1:16_aug_shift_1:q30:2bbee0ce",
+          "year": 2021,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "16 Aug Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2021_tier1_16augshift1.pdf"
+        }
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "the average weight of 14 students is 49text kg if the teachers weight is included the average increa",
+      "occurrences": [
+        {
+          "id": "pyq:ssc_cgl:2022:tier_1:02_dec_shift_3:q7:766d5531",
+          "year": 2022,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "02 Dec Shift 3",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2022_tier1_02decshift3.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2021:tier_1:16_aug_shift_3:q7:766d5531",
+          "year": 2021,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "16 Aug Shift 3",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2021_tier1_16augshift3.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2023:tier_1:15_jul_shift_3:q7:766d5531",
+          "year": 2023,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "15 Jul Shift 3",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2023_tier1_15julshift3.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2024:tier_1:10_sep_shift_3:q7:766d5531",
+          "year": 2024,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "10 Sep Shift 3",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2024_tier1_10sepshift3.pdf"
+        }
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "the speed of a boat in still water is 13text kmh and the speed of the stream is 4text kmh find the r",
+      "occurrences": [
+        {
+          "id": "pyq:ssc_cgl:2024:tier_1:10_sep_shift_2:q20:1e3cfda2",
+          "year": 2024,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "10 Sep Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2024_tier1_10sepshift2.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2023:tier_1:18_jul_shift_2:q20:1e3cfda2",
+          "year": 2023,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "18 Jul Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2023_tier1_18julshift2.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2022:tier_1:02_dec_shift_2:q20:1e3cfda2",
+          "year": 2022,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "02 Dec Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2022_tier1_02decshift2.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2021:tier_1:16_aug_shift_2:q20:1e3cfda2",
+          "year": 2021,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "16 Aug Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2021_tier1_16augshift2.pdf"
+        }
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "the table shows production of cars in thousands by four companies a b c d in year 2023 a 400 b 440 c",
+      "occurrences": [
+        {
+          "id": "pyq:ssc_cgl:2024:tier_1:10_sep_shift_2:q18:537045f4",
+          "year": 2024,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "10 Sep Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2024_tier1_10sepshift2.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2022:tier_1:02_dec_shift_2:q18:537045f4",
+          "year": 2022,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "02 Dec Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2022_tier1_02decshift2.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2023:tier_1:15_jul_shift_2:q18:537045f4",
+          "year": 2023,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "15 Jul Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2023_tier1_15julshift2.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2021:tier_1:16_aug_shift_2:q18:537045f4",
+          "year": 2021,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "16 Aug Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2021_tier1_16augshift2.pdf"
+        }
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "two numbers are in the ratio 3 6 and their hcf is 16 find their lcm",
+      "occurrences": [
+        {
+          "id": "pyq:ssc_cgl:2023:tier_1:20_jul_shift_2:q25:e94bf035",
+          "year": 2023,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "20 Jul Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2023_tier1_20julshift2.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2021:tier_1:16_aug_shift_2:q25:e94bf035",
+          "year": 2021,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "16 Aug Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2021_tier1_16augshift2.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2024:tier_1:10_sep_shift_2:q25:e94bf035",
+          "year": 2024,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "10 Sep Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2024_tier1_10sepshift2.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2022:tier_1:06_dec_shift_2:q25:e94bf035",
+          "year": 2022,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "06 Dec Shift 2",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2022_tier1_06decshift2.pdf"
+        }
+      ]
+    },
+    {
+      "examId": "SSC_CGL",
+      "textSnippet": "select the most appropriate option to fill in blank 2 it empowers individuals with knowledge and ___",
+      "occurrences": [
+        {
+          "id": "pyq:ssc_cgl:2024:tier_1:10_sep_shift_1:q67:92c2f23a",
+          "year": 2024,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "10 Sep Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2024_tier1_10sepshift1.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2022:tier_1:02_dec_shift_1:q67:92c2f23a",
+          "year": 2022,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "02 Dec Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2022_tier1_02decshift1.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2023:tier_1:15_jul_shift_1:q67:92c2f23a",
+          "year": 2023,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "15 Jul Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2023_tier1_15julshift1.pdf"
+        },
+        {
+          "id": "pyq:ssc_cgl:2021:tier_1:16_aug_shift_1:q67:92c2f23a",
+          "year": 2021,
+          "paper": "Tier 1 Combined Paper",
+          "shift": "16 Aug Shift 1",
+          "sourceUrl": "https://ssc.gov.in/notices/cgl_2021_tier1_16augshift1.pdf"
+        }
+      ]
+    }
+  ]
+}

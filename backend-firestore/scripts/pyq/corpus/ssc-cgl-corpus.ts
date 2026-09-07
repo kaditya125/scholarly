@@ -3,11 +3,28 @@
  * Covers 2021–2024 Tier 1 CBT across Quant, Reasoning, English, General Awareness.
  */
 
-import { CanonicalPYQQuestion } from '../../../src/types/pyq.types';
+import { CanonicalPYQQuestion, PYQProvenanceRecord } from '../../../src/types/pyq.types';
 import { pyqExtractorService } from '../../../src/services/pyq/pyqExtractor.service';
+import { buildComplete2024Sep09FullPapers } from './ssc-cgl-2024-sep09-shifts';
+import { buildComplete2023Jul14FullPapers } from './ssc-cgl-2023-jul14-shifts';
+import { buildComplete2022Dec01FullPapers } from './ssc-cgl-2022-dec01-shifts';
+import { buildComplete2021Aug13FullPapers } from './ssc-cgl-2021-aug13-shifts';
+import { buildAllSSCCGLShifts } from '../tools/generate-ssc-shift-corpus';
 
-export function buildSSCCGLCorpus(): CanonicalPYQQuestion[] {
-  const questions: CanonicalPYQQuestion[] = [];
+export function buildSSCCGLCorpus(targetYear?: number): CanonicalPYQQuestion[] {
+  const baseline: CanonicalPYQQuestion[] = [
+    ...buildComplete2024Sep09FullPapers(),
+    ...buildComplete2023Jul14FullPapers(),
+    ...buildComplete2022Dec01FullPapers(),
+    ...buildComplete2021Aug13FullPapers(),
+  ];
+
+  const generated = buildAllSSCCGLShifts(targetYear);
+  const combined = targetYear
+    ? [...baseline.filter((q) => q.year === targetYear), ...generated]
+    : [...baseline, ...generated];
+
+  const questions: CanonicalPYQQuestion[] = [...combined];
   const now = Date.now();
 
   const addQ = (data: {
@@ -26,12 +43,13 @@ export function buildSSCCGLCorpus(): CanonicalPYQQuestion[] {
     diff: 'EASY' | 'MEDIUM' | 'HARD';
     secSource?: string;
   }) => {
+    if (targetYear && data.year !== targetYear) return;
     const normText = pyqExtractorService.normalizeMathAndScienceNotation(data.text);
     const normOpts = data.options.map((o) => pyqExtractorService.normalizeMathAndScienceNotation(o));
     const contentHash = pyqExtractorService.generateQuestionHash('SSC_CGL', normText, normOpts, data.qNum);
     const qId = `pyq:ssc_cgl:${data.year}:${data.session.toLowerCase().replace(/\s+/g, '_')}:${data.shift.toLowerCase().replace(/\s+/g, '_')}:q${data.qNum}:${contentHash.slice(0, 8)}`;
 
-    const provenance = [
+    const provenance: PYQProvenanceRecord[] = [
       {
         sourceTier: 'TIER_A_OFFICIAL' as const,
         sourceName: `SSC Official Master Key ${data.year}`,

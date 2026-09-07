@@ -1,0 +1,70 @@
+{
+  "totalQuarantinedEvaluated": 5653,
+  "byRestorationState": {
+    "VERIFIED_AUTHENTIC": 0,
+    "CORROBORATED_EXTERNAL": 0,
+    "UNVERIFIED": 62,
+    "CONFLICTING": 0,
+    "SYNTHETIC_TEMPLATE": 5591
+  },
+  "byExam": {
+    "SSC_CGL": {
+      "VERIFIED_AUTHENTIC": 0,
+      "CORROBORATED_EXTERNAL": 0,
+      "UNVERIFIED": 0,
+      "CONFLICTING": 0,
+      "SYNTHETIC_TEMPLATE": 2171
+    },
+    "NEET_UG": {
+      "VERIFIED_AUTHENTIC": 0,
+      "CORROBORATED_EXTERNAL": 0,
+      "UNVERIFIED": 0,
+      "CONFLICTING": 0,
+      "SYNTHETIC_TEMPLATE": 2600
+    },
+    "BPSC_CCE": {
+      "VERIFIED_AUTHENTIC": 0,
+      "CORROBORATED_EXTERNAL": 0,
+      "UNVERIFIED": 0,
+      "CONFLICTING": 0,
+      "SYNTHETIC_TEMPLATE": 255
+    },
+    "UPSC_CSE": {
+      "VERIFIED_AUTHENTIC": 0,
+      "CORROBORATED_EXTERNAL": 0,
+      "UNVERIFIED": 0,
+      "CONFLICTING": 0,
+      "SYNTHETIC_TEMPLATE": 565
+    },
+    "JEE_ADVANCED": {
+      "VERIFIED_AUTHENTIC": 0,
+      "CORROBORATED_EXTERNAL": 0,
+      "UNVERIFIED": 42,
+      "CONFLICTING": 0,
+      "SYNTHETIC_TEMPLATE": 0
+    },
+    "RRB_NTPC": {
+      "VERIFIED_AUTHENTIC": 0,
+      "CORROBORATED_EXTERNAL": 0,
+      "UNVERIFIED": 10,
+      "CONFLICTING": 0,
+      "SYNTHETIC_TEMPLATE": 0
+    },
+    "IBPS_PO": {
+      "VERIFIED_AUTHENTIC": 0,
+      "CORROBORATED_EXTERNAL": 0,
+      "UNVERIFIED": 9,
+      "CONFLICTING": 0,
+      "SYNTHETIC_TEMPLATE": 0
+    },
+    "UNKNOWN": {
+      "VERIFIED_AUTHENTIC": 0,
+      "CORROBORATED_EXTERNAL": 0,
+      "UNVERIFIED": 1,
+      "CONFLICTING": 0,
+      "SYNTHETIC_TEMPLATE": 0
+    }
+  },
+  "restoredToActiveCount": 0,
+  "remainedQuarantinedCount": 5653
+}

@@ -1,0 +1,1724 @@
+[
+  {
+    "id_combined": "GS1_2024_Q1",
+    "year": 2024,
+    "q_no_in_paper": 1,
+    "question_text_combined": "Consider the following statements: Statement-I: The atmosphere is heated more by incoming solar radiation than by terrestrial radiation. Statement-II: Carbon dioxide and other greenhouse gases in the atmosphere are good absorbers of long wave radiation. Which one of the following is correct in respect of the above statements?",
+    "raw_blocks_combined": ", , , ",
+    "options_combined": "(a) Both Statement-I and Statement-II are correct and Statement-II explains Statement-I\n(b) Both Statement-I and Statement-II are correct, but Statement-II does not explain Statement-I\n(c) Statement-I is correct, but Statement-II is incorrect\n(d) Statement-I is incorrect, but Statement-II is correct",
+    "answer_key": "D",
+    [cite_start]"answer_explanation": "The atmosphere is primarily heated from below by terrestrial (long-wave) radiation, making Statement-I incorrect. [cite: 1] [cite_start] Greenhouse gases like carbon dioxide are largely transparent to incoming short-wave solar radiation but effectively absorb the outgoing long-wave terrestrial radiation. [cite: 2]",
+    "answer_sources": [
+      "NCERT Class 11 Fundamentals of Physical Geography, Chapter 9: Solar Radiation, Heat Balance and Temperature."
+    ],
+    "subject": "Geography",
+    "topic": "Climatology / Heat Budget",
+    "confidence_score": 1.0,
+    "assumptions": "Assuming standard UPSC interpretation of atmospheric heating dynamics."
+  },
+  {
+    "id_combined": "GS1_2024_Q2",
+    "year": 2024,
+    "q_no_in_paper": 2,
+    "question_text_combined": "Consider the following statements: Statement-I: Thickness of the troposphere at the equator is much greater as compared to poles. Statement-II: At the equator, heat is transported to great heights by strong convectional currents. Which one of the following is correct in respect of the above statements?",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) Both Statement-I and Statement-II are correct and Statement-II explains Statement-I\n(b) Both Statement-I and Statement-II are correct, but Statement-II does not explain Statement-I\n(c) Statement-I is correct, but Statement-II is incorrect\n(d) Statement-I is incorrect, but Statement-II is correct",
+    "answer_key": "A",
+    [cite_start]"answer_explanation": "The troposphere's thickness is roughly 18 km at the equator and 8 km at the poles, making Statement-I correct. [cite: 5] [cite_start] This difference exists because strong convectional currents transport heat to greater heights at the equator, which directly explains the phenomenon. [cite: 6]",
+    "answer_sources": [
+      "NCERT Class 11 Fundamentals of Physical Geography, Chapter 8: Composition and Structure of Atmosphere."
+    ],
+    "subject": "Geography",
+    "topic": "Climatology / Structure of Atmosphere",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q3",
+    "year": 2024,
+    "q_no_in_paper": 3,
+    "question_text_combined": "Consider the following: 1. Pyroclastic debris 2. Ash and dust 3. Nitrogen compounds 4. Sulphur compounds. How many of the above are products of volcanic eruptions?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Only one\n(b) Only two\n(c) Only three\n(d) All four",
+    "answer_key": "D",
+    "answer_explanation": "Volcanic eruptions release a wide variety of materials. [cite_start]Solid materials include pyroclastic debris, ash, and dust. [cite: 8] [cite_start]The gaseous emissions heavily feature sulphur compounds (like sulphur dioxide) and nitrogen compounds. [cite: 8]",
+    "answer_sources": [
+      "NCERT Class 11 Fundamentals of Physical Geography, Chapter 3: Interior of the Earth."
+    ],
+    "subject": "Geography",
+    "topic": "Geomorphology / Volcanism",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q4",
+    "year": 2024,
+    "q_no_in_paper": 4,
+    "question_text_combined": "Which of the following is/are correct inference/inferences from isothermal maps in the month of January? 1. The isotherms deviate to the north over the ocean and to the south over the continent. 2. The presence of cold ocean currents, Gulf Stream and North Atlantic Drift make the North Atlantic Ocean colder and the isotherms bend towards the north.",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) 1 only\n(b) 2 only\n(c) Both 1 and 2\n(d) Neither 1 nor 2",
+    "answer_key": "A",
+    [cite_start]"answer_explanation": "In January, the Northern Hemisphere experiences winter, meaning oceans are warmer than landmasses; thus, isotherms deviate north over oceans and south over continents. [cite: 9] [cite_start] Statement 2 is incorrect because the Gulf Stream and North Atlantic Drift are warm ocean currents, not cold ones. [cite: 10]",
+    "answer_sources": [
+      "NCERT Class 11 Fundamentals of Physical Geography, Chapter 9: Solar Radiation, Heat Balance and Temperature."
+    ],
+    "subject": "Geography",
+    "topic": "Climatology / Isotherms",
+    "confidence_score": 1.0,
+    "assumptions": "Assumes the first statement implicitly refers to the Northern Hemisphere, which is standard in UPSC context for this specific wording."
+  },
+  {
+    "id_combined": "GS1_2024_Q5",
+    "year": 2024,
+    "q_no_in_paper": 5,
+    "question_text_combined": "Which of the following countries are well known as the two largest cocoa producers in the world?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Algeria and Morocco\n(b) Botswana and Namibia\n(c) Côte d'Ivoire and Ghana\n(d) Madagascar and Mozambique",
+    "answer_key": "C",
+    "answer_explanation": "West Africa dominates global cocoa production. [cite_start]Côte d'Ivoire and Ghana are consistently ranked as the top two largest cocoa producers in the world, accounting for the majority of global supply. [cite: 12]",
+    "answer_sources": [
+      "FAOSTAT (Food and Agriculture Organization of the United Nations) global production data."
+    ],
+    "subject": "Geography",
+    "topic": "Economic Geography / Agriculture",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q6",
+    "year": 2024,
+    "q_no_in_paper": 6,
+    "question_text_combined": "With reference to the Himalayan rivers 9. joining the Ganga downstream of Prayagraj from West to East, which one of the following sequences is correct?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Ghaghara - Gomati - Gandak-Kosi\n(b) Gomati Ghaghara - Gandak - Kosi\n(c) Ghaghara-Gomati - Kosi - Gandak\n(d) Gomati Ghaghara Kosi - Gandak",
+    "answer_key": "B",
+    [cite_start]"answer_explanation": "The correct West to East sequence of these Ganga tributaries is Gomati, Ghaghara, Gandak, and Kosi[cite: 13].  Gomati joins near Varanasi, Ghaghara near Chhapra, Gandak near Hajipur/Patna, and Kosi near Katihar.",
+    "answer_sources": [
+      "NCERT Class 11 India: Physical Environment, Chapter 3: Drainage System."
+    ],
+    "subject": "Geography",
+    "topic": "Drainage System",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q7",
+    "year": 2024,
+    "q_no_in_paper": 7,
+    "question_text_combined": "Consider the following statements: Statement-I: Rainfall is one of the reasons for weathering of rocks. Statement-II: Rain water contains carbon dioxide in solution. Statement-III: Rain water contains atmospheric oxygen. Which one of the following is correct in respect of the above statements?",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) Both Statement-II and Statement-III are correct and both of them explain Statement-I\n(b) Both Statement-II and Statement-III are correct, but only one of them explains Statement-I\n(c) Only one of the Statements II and III is correct and that explains Statement-I\n(d) Neither Statement-II nor Statement-III is correct",
+    "answer_key": "A",
+    [cite_start]"answer_explanation": "Rainfall causes chemical weathering of rocks[cite: 14]. [cite_start]This happens because rainwater contains dissolved carbon dioxide (forming weak carbonic acid leading to carbonation) and dissolved oxygen (leading to oxidation of minerals)[cite: 15]. [cite_start]Both statements II and III are correct and explain the process in Statement I[cite: 16].",
+    "answer_sources": [
+      "NCERT Class 11 Fundamentals of Physical Geography, Chapter 6: Geomorphic Processes."
+    ],
+    "subject": "Geography",
+    "topic": "Geomorphology / Weathering",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q8",
+    "year": 2024,
+    "q_no_in_paper": 8,
+    "question_text_combined": "Consider the following countries: 1. Finland 2. Germany 3. Norway 4. Russia. How many of the above countries have a border with the North Sea?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Only one\n(b) Only two\n(c) Only three\n(d) All four",
+    "answer_key": "B",
+    "answer_explanation": "Only two of the listed countries border the North Sea: Germany and Norway.  Finland and Russia border the Baltic Sea and the Arctic Ocean, not the North Sea.",
+    "answer_sources": [
+      "World Atlas / Standard Political Map of Europe."
+    ],
+    "subject": "Geography",
+    "topic": "World Geography / Mapping",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q9",
+    "year": 2024,
+    "q_no_in_paper": 9,
+    "question_text_combined": "Consider the following information: Waterfall Region River 1.Dhuandhar Malwa Narmada 2.Hundru Chota Nagpur Subarnarekha 3.Gersoppa Western Ghats Netravati. In how many of the above rows is the given information correctly matched?",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) Only one\n(b) Only two\n(c) All three\n(d) None",
+    "answer_key": "A",
+    "answer_explanation": "Only one row is correctly matched: Hundru Falls is on the Subarnarekha River in the Chota Nagpur plateau. Dhuandhar is on the Narmada but located in the Mahakoshal region (Jabalpur), not Malwa. [cite_start]Gersoppa (Jog Falls) is in the Western Ghats but is formed by the Sharavati River, not the Netravati[cite: 18].",
+    "answer_sources": [
+      "NCERT Class 11 India: Physical Environment, Chapter 3: Drainage System."
+    ],
+    "subject": "Geography",
+    "topic": "Indian Geography / Drainage",
+    "confidence_score": 0.9,
+    "assumptions": "Assumed 'Malwa' strictly excludes Jabalpur geographically."
+  },
+  {
+    "id_combined": "GS1_2024_Q10",
+    "year": 2024,
+    "q_no_in_paper": 10,
+    "question_text_combined": "Consider the following information: Region Name of the mountain range Type of mountain 1. Central Asia Vosges Fold mountain 2.Europe Alps Block mountain 3.North America Appalachians Fold mountain 4.South America Andes Fold mountain. In how many of the above rows is the given information correctly matched?",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) Only one\n(b) Only two\n(c) Only three\n(d)All four",
+    "answer_key": "B",
+    [cite_start]"answer_explanation": "Only two pairs are correct: The Appalachians and the Andes are both fold mountains[cite: 21]. [cite_start]The Vosges are block mountains located in Europe, and the Alps are fold mountains, making the first two pairs incorrect[cite: 20].",
+    "answer_sources": [
+      "NCERT Class 11 Fundamentals of Physical Geography, Chapter: Landforms and their Evolution."
+    ],
+    "subject": "Geography",
+    "topic": "Geomorphology / Mountains",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q11",
+    "year": 2024,
+    "q_no_in_paper": 11,
+    "question_text_combined": "Consider the following airports: 1. Donyi Polo Airport 2. Kushinagar International Airport 3. Vijayawada International Airport. In the recent past, which of the above have been constructed as Greenfield projects?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) 1 and 2 only\n(b) 2 and 3 only\n(c) 1 and 3 only\n(d) 1, 2 and 3",
+    "answer_key": "null",
+    "answer_explanation": "The options are ambiguous because the standard answer choices for 'how many' style questions are missing, and only '1 only' is factually fully defensible, which is missing from the options. [cite_start]Donyi Polo is a Greenfield project[cite: 23]. Kushinagar and Vijayawada are upgrades of existing airstrips/airports (Brownfield). If forced, a candidate might choose (a) assuming Kushinagar's massive international upgrade classified it differently in some ministry reports, but structurally it is brownfield.",
+    "answer_sources": [
+      "Ministry of Civil Aviation, Government of India: List of Greenfield Airports."
+    ],
+    "subject": "Economy",
+    "topic": "Infrastructure / Aviation",
+    "confidence_score": 0.5,
+    "assumptions": "Marked ambiguous due to lack of a '1 only' option while Kushinagar is historically an existing airstrip."
+  },
+  {
+    "id_combined": "GS1_2024_Q12",
+    "year": 2024,
+    "q_no_in_paper": 12,
+    "question_text_combined": "With reference to \"water vapour\", which of the following statements is/are correct? 1. It is a gas, the amount of which decreases with altitude. 2. Its percentage is maximum at the poles.",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) 1 only\n(b) 2 only\n(c) Both 1 and 2\n(d) Neither 1 nor 2",
+    "answer_key": "A",
+    [cite_start]"answer_explanation": "Water vapour decreases rapidly with altitude, making statement 1 correct[cite: 24]. [cite_start]Its percentage is highest near the equator and decreases towards the poles due to temperature differences, making statement 2 incorrect[cite: 24].",
+    "answer_sources": [
+      "NCERT Class 11 Fundamentals of Physical Geography, Chapter 8: Composition and Structure of Atmosphere."
+    ],
+    "subject": "Geography",
+    "topic": "Climatology",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q13",
+    "year": 2024,
+    "q_no_in_paper": 13,
+    "question_text_combined": "Consider the following description: 1. Annual and daily range of temperatures is low. 2. Precipitation occurs throughout the year. 3. Precipitation varies between 50 cm 250 cm. What is this type of climate?",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) Equatorial climate\n(b) China type climate\n(c) Humid subtropical climate\n(d) Marine West coast climate",
+    "answer_key": "D",
+    [cite_start]"answer_explanation": "The Marine West Coast climate features low temperature ranges due to oceanic influence and consistent precipitation throughout the year ranging from 50 to 250 cm[cite: 26]. [cite_start]Equatorial climates also have rain all year but typically experience much higher precipitation volumes[cite: 27].",
+    "answer_sources": [
+      "G.C. Leong, Certificate Physical and Human Geography, Chapter 22: The Warm Temperate Western Margin Climate."
+    ],
+    "subject": "Geography",
+    "topic": "Climatology / World Climate Types",
+    "confidence_score": 0.9,
+    "assumptions": "Assumed 50-250cm distinguishes it from the heavier rainfall parameters of a true Equatorial climate."
+  },
+  {
+    "id_combined": "GS1_2024_Q14",
+    "year": 2024,
+    "q_no_in_paper": 14,
+    "question_text_combined": "With reference to \"Coriolis force\", which of the following statements is/are correct? 1. It increases with increase in wind velocity. 2. It is maximum at the poles and is absent at the equator.",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) 1 only\n(b) 2 only\n(c) Both 1 and 2\n(d) Neither 1 nor 2",
+    "answer_key": "C",
+    [cite_start]"answer_explanation": "The Coriolis force is directly proportional to wind velocity, making statement 1 correct[cite: 28]. [cite_start]It is governed by the sine of the latitude, meaning it is maximum at the poles (sin 90° = 1) and zero at the equator (sin 0° = 0), making statement 2 correct[cite: 28].",
+    "answer_sources": [
+      "NCERT Class 11 Fundamentals of Physical Geography, Chapter 10: Atmospheric Circulation and Weather Systems."
+    ],
+    "subject": "Geography",
+    "topic": "Climatology / Coriolis Force",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q15",
+    "year": 2024,
+    "q_no_in_paper": 15,
+    "question_text_combined": "On June 21 every year, which of the following latitude(s) experience(s) a sunlight of more than 12 hours? 1. Equator 2. Tropic of Cancer 3. Tropic of Capricorn 4. Arctic Circle",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) 1 only\n(b) 2 only\n(c) 3 and 4\n(d) 2 and 4",
+    "answer_key": "D",
+    [cite_start]"answer_explanation": "On June 21 (Summer Solstice in the Northern Hemisphere), the sun is directly overhead the Tropic of Cancer, leading to daylight hours longer than 12 hours there[cite: 30]. [cite_start] The Arctic Circle experiences 24 hours of daylight[cite: 30]. The Equator has exactly 12 hours, and the Tropic of Capricorn has less than 12.",
+    "answer_sources": [
+      "NCERT Class 6 The Earth Our Habitat, Chapter 3: Motions of the Earth."
+    ],
+    "subject": "Geography",
+    "topic": "Earth Mechanics / Solstices",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q16",
+    "year": 2024,
+    "q_no_in_paper": 16,
+    "question_text_combined": "One of the following regions has the world's largest tropical peatland, which holds about three years worth of global carbon emissions from fossil fuels; and the possible destruction of which can exert detrimental effect on the global climate. Which one of the following denotes that region?",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) Amazon Basin\n(b) Congo Basin\n(c) Kikori Basin\n(d) Rio de la Plata Basin",
+    "answer_key": "B",
+    [cite_start]"answer_explanation": "The Congo Basin houses the Cuvette Centrale, recognized as the world's largest tropical peatland[cite: 31]. [cite_start]Its destruction would release massive amounts of sequestered carbon into the atmosphere, accelerating climate change[cite: 32].",
+    "answer_sources": [
+      "UNEP (United Nations Environment Programme) publications on the Cuvette Centrale peatlands."
+    ],
+    "subject": "Environment",
+    "topic": "Ecosystems / Climate Change",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q17",
+    "year": 2024,
+    "q_no_in_paper": 17,
+    "question_text_combined": "With reference to perfluoroalkyl and polyfluoroalkyl substances (PFAS) that are used in making many consumer products, consider the following statements: 1. PFAS are found to be widespread in drinking water, food and food packaging materials. 2. PFAS are not easily degraded in the environment. 3. Persistent exposure to PFAS can lead to bioaccumulation in animal bodies. Which of the statements given above are correct?",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) 1 and 2 only\n(b) 2 and 3 only\n(c) 1 and 3 only\n(d) 1, 2 and 3",
+    "answer_key": "D",
+    [cite_start]"answer_explanation": "PFAS are widespread synthetic chemicals often termed 'forever chemicals' because they resist environmental degradation[cite: 33]. [cite_start]They are commonly found in water and packaging, and they bioaccumulate in humans and animals over time[cite: 34].",
+    "answer_sources": [
+      "US Environmental Protection Agency (EPA) documentation on PFAS."
+    ],
+    "subject": "Environment",
+    "topic": "Pollution / Chemical Hazards",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q18",
+    "year": 2024,
+    "q_no_in_paper": 18,
+    "question_text_combined": "Consider the following: 1. Carabid beetles 2. Centipedes 3. Flies 4. Termites 5. Wasps. Parasitoid species are found in how many of the above kind of organisms?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Only two\n(b) Only three\n(c) Only four\n(d) All five",
+    "answer_key": "B",
+    "answer_explanation": "Parasitoid lifestyles are well documented in Wasps, Flies (e.g., Tachinid flies), and certain Beetles (e.g., Rove beetles or some Carabids). Centipedes are predators, and termites are social herbivores/detritivores; neither have parasitoid species.",
+    "answer_sources": [
+      "Standard biological taxonomy texts on parasitoidism."
+    ],
+    "subject": "Environment",
+    "topic": "Biodiversity / Species Behavior",
+    "confidence_score": 0.9,
+    "assumptions": "Assuming strict biological definitions of 'parasitoid' vs 'predator'."
+  },
+  {
+    "id_combined": "GS1_2024_Q19",
+    "year": 2024,
+    "q_no_in_paper": 19,
+    "question_text_combined": "Consider the following plants: 1. Groundnut 2. Horse-gram 3. Soybean. How many of the above belong to the pea family?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Only one\n(b) Only two\n(c) All three\n(d) None",
+    "answer_key": "C",
+    "answer_explanation": "Groundnut, horse-gram, and soybean are all leguminous plants. They belong to the Fabaceae family, which is commonly known as the pea, legume, or bean family.",
+    "answer_sources": [
+      "NCERT Class 11 Biology, Chapter 5: Morphology of Flowering Plants (Family Fabaceae)."
+    ],
+    "subject": "Environment",
+    "topic": "Agriculture / Botany",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q20",
+    "year": 2024,
+    "q_no_in_paper": 20,
+    "question_text_combined": "Consider the following statements: Statement-I: The Indian Flying Fox is placed under the \"vermin\" category in the Wild Life (Protection) Act, 1972. Statement-II: The Indian Flying Fox feeds on the blood of other animals. Which one of the following is correct in respect of the above statements?",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) Both Statement-I and Statement-II are correct and Statement-II explains Statement-I\n(b) Both Statement-I and Statement-II are correct, but Statement-II does not explain Statement-I\n(c) Statement-I is correct, but Statement-II is incorrect\n(d) Statement-I is incorrect, but Statement-II is correct",
+    "answer_key": "C",
+    [cite_start]"answer_explanation": "The Indian Flying Fox is a fruit bat (frugivore) and does not feed on blood, making Statement-II unequivocally incorrect[cite: 37]. Under the original unamended WPA 1972, fruit bats were listed in Schedule V as vermin (though the 2022 amendment removed this schedule entirely). [cite_start]Assuming UPSC references the original act's historical framing, only Statement I is treated as correct[cite: 38].",
+    "answer_sources": [
+      "Wildlife (Protection) Act, 1972 (Original schedules vs 2022 Amendment)."
+    ],
+    "subject": "Environment",
+    "topic": "Wildlife Conservation Acts",
+    "confidence_score": 0.8,
+    "assumptions": "UPSC relied on the pre-2022 WPA 1972 classification for Statement I."
+  },
+  {
+    "id_combined": "GS1_2024_Q21",
+    "year": 2024,
+    "q_no_in_paper": 21,
+    "question_text_combined": "The organisms \"Cicada, Froghopper and Pond skater\" are:",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Birds\n(b) Fish\n(c) Insects\n(d) Reptiles",
+    "answer_key": "C",
+    "answer_explanation": "Cicadas, froghoppers, and pond skaters are all classified biologically as insects (Class Insecta).",
+    "answer_sources": [
+      "Standard biological taxonomy texts."
+    ],
+    "subject": "Environment",
+    "topic": "Biodiversity",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q22",
+    "year": 2024,
+    "q_no_in_paper": 22,
+    "question_text_combined": "Consider the following statements: Statement-1: Many chewing gums found in the market are considered a source of environmental pollution. Statement-II: Many chewing gums contain plastic as gum base. Which one of the following is correct in respect of the above statements?",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) Both Statement-I and Statement-II are Statement-II explains correct and Statement-I\n(b) Both Statement-I and Statement-II are correct, but Statement-II does not explain Statement-I\n(c) Statement-I is correct, but Statement-II is incorrect\n(d) Statement-I is incorrect, but Statement-II is correct",
+    "answer_key": "A",
+    [cite_start]"answer_explanation": "Modern chewing gums often utilize synthetic polymers (plastics like polyethylene and polyvinyl acetate) in their gum bases[cite: 39]. [cite_start]This makes them non-biodegradable, directly causing environmental pollution when improperly discarded[cite: 40]. Thus, Statement II directly explains Statement I.",
+    "answer_sources": [
+      "UNEP reports on microplastics and synthetic polymers in consumer goods."
+    ],
+    "subject": "Environment",
+    "topic": "Pollution / Plastics",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q23",
+    "year": 2024,
+    "q_no_in_paper": 23,
+    "question_text_combined": "Consider the following pairs: Country Animal found in its natural habitat 1. Brazil Indri 2. Indonesia Elk 3. Madagascar Bonobo. How many of the pairs given above are correctly matched?",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) Only one\n(b) Only two\n(c) All three\n(d) None",
+    "answer_key": "D",
+    "answer_explanation": "None of the pairs are correct. [cite_start]The Indri is a lemur endemic to Madagascar, not Brazil[cite: 41]. Elks are native to North America and Eurasia, not Indonesia. [cite_start]Bonobos are endemic to the Democratic Republic of the Congo, not Madagascar[cite: 41].",
+    "answer_sources": [
+      "IUCN Red List of Threatened Species for habitat distribution."
+    ],
+    "subject": "Environment",
+    "topic": "Biodiversity / Habitat",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q24",
+    "year": 2024,
+    "q_no_in_paper": 24,
+    "question_text_combined": "Consider the following statements regarding World Toilet Organization: 1. It is one of the agencies of the United Nations. 2. World Toilet Summit, World Toilet Day and World Toilet College are the initiatives of this organization, to inspire action to tackle the global sanitation crisis. 3. The main focus of its function is to grant funds to the least developed countries and developing countries to achieve the end of open defecation. Which of the statements given above is/are correct?",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) 2 only\n(b) 3 only\n(c) 1 and 2\n(d) 2 and 3",
+    "answer_key": "A",
+    [cite_start]"answer_explanation": "The World Toilet Organization is a global non-profit organization, not a UN agency[cite: 43]. [cite_start]It operates through advocacy and initiatives like the World Toilet Summit and World Toilet College[cite: 44]. [cite_start]It is an advocacy group and does not function as a grant-funding agency for countries[cite: 45].",
+    "answer_sources": [
+      "World Toilet Organization official website (About Us)."
+    ],
+    "subject": "International Relations",
+    "topic": "Global Health & NGOs",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q25",
+    "year": 2024,
+    "q_no_in_paper": 25,
+    "question_text_combined": "Consider the following statements: 1. Lions do not have a particular breeding season. 2. Unlike most other big cats, cheetahs do not roar. 3. Unlike male lions, male leopards do not proclaim their territory by scent marking. Which of the statements given above are correct?",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) 1 and 2 only\n(b) 2 and 3 only\n(c) 1 and 3 only\n(d) 1, 2 and 3",
+    "answer_key": "A",
+    [cite_start]"answer_explanation": "Lions are polyestrous and breed throughout the year, making statement 1 correct[cite: 46]. [cite_start]Cheetahs lack the physical adaptation in the larynx to roar; instead, they purr and chirp, making statement 2 correct[cite: 47]. [cite_start]Male leopards actively scent mark their territories using urine and scrape marks, making statement 3 incorrect[cite: 48].",
+    "answer_sources": [
+      "Wildlife Conservation Society (WCS) species profiles for Lions, Cheetahs, and Leopards."
+    ],
+    "subject": "Environment",
+    "topic": "Biodiversity / Animal Behavior",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q26",
+    "year": 2024,
+    "q_no_in_paper": 26,
+    "question_text_combined": "Which one of the following is the correct description of \"100 Million Farmers\"?",
+    "raw_blocks_combined": ", , , , ",
+    "options_combined": "(a) It is a platform for accelerating the transition towards food and water systems that are net-zero (carbon), nature-positive and that aims to increase farmer resilience.\n(b) It is an international alliance and a network of individuals and farming organisations interested in supporting and strengthening the development of the organic animal husbandry.\n(c) It is a digital platform fully integrated with service providers and built on blockchain that lets buyers, sellers and third parties trade fertilizers quickly and securely.\n(d) It is a platform with the mission of encouraging the farmers to form Farmer Product Organisations or Agribusiness Consortiums, thus facilitating the access to global open markets to sell their products.",
+    "answer_key": "A",
+    [cite_start]"answer_explanation": "The '100 Million Farmers' initiative is a World Economic Forum platform aimed at transitioning the global food system towards net-zero and nature-positive practices[cite: 49]. [cite_start]It specifically focuses on building farmer resilience and sustainability[cite: 49].",
+    "answer_sources": [
+      "World Economic Forum (WEF) official press release on '100 Million Farmers'."
+    ],
+    "subject": "Environment",
+    "topic": "Sustainable Agriculture / Global Initiatives",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q27",
+    "year": 2024,
+    "q_no_in_paper": 27,
+    "question_text_combined": "Consider the following: 1 Battery storage 2. Biomass generators 3. Fuel cells 4. Rooftop solar photovoltaic units. How many of the above are considered \"Distributed Energy Resources\"?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Only one\n(b) Only two\n(c) Only three\n(d) All four",
+    "answer_key": "D",
+    "answer_explanation": "Distributed Energy Resources (DERs) are small-scale energy generation or storage technologies located close to the load they serve. This includes battery storage, biomass generators, fuel cells, and rooftop solar units.",
+    "answer_sources": [
+      "International Energy Agency (IEA) definitions of Distributed Energy Resources."
+    ],
+    "subject": "Science & Tech",
+    "topic": "Energy Technologies",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q28",
+    "year": 2024,
+    "q_no_in_paper": 28,
+    "question_text_combined": "Which one of the following shows a unique relationship with an insect that has coevolved with it and that is the only insect that can pollinate this tree?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Fig\n(b) Mahua\n(c) Sandalwood\n(d) Silk cotton",
+    "answer_key": "A",
+    [cite_start]"answer_explanation": "Fig trees exhibit highly specific obligate mutualism with fig wasps[cite: 55]. Each species of fig is typically pollinated by a specific, coevolved species of fig wasp, and neither organism can survive without the other.",
+    "answer_sources": [
+      "NCERT Class 12 Biology, Chapter 13: Organisms and Populations (Mutualism)."
+    ],
+    "subject": "Environment",
+    "topic": "Ecology / Species Interactions",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q29",
+    "year": 2024,
+    "q_no_in_paper": 29,
+    "question_text_combined": "Consider the following: 1. Butterflies 2. Fish 3. Frogs. How many of the above have poisonous species among them?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Only one\n(b) Only two\n(c) All three\n(d) None",
+    "answer_key": "C",
+    "answer_explanation": "All three groups have poisonous species. The Monarch butterfly is poisonous due to toxins from milkweed. Pufferfish contain deadly tetrodotoxin. Poison dart frogs secrete potent lipophilic alkaloid toxins through their skin.",
+    "answer_sources": [
+      "Standard biological taxonomy texts."
+    ],
+    "subject": "Environment",
+    "topic": "Biodiversity",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q30",
+    "year": 2024,
+    "q_no_in_paper": 30,
+    "question_text_combined": "Consider the following: 1. Cashew 2. Papaya 3. Red sanders. How many of the above trees are actually native to India?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Only one\n(b) Only two\n(c) All three\n(d) None",
+    "answer_key": "A",
+    "answer_explanation": "Only Red Sanders is native to India (endemic to the Eastern Ghats). Cashew was introduced to India by the Portuguese from Brazil. Papaya is native to Mesoamerica and South America.",
+    "answer_sources": [
+      "Botanical Survey of India (BSI) Flora of India."
+    ],
+    "subject": "Environment",
+    "topic": "Biodiversity / Flora",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q31",
+    "year": 2024,
+    "q_no_in_paper": 31,
+    "question_text_combined": "With reference to radioisotope thermoelectric generators (RTGs), consider the following statements: 1. RTGs are miniature fission reactors. 2. RTGs are used for powering the onboard systems of spacecrafts. 3. RTGs can use Plutonium-238, which is a by-product of weapons development. Which of the statements given above are correct?",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) 1 and 2 only\n(b) 2 and 3 only\n(c) 1 and 3 only\n(d) 1, 2 and 3",
+    "answer_key": "B",
+    [cite_start]"answer_explanation": "RTGs are not fission reactors; they generate electricity from the heat released by the natural radioactive decay of isotopes like Plutonium-238[cite: 59]. [cite_start]They are extensively used to power deep-space spacecraft, making statements 2 and 3 correct while 1 is factually flawed[cite: 58]. ",
+    "answer_sources": [
+      "NASA Space Science Data Coordinated Archive (NSSDCA) - RTG Fact Sheet."
+    ],
+    "subject": "Science & Tech",
+    "topic": "Space Technology",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q32",
+    "year": 2024,
+    "q_no_in_paper": 32,
+    "question_text_combined": "Consider the following statements: Statement-I: Giant stars live much longer than dwarf stars. Statement-II: Compared to dwarf stars, giant stars have a greater rate of nuclear reactions. Which one of the following is correct in respect of the above statements?",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) Both Statement-I and Statement-II are correct and Statement-II explains Statement-I\n(b) Both Statement-I and Statement-II are correct, but Statement-II does not explain Statement-I\n(c) Statement-I is correct, but Statement-II is incorrect\n(d) Statement-I is incorrect, but Statement-II is correct",
+    "answer_key": "D",
+    [cite_start]"answer_explanation": "Giant stars have significantly more mass, which causes them to burn their nuclear fuel at a much higher rate than dwarf stars[cite: 61]. [cite_start]Because of this rapid fuel consumption, their lifespans are drastically shorter, making Statement-I incorrect[cite: 62]. ",
+    "answer_sources": [
+      "NCERT Class 11 Physical Geography, Chapter 1: The Earth and the Universe (Stellar Evolution)."
+    ],
+    "subject": "Science & Tech",
+    "topic": "Space / Astronomy",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q33",
+    "year": 2024,
+    "q_no_in_paper": 33,
+    "question_text_combined": "Which one of the following is synthesised in human body that dilates blood vessels and increases blood flow?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Nitric oxide\n(b) Nitrous oxide\n(c) Nitrogen dioxide\n(d) Nitrogen pentoxide",
+    "answer_key": "A",
+    [cite_start]"answer_explanation": "Nitric oxide (NO) is an endogenously synthesized molecule in the human body[cite: 64]. It acts as a potent vasodilator, relaxing the inner muscles of blood vessels and increasing blood flow. ",
+    "answer_sources": [
+      "NCERT Class 11 Biology, Chapter 18: Body Fluids and Circulation (Cardiovascular regulation)."
+    ],
+    "subject": "Science & Tech",
+    "topic": "Human Biology / Medicine",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q34",
+    "year": 2024,
+    "q_no_in_paper": 34,
+    "question_text_combined": "Consider the following activities: 1. Identification of narcotics on passengers at airports or in aircraft 2. Monitoring of precipitation 3. Tracking the migration of animals In how many of the above activities can the radars be used?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Only one\n(b) Only two\n(c) All three\n(d) None",
+    "answer_key": "C",
+    "answer_explanation": "Radar technology has broad applications. [cite_start]Terahertz and millimeter-wave radars can penetrate clothing and identify concealed illicit substances like narcotics[cite: 65]. Weather radars monitor precipitation, and specialized aeroecological radars track bird and bat migration.",
+    "answer_sources": [
+      "ScienceDirect - Terahertz radar applications in security.",
+      "NOAA - Weather Radar fundamentals."
+    ],
+    "subject": "Science & Tech",
+    "topic": "Applied Physics / Technology",
+    "confidence_score": 1.0,
+    "assumptions": "Assumes 'identification' encompasses active radar scanning technologies like millimeter-wave scanners utilized in modern aviation security."
+  },
+  {
+    "id_combined": "GS1_2024_Q35",
+    "year": 2024,
+    "q_no_in_paper": 35,
+    "question_text_combined": "Consider the following aircraft: 1. Rafael 2. MiG-29 3. Tejas MK-1 How many of the above are considered fifth generation fighter aircraft?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Only one\n(b) Only two\n(c) All three\n(d) None",
+    "answer_key": "D",
+    [cite_start]"answer_explanation": "None of the listed aircraft belong to the fifth generation[cite: 66]. The Dassault Rafale and MiG-29 are classified as 4th or 4.5 generation fighters. The HAL Tejas MK-1 is a 4th generation light combat aircraft.",
+    "answer_sources": [
+      "Ministry of Defence, Government of India - Aircraft classifications and procurements."
+    ],
+    "subject": "Science & Tech",
+    "topic": "Defence Technology",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q36",
+    "year": 2024,
+    "q_no_in_paper": 36,
+    "question_text_combined": "In which of the following are hydrogels used? 1. Controlled drug delivery in patients 2. Mobile air-conditioning systems 3. Preparation of industrial lubricants Select the correct answer using the code given below:",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) 1 only\n(b) 1 and 2 only\n(c) 2 and 3 only\n(d) 1, 2 and 3",
+    "answer_key": "D",
+    "answer_explanation": "Hydrogels are highly versatile polymer networks. [cite_start]They are heavily utilized in biomedical applications for controlled drug delivery[cite: 67]. Additionally, they are engineered for passive cooling in mobile air-conditioning systems and serve as advanced industrial lubricants due to their low-friction and water-retaining properties.",
+    "answer_sources": [
+      "Nature Reviews Materials - Hydrogel applications in engineering and medicine."
+    ],
+    "subject": "Science & Tech",
+    "topic": "Materials Science",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q37",
+    "year": 2024,
+    "q_no_in_paper": 37,
+    "question_text_combined": "Which one of the following is the exhaust pipe emission from Fuel Cell Electric Vehicles, powered by hydrogen?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Hydrogen peroxide\n(b) Hydronium\n(c) Oxygen\n(d) Water vapour",
+    "answer_key": "D",
+    [cite_start]"answer_explanation": "Fuel Cell Electric Vehicles (FCEVs) generate electricity through an electrochemical reaction combining hydrogen fuel and oxygen from the air[cite: 68]. The sole exhaust emission from this specific process is pure water vapour. ",
+    "answer_sources": [
+      "Ministry of New and Renewable Energy (MNRE) - Hydrogen and Fuel Cell technology."
+    ],
+    "subject": "Science & Tech",
+    "topic": "Energy Technologies",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q38",
+    "year": 2024,
+    "q_no_in_paper": 38,
+    "question_text_combined": "Recently, the term \"pumped-storage hydropower\" is actually and appropriately discussed in the context of which one of the following?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Irrigation of terraced crop fields\n(b) Lift irrigation of cereal crops\n(c) Long duration energy storage\n(d) Rainwater harvesting system",
+    "answer_key": "C",
+    "answer_explanation": "Pumped-storage hydropower acts as a giant structural battery. [cite_start]It stores surplus electrical energy by pumping water to an upper reservoir and releases it through turbines to generate electricity during peak demand, making it a highly effective long-duration energy storage system[cite: 69]. 
+
+[Image of pumped-storage hydropower facility]
+",
+    "answer_sources": [
+      "International Energy Agency (IEA) - Pumped-storage hydropower fundamentals."
+    ],
+    "subject": "Economy",
+    "topic": "Infrastructure / Energy",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q39",
+    "year": 2024,
+    "q_no_in_paper": 39,
+    "question_text_combined": "\"Membrane Bioreactors\" are often discussed in the context of:",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Assisted reproductive technologies\n(b) Drug delivery nanotechnologies\n(c) Vaccine production technologies\n(d) Wastewater treatment technologies",
+    "answer_key": "D",
+    "answer_explanation": "Membrane Bioreactors (MBRs) combine biological treatment processes with membrane filtration (such as ultrafiltration or microfiltration). They are explicitly engineered and deployed for advanced wastewater treatment and water reclamation. ",
+    "answer_sources": [
+      "Central Pollution Control Board (CPCB) - Guidelines on Wastewater Treatment Technologies."
+    ],
+    "subject": "Environment",
+    "topic": "Pollution Control Technologies",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q40",
+    "year": 2024,
+    "q_no_in_paper": 40,
+    "question_text_combined": "With reference to the Indian economy, Lending \"Collateral Borrowing and Obligations are the instruments of:",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Bond market\n(b) Forex market\n(c) Money market\n(d) Stock market",
+    "answer_key": "C",
+    "answer_explanation": "Collateralized Borrowing and Lending Obligations (CBLO) were short-term liquidity instruments operated by the Clearing Corporation of India Ltd (CCIL). Because they manage short-term funds (less than a year), they are definitively instruments of the money market.",
+    "answer_sources": [
+      "Reserve Bank of India (RBI) - Master Direction on Money Market Instruments."
+    ],
+    "subject": "Economy",
+    "topic": "Financial Markets",
+    "confidence_score": 1.0,
+    "assumptions": "Recognizes 'Collateral Borrowing and Obligations' as a typo in the question paper for 'Collateralized Borrowing and Lending Obligations' (CBLO)."
+  },
+  {
+    "id_combined": "GS1_2024_Q41",
+    "year": 2024,
+    "q_no_in_paper": 41,
+    "question_text_combined": "The total fertility rate in an economy is defined as:",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) the number of children born per 1000 people in the population in a year.\n(b) the number of children born to a couple in their lifetime in a given population.\n(c) the birth rate minus death rate.\n(d) the average number of live births a woman would have by the end of her child-bearing age.",
+    "answer_key": "D",
+    [cite_start]"answer_explanation": "The Total Fertility Rate (TFR) is a standard demographic metric. It precisely represents the average number of live births a woman would have by the end of her child-bearing years if she experienced the current age-specific fertility rates throughout her life[cite: 70].",
+    "answer_sources": [
+      "National Family Health Survey (NFHS) - Demographic definitions.",
+      "World Bank - Total Fertility Rate metadata."
+    ],
+    "subject": "Economy",
+    "topic": "Demography",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q42",
+    "year": 2024,
+    "q_no_in_paper": 42,
+    "question_text_combined": "Consider the following statements: 1. In India, Non-Banking Financial Companies can access the Liquidity Adjustment Facility window of the Reserve Bank of India. 2. In India, Foreign Institutional Investors can hold the Government Securities (G-Secs). 3. In India, Stock Exchanges can offer separate trading platforms for debts. Which of the statements given above is/are correct?",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) 1 and 2 only\n(b) 3 only\n(c) 1, 2 and 3\n(d) 2 and 3 only",
+    "answer_key": "D",
+    [cite_start]"answer_explanation": "Foreign Institutional Investors (FIIs/FPIs) are permitted to invest in Government Securities (G-Secs) subject to regulatory limits[cite: 72]. [cite_start]Stock exchanges like NSE and BSE operate separate active trading platforms for debt instruments[cite: 73]. [cite_start]Conversely, standard NBFCs do not have direct access to the RBI's Liquidity Adjustment Facility (LAF) window, which is largely restricted to commercial banks and primary dealers[cite: 71].",
+    "answer_sources": [
+      "Reserve Bank of India (RBI) - LAF operational guidelines.",
+      "SEBI - Guidelines on FPI investments in Debt."
+    ],
+    "subject": "Economy",
+    "topic": "Financial Markets / RBI",
+    "confidence_score": 1.0,
+    "assumptions": "Assumes standard NBFC regulations apply, disregarding exception cases like Standalone Primary Dealers which fall under specific NBFC categories but are fundamentally PDs."
+  },
+  {
+    "id_combined": "GS1_2024_Q43",
+    "year": 2024,
+    "q_no_in_paper": 43,
+    "question_text_combined": "In India, which of the following can trade in Corporate Bonds and Government Securities? 1. Insurance Companies 2. Pension Funds 3. Retail Investors Select the correct answer using the code given below:",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) 1 and 2 only\n(b) 2 and 3 only\n(c) 1 and 3 only\n(d) 1, 2 and 3",
+    "answer_key": "D",
+    [cite_start]"answer_explanation": "Insurance companies and pension funds are dominant institutional participants in both corporate bond and G-Sec markets[cite: 74]. Following the launch of the RBI Retail Direct Scheme, retail investors have also been granted access to trade directly in Government Securities and corporate bonds.",
+    "answer_sources": [
+      "RBI - Retail Direct Scheme Notification.",
+      "IRDAI/PFRDA investment guidelines for institutional funds."
+    ],
+    "subject": "Economy",
+    "topic": "Financial Markets",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q44",
+    "year": 2024,
+    "q_no_in_paper": 44,
+    "question_text_combined": "Consider the following: 1. Exchange-Traded Funds (ETF) 2. Motor vehicles 3. Currency swap Which of the above is/are considered financial instruments?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) 1 only\n(b) 2 and 3 only\n(c) 1, 2 and 3\n(d) 1 and 3 only",
+    "answer_key": "D",
+    [cite_start]"answer_explanation": "Exchange-Traded Funds (ETFs) and currency swaps are recognized financial instruments representing ownership shares or derivative contracts[cite: 75]. Motor vehicles are physical, depreciating tangible assets, not tradable financial securities.",
+    "answer_sources": [
+      "Investopedia - Definition of Financial Instruments.",
+      "Indian Accounting Standards (Ind AS) 32 - Financial Instruments."
+    ],
+    "subject": "Economy",
+    "topic": "Financial Instruments",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q45",
+    "year": 2024,
+    "q_no_in_paper": 45,
+    "question_text_combined": "With reference to the sectors of the Indian economy, consider the following pains: Economic activity - Sector 1.Storage of agricultural produce - Secondary 2.Dairy farm - Primary 3.Mineral exploration - Tertiary 4.Weaving cloth - Secondary How many of the pairs given above are correctly matched?",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) Only one\n(b) Only two\n(c) Only three\n(d) All four",
+    "answer_key": "B",
+    [cite_start]"answer_explanation": "Dairy farming (Pair 2) directly utilizes natural resources, classifying it as a Primary sector activity[cite: 76]. [cite_start]Weaving cloth (Pair 4) is a manufacturing process, placing it in the Secondary sector[cite: 77]. Therefore, two pairs are correctly matched. Storage is a service (Tertiary), and mineral exploration deals with raw extraction/discovery (Primary), rendering pairs 1 and 3 incorrect.",
+    "answer_sources": [
+      "NCERT Class 10 Economics, Chapter 2: Sectors of the Indian Economy."
+    ],
+    "subject": "Economy",
+    "topic": "Sectors of Economy",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q46",
+    "year": 2024,
+    "q_no_in_paper": 46,
+    "question_text_combined": "Consider the following materials: 1. Agricultural residues 2. Corn grain 3. Wastewater treatment sludge 4. Wood mill waste Which of the above can be used as feedstock for producing Sustainable Aviation Fuel?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) 1 and 2 only\n(b) 3 and 4 only\n(c) 1, 2, 3 and 4\n(d) 1, 3 and 4 only",
+    "answer_key": "C",
+    [cite_start]"answer_explanation": "Sustainable Aviation Fuel (SAF) is a drop-in biofuel alternative to conventional jet fuel[cite: 78]. All four materials listed—agricultural residues, corn grain (starch-based), wastewater sludge (lipid/municipal waste), and wood mill waste (lignocellulosic biomass)—are approved and technologically viable feedstocks for SAF production under global standards. ",
+    "answer_sources": [
+      "International Civil Aviation Organization (ICAO) - Eligible SAF Feedstocks.",
+      "Ministry of Petroleum and Natural Gas (India) - Biofuel Policy."
+    ],
+    "subject": "Environment",
+    "topic": "Renewable Energy / SAF",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q47",
+    "year": 2024,
+    "q_no_in_paper": 47,
+    "question_text_combined": "With reference to physical capital in Indian economy, consider the following pairs: Items - Category 1.Farmer's plough - Working capital 2.Computer - Fixed capital 3.Yarn used by the weaver - Fixed capital 4.Petrol - Working capital How many of the above pairs are correctly matched?",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) Only one\n(b) Only two\n(c) Only three\n(d) All four",
+    "answer_key": "B",
+    [cite_start]"answer_explanation": "Fixed capital refers to tools, machines, and buildings that can be used over many years[cite: 79], making Pair 2 (Computer) correct and Pair 1 (Plough) incorrectly matched. [cite_start]Working capital consists of raw materials and money used up during the production cycle, making Pair 4 (Petrol) correct [cite: 80] and Pair 3 (Yarn) incorrectly matched.",
+    "answer_sources": [
+      "NCERT Class 9 Economics, Chapter 1: The Story of Village Palampur (Organization of Production)."
+    ],
+    "subject": "Economy",
+    "topic": "Macroeconomics / Capital",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q48",
+    "year": 2024,
+    "q_no_in_paper": 48,
+    "question_text_combined": "Which one of the following words/phrases is most appropriately used to denote \"an interoperable network of 3D virtual worlds that can be accessed simultaneously by millions of users, who can exert property rights over virtual items\"?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Big data analytics\n(b) Cryptography\n(c)Metaverse\n(d) Virtual matrix",
+    "answer_key": "C",
+    [cite_start]"answer_explanation": "The definition provided directly corresponds to the 'Metaverse'[cite: 81]. It integrates AR, VR, and blockchain (for digital property rights/NFTs) to create an interconnected 3D virtual environment.",
+    "answer_sources": [
+      "World Economic Forum - Defining the Metaverse."
+    ],
+    "subject": "Science & Tech",
+    "topic": "Emerging Technologies",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q49",
+    "year": 2024,
+    "q_no_in_paper": 49,
+    "question_text_combined": "With reference to the rule/rules imposed by the Reserve Bank of India while treating foreign banks, consider the following statements: 1. There is no minimum capital requirement for wholly owned banking subsidiaries in India. 2. For wholly owned banking subsidiaries in India, at least 50% of the board members should be Indian nationals.",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) 1 only\n(b) 2 only\n(c) Both 1 and 2\n(d) Neither 1 nor 2",
+    "answer_key": "B",
+    [cite_start]"answer_explanation": "Statement 1 is factually incorrect; the RBI mandates a minimum initial paid-up equity capital of ₹500 crore for foreign banks setting up Wholly Owned Subsidiaries (WOS) in India[cite: 82]. Statement 2 is correct; [cite_start]RBI corporate governance guidelines dictate that at least 50% of the directors must be Indian nationals resident in India[cite: 83].",
+    "answer_sources": [
+      "Reserve Bank of India (RBI) - Scheme for Setting up of Wholly Owned Subsidiaries (WOS) by foreign banks in India."
+    ],
+    "subject": "Economy",
+    "topic": "Banking Regulations",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q50",
+    "year": 2024,
+    "q_no_in_paper": 50,
+    "question_text_combined": "With reference to Corporate Social Responsibility (CSR) rules in India, consider the following statements: 1. CSR rules specify that expenditures that benefit the company directly or its employees will not be considered as CSR activities. 2. CSR rules do not specify minimum spending on CSR activities.",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) 1 only\n(b) 2 only\n(c) Both 1 and 2\n(d) Neither 1 nor 2",
+    "answer_key": "A",
+    [cite_start]"answer_explanation": "Statement 1 is correct; under the Companies Act, 2013, activities undertaken in the normal course of business or those exclusively benefiting employees do not qualify as CSR[cite: 84]. Statement 2 is incorrect; [cite_start]Section 135 strictly specifies a minimum spending requirement of 2% of the average net profits made during the three immediately preceding financial years[cite: 85].",
+    "answer_sources": [
+      "Companies Act, 2013, Section 135 and Companies (CSR Policy) Rules, 2014."
+    ],
+    "subject": "Economy",
+    "topic": "Corporate Governance",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q51",
+    "year": 2024,
+    "q_no_in_paper": 51,
+    "question_text_combined": "Consider the following statements: Statement-I: If the United States of America (USA) were to default on its debt, holders of US Treasury Bonds will not be able to exercise their claims to receive payment. Statement-II: The USA Government debt is not backed by any hard assets, but only by the faith of the Government.",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) Both Statement-I and Statement-II are correct and Statement-II explains Statement-I\n(b) Both Statement-I and Statement-II are correct, but Statement-II does not explain Statement-I\n(c) Statement-I is correct, but Statement-II is incorrect\n(d) Statement-I is incorrect, but Statement-II is correct",
+    "answer_key": "B",
+    [cite_start]"answer_explanation": "A default means failure to fulfill payment obligations, so bondholders would face disrupted or missing payments[cite: 86]. [cite_start]US Treasury bonds are fiat instruments backed by the \"full faith and credit\" of the US government, not physical commodities like gold[cite: 87]. While both are true, the lack of hard assets (Statement II) explains the *nature* of the bond, not *why* a default occurs (which is usually a political or liquidity failure).",
+    "answer_sources": [
+      "IMF Working Papers on Sovereign Debt and Defaults.",
+      "US Department of the Treasury - Treasury Securities."
+    ],
+    "subject": "Economy",
+    "topic": "International Finance",
+    "confidence_score": 0.8,
+    "assumptions": "UPSC logic frequently treats sovereign default causality strictly; lack of collateral does not cause default, thus II does not directly explain I."
+  },
+  {
+    "id_combined": "GS1_2024_Q52",
+    "year": 2024,
+    "q_no_in_paper": 52,
+    "question_text_combined": "Consider the following statements: Statement-I: Syndicated lending spreads the risk of borrower default across multiple lenders. Statement-II: The syndicated loan can be a fixed amount/lump sum of funds, but cannot be a credit line.",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) Both Statement-I and Statement-II are and Statement-II explains correct Statement-I\n(b) Both Statement-I and Statement-II are correct, but Statement-II does not explain Statement-I\n(c) Statement-I is correct, but Statement-II is incorrect\n(d) Statement-I is incorrect, but Statement-II is correct",
+    "answer_key": "C",
+    [cite_start]"answer_explanation": "Syndicated lending involves a group of lenders providing funds to a single borrower, inherently diversifying and spreading the default risk among them (Statement I is correct)[cite: 89]. [cite_start]However, syndicated loans are highly flexible and frequently structured as revolving credit lines, not just term loans (Statement II is incorrect)[cite: 90].",
+    "answer_sources": [
+      "Investopedia - Syndicated Loan definition.",
+      "Reserve Bank of India (RBI) - Guidelines on Loan Syndication."
+    ],
+    "subject": "Economy",
+    "topic": "Banking",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q53",
+    "year": 2024,
+    "q_no_in_paper": 53,
+    "question_text_combined": "Consider the following statements in respect of the digital rupee: 1. It is a sovereign currency issued by the Reserve Bank of India (RBI) in alignment with its monetary policy. 2. It appears as a liability on the RBI's balance sheet. 3. It is insured against inflation by its very design. 4. It is freely convertible against commercial bank money and cash.",
+    "raw_blocks_combined": ", , , ",
+    "options_combined": "(a) 1 and 2 only\n(b) 1 and 3 only\n(c) 2 and 4 only\n(d) 1, 2 and 4",
+    "answer_key": "D",
+    [cite_start]"answer_explanation": "The Digital Rupee (e₹) is a Central Bank Digital Currency (CBDC), meaning it is sovereign fiat money and a direct liability of the RBI (1 and 2 are correct)[cite: 92, 93]. [cite_start]It is a digital representation of physical cash and is fully convertible at par (4 is correct)[cite: 95]. [cite_start]Because it is a fiat currency, its value depreciates with inflation just like physical rupees; it offers no intrinsic inflation protection (3 is incorrect)[cite: 94].",
+    "answer_sources": [
+      "Reserve Bank of India (RBI) - Concept Note on Central Bank Digital Currency (CBDC)."
+    ],
+    "subject": "Economy",
+    "topic": "Currency / Emerging Tech",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q54",
+    "year": 2024,
+    "q_no_in_paper": 54,
+    "question_text_combined": "With reference to ancient India, Gautama Buddha was generally known by which of the following epithets? 1. Nayaputta 2. Shakyamuni 3. Tathagata",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) 1 only\n(b) 2 and 3 only\n(c) 1, 2 and 3\n(d) None of the above are epithets of Gautama Buddha",
+    "answer_key": "B",
+    "answer_explanation": "Gautama Buddha was born in the Shakya clan, earning the title 'Shakyamuni' (Sage of the Shakyas), and frequently referred to himself as the 'Tathagata' (One who has thus gone/come). [cite_start]'Nayaputta' (Nigantha Nataputta) is the Pali term used in Buddhist texts to refer to Mahavira, the 24th Tirthankara of Jainism[cite: 96].",
+    "answer_sources": [
+      "NCERT Class 11 Ancient India (R.S. Sharma), Chapter 10: Jainism and Buddhism."
+    ],
+    "subject": "History",
+    "topic": "Ancient India / Buddhism",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q55",
+    "year": 2024,
+    "q_no_in_paper": 55,
+    "question_text_combined": "Consider the following information: Archaeological Site - State - Description 1.Chandraketugarh - Odisha - Trading Port town 2.Inamgaon - Maharashtra - Chalcolithic site 3.Mangadu - Kerala - Megalithic site 4.Salihundam - Andhra Pradesh - Rock-cut cave shrines In which of the above rows is the given information correctly matched?",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) 1 and 2\n(b) 2 and 3\n(c) 3 and 4\n(d) 1 and 4",
+    "answer_key": "B",
+    [cite_start]"answer_explanation": "Inamgaon in Maharashtra is a prominent Chalcolithic farming settlement[cite: 98], and Mangadu in Kerala is renowned for Megalithic urn burials. [cite_start]Chandraketugarh is an ancient site located in West Bengal, not Odisha[cite: 97]. [cite_start]Salihundam is an ancient Buddhist stupa settlement on a hillock in Andhra Pradesh, not primarily defined by \"Rock-cut cave shrines\"[cite: 99].",
+    "answer_sources": [
+      "NCERT Class 11 Ancient India (R.S. Sharma), Chapter 9: Chalcolithic Farming Cultures.",
+      "Archaeological Survey of India (ASI) site profiles."
+    ],
+    "subject": "History",
+    "topic": "Ancient India / Archaeology",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q56",
+    "year": 2024,
+    "q_no_in_paper": 56,
+    "question_text_combined": "Who of the following rulers of medieval India gave permission to the Portuguese to build a fort at Bhatkal?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Krishnadevaraya\n(b) Narasimha Saluva\n(c) Muhammad Shah III\n(d) Yusuf Adil Shah",
+    "answer_key": "A",
+    "answer_explanation": "In 1514, Krishnadevaraya of the Vijayanagara Empire granted permission to the Portuguese governor, Afonso de Albuquerque, to construct a fort at Bhatkal. [cite_start]This agreement was largely to secure a steady supply of imported Arabian and Persian horses for his military[cite: 100].",
+    "answer_sources": [
+      "Satish Chandra, History of Medieval India, Chapter: Vijayanagara and Bahmani Kingdoms."
+    ],
+    "subject": "History",
+    "topic": "Medieval India / Vijayanagara",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q57",
+    "year": 2024,
+    "q_no_in_paper": 57,
+    "question_text_combined": "With reference to revenue collection by Cornwallis, consider the following statements: 1. Under the Ryotwari Settlement of revenue collection, the peasants were exempted from revenue payment in case of bad harvests or natural calamities. 2. Under the Permanent Settlement in Bengal, if the Zamindar failed to pay his revenues to the state, on or before the fixed date, he would be removed from his Zamindari.",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) 1 only\n(b) 2 only\n(c) Both 1 and 2\n(d) Neither 1 nor 2",
+    "answer_key": "B",
+    [cite_start]"answer_explanation": "Statement 1 is incorrect; the Ryotwari system (introduced later by Munro and Read, not Cornwallis) demanded rigid revenue payments, and exemptions during bad harvests were rarely granted[cite: 101]. [cite_start]Statement 2 accurately describes the 'Sunset Clause' of the Permanent Settlement introduced by Cornwallis in 1793, where failure to pay revenue by sunset of the specified date led to the Zamindari being auctioned off[cite: 102].",
+    "answer_sources": [
+      "Bipan Chandra, History of Modern India, Chapter: Economic Impact of British Rule."
+    ],
+    "subject": "History",
+    "topic": "Modern Indian History / Land Revenue",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q58",
+    "year": 2024,
+    "q_no_in_paper": 58,
+    "question_text_combined": "Consider the following statements: 1. There are no parables in Upanishads. 2. Upanishads were composed earlier than the Puranas.",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) 1 only\n(b) 2 only\n(c) Both 1 and 2\n(d) Neither 1 nor 2",
+    "answer_key": "B",
+    [cite_start]"answer_explanation": "The Upanishads frequently utilize parables, allegories, and dialogues to explain abstract philosophical concepts (e.g., the story of Nachiketa in the Katha Upanishad), making Statement 1 false[cite: 103]. [cite_start]The principal Upanishads date back to the late Vedic period (c. 800–500 BCE), whereas the written compilation of Puranas occurred much later, primarily during the Gupta period (c. 3rd–5th century CE), making Statement 2 correct[cite: 104].",
+    "answer_sources": [
+      "A.L. Basham, The Wonder That Was India, Religion and Philosophy."
+    ],
+    "subject": "History",
+    "topic": "Ancient India / Literature",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q59",
+    "year": 2024,
+    "q_no_in_paper": 59,
+    "question_text_combined": "Consider the following statements: 1. India is a member of the International Grains Council. 2. A country needs to be a member of the International Grains Council for exporting or importing rice and wheat.",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) 1 only\n(b) 2 only\n(c) Both 1 and 2\n(d) Neither 1 nor 2",
+    "answer_key": "A",
+    [cite_start]"answer_explanation": "India is indeed a member of the International Grains Council (IGC)[cite: 105]. [cite_start]However, membership in the IGC is not a legal prerequisite to participate in the international trade (export/import) of grains like wheat or rice, invalidating the second statement[cite: 106].",
+    "answer_sources": [
+      "International Grains Council (IGC) Official Member List.",
+      "WTO General Agreement on Tariffs and Trade (GATT) trade rules."
+    ],
+    "subject": "Economy",
+    "topic": "International Trade / Organizations",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q60",
+    "year": 2024,
+    "q_no_in_paper": 60,
+    "question_text_combined": "Which one of the following was the latest inclusion in the Intangible Cultural Heritage List of UNESCO?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Chhau dance\n(b) Durga puja\n(c) Garba dance\n(d) Kumbh mela",
+    "answer_key": "C",
+    [cite_start]"answer_explanation": "As of late 2023, the 'Garba of Gujarat' was inscribed on the Representative List of the Intangible Cultural Heritage of Humanity[cite: 107]. This makes it the latest inclusion among the options provided (Durga Puja was added in 2021, Kumbh Mela in 2017, and Chhau in 2010).",
+    "answer_sources": [
+      "UNESCO Intangible Cultural Heritage Database."
+    ],
+    "subject": "History",
+    "topic": "Art & Culture",
+    "confidence_score": 1.0,
+    "assumptions": "Refers to the timeline leading up to the 2024 UPSC Prelims."
+  },
+  {
+    "id_combined": "GS1_2024_Q61",
+    "year": 2024,
+    "q_no_in_paper": 61,
+    "question_text_combined": "Who was the Provisional President of the Constituent Assembly before Dr. Rajendra Prasad took over?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) C. Rajagopalachari\n(b) Dr. B.R. Ambedkar\n(c) T.T. Krishnamachari\n(d) Dr. Sachchidananda Sinha",
+    "answer_key": "D",
+    [cite_start]"answer_explanation": "Following the French practice, the Constituent Assembly elected its oldest member, Dr. Sachchidananda Sinha, as the temporary/provisional President during its first meeting on December 9, 1946[cite: 108]. Dr. Rajendra Prasad was elected as the permanent President later on December 11, 1946.",
+    "answer_sources": [
+      "M. Laxmikanth, Indian Polity, Chapter 2: Making of the Constitution."
+    ],
+    "subject": "Polity",
+    "topic": "Constituent Assembly",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q62",
+    "year": 2024,
+    "q_no_in_paper": 62,
+    "question_text_combined": "With reference to the Government of India Act, 1935, consider the following statements: 1. It provided for the establishment of an All India Federation based on the union of the British Indian Provinces and Princely States. 2. Defence and Foreign Affairs were kept under the control of the federal legislature. Which of the statements given above is/are correct?",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) 1 only\n(b) 2 only\n(c) Both 1 and 2\n(d) Neither 1 nor 2",
+    "answer_key": "A",
+    [cite_start]"answer_explanation": "Statement 1 is correct; the 1935 Act proposed an All-India Federation consisting of provinces and princely states as units[cite: 109]. Statement 2 is incorrect; [cite_start]Defence and Foreign Affairs were classified as 'reserved subjects' administered exclusively by the Governor-General, completely outside the control of the federal legislature[cite: 110].",
+    "answer_sources": [
+      "M. Laxmikanth, Indian Polity, Chapter 1: Historical Background."
+    ],
+    "subject": "Polity",
+    "topic": "Constitutional History",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q63",
+    "year": 2024,
+    "q_no_in_paper": 63,
+    "question_text_combined": "Which one of the following is a work attributed to playwright Bhasa?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Kavyalankara\n(b) Natyashastra\n(c) Madhyama-vyayoga\n(d) Mahabhashya",
+    "answer_key": "C",
+    [cite_start]"answer_explanation": "Madhyama-vyayoga is a classic Sanskrit play written by Bhasa[cite: 111]. For elimination: Natyashastra is by Bharata Muni, Mahabhashya is by Patanjali, and Kavyalankara is by Bhamaha. This is pure rote memorization of ancient texts.",
+    "answer_sources": [
+      "Upinder Singh, A History of Ancient and Early Medieval India."
+    ],
+    "subject": "History",
+    "topic": "Ancient India / Literature",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q64",
+    "year": 2024,
+    "q_no_in_paper": 64,
+    "question_text_combined": "Sanghabhuti, an Indian Buddhist monk, who travelled to China at the end of the fourth century AD, was the author of a commentary on:",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Prajnaparamita Sutra\n(b) Visuddhimagga\n(c) Sarvastivada Vinaya\n(d) Lalitavistara",
+    "answer_key": "C",
+    "answer_explanation": "Sanghabhuti (also known as Samghabhadra), a Kashmiri Buddhist monk who travelled to China in 381 AD, translated and wrote a commentary on the Sarvastivada Vinaya.",
+    "answer_sources": [
+      "A.L. Basham, The Wonder That Was India."
+    ],
+    "subject": "History",
+    "topic": "Ancient India / Buddhism",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q65",
+    "year": 2024,
+    "q_no_in_paper": 65,
+    "question_text_combined": "Consider the following properties included in the World Heritage List released by UNESCO: 1. Shantiniketan 2. Rani-ki-Vav 3. Sacred Ensembles of the Hoysalas 4. Mahabodhi Temple Complex Bodhgaya at How many of the above properties were included in 2023?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Only one\n(b) Only two\n(c) Only three\n(d) All four",
+    "answer_key": "B",
+    [cite_start]"answer_explanation": "Two properties were added to the UNESCO list in 2023: Santiniketan (West Bengal) and the Sacred Ensembles of the Hoysalas (Karnataka)[cite: 112]. Rani-ki-Vav was added in 2014, and the Mahabodhi Temple was added in 2002.",
+    "answer_sources": [
+      "UNESCO World Heritage Centre Database."
+    ],
+    "subject": "History",
+    "topic": "Art & Culture / Current Affairs",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q66",
+    "year": 2024,
+    "q_no_in_paper": 66,
+    "question_text_combined": "As per Article 368 of the Constitution of India, the Parliament may amend any provision of the Constitution by way of: 1. Addition 2. Variation 3. Repeal Select the correct answer using the code given below:",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) 1 and 2 only\n(b) 2 and 3 only\n(c) 1 and 3 only\n(d) 1, 2 and 3",
+    "answer_key": "D",
+    "answer_explanation": "Article 368(1) explicitly states that Parliament may in exercise of its constituent power amend by way of addition, variation or repeal any provision of this Constitution in accordance with the procedure laid down.",
+    "answer_sources": [
+      "Constitution of India, Part XX, Article 368."
+    ],
+    "subject": "Polity",
+    "topic": "Amendment of the Constitution",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q67",
+    "year": 2024,
+    "q_no_in_paper": 67,
+    "question_text_combined": "Consider the following countries: 1. Italy 2. Japan 3. Nigeria 4. South Korea 5. South Africa Which of the above countries are frequently mentioned in the media for their low birth rates, or ageing population or declining population?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) 1, 2 and 4\n(b) 1, 3 and 5\n(c) 2 and 4 only\n(d) 3 and 5 only",
+    "answer_key": "A",
+    [cite_start]"answer_explanation": "Italy, Japan, and South Korea are facing severe demographic crises characterized by ultra-low fertility rates (below replacement level) and rapidly aging populations[cite: 113].  Conversely, Nigeria and South Africa have relatively young, expanding populations.",
+    "answer_sources": [
+      "World Bank Population Dynamics Data."
+    ],
+    "subject": "Economy",
+    "topic": "Human Geography / Demographics",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q68",
+    "year": 2024,
+    "q_no_in_paper": 68,
+    "question_text_combined": "Which of the following statements are correct in respect of a Money Bill in the Parliament? 1. Article 109 mentions special procedure in respect of Money Bills. 2. A Money Bill shall not be introduced in the Council of States. 3. The Rajya Sabha can either approve the Bill or suggest changes but cannot reject it. 4. Amendments to a Money Bill suggested by the Rajya Sabha have to be accepted by the Lok Sabha.",
+    "raw_blocks_combined": ", , , , ",
+    "options_combined": "(a) 1 and 2 only\n(b) 2 and 3 only\n(c) 1, 2 and 3\n(d) 1, 3 and 4",
+    "answer_key": "C",
+    [cite_start]"answer_explanation": "Article 109 strictly governs the special procedure for Money Bills[cite: 114]. [cite_start]It states that a Money Bill cannot be introduced in the Rajya Sabha[cite: 115]. [cite_start]The Rajya Sabha can only make recommendations, which it must do within 14 days, but it cannot reject the bill[cite: 116]. [cite_start]The Lok Sabha has the absolute power to accept or reject any of the Rajya Sabha's recommendations, making statement 4 incorrect[cite: 117]. ",
+    "answer_sources": [
+      "Constitution of India, Article 109."
+    ],
+    "subject": "Polity",
+    "topic": "Parliament",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q69",
+    "year": 2024,
+    "q_no_in_paper": 69,
+    "question_text_combined": "Which of the following is/are correctly matched in terms of equivalent rank in the three services of Indian Defence forces? Army Airforce Navy 1. Brigadier Air Commodore Commander 2. Major General Air Vice Marshal Vice Admiral 3. Major Squadron Leader Lieutenant Commander 4. Lieutenant Colonel Group Captain Captain",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) 1 and 4\n(b) 1 and 3\n(c) 2, 3 and 4\n(d) 3 only",
+    "answer_key": "D",
+    [cite_start]"answer_explanation": "Only Pair 3 is correct: Major (Army) = Squadron Leader (Air Force) = Lieutenant Commander (Navy)[cite: 121]. Pair 1 is wrong: Brigadier = Commodore (not Commander). Pair 2 is wrong: Major General = Rear Admiral (not Vice Admiral). Pair 4 is wrong: Lieutenant Colonel = Wing Commander (not Group Captain).",
+    "answer_sources": [
+      "Ministry of Defence, Government of India - Rank Equivalency Chart."
+    ],
+    "subject": "Misc",
+    "topic": "Defence",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q70",
+    "year": 2024,
+    "q_no_in_paper": 70,
+    "question_text_combined": "The North Eastern Council (NEC) was established by the North Eastern Council Act, 1971. Subsequent to the amendment of NEC Act in 2002, the Council comprises which of the following members? 1. Governor of the Constituent State 2. Chief Minister of the Constituent State 3. Three Members to be nominated by the President of India 4. The Home Minister of India",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) 1, 2 and 3 only\n(b) 1, 3 and 4 only\n(c) 2 and 4 only\n(d) 1, 2, 3 and 4",
+    "answer_key": "D",
+    "answer_explanation": "The NEC (Amendment) Act, 2002 restructured the council. [cite_start]It now comprises the Governors and Chief Ministers of the eight constituent states, three members nominated by the President of India, and the Union Home Minister, who acts as the ex-officio Chairman[cite: 122].",
+    "answer_sources": [
+      "North Eastern Council (Amendment) Act, 2002."
+    ],
+    "subject": "Polity",
+    "topic": "Statutory Bodies",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q71",
+    "year": 2024,
+    "q_no_in_paper": 71,
+    "question_text_combined": "How many Delimitation Commissions have been constituted by the Government of India till December 2023?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) One\n(b) Two\n(c) Three\n(d) Four",
+    "answer_key": "D",
+    [cite_start]"answer_explanation": "Four Delimitation Commissions have been constituted in India so far: in 1952, 1963, 1973, and 2002. No further commissions have been constituted for nationwide delimitation as of December 2023[cite: 123].",
+    "answer_sources": [
+      "Election Commission of India - Delimitation Commission history."
+    ],
+    "subject": "Polity",
+    "topic": "Elections",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q72",
+    "year": 2024,
+    "q_no_in_paper": 72,
+    "question_text_combined": "The Constitution (71st Amendment) Act, 1992 amends the Eighth Schedule to the Constitution to include which of the following languages? 1. Konkani 2. Manipuri 3. Nepali 4. Maithili",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) 1, 2 and 3\n(b) 1, 2 and 4\n(c) 1,3 and 4\n(d) 2, 3 and 4",
+    "answer_key": "A",
+    "answer_explanation": "The 71st Amendment Act of 1992 added three languages to the Eighth Schedule: Konkani, Manipuri, and Nepali. [cite_start]Maithili, along with Bodo, Dogri, and Santhali, was added later by the 92nd Amendment Act of 2003[cite: 124].",
+    "answer_sources": [
+      "Constitution of India, Eighth Schedule."
+    ],
+    "subject": "Polity",
+    "topic": "Constitutional Amendments",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q73",
+    "year": 2024,
+    "q_no_in_paper": 73,
+    "question_text_combined": "Consider the following pairs: Party Its Leader 1. Bharatiya Jana Sangh Dr. Shyama Prasad Mukherjee 2. Socialist Party C. Rajagopalachari 3. Congress for Democracy Jagjivan Ram 4. Swatantra Party Acharya Narendra Dev How many of the above are correctly matched?",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) Only one\n(b) Only two\n(e) Only three\n(d) All four",
+    "answer_key": "B",
+    [cite_start]"answer_explanation": "Only two pairs are correctly matched: Bharatiya Jana Sangh was founded by Dr. Shyama Prasad Mukherjee (Pair 1)[cite: 125], and Congress for Democracy was formed by Jagjivan Ram (Pair 3). Pairs 2 and 4 are swapped; the Socialist Party was led by figures like Acharya Narendra Dev, while the Swatantra Party was founded by C. Rajagopalachari.",
+    "answer_sources": [
+      "Bipan Chandra, India Since Independence, Chapter 10: Political Parties."
+    ],
+    "subject": "Polity",
+    "topic": "Post-Independence India",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q74",
+    "year": 2024,
+    "q_no_in_paper": 74,
+    "question_text_combined": "Which of the following statements are correct about the Constitution of India? 1. Powers of the Municipalities are given in Part IX A of the Constitution. 2. Emergency provisions are given in Part XVIII of the Constitution. 3. Provisions related to the amendment of the Constitution are given in Part XX of the Constitution.",
+    "raw_blocks_combined": ", , , ",
+    "options_combined": "(a) 1 and 2 only\n(b) 2 and 3 only\n(c) 1 and 3 only\n(d) 1, 2 and 3",
+    "answer_key": "D",
+    "answer_explanation": "All three statements are factually correct. [cite_start]Part IX-A deals with Municipalities (Articles 243-P to 243-ZG)[cite: 127]. [cite_start]Part XVIII contains Emergency Provisions (Articles 352 to 360)[cite: 128]. [cite_start]Part XX contains the provision for amending the Constitution (Article 368)[cite: 129]. ",
+    "answer_sources": [
+      "Constitution of India, Parts Index."
+    ],
+    "subject": "Polity",
+    "topic": "Parts of the Constitution",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q75",
+    "year": 2024,
+    "q_no_in_paper": 75,
+    "question_text_combined": "Which one of the following statements is correct as per the Constitution of India?",
+    "raw_blocks_combined": ", , , , ",
+    "options_combined": "(a) Inter-State trade and commerce is a State subject under the State List.\n(b) Inter-State migration is a State subject under the State List.\n(c) Inter-State quarantine is a Union subject under the Union List.\n(d) Corporation tax is a State subject under the State List.",
+    "answer_key": "C",
+    [cite_start]"answer_explanation": "Inter-State quarantine is strictly under the Union List (Entry 81 of List I)[cite: 133]. [cite_start]Inter-state trade and commerce (Entry 42), inter-state migration (Entry 81), and Corporation tax (Entry 85) are all also Union subjects, making options A, B, and D incorrect[cite: 131, 132, 134].",
+    "answer_sources": [
+      "Constitution of India, Seventh Schedule."
+    ],
+    "subject": "Polity",
+    "topic": "Centre-State Relations / 7th Schedule",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q76",
+    "year": 2024,
+    "q_no_in_paper": 76,
+    "question_text_combined": "Under which of the following Articles of the Constitution of India, has the Supreme Court of India placed the Right to Privacy?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Article 15\n(b) Article 16\n(e) Article 19\n(d) Article 21",
+    "answer_key": "D",
+    [cite_start]"answer_explanation": "In the landmark K.S. Puttaswamy v. Union of India (2017) judgment, the Supreme Court unanimously held that the Right to Privacy is a fundamental right. It is protected as an intrinsic part of the right to life and personal liberty under Article 21[cite: 136].",
+    "answer_sources": [
+      "Supreme Court of India Judgment: Justice K.S. Puttaswamy (Retd.) vs Union of India (2017)."
+    ],
+    "subject": "Polity",
+    "topic": "Fundamental Rights",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q77",
+    "year": 2024,
+    "q_no_in_paper": 77,
+    "question_text_combined": "What are the duties of the Chief of Defence Staff (CDS) as Head of the Department of Military Affairs? 1. Permanent Chairman of Chiefs of Staff Committee 2. Exercise military command over the three Service Chiefs 3. Principal Military Advisor to Defence Minister on all tri-service matters",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) 1, 2 and 3\n(b) 1 and 2 only\n(c) 2 and 3 only\n(d) 1 and 3 only",
+    "answer_key": "D",
+    [cite_start]"answer_explanation": "The CDS acts as the Principal Military Advisor to the Defence Minister on tri-service matters and is the Permanent Chairman of the Chiefs of Staff Committee[cite: 137]. However, the CDS does not exercise military command over the three Service Chiefs; they remain independent commanders of their respective forces.",
+    "answer_sources": [
+      "Ministry of Defence, Government of India - Role and Responsibilities of the CDS."
+    ],
+    "subject": "Defence",
+    "topic": "Military Administration",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q78",
+    "year": 2024,
+    "q_no_in_paper": 78,
+    "question_text_combined": "Operations undertaken by the Army towards upliftment of the local population in remote areas to include addressing of their basic needs is called:",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Operation Sankalp\n(b) Operation Maitri\n(c) Operation Sadbhavana\n(d) Operation Madad",
+    "answer_key": "C",
+    "answer_explanation": "Operation Sadbhavana (Goodwill) is a civic action program undertaken by the Indian Army in Jammu & Kashmir and Ladakh. It aims to address the basic needs of people in remote areas through education, infrastructure, and healthcare upliftment.",
+    "answer_sources": [
+      "Indian Army Official Website - Operation Sadbhavana."
+    ],
+    "subject": "Defence",
+    "topic": "Internal Security / Armed Forces Initiatives",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q79",
+    "year": 2024,
+    "q_no_in_paper": 79,
+    "question_text_combined": "The longest border between any two countries in the world is between:",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Canada and the United States of America\n(b) Chile and Argentina\n(c) China and India\n(d) Kazakhstan and Russian Federation",
+    "answer_key": "A",
+    "answer_explanation": "The international border between the United States and Canada is the longest continuous land border in the world, spanning over 8,891 kilometers. [cite_start]While the border between Chile and Argentina is massive[cite: 138], the US-Canada boundary far exceeds it. 
+
+[Image of US-Canada border map]
+",
+    "answer_sources": [
+      "Guinness World Records - Longest International Border."
+    ],
+    "subject": "Geography",
+    "topic": "World Geography / Mapping",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q80",
+    "year": 2024,
+    "q_no_in_paper": 80,
+    "question_text_combined": "Which of the following statements about the Ethics Committee in the Lok Sabha are correct? 1. Initially it was an ad-hoc Committee. 2. Only a Member of the Lok Sabha can make a complaint relating to unethical conduct of a member of the Lok Sabha. 3. This Committee cannot take up any matter which is sub-judice.",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) 1 and 2 only\n(b) 2 and 3 only\n(c) 1 and 3 only\n(d) 1, 2 and 3",
+    "answer_key": "C",
+    [cite_start]"answer_explanation": "The Ethics Committee was initially constituted as an ad-hoc committee in 2000[cite: 139]. [cite_start]It is true that it cannot take up matters that are sub-judice[cite: 141]. [cite_start]However, any person (not just an MP) can make a complaint against an MP, provided the complaint is routed through another Lok Sabha MP[cite: 140], rendering statement 2 incorrect.",
+    "answer_sources": [
+      "Lok Sabha Rules of Procedure and Conduct of Business - Ethics Committee."
+    ],
+    "subject": "Polity",
+    "topic": "Parliament / Committees",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q81",
+    "year": 2024,
+    "q_no_in_paper": 81,
+    "question_text_combined": "Consider the following statements regarding 'Nari Shakti Vandan Adhiniyam': 1. Provisions will come into effect from the 18th Lok Sabha. 2. This will be in force for 15 years after becoming an Act. 3. There are provisions for the reservation of seats for Scheduled Castes Women within the quota reserved for the Scheduled Castes.",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) 1, 2 and 3\n(b) 1 and 2 only\n(c) 2 and 3 only\n(d) 1 and 3 only",
+    "answer_key": "C",
+    [cite_start]"answer_explanation": "The Act mandates sub-reservation for SC/ST women within their respective quotas [cite: 144] [cite_start]and sets a 15-year sunset clause[cite: 143]. [cite_start]However, the reservation will not apply to the 18th Lok Sabha; its implementation is strictly contingent upon a delimitation exercise conducted after the first post-enactment census[cite: 142].",
+    "answer_sources": [
+      "Constitution (One Hundred and Sixth Amendment) Act, 2023."
+    ],
+    "subject": "Polity",
+    "topic": "Constitutional Amendments",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q82",
+    "year": 2024,
+    "q_no_in_paper": 82,
+    "question_text_combined": "Which of the following statements about Exercise Mitra Shakti-2023' are correct? 1. This was a joint military exercise between India and Bangladesh. 2. It commenced in Aundh (Pune). 3. Joint response during counter-terrorism operations was a goal of this operation. 4. Indian Air Force was a part of this exercise.",
+    "raw_blocks_combined": ", , , ",
+    "options_combined": "(a) 1, 2 and 3\n(b) 1, 2 and 4\n(c) 1, 3 and 4\n(d) 2, 3 and 4",
+    "answer_key": "D",
+    [cite_start]"answer_explanation": "Exercise Mitra Shakti is a bilateral exercise between India and Sri Lanka, not Bangladesh[cite: 145]. [cite_start]The 2023 iteration took place in Aundh, Pune [cite: 146][cite_start], focused on counter-terrorism [cite: 147][cite_start], and actively involved the Indian Air Force[cite: 148].",
+    "answer_sources": [
+      "Press Information Bureau (PIB) - Joint Military Exercise Mitra Shakti 2023."
+    ],
+    "subject": "Defence",
+    "topic": "Military Exercises",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q83",
+    "year": 2024,
+    "q_no_in_paper": 83,
+    "question_text_combined": "A Writ of Prohibition is an order issued by the Supreme Court or High Courts to:",
+    "raw_blocks_combined": ", , , ",
+    "options_combined": "(a) a government officer prohibiting him from taking a particular action.\n(b) the Parliament/Legislative Assembly to pass a law on Prohibition.\n(c) the lower court prohibiting continuation of proceedings in a case.\n(d) the Government prohibiting it from following an unconstitutional policy.",
+    "answer_key": "C",
+    "answer_explanation": "The writ of Prohibition is a judicial writ issued by a higher court to a lower court or tribunal. [cite_start]Its sole purpose is to forbid the lower court from continuing proceedings in a case where it is acting outside its legal jurisdiction[cite: 151]. ",
+    "answer_sources": [
+      "M. Laxmikanth, Indian Polity, Chapter 7: Fundamental Rights."
+    ],
+    "subject": "Polity",
+    "topic": "Fundamental Rights / Judiciary",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q84",
+    "year": 2024,
+    "q_no_in_paper": 84,
+    "question_text_combined": "Consider the following statements: 1. It is the Governor of the State who recognizes and declares any community of that State as a Scheduled Tribe. 2. A community declared as a Scheduled Tribe in a State need not be so in another State.",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) 1 only\n(b) 2 only\n(c) Both 1 and 2\n(d) Neither 1 nor 2",
+    "answer_key": "B",
+    [cite_start]"answer_explanation": "Under Article 342, the President of India (not the Governor) officially notifies the list of Scheduled Tribes for a State, though this is done after consulting the State's Governor[cite: 153]. [cite_start]ST status is strictly state-specific; an ST community in one state may be unreserved in another[cite: 154].",
+    "answer_sources": [
+      "Constitution of India, Article 342."
+    ],
+    "subject": "Polity",
+    "topic": "Vulnerable Sections",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q85",
+    "year": 2024,
+    "q_no_in_paper": 85,
+    "question_text_combined": "With reference to Union Budget, consider the following statements: 1. The Union Finance Minister on behalf of the Prime Minister lays the Annual Financial Statement before both the Houses of Parliament. 2. At the Union level, no demand for a grant can be made except on the recommendation of the President of India.",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) 1 only\n(b) 2 only\n(c) Both 1 and 2\n(d) Neither 1 nor 2",
+    "answer_key": "B",
+    [cite_start]"answer_explanation": "Article 112 dictates that the President (not the Finance Minister on behalf of the PM) shall cause the Annual Financial Statement to be laid before Parliament[cite: 155]. [cite_start]Per Article 113, no demand for a grant shall be made except on the direct recommendation of the President[cite: 156].",
+    "answer_sources": [
+      "Constitution of India, Articles 112 and 113."
+    ],
+    "subject": "Polity",
+    "topic": "Parliament / Budget",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q86",
+    "year": 2024,
+    "q_no_in_paper": 86,
+    "question_text_combined": "Who of the following is the author of the books \"The India Way\" and \"Why Bharat Matters\"?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Bhupender Yadav\n(b) Nalin Mehta\n(c) Shashi Tharoor\n(d) Subrahmanyam Jaishankar",
+    "answer_key": "D",
+    [cite_start]"answer_explanation": "Both 'The India Way: Strategies for an Uncertain World' and 'Why Bharat Matters' are books authored by India's Minister of External Affairs, Dr. S. Jaishankar[cite: 157].",
+    "answer_sources": [
+      "Standard Contemporary Literature / IR publications."
+    ],
+    "subject": "International Relations",
+    "topic": "Books and Authors",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q87",
+    "year": 2024,
+    "q_no_in_paper": 87,
+    "question_text_combined": "Consider the following pairs: Country - Reason for being in the news 1. Argentina - Worst economic crisis 2. Sudan - War between the country's regular army and paramilitary forces 3. Turkey - Rescinded its membership of NATO",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) Only one pair\n(b) Only two pairs\n(c) All three pairs\n(d) None of the pairs",
+    "answer_key": "B",
+    "answer_explanation": "Argentina faced massive hyperinflation and a severe economic crisis. [cite_start]Sudan has been devastated by internal warfare between its regular army and the Rapid Support Forces (RSF)[cite: 158]. Turkey has not rescinded its NATO membership, rendering Pair 3 incorrect.",
+    "answer_sources": [
+      "International News Reports (2023-2024)."
+    ],
+    "subject": "International Relations",
+    "topic": "Current Events / World Mapping",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q88",
+    "year": 2024,
+    "q_no_in_paper": 88,
+    "question_text_combined": "Consider the following statements: Statement-I: Sumed pipeline is a strategic route for Persian Gulf oil and natural gas shipments to Europe. Statement-II: Sumed pipeline connects the Red Sea with the Mediterranean Sea.",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) Both Statement-I and Statement-II are correct and Statement-II explains Statement-I\n(b) Both Statement-I and Statement-II are correct, but Statement-II does not explain Statement-I\n(c) Statement-I is correct, but Statement-II is incorrect\n(d) Statement-I is incorrect, but Statement-II is correct",
+    "answer_key": "A",
+    [cite_start]"answer_explanation": "The Sumed (Suez-Mediterranean) pipeline directly connects the Red Sea (Gulf of Suez) to the Mediterranean Sea[cite: 161]. [cite_start]Because it spans this geographical bottleneck, it provides a critical alternative to the Suez Canal for transporting oil from the Persian Gulf to European markets[cite: 160]. Therefore, Statement II physically explains the strategic importance outlined in Statement I. ",
+    "answer_sources": [
+      "US Energy Information Administration (EIA) - World Oil Transit Chokepoints."
+    ],
+    "subject": "Geography",
+    "topic": "World Geography / Economic Geography",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q89",
+    "year": 2024,
+    "q_no_in_paper": 89,
+    "question_text_combined": "Consider the following statements: 1. The Red Sea receives very little precipitation in any form. 2. No water enters the Red Sea from rivers. Which of the statements given above is/are correct?",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) 1 only\n(b) 2 only\n(c) Both 1 and 2\n(d) Neither 1 nor 2",
+    "answer_key": "C",
+    "answer_explanation": "The Red Sea is situated in an extremely arid desert region, resulting in negligible precipitation. Additionally, it is unique among major bodies of water because no permanent rivers or streams flow into it. Both statements are factually correct.",
+    "answer_sources": [
+      "NCERT Class 11 Fundamentals of Physical Geography (Oceanography).",
+      "Standard geographic encyclopedia on the Red Sea's hydrology."
+    ],
+    "subject": "Geography",
+    "topic": "Oceanography / World Geography",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q90",
+    "year": 2024,
+    "q_no_in_paper": 90,
+    "question_text_combined": "According to the Environmental Protection Agency (EPA), which one of the following is the largest source of sulphur dioxide emissions?",
+    "raw_blocks_combined": "",
+    "options_combined": "(a) Locomotives using fossil fuels\n(b) Ships using fossil fuels\n(c) Extraction of metals from ores\n(d) Power plants using fossil fuels",
+    "answer_key": "D",
+    "answer_explanation": "According to the US EPA, the largest source of sulfur dioxide (SO2) emissions in the atmosphere is the burning of fossil fuels by power plants and other industrial facilities, primarily from coal combustion.",
+    "answer_sources": [
+      "US Environmental Protection Agency (EPA) - Sulfur Dioxide (SO2) Basics."
+    ],
+    "subject": "Environment",
+    "topic": "Pollution",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q91",
+    "year": 2024,
+    "q_no_in_paper": 91,
+    "question_text_combined": "Consider the following statements: Statement-I: There is instability and worsening security situation in the Sahel region. Statement-II: There have been military takeovers/coups d'état in several countries of the Sahel region in the recent past.",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) Both Statement-I and Statement-II are correct Statement-II explains Statement-I and\n(b) Both Statement-I and Statement-II are correct, but Statement-II does not explain Statement-I\n(c) Statement-I is correct, but Statement-II is incorrect\n(d) Statement-I is incorrect, but Statement-II is correct",
+    "answer_key": "A",
+    "answer_explanation": "The Sahel region of Africa (including Mali, Burkina Faso, and Niger) has experienced extreme instability and a deteriorating security environment (Statement I). This is directly fueled and explained by a wave of recent military coups and the overthrow of civilian governments in these exact nations (Statement II).",
+    "answer_sources": [
+      "UN Security Council Reports on West Africa and the Sahel (2023-2024)."
+    ],
+    "subject": "International Relations",
+    "topic": "Current Events / Africa",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q92",
+    "year": 2024,
+    "q_no_in_paper": 92,
+    "question_text_combined": "Consider the following statements: Statement-I: India does not import apples from the United States of America. Statement-II: In India, the law prohibits the import of Genetically Modified food without the approval of the competent authority.",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) Both Statement-I and Statement-II are correct and Statement-II explains Statement-I\n(b) Both Statement-I and Statement-II are correct, but Statement-II does not explain Statement-I\n(c) Statement-I is correct, but Statement-II is incorrect\n(d) Statement-I is incorrect, but Statement-II is correct",
+    "answer_key": "D",
+    "answer_explanation": "India actively imports apples from the USA, especially after retaliatory tariffs were removed in 2023, making Statement I factually false. Statement II is correct; under the Environment Protection Act and FSSAI rules, importing any Genetically Modified (GM) food requires prior approval from the Genetic Engineering Appraisal Committee (GEAC).",
+    "answer_sources": [
+      "Ministry of Commerce and Industry - Trade Data on US Apple imports.",
+      "FSSAI guidelines on Genetically Modified Organisms."
+    ],
+    "subject": "Economy",
+    "topic": "International Trade / Agriculture",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q93",
+    "year": 2024,
+    "q_no_in_paper": 93,
+    "question_text_combined": "With reference to the Speaker of the Lok Sabha, consider the following statements: While any resolution for the removal of the Speaker of the Lok Sabha is under consideration 1. He/She shall not preside. 2. He/She shall not have the right to speak. 3. He/She shall not be entitled to vote on the resolution in the first instance.",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) 1 only\n(b) 1 and 2 only\n(c) 2 and 3 only\n(d) 1, 2 and 3",
+    "answer_key": "A",
+    "answer_explanation": "Article 96 dictates that when a resolution for the Speaker's removal is under consideration, they shall not preside over the House (Statement 1 is correct). However, they retain the right to speak in and participate in proceedings (Statement 2 is incorrect). Furthermore, they are entitled to vote in the first instance on such a resolution, but not in the case of a tie (Statement 3 is incorrect).",
+    "answer_sources": [
+      "Constitution of India, Article 96."
+    ],
+    "subject": "Polity",
+    "topic": "Parliament / Speaker",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q94",
+    "year": 2024,
+    "q_no_in_paper": 94,
+    "question_text_combined": "With reference to the Indian Parliament, consider the following statements: 1. A bill pending in the Lok Sabha lapses on its dissolution. 2. A bill passed by the Lok Sabha and pending in the Rajya Sabha lapses on the dissolution of the Lok Sabha. 3. A bill in regard to which the President of India notified his/her intention to summon the Houses to a joint sitting lapses on the dissolution of the Lok Sabha.",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) 1 only\n(b) 1 and 2\n(c) 2 and 3\n(d) 3 only",
+    "answer_key": "B",
+    "answer_explanation": "Under Article 107, a bill pending in the Lok Sabha or passed by the Lok Sabha but pending in the Rajya Sabha lapses on dissolution (Statements 1 and 2 are correct). However, under Article 108(5), if the President has already notified the intention to summon a joint sitting before dissolution, the bill does not lapse and the joint sitting can still be held (Statement 3 is incorrect).",
+    "answer_sources": [
+      "Constitution of India, Articles 107 and 108."
+    ],
+    "subject": "Polity",
+    "topic": "Parliament / Legislative Procedure",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q95",
+    "year": 2024,
+    "q_no_in_paper": 95,
+    "question_text_combined": "With reference to the Parliament of India, consider the following statements: 1. Prorogation of a House by the President of India does not require the advice of the Council of Ministers. 2. Prorogation of a House is generally done after the House is adjourned sine die but there is no bar to the President of India prorogating the House which is in session. 3. Dissolution of the Lok Sabha is done by the President of India who, save in exceptional circumstances, does so on the advice of the Council of Ministers.",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) 1 only\n(b) 1 and 2\n(c) 2 and 3\n(d) 3 only",
+    "answer_key": "C",
+    "answer_explanation": "The President is bound by Article 74 to act on the aid and advice of the Council of Ministers (CoM) for proroguing a House; it is not a discretionary power (Statement 1 is incorrect). The President can prorogue a House in session, though it typically follows an adjournment sine die (Statement 2 is correct). The Lok Sabha is dissolved by the President on the CoM's advice, except when the PM loses their majority (Statement 3 is correct).",
+    "answer_sources": [
+      "M. Laxmikanth, Indian Polity, Chapter 22: Parliament."
+    ],
+    "subject": "Polity",
+    "topic": "Parliament / Sessions",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q96",
+    "year": 2024,
+    "q_no_in_paper": 96,
+    "question_text_combined": "Consider the following statements: Statement-I: The European Parliament approved The Net-Zero Industry Act recently. Statement-II: The European Union intends to achieve carbon neutrality by 2040 and therefore aims to develop all of its own clean technology by that time.",
+    "raw_blocks_combined": ", , ",
+    "options_combined": "(a) Both Statement-I and Statement-II are correct and Statement-II explains Statement-I\n(b) Both Statement-I and Statement-II are correct, but Statement-II does not explain Statement-I\n(c) Statement-I is correct, but Statement-II is incorrect\n(d) Statement-I is incorrect, but Statement-II is correct",
+    "answer_key": "C",
+    "answer_explanation": "The European Parliament did recently pass the Net-Zero Industry Act (Statement I is correct). However, the EU's legally binding target for carbon neutrality is 2050, not 2040. Furthermore, the Act aims to produce at least 40% of its annual deployment needs for net-zero technologies locally by 2030, not \"all\" of its technology (Statement II is completely incorrect).",
+    "answer_sources": [
+      "European Commission - Net-Zero Industry Act framework."
+    ],
+    "subject": "Environment",
+    "topic": "International Climate Initiatives",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q97",
+    "year": 2024,
+    "q_no_in_paper": 97,
+    "question_text_combined": "Consider the following statements: Statement-I: Recently, Venezuela has achieved a rapid recovery from its economic crisis and succeeded in preventing its people from fleeing/emigrating to other countries. Statement-II: Venezuela has the world's largest oil reserves.",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) Both Statement-I and Statement-II are correct and Statement-II explains Statement-I\n(b) Both Statement-I and Statement-II are correct, but Statement-II does not explain Statement-I\n(c) Statement-I is correct, but Statement-II is incorrect\n(d) Statement-I is incorrect, but Statement-II is correct",
+    "answer_key": "D",
+    "answer_explanation": "Venezuela has not achieved a rapid economic recovery; it continues to suffer from severe hyperinflation and political instability, with millions of citizens still emigrating as refugees. Statement I is objectively false. However, Venezuela does hold the world's largest proven crude oil reserves, making Statement II correct.",
+    "answer_sources": [
+      "UNHCR Data on the Venezuelan Refugee Crisis.",
+      "OPEC Annual Statistical Bulletin - Proven oil reserves."
+    ],
+    "subject": "Economy",
+    "topic": "International Relations / Global Economy",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q98",
+    "year": 2024,
+    "q_no_in_paper": 98,
+    "question_text_combined": "With reference to the Digital India Land Records Modernisation Programme, consider the following statements: 1. To implement the scheme, the Central Government provides 100% funding. 2. Under the Scheme, Cadastral Maps are digitised. 3. An initiative has been undertaken to transliterate the Records of Rights from local language to any of the languages recognized by the Constitution of India.",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) 1 and 2 only\n(b) 2 and 3 only\n(c) 1 and 3 only\n(d) 1, 2 and 3",
+    "answer_key": "D",
+    "answer_explanation": "DILRMP was revamped as a Central Sector Scheme in 2016, meaning it is 100% funded by the Government of India (1 is correct). Digitization of cadastral maps is a core component (2 is correct). The government recently rolled out a multilingual feature to transliterate Records of Rights (RoR) across 22 Scheduled languages (3 is correct).",
+    "answer_sources": [
+      "Department of Land Resources (DoLR), Ministry of Rural Development - DILRMP Guidelines."
+    ],
+    "subject": "Economy",
+    "topic": "Government Schemes",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  },
+  {
+    "id_combined": "GS1_2024_Q99",
+    "year": 2024,
+    "q_no_in_paper": 99,
+    "question_text_combined": "With reference to the 'Pradhan Mantri Surakshit Matritva Abhiyan', consider the following statements: 1. This scheme guarantees a minimum package of antenatal care services to women in their second and third trimesters of pregnancy and six months post-delivery health care service in any government health facility. 2. Under this scheme, private sector health care providers of certain specialities can volunteer to provide services at nearby government health facilities.",
+    "raw_blocks_combined": ", ",
+    "options_combined": "(a) 1 only\n(b) 2 only\n(c) Both 1 and 2\n(d) Neither 1 nor 2",
+    "answer_key": "B",
+    "answer_explanation": "PMSMA focuses specifically on providing a minimum package of free antenatal care (ANC) services on the 9th of every month to pregnant women in their 2nd/3rd trimesters. It does not mandate six months of post-delivery care within its core framework (Statement 1 is incorrect). The scheme heavily relies on voluntary participation from private sector OBGYN specialists at government facilities (Statement 2 is correct).",
+    "answer_sources": [
+      "Ministry of Health and Family Welfare - PMSMA Official Guidelines."
+    ],
+    "subject": "Economy",
+    "topic": "Government Schemes / Health",
+    "confidence_score": 1.0,
+    "assumptions": "Post-delivery care is covered under other umbrellas like JSY/JSSK, not specifically targeted by the 9th-of-the-month PMSMA camps."
+  },
+  {
+    "id_combined": "GS1_2024_Q100",
+    "year": 2024,
+    "q_no_in_paper": 100,
+    "question_text_combined": "With reference to the Pradhan Mantri Shram Yogi Maan-dhan (PM-SYM) Yojana, consider the following statements: 1. The entry age group for enrolment in the scheme is 21 to 40 years. 2. Age specific contribution shall be made by the beneficiary. 3. Each subscriber under the scheme shall receive a minimum pension of ₹ 3,000 per month after attaining the age of 60 years. 4. Family pension is applicable to the spouse and unmarried daughters.",
+    "raw_blocks_combined": ", , , ",
+    "options_combined": "(a) 1, 3 and 4\n(b) 2 and 3 only\n(c) 2 only\n(d) 1, 2 and 4",
+    "answer_key": "B",
+    "answer_explanation": "The PM-SYM scheme is for unorganized workers with an entry age of 18 to 40 years, not 21 (Statement 1 is incorrect). The premium contribution varies based on the entry age (Statement 2 is correct). It guarantees a minimum monthly pension of ₹3000 after age 60 (Statement 3 is correct). If the subscriber dies, only the spouse is entitled to receive 50% of the pension as a family pension; children are not eligible (Statement 4 is incorrect).",
+    "answer_sources": [
+      "Ministry of Labour and Employment - PM-SYM Scheme Guidelines."
+    ],
+    "subject": "Economy",
+    "topic": "Government Schemes / Social Security",
+    "confidence_score": 1.0,
+    "assumptions": "None."
+  }
+]
+
+
+

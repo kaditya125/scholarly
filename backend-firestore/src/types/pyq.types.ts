@@ -38,7 +38,31 @@ export type PYQVerificationStatus =
   | 'UNVERIFIED'
   | 'CONFLICTING';
 
+export type PYQOrigin =
+  | 'authentic_import'
+  | 'external_import'
+  | 'authored'
+  | 'template'
+  | 'unknown';
+
+export type PYQQuarantineReason =
+  | 'TEMPLATE_GENERATED'
+  | 'DUPLICATE_REPLAY'
+  | 'UNVERIFIED_OFFICIAL_SOURCE'
+  | 'INVALID_PROVENANCE'
+  | 'UNKNOWN_ORIGIN';
+
+export type PYQRestorationState =
+  | 'VERIFIED_AUTHENTIC'
+  | 'CORROBORATED_EXTERNAL'
+  | 'UNVERIFIED'
+  | 'CONFLICTING'
+  | 'SYNTHETIC_TEMPLATE';
+
+export type PYQCorpusBucket = 'OFFICIAL_PYQ' | 'PRACTICE_MOCK' | 'TEXTBOOK';
+
 export type PYQIngestionState =
+  | 'ACTIVE'
   | 'DISCOVERED'
   | 'SOURCE_REVIEWED'
   | 'EXTRACTED'
@@ -47,7 +71,8 @@ export type PYQIngestionState =
   | 'READY_FOR_INDEX'
   | 'INDEXED'
   | 'RETRIEVAL_VERIFIED'
-  | 'QUARANTINED';
+  | 'QUARANTINED'
+  | 'ARCHIVED_DUPLICATE';
 
 export type PYQQuestionType =
   | 'MCQ_SINGLE'
@@ -85,13 +110,57 @@ export interface PYQSourceEntry {
   rightsStatus: PYQRightsStatus;
   licenseNotes?: string;
   storagePath?: string;
+  artifactPath?: string; // Durable local file path to raw downloaded artifact
   sourceDocumentHash?: string;
+  documentHash?: string; // SHA-256 hex checksum of raw document bytes
+  documentSize?: number; // File size in bytes
+  mimeType?: string;     // e.g. "application/pdf", "application/json"
+  paperCode?: string;    // e.g. "Code Q", "Paper 1"
+  retrievedAt?: number;  // Timestamp when artifact was downloaded/verified
+  documentTitle?: string;
+  answerKeySource?: string;
+  answerKeyHash?: string; // SHA-256 hex checksum of official answer key document
+  verifiedBy?: string;
+  verificationMethod?: string;
   questionCountDiscovered?: number;
   hasAnswerKey: boolean;
   hasSolutions: boolean;
   discoveredAt: number;
   lastCheckedAt: number;
   duplicateGroupId?: string;
+}
+
+/**
+ * Verified paper occurrence for a question (Content Identity vs Paper Occurrence).
+ */
+export interface PYQQuestionOccurrence {
+  examId: string;
+  year: number;
+  session?: string;
+  paper?: string;
+  shift?: string;
+  paperCode?: string;
+  questionNumber: number;
+  sourceId: string;
+  documentHash: string;
+  answerKeyHash?: string;
+  verifiedAt: number;
+  verificationMethod: string;
+}
+
+/**
+ * Explicit audit record for answer key conflicts, bonus, and dropped questions.
+ */
+export interface PYQAnswerConflictRecord {
+  questionId: string;
+  storedAnswer: string;
+  officialAnswer: string;
+  answerKeySource: string;
+  answerKeyHash: string;
+  conflictType: 'DISCREPANCY' | 'BONUS_DROPPED' | 'MULTIPLE_CORRECT' | 'OUT_OF_SYLLABUS';
+  resolutionStatus: 'UNRESOLVED' | 'RESOLVED_OFFICIAL' | 'MANUAL_REVIEW_REQUIRED';
+  recordedAt: number;
+  notes?: string;
 }
 
 /**
@@ -179,7 +248,16 @@ export interface CanonicalPYQQuestion {
   redistributionAllowed: boolean;
   contentHash: string;      // SHA-256 of normalized text + options
   duplicateGroupId?: string;// Group ID if multiple sources share this question
+  origin?: PYQOrigin;
+  corpusBucket?: PYQCorpusBucket; // 'OFFICIAL_PYQ' | 'PRACTICE_MOCK' | 'TEXTBOOK'
+  canonicalPracticeId?: string;   // For archived duplicates, foreign key to primary canonical question
+  occurrences?: PYQQuestionOccurrence[]; // Distinct verified paper occurrences
+  answerConflict?: PYQAnswerConflictRecord; // Flagged answer key disputes or drops
   ingestionState: PYQIngestionState;
+  quarantineReason?: PYQQuarantineReason;
+  quarantinedAt?: number;
+  quarantinedBy?: string;
+  restorationState?: PYQRestorationState;
   vectorIndexed: boolean;
   vectorIndexedAt?: number;
   retrievalTested: boolean;

@@ -1,0 +1,110 @@
+{
+  "timestamp": 1788646859616,
+  "mode": "DRY_RUN",
+  "totalInspected": 5656,
+  "eligibleForRestoration": 0,
+  "remainingQuarantined": 5656,
+  "manualReviewCount": 0,
+  "answerConflictsCount": 0,
+  "classificationCounts": {
+    "VERIFIED_AUTHENTIC": 0,
+    "CORROBORATED_EXTERNAL": 0,
+    "SYNTHETIC_TEMPLATE": 5591,
+    "UNVERIFIED": 65,
+    "CONFLICTING": 0
+  },
+  "byExamCounts": {
+    "SSC_CGL": {
+      "total": 2171,
+      "eligible": 0,
+      "quarantined": 2171,
+      "synthetic": 2171,
+      "unverified": 0,
+      "conflicting": 0,
+      "corroborated": 0,
+      "verified": 0
+    },
+    "NEET_UG": {
+      "total": 2600,
+      "eligible": 0,
+      "quarantined": 2600,
+      "synthetic": 2600,
+      "unverified": 0,
+      "conflicting": 0,
+      "corroborated": 0,
+      "verified": 0
+    },
+    "BPSC_CCE": {
+      "total": 255,
+      "eligible": 0,
+      "quarantined": 255,
+      "synthetic": 255,
+      "unverified": 0,
+      "conflicting": 0,
+      "corroborated": 0,
+      "verified": 0
+    },
+    "UPSC_CSE": {
+      "total": 565,
+      "eligible": 0,
+      "quarantined": 565,
+      "synthetic": 565,
+      "unverified": 0,
+      "conflicting": 0,
+      "corroborated": 0,
+      "verified": 0
+    },
+    "JEE_ADVANCED": {
+      "total": 42,
+      "eligible": 0,
+      "quarantined": 42,
+      "synthetic": 0,
+      "unverified": 42,
+      "conflicting": 0,
+      "corroborated": 0,
+      "verified": 0
+    },
+    "RRB_NTPC": {
+      "total": 10,
+      "eligible": 0,
+      "quarantined": 10,
+      "synthetic": 0,
+      "unverified": 10,
+      "conflicting": 0,
+      "corroborated": 0,
+      "verified": 0
+    },
+    "IBPS_PO": {
+      "total": 9,
+      "eligible": 0,
+      "quarantined": 9,
+      "synthetic": 0,
+      "unverified": 9,
+      "conflicting": 0,
+      "corroborated": 0,
+      "verified": 0
+    },
+    "UNKNOWN": {
+      "total": 4,
+      "eligible": 0,
+      "quarantined": 4,
+      "synthetic": 0,
+      "unverified": 4,
+      "conflicting": 0,
+      "corroborated": 0,
+      "verified": 0
+    }
+  },
+  "pineconeStats": {
+    "indexName": "edtech-ai-rag",
+    "dimension": 768,
+    "totalVectorCount": 30502,
+    "indexFullness": 0,
+    "namespaces": [
+      {
+        "name": "production",
+        "vectorCount": 30502
+      }
+    ]
+  }
+}

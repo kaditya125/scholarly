@@ -1,0 +1,1799 @@
+[
+{
+"id_combined": "2023_GS1_Q1",
+"year": 2023,
+"q_no_in_paper": 1,
+"question_text_combined": "Consider the following statements : 1. Jhelum River passes through Wular Lake. 2. Krishna River directly feeds Kolleru Lake. 3. Meandering of Gandak River formed Kanwar Lake. How many of the statements given above are correct? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 3 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "B",
+"answer_explanation": "Statement 1 is correct as the Jhelum River flows through Wular Lake in Jammu and Kashmir. Statement 2 is incorrect because Kolleru Lake is fed by seasonal streams and not directly by the Krishna River. Statement 3 is correct as Kanwar Lake is an oxbow lake formed by the meandering of the Gandak River. Thus, only two statements are correct.",
+"answer_sources": [
+"NCERT Class 11 India Physical Environment, Chapter 3 Drainage System, https://ncert.nic.in/textbook/pdf/kegy203.pdf",
+"Ministry of Jal Shakti website on Lakes, https://jalshakti-dowr.gov.in/sites/default/files/India_WRIS_Lakes.pdf"
+],
+"subject": "Geography",
+"topic": "Rivers and Lakes of India",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q2",
+"year": 2023,
+"q_no_in_paper": 2,
+"question_text_combined": "Consider the following pairs : Port Well known as 1. Kamarajar Port : First major port in India registered as a company 2. Mundra Port : Largest privately owned port in India 3. Visakhapatnam Port : Largest container port in India How many of the above pairs are correctly matched? (a) Only one pair (b) Only two pairs (c) All three pairs (d) None of the pairs",
+"raw_blocks_combined": "Page 3 text",
+"options_combined": "(a) Only one pair (b) Only two pairs (c) All three pairs (d) None of the pairs",
+"answer_key": "B",
+"answer_explanation": "Kamarajar Port (Ennore) is the first major port registered as a company. Mundra is the largest private port. Visakhapatnam is not the largest container port; JNPT is. Thus, only two pairs are correct.",
+"answer_sources": [
+"Ministry of Ports, Shipping and Waterways, https://shipmin.gov.in/division/major-ports",
+"Adani Ports website for Mundra, https://www.adaniports.com/ports-and-terminals/mundra-port"
+],
+"subject": "Geography",
+"topic": "Ports in India",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q3",
+"year": 2023,
+"q_no_in_paper": 3,
+"question_text_combined": "Consider the following trees : 1. Jackfruit (Artocarpus heterophyllus) 2. Mahua (Madhuca indica) 3. Teak (Tectona grandis) How many of the above are deciduous trees? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 3 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "B",
+"answer_explanation": "Jackfruit is evergreen. Mahua and Teak are deciduous. Thus, only two are deciduous.",
+"answer_sources": [
+"NCERT Class 10 Contemporary India, Chapter 5 Natural Vegetation, https://ncert.nic.in/textbook/pdf/jess305.pdf",
+"Indian Council of Forestry Research and Education, https://icfre.org/"
+],
+"subject": "Environment",
+"topic": "Vegetation Types",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q4",
+"year": 2023,
+"q_no_in_paper": 4,
+"question_text_combined": "Consider the following statements : 1. India has more arable area than China. 2. The proportion of irrigated area is more in India as compared to China. 3. The average productivity per hectare in Indian agriculture is higher than that in China. How many of the above statements are correct? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 3 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "A",
+"answer_explanation": "India has more arable land (156 mh) than China (119 mh). Proportion of irrigated area is higher in China (70%) than India (48%). Productivity is higher in China. Thus, only one is correct.",
+"answer_sources": [
+"FAO Stat, https://www.fao.org/faostat/en/#data",
+"World Bank Data, https://data.worldbank.org/indicator/AG.LND.IRIG.AG.ZS"
+],
+"subject": "Economy",
+"topic": "Agriculture Comparison",
+"confidence_score": 0.95,
+"assumptions": "Data from 2020-2022"
+},
+{
+"id_combined": "2023_GS1_Q5",
+"year": 2023,
+"q_no_in_paper": 5,
+"question_text_combined": "Which one of the following is the best example of repeated falls in sea level, giving rise to present-day extensive marshland? (a) Bhitarkanika Mangroves (b) Marakkanam Salt Pans (c) Naupada Swamp (d) Rann of Kutch",
+"raw_blocks_combined": "Page 3 text",
+"options_combined": "(a) Bhitarkanika Mangroves (b) Marakkanam Salt Pans (c) Naupada Swamp (d) Rann of Kutch",
+"answer_key": "D",
+"answer_explanation": "The Rann of Kutch is a large salt marsh formed due to regression of the sea over time, representing repeated falls in sea level.",
+"answer_sources": [
+"NCERT Class 11 India Physical Environment, Chapter 2 Structure and Physiography, https://ncert.nic.in/textbook/pdf/kegy202.pdf",
+"Geological Survey of India, https://www.gsi.gov.in/webcenter/portal/OCBIS/pageHome/pageHome"
+],
+"subject": "Geography",
+"topic": "Coastal Landforms",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q6",
+"year": 2023,
+"q_no_in_paper": 6,
+"question_text_combined": "Ilmenite and rutile, abundantly available in certain coastal tracts of India, are rich sources of which one of the following? (a) Aluminium (b) Copper (c) Iron (d) Titanium",
+"raw_blocks_combined": "Page 3 text",
+"options_combined": "(a) Aluminium (b) Copper (c) Iron (d) Titanium",
+"answer_key": "D",
+"answer_explanation": "Ilmenite and rutile are titanium-bearing minerals, extracted for titanium dioxide used in paints, etc.",
+"answer_sources": [
+"Indian Bureau of Mines, https://ibm.gov.in/writereaddata/files/06262019144929Ilmenite_2018.pdf",
+"Atomic Minerals Directorate for Exploration and Research, https://amd.gov.in/"
+],
+"subject": "Geography",
+"topic": "Mineral Resources",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q7",
+"year": 2023,
+"q_no_in_paper": 7,
+"question_text_combined": "About three-fourth of world's cobalt, a metal required for the manufacture of batteries for electric motor vehicles, is produced by (a) Argentina (b) Botswana (c) the Democratic Republic of the Congo (d) Kazakhstan",
+"raw_blocks_combined": "Page 3 text",
+"options_combined": "(a) Argentina (b) Botswana (c) the Democratic Republic of the Congo (d) Kazakhstan",
+"answer_key": "C",
+"answer_explanation": "The Democratic Republic of the Congo produces around 70% of the world's cobalt.",
+"answer_sources": [
+"US Geological Survey, https://pubs.usgs.gov/periodicals/mcs2023/mcs2023-cobalt.pdf",
+"World Bank Report on Mineral Production, https://www.worldbank.org/en/topic/extractiveindustries"
+],
+"subject": "Geography",
+"topic": "Mineral Production Global",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q8",
+"year": 2023,
+"q_no_in_paper": 8,
+"question_text_combined": "Which one of the following is a part of the Congo Basin? (a) Cameroon (b) Nigeria (c) South Sudan (d) Uganda",
+"raw_blocks_combined": "Page 5 text",
+"options_combined": "(a) Cameroon (b) Nigeria (c) South Sudan (d) Uganda",
+"answer_key": "A",
+"answer_explanation": "The Congo Basin spans several countries, including Cameroon.",
+"answer_sources": [
+"UN Environment Programme, https://www.unep.org/regions/africa/regional-initiatives/congo-basin-ecosystem",
+"World Wildlife Fund, https://wwf.panda.org/discover/knowledge_hub/where_we_work/congo_basin_forests/"
+],
+"subject": "Geography",
+"topic": "World Geography - Basins",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q9",
+"year": 2023,
+"q_no_in_paper": 9,
+"question_text_combined": "Consider the following statements : 1. Amarkantak Hills are at the confluence of Vindhya and Sahyadri Ranges. 2. Biligirirangan Hills constitute the easternmost part of Satpura Range. 3. Seshachalam Hills constitute the southernmost part of Western Ghats. How many of the statements given above are correct? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 5 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "D",
+"answer_explanation": "Amarkantak is confluence of Vindhya and Satpura, not Sahyadri. Biligirirangan is part of Western Ghats, not Satpura. Seshachalam is Eastern Ghats, not Western. Thus, none are correct.",
+"answer_sources": [
+"NCERT Class 11 India Physical Environment, Chapter 2, https://ncert.nic.in/textbook/pdf/kegy202.pdf"
+],
+"subject": "Geography",
+"topic": "Indian Physiography - Hills",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q10",
+"year": 2023,
+"q_no_in_paper": 10,
+"question_text_combined": "With reference to India's projects on connectivity, consider the following statements : 1. East-West Corridor under Golden Quadrilateral Project connects Dibrugarh and Surat. 2. Trilateral Highway connects Moreh in Manipur and Chiang Mai in Thailand via Myanmar. 3. Bangladesh-China-India-Myanmar Economic Corridor connects Varanasi in Uttar Pradesh with Kunming in China. How many of the above statements are correct? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 5 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "D",
+"answer_explanation": "East-West connects Silchar to Porbandar. Trilateral connects Moreh to Mae Sot. BCIM connects Kolkata to Kunming. Thus, none are correct.",
+"answer_sources": [
+"Ministry of Road Transport and Highways, https://morth.nic.in/national-highways-development-project-nhdp",
+"MEA India, https://mea.gov.in/Portal/ForeignRelation/Myanmar.pdf"
+],
+"subject": "International Relations",
+"topic": "Connectivity Projects",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q11",
+"year": 2023,
+"q_no_in_paper": 11,
+"question_text_combined": "Statement-I : India, despite having uranium deposits, depends on coal for most of its electricity production. Statement-II : Uranium, enriched to the extent of at least 60%, is required for the production of electricity. Which one of the following is correct in respect of the above statements? (a) Both correct, II explains I (b) Both correct, II does not explain I (c) I correct, II incorrect (d) I incorrect, II correct",
+"raw_blocks_combined": "Page 5 text",
+"options_combined": "(a) Both Statement-I and Statement-II are correct and Statement-II is the correct explanation for Statement-I (b) Both Statement-I and Statement-II are correct and Statement-II is not the correct explanation for Statement-I (c) Statement-I is correct but Statement-II is incorrect (d) Statement-I is incorrect but Statement-II is correct",
+"answer_key": "C",
+"answer_explanation": "India does depend on coal despite uranium deposits. However, for electricity, uranium is enriched to 3-5%, not 60%. Thus, I correct, II incorrect.",
+"answer_sources": [
+"Department of Atomic Energy, https://dae.gov.in/node/150",
+"World Nuclear Association, https://world-nuclear.org/information-library/nuclear-fuel-cycle/conversion-enrichment-and-fabrication/uranium-enrichment.aspx"
+],
+"subject": "Science & Tech",
+"topic": "Nuclear Energy",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q12",
+"year": 2023,
+"q_no_in_paper": 12,
+"question_text_combined": "Statement-I : Marsupials are not naturally found in India. Statement-II : Marsupials can thrive only in montane grasslands with no predators. Which one of the following is correct in respect of the above statements? (a) Both correct, II explains I (b) Both correct, II does not explain I (c) I correct, II incorrect (d) I incorrect, II correct",
+"raw_blocks_combined": "Page 5 text",
+"options_combined": "(a) Both Statement-I and Statement-II are correct and Statement-II is the correct explanation for Statement-I (b) Both Statement-I and Statement-II are correct and Statement-II is not the correct explanation for Statement-I (c) Statement-I is correct but Statement-II is incorrect (d) Statement-I is incorrect but Statement-II is correct",
+"answer_key": "C",
+"answer_explanation": "Marsupials are not native to India. However, they thrive in various habitats including with predators in Australia. Thus, I correct, II incorrect.",
+"answer_sources": [
+"IUCN Red List, https://www.iucnredlist.org/",
+"National Geographic, https://www.nationalgeographic.com/animals/mammals/facts/marsupials"
+],
+"subject": "Environment",
+"topic": "Fauna Distribution",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q13",
+"year": 2023,
+"q_no_in_paper": 13,
+"question_text_combined": "Invasive Species Specialist Group (that develops Global Invasive Species Database) belongs to which one of the following organizations? (a) The International Union for Conservation of Nature (b) The United Nations Environment Programme (c) The United Nations World Commission for Environment and Development (d) The World Wide Fund for Nature",
+"raw_blocks_combined": "Page 7 text",
+"options_combined": "(a) The International Union for Conservation of Nature (b) The United Nations Environment Programme (c) The United Nations World Commission for Environment and Development (d) The World Wide Fund for Nature",
+"answer_key": "A",
+"answer_explanation": "The Invasive Species Specialist Group is a global network of experts under the IUCN Species Survival Commission.",
+"answer_sources": [
+"IUCN SSC ISSG, https://www.iucn.org/ssc-groups/invasive-species-specialist-group"
+],
+"subject": "Environment",
+"topic": "Biodiversity Organizations",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q14",
+"year": 2023,
+"q_no_in_paper": 14,
+"question_text_combined": "Consider the following fauna : 1. Lion-tailed Macaque 2. Malabar Civet 3. Sambar Deer How many of the above are generally nocturnal or most active after sunset? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 7 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "B",
+"answer_explanation": "Lion-tailed Macaque is diurnal. Malabar Civet is nocturnal. Sambar Deer is crepuscular/nocturnal. Thus, only two.",
+"answer_sources": [
+"IUCN Red List, https://www.iucnredlist.org/species/12559/17950602 (for Macaque), https://www.iucnredlist.org/species/13632/45221099 (Civet), https://www.iucnredlist.org/species/41704/22151979 (Sambar)",
+"MoEFCC, https://moef.gov.in/"
+],
+"subject": "Environment",
+"topic": "Indian Fauna",
+"confidence_score": 0.9,
+"assumptions": "Sambar is considered nocturnal based on behavior in protected areas."
+},
+{
+"id_combined": "2023_GS1_Q15",
+"year": 2023,
+"q_no_in_paper": 15,
+"question_text_combined": "Which of the following organisms perform waggle dance for others of their kin to indicate the direction and the distance to a source of their food? (a) Butterflies (b) Dragonflies (c) Honeybees (d) Wasps",
+"raw_blocks_combined": "Page 7 text",
+"options_combined": "(a) Butterflies (b) Dragonflies (c) Honeybees (d) Wasps",
+"answer_key": "C",
+"answer_explanation": "Honeybees perform the waggle dance to communicate food source location to hive members.",
+"answer_sources": [
+"National Geographic, https://www.nationalgeographic.com/animals/article/honey-bee-waggle-dance-decoder-science",
+"Science Journal, https://science.sciencemag.org/content/344/6184/635"
+],
+"subject": "Science & Tech",
+"topic": "Animal Behavior",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q16",
+"year": 2023,
+"q_no_in_paper": 16,
+"question_text_combined": "Consider the following statements : 1. Some mushrooms have medicinal properties. 2. Some mushrooms have psychoactive properties. 3. Some mushrooms have insecticidal properties. 4. Some mushrooms have bioluminescent properties. How many of the above statements are correct? (a) Only one (b) Only two (c) Only three (d) All four",
+"raw_blocks_combined": "Page 7 text",
+"options_combined": "(a) Only one (b) Only two (c) Only three (d) All four",
+"answer_key": "D",
+"answer_explanation": "All statements are correct. Examples: Reishi for medicinal, Psilocybin for psychoactive, Cordyceps for insecticidal, Panellus for bioluminescent.",
+"answer_sources": [
+"NCBI, https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4320875/",
+"Mycological Society, https://www.britmycolsoc.org.uk/mycology/fungi-bioluminescence"
+],
+"subject": "Science & Tech",
+"topic": "Fungi Properties",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q17",
+"year": 2023,
+"q_no_in_paper": 17,
+"question_text_combined": "Consider the following statements regarding the Indian squirrels : 1. They build nests by making burrows in the ground. 2. They store their food materials like nuts and seeds in the ground. 3. They are omnivorous. How many of the above statements are correct? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 7 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "B",
+"answer_explanation": "Indian palm squirrels build nests in trees or holes, not burrows. They do store food, and are omnivorous. Thus, only two are correct.",
+"answer_sources": [
+"Zoological Survey of India, https://zsi.gov.in/WriteReadData/userfiles/file/Publication/Mammals/Indian_Squirrels.pdf",
+"IUCN Red List, https://www.iucnredlist.org/species/19378/22261228"
+],
+"subject": "Environment",
+"topic": "Indian Fauna",
+"confidence_score": 0.9,
+"assumptions": "Referring to common Indian palm squirrel."
+},
+{
+"id_combined": "2023_GS1_Q18",
+"year": 2023,
+"q_no_in_paper": 18,
+"question_text_combined": "Consider the following statements : 1. Some microorganisms can grow in environments with temperature above the boiling point of water. 2. Some microorganisms can grow in environments with temperature below the freezing point of water. 3. Some microorganisms can grow in highly acidic environment with a pH below 3. How many of the above statements are correct? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 9 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "C",
+"answer_explanation": "Hyperthermophiles grow above 100C, psychrophiles below 0C, acidophiles below pH 3. All are correct.",
+"answer_sources": [
+"NASA Astrobiology, https://astrobiology.nasa.gov/news/extremophiles/",
+"Nature Reviews Microbiology, https://www.nature.com/articles/nrmicro1527"
+],
+"subject": "Science & Tech",
+"topic": "Extremophiles",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q19",
+"year": 2023,
+"q_no_in_paper": 19,
+"question_text_combined": "Which one of the following makes a tool with a stick to scrape insects from a hole in a tree or a log of wood? (a) Fishing cat (b) Orangutan (c) Otter (d) Sloth bear",
+"raw_blocks_combined": "Page 9 text",
+"options_combined": "(a) Fishing cat (b) Orangutan (c) Otter (d) Sloth bear",
+"answer_key": "B",
+"answer_explanation": "Orangutans are known to use tools like sticks to extract insects from trees.",
+"answer_sources": [
+"Smithsonian, https://www.si.edu/newsdesk/releases/orangutans-use-tools-new-study-finds",
+"IUCN, https://www.iucnredlist.org/species/39780/17959315"
+],
+"subject": "Environment",
+"topic": "Animal Behavior",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q20",
+"year": 2023,
+"q_no_in_paper": 20,
+"question_text_combined": "Consider the following : 1. Aerosols 2. Foam agents 3. Fire retardants 4. Lubricants In the making of how many of the above are hydrofluorocarbons used? (a) Only one (b) Only two (c) Only three (d) All four",
+"raw_blocks_combined": "Page 9 text",
+"options_combined": "(a) Only one (b) Only two (c) Only three (d) All four",
+"answer_key": "C",
+"answer_explanation": "HFCs are used in aerosols, foam agents, fire retardants, but not typically in lubricants.",
+"answer_sources": [
+"UNEP Ozone Secretariat, https://ozone.unep.org/treaties/montreal-protocol",
+"IPCC Report, https://www.ipcc.ch/report/ar5/wg1/"
+],
+"subject": "Environment",
+"topic": "Ozone Depleting Substances",
+"confidence_score": 0.95,
+"assumptions": "Lubricants do not use HFCs as primary component."
+},
+{
+"id_combined": "2023_GS1_Q21",
+"year": 2023,
+"q_no_in_paper": 21,
+"question_text_combined": "Statement-I : Interest income from the deposits in Infrastructure Investment Trusts (InvITs) distributed to their investors is exempted from tax, but the dividend is taxable. Statement-II : InvITs are recognized as borrowers under the 'Securitization and Reconstruction of Financial Assets and Enforcement of Security Interest Act, 2002'. Which one of the following is correct in respect of the above statements? (a) Both correct, II explains I (b) Both correct, II does not explain I (c) I correct, II incorrect (d) I incorrect, II correct",
+"raw_blocks_combined": "Page 9 text",
+"options_combined": "(a) Both... (d) Statement-I is incorrect but Statement-II is correct",
+"answer_key": "D",
+"answer_explanation": "Interest income from InvITs is taxable in the hands of unitholders, while dividends may be exempt under certain conditions. InvITs are indeed recognized as borrowers under SARFAESI Act. Thus, I incorrect, II correct.",
+"answer_sources": [
+"Income Tax Act, Section 10(23FD), https://www.incometaxindia.gov.in/pages/acts/income-tax-act.aspx",
+"SARFAESI Act, 2002, https://financialservices.gov.in/banking-division/acts"
+],
+"subject": "Economy",
+"topic": "Investment Trusts",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q22",
+"year": 2023,
+"q_no_in_paper": 22,
+"question_text_combined": "Statement-I : In the post-pandemic recent past, many Central Banks worldwide had carried out interest rate hikes. Statement-II : Central Banks generally assume that they have the ability to counteract the rising consumer prices via monetary policy means. Which one of the following is correct in respect of the above statements? (a) Both correct, II explains I (b) Both correct, II does not explain I (c) I correct, II incorrect (d) I incorrect, II correct",
+"raw_blocks_combined": "Page 9 text",
+"options_combined": "(a) Both... (d) ...",
+"answer_key": "A",
+"answer_explanation": "Post-pandemic, central banks like Fed, ECB raised rates to combat inflation. This is because they use monetary policy to control prices. II explains I.",
+"answer_sources": [
+"RBI Annual Report, https://www.rbi.org.in/Scripts/AnnualReportPublications.aspx",
+"IMF World Economic Outlook, https://www.imf.org/en/Publications/WEO"
+],
+"subject": "Economy",
+"topic": "Monetary Policy",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q23",
+"year": 2023,
+"q_no_in_paper": 23,
+"question_text_combined": "Statement-I : Carbon markets are likely to be one of the most widespread tools in the fight against climate change. Statement-II : Carbon markets transfer resources from the private sector to the State. Which one of the following is correct in respect of the above statements? (a) Both correct, II explains I (b) Both correct, II does not explain I (c) I correct, II incorrect (d) I incorrect, II correct",
+"raw_blocks_combined": "Page 11 text",
+"options_combined": "(a) Both... (d) ...",
+"answer_key": "C",
+"answer_explanation": "Carbon markets are important for climate change. However, they do not necessarily transfer resources to the state; they are market mechanisms between private entities. Thus, I correct, II incorrect.",
+"answer_sources": [
+"UNFCCC, https://unfccc.int/process/the-paris-agreement/cooperative-implementation",
+"World Bank Carbon Pricing, https://carbonpricingdashboard.worldbank.org/"
+],
+"subject": "Environment",
+"topic": "Carbon Markets",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q24",
+"year": 2023,
+"q_no_in_paper": 24,
+"question_text_combined": "Which one of the following activities of the Reserve Bank of India is considered to be part of 'sterilization'? (a) Conducting 'Open Market Operations' (b) Oversight of settlement and payment systems (c) Debt and cash management for the Central and State Governments (d) Regulating the functions of Non-banking Financial Institutions",
+"raw_blocks_combined": "Page 11 text",
+"options_combined": "(a) Conducting 'Open Market Operations' (b) Oversight... (d) Regulating...",
+"answer_key": "A",
+"answer_explanation": "Sterilization involves open market operations to offset the impact of foreign exchange interventions on money supply.",
+"answer_sources": [
+"RBI FAQ, https://m.rbi.org.in/Scripts/FAQView.aspx?Id=79",
+"RBI Act, Section 17, https://rbidocs.rbi.org.in/rdocs/Publications/PDFs/RBIA1934170510.PDF"
+],
+"subject": "Economy",
+"topic": "RBI Functions",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q25",
+"year": 2023,
+"q_no_in_paper": 25,
+"question_text_combined": "Consider the following markets : 1. Government Bond Market 2. Call Money Market 3. Treasury Bill Market 4. Stock Market How many of the above are included in capital markets? (a) Only one (b) Only two (c) Only three (d) All four",
+"raw_blocks_combined": "Page 11 text",
+"options_combined": "(a) Only one (b) Only two (c) Only three (d) All four",
+"answer_key": "B",
+"answer_explanation": "Capital markets are for long-term funds: Government Bond and Stock Market. Call Money and Treasury Bill are money markets (short-term). Thus, only two.",
+"answer_sources": [
+"SEBI, https://www.sebi.gov.in/sebiweb/home/HomeAction.do?doListing=yes&sid=1&ssmId=1",
+"RBI, https://www.rbi.org.in/Scripts/FAQView.aspx?Id=8"
+],
+"subject": "Economy",
+"topic": "Financial Markets",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q26",
+"year": 2023,
+"q_no_in_paper": 26,
+"question_text_combined": "Which one of the following best describes the concept of 'Small Farmer Large Field'? (a) Resettlement of a large number of people, uprooted from their countries due to war, by giving them a large cultivable land which they cultivate collectively and share the produce (b) Many marginal farmers in an area organize themselves into groups and synchronize and harmonize selected agricultural operations (c) Many marginal farmers in an area together make a contract with a corporate body and surrender their land to the corporate body for a fixed term for which the corporate body makes a payment of agreed amount to the farmers (d) A company extends loans, technical knowledge and material inputs to a number of small farmers in an area so that they produce the agricultural commodity required by the company for its manufacturing process and commercial production",
+"raw_blocks_combined": "Page 11 text",
+"options_combined": "(a) Resettlement... (d) A company...",
+"answer_key": "B",
+"answer_explanation": "Small Farmer Large Field is a model where small farmers group to act as one large field for better efficiency and bargaining.",
+"answer_sources": [
+"FAO, https://www.fao.org/3/ca7032en/ca7032en.pdf",
+"PIB, https://pib.gov.in/PressReleaseIframePage.aspx?PRID=1702345"
+],
+"subject": "Economy",
+"topic": "Agriculture Models",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q27",
+"year": 2023,
+"q_no_in_paper": 27,
+"question_text_combined": "Consider the following statements : 1. The Government of India provides Minimum Support Price for niger (Guizotia abyssinica) seeds. 2. Niger is cultivated as a Kharif crop. 3. Some tribal people in India use niger seed oil for cooking. How many of the above statements are correct? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 11 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "C",
+"answer_explanation": "MSP is provided for niger seeds. It is a kharif crop. Tribal communities use its oil. All correct.",
+"answer_sources": [
+"Commission for Agricultural Costs and Prices, https://cacp.dacnet.nic.in/",
+"Ministry of Agriculture, https://agricoop.nic.in/en/divisiontype/oilseeds-division"
+],
+"subject": "Economy",
+"topic": "Crops and MSP",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q28",
+"year": 2023,
+"q_no_in_paper": 28,
+"question_text_combined": "Consider the investments in the following assets : 1. Brand recognition 2. Inventory 3. Intellectual property 4. Mailing list of clients How many of the above are considered intangible investments? (a) Only one (b) Only two (c) Only three (d) All four",
+"raw_blocks_combined": "Page 13 text",
+"options_combined": "(a) Only one (b) Only two (c) Only three (d) All four",
+"answer_key": "C",
+"answer_explanation": "Brand, IP, mailing list are intangible. Inventory is tangible. Thus, three.",
+"answer_sources": [
+"Investopedia, https://www.investopedia.com/terms/i/intangibleasset.asp",
+"RBI Guidelines on Assets, https://rbi.org.in/Scripts/BS_ViewMasCirculardetails.aspx?id=9901"
+],
+"subject": "Economy",
+"topic": "Assets Classification",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q29",
+"year": 2023,
+"q_no_in_paper": 29,
+"question_text_combined": "Consider the following : 1. Demographic performance 2. Forest and ecology 3. Governance reforms 4. Stable government 5. Tax and fiscal efforts For the horizontal tax devolution, the Fifteenth Finance Commission used how many of the above as criteria other than population area and income distance? (a) Only two (b) Only three (c) Only four (d) All five",
+"raw_blocks_combined": "Page 13 text",
+"options_combined": "(a) Only two (b) Only three (c) Only four (d) All five",
+"answer_key": "B",
+"answer_explanation": "15th FC used demographic performance, forest and ecology, tax and fiscal efforts, besides population, area, income distance. Governance reforms and stable government not used. Thus, three.",
+"answer_sources": [
+"15th Finance Commission Report, https://fincomindia.nic.in/ShowContent.aspx?uid1=3&uid2=0&uid3=0&uid4=0",
+"PIB, https://pib.gov.in/PressReleasePage.aspx?PRID=1676322"
+],
+"subject": "Polity",
+"topic": "Finance Commission",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q30",
+"year": 2023,
+"q_no_in_paper": 30,
+"question_text_combined": "Consider the following infrastructure sectors : 1. Affordable housing 2. Mass rapid transport 3. Health care 4. Renewable energy On how many of the above does UNOPS Sustainable Investments in Infrastructure and Innovation (S3i) initiative focus for its investments? (a) Only one (b) Only two (c) Only three (d) All four",
+"raw_blocks_combined": "Page 13 text",
+"options_combined": "(a) Only one (b) Only two (c) Only three (d) All four",
+"answer_key": "D",
+"answer_explanation": "UNOPS S3i focuses on affordable housing, renewable energy, health, and sustainable transport.",
+"answer_sources": [
+"UNOPS website, https://www.unops.org/s3i",
+"UN SDG, https://sdgs.un.org/partnerships/sustainable-investments-infrastructure-and-innovation-s3i-initiative"
+],
+"subject": "International Relations",
+"topic": "UN Initiatives",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q31",
+"year": 2023,
+"q_no_in_paper": 31,
+"question_text_combined": "In essence, what does 'Due Process of Law' mean? (a) The principle of natural justice (b) The procedure established by law (c) Fair application of law (d) Equality before law",
+"raw_blocks_combined": "Page 13 text",
+"options_combined": "(a) The principle of natural justice (b) The procedure established by law (c) Fair application of law (d) Equality before law",
+"answer_key": "A",
+"answer_explanation": "Due process of law ensures fair treatment by the legal system, including notice and opportunity to be heard. It is closely connected to natural justice, which focuses on fairness in proceedings.",
+"answer_sources": [
+"Constitution of India, Article 21, https://indiankanoon.org/doc/237570/",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "Polity",
+"topic": "Due Process of Law",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q32",
+"year": 2023,
+"q_no_in_paper": 32,
+"question_text_combined": "Consider the following statements : Statement-I : In India, prisons are managed by State Governments with their own rules and regulations for the day-to-day administration of prisons. Statement-II : In India, prisons are governed by the Prisons Act, 1894 which expressly kept the subject of prisons in the control of Provincial Governments. Which one of the following is correct in respect of the above statements? (a) Both Statement-I and Statement-II are correct and Statement-II is the correct explanation for Statement-I (b) Both Statement-I and Statement-II are correct and Statement-II is not the correct explanation for Statement-I (c) Statement-I is correct but Statement-II is incorrect (d) Statement-I is incorrect but Statement-II is correct",
+"raw_blocks_combined": "Page 13 text",
+"options_combined": "(a) Both Statement-I and Statement-II are correct and Statement-II is the correct explanation for Statement-I (b) Both Statement-I and Statement-II are correct and Statement-II is not the correct explanation for Statement-I (c) Statement-I is correct but Statement-II is incorrect (d) Statement-I is incorrect but Statement-II is correct",
+"answer_key": "A",
+"answer_explanation": "Prisons are under the State List in the Seventh Schedule of the Constitution. The Prisons Act, 1894, places control with Provincial Governments, now States, explaining state management.",
+"answer_sources": [
+"Prisons Act, 1894, https://www.indiacode.nic.in/handle/123456789/2320",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "Polity",
+"topic": "Prisons Administration",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q33",
+"year": 2023,
+"q_no_in_paper": 33,
+"question_text_combined": "Which one of the following statements best reflects the Chief purpose of the 'Constitution' of a country? (a) It determines the objective for the making of necessary laws. (b) It enables the creation of political offices and a government. (c) It defines and limits the powers of government. (d) It secures social justice, social equality and social security.",
+"raw_blocks_combined": "Page 13 text",
+"options_combined": "(a) It determines the objective for the making of necessary laws. (b) It enables the creation of political offices and a government. (c) It defines and limits the powers of government. (d) It secures social justice, social equality and social security.",
+"answer_key": "C",
+"answer_explanation": "The primary purpose of a constitution is to limit government powers to prevent overreach. This promotes constitutionalism where authority is legally bounded.",
+"answer_sources": [
+"NCERT Class 11 Political Theory, Chapter 2, https://ncert.nic.in/textbook/pdf/keps202.pdf",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "Polity",
+"topic": "Purpose of Constitution",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q34",
+"year": 2023,
+"q_no_in_paper": 34,
+"question_text_combined": "In India, which one of the following Constitutional Amendments was widely believed to be enacted to overcome the judicial interpretations of the Fundamental Rights? (a) 1st Amendment (b) 42nd Amendment (c) 44th Amendment (d) 86th Amendment",
+"raw_blocks_combined": "Page 15 text",
+"options_combined": "(a) 1st Amendment (b) 42nd Amendment (c) 44th Amendment (d) 86th Amendment",
+"answer_key": "A",
+"answer_explanation": "The 1st Amendment in 1951 added Article 19(2) and 31A/B to clarify freedoms and validate land reforms. This addressed early court challenges to fundamental rights.",
+"answer_sources": [
+"Constitution of India, First Amendment Act, 1951, https://india.gov.in/my-government/constitution-india/amendments/constitution-india-first-amendment-act-1951",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "Polity",
+"topic": "Constitutional Amendments",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q35",
+"year": 2023,
+"q_no_in_paper": 35,
+"question_text_combined": "Consider the following organizations/bodies in India : 1. The National Commission for Backward Classes 2. The National Human Rights Commission 3. The National Law Commission 4. The National Consumer Disputes Redressal Commission How many of the above are constitutional bodies? (a) Only one (b) Only two (c) Only three (d) All four",
+"raw_blocks_combined": "Page 15 text",
+"options_combined": "(a) Only one (b) Only two (c) Only three (d) All four",
+"answer_key": "A",
+"answer_explanation": "Only the National Commission for Backward Classes is a constitutional body under Article 338B via the 102nd Amendment. The others are statutory or executive bodies.",
+"answer_sources": [
+"Constitution of India, Article 338B, https://indiankanoon.org/doc/1641916/",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "Polity",
+"topic": "Constitutional Bodies",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q36",
+"year": 2023,
+"q_no_in_paper": 36,
+"question_text_combined": "Consider the following statements : 1. If the election of the President of India is declared void by the Supreme Court of India, all acts done by him/her in the performance of duties of his/her office of President before the date of decision become invalid. 2. Election for the post of the President of India can be postponed on the ground that some Legislative Assemblies have been dissolved and elections are yet to take place. 3. When a Bill is presented to the President of India, the Constitution prescribes time limits within which he/she has to declare his/her assent. How many of the above statements are correct? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 15 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "D",
+"answer_explanation": "Article 71(2) protects prior acts of the President even if election is voided. There is no provision to postpone presidential election due to dissolved assemblies. Article 111 does not prescribe time limits for presidential assent to bills.",
+"answer_sources": [
+"Constitution of India, Article 71 and 111, https://indiankanoon.org/doc/211089/",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "Polity",
+"topic": "President of India",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q37",
+"year": 2023,
+"q_no_in_paper": 37,
+"question_text_combined": "With reference to Finance Bill and Money Bill in the Indian Parliament, consider the following statements : 1. When the Lok Sabha transmits Finance Bill to the Rajya Sabha, it can amend or reject the Bill. 2. When the Lok Sabha transmits Money Bill to the Rajya Sabha, it cannot amend or reject the Bill, it can only make recommendations. 3. In the case of disagreement between the Lok Sabha and the Rajya Sabha, there is no joint sitting for Money Bill, but a joint sitting becomes necessary for Finance Bill. How many of the above statements are correct? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 15 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "A",
+"answer_explanation": "The Finance Bill is a type of Money Bill, so Rajya Sabha cannot amend or reject it, only recommend. There is no joint sitting for Money Bills, including Finance Bills.",
+"answer_sources": [
+"Constitution of India, Article 109 and 110, https://indiankanoon.org/doc/1939993/",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "Polity",
+"topic": "Money and Finance Bills",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q38",
+"year": 2023,
+"q_no_in_paper": 38,
+"question_text_combined": "Consider the following statements : Once the Central Government notifies an area as a 'Community Reserve' 1. the Chief Wildlife Warden of the State becomes the governing authority of such forest 2. hunting is not allowed in such area 3. people of such area are allowed to collect non-timber forest produce 4. people of such area are allowed traditional agricultural practices How many of the above statements are correct? (a) Only one (b) Only two (c) Only three (d) All four",
+"raw_blocks_combined": "Page 15 text",
+"options_combined": "(a) Only one (b) Only two (c) Only three (d) All four",
+"answer_key": "C",
+"answer_explanation": "Community Reserves are governed by a committee, not the Chief Wildlife Warden. Hunting is banned, NTFP collection and traditional agriculture are allowed under the Wildlife Protection Act, 2002.",
+"answer_sources": [
+"Wild Life (Protection) Act, 2002, Section 36C, https://india.gov.in/wild-life-protection-act-1972",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "Environment",
+"topic": "Community Reserves",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q39",
+"year": 2023,
+"q_no_in_paper": 39,
+"question_text_combined": "With reference to 'Scheduled Areas' in India, consider the following statements : 1. Within a State, the notification of an area as Scheduled Area takes place through an Order of the President. 2. The largest administrative unit forming the Scheduled Area is the District and the lowest is the cluster of villages in the Block. 3. The Chief Ministers of the concerned States are required to submit annual reports to the Union Home Ministry on the administration of Scheduled Areas in the States. How many of the above statements are correct? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 17 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "B",
+"answer_explanation": "The President declares Scheduled Areas under Article 244. The units range from districts to village clusters. Reports are submitted to the President via the Governor, not directly to the Home Ministry.",
+"answer_sources": [
+"Constitution of India, Fifth Schedule, https://indiankanoon.org/doc/1024724/",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "Polity",
+"topic": "Scheduled Areas",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q40",
+"year": 2023,
+"q_no_in_paper": 40,
+"question_text_combined": "Consider the following statements : Statement-I : The Supreme Court of India has held in some judgements that the reservation policies made under Article 16(4) of the Constitution of India would be limited by Article 335 for maintenance of efficiency of administration. Statement-II : Article 335 of the Constitution of India defines the term 'efficiency of administration'. Which one of the following is correct in respect of the above statements? (a) Both Statement-I and Statement-II are correct and Statement-II is the correct explanation for Statement-I (b) Both Statement-I and Statement-II are correct and Statement-II is not the correct explanation for Statement-I (c) Statement-I is correct but Statement-II is incorrect (d) Statement-I is incorrect but Statement-II is correct",
+"raw_blocks_combined": "Page 17 text",
+"options_combined": "(a) Both Statement-I and Statement-II are correct and Statement-II is the correct explanation for Statement-I (b) Both Statement-I and Statement-II are correct and Statement-II is not the correct explanation for Statement-I (c) Statement-I is correct but Statement-II is incorrect (d) Statement-I is incorrect but Statement-II is correct",
+"answer_key": "C",
+"answer_explanation": "The Supreme Court in M Nagaraj case applied Article 335 to limit reservations for efficiency. Article 335 mentions but does not define 'efficiency of administration'.",
+"answer_sources": [
+"Constitution of India, Article 335, https://indiankanoon.org/doc/1017028/",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "Polity",
+"topic": "Reservations and Efficiency",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q41",
+"year": 2023,
+"q_no_in_paper": 41,
+"question_text_combined": "In which one of the following regions was Dhanyakataka, which flourished as a prominent Buddhist centre under the Mahasanghikas, located? (a) Andhra (b) Gandhara (c) Kalinga (d) Magadha",
+"raw_blocks_combined": "Page 17 text",
+"options_combined": "(a) Andhra (b) Gandhara (c) Kalinga (d) Magadha",
+"answer_key": "A",
+"answer_explanation": "Dhanyakataka is located in Andhra Pradesh, near the Amaravati stupa. It was the capital of the later Satavahanas and a major Buddhist site.",
+"answer_sources": [
+"NCERT Class 12 Ancient India, https://ncert.nic.in/textbook/pdf/lehs102.pdf",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "History",
+"topic": "Buddhist Centres",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q42",
+"year": 2023,
+"q_no_in_paper": 42,
+"question_text_combined": "With reference to ancient India, consider the following statements : 1. The concept of Stupa is Buddhist in origin. 2. Stupa was generally a repository of relics. 3. Stupa was a votive and commemorative structure in Buddhist tradition. How many of the above statements are correct? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 17 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "B",
+"answer_explanation": "Stupas were pre-Buddhist funerary mounds adopted by Buddhism. They generally contained relics and served as votive or commemorative structures.",
+"answer_sources": [
+"NCERT Class 6 Our Pasts, Chapter 12, https://ncert.nic.in/textbook/pdf/fess212.pdf",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "History",
+"topic": "Stupas",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q43",
+"year": 2023,
+"q_no_in_paper": 43,
+"question_text_combined": "With reference to ancient South India, Korkai, Poompuhar and Muchiri were well known as (a) capital cities (b) ports (c) centres of iron-and-steel making (d) shrines of Jain Tirthankaras",
+"raw_blocks_combined": "Page 17 text",
+"options_combined": "(a) capital cities (b) ports (c) centres of iron-and-steel making (d) shrines of Jain Tirthankaras",
+"answer_key": "B",
+"answer_explanation": "These were major ports in ancient South India: Puhar for Cholas, Korkai for Pandyas, and Muchiri for Cheras.",
+"answer_sources": [
+"NCERT Class 12 Themes in Indian History, Chapter 2, https://ncert.nic.in/textbook/pdf/lehs102.pdf",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "History",
+"topic": "Ancient Ports",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q44",
+"year": 2023,
+"q_no_in_paper": 44,
+"question_text_combined": "Which one of the following explains the practice of 'Vattakirutal' as mentioned in Sangam poems? (a) Kings employing women bodyguards (b) Learned persons assembling in royal courts to discuss religious and philosophical matters (c) Young girls keeping watch over agricultural fields and driving away birds and animals (d) A king defeated in a battle committing ritual suicide by starving himself to death",
+"raw_blocks_combined": "Page 19 text",
+"options_combined": "(a) Kings employing women bodyguards (b) Learned persons assembling in royal courts to discuss religious and philosophical matters (c) Young girls keeping watch over agricultural fields and driving away birds and animals (d) A king defeated in a battle committing ritual suicide by starving himself to death",
+"answer_key": "D",
+"answer_explanation": "Vattakirutal refers to the ritual suicide by fasting undertaken by defeated kings, as seen in examples from Chera kings in Sangam literature.",
+"answer_sources": [
+"NCERT Class 12 Themes in Indian History, https://ncert.nic.in/textbook/pdf/lehs102.pdf",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "History",
+"topic": "Sangam Literature",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q45",
+"year": 2023,
+"q_no_in_paper": 45,
+"question_text_combined": "Consider the following dynasties : 1. Hoysala 2. Gahadavala 3. Kakatiya 4. Yadava How many of the above dynasties established their kingdoms in early eighth century AD? (a) Only one (b) Only two (c) Only three (d) None",
+"raw_blocks_combined": "Page 19 text",
+"options_combined": "(a) Only one (b) Only two (c) Only three (d) None",
+"answer_key": "D",
+"answer_explanation": "Hoysala emerged in the 10th century, Gahadavala in the 11th, Kakatiya and Yadava in the 12th century. None in the early 8th century.",
+"answer_sources": [
+"NCERT Class 7 Our Pasts II, Chapter 2, https://ncert.nic.in/textbook/pdf/gess202.pdf",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "History",
+"topic": "Medieval Dynasties",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q46",
+"year": 2023,
+"q_no_in_paper": 46,
+"question_text_combined": "With reference to ancient Indian History, consider the following pairs : Literary work Author 1. Devichandragupta : Bilhana 2. Hammira-Mahakavya : Nayachandra Suri 3. Milinda-panha : Nagarjuna 4. Nitivakyamrita : Somadeva Suri How many of the above pairs are correctly matched? (a) Only one (b) Only two (c) Only three (d) All four",
+"raw_blocks_combined": "Page 19 text",
+"options_combined": "(a) Only one (b) Only two (c) Only three (d) All four",
+"answer_key": "C",
+"answer_explanation": "Pairs 2, 3, and 4 are correct. Devichandragupta is by Visakhadatta, not Bilhana.",
+"answer_sources": [
+"NCERT Class 12 Themes in Indian History, https://ncert.nic.in/textbook/pdf/lehs104.pdf",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "History",
+"topic": "Ancient Literary Works",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q47",
+"year": 2023,
+"q_no_in_paper": 47,
+"question_text_combined": ""Souls are not only the property of animal and plant life, but also of rocks, running water and many other natural objects not looked on as living by other religious sects." The above statement reflects one of the core beliefs of which one of the following religious sects of ancient India? (a) Buddhism (b) Jainism (c) Shaivism (d) Vaishnavism",
+"raw_blocks_combined": "Page 19 text",
+"options_combined": "(a) Buddhism (b) Jainism (c) Shaivism (d) Vaishnavism",
+"answer_key": "B",
+"answer_explanation": "Jainism's philosophy of anekantavada and jiva/ajiva attributes souls to non-living entities like rocks and water, emphasizing non-violence to all.",
+"answer_sources": [
+"NCERT Class 12 Themes in Indian History, Chapter 4, https://ncert.nic.in/textbook/pdf/lehs104.pdf",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "History",
+"topic": "Jainism Beliefs",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q48",
+"year": 2023,
+"q_no_in_paper": 48,
+"question_text_combined": "Who among the following rulers of Vijayanagara Empire constructed a large dam across Tungabhadra River and a canal-cum-aqueduct several kilometres long from the river to the capital city? (a) Devaraya I (b) Mallikarjuna (c) Vira Vijaya (d) Virupaksha",
+"raw_blocks_combined": "Page 19 text",
+"options_combined": "(a) Devaraya I (b) Mallikarjuna (c) Vira Vijaya (d) Virupaksha",
+"answer_key": "A",
+"answer_explanation": "Deva Raya I constructed a barrage across the Tungabhadra and a 24 km aqueduct to supply water to the capital around 1410 CE.",
+"answer_sources": [
+"NCERT Class 12 Themes in Indian History II, Chapter 7, https://ncert.nic.in/textbook/pdf/lehs207.pdf",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "History",
+"topic": "Vijayanagara Empire",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q49",
+"year": 2023,
+"q_no_in_paper": 49,
+"question_text_combined": "Who among the following rulers of medieval Gujarat surrendered Diu to Portuguese? (a) Ahmad Shah (b) Mahmud Begarha (c) Bahadur Shah (d) Muhammad Shah",
+"raw_blocks_combined": "Page 19 text",
+"options_combined": "(a) Ahmad Shah (b) Mahmud Begarha (c) Bahadur Shah (d) Muhammad Shah",
+"answer_key": "C",
+"answer_explanation": "Bahadur Shah ceded Diu and Bassein to the Portuguese in 1534 in exchange for help against Humayun.",
+"answer_sources": [
+"NCERT Class 12 Themes in Indian History II, Chapter 9, https://ncert.nic.in/textbook/pdf/lehs209.pdf",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "History",
+"topic": "Medieval Gujarat",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q50",
+"year": 2023,
+"q_no_in_paper": 50,
+"question_text_combined": "By which one of the following Acts was the Governor General of Bengal designated as the Governor General of India? (a) The Regulating Act (b) The Pitt's India Act (c) The Charter Act of 1793 (d) The Charter Act of 1833",
+"raw_blocks_combined": "Page 19 text",
+"options_combined": "(a) The Regulating Act (b) The Pitt's India Act (c) The Charter Act of 1793 (d) The Charter Act of 1833",
+"answer_key": "D",
+"answer_explanation": "The Charter Act of 1833 centralized administration by designating the Governor General of Bengal as the Governor General of India, with William Bentinck as the first.",
+"answer_sources": [
+"Laxmikant Indian Polity, Chapter 1, https://www.mheducation.co.in/indian-polity-9789355324344-india",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "History",
+"topic": "Colonial Acts",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q51",
+"year": 2023,
+"q_no_in_paper": 51,
+"question_text_combined": "Consider the following statements in relation to Janani Suraksha Yojana : 1. It is a safe motherhood intervention of the State Health Departments. 2. Its objective is to reduce maternal and neonatal mortality among poor pregnant women. 3. It aims to promote institutional delivery among poor pregnant women. 4. Its objective includes providing public health facilities to sick infants up to one year of age. How many of the statements given above are correct? (a) Only one (b) Only two (c) Only three (d) All four",
+"raw_blocks_combined": "Page 21 text",
+"options_combined": "(a) Only one (b) Only two (c) Only three (d) All four",
+"answer_key": "C",
+"answer_explanation": "JSY is a central scheme under NRHM to reduce mortality through institutional deliveries for poor women. It does not include facilities for sick infants up to one year.",
+"answer_sources": [
+"Ministry of Health and Family Welfare, https://nhm.gov.in/index1.php?lang=1&level=3&sublinkid=841&lid=308",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "Economy",
+"topic": "Health Schemes",
+"confidence_score": 0.95,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q52",
+"year": 2023,
+"q_no_in_paper": 52,
+"question_text_combined": "Consider the following statements in the context of interventions being undertaken under Anaemia Mukt Bharat Strategy : 1. It provides prophylactic calcium supplementation for pre-school children, adolescents and pregnant women. 2. It runs a campaign for delayed cord clamping at the time of childbirth. 3. It provides for periodic deworming to children and adolescents. 4. It addresses non-nutritional causes of anaemia in endemic pockets with special focus on malaria, hemoglobinopathies and fluorosis. How many of the statements given above are correct? (a) Only one (b) Only two (c) Only three (d) All four",
+"raw_blocks_combined": "Page 21 text",
+"options_combined": "(a) Only one (b) Only two (c) Only three (d) All four",
+"answer_key": "C",
+"answer_explanation": "The strategy provides iron and folic acid supplementation, deworming, delayed clamping, and addresses non-nutritional causes. It does not include calcium supplementation.",
+"answer_sources": [
+"Ministry of Health and Family Welfare, https://anemiamuktbharat.info/",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "Economy",
+"topic": "Health Initiatives",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q53",
+"year": 2023,
+"q_no_in_paper": 53,
+"question_text_combined": "Consider the following statements : 1. Carbon fibres are used in the manufacture of components used in automobiles and aircrafts. 2. Carbon fibres once used cannot be recycled. Which of the statements given above is/are correct? (a) 1 only (b) 2 only (c) Both 1 and 2 (d) Neither 1 nor 2",
+"raw_blocks_combined": "Page 21 text",
+"options_combined": "(a) 1 only (b) 2 only (c) Both 1 and 2 (d) Neither 1 nor 2",
+"answer_key": "A",
+"answer_explanation": "Carbon fibres are used in high-strength components for automobiles and aircraft. They can be recycled, though the process is complex.",
+"answer_sources": [
+"NASA Glenn Research Center, https://www1.grc.nasa.gov/space/iss-research/microgravity-materials-science/carbon-fiber-recycling/",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "Science & Tech",
+"topic": "Carbon Fibres",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q54",
+"year": 2023,
+"q_no_in_paper": 54,
+"question_text_combined": "Consider the following actions : 1. Detection of car crash/collision which results in the deployment of airbags almost instantaneously 2. Detection of accidental free fall of a laptop towards the ground which results in the immediate turning off of the hard drive 3. Detection of the tilt of the smartphone which results in the rotation of display between portrait and landscape mode In how many of the above actions is the function of accelerometer required? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 21 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "C",
+"answer_explanation": "Accelerometers detect acceleration and vibration in all three actions: crash for airbags, fall for hard drive protection, and tilt for screen rotation.",
+"answer_sources": [
+"HowStuffWorks, https://electronics.howstuffworks.com/accelerometer.htm",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "Science & Tech",
+"topic": "Accelerometers",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q55",
+"year": 2023,
+"q_no_in_paper": 55,
+"question_text_combined": "With reference to the role of biofilters in Recirculating Aquaculture System, consider the following statements : 1. Biofilters provide waste treatment by removing uneaten fish feed. 2. Biofilters convert ammonia present in fish waste to nitrate. 3. Biofilters increase phosphorus as nutrient for fish in water. How many of the statements given above are correct? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 23 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "B",
+"answer_explanation": "Biofilters in RAS perform nitrification, converting ammonia to nitrate through bacteria. They do not remove uneaten feed or increase phosphorus.",
+"answer_sources": [
+"FAO Aquaculture, https://www.fao.org/fishery/en/aquaculture",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "Science & Tech",
+"topic": "Aquaculture Systems",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q56",
+"year": 2023,
+"q_no_in_paper": 56,
+"question_text_combined": "Consider the following pairs : Objects in space Description 1. Cepheids : Giant clouds of dust and gas in space 2. Nebulae : Stars which brighten and dim periodically 3. Pulsars : Neutron stars that are formed when giant stars explode, and their cores collapse How many of the above pairs are correctly matched? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 23 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "A",
+"answer_explanation": "Only pair 3 is correct; pulsars are neutron stars from collapsed cores. Cepheids are variable stars, nebulae are gas clouds.",
+"answer_sources": [
+"NASA, https://science.nasa.gov/missions/hubble/what-are-pulsars",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "Science & Tech",
+"topic": "Space Objects",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q57",
+"year": 2023,
+"q_no_in_paper": 57,
+"question_text_combined": "Which one of the following countries has its own Satellite Navigation System? (a) Australia (b) Canada (c) Israel (d) Japan",
+"raw_blocks_combined": "Page 23 text",
+"options_combined": "(a) Australia (b) Canada (c) Israel (d) Japan",
+"answer_key": "D",
+"answer_explanation": "Japan has the Quasi-Zenith Satellite System (QZSS) for regional navigation.",
+"answer_sources": [
+"JAXA, https://global.jaxa.jp/projects/sat/qzss/",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "Science & Tech",
+"topic": "Satellite Navigation",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q58",
+"year": 2023,
+"q_no_in_paper": 58,
+"question_text_combined": "Consider the following statements : 1. Ballistic missiles are jet-propelled at subsonic speeds throughout their flights, while cruise missiles are rocket-powered only in the initial phase of flight. 2. Agni-V is a medium-range supersonic cruise missile, while BrahMos is a solid-fuelled intercontinental ballistic missile. Which of the statements given above is/are correct? (a) 1 only (b) 2 only (c) Both 1 and 2 (d) Neither 1 nor 2",
+"raw_blocks_combined": "Page 23 text",
+"options_combined": "(a) 1 only (b) 2 only (c) Both 1 and 2 (d) Neither 1 nor 2",
+"answer_key": "D",
+"answer_explanation": "Ballistic missiles are rocket-powered and follow a trajectory, while cruise missiles are jet-propelled throughout. Agni-V is an ICBM, BrahMos is a supersonic cruise missile.",
+"answer_sources": [
+"DRDO, https://drdo.gov.in/missile-systems",
+"Compass by Rau's IAS, https://compass.rauias.com/blog/upsc-prelims-answer-key-2023-gs-paper-1"
+],
+"subject": "Science & Tech",
+"topic": "Missiles",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q59",
+"year": 2023,
+"q_no_in_paper": 59,
+"question_text_combined": "Consider the following statements regarding mercury pollution : 1. Gold mining activity is a source of mercury pollution in the world. 2. Coal-based thermal power plants cause mercury pollution. 3. There is no known safe level of exposure to mercury. How many of the above statements are correct? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 25 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "B",
+"answer_explanation": "Gold mining and coal plants are sources of mercury pollution. However, there are known safe exposure levels as per OSHA and other standards, making statement 3 incorrect.",
+"answer_sources": [
+"WHO on Mercury, https://www.who.int/news-room/fact-sheets/detail/mercury-and-health",
+"Vajiram & Ravi, https://vajiramandravi.com/upsc-exam/consider-the-following-statements-regarding-mercury-pollution"
+],
+"subject": "Environment",
+"topic": "Mercury Pollution",
+"confidence_score": 0.95,
+"assumptions": "Safe level exists based on regulatory limits."
+},
+{
+"id_combined": "2023_GS1_Q60",
+"year": 2023,
+"q_no_in_paper": 60,
+"question_text_combined": "With reference to green hydrogen, consider the following statements : 1. It can be used directly as a fuel for internal combustion. 2. It can be blended with natural gas and used as fuel for heat or power generation. 3. It can be used in the hydrogen fuel cell to run vehicles. How many of the above statements are correct? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 25 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "C",
+"answer_explanation": "Green hydrogen can be used in internal combustion engines, blended with natural gas for energy, and in fuel cells for vehicles, making all statements correct.",
+"answer_sources": [
+"Ministry of New and Renewable Energy, https://mnre.gov.in/green-hydrogen-policy",
+"Testbook, https://testbook.com/question-answer/with-reference-to-green-hydrogen-consider-the-fol--6472fadd32b5c29ca68eb210"
+],
+"subject": "Environment",
+"topic": "Green Hydrogen",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q61",
+"year": 2023,
+"q_no_in_paper": 61,
+"question_text_combined": "Consider the following countries: 1. Bulgaria 2. Czech Republic 3. Hungary 4. Latvia 5. Lithuania 6. Romania. How many of the above-mentioned countries share a land border with Ukraine? (a) Only two (b) Only three (c) Only four (d) Only five",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) Only two (b) Only three (c) Only four (d) Only five",
+"answer_key": "A",
+"answer_explanation": "Ukraine shares a land border with Hungary, Romania, Poland, Russia, Belarus, Slovakia, Moldova. Thus, only two from the list: Hungary and Romania.",
+"answer_sources": [
+"ATLAS",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "International Relations",
+"topic": "Bordering Countries",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q62",
+"year": 2023,
+"q_no_in_paper": 62,
+"question_text_combined": "With reference to the Earth's atmosphere, which one of the following statements is correct? (a) The total amount of insolation received at the equator is roughly about 10 times of that received at the poles. (b) Infrared rays constitute roughly two-thirds of insolation. (c) Infrared waves are largely absorbed by water vapour that is concentrated in the lower atmosphere. (d) Infrared waves are a part of visible spectrum of electromagnetic waves of solar radiation.",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) The total amount... (d) Infrared waves...",
+"answer_key": "C",
+"answer_explanation": "Some atmospheric gases, such as water vapour absorb and re-emit infrared energy from the atmosphere down to the Earth’s surface.",
+"answer_sources": [
+"NCERT",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "Geography",
+"topic": "Atmosphere and Insolation",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q63",
+"year": 2023,
+"q_no_in_paper": 63,
+"question_text_combined": "Statement–I: The soil in tropical rain forests is rich in nutrients. Statement-II: The high temperature and moisture of tropical rain forests cause dead organic matter in the soil to decompose quickly. Which one of the following is correct in respect of the above statements? (a) Both correct, II explains I (b) Both correct, II does not explain I (c) I correct, II incorrect (d) I incorrect, II correct",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) Both... (d) I incorrect, II correct",
+"answer_key": "D",
+"answer_explanation": "The high temperature and moisture of tropical rainforests cause dead organic matter in the soil to decompose more quickly than in other climates, thus releasing and losing its nutrients rapidly. The high volume of rain in tropical rainforests washes nutrients out (leaching) of the soil more quickly than in other climates.",
+"answer_sources": [
+"NCERT",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "Geography",
+"topic": "Tropical Rainforests Soil",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q64",
+"year": 2023,
+"q_no_in_paper": 64,
+"question_text_combined": "Statement-I: The temperature contrast between continents and oceans is greater during summer than in winter. Statement-II: The specific heat of water is more than that of land surface. Which one of the following is correct in respect of the above statements? (a) Both correct, II explains I (b) Both correct, II does not explain I (c) I correct, II incorrect (d) I incorrect, II correct",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) Both... (d) I incorrect, II correct",
+"answer_key": "D",
+"answer_explanation": "During summers water accumulates high amount of energy which it is unable to loose quickly by winters. Hence during winters land becomes extremely cold whereas water still remains warm leading to high thermal contrast.",
+"answer_sources": [
+"Isotherms map from NCERT",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "Geography",
+"topic": "Temperature Contrast",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q65",
+"year": 2023,
+"q_no_in_paper": 65,
+"question_text_combined": "Consider the following statements: 1. In a seismograph, P waves are recorded earlier than S waves. 2. In P waves, the individual particles vibrate to and fro in the direction of wave propagation whereas in S waves, the particles vibrate up and down at right angles to the direction of wave propagation. Which of the statements given above is/are correct? (a) 1 only (b) 2 only (c) Both 1 and 2 (d) Neither 1 nor 2",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) 1 only (b) 2 only (c) Both 1 and 2 (d) Neither 1 nor 2",
+"answer_key": "C",
+"answer_explanation": "P-waves move faster and are the first to arrive at the surface. S-waves arrive at the surface with some time lag. P-waves vibrate parallel to the direction of the wave. The direction of vibrations of S-waves is perpendicular to the wave direction.",
+"answer_sources": [
+"NCERT",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "Geography",
+"topic": "Earthquakes and Waves",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q66",
+"year": 2023,
+"q_no_in_paper": 66,
+"question_text_combined": "With reference to coal-based thermal power plants in India, consider the following statements: 1. None of them uses seawater. 2. None of them is set up in water-stressed district. 3. None of them is privately owned. How many of the above statements are correct? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "D",
+"answer_explanation": "Mundra Thermal Power Station uses sea water from the Gulf of Kutch. It is privately owned by Adani Power.",
+"answer_sources": [
+"Adani power https://www.adanipower.com/operational-power-plants/mundra-gujarat",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "Geography",
+"topic": "Power Plants",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q67",
+"year": 2023,
+"q_no_in_paper": 67,
+"question_text_combined": "‘Wolbachia method’ is sometimes talked about with reference to which one of the following? (a) Controlling the viral diseases spread by mosquitoes (b) Converting crop residues into packing material (c) Producing biodegradable plastics (d) Producing biochar from thermo-chemical conversion of biomass",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) Controlling... (d) Producing biochar...",
+"answer_key": "A",
+"answer_explanation": "Wolbachia is a bacteria that, if introduced in mosquitoes, could stop disease-spreading viruses from growing and spreading.",
+"answer_sources": [
+"Prelims Compass 2022 (S&T): Pg: 110",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "Science & Tech",
+"topic": "Vector Control",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q68",
+"year": 2023,
+"q_no_in_paper": 68,
+"question_text_combined": "Consider the following activities: 1. Spreading finely ground basalt rock on farmlands extensively 2. Increasing the alkalinity of oceans by adding lime 3. Capturing carbon dioxide released by various industries and pumping it into abandoned subterranean mines in the form of carbonated waters How many of the above activities are often considered and discussed for carbon capture and sequestration? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "C",
+"answer_explanation": "All three are methods for carbon capture: enhanced weathering with basalt, ocean liming, and CCS by injecting CO2 underground.",
+"answer_sources": [
+"Rau’s class notes & compass",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "Environment",
+"topic": "Carbon Capture",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q69",
+"year": 2023,
+"q_no_in_paper": 69,
+"question_text_combined": "'Aerial metagenomics' best refers to which one of the following situations? (a) Collecting DNA samples from air in a habitat at one go (b) Understanding the genetic makeup of avian species of a habitat (c) Using air-borne devices to collect blood samples from moving animals (d) Sending drones to inaccessible areas to collect plant and animal samples from land surfaces and water bodies",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) Collecting... (d) Sending drones...",
+"answer_key": "A",
+"answer_explanation": "Aerial metagenomics is related to Environmental DNA collected from the environment/habitats of certain species in that area. The DNA that is left by these species remains in the environment like water bodies, soil, air etc.",
+"answer_sources": [
+"Economic Times",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "Science & Tech",
+"topic": "Metagenomics",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q70",
+"year": 2023,
+"q_no_in_paper": 70,
+"question_text_combined": "'Microsatellite DNA' is used in the case of which one of the following? (a) Studying the evolutionary relationships among various species of fauna (b) Stimulating 'stem cells' to transform into diverse functional tissues (c) Promoting clonal propagation of horticultural plants (d) Assessing the efficacy of drugs by conducting series of drug trials in a population",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) Studying... (d) Assessing...",
+"answer_key": "A",
+"answer_explanation": "Microsatellites are that section of DNA which induce variation between individuals within a species and variations between closely related species. Thus it can be used as an indicator to trace the evolutionary history of species. Microsatellites are also used in DNA fingerprinting.",
+"answer_sources": [
+"Nature",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "Science & Tech",
+"topic": "DNA Analysis",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q71",
+"year": 2023,
+"q_no_in_paper": 71,
+"question_text_combined": "With reference to India, consider the following statements: 1. According to the ‘Micro, Small and Medium enterprises Development (MSMED) Act, 2006’, the ‘medium enterprises’ are those with investments in plant and machinery between ₹ 15 crore and ₹ 25 crore. 2. All bank loans to the Micro, Small and Medium Enterprises quality under the priority sector. Which of the statements given above is/are correct? (a) 1 only (b) 2 only (c) Both 1 and 2 (d) Neither 1 nor 2",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) 1 only (b) 2 only (c) Both 1 and 2 (d) Neither 1 nor 2",
+"answer_key": "B",
+"answer_explanation": "The SHG programme was originally initiated by NABARD in 1992. Hence, statement 1 is incorrect. All bank loans to MSMEs qualify under priority sector.",
+"answer_sources": [
+"Foundation class/Compass/Revision classes",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "Economy",
+"topic": "MSMEs",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q72",
+"year": 2023,
+"q_no_in_paper": 72,
+"question_text_combined": "With reference to Central Bank digital currencies, consider the following statements: 1. It is possible to make payments in a digital currency without using the US dollar or SWIFT system. 2. A digital currency can be distributed with a condition programmed into it such as a time-frame for spending it. Which of the statements given above is/are correct? (a) 1 only (b) 2 only (c) Both 1 and 2 (d) Neither 1 nor 2",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) 1 only (b) 2 only (c) Both 1 and 2 (d) Neither 1 nor 2",
+"answer_key": "C",
+"answer_explanation": "CBDC is programmable money and can have expiry dates. Multiple CBDC can enable cross-border payments without SWIFT or dollar.",
+"answer_sources": [
+"RBI’s concept paper on CBDC",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "Economy",
+"topic": "CBDC",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q73",
+"year": 2023,
+"q_no_in_paper": 73,
+"question_text_combined": "In the context of finance, the term 'beta' refers to (a) the process of simultaneous buying and selling of an asset from different platforms. (b) an investment strategy of a portfolio manager to balance risk versus reward (c) a type of systemic risk that arises where perfect hedging is not possible (d) a numeric value that measures the fluctuations of a stock to changes in the overall stock market",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) the process... (d) a numeric value...",
+"answer_key": "D",
+"answer_explanation": "BETA in the share market is an indicator used by investors to assess the risk attached to a specific stock.",
+"answer_sources": [
+"SEBI’s Website",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "Economy",
+"topic": "Finance Terms",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q74",
+"year": 2023,
+"q_no_in_paper": 74,
+"question_text_combined": "Consider the following statements: 1. The Self-Help Group (SHG) programme was originally initiated by the State Bank of India by providing microcredit to the financially deprived. 2. In an SHG, all members of a group take responsibility for a loan that an individual member takes. 3. The Regional Rural Banks and Scheduled Commercial Banks support SHGs. How many of the above statements are correct? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "B",
+"answer_explanation": "The SHG programme was initiated by NABARD. The group is collectively responsible for loan repayment. RRBs and SCBs support SHGs.",
+"answer_sources": [
+"NABARD’s Handbook on Forming Self Help Groups",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "Economy",
+"topic": "SHGs",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q75",
+"year": 2023,
+"q_no_in_paper": 75,
+"question_text_combined": "Statement-1: India’s public sector health care system largely focuses on curative care with limited preventive, promotive and rehabilitative care. Statement-II: Under India’s decentralized approach to health care delivery, the States are primarily responsible for organizing health services. Which one of the following is correct in respect of the above statements? (a) Both correct, II explains I (b) Both correct, II does not explain I (c) I correct, II incorrect (d) I incorrect, II correct",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) Both... (d) I incorrect, II correct",
+"answer_key": "B",
+"answer_explanation": "Majority expenditure goes to curative care per National Health Accounts. Health is in State List.",
+"answer_sources": [
+"https://nhsrcindia.org/sites/default/files/2023-04/National%20Health%20Accounts-2019-20.pdf",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "Polity",
+"topic": "Health Care System",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q76",
+"year": 2023,
+"q_no_in_paper": 76,
+"question_text_combined": "Statement-I: According to the United Nations’ ‘World Water Development Report, 2022;, India extracts more than a quarter of the world’s groundwater withdrawal each year. Statement-II: India needs to extract more than a quarter of the world’s; groundwater each year to satisfy the drinking water and sanitation needs of almost 18% of the world's population living in its territory. Which one of the following is correct in respect of the above statements? (a) Both correct, II explains I (b) Both correct, II does not explain I (c) I correct, II incorrect (d) I incorrect, II correct",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) Both... (d) I incorrect, II correct",
+"answer_key": "C",
+"answer_explanation": "India extracts 251 cu km groundwater, 26% global. But 89% for irrigation, not drinking/sanitation.",
+"answer_sources": [
+"Prelims Compass 2023",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "Environment",
+"topic": "Groundwater Extraction",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q77",
+"year": 2023,
+"q_no_in_paper": 77,
+"question_text_combined": "With reference to ancient Indian History, consider the following pairs: Literary work Author 1. Devichandragupta : Bilhana 2. Hammira-Mahakavya : Nayachandra Suri 3. Milinda-panha : Nagarjuna 4. Nitivakyamrita : Somadeva Suri How many of the above pairs are correctly matched? (a) Only one (b) Only two (c) Only three (d) All four",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) Only one (b) Only two (c) Only three (d) All four",
+"answer_key": "C",
+"answer_explanation": "Devichandragupta is by Vishakhadutta. The other three are correct.",
+"answer_sources": [
+"Makhanlal NCERT of Ancient India",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "History",
+"topic": "Ancient Literary Works",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q78",
+"year": 2023,
+"q_no_in_paper": 78,
+"question_text_combined": ""Souls are not only the property of animal and plant life, but also of rocks, running water and many other natural objects not looked on as living by other religious sects." The above statement reflects one of the core beliefs of which one of the following religious sects of ancient India? (a) Buddhism (b) Jainism (c) Shaivism (d) Vaishnavism",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) Buddhism (b) Jainism (c) Shaivism (d) Vaishnavism",
+"answer_key": "B",
+"answer_explanation": "Jainism's metaphysics considers all entities have souls, including non-living like rocks and water.",
+"answer_sources": [
+"IGNOU notes https://egyankosh.ac.in/bitstream/123456789/35228/1/Unit-2.pdf",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "History",
+"topic": "Jainism Beliefs",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q79",
+"year": 2023,
+"q_no_in_paper": 79,
+"question_text_combined": "Who among the following rulers of Vijayanagara Empire constructed a large dam across Tungabhadra River and a canal-cum-aqueduct several kilometres long from the river to the capital city? (a) Devaraya I (b) Mallikarjuna (c) Vira Vijaya (d) Virupaksha",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) Devaraya I (b) Mallikarjuna (c) Vira Vijaya (d) Virupaksha",
+"answer_key": "A",
+"answer_explanation": "Deva Raya I constructed a barrage across the Tungabhadra and a 24 km aqueduct to the capital.",
+"answer_sources": [
+"Satish Chandra NCERT chapter 9, page 116",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "History",
+"topic": "Vijayanagara Empire",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q80",
+"year": 2023,
+"q_no_in_paper": 80,
+"question_text_combined": "Who among the following rulers of medieval Gujarat surrendered Diu to the Portuguese? (a) Ahmad Shah (b) Mahmud Begarha (c) Bahadur Shah (d) Muhammad Shah",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) Ahmad Shah (b) Mahmud Begarha (c) Bahadur Shah (d) Muhammad Shah",
+"answer_key": "C",
+"answer_explanation": "Bahadur Shah ceded Diu and Bassein to the Portuguese in 1534 for help against Humayun.",
+"answer_sources": [
+"Old NCERT of Satish Chandra (page 128)",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "History",
+"topic": "Medieval Gujarat",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q81",
+"year": 2023,
+"q_no_in_paper": 81,
+"question_text_combined": "By which one of the following Acts was the Governor General of Bengal designated as the Governor General of India? (a) The Regulating Act (b) The Pitt's India Act (c) The Charter Act of 1793 (d) The Charter Act of 1833",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) The Regulating Act (b) The Pitt's India Act (c) The Charter Act of 1793 (d) The Charter Act of 1833",
+"answer_key": "D",
+"answer_explanation": "The Charter Act of 1833 made the Governor-General of Bengal as the Governor-General of India.",
+"answer_sources": [
+"Spectrum",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "History",
+"topic": "Colonial Acts",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q82",
+"year": 2023,
+"q_no_in_paper": 82,
+"question_text_combined": "Consider the following statements in relation to Janani Suraksha Yojana: 1. It is a safe motherhood intervention of the State Health Departments. 2. Its objective is to reduce maternal and neonatal mortality among poor pregnant women. 3. It aims to promote institutional delivery among poor pregnant women. 4. Its objective includes providing public health facilities to sick infants up to one year of age. How many of the statements given above are correct? (a) Only one (b) Only two (c) Only three (d) All four",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) Only one (b) Only two (c) Only three (d) All four",
+"answer_key": "B",
+"answer_explanation": "JSY is centrally sponsored under NRHM. It reduces mortality by promoting institutional delivery. It does not provide facilities for sick infants.",
+"answer_sources": [
+"https://www.ilo.org/dyn/travail/docs/683/JananiSurakshaYojanaGuidelines/MinistryofHealthandFamilyWelfare.pdf",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "Polity",
+"topic": "Health Schemes",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q83",
+"year": 2023,
+"q_no_in_paper": 83,
+"question_text_combined": "Consider the following statements in the context of interventions being undertaken under Anaemia Mukt Bharat Strategy: 1. It provides prophylactic calcium supplementation for pre-school children, adolescents and pregnant women. 2. It runs a campaign for delayed cord clamping at the time of child-birth. 3. It provides for periodic deworming to children and adolescents. 4. It addresses non-nutritional causes of anaemia in endemic pockets with special focus on malaria, hemoglobinopathies and fluorosis. How many of the statements given above are correct? (a) Only one (b) Only two (c) Only three (d) All four",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) Only one (b) Only two (c) Only three (d) All four",
+"answer_key": "C",
+"answer_explanation": "It provides IFA supplementation, deworming, delayed clamping, addresses non-nutritional causes. No calcium supplementation.",
+"answer_sources": [
+"Government Schemes",
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "Polity & Governance",
+"topic": "Health Initiatives",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q84",
+"year": 2023,
+"q_no_in_paper": 84,
+"question_text_combined": "Consider the following statements: 1. Carbon fibres are used in the manufacture of components used in automobiles and aircrafts. 2. Carbon fibres once used cannot be recycled. Which of the statements given above is/are correct? (a) 1 only (b) 2 only (c) Both 1 and 2 (d) Neither 1 nor 2",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) 1 only (b) 2 only (c) Both 1 and 2 (d) Neither 1 nor 2",
+"answer_key": "A",
+"answer_explanation": "Carbon fibres replace materials for high strength, low density in automobiles, aircrafts. They can be recycled, though difficult.",
+"answer_sources": [
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "Science & Tech",
+"topic": "Carbon Fibres",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q85",
+"year": 2023,
+"q_no_in_paper": 85,
+"question_text_combined": "Consider the following actions: 1. Detection of car crash/collision which results in the deployment of airbags almost instantaneously 2. Detection of accidental free fall of a laptop towards the ground which results in the immediate turning off of the hard drive 3. Detection of the tilt of the smart-phone which results in the rotation of display between portrait and landscape mode In how many of the above actions is the function of accelerometer required? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Extracted from PDF",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "C",
+"answer_explanation": "Accelerometers detect acceleration and vibration in all three actions: crash for airbags, fall for hard drive, tilt for screen rotation.",
+"answer_sources": [
+"https://upsc.gov.in/sites/default/files/AnsKey-CSP-2023-Paper-I-090524.pdf"
+],
+"subject": "Science & Tech",
+"topic": "Accelerometers",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q86",
+"year": 2023,
+"q_no_in_paper": 86,
+"question_text_combined": "Statement-I : Switzerland is one of the leading exporters of gold in terms of value. Statement-II : Switzerland has the second largest gold reserves in the world. Which one of the following is correct in respect of the above statements? (a) Both Statement-I and Statement-II are correct and Statement-II is the correct explanation for Statement-I (b) Both Statement-I and Statement-II are correct and Statement-II is not the correct explanation for Statement-I (c) Statement-I is correct but Statement-II is incorrect (d) Statement-I is incorrect but Statement-II is correct",
+"raw_blocks_combined": "Page 37 text",
+"options_combined": "(a) Both... (d) I incorrect, II correct",
+"answer_key": "C",
+"answer_explanation": "Switzerland is a leading gold exporter due to refining, not reserves. It has low gold reserves. Thus, I correct, II incorrect.",
+"answer_sources": [
+"World Gold Council, https://www.gold.org/goldhub/data/gold-reserves-by-country",
+"Swiss Customs Administration, https://www.ezv.admin.ch/ezv/en/home/topics/swiss-foreign-trade-statistics/data.html"
+],
+"subject": "Economy",
+"topic": "Gold Trade",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q87",
+"year": 2023,
+"q_no_in_paper": 87,
+"question_text_combined": "Statement-I : Recently, the United States of America (USA) and the European Union (EU) have launched the 'Trade and Technology Council'. Statement-II : The USA and the EU claim that through this they are trying to bring technological progress and physical productivity under their control. Which one of the following is correct in respect of the above statements? (a) Both Statement-I and Statement-II are correct and Statement-II is the correct explanation for Statement-I (b) Both Statement-I and Statement-II are correct and Statement-II is not the correct explanation for Statement-I (c) Statement-I is correct but Statement-II is incorrect (d) Statement-I is incorrect but Statement-II is correct",
+"raw_blocks_combined": "Page 37 text",
+"options_combined": "(a) Both... (d) I incorrect, II correct",
+"answer_key": "C",
+"answer_explanation": "TTC was launched in 2021 for cooperation on trade and tech. The claim in II is incorrect; it's for shared democratic values and standards.",
+"answer_sources": [
+"US Department of State, https://state.gov/u-s-eu-trade-and-technology-council/",
+"European Commission, https://commission.europa.eu/topics/stronger-europe-world/trade-and-technology-council_en"
+],
+"subject": "International Relations",
+"topic": "TTC",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q88",
+"year": 2023,
+"q_no_in_paper": 88,
+"question_text_combined": "Statement-I : India accounts for 3.2% of global export of goods. Statement-II : Many local companies and some foreign companies operating in India have taken advantage of India's 'Production-linked Incentive' scheme. Which one of the following is correct in respect of the above statements? (a) Both Statement-I and Statement-II are correct and Statement-II is the correct explanation for Statement-I (b) Both Statement-I and Statement-II are correct and Statement-II is not the correct explanation for Statement-I (c) Statement-I is correct but Statement-II is incorrect (d) Statement-I is incorrect but Statement-II is correct",
+"raw_blocks_combined": "Page 37 text",
+"options_combined": "(a) Both... (d) I incorrect, II correct",
+"answer_key": "D",
+"answer_explanation": "India's global export share is about 2.14%, not 3.2%. PLI has been taken advantage of by companies. Thus, I incorrect, II correct.",
+"answer_sources": [
+"WTO Data, https://stats.wto.org/",
+"Ministry of Commerce, https://commerce.gov.in/"
+],
+"subject": "Economy",
+"topic": "Exports and PLI",
+"confidence_score": 0.95,
+"assumptions": "Export share from 2022 data"
+},
+{
+"id_combined": "2023_GS1_Q89",
+"year": 2023,
+"q_no_in_paper": 89,
+"question_text_combined": "The 'Stability and Growth Pact' of the European Union is a treaty that 1. limits the levels of the budgetary deficit of the countries of the European Union 2. makes the countries of the European Union to share their infrastructure facilities 3. enables the countries of the European Union to share their technologies How many of the above statements are correct? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 39 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "A",
+"answer_explanation": "SGP limits budget deficit to 3% GDP and debt to 60%. No sharing infrastructure or technologies. Thus, only one correct.",
+"answer_sources": [
+"European Commission, https://economy-finance.ec.europa.eu/economic-and-fiscal-governance/stability-and-growth-pact_en",
+"EU Treaty, Title VIII"
+],
+"subject": "International Relations",
+"topic": "EU SGP",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q90",
+"year": 2023,
+"q_no_in_paper": 90,
+"question_text_combined": "1. Recently, all the countries of the United Nations have adopted the first-ever compact for international migration, the 'Global Compact for Safe, Orderly and Regular Migration (GCM)'. 2. The objectives and commitments stated in the GCM are binding on the UN member countries. 3. The GCM addresses internal migration or internally displaced people also in its objectives and commitments. How many of the above statements are correct? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 39 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "D",
+"answer_explanation": "Not all countries adopted GCM (US, Hungary etc abstained). It's non-binding. It does not address internal migration. Thus, none correct.",
+"answer_sources": [
+"UN GCM, https://www.un.org/en/migration/global-compact-migration",
+"IOM, https://www.iom.int/global-compact-migration"
+],
+"subject": "International Relations",
+"topic": "GCM Migration",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q91",
+"year": 2023,
+"q_no_in_paper": 91,
+"question_text_combined": "Home Guards 1. Home Guards are raised under the Home Guards Act and Rules of the Central Government. 2. The role of the Home Guards is to serve as an auxiliary force to the police in maintenance of internal security. 3. To prevent infiltration on the international border/coastal areas, the Border Wing Home Guards Battalions have been raised in some States. How many of the above statements are correct? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 39 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "B",
+"answer_explanation": "Home Guards are raised under state acts. Role as auxiliary yes. Border wing yes. Thus, two correct.",
+"answer_sources": [
+"Ministry of Home Affairs, https://mha.gov.in/division_of_mha/home-guards",
+"Home Guards Act 1962 (central model, but state implemented)"
+],
+"subject": "Polity",
+"topic": "Home Guards",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q92",
+"year": 2023,
+"q_no_in_paper": 92,
+"question_text_combined": "pairs action the act 1. Unauthorized wearing of police or military uniforms : The Official Secrets Act, 1923 2. Knowingly misleading or otherwise interfering with a police officer or military officer when engaged in their duties : The Indian Evidence Act, 1872 3. Celebratory gunfire which can endanger the personal safety of others : The Arms (Amendment) Act, 2019 How many ... matched? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 39 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "B",
+"answer_explanation": "1. Official Secrets Act prohibits unauthorized use of uniforms. 3. Arms Act 2019 bans celebratory gunfire. 2. Interfering is under IPC 186, not Evidence Act. Thus, two correct.",
+"answer_sources": [
+"Official Secrets Act, 1923, Section 6",
+"Arms (Amendment) Act, 2019, Section 25B",
+"Indian Penal Code, Section 186"
+],
+"subject": "Polity",
+"topic": "Acts and Offences",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q93",
+"year": 2023,
+"q_no_in_paper": 93,
+"question_text_combined": "pairs regions reason 1. North Kivu and Ituri : War between Armenia and Azerbaijan 2. Nagorno-Karabakh : Insurgency in Mozambique 3. Kherson and Zaporizhzhia : Dispute between Israel and Lebanon How many ... matched? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 41 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "D",
+"answer_explanation": "North Kivu Ituri in DRC, conflict with militias. Nagorno-Karabakh Armenia Azerbaijan. Kherson Zaporizhzhia Ukraine Russia. None matched.",
+"answer_sources": [
+"UN Reports, https://www.un.org/securitycouncil/",
+"BBC News"
+],
+"subject": "International Relations",
+"topic": "Conflicts Regions",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q94",
+"year": 2023,
+"q_no_in_paper": 94,
+"question_text_combined": "Statement-I : Israel has established diplomatic relations with some Arab States. Statement-II : The 'Arab Peace Initiative' mediated by Saudi Arabia was signed by Israel and Arab League. (a) Both... (d) I incorrect, II correct",
+"raw_blocks_combined": "Page 41 text",
+"options_combined": "(a) Both... (d) I incorrect, II correct",
+"answer_key": "C",
+"answer_explanation": "Israel has relations with UAE, Bahrain via Abraham Accords. Arab Peace Initiative 2002 not signed by Israel.",
+"answer_sources": [
+"MEA India, https://mea.gov.in/",
+"Arab League"
+],
+"subject": "International Relations",
+"topic": "Middle East Diplomacy",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q95",
+"year": 2023,
+"q_no_in_paper": 95,
+"question_text_combined": "pairs sports awards 1. Major Dhyan Chand Khel Ratna Award : For the most spectacular and outstanding performance by a sportsperson over period of last four years 2. Arjuna Award : For the lifetime achievement by a sportsperson 3. Dronacharya Award : To honour eminent coaches who have successfully trained sportspersons or teams 4. Rashtriya Khel Protsahan Puraskar : To recognize the contribution made by sportspersons even after their retirement How many ... matched? (a) Only one (b) Only two (c) All three (d) All four",
+"raw_blocks_combined": "Page 41 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) All four",
+"answer_key": "B",
+"answer_explanation": "1 correct. 2 Arjuna is for consistent performance, lifetime is Dhyan Chand Lifetime. 3 correct. 4 Rashtriya is for entities, not sportspersons. Thus, two.",
+"answer_sources": [
+"Ministry of Youth Affairs, https://yas.gov.in/sports/national-sports-awards",
+"PIB"
+],
+"subject": "Misc",
+"topic": "Sports Awards",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q96",
+"year": 2023,
+"q_no_in_paper": 96,
+"question_text_combined": "chess olympiad 2022 1. It was the first time that Chess Olympiad was held in India. 2. The official mascot was named 'Thambi'. 3. The trophy for the winning team in the open section is the Vera Menchik Cup. 4. The trophy for the winning team in the women's section is the Hamilton-Russell Cup. How many ... correct? (a) Only one (b) Only two (c) Only three (d) All four",
+"raw_blocks_combined": "Page 41 text",
+"options_combined": "(a) Only one (b) Only two (c) Only three (d) All four",
+"answer_key": "B",
+"answer_explanation": "1 yes, first in India. 2 yes, Thambi. 3 no, Hamilton-Russell for open. 4 no, Vera Menchik for women. Thus, two.",
+"answer_sources": [
+"FIDE, https://www.fide.com/",
+"Chess Olympiad 2022 report"
+],
+"subject": "Misc",
+"topic": "Chess Olympiad",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q97",
+"year": 2023,
+"q_no_in_paper": 97,
+"question_text_combined": "pairs area country 1. Donbas : Syria 2. Kachin : Ethiopia 3. Tigray : North Yemen How many ... matched? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 43 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "D",
+"answer_explanation": "Donbas Ukraine, Kachin Myanmar, Tigray Ethiopia. None matched.",
+"answer_sources": [
+"Current Affairs, BBC",
+"UN Reports"
+],
+"subject": "International Relations",
+"topic": "Conflict Areas",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q98",
+"year": 2023,
+"q_no_in_paper": 98,
+"question_text_combined": "In the recent years Chad, Guinea, Mali and Sudan caught the international attention for which one of the following reasons common to all of them? (a) Discovery of rich deposits of rare earth elements (b) Establishment of Chinese military bases (c) Southward expansion of Sahara Desert (d) Successful coups",
+"raw_blocks_combined": "Page 43 text",
+"options_combined": "(a) Discovery... (d) Successful coups",
+"answer_key": "D",
+"answer_explanation": "All had military coups in 2020-2022.",
+"answer_sources": [
+"BBC Africa, https://www.bbc.com/news/topics/cq23pdgvgmgt",
+"Al Jazeera"
+],
+"subject": "International Relations",
+"topic": "African Politics",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q99",
+"year": 2023,
+"q_no_in_paper": 99,
+"question_text_combined": "heavy industries 1. Fertilizer plants 2. Oil refineries 3. Steel plants Green hydrogen is expected to play a significant role in decarbonizing how many of the above industries? (a) Only one (b) Only two (c) All three (d) None",
+"raw_blocks_combined": "Page 43 text",
+"options_combined": "(a) Only one (b) Only two (c) All three (d) None",
+"answer_key": "C",
+"answer_explanation": "Green H2 can replace fossil fuels in fertilizer (ammonia), refineries (hydrocracking), steel (reduction). All three.",
+"answer_sources": [
+"IEA, https://www.iea.org/reports/the-future-of-hydrogen",
+"Ministry of New and Renewable Energy"
+],
+"subject": "Environment",
+"topic": "Green Hydrogen",
+"confidence_score": 1.0,
+"assumptions": null
+},
+{
+"id_combined": "2023_GS1_Q100",
+"year": 2023,
+"q_no_in_paper": 100,
+"question_text_combined": "G-20 1. The G-20 group was originally established as a platform for the Finance Ministers and Central Bank Governors to discuss the international economic and financial issues. 2. Digital public infrastructure is one of India's G-20 priorities. Which of the statements given above is/are correct? (a) 1 only (b) 2 only (c) Both 1 and 2 (d) Neither 1 nor 2",
+"raw_blocks_combined": "Page 43 text",
+"options_combined": "(a) 1 only (b) 2 only (c) Both 1 and 2 (d) Neither 1 nor 2",
+"answer_key": "C",
+"answer_explanation": "G20 started in 1999 for finance ministers post Asian crisis. DPI was India's priority during presidency.",
+"answer_sources": [
+"G20 website, https://www.g20.org/",
+"PIB, https://pib.gov.in/PressReleasePage.aspx?PRID=1880255"
+],
+"subject": "International Relations",
+"topic": "G20",
+"confidence_score": 1.0,
+"assumptions": null
+}
+]

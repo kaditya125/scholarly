@@ -33,6 +33,12 @@ export class PYQRepository {
     return doc.data() as PYQSourceEntry;
   }
 
+  async getSourceByHash(documentHash: string): Promise<PYQSourceEntry | null> {
+    const snap = await this.sourcesCol.where('documentHash', '==', documentHash).limit(1).get();
+    if (snap.empty) return null;
+    return snap.docs[0].data() as PYQSourceEntry;
+  }
+
   async listSources(filter?: {
     examId?: string;
     year?: number;
@@ -79,6 +85,27 @@ export class PYQRepository {
 
   async saveCanonicalQuestion(question: CanonicalPYQQuestion): Promise<void> {
     await this.questionsCol.doc(question.questionId).set(question, { merge: true });
+  }
+
+  /**
+   * Safely marks a question as retrieval tested. Uses update() so it NEVER creates
+   * phantom stub documents if the questionId does not exist in Firestore.
+   */
+  async markRetrievalTested(questionId: string): Promise<boolean> {
+    try {
+      const docRef = this.questionsCol.doc(questionId);
+      const doc = await docRef.get();
+      if (!doc.exists) {
+        return false;
+      }
+      await docRef.update({
+        retrievalTested: true,
+        retrievalTestedAt: Date.now(),
+      });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async saveCanonicalQuestionsBatch(questions: CanonicalPYQQuestion[]): Promise<void> {
@@ -208,7 +235,9 @@ export class PYQRepository {
 
       // Shift match
       if (src.shift && q.shift) {
-        if (src.shift !== q.shift) return false;
+        const s = src.shift.toLowerCase().trim();
+        const qS = q.shift.toLowerCase().trim();
+        if (s !== qS && !qS.endsWith(s) && !qS.includes(s) && !s.includes(qS)) return false;
       }
 
       return true;
