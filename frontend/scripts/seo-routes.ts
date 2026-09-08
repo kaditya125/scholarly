@@ -36,6 +36,7 @@
 
 import { EXAM_CATALOG } from '../src/lib/examCatalog';
 import { BLOG_POSTS } from '../src/content/blogPosts';
+import { examMetaDescription } from '../src/lib/examSeo';
 import { SITE, PRO_MONTHLY_INR } from '../src/lib/siteConfig';
 
 export interface SeoRoute {
@@ -253,7 +254,8 @@ const DEFAULT_EXAM_PRIORITY = 0.85;
 const EXAM_ROUTES: SeoRoute[] = EXAM_CATALOG.map((exam) => ({
   path: `/exams/${exam.slug}`,
   title: `${exam.name} Exam Pattern, Syllabus & AI Preparation — ${exam.fullName} | ${SITE.name}`,
-  description: `Complete latest pattern, subject-wise syllabus, marking scheme, and AI tutor for ${exam.fullName} (${exam.name}). ${exam.about.slice(0, 110)}…`,
+  // Written copy, one per exam, shared with ExamLanding.tsx so the two cannot diverge.
+  description: examMetaDescription(exam),
   changefreq: 'monthly' as const,
   priority: EXAM_PRIORITY[exam.slug] ?? DEFAULT_EXAM_PRIORITY,
   lastmod: '2026-08-29',
@@ -307,12 +309,16 @@ export function canonicalFor(route: SeoRoute): string {
 }
 
 /*
- * KNOWN, NOT FIXED HERE: 31 of the 43 descriptions above run past the ~160 characters Google
- * renders before truncating — the exam hubs worst, at 240-270, because they splice 110 characters
- * of exam.about onto an already-full sentence. That is pre-existing copy, carried over verbatim
- * from each page's useSeo() call, and it is NOT what was keeping those pages out of the index; a
- * long description gets trimmed in the result, a wrong canonical gets the page dropped entirely.
- * It is left alone deliberately rather than rewritten in a fix about canonicals. Worth a pass of
- * its own, starting with the exam hubs, where a purpose-written 150-character line would read
- * better in results than a truncated splice.
+ * REMAINING LONG DESCRIPTIONS: 14 of the 43 routes above still run past the ~160 characters
+ * Google renders before truncating — the marketing pages (/our-team worst at 272) and six of the
+ * nine blog posts, whose descriptions are the post's own `summary` and are written to introduce
+ * an article rather than to sit in a search result.
+ *
+ * The 17 exam hubs used to be the worst of this, at 240-270 each. They are now written copy in
+ * src/lib/examSeo.ts and all land between 127 and 154.
+ *
+ * The rest are left deliberately. A long description is truncated in the result; it does not
+ * cost the page its indexing, which is what the canonical bug was doing. Fixing them means
+ * writing copy, page by page, and the blog ones mean deciding whether a post's summary should
+ * serve two audiences or be split into two fields. Worth a pass of its own.
  */
