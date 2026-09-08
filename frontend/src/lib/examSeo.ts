@@ -38,6 +38,7 @@
  */
 
 import type { ExamEntry } from './examCatalog';
+import { SITE } from './siteConfig';
 
 /**
  * Google renders roughly 155-160 characters of a description on desktop and fewer on mobile,
@@ -45,6 +46,46 @@ import type { ExamEntry } from './examCatalog';
  * never read — so this is a budget, not a validation rule.
  */
 export const META_DESCRIPTION_LIMIT = 155;
+
+/**
+ * Google gives a title roughly 600 pixels, which works out near 60 characters before it is
+ * replaced by an ellipsis. Like the description limit this is a budget, not a rule — an over-long
+ * title is shortened in the result, not penalised.
+ */
+export const META_TITLE_LIMIT = 60;
+
+/**
+ * The exam hubs used to title themselves:
+ *
+ *     `${exam.name} Exam Pattern, Syllabus & AI Preparation — ${exam.fullName} | ${SITE.name}`
+ *
+ * 92-152 characters against the ~60 shown. Two things were spending that budget badly. The
+ * `— ${exam.fullName}` splice is the larger one: `fullName` runs to 90 characters on its own
+ * ("State Public Service Commission Examinations (UPPSC, MPPSC, RAS, WBPSC, TNPSC, MPSC, etc.)"),
+ * and it is already the page's <h1>, so the title was repeating what the page says anyway and
+ * losing the brand off the end to do it. "AI Preparation" is the other: fifteen characters spent
+ * on a phrase nobody types into a search box.
+ *
+ * What replaces them are the terms people actually search — "<exam> syllabus", "<exam> exam
+ * pattern", "<exam> eligibility" — all of which this page genuinely answers.
+ */
+function defaultTitle(exam: ExamEntry): string {
+  return `${exam.name} Exam Pattern, Syllabus & Eligibility | ${SITE.name}`;
+}
+
+/**
+ * For exams the default sentence does not describe honestly. CBSE & ICSE is not an entrance exam
+ * with an eligibility bar — it is board-curriculum tutoring for Classes 6-12 — so promising
+ * "Eligibility" there would be a title the page does not pay off.
+ */
+const EXAM_TITLE_OVERRIDES: Record<string, string> = {
+  'cbse-icse': `CBSE & ICSE Syllabus & Board Exam Preparation | ${SITE.name}`,
+};
+
+/** The <title> served for /exams/<slug>. */
+export function examMetaTitle(exam: ExamEntry): string {
+  return EXAM_TITLE_OVERRIDES[exam.slug] ?? defaultTitle(exam);
+}
 
 /**
  * One description per exam, keyed by slug.
