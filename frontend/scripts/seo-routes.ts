@@ -36,6 +36,7 @@
 
 import { EXAM_CATALOG } from '../src/lib/examCatalog';
 import { BLOG_POSTS } from '../src/content/blogPosts';
+import { CURRENT_POLICY_METADATA } from '../src/content/policies/policyData';
 import { examMetaDescription, examMetaTitle } from '../src/lib/examSeo';
 import { SITE, PRO_MONTHLY_INR } from '../src/lib/siteConfig';
 
@@ -173,6 +174,21 @@ const STATIC_ROUTES: SeoRoute[] = [
     priority: 0.5,
     lastmod: '2026-08-29',
     inSitemap: false,
+  },
+  {
+    // Missed on the first pass of this table, and it went out serving the home page's canonical
+    // for a week — the exact bug this file exists to prevent. It is a real public page: linked
+    // from the site footer and from Settings, with its own useSeo() call and thirteen policies
+    // of unique content. The /policies/:category route beside it in App.tsx never reads the
+    // param, so those URLs render identical content; nothing links to them, so they are left to
+    // the shell fallback rather than given alias files nobody will request.
+    path: '/policies',
+    title: `Platform Terms & Operating Policies — ${SITE.name}`,
+    description: CURRENT_POLICY_METADATA.tagline,
+    changefreq: 'monthly',
+    priority: 0.4,
+    // The policies' own effective date, not a build date — it is what actually last changed.
+    lastmod: '2026-08-31',
   },
   {
     path: '/contact',
