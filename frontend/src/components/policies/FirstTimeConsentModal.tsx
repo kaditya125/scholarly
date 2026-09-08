@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { AlertCircle, ArrowUpRight, Check } from 'lucide-react';
+import { AlertCircle, ArrowUpRight } from 'lucide-react';
 import { api } from '../../lib/api/client';
 import { CURRENT_POLICY_METADATA, SADHYA_POLICIES } from '../../content/policies/policyData';
 import { BrandMark, LegalLink, SubmitButton } from '../auth/AuthShell';
+import { ConsentCheckbox } from './ConsentCheckbox';
 import { useAuth } from '../../lib/AuthContext';
 
 /** The wizard's easing curve, so this screen moves the way the next one does. */
@@ -215,34 +216,11 @@ export default function FirstTimeConsentModal({
             </p>
           )}
 
-          {/* Custom control rather than a native checkbox: the native one cannot be given the
-              lime fill without appearance-none, at which point it is this anyway. */}
-          <label className="flex items-start gap-3 cursor-pointer select-none group">
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={(event) => setAgreed(event.target.checked)}
-              className="peer sr-only"
-            />
-            <span
-              aria-hidden
-              className={[
-                'mt-px shrink-0 w-[18px] h-[18px] rounded-[6px] border flex items-center justify-center transition-colors',
-                'peer-focus-visible:ring-2 peer-focus-visible:ring-[#c8e558] peer-focus-visible:ring-offset-2',
-                'dark:peer-focus-visible:ring-offset-[#0b0b0c]',
-                agreed
-                  ? 'bg-[#c8e558] border-[#c8e558]'
-                  : 'border-slate-300 dark:border-white/20 group-hover:border-slate-400 dark:group-hover:border-white/35',
-              ].join(' ')}
-            >
-              {agreed && <Check className="w-3 h-3 text-slate-900" strokeWidth={3} />}
-            </span>
-            <span className="text-[13.5px] leading-snug text-slate-600 dark:text-gray-300">
-              I have read and agree to the{' '}
-              <LegalLink href="/terms">Terms of Service</LegalLink> and{' '}
-              <LegalLink href="/privacy">Privacy Policy</LegalLink>.
-            </span>
-          </label>
+          <ConsentCheckbox checked={agreed} onChange={setAgreed}>
+            I have read and agree to the{' '}
+            <LegalLink href="/terms">Terms of Service</LegalLink> and{' '}
+            <LegalLink href="/privacy">Privacy Policy</LegalLink>.
+          </ConsentCheckbox>
 
           <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
             {/* A gate with no way out is a trap. Declining means not having an account here. */}
