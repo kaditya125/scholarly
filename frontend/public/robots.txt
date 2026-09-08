@@ -1,3 +1,24 @@
+# Sadhya — crawl policy.
+#
+# Disallow covers the signed-in app: those routes render nothing without a session, so
+# crawling them spends budget to reach a redirect. Matching is by PREFIX — /chat already
+# covers /chats, and /assessment covers /assessment/report — which cuts both ways: adding
+# Disallow: /help would silently take out the public /help page, and /plan would take out
+# nothing public today but would catch any future /plans landing page. Check before adding
+# a short one.
+#
+# Signed-in routes NOT listed here (/test, /read, /coverage, /plan, /support, /help-center,
+# /refer, /join/:code, /verify-email) are left crawlable on purpose. They fall through to the
+# SPA shell, whose canonical points at the home page, so Google folds them into it. Blocking
+# them instead would stop the crawl before that canonical is ever read, and a blocked URL can
+# still be indexed bare from an inbound link. Crawlable-and-consolidated beats blocked.
+#
+# Note what this file does NOT do: robots.txt stops crawling, not indexing. A URL that is
+# linked from elsewhere can still appear in results without a snippet. Anything that must
+# be kept out of the index needs to stay crawlable and say so itself. Public pages are
+# handled the other way round — every one of them now ships its own rel=canonical from
+# scripts/seo-routes.ts, so a stray alias consolidates instead of competing.
+
 User-agent: *
 Allow: /
 Disallow: /chat
@@ -39,6 +60,7 @@ Disallow: /exam-center
 Disallow: /research
 Disallow: /flashcards
 Disallow: /quiz/
+Disallow: /admin
 Disallow: /classes/
 
 Sitemap: https://sadhya.app/sitemap.xml
