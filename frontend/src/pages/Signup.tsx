@@ -22,6 +22,7 @@ import {
   GoogleMark,
   AuthError,
   FlourishLink,
+  LegalLink,
   RoleCard,
 } from '../components/auth/AuthShell';
 import { Underline } from '../components/landing/Annotate';
@@ -310,7 +311,9 @@ export default function Signup() {
       </div>
 
       <p className="mt-5 text-[12px] leading-relaxed text-slate-400 dark:text-gray-600 text-center">
-        By creating an account you agree to our Terms of Service and Privacy Policy.
+        By creating an account you agree to our{' '}
+        <LegalLink href="/terms">Terms of Service</LegalLink> and{' '}
+        <LegalLink href="/privacy">Privacy Policy</LegalLink>.
       </p>
     </AuthShell>
   );

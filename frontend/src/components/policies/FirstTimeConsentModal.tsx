@@ -1,9 +1,9 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { AlertCircle, ArrowUpRight, Check } from 'lucide-react';
 import { api } from '../../lib/api/client';
 import { CURRENT_POLICY_METADATA, SADHYA_POLICIES } from '../../content/policies/policyData';
-import { BrandMark, SubmitButton } from '../auth/AuthShell';
+import { BrandMark, LegalLink, SubmitButton } from '../auth/AuthShell';
 import { useAuth } from '../../lib/AuthContext';
 
 /** The wizard's easing curve, so this screen moves the way the next one does. */
@@ -185,8 +185,8 @@ export default function FirstTimeConsentModal({
 
           <p className="mt-6 text-[14px] leading-relaxed text-slate-500 dark:text-gray-400">
             That is a summary, not a replacement. Your use is governed by the{' '}
-            <PolicyLink href="/terms">Terms of Service</PolicyLink> and{' '}
-            <PolicyLink href="/privacy">Privacy Policy</PolicyLink>, alongside{' '}
+            <LegalLink href="/terms">Terms of Service</LegalLink> and{' '}
+            <LegalLink href="/privacy">Privacy Policy</LegalLink>, alongside{' '}
             {SADHYA_POLICIES.length} policies covering AI use, community, classrooms and billing.
           </p>
 
@@ -239,8 +239,8 @@ export default function FirstTimeConsentModal({
             </span>
             <span className="text-[13.5px] leading-snug text-slate-600 dark:text-gray-300">
               I have read and agree to the{' '}
-              <PolicyLink href="/terms">Terms of Service</PolicyLink> and{' '}
-              <PolicyLink href="/privacy">Privacy Policy</PolicyLink>.
+              <LegalLink href="/terms">Terms of Service</LegalLink> and{' '}
+              <LegalLink href="/privacy">Privacy Policy</LegalLink>.
             </span>
           </label>
 
@@ -271,19 +271,5 @@ export default function FirstTimeConsentModal({
         </div>
       </footer>
     </div>
-  );
-}
-
-/** Underlined inline link, matching the landing pages' treatment. */
-function PolicyLink({ href, children }: { href: string; children: ReactNode }) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      className="font-semibold text-slate-900 dark:text-white underline underline-offset-2 decoration-slate-300 dark:decoration-white/25 hover:decoration-[#8ea63a] dark:hover:decoration-[#c8e558] transition-colors"
-    >
-      {children}
-    </a>
   );
 }

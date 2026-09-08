@@ -316,6 +316,31 @@ export function AuthError({ message }: { message: string | null }) {
  * `text-decoration` underline was standing in for this and read as a plain link — the
  * curve is what gives the footer its personality, so it's drawn as a real SVG stroke.
  */
+/**
+ * Quiet inline link for legal fine print — the sign-up notice and the consent gate's checkbox.
+ *
+ * Opens in a new tab deliberately: both callers sit beside something the reader is part-way
+ * through (a sign-up form, an unticked consent box), and navigating away to read a policy
+ * would lose it. That also rules out <Link>, which would navigate in place.
+ *
+ * Deliberately NOT FlourishLink: that one's hand-drawn swash is sized for a single prominent
+ * call to action, and two of them inside 12px grey fine print read as clutter. This is the
+ * plainer treatment — but still slate-900/white on a slate-400 sentence, because the whole
+ * point is that these are visibly links.
+ */
+export function LegalLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="font-semibold text-slate-900 dark:text-white underline underline-offset-2 decoration-slate-300 dark:decoration-white/25 hover:decoration-[#8ea63a] dark:hover:decoration-[#c8e558] transition-colors"
+    >
+      {children}
+    </a>
+  );
+}
+
 export function FlourishLink({ to, children }: { to: string; children: React.ReactNode }) {
   return (
     <Link
