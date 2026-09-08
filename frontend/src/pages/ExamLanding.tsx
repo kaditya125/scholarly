@@ -1,25 +1,7 @@
 import React, { useState, useEffect, type ReactNode } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
-import {
-  ArrowRight,
-  CheckCircle2,
-  BookOpen,
-  Calendar,
-  Clock,
-  Award,
-  Layers,
-  Sparkles,
-  ExternalLink,
-  ChevronDown,
-  ChevronUp,
-  FileText,
-  HelpCircle,
-  BarChart3,
-  ShieldCheck,
-  Globe,
-  GraduationCap
-} from 'lucide-react';
+import { ArrowRight, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
 import SkyAmbience from '../components/landing/sky';
 import SiteFooter from '../components/landing/SiteFooter';
@@ -129,212 +111,178 @@ export default function ExamLanding() {
       <SiteHeader />
       <SkyAmbience />
 
-      <main className="relative z-10 max-w-[1160px] mx-auto px-5 sm:px-8 pt-10 sm:pt-14 pb-20 sm:pb-28">
-        {/* ══ Breadcrumbs ═════════════════════════════════════════════════ */}
+      {/*
+        Measure is deliberately narrower than the old 1160px. This is a document — pattern,
+        syllabus, eligibility, read in order — not a dashboard to be scanned. The wide track is
+        what pushed the previous design into filling the space with cards.
+      */}
+      <main className="relative z-10 max-w-[900px] mx-auto px-5 sm:px-8 pt-10 sm:pt-14 pb-20 sm:pb-28">
         <Reveal>
-          <nav className="flex items-center gap-2 text-[13px] text-slate-500 dark:text-gray-400 mb-6">
+          <nav className="flex items-center gap-2 text-[13px] text-slate-500 dark:text-gray-400">
             <Link to="/" className="hover:text-slate-900 dark:hover:text-white transition-colors">Home</Link>
-            <span>/</span>
+            <span aria-hidden>/</span>
             <Link to="/#exams" className="hover:text-slate-900 dark:hover:text-white transition-colors">Exams</Link>
-            <span>/</span>
+            <span aria-hidden>/</span>
             <span className="text-slate-900 dark:text-white font-medium">{exam.name}</span>
           </nav>
 
-          {/* ══ Hero Header ═════════════════════════════════════════════════ */}
-          <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#141416] p-6 sm:p-10 shadow-xs">
-            <div className="max-w-4xl">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] flex items-center justify-center p-2.5 shrink-0 shadow-2xs">
-                  <ExamLogo slug={exam.slug} size={44} className="w-full h-full object-contain" />
-                </div>
-                <div>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#c8e558]/20 dark:bg-[#c8e558]/10 text-slate-900 dark:text-[#c8e558] text-[12px] font-semibold mb-1">
-                    <span>{exam.category.toUpperCase()}</span>
-                  </div>
-                  <h1 className="text-[28px] sm:text-[38px] lg:text-[42px] leading-[1.12] font-semibold tracking-[-0.03em] text-slate-950 dark:text-white">
-                    {exam.fullName}
-                  </h1>
-                  <p className="text-[14px] sm:text-[15px] font-medium text-slate-500 dark:text-gray-400">
-                    Conducted by <span className="text-slate-800 dark:text-gray-200">{exam.conductedBy}</span>
-                  </p>
-                </div>
+          {/* ══ Hero — on the page, not in a card ══════════════════════════ */}
+          <header className="mt-8">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-white/[0.04] flex items-center justify-center p-2 shrink-0">
+                <ExamLogo slug={exam.slug} size={40} className="w-full h-full object-contain" />
               </div>
-
-              <p className="mt-5 text-[15.5px] sm:text-[16.5px] leading-relaxed text-slate-600 dark:text-gray-300 max-w-3xl">
-                {exam.about}
-              </p>
-
-              {/* Action Buttons */}
-              <div className="mt-7 flex flex-wrap items-center gap-3">
-                <motion.div
-                  whileHover={{ scale: 1.03, y: -2 }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                >
-                  <Link
-                    to="/signup"
-                    state={{ intent: exam.name }}
-                    className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[14.5px] font-semibold text-slate-900 shadow-sm hover:shadow-md transition-shadow"
-                    style={{ background: ACCENT }}
-                  >
-                    Start Preparing for {exam.name}
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </motion.div>
-                <motion.div
-                  whileHover={{ scale: 1.03, y: -2 }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                >
-                  <Link
-                    to={`/test?topic=${encodeURIComponent(exam.name + ' - ' + exam.fullName)}&slug=${exam.slug}`}
-                    state={{ topic: `${exam.name}: ${exam.fullName}`, slug: exam.slug, count: 10, mode: 'exam' }}
-                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] px-5 py-2.5 text-[14.5px] font-semibold text-slate-800 dark:text-gray-200 hover:border-slate-300 dark:hover:border-white/25 hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-2xs cursor-pointer"
-                  >
-                    <Sparkles className="w-4 h-4 text-amber-500" />
-                    Take Practice Quiz
-                  </Link>
-                </motion.div>
+              <div className="min-w-0">
+                <p className="text-[11.5px] font-semibold uppercase tracking-[0.12em] text-[#6ca855] dark:text-[#c8e558]">
+                  {exam.category}
+                </p>
+                <p className="mt-0.5 text-[13.5px] text-slate-500 dark:text-gray-400">
+                  Conducted by <span className="text-slate-700 dark:text-gray-200">{exam.conductedBy}</span>
+                </p>
               </div>
             </div>
-          </div>
 
-          {/* ══ Quick Facts Bar ═════════════════════════════════════════════ */}
-          <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { icon: Clock, label: "Duration", value: exam.duration },
-              { icon: Award, label: "Total Marks", value: exam.totalMarks },
-              { icon: Layers, label: "Mode", value: exam.mode },
-              { icon: Calendar, label: "Frequency", value: exam.frequency },
-            ].map((fact, i) => (
-              <motion.div
-                key={i}
-                whileHover={{ y: -4, scale: 1.02 }}
-                transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-                className="p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.02] shadow-2xs hover:shadow-xs transition-shadow cursor-default"
+            <h1 className="mt-6 text-[28px] sm:text-[36px] leading-[1.12] font-semibold tracking-[-0.035em] text-balance">
+              {exam.fullName}
+            </h1>
+
+            <p className="mt-4 max-w-[36rem] text-[15px] leading-[1.7] text-slate-600 dark:text-gray-300">
+              {exam.about}
+            </p>
+
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <Link
+                to="/signup"
+                state={{ intent: exam.name }}
+                className="inline-flex items-center gap-2 h-11 px-5 rounded-xl text-[14px] font-semibold text-slate-900 bg-[#c8e558] hover:bg-[#bcd94c] active:bg-[#b0cd40] transition-colors"
               >
-                <div className="flex items-center gap-2 text-slate-400 dark:text-gray-500">
-                  <fact.icon className="w-4 h-4" />
-                  <span className="text-[12px] font-medium uppercase tracking-wider">{fact.label}</span>
-                </div>
-                <p className="mt-1.5 text-[14px] font-semibold text-slate-800 dark:text-gray-100">{fact.value}</p>
-              </motion.div>
+                Start preparing for {exam.name}
+                <ArrowRight className="w-4 h-4" strokeWidth={2.25} />
+              </Link>
+              <Link
+                to={`/test?topic=${encodeURIComponent(exam.name + ' - ' + exam.fullName)}&slug=${exam.slug}`}
+                state={{ topic: `${exam.name}: ${exam.fullName}`, slug: exam.slug, count: 10, mode: 'exam' }}
+                className="inline-flex items-center h-11 px-5 rounded-xl border border-slate-200 dark:border-white/10 text-[14px] font-semibold text-slate-700 dark:text-gray-200 hover:border-slate-300 dark:hover:border-white/25 transition-colors"
+              >
+                Take a practice quiz
+              </Link>
+              {exam.officialSite && (
+                <a
+                  href={exam.officialSite}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="text-[13.5px] font-medium text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                >
+                  Official site ↗
+                </a>
+              )}
+            </div>
+          </header>
+
+          {/* ══ At a glance — a row of facts, not four tiles ═══════════════ */}
+          <dl className="mt-12 grid grid-cols-2 sm:grid-cols-4 border-t border-slate-100 dark:border-white/[0.07]">
+            {[
+              { label: 'Duration', value: exam.duration },
+              { label: 'Total marks', value: exam.totalMarks },
+              { label: 'Mode', value: exam.mode },
+              { label: 'Frequency', value: exam.frequency },
+            ].map((fact) => (
+              <div
+                key={fact.label}
+                className="py-4 pr-5 border-b border-slate-100 dark:border-white/[0.07] sm:border-b-0"
+              >
+                <dt className="text-[11px] font-semibold uppercase tracking-[0.11em] text-slate-400 dark:text-gray-500">
+                  {fact.label}
+                </dt>
+                <dd className="mt-1 text-[13.5px] font-medium text-slate-800 dark:text-gray-200">{fact.value}</dd>
+              </div>
             ))}
-          </div>
+          </dl>
         </Reveal>
 
-        {/* ══ Interactive Tabs Section ═════════════════════════════════════ */}
-        <div className="mt-12">
-          {/* Tab Navigation */}
-          <div className="flex border-b border-slate-200 dark:border-white/10 gap-2 sm:gap-6 overflow-x-auto pb-px">
-            <button
-              onClick={() => setActiveTab('pattern')}
-              className={`flex items-center gap-2 pb-3 px-1 text-[14.5px] font-semibold border-b-2 whitespace-nowrap transition-all ${
-                activeTab === 'pattern'
-                  ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white'
-                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200'
-              }`}
-            >
-              <BarChart3 className="w-4 h-4" />
-              <span>Exam Pattern & Marking</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('syllabus')}
-              className={`flex items-center gap-2 pb-3 px-1 text-[14.5px] font-semibold border-b-2 whitespace-nowrap transition-all ${
-                activeTab === 'syllabus'
-                  ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white'
-                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200'
-              }`}
-            >
-              <BookOpen className="w-4 h-4" />
-              <span>Subject-wise Syllabus</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('eligibility')}
-              className={`flex items-center gap-2 pb-3 px-1 text-[14.5px] font-semibold border-b-2 whitespace-nowrap transition-all ${
-                activeTab === 'eligibility'
-                  ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white'
-                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200'
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4" />
-              <span>Eligibility & Criteria</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('ai-prep')}
-              className={`flex items-center gap-2 pb-3 px-1 text-[14.5px] font-semibold border-b-2 whitespace-nowrap transition-all ${
-                activeTab === 'ai-prep'
-                  ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white'
-                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200'
-              }`}
-            >
-              <Sparkles className="w-4 h-4 text-lime-500" />
-              <span>Sadhya AI Advantage</span>
-            </button>
+        {/* ══ Tabs ═══════════════════════════════════════════════════════ */}
+        <div className="mt-14">
+          <div
+            role="tablist"
+            className="flex gap-6 overflow-x-auto border-b border-slate-100 dark:border-white/[0.07]"
+          >
+            {([
+              ['pattern', 'Pattern & marking'],
+              ['syllabus', 'Syllabus'],
+              ['eligibility', 'Eligibility'],
+              ['ai-prep', 'With Sadhya'],
+            ] as const).map(([key, label]) => (
+              <button
+                key={key}
+                role="tab"
+                aria-selected={activeTab === key}
+                onClick={() => setActiveTab(key)}
+                className={`pb-3 -mb-px text-[14px] font-semibold whitespace-nowrap border-b-2 transition-colors ${
+                  activeTab === key
+                    ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white'
+                    : 'border-transparent text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-200'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
-          {/* ── TAB 1: Pattern & Marking ───────────────────────────────── */}
+          {/* ── Pattern & marking ─────────────────────────────────────── */}
           {activeTab === 'pattern' && (
-            <Reveal className="mt-8 space-y-8">
-              <div>
-                <Eyebrow>Marking Scheme</Eyebrow>
-                <div className="mt-3 p-4 rounded-xl border border-amber-200/80 dark:border-amber-500/20 bg-amber-50/60 dark:bg-amber-500/5 text-[14px] text-amber-950 dark:text-amber-200 flex items-start gap-3">
-                  <HelpCircle className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
-                  <div>
-                    <p className="font-semibold">Official Marking Rule:</p>
-                    <p className="mt-0.5 text-[14px] leading-relaxed text-amber-900 dark:text-amber-300">{exam.markingScheme}</p>
-                  </div>
-                </div>
-              </div>
+            <Reveal className="mt-10 space-y-12">
+              <section>
+                <Eyebrow>Marking scheme</Eyebrow>
+                <p className="mt-3 pl-4 border-l-2 border-[#c8e558] text-[14.5px] leading-[1.7] text-slate-700 dark:text-gray-300">
+                  {exam.markingScheme}
+                </p>
+              </section>
 
-              <div>
-                <Eyebrow>Stages & Section Breakdown</Eyebrow>
-                <div className="mt-4 space-y-6">
+              <section>
+                <Eyebrow>Stages and sections</Eyebrow>
+                <div className="mt-5 space-y-10">
                   {exam.stages.map((stage, idx) => (
-                    <div key={idx} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111113] overflow-hidden shadow-2xs">
-                      <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-white/[0.07] bg-slate-50/50 dark:bg-white/[0.02] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12px] font-bold flex items-center justify-center">
-                              {idx + 1}
-                            </span>
-                            <h3 className="text-[17px] font-semibold text-slate-900 dark:text-white">{stage.name}</h3>
-                          </div>
-                          <p className="mt-1 text-[13.5px] text-slate-500 dark:text-gray-400">{stage.type}</p>
-                        </div>
-                        <div className="flex items-center gap-4 text-[13px] font-medium text-slate-600 dark:text-gray-300">
-                          <span className="inline-flex items-center gap-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 px-3 py-1 rounded-lg">
-                            <Clock className="w-3.5 h-3.5 text-slate-400" />
-                            {stage.duration}
+                    <div key={idx}>
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 pb-3 border-b border-slate-100 dark:border-white/[0.07]">
+                        <h3 className="text-[16px] font-semibold tracking-[-0.015em]">
+                          <span className="mr-2 font-normal tabular-nums text-slate-400 dark:text-gray-500">
+                            {idx + 1}
                           </span>
-                          <span className="inline-flex items-center gap-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 px-3 py-1 rounded-lg">
-                            <Award className="w-3.5 h-3.5 text-slate-400" />
-                            {stage.totalMarks}
-                          </span>
-                        </div>
+                          {stage.name}
+                        </h3>
+                        <p className="text-[13px] text-slate-500 dark:text-gray-400">
+                          {stage.duration} · {stage.totalMarks}
+                        </p>
                       </div>
+                      <p className="mt-2 text-[13.5px] text-slate-500 dark:text-gray-400">{stage.type}</p>
 
-                      <div className="p-5 sm:p-6">
-                        <table className="w-full text-left text-[14px]">
+                      {/* Its own scroll container, so a wide table never scrolls the page. */}
+                      <div className="mt-4 overflow-x-auto">
+                        <table className="w-full min-w-[420px] text-left text-[14px]">
                           <thead>
-                            <tr className="border-b border-slate-100 dark:border-white/[0.07] text-slate-400 dark:text-gray-500 text-[12px] uppercase font-semibold">
-                              <th className="pb-3 font-medium">Subject / Section</th>
-                              <th className="pb-3 font-medium">Questions</th>
-                              <th className="pb-3 font-medium text-right">Max Marks</th>
+                            <tr className="text-[11px] uppercase tracking-[0.11em] text-slate-400 dark:text-gray-500">
+                              <th className="pb-2 font-semibold">Section</th>
+                              <th className="pb-2 font-semibold">Questions</th>
+                              <th className="pb-2 font-semibold text-right">Marks</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 dark:divide-white/[0.05]">
+                          <tbody className="divide-y divide-slate-100 dark:divide-white/[0.06] border-t border-slate-100 dark:border-white/[0.07]">
                             {stage.sections.map((sec, sIdx) => (
-                              <tr key={sIdx} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.01]">
-                                <td className="py-3.5 pr-4 font-medium text-slate-800 dark:text-gray-200">
+                              <tr key={sIdx}>
+                                <td className="py-3 pr-4 text-slate-800 dark:text-gray-200">
                                   {sec.name}
-                                  {sec.timing && <span className="block text-[12px] font-normal text-slate-400">Time: {sec.timing}</span>}
+                                  {sec.timing && (
+                                    <span className="block text-[12px] text-slate-400 dark:text-gray-500">
+                                      {sec.timing}
+                                    </span>
+                                  )}
                                 </td>
-                                <td className="py-3.5 pr-4 text-slate-600 dark:text-gray-400">{sec.questions}</td>
-                                <td className="py-3.5 text-right font-semibold text-slate-800 dark:text-gray-200">{sec.marks}</td>
+                                <td className="py-3 pr-4 tabular-nums text-slate-600 dark:text-gray-400">
+                                  {sec.questions}
+                                </td>
+                                <td className="py-3 text-right tabular-nums font-medium text-slate-800 dark:text-gray-200">
+                                  {sec.marks}
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -343,218 +291,179 @@ export default function ExamLanding() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </section>
             </Reveal>
           )}
 
-          {/* ── TAB 2: Subject-wise Syllabus ──────────────────────────── */}
+          {/* ── Syllabus ──────────────────────────────────────────────── */}
           {activeTab === 'syllabus' && (
-            <Reveal className="mt-8 space-y-8">
-              <div className="p-4 rounded-xl border border-blue-200/80 dark:border-blue-500/20 bg-blue-50/60 dark:bg-blue-500/5 text-[14px] text-blue-950 dark:text-blue-200 flex items-start gap-3">
-                <BookOpen className="w-5 h-5 shrink-0 text-blue-600 mt-0.5" />
-                <div>
-                  <p className="font-semibold">Official Syllabus & High-Yield Units:</p>
-                  <p className="mt-0.5 text-[14px] text-blue-900 dark:text-blue-300">
-                    Sadhya’s question generation, chapter notebooks, and diagnostic tests are strictly mapped to these official topics.
-                  </p>
-                </div>
-              </div>
+            <Reveal className="mt-10">
+              <p className="max-w-[36rem] text-[14.5px] leading-[1.7] text-slate-600 dark:text-gray-300">
+                Sadhya&rsquo;s question generation, notebooks and diagnostics are mapped to these
+                official topics, so practice follows the syllabus rather than a guess at it.
+              </p>
 
-              <div className="space-y-6">
+              <div className="mt-10 space-y-12">
                 {exam.syllabus.map((subj, subIdx) => (
-                  <motion.div
-                    key={subIdx}
-                    whileHover={{ y: -4 }}
-                    transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-                    className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111113] p-6 shadow-2xs hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-white/[0.07]">
-                      <h3 className="text-[19px] font-semibold text-slate-900 dark:text-white flex items-center gap-2.5">
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ background: ACCENT }} />
-                        {subj.subject}
-                      </h3>
-                      <div className="flex items-center gap-3">
-                        <span className="text-[13px] font-medium text-slate-400 dark:text-gray-500 hidden sm:inline">
-                          {subj.chapters.length} Core Units
+                  <section key={subIdx}>
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 pb-3 border-b border-slate-100 dark:border-white/[0.07]">
+                      <h3 className="text-[17px] font-semibold tracking-[-0.02em]">{subj.subject}</h3>
+                      <div className="flex items-center gap-4">
+                        <span className="text-[12.5px] tabular-nums text-slate-400 dark:text-gray-500">
+                          {subj.chapters.length} units
                         </span>
                         <Link
                           to={`/test?topic=${encodeURIComponent(exam.name + ' - ' + subj.subject)}&slug=${exam.slug}`}
                           state={{ topic: `${exam.name}: ${subj.subject}`, slug: exam.slug, count: 5, mode: 'study' }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[12.5px] font-medium bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-gray-200 transition-colors shadow-2xs cursor-pointer"
+                          className="text-[12.5px] font-semibold text-slate-900 dark:text-white underline underline-offset-4 decoration-slate-300 dark:decoration-white/25 hover:decoration-[#8ea63a] dark:hover:decoration-[#c8e558] transition-colors"
                         >
-                          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                          Practice Subject
+                          Practise this
                         </Link>
                       </div>
                     </div>
 
-                    {/* High weightage tags */}
-                    <div className="mt-4">
-                      <p className="text-[12px] uppercase font-bold tracking-wider text-slate-400 dark:text-gray-500 mb-2.5">
-                        High Weightage Focus Areas:
+                    {subj.highWeightageTopics.length > 0 && (
+                      <p className="mt-4 text-[13.5px] leading-relaxed text-slate-500 dark:text-gray-400">
+                        <span className="font-semibold text-slate-700 dark:text-gray-200">Heaviest areas:</span>{' '}
+                        {subj.highWeightageTopics.join(' · ')}
                       </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {subj.highWeightageTopics.map((tag, tIdx) => (
-                          <span
-                            key={tIdx}
-                            className="inline-flex items-center px-2.5 py-1 rounded-md text-[12px] font-medium border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03] text-slate-700 dark:text-gray-300"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+                    )}
 
-                    {/* Chapter Accordions */}
-                    <div className="mt-6 space-y-3">
+                    <div className="mt-5">
                       {subj.chapters.map((ch, cIdx) => {
                         const unitKey = `${subIdx}-${cIdx}`;
-                        const isExpanded = expandedUnits[unitKey] !== false; // default expanded
+                        const isExpanded = expandedUnits[unitKey] !== false;
                         return (
-                          <div key={cIdx} className="rounded-xl border border-slate-100 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.015] overflow-hidden">
+                          <div key={cIdx} className="border-b border-slate-100 dark:border-white/[0.07]">
                             <button
                               onClick={() => toggleUnit(unitKey)}
-                              className="w-full px-4 py-3 text-left flex items-center justify-between gap-4 font-semibold text-[14.5px] text-slate-800 dark:text-gray-200 hover:bg-slate-100/60 dark:hover:bg-white/5 transition-colors"
+                              aria-expanded={isExpanded}
+                              className="w-full py-3 text-left flex items-center justify-between gap-4 text-[14px] font-medium text-slate-800 dark:text-gray-200 hover:text-slate-950 dark:hover:text-white transition-colors"
                             >
                               <span>{ch.unit}</span>
-                              {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                              {isExpanded ? (
+                                <ChevronUp className="w-4 h-4 shrink-0 text-slate-400" strokeWidth={2} />
+                              ) : (
+                                <ChevronDown className="w-4 h-4 shrink-0 text-slate-400" strokeWidth={2} />
+                              )}
                             </button>
                             {isExpanded && (
-                              <div className="px-4 pb-4 pt-1 border-t border-slate-100 dark:border-white/[0.04]">
-                                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-                                  {ch.topics.map((top, topIdx) => (
-                                    <li key={topIdx} className="flex items-start gap-2 text-[13.5px] text-slate-600 dark:text-gray-400">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-gray-600 mt-2 shrink-0" />
-                                      <span>{top}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
+                              <ul className="pb-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
+                                {ch.topics.map((top, topIdx) => (
+                                  <li
+                                    key={topIdx}
+                                    className="text-[13.5px] leading-relaxed text-slate-500 dark:text-gray-400"
+                                  >
+                                    {top}
+                                  </li>
+                                ))}
+                              </ul>
                             )}
                           </div>
                         );
                       })}
                     </div>
-                  </motion.div>
+                  </section>
                 ))}
               </div>
             </Reveal>
           )}
 
-          {/* ── TAB 3: Eligibility & Requirements ─────────────────────── */}
+          {/* ── Eligibility ───────────────────────────────────────────── */}
           {activeTab === 'eligibility' && (
-            <Reveal className="mt-8 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="p-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111113] shadow-2xs">
-                  <div className="flex items-center gap-3 text-slate-900 dark:text-white mb-3">
-                    <GraduationCap className="w-5 h-5 text-indigo-500" />
-                    <h3 className="text-[17px] font-semibold">Educational Qualification</h3>
+            <Reveal className="mt-10 space-y-12">
+              <dl className="border-t border-slate-100 dark:border-white/[0.07]">
+                {[
+                  { term: 'Qualification', value: exam.eligibility.qualification },
+                  { term: 'Age limit', value: exam.eligibility.ageLimit },
+                  {
+                    term: 'Attempts',
+                    value:
+                      exam.eligibility.attemptsLimit ||
+                      'No restriction, as long as the age and qualification criteria are met.',
+                  },
+                  { term: 'Medium', value: exam.eligibility.languageMedium },
+                ].map((row) => (
+                  <div
+                    key={row.term}
+                    className="grid sm:grid-cols-[168px_1fr] gap-x-8 gap-y-1 py-5 border-b border-slate-100 dark:border-white/[0.07]"
+                  >
+                    <dt className="text-[13.5px] font-semibold text-slate-900 dark:text-white">{row.term}</dt>
+                    <dd className="text-[14.5px] leading-[1.7] text-slate-600 dark:text-gray-300">{row.value}</dd>
                   </div>
-                  <p className="text-[14.5px] leading-relaxed text-slate-600 dark:text-gray-300">
-                    {exam.eligibility.qualification}
-                  </p>
-                </div>
+                ))}
+              </dl>
 
-                <div className="p-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111113] shadow-2xs">
-                  <div className="flex items-center gap-3 text-slate-900 dark:text-white mb-3">
-                    <Clock className="w-5 h-5 text-amber-500" />
-                    <h3 className="text-[17px] font-semibold">Age Limit & Relaxations</h3>
-                  </div>
-                  <p className="text-[14.5px] leading-relaxed text-slate-600 dark:text-gray-300">
-                    {exam.eligibility.ageLimit}
-                  </p>
-                </div>
-
-                <div className="p-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111113] shadow-2xs">
-                  <div className="flex items-center gap-3 text-slate-900 dark:text-white mb-3">
-                    <Layers className="w-5 h-5 text-emerald-500" />
-                    <h3 className="text-[17px] font-semibold">Number of Attempts</h3>
-                  </div>
-                  <p className="text-[14.5px] leading-relaxed text-slate-600 dark:text-gray-300">
-                    {exam.eligibility.attemptsLimit || 'No restriction as long as candidate fulfills the prescribed age and educational eligibility.'}
-                  </p>
-                </div>
-
-                <div className="p-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111113] shadow-2xs">
-                  <div className="flex items-center gap-3 text-slate-900 dark:text-white mb-3">
-                    <Globe className="w-5 h-5 text-cyan-500" />
-                    <h3 className="text-[17px] font-semibold">Medium & Languages</h3>
-                  </div>
-                  <p className="text-[14.5px] leading-relaxed text-slate-600 dark:text-gray-300">
-                    {exam.eligibility.languageMedium}
-                  </p>
-                </div>
-              </div>
-
-              {/* Preparation Advice */}
-              <div className="mt-8 p-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
-                <h3 className="text-[17px] font-semibold text-slate-900 dark:text-white mb-4">
-                  Expert Preparation Strategy for {exam.name}
-                </h3>
-                <ul className="space-y-3">
+              <section>
+                <Eyebrow>How to approach it</Eyebrow>
+                <ul className="mt-4 space-y-3">
                   {exam.preparationTips.map((tip, idx) => (
                     <li key={idx} className="flex items-start gap-3">
-                      <CheckCircle2 className="w-4 h-4 mt-1 shrink-0" style={{ color: ACCENT }} strokeWidth={2.5} />
-                      <span className="text-[14.5px] text-slate-700 dark:text-gray-300 leading-relaxed">{tip}</span>
+                      <Check
+                        className="w-4 h-4 mt-1 shrink-0 text-[#6ca855] dark:text-[#c8e558]"
+                        strokeWidth={2.5}
+                      />
+                      <span className="text-[14.5px] leading-[1.7] text-slate-600 dark:text-gray-300">{tip}</span>
                     </li>
                   ))}
                 </ul>
-              </div>
+              </section>
             </Reveal>
           )}
 
-          {/* ── TAB 4: Sadhya AI Advantage ────────────────────────────── */}
+          {/* ── With Sadhya ───────────────────────────────────────────── */}
           {activeTab === 'ai-prep' && (
-            <Reveal className="mt-8 space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <Reveal className="mt-10">
+              {/* The old version titled each of these "Feature #1", "Feature #2" — a heading that
+                  told the reader nothing the point beside it did not. The point is the content. */}
+              <ul className="border-t border-slate-100 dark:border-white/[0.07]">
                 {exam.howSadhyaHelps.map((point, idx) => (
-                  <div key={idx} className="p-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111113] shadow-2xs">
-                    <div className="w-10 h-10 rounded-xl bg-lime-400/10 text-lime-600 dark:text-lime-400 flex items-center justify-center mb-4">
-                      <Sparkles className="w-5 h-5" />
-                    </div>
-                    <h4 className="text-[16px] font-semibold text-slate-900 dark:text-white mb-2">
-                      Feature #{idx + 1}
-                    </h4>
-                    <p className="text-[14.5px] leading-relaxed text-slate-600 dark:text-gray-300">
-                      {point}
-                    </p>
-                  </div>
+                  <li
+                    key={idx}
+                    className="grid sm:grid-cols-[40px_1fr] gap-x-4 py-5 border-b border-slate-100 dark:border-white/[0.07]"
+                  >
+                    <span className="hidden sm:block pt-0.5 text-[13px] tabular-nums text-slate-300 dark:text-gray-600">
+                      {String(idx + 1).padStart(2, '0')}
+                    </span>
+                    <p className="text-[14.5px] leading-[1.7] text-slate-600 dark:text-gray-300">{point}</p>
+                  </li>
                 ))}
-              </div>
+              </ul>
 
-              <div className="p-6 sm:p-8 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-900 text-white dark:bg-white/[0.04] mt-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div className="mt-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h3 className="text-[20px] font-semibold text-white">Test Your Readiness for {exam.name}</h3>
-                  <p className="mt-1 text-[14.5px] text-slate-300 dark:text-gray-400">
-                    Generate an instant diagnostic quiz calibrated to {exam.name}’s latest pattern with zero fluff.
+                  <h3 className="text-[16px] font-semibold tracking-[-0.015em]">
+                    Test your readiness for {exam.name}
+                  </h3>
+                  <p className="mt-1 text-[14px] text-slate-500 dark:text-gray-400">
+                    A diagnostic quiz built to {exam.name}&rsquo;s current pattern.
                   </p>
                 </div>
                 <Link
                   to={`/test?topic=${encodeURIComponent(exam.name + ' - ' + exam.fullName)}&slug=${exam.slug}`}
                   state={{ topic: `${exam.name}: ${exam.fullName}`, slug: exam.slug, count: 10, mode: 'exam' }}
-                  className="shrink-0 px-6 py-3 rounded-xl font-semibold text-slate-900 transition-transform hover:scale-[1.02] active:scale-98 shadow-xs cursor-pointer"
-                  style={{ background: ACCENT }}
+                  className="shrink-0 inline-flex items-center justify-center h-11 px-5 rounded-xl text-[14px] font-semibold text-slate-900 bg-[#c8e558] hover:bg-[#bcd94c] active:bg-[#b0cd40] transition-colors"
                 >
-                  Generate Practice Test
+                  Generate a practice test
                 </Link>
               </div>
             </Reveal>
           )}
         </div>
 
-        {/* ══ Other Exams Covered ═════════════════════════════════════════ */}
+        {/* ══ Other exams ════════════════════════════════════════════════ */}
         {others.length > 0 && (
-          <Reveal delay={0.2} className="mt-20 pt-10 border-t border-slate-200 dark:border-white/10">
-            <Eyebrow>Other competitive exams covered by Sadhya</Eyebrow>
-            <div className="mt-4 flex flex-wrap gap-2">
+          <Reveal delay={0.15} className="mt-20 pt-10 border-t border-slate-100 dark:border-white/[0.07]">
+            <Eyebrow>Other exams on Sadhya</Eyebrow>
+            <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2.5">
               {others.map((e) => (
                 <Link
                   key={e.slug}
                   to={`/exams/${e.slug}`}
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3 py-1.5 text-[12.5px] font-medium text-slate-700 dark:text-gray-300 hover:border-slate-300 dark:hover:border-white/25 hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-2xs group"
+                  className="inline-flex items-center gap-2 text-[13.5px] font-medium text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
-                  <ExamLogo slug={e.slug} className="w-[18px] h-[18px] shrink-0 object-contain transition-transform group-hover:scale-110" size={18} />
-                  <span>{e.name}</span>
+                  <ExamLogo slug={e.slug} size={16} className="w-4 h-4 shrink-0 object-contain" />
+                  {e.name}
                 </Link>
               ))}
             </div>
