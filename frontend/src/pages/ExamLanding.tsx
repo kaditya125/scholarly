@@ -145,7 +145,7 @@ export default function ExamLanding() {
             <div className="max-w-4xl">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] flex items-center justify-center p-2.5 shrink-0 shadow-2xs">
-                  <ExamLogo slug={exam.slug} size={44} className="object-contain" />
+                  <ExamLogo slug={exam.slug} size={44} className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#c8e558]/20 dark:bg-[#c8e558]/10 text-slate-900 dark:text-[#c8e558] text-[12px] font-semibold mb-1">
