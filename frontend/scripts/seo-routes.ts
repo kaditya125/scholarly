@@ -36,7 +36,7 @@
 
 import { EXAM_CATALOG } from '../src/lib/examCatalog';
 import { BLOG_POSTS } from '../src/content/blogPosts';
-import { examMetaDescription } from '../src/lib/examSeo';
+import { examMetaDescription, examMetaTitle } from '../src/lib/examSeo';
 import { SITE, PRO_MONTHLY_INR } from '../src/lib/siteConfig';
 
 export interface SeoRoute {
@@ -253,7 +253,7 @@ const DEFAULT_EXAM_PRIORITY = 0.85;
  */
 const EXAM_ROUTES: SeoRoute[] = EXAM_CATALOG.map((exam) => ({
   path: `/exams/${exam.slug}`,
-  title: `${exam.name} Exam Pattern, Syllabus & AI Preparation — ${exam.fullName} | ${SITE.name}`,
+  title: examMetaTitle(exam),
   // Written copy, one per exam, shared with ExamLanding.tsx so the two cannot diverge.
   description: examMetaDescription(exam),
   changefreq: 'monthly' as const,

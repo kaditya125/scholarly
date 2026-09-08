@@ -26,7 +26,7 @@ import SiteFooter from '../components/landing/SiteFooter';
 import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
 import { EXAM_CATALOG, getExamBySlug } from '../lib/examCatalog';
-import { examMetaDescription } from '../lib/examSeo';
+import { examMetaDescription, examMetaTitle } from '../lib/examSeo';
 import { ExamLogo } from '../components/brand/ExamLogo';
 
 const ACCENT = '#c8e558';
@@ -95,10 +95,11 @@ export default function ExamLanding() {
   }, [exam]);
 
   useSeo({
-    title: exam ? `${exam.name} Exam Pattern, Syllabus & AI Preparation — ${exam.fullName} | ${SITE.name}` : `Exam Preparation | ${SITE.name}`,
-    // Shared with scripts/seo-routes.ts, which stamps the same string into the served HTML.
-    // Assembling it here from exam.about produced 240-270 characters against the ~155 Google
-    // renders, and cut mid-word; see src/lib/examSeo.ts.
+    title: exam ? examMetaTitle(exam) : `Exam Preparation | ${SITE.name}`,
+    // Title and description are both shared with scripts/seo-routes.ts, which stamps the same
+    // strings into the served HTML. Assembled here, they ran 92-152 and 240-270 characters
+    // against the ~60 and ~155 Google shows. fullName is not lost by leaving the title: it is
+    // the page's <h1> and the JSON-LD `about` below. See src/lib/examSeo.ts.
     description: exam
       ? examMetaDescription(exam)
       : `${SITE.name} covers preparation for ${EXAM_CATALOG.length}+ competitive exams and boards.`,
