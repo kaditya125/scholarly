@@ -26,6 +26,7 @@ import SiteFooter from '../components/landing/SiteFooter';
 import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
 import { EXAM_CATALOG, getExamBySlug } from '../lib/examCatalog';
+import { examMetaDescription } from '../lib/examSeo';
 import { ExamLogo } from '../components/brand/ExamLogo';
 
 const ACCENT = '#c8e558';
@@ -95,8 +96,11 @@ export default function ExamLanding() {
 
   useSeo({
     title: exam ? `${exam.name} Exam Pattern, Syllabus & AI Preparation — ${exam.fullName} | ${SITE.name}` : `Exam Preparation | ${SITE.name}`,
+    // Shared with scripts/seo-routes.ts, which stamps the same string into the served HTML.
+    // Assembling it here from exam.about produced 240-270 characters against the ~155 Google
+    // renders, and cut mid-word; see src/lib/examSeo.ts.
     description: exam
-      ? `Complete latest pattern, subject-wise syllabus, marking scheme, and AI tutor for ${exam.fullName} (${exam.name}). ${exam.about.slice(0, 110)}…`
+      ? examMetaDescription(exam)
       : `${SITE.name} covers preparation for ${EXAM_CATALOG.length}+ competitive exams and boards.`,
     url: exam ? `${SITE.url}/exams/${exam.slug}` : `${SITE.url}/exams`,
   });

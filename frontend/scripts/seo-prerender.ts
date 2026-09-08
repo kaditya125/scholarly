@@ -39,6 +39,8 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { SEO_ROUTES, assertRoutesAreSane, canonicalFor, type SeoRoute } from './seo-routes';
+import { EXAM_CATALOG } from '../src/lib/examCatalog';
+import { hasWrittenDescription } from '../src/lib/examSeo';
 import { SITE } from '../src/lib/siteConfig';
 
 const DIST = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
@@ -181,6 +183,16 @@ function main(): void {
   }
 
   writeFileSync(join(DIST, 'sitemap.xml'), buildSitemap(), 'utf8');
+
+  // A warning, not a failure: an exam without written copy still gets a serviceable generated
+  // description, so this should not block adding one. It should just be impossible to forget.
+  const unwritten = EXAM_CATALOG.filter((e) => !hasWrittenDescription(e.slug)).map((e) => e.slug);
+  if (unwritten.length > 0) {
+    console.warn(
+      `[seo] ${unwritten.length} exam(s) have no written meta description and fell back to a` +
+        ` generated one: ${unwritten.join(', ')}. Add a line to src/lib/examSeo.ts.`,
+    );
+  }
 
   const inSitemap = SEO_ROUTES.filter((r) => r.inSitemap !== false).length;
   const aliases = SEO_ROUTES.length - inSitemap;
