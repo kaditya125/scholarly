@@ -317,7 +317,11 @@ const DEFAULT_AVATARS = [
 export default function LandingPage() {
   useSeo({
     title: `${SITE.name} — ${SITE.tagline}`,
-    description: `${SITE.descriptor} Covers NEET, JEE, UPSC CSE, SSC CGL, banking, teaching and school board exams — photograph a question, get a step-by-step answer, and an adaptive study plan built around your actual syllabus.`,
+    // Must match the '/' entry in scripts/seo-routes.ts, which is what the crawler and every
+    // link unfurler actually read. The previous 237-character version was truncated in
+    // results and disagreed with the served HTML.
+    description:
+      'AI-powered prep for UPSC, SSC CGL, JEE, NEET, BPSC. Every answer grounded in the official syllabus. No hallucinations.',
     url: SITE.url,
   });
 
