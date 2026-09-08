@@ -79,10 +79,37 @@ nothing and behaviour is identical to today.
 ## Applying it
 
 ```bash
-sudo cp /etc/nginx/sites-enabled/sadhya /etc/nginx/sites-enabled/sadhya.bak-$(date +%F)
-sudo sed -i 's|try_files \$uri \$uri/ /index.html;|try_files $uri $uri/index.html $uri/ /index.html;|' /etc/nginx/sites-enabled/sadhya
+sudo mkdir -p /etc/nginx/backups
+sudo cp /etc/nginx/sites-enabled/sadhya /etc/nginx/backups/sadhya.bak-$(date +%F-%H%M%S)
+sudo sed -i 's|try_files $uri $uri/ /index.html;|try_files $uri $uri/index.html $uri/ /index.html;|' /etc/nginx/sites-enabled/sadhya
 sudo nginx -t && sudo systemctl reload nginx
 ```
+
+**The backup must not live in `sites-enabled/`.** nginx includes that directory by glob, so a
+copy of the server block sitting next to it is loaded as a *second* server block and the config
+stops parsing:
+
+```
+[emerg] duplicate listen options for [::]:443 in sites-enabled/sadhya.bak-...:53
+nginx: configuration file /etc/nginx/nginx.conf test failed
+```
+
+That is how this was first attempted, and `nginx -t` caught it before any reload — which is the
+whole reason the test comes before the reload.
+
+Clearing it up turned up something that had nothing to do with this change: a pre-existing
+`sadhya.bak.1787617980`, dated **25 August 2026**, was already sitting in `sites-enabled/`, and
+`nginx.conf` includes that directory as a bare `include /etc/nginx/sites-enabled/*;`. It declares
+`listen 443 ssl` under the same `server_name`, so from 25 August onward **every `nginx -t` and
+every reload on this box would have failed**. The running nginx was fine only because it had
+been started before the file appeared.
+
+That matters because certbot reloads nginx unattended after it renews. The certificate expires
+**16 November 2026** and certbot renews inside the last 30 days, so the first failing reload
+would have landed around **17 October**: renewal writes the new certificate, the reload fails,
+nginx keeps serving the old one from memory, and the site goes hard-down on 16 November. `.app`
+is HSTS-preloaded, so that outage has no click-through. Both backups now live in
+`/etc/nginx/backups/`, outside the glob.
 
 `nginx -t` before the reload is the safety gate: a config that fails to parse is never loaded,
 and `reload` keeps the old workers serving until the new ones are up, so there is no window
@@ -91,7 +118,7 @@ where the site is down.
 ## Rolling back
 
 ```bash
-sudo cp /etc/nginx/sites-enabled/sadhya.bak-<date> /etc/nginx/sites-enabled/sadhya
+sudo cp /etc/nginx/backups/sadhya.bak-<timestamp> /etc/nginx/sites-enabled/sadhya
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
