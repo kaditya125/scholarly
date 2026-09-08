@@ -13,6 +13,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const {
     consentStatus,
     isLoading: consentLoading,
+    isError: consentCheckFailed,
     requiresReview,
     refetch: refetchConsent,
   } = usePolicyConsent(!!user);
@@ -42,6 +43,62 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     if (location.pathname !== '/verify-email') {
       return <Navigate to="/verify-email" replace />;
     }
+  }
+
+  /*
+   * ── Policy consent gate ──────────────────────────────────────────────────────────────
+   *
+   * Deliberately ABOVE the role and profile gates. Someone signing up for the first time
+   * should agree to the terms and then be walked through onboarding, not be walked through
+   * onboarding and shown the agreement somewhere along the way.
+   *
+   * It also replaces the app rather than sitting on top of it. Previously this rendered as
+   * `{children}` plus an overlay, which had three consequences:
+   *
+   *   · `requiresReview` is `data?.requiresReview ?? false`, so while the status request was
+   *     in flight it read false and the dashboard rendered. The gate appeared afterwards, on
+   *     top of an app the person had already seen.
+   *   · the app stayed mounted behind the gate for the whole time it was open — fetching,
+   *     running effects, and reachable by keyboard, since an opaque overlay is not a focus trap.
+   *   · it failed open. If /policies/my-consent errored, `data` stayed undefined,
+   *     `requiresReview` stayed false, and an account that had never accepted anything walked
+   *     straight through.
+   *
+   * The third one still fails open, but now it does so knowingly and says so — see below.
+   */
+  // /verify-email is exempt. An unverified account is redirected there by the block above, and
+  // replacing that page with the consent gate would hide the resend control — leaving someone
+  // who accepts the terms right back on a page they still cannot act on. Verification first.
+  const isVerificationFlow = location.pathname.startsWith('/verify-email');
+
+  if (!isVerificationFlow && consentLoading && !dismissModalForSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#0b0b0c]">
+        <span className="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-white/10 border-t-[#c8e558] animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isVerificationFlow && requiresReview && !dismissModalForSession) {
+    return (
+      <FirstTimeConsentModal
+        isOpen
+        isUpdate={!!consentStatus?.lastAcceptedVersion}
+        lastAcceptedVersion={consentStatus?.lastAcceptedVersion}
+        onConsentAccepted={() => {
+          setDismissModalForSession(true);
+          refetchConsent();
+        }}
+      />
+    );
+  }
+
+  if (consentCheckFailed) {
+    // Chosen deliberately: a transient failure on this one endpoint should not brick the whole
+    // product for someone who has already accepted. The cost is that an unconsented account can
+    // slip through while the endpoint is down — recorded here rather than hidden, because the
+    // alternative is a lockout no user can clear.
+    console.warn('[consent] status check failed; proceeding without the gate this session.');
   }
 
   // Role Gate
@@ -98,23 +155,8 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     }
   }
 
-  return (
-    <>
-      {children}
-      {/* Policy Consent Gate Modal — Appears whenever active policy requires review and not yet accepted */}
-      {requiresReview && !dismissModalForSession && (
-        <FirstTimeConsentModal
-          isOpen={true}
-          isUpdate={!!consentStatus?.lastAcceptedVersion}
-          lastAcceptedVersion={consentStatus?.lastAcceptedVersion}
-          onConsentAccepted={() => {
-            setDismissModalForSession(true);
-            refetchConsent();
-          }}
-        />
-      )}
-    </>
-  );
+  // Consent has been dealt with above, so this is just the app.
+  return <>{children}</>;
 }
 
 export default ProtectedRoute;

@@ -13,7 +13,7 @@ export interface UserConsentStatus {
 export function usePolicyConsent(enabled = true) {
   const queryClient = useQueryClient();
 
-  const { data, isLoading, refetch } = useQuery<UserConsentStatus>({
+  const { data, isLoading, isError, refetch } = useQuery<UserConsentStatus>({
     queryKey: ['policy-consent-status'],
     queryFn: async () => {
       const res = await api.get('/policies/my-consent');
@@ -37,6 +37,11 @@ export function usePolicyConsent(enabled = true) {
   return {
     consentStatus: data,
     isLoading,
+    /**
+     * The status request failed. Callers gating on consent need to tell this apart from
+     * 'not required': both leave requiresReview false, but one of them means we do not know.
+     */
+    isError,
     hasAcceptedCurrent: data?.hasAcceptedCurrent ?? false,
     requiresReview: data?.requiresReview ?? false,
     acceptPolicies: acceptMutation.mutateAsync,
