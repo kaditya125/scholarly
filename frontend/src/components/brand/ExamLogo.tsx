@@ -39,7 +39,14 @@ export function ExamLogo({ slug, className = 'w-5 h-5', size = 20 }: ExamLogoPro
 
   if (imageSrc && !error) {
     return (
-      <span className={`${className} dark:bg-white dark:p-0.5 dark:rounded-md dark:shadow-2xs shrink-0 inline-flex items-center justify-center`}>
+      // max-w/max-h are a guard, not styling. The <img> below is w-full h-full, so its rendered
+      // size comes from THIS span — not from the `size` prop, which only sets the width/height
+      // attributes that those classes then override. A caller passing a className with no width
+      // utility (the exam hero passed just "object-contain") therefore left the span content-sized,
+      // `w-full` resolved against nothing, and the image painted at its intrinsic resolution —
+      // ~230px of NTA logo across the badge, heading and body copy of all 17 exam pages.
+      // Capping against the parent means the worst a bad className can now do is fill its box.
+      <span className={`${className} max-w-full max-h-full dark:bg-white dark:p-0.5 dark:rounded-md dark:shadow-2xs shrink-0 inline-flex items-center justify-center`}>
         <img
           src={imageSrc}
           alt={`${slug} logo`}
