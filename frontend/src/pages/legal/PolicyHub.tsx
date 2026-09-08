@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import {
-  ShieldCheck, Check, Search, ArrowRight, FileText, AlertCircle,
-  Clock, Sparkles, Scale, ExternalLink
-} from 'lucide-react';
+import { AlertCircle, Check, Scale, Search } from 'lucide-react';
 import SiteHeader from '../../components/landing/SiteHeader';
 import SkyAmbience from '../../components/landing/sky';
 import SiteFooter from '../../components/landing/SiteFooter';
@@ -12,11 +9,12 @@ import {
   CURRENT_POLICY_METADATA,
   PolicySection,
 } from '../../content/policies/policyData';
+import { LegalLink, SubmitButton } from '../../components/auth/AuthShell';
+import { ConsentCheckbox } from '../../components/policies/ConsentCheckbox';
 import { useAuth } from '../../lib/AuthContext';
 import { usePolicyConsent } from '../../lib/hooks/usePolicyConsent';
 import { useSeo } from '../../lib/useSeo';
 import { SITE } from '../../lib/siteConfig';
-import { cn } from '../../lib/utils';
 
 export default function PolicyHub() {
   const { user } = useAuth();
@@ -199,89 +197,78 @@ export default function PolicyHub() {
               </section>
             ))}
 
-            {/* ── Official Agreement & Acceptance Box ──────────────────────── */}
+            {/* ── Acceptance ──────────────────────────────────────────────────
+                Three states, because the old one had two and got the third wrong: a signed-out
+                visitor was shown a live "I have read, understood, and agree" checkbox whose only
+                button was "Create Student Account". Ticking it recorded nothing and navigated
+                away — a consent control that does not take consent. Signed out, there is now
+                nothing to tick, and the copy says where acceptance actually happens. */}
             <section
               id="agreement-covenant"
-              className="mt-16 pt-8 border-t-2 border-slate-200 dark:border-white/10 space-y-5"
+              className="mt-16 pt-8 border-t border-slate-100 dark:border-white/[0.07] space-y-4"
             >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-[12px] font-mono font-bold uppercase tracking-wider text-[#6ca855] dark:text-[#c8e558]">
-                  <Scale className="w-3.5 h-3.5" />
-                  <span>Covenant &amp; Agreement Acknowledgment</span>
-                </div>
-                <h3 className="text-[20px] font-bold tracking-tight text-slate-900 dark:text-white">
-                  Confirm Your Acceptance
-                </h3>
-                <p className="text-[13.5px] text-slate-600 dark:text-gray-400 leading-relaxed">
-                  By checking the box below, you acknowledge having reviewed and agreed to the Sadhya Terms of Service, Privacy Policy, and Educational Operating Guidelines.
-                </p>
-              </div>
+              <h2 className="text-[20px] sm:text-[23px] font-semibold tracking-[-0.025em] text-slate-900 dark:text-white">
+                Your acceptance
+              </h2>
 
               {hasAcceptedCurrent || acceptSuccess ? (
-                <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-[13.5px] flex items-center gap-3">
-                  <ShieldCheck className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                  <div>
-                    <span className="font-semibold">Consent Recorded:</span> You have accepted Version {CURRENT_POLICY_METADATA.version} of the Sadhya Platform Terms &amp; Policies.
+                <p className="flex items-start gap-2.5 max-w-[34rem] text-[14px] leading-relaxed text-slate-600 dark:text-gray-300">
+                  <Check
+                    className="w-4 h-4 mt-1 shrink-0 text-[#6ca855] dark:text-[#c8e558]"
+                    strokeWidth={2.5}
+                  />
+                  <span>
+                    Recorded. You accepted version {CURRENT_POLICY_METADATA.version} of these
+                    policies, and it is listed in your Settings.
+                  </span>
+                </p>
+              ) : user ? (
+                <div className="space-y-5 max-w-[34rem]">
+                  <p className="text-[14px] leading-relaxed text-slate-600 dark:text-gray-300">
+                    Record your acceptance of version {CURRENT_POLICY_METADATA.version} against
+                    your account.
+                  </p>
+
+                  {acceptError && (
+                    <p
+                      role="alert"
+                      className="flex items-start gap-2 text-[13.5px] leading-snug text-red-600 dark:text-red-400"
+                    >
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-px" strokeWidth={2.25} />
+                      {acceptError}
+                    </p>
+                  )}
+
+                  <ConsentCheckbox checked={agreed} onChange={setAgreed}>
+                    I have read and agree to the{' '}
+                    <LegalLink href="/terms">Terms of Service</LegalLink>,{' '}
+                    <LegalLink href="/privacy">Privacy Policy</LegalLink> and the policies set
+                    out on this page.
+                  </ConsentCheckbox>
+
+                  <div className="sm:w-[240px]">
+                    <SubmitButton
+                      type="button"
+                      onClick={handleConsentSubmit}
+                      disabled={!agreed}
+                      loading={isAccepting}
+                    >
+                      {isAccepting ? 'Recording' : 'Record my acceptance'}
+                    </SubmitButton>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-4 pt-2">
-                  {acceptError && (
-                    <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-[13px] flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 shrink-0" />
-                      <span>{acceptError}</span>
-                    </div>
-                  )}
-
-                  <label className="flex items-start gap-3 cursor-pointer select-none group">
-                    <input
-                      type="checkbox"
-                      checked={agreed}
-                      onChange={(e) => setAgreed(e.target.checked)}
-                      className="mt-1 w-4 h-4 rounded border-slate-300 dark:border-gray-600 text-slate-900 dark:text-[#c8e558] focus:ring-[#c8e558] cursor-pointer"
-                    />
-                    <span className="text-[13.5px] text-slate-700 dark:text-gray-300 leading-snug">
-                      I have read, understood, and agree to abide by the complete{' '}
-                      <strong>Sadhya Platform Terms of Service</strong>, <strong>Privacy Policy</strong>, and <strong>Platform Guidelines</strong> (Version {CURRENT_POLICY_METADATA.version}).
-                    </span>
-                  </label>
-
-                  <div className="pt-2 flex items-center gap-4">
-                    {user ? (
-                      <button
-                        type="button"
-                        disabled={!agreed || isAccepting}
-                        onClick={handleConsentSubmit}
-                        className={cn(
-                          'px-6 py-2.5 rounded-xl font-semibold text-[13.5px] transition-all flex items-center gap-2',
-                          agreed && !isAccepting
-                            ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 shadow-md cursor-pointer'
-                            : 'bg-slate-200 dark:bg-white/10 text-slate-400 dark:text-gray-500 cursor-not-allowed'
-                        )}
-                      >
-                        {isAccepting ? (
-                          <>
-                            <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                            <span>Recording Agreement...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Check className="w-4 h-4" />
-                            <span>Accept &amp; Save to Profile</span>
-                          </>
-                        )}
-                      </button>
-                    ) : (
-                      <Link
-                        to="/signup"
-                        className="px-6 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold text-[13.5px] hover:opacity-90 transition-opacity inline-flex items-center gap-2"
-                      >
-                        <span>Create Student Account</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </Link>
-                    )}
-                  </div>
-                </div>
+                <p className="max-w-[34rem] text-[14px] leading-relaxed text-slate-600 dark:text-gray-300">
+                  Acceptance is recorded against an account, so there is nothing to agree to from
+                  this page while you are signed out. You are asked once, when you{' '}
+                  <Link
+                    to="/signup"
+                    className="font-semibold text-slate-900 dark:text-white underline underline-offset-2 decoration-slate-300 dark:decoration-white/25 hover:decoration-[#8ea63a] dark:hover:decoration-[#c8e558] transition-colors"
+                  >
+                    create one
+                  </Link>
+                  .
+                </p>
               )}
             </section>
 
