@@ -10,8 +10,30 @@ import { GoogleEmbeddingProvider } from './ai/providers/google-embedding.provide
 import { pineconeService } from './rag/pinecone.service';
 import { GeminiProvider } from './ai/gemini.provider';
 import { withRetry } from '../utils/retry';
+import { RICH_ASSET_SPECS, zodValidator } from './assetSpecs';
+import { callStructuredLLM } from './ai/structuredLlm';
 import { RecordMetadata } from '@pinecone-database/pinecone';
 import { firebaseApp } from '../config/firebase';
+
+
+/**
+ * The status a chapter reports while each asset generates.
+ *
+ * ChapterReader polls a fixed set of IN_PROGRESS_STATUSES that already includes
+ * GENERATING_ARTICLE / GENERATING_STUDY_MODE / GENERATING_REVISION_MODE / GENERATING_EXAM_MODE.
+ * Nothing on the server ever set them, so the reader's staged progress UI had states it could
+ * never observe. These are those strings, so PreparingChapter shows real progress.
+ */
+const STATUS_FOR_ASSET: Record<string, string> = {
+  DOCUMENTARY_ARTICLE: 'GENERATING_ARTICLE',
+  EXAM_QUESTIONS: 'GENERATING_EXAM_MODE',
+  REVISION_NOTES: 'GENERATING_REVISION_MODE',
+  LEARNING_OBJECTIVES: 'GENERATING_STUDY_MODE',
+  KEY_FORMULAE: 'GENERATING_STUDY_MODE',
+  HIGH_YIELD_FACTS: 'GENERATING_STUDY_MODE',
+  COMMON_MISTAKES: 'GENERATING_STUDY_MODE',
+  EXAM_TIPS: 'GENERATING_EXAM_MODE',
+};
 
 export class SourceService {
   async processUpload(notebookId: string, userId: string, file: Express.Multer.File): Promise<DocumentSource> {
@@ -316,6 +338,165 @@ export class SourceService {
         difficultyLevel: 'Medium', estimatedStudyTimeMinutes: 30
       };
     }
+  }
+
+  /**
+   * Generate the rich assets for an ALREADY-ingested chapter — the article Reading Mode shows,
+   * the exam questions Exam Mode shows, and the six supporting assets.
+   *
+   * ─────────────────────────────────────────────────────────────────────────────────────────
+   *  WHY THIS EXISTS. It was being called and did not exist. bookLibrary.controller's
+   *  `generateChapterAssets` has always run:
+   *
+   *      sourceService.asyncGenerateAssets(notebookId, sourceId).catch(console.error)
+   *
+   *  SourceService had `autoGenerateAssets` (private, upload-time, SUMMARY/FLASHCARDS/QUIZ) and
+   *  no `asyncGenerateAssets` at all. Calling an undefined method throws a TypeError
+   *  synchronously — before any promise exists, so the `.catch` never sees it — and the
+   *  controller's try/catch turned it into a 500. POST /generate has therefore been failing and
+   *  generating nothing. The chapters that do have articles were seeded by scripts.
+   *
+   *  services/assetSpecs.ts is the other half of the same gap: 200-odd lines of specs, Zod
+   *  schemas and prompts, imported by nothing. It was written for this method. The title
+   *  convention proves they were built together — the spec says titleSuffix 'Documentary
+   *  Article' and contentKey 'article', and getChapterStatus looks for
+   *  `${chapterTitle} - Documentary Article` and reads `content.article`.
+   * ─────────────────────────────────────────────────────────────────────────────────────────
+   *
+   * Text comes from the chunk vectors already in Pinecone — the same reconstruction the
+   * knowledge-graph backfill uses — so this never re-downloads or re-parses the PDF.
+   *
+   * Failure policy: one asset failing must not lose the other seven. Each is attempted
+   * independently; the article is the only one whose absence downgrades the result, because it
+   * is the only one the reader cannot open without. Everything else missing is READY_DEGRADED
+   * at worst, which is what verification.service already treats DOCUMENTARY_ARTICLE as.
+   */
+  async asyncGenerateAssets(notebookId: string, sourceId: string): Promise<void> {
+    const db = firebaseApp.firestore();
+    const sourceRef = db.collection('notebooks').doc(notebookId).collection('sources').doc(sourceId);
+    const snap = await sourceRef.get();
+    if (!snap.exists) throw new Error(`Source ${sourceId} not found in notebook ${notebookId}`);
+
+    const source: any = { id: sourceId, ...snap.data() };
+    const chapterTitle: string = source.title || 'Chapter';
+
+    const setStatus = (status: string) => sourceRef.update({ status }).catch(() => { /* status is advisory */ });
+
+    try {
+      await setStatus('EXTRACTING');
+      const fullText = await this.reconstructTextFromChunks(source);
+      if (!fullText || fullText.length < 200) {
+        await sourceRef.update({
+          status: 'FAILED',
+          failureReason: 'NO_TEXT',
+          errorDetails: `No reconstructable text for "${chapterTitle}" (chunks=${source.chunksExtracted || 0}). Re-index the chapter before generating.`,
+        });
+        return;
+      }
+
+      // Gemini's context is large but not free. The article and the questions both need the whole
+      // chapter to be any good, so this trims rather than samples — a windowed excerpt would give
+      // Exam Mode questions from only part of the chapter, which is the one thing it must not do.
+      const text = fullText.length > 120_000 ? fullText.slice(0, 120_000) : fullText;
+
+      let articleOk = false;
+      let generated = 0;
+      const failures: string[] = [];
+
+      for (const spec of RICH_ASSET_SPECS) {
+        await setStatus(STATUS_FOR_ASSET[spec.type] || 'GENERATING_ARTICLE');
+        try {
+          const title = `${chapterTitle} - ${spec.titleSuffix}`;
+
+          if (spec.kind === 'prose') {
+            const ai = new GeminiProvider();
+            const res = await ai.generateResponse(
+              [{ role: 'user', content: spec.prompt(text), timestamp: Date.now() }],
+              undefined,
+              { userId: source.userId, notebookId, operation: spec.operation },
+            );
+            const body = (res.reply || '').trim();
+            if (!body) { failures.push(spec.type); continue; }
+            await this.writeAsset(notebookId, spec.type, title, body);
+          } else {
+            const res = await callStructuredLLM<any>({
+              prompt: spec.prompt(text),
+              model: spec.model,
+              validate: zodValidator(spec.schema),
+              label: spec.operation,
+              context: { userId: source.userId, notebookId, operation: spec.operation },
+            });
+            if (!res.ok || res.data == null) { failures.push(spec.type); continue; }
+
+            // An empty array is a legitimate answer (a chapter with no formulae) but not worth
+            // storing — an absent asset and an empty one read the same to the client, and the
+            // absent one does not make the reader render an empty panel.
+            if (Array.isArray(res.data) && res.data.length === 0) continue;
+
+            await this.writeAsset(notebookId, spec.type, title, { [spec.contentKey]: res.data });
+            if (spec.type === 'DOCUMENTARY_ARTICLE') articleOk = true;
+          }
+          generated++;
+        } catch (e: any) {
+          console.error(`[asyncGenerateAssets] ${spec.type} failed for "${chapterTitle}":`, e?.message || e);
+          failures.push(spec.type);
+        }
+      }
+
+      await sourceRef.update({
+        status: articleOk ? 'READY' : 'READY_DEGRADED',
+        assetsGeneratedAt: Date.now(),
+        ...(failures.length ? { assetFailures: failures } : {}),
+      });
+      console.log(
+        `[asyncGenerateAssets] "${chapterTitle}": ${generated}/${RICH_ASSET_SPECS.length} assets` +
+          (failures.length ? ` (failed: ${failures.join(', ')})` : ''),
+      );
+    } catch (e: any) {
+      console.error(`[asyncGenerateAssets] fatal for "${chapterTitle}":`, e);
+      await sourceRef.update({
+        status: 'FAILED',
+        failureReason: 'GENERATION_ERROR',
+        errorDetails: e?.message || String(e),
+      }).catch(() => { /* the throw below is the real signal */ });
+      throw e;
+    }
+  }
+
+  /** One asset document, in the shape the assets subcollection has always used. */
+  private async writeAsset(notebookId: string, type: string, title: string, content: any): Promise<void> {
+    await firebaseApp.firestore()
+      .collection('notebooks').doc(notebookId).collection('assets')
+      .add({ notebookId, type, title, content, createdAt: Date.now() });
+  }
+
+  /**
+   * Rebuild a source's text from its indexed chunk vectors, so generation never re-downloads or
+   * re-parses the original PDF. Same approach as scripts/backfill_knowledge_graph.ts.
+   */
+  private async reconstructTextFromChunks(source: any): Promise<string> {
+    const chunkCount: number = source.chunksExtracted || 0;
+    if (chunkCount <= 0) return '';
+
+    const ids: string[] = [];
+    for (let i = 0; i < chunkCount; i++) ids.push(`${source.id}_chunk_${i}`);
+
+    const collected: { idx: number; text: string }[] = [];
+    const BATCH = 100;
+    for (let i = 0; i < ids.length; i += BATCH) {
+      const recs = await pineconeService.fetchVectors(ids.slice(i, i + BATCH), env.PINECONE_NAMESPACE);
+      for (const rec of Object.values(recs)) {
+        const md: any = (rec as any)?.metadata || {};
+        const text = typeof md.text === 'string' ? md.text : '';
+        if (!text) continue;
+        const idx = typeof md.chunkIndex === 'number' ? md.chunkIndex : collected.length;
+        collected.push({ idx, text });
+      }
+    }
+    // Chunks come back in fetch order, not document order; the reader's page anchors depend on
+    // the article seeing the chapter in sequence, so sort before joining.
+    collected.sort((a, b) => a.idx - b.idx);
+    return collected.map((c) => c.text).join('\n');
   }
 
   private async autoGenerateAssets(source: DocumentSource, textSample: string) {

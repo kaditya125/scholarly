@@ -24,6 +24,7 @@ import { useAuth } from '../../lib/AuthContext';
 import { auth } from '../../lib/firebase';
 import { signInAnonymously } from 'firebase/auth';
 import { chapterPdfUrl } from '../../lib/api/scan';
+import ExamMode, { type ExamQuestion } from './ExamMode';
 import { ScanPanel } from './ScanPanel';
 import { cn } from '../../lib/utils';
 import {
@@ -133,74 +134,71 @@ function YouTubeEmbed({ chapter, youtubeVideos }: { chapter: DocumentaryChapter;
 }
 
 // ─── Article Hero Header (Eleken exact) ───────────────────────────────────────
+/**
+ * The chapter article's header.
+ *
+ * DESIGN — the same language as the rest of the site (landing, exams, policies): lime #c8e558 as
+ * the only accent with #6ca855 as its light-mode text pairing, slate for everything else, hairline
+ * rules, restrained type. What this replaced ran its own beige palette — #EEDEB6 tan badges on
+ * #7A6540, #C4A96A, #9A9A95, #C0BDB5, #E8E7E1 — none of which appears anywhere else in the
+ * product. (The inline font stacks elsewhere in this file go through one shared `fontStack`
+ * variable rather than being repeated literals, so they are left alone.)
+ *
+ * The h1 ran to 48px and section headings to 38px. A chapter title is not a landing-page hero;
+ * it sits above 25 minutes of reading and only has to be read once.
+ *
+ * REMOVED: an "UPDATED ON <today>" line built from `new Date()`. It re-rendered to the current
+ * date on every page load, so it claimed the chapter had been updated today, every day, forever.
+ * A date that is always today tells the reader nothing and is false the moment it is read. The
+ * chapter data carries no revision timestamp, so rather than invent one the line is gone and the
+ * reading time — which IS real, from `estimatedReadingTime` — carries the slot.
+ */
 function ArticleHero({ chapter }: { chapter: DocumentaryChapter }) {
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+  const readingTime = (chapter.estimatedReadingTime || '15 mins').trim();
 
   return (
-    <div className="mb-8 sm:mb-12">
-      {/* Breadcrumb — "Home / Subjects / Physics / Chapter..." */}
-      <div
-        className="text-center text-[11px] sm:text-[13px] text-[#9A9A95] mb-5 sm:mb-8 flex flex-wrap items-center justify-center gap-1 leading-normal"
-        style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}
+    <header className="mb-10 sm:mb-12">
+      <nav
+        aria-label="Breadcrumb"
+        className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-slate-500 dark:text-gray-400"
       >
         <span>Home</span>
-        <span className="mx-1.5 text-[#C0BDB5]">/</span>
+        <span aria-hidden className="text-slate-300 dark:text-gray-600">/</span>
         <span>Subjects</span>
-        <span className="mx-1.5 text-[#C0BDB5]">/</span>
+        <span aria-hidden className="text-slate-300 dark:text-gray-600">/</span>
         <span>{chapter.subject}</span>
-        <span className="mx-1.5 text-[#C0BDB5]">/</span>
-        <span className="text-[#1A1A1A] dark:text-white truncate max-w-[200px] sm:max-w-xs">
+        <span aria-hidden className="text-slate-300 dark:text-gray-600">/</span>
+        <span className="text-slate-900 dark:text-white font-medium truncate max-w-[220px] sm:max-w-sm">
           {chapter.title}
         </span>
-      </div>
+      </nav>
 
-      {/* Tags + Date row */}
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-4 sm:mb-5">
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <span
-            className="text-[10px] sm:text-[11px] font-semibold tracking-[0.12em] uppercase px-2.5 py-1 rounded-sm"
-            style={{ background: '#EEDEB6', color: '#7A6540', fontFamily: "'Inter', sans-serif" }}
-          >
-            ARTICLE
-          </span>
-          <span
-            className="text-[10px] sm:text-[11px] font-semibold tracking-[0.12em] uppercase px-2.5 py-1 rounded-sm"
-            style={{ background: '#EEDEB6', color: '#7A6540', fontFamily: "'Inter', sans-serif" }}
-          >
-            {(chapter.subject || 'GENERAL').toUpperCase()}
-          </span>
-        </div>
-        <span
-          className="text-[10px] sm:text-[11px] font-semibold tracking-[0.08em] uppercase text-[#9A9A95]"
-          style={{ fontFamily: "'Inter', sans-serif" }}
-        >
-          UPDATED ON:&nbsp;{dateStr}
-        </span>
-      </div>
+      <p className="mt-7 text-[11.5px] font-semibold uppercase tracking-[0.12em] text-[#6ca855] dark:text-[#c8e558]">
+        {(chapter.subject || 'General').toUpperCase()}
+      </p>
 
-      {/* H1 Title — Responsive font size */}
-      <h1
-        className="text-[24px] xs:text-[28px] sm:text-[36px] md:text-[44px] lg:text-[48px] font-bold text-[#1A1A1A] dark:text-white leading-[1.2] sm:leading-[1.15] tracking-[-0.02em] mb-3 sm:mb-5"
-        style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }}
-      >
+      <h1 className="mt-2 text-[26px] sm:text-[34px] lg:text-[38px] leading-[1.15] font-semibold tracking-[-0.035em] text-slate-900 dark:text-white text-balance">
         {chapter.title}
       </h1>
 
-      {/* Reading time — "11 MIN TO READ" */}
-      <div
-        className="flex items-center gap-1.5 text-[11.5px] sm:text-[13px] text-[#9A9A95] mb-6 sm:mb-10"
-        style={{ fontFamily: "'Inter', sans-serif" }}
-      >
-        <span>{(chapter.estimatedReadingTime || '15 mins').replace(' mins', ' MIN')}</span>
-        <span className="font-semibold text-[#C4A96A] tracking-[0.06em] uppercase text-[10px] sm:text-[11px]">
-          TO READ
-        </span>
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-slate-500 dark:text-gray-400">
+        <span>{readingTime} to read</span>
+        {chapter.difficulty && (
+          <>
+            <span aria-hidden className="text-slate-300 dark:text-gray-600">·</span>
+            <span>{chapter.difficulty}</span>
+          </>
+        )}
+        {chapter.bookTitle && (
+          <>
+            <span aria-hidden className="text-slate-300 dark:text-gray-600">·</span>
+            <span className="truncate max-w-[240px]">{chapter.bookTitle}</span>
+          </>
+        )}
       </div>
 
-      {/* Thin separator */}
-      <div className="border-t border-[#E8E7E1] dark:border-white/10" />
-    </div>
+      <div className="mt-8 border-t border-slate-100 dark:border-white/[0.07]" />
+    </header>
   );
 }
 
@@ -221,7 +219,7 @@ function SidebarTOC({
 
   return (
     <aside
-      className="hidden lg:block shrink-0 mr-10 xl:mr-14 custom-scrollbar border-r border-[#EAE8E1] dark:border-white/10"
+      className="hidden lg:block shrink-0 mr-10 xl:mr-14 custom-scrollbar border-r border-slate-100 dark:border-white/10"
       style={{
         width: '260px',
         position: 'sticky',
@@ -238,10 +236,10 @@ function SidebarTOC({
       }}
     >
       <div className="flex items-center justify-between mb-4 pr-3">
-        <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#9A9A95] dark:text-[#6A6A6F]">
+        <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-500 dark:text-[#6A6A6F]">
           TABLE OF CONTENTS
         </span>
-        <span className="text-[#9A9A95] dark:text-[#6A6A6F]">—</span>
+        <span className="text-slate-500 dark:text-[#6A6A6F]">—</span>
       </div>
 
       {/* Thin top divider */}
@@ -257,8 +255,8 @@ function SidebarTOC({
                 onClick={() => onSelect(entry.id)}
                 className={`block w-full text-left py-3.5 text-[14px] leading-[1.55] cursor-pointer transition-colors ${
                   active
-                    ? 'font-semibold text-[#1A1A1A] dark:text-[#F0EFF0]'
-                    : 'font-normal text-[#7A7A75] dark:text-[#9A9A9F] hover:text-[#1A1A1A] dark:hover:text-[#F0EFF0]'
+                    ? 'font-semibold text-slate-900 dark:text-[#F1F5F9]'
+                    : 'font-normal text-[#7A7A75] dark:text-[#9A9A9F] hover:text-slate-900 dark:hover:text-[#F1F5F9]'
                 }`}
                 style={{ background: 'transparent', border: 'none' }}
               >
@@ -334,7 +332,7 @@ function ArticleContent({
           ─────────────────────────────────────────────────────────── */}
       <div className="flex items-start px-4 sm:px-8 md:px-12 lg:px-20 pb-16 sm:pb-20 max-w-[960px] mx-auto">
 
-        {/* TOC — sticky with background #F4F3ED on desktop */}
+        {/* TOC — sticky; see SidebarTOC for the sticky-inside-overflow note */}
         <SidebarTOC
           chapter={chapter}
           activeSectionId={activeSectionId}
@@ -346,7 +344,7 @@ function ArticleContent({
 
           {/* Lead paragraph + YouTube embed */}
           <div className="mb-8 sm:mb-10">
-            <p className="text-[15.5px] sm:text-[17px] leading-[1.75] sm:leading-[1.85] text-[#555555] dark:text-gray-300 mb-6">
+            <p className="text-[15.5px] leading-[1.75] text-slate-600 dark:text-gray-300 mb-6">
               {chapter.leadParagraph}
             </p>
             <YouTubeEmbed chapter={chapter} youtubeVideos={youtubeVideos} />
@@ -356,7 +354,7 @@ function ArticleContent({
           {(chapter.sections || []).map((sec) => (
             <section key={sec.id} id={sec.id} className="mb-12 sm:mb-16 scroll-mt-8">
               <h2
-                className="text-[22px] sm:text-[30px] md:text-[38px] font-medium text-[#111111] dark:text-[#F0EFF0] leading-[1.25] tracking-tight mt-10 sm:mt-14 mb-4 sm:mb-6"
+                className="text-[20px] sm:text-[24px] font-semibold text-slate-900 dark:text-white leading-[1.25] tracking-[-0.025em] mt-10 sm:mt-12 mb-4"
                 style={{ fontFamily: fontStack }}
               >
                 {sec.title}
@@ -367,7 +365,7 @@ function ArticleContent({
               {(sec.concepts || []).map((concept, cIdx) => (
                 <div key={concept.id} className="mb-8 sm:mb-12">
                   <h3
-                    className="text-[18px] sm:text-[24px] md:text-[30px] font-medium text-[#111111] dark:text-[#F0EFF0] leading-[1.3] tracking-tight mt-6 sm:mt-10 mb-3 sm:mb-5"
+                    className="text-[18px] sm:text-[24px] md:text-[30px] font-medium text-slate-900 dark:text-[#F1F5F9] leading-[1.3] tracking-tight mt-6 sm:mt-10 mb-3 sm:mb-5"
                     style={{ fontFamily: fontStack }}
                   >
                     {cIdx + 1}. {concept.heading}
@@ -400,7 +398,7 @@ function ArticleContent({
                       ))}
                     </ul>
                   )}
-                  <div className="mt-8 sm:mt-10 border-t border-[#E8E7E1] dark:border-white/10" />
+                  <div className="mt-8 sm:mt-10 border-t border-slate-100 dark:border-white/10" />
                 </div>
               ))}
             </section>
@@ -409,15 +407,15 @@ function ArticleContent({
           {/* In Summary */}
           <section id="sec-summary" className="mt-8 sm:mt-10 mb-12 sm:mb-16 scroll-mt-8">
             <h2
-              className="text-[22px] sm:text-[28px] md:text-[34px] font-bold text-[#1A1A1A] dark:text-white leading-[1.2] tracking-[-0.015em] mt-10 sm:mt-14 mb-4 sm:mb-6"
+              className="text-[22px] sm:text-[28px] md:text-[34px] font-bold text-slate-900 dark:text-white leading-[1.2] tracking-[-0.015em] mt-10 sm:mt-14 mb-4 sm:mb-6"
               style={{ fontFamily: fontStack }}
             >
               In summary
             </h2>
-            <p className="text-[15.5px] sm:text-[17px] leading-[1.75] sm:leading-[1.85] text-[#555555] dark:text-gray-300 mb-6">{chapter.summary?.body}</p>
+            <p className="text-[15.5px] leading-[1.75] text-slate-600 dark:text-gray-300 mb-6">{chapter.summary?.body}</p>
             <ul className="space-y-2.5 sm:space-y-3 pl-0">
               {(chapter.summary?.keyPoints || []).map((point, i) => (
-                <li key={i} className="flex items-start gap-2.5 sm:gap-3 text-[15px] sm:text-[17px] leading-[1.7] sm:leading-[1.75] text-[#555555] dark:text-gray-300">
+                <li key={i} className="flex items-start gap-2.5 sm:gap-3 text-[15px] sm:text-[17px] leading-[1.7] sm:leading-[1.75] text-slate-600 dark:text-gray-300">
                   <span className="shrink-0 mt-[0.55em] w-1.5 h-1.5 rounded-full bg-[#BDBDB5] dark:bg-[#555]" />
                   <span>{point}</span>
                 </li>
@@ -511,6 +509,8 @@ export function ChapterReader({
   // Load chapter documentary data
   const [docChapter, setDocChapter] = useState<DocumentaryChapter | null>(null);
   const [youtubeVideos, setYoutubeVideos] = useState<any[]>([]);
+  /** Written once at ingestion by the EXAM_QUESTIONS spec; empty until that has run. */
+  const [examQuestions, setExamQuestions] = useState<ExamQuestion[]>([]);
   // Start as '' (unknown) instead of 'QUEUED' so we never fire a premature POST /generate
   // before the Firestore snapshot has even told us the real status. The old default lied
   // about the chapter's state on first mount and triggered one spurious generation request
@@ -558,6 +558,10 @@ export function ChapterReader({
         
         if (data.youtubeVideos) {
           setYoutubeVideos(data.youtubeVideos);
+        }
+
+        if (Array.isArray(data.examQuestions)) {
+          setExamQuestions(data.examQuestions);
         }
 
         // Keep polling if not in a terminal state
@@ -870,14 +874,14 @@ export function ChapterReader({
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={onBack}
-            className="inline-flex items-center gap-1 text-[13px] font-medium text-[#555] dark:text-gray-400 hover:text-[#1A1A1A] dark:hover:text-white transition-colors shrink-0 touch-manipulation cursor-pointer"
+            className="inline-flex items-center gap-1 text-[13px] font-medium text-[#555] dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors shrink-0 touch-manipulation cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden xs:inline">Back</span>
           </button>
           <div className="h-4 w-px bg-[#D0CEC6] dark:bg-white/10 shrink-0" />
           <div className="min-w-0">
-            <div className="text-[13px] sm:text-[14px] font-semibold text-[#1A1A1A] dark:text-white truncate max-w-[120px] xs:max-w-[160px] sm:max-w-[220px] md:max-w-sm">
+            <div className="text-[13px] sm:text-[14px] font-semibold text-slate-900 dark:text-white truncate max-w-[120px] xs:max-w-[160px] sm:max-w-[220px] md:max-w-sm">
               {docChapter?.title || chapterTitle || 'Preparing Chapter...'}
             </div>
           </div>
@@ -901,8 +905,8 @@ export function ChapterReader({
                 className={cn(
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all touch-manipulation cursor-pointer',
                   active
-                    ? 'bg-white dark:bg-[#232328] text-[#1A1A1A] dark:text-white shadow-xs font-semibold'
-                    : 'text-[#777] dark:text-gray-400 hover:text-[#1A1A1A] dark:hover:text-white'
+                    ? 'bg-white dark:bg-[#232328] text-slate-900 dark:text-white shadow-xs font-semibold'
+                    : 'text-[#777] dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                 )}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -920,7 +924,7 @@ export function ChapterReader({
               onClick={() => setMode('documentary')}
               className={cn(
                 'px-2 py-1 rounded-md transition-all touch-manipulation flex items-center gap-1 cursor-pointer',
-                mode === 'documentary' ? 'bg-white dark:bg-[#232328] text-[#1A1A1A] dark:text-white shadow-xs font-semibold' : 'text-[#777] dark:text-gray-400'
+                mode === 'documentary' ? 'bg-white dark:bg-[#232328] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-[#777] dark:text-gray-400'
               )}
               title="Article mode"
             >
@@ -931,7 +935,7 @@ export function ChapterReader({
               onClick={() => setMode('ncert')}
               className={cn(
                 'px-2 py-1 rounded-md transition-all touch-manipulation flex items-center gap-1 cursor-pointer',
-                mode === 'ncert' || mode === 'split' ? 'bg-white dark:bg-[#232328] text-[#1A1A1A] dark:text-white shadow-xs font-semibold' : 'text-[#777] dark:text-gray-400'
+                mode === 'ncert' || mode === 'split' ? 'bg-white dark:bg-[#232328] text-slate-900 dark:text-white shadow-xs font-semibold' : 'text-[#777] dark:text-gray-400'
               )}
               title="NCERT PDF mode"
             >
@@ -993,7 +997,30 @@ export function ChapterReader({
         )}
 
         {/* SPLIT / EXAM modes */}
-        {(mode === 'split' || mode === 'exam' || (!docChapter && mode === 'documentary')) && (
+        {/* EXAM — its own surface. Until this existed the tab fell through to the Split View
+            branch below, which rendered the article while the PDF panel's condition excluded
+            'exam', so the mode showed Split View minus the PDF and no questions at all. */}
+        {mode === 'exam' && (
+          <main className="flex-1 overflow-y-auto custom-scrollbar bg-[#F9F8F4] dark:bg-[#131315]">
+            {docChapter || examQuestions.length > 0 ? (
+              <ExamMode
+                questions={examQuestions}
+                onJumpToPage={(page) => { gotoPage(page); setMode('split'); }}
+              />
+            ) : (
+              <PreparingChapter
+                status={sourceStatus}
+                stuckSinceMs={stuckSinceMs}
+                failureReason={failureReason}
+                errorDetails={errorDetails}
+                onRetry={handleForceRetry}
+                onOpenPdf={() => setMode('ncert')}
+              />
+            )}
+          </main>
+        )}
+
+        {(mode === 'split' || (!docChapter && mode === 'documentary')) && (
           <main className="flex-1 overflow-y-auto custom-scrollbar bg-[#F9F8F4] dark:bg-[#131315]">
             {docChapter ? (
               <ArticleContent
