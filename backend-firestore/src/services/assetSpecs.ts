@@ -236,35 +236,59 @@ Output ONLY a JSON object matching this schema:
 Make it incredibly detailed. The 'sections' array should cover the entire chapter.
 \n\nChapter Text:\n${t}`,
   },
-  {
-    type: 'EXAM_QUESTIONS',
-    kind: 'json',
-    model: 'gemini-2.5-flash',
-    titleSuffix: 'Exam Questions',
-    operation: 'asset_exam_questions',
-    contentKey: 'questions',
-    schema: ExamQuestionSetSchema,
-    prompt: (t) => `You are an examiner who has set papers on this syllabus for years. From the NCERT chapter text below, write the questions most likely to be asked from it.
+];
+
+/**
+ * Exam questions are generated PER SECTION, not per chapter — so this is exported as a schema and
+ * a prompt builder rather than living in RICH_ASSET_SPECS with the one-shot specs.
+ *
+ * WHY PER SECTION. Asking for 2-4 questions across every page of a 25-minute chapter in one call
+ * produces the largest structured output in the pipeline, and the whole set is lost if any part of
+ * it fails to parse. Per section each call is small enough to validate reliably, one bad section
+ * costs one section's questions instead of the chapter's, and — the part that actually matters —
+ * the page anchor stops being a guess. A chapter-wide call has to infer which page a question came
+ * from; a per-section call is told, because the article's sections and concepts already carry
+ * ncertPageRef from the source document.
+ */
+export const ExamQuestionSet = ExamQuestionSetSchema;
+
+/** The pages this section spans, for grounding the anchor rather than asking the model to guess. */
+export interface ExamSectionContext {
+  title: string;
+  /** Page the section starts on. */
+  pageRef: number;
+  /** Every page its concepts cite — the legal range for a question's ncertPageRef. */
+  pages: number[];
+  /** Section prose: intro plus concept headings and bodies. */
+  text: string;
+}
+
+export function examQuestionsPrompt(ctx: ExamSectionContext, chapterTitle: string): string {
+  const pageList = ctx.pages.length ? ctx.pages.join(', ') : String(ctx.pageRef);
+  return `You are an examiner who has set papers on this syllabus for years. Write the questions most likely to be asked from ONE SECTION of an NCERT chapter.
+
+Chapter: ${chapterTitle}
+Section: ${ctx.title}
+This section covers NCERT page(s): ${pageList}
 
 Rules:
-- Cover the WHOLE chapter. Walk it page by page and give 2-4 questions per page of substantive content. A page that is only a figure caption or a chapter opener needs none.
-- Set "ncertPageRef" to the page the question is answerable from. If the text gives page markers, use them; otherwise estimate from position in the chapter. Never invent a page beyond the chapter's length.
-- Mix the types the way a real paper does: "mcq" (four options, one correct), "short" (2-3 marks), "long" (5 marks), and "assertion-reason" where the material suits it. Do not make everything an MCQ.
-- Every question must be answerable from THIS chapter's text alone. Do not pull in outside facts.
-- "answer" must be the actual answer, not a restatement of the question. For an MCQ it must match one of the options exactly.
+- Write 2-5 questions. Fewer if the section is short or is only a figure caption; do not pad.
+- Set "ncertPageRef" to one of these exact pages: ${pageList}. Do not use any other number.
+- Mix types the way a real paper does: "mcq" (four options, exactly one correct), "short" (2-3 marks), "long" (5 marks), "assertion-reason" where the material suits it. Do not make them all MCQs.
+- Every question must be answerable from the section text below alone. Do not pull in outside facts.
+- "answer" is the actual answer, not a restatement of the question. For an MCQ it must match one of the options character for character.
 - "explanation" is why the answer is right, in one or two sentences.
 - "whyAsked" is one short line on why this point tends to be examined — a definition students confuse, an exception, a process with ordered steps.
-- "likelihood" is "high" for the material a paper would be odd to skip, "medium" for the rest. Do not mark everything high.
+- "likelihood" is "high" for material a paper would be odd to skip, "medium" for the rest. Do not mark everything high.
 
 These are practice questions written from the chapter. They are NOT previous-year questions and must not be described as such.
 
 Output ONLY a JSON array:
-[{"id":"q-1","ncertPageRef":12,"type":"mcq","question":"...","options":["...","...","...","..."],"answer":"...","explanation":"...","marks":1,"likelihood":"high","whyAsked":"..."}]
+[{"id":"q-1","ncertPageRef":${ctx.pageRef},"type":"mcq","question":"...","options":["...","...","...","..."],"answer":"...","explanation":"...","marks":1,"likelihood":"high","whyAsked":"..."}]
 
-Chapter Text:
-${t}`,
-  },
-];
+Section text:
+${ctx.text}`;
+}
 
 /** Zod validator wrapper matching the callStructuredLLM `validate` contract. */
 export function zodValidator(schema: z.ZodTypeAny) {

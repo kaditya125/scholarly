@@ -10,7 +10,13 @@ import { GoogleEmbeddingProvider } from './ai/providers/google-embedding.provide
 import { pineconeService } from './rag/pinecone.service';
 import { GeminiProvider } from './ai/gemini.provider';
 import { withRetry } from '../utils/retry';
-import { RICH_ASSET_SPECS, zodValidator } from './assetSpecs';
+import {
+  RICH_ASSET_SPECS,
+  zodValidator,
+  ExamQuestionSet,
+  examQuestionsPrompt,
+  type ExamSectionContext,
+} from './assetSpecs';
 import { callStructuredLLM } from './ai/structuredLlm';
 import { RecordMetadata } from '@pinecone-database/pinecone';
 import { firebaseApp } from '../config/firebase';
@@ -419,9 +425,13 @@ export class SourceService {
     assetsSnap.forEach((d: any) => { const t = d.data()?.type; if (t) existing.add(t); });
 
     const missing = RICH_ASSET_SPECS.filter((spec) => !existing.has(spec.type));
+    // EXAM_QUESTIONS is generated per section, so it is not in RICH_ASSET_SPECS and has to be
+    // counted separately here — otherwise a chapter holding all seven one-shot assets but no
+    // questions (one generated before that asset existed) returns early and never gets them.
+    const needsQuestions = !existing.has('EXAM_QUESTIONS');
 
-    if (!opts.force && missing.length === 0) {
-      console.log(`[asyncGenerateAssets] "${chapterTitle}" already has all ${RICH_ASSET_SPECS.length} assets; nothing to do`);
+    if (!opts.force && missing.length === 0 && !needsQuestions) {
+      console.log(`[asyncGenerateAssets] "${chapterTitle}" already has all ${RICH_ASSET_SPECS.length + 1} assets; nothing to do`);
       // The reader polls until it sees a terminal status. If a chapter has every asset but was
       // left mid-pipeline, saying so here is what stops it asking again every 60 seconds.
       if (source.status !== 'READY' && source.status !== 'COMPLETED') {
@@ -467,6 +477,8 @@ export class SourceService {
       const text = fullText.length > 120_000 ? fullText.slice(0, 120_000) : fullText;
 
       let articleOk = !opts.force && existing.has('DOCUMENTARY_ARTICLE');
+      /** Held for the per-section exam-questions pass below, which reads its sections. */
+      let articleData: any = null;
       let generated = 0;
       const failures: string[] = [];
 
@@ -501,12 +513,40 @@ export class SourceService {
             if (Array.isArray(res.data) && res.data.length === 0) continue;
 
             await this.writeAsset(notebookId, spec.type, title, { [spec.contentKey]: res.data });
-            if (spec.type === 'DOCUMENTARY_ARTICLE') articleOk = true;
+            if (spec.type === 'DOCUMENTARY_ARTICLE') { articleOk = true; articleData = res.data; }
           }
           generated++;
         } catch (e: any) {
           console.error(`[asyncGenerateAssets] ${spec.type} failed for "${chapterTitle}":`, e?.message || e);
           failures.push(spec.type);
+        }
+      }
+
+      // ── Exam questions, per section ──────────────────────────────────────────────────
+      // Needs the article's sections, so it runs after the loop. If the article already existed
+      // and was not regenerated, read it back rather than skipping — a chapter can legitimately
+      // have an article and no questions (it was generated before this asset existed).
+      const wantQuestions = opts.force || needsQuestions;
+      if (wantQuestions) {
+        await setStatus('GENERATING_EXAM_MODE');
+        if (!articleData) articleData = await this.loadArticle(notebookId, chapterTitle);
+        if (articleData) {
+          const { count, sectionsFailed } = await this.generateExamQuestions(
+            notebookId, chapterTitle, articleData, source.userId,
+          );
+          if (count > 0) {
+            generated++;
+            console.log(
+              `[asyncGenerateAssets] "${chapterTitle}": ${count} exam questions` +
+                (sectionsFailed ? ` (${sectionsFailed} section(s) failed)` : ''),
+            );
+          } else {
+            failures.push('EXAM_QUESTIONS');
+          }
+        } else {
+          // No article means no sections to anchor questions to. Not a failure of this asset so
+          // much as a consequence of the article's — which is already recorded above.
+          console.warn(`[asyncGenerateAssets] "${chapterTitle}": no article, skipping exam questions`);
         }
       }
 
@@ -533,6 +573,111 @@ export class SourceService {
       // chapter from ever generating again for the life of the process.
       GENERATION_IN_FLIGHT.delete(key);
     }
+  }
+
+  /**
+   * Exam questions, generated one section at a time and merged into a single asset.
+   *
+   * Runs after the spec loop because it reads the article's sections — which carry the
+   * ncertPageRef the source document actually printed. That is the difference between a page
+   * anchor a student can trust and one the model inferred from position in a 25-minute chapter.
+   *
+   * Each section is its own call. A section that fails to parse costs that section's questions;
+   * the chapter-wide version lost every question in the chapter to one bad parse.
+   */
+  private async generateExamQuestions(
+    notebookId: string,
+    chapterTitle: string,
+    article: any,
+    userId?: string,
+  ): Promise<{ count: number; sectionsFailed: number }> {
+    const sections: any[] = Array.isArray(article?.sections) ? article.sections : [];
+    if (sections.length === 0) return { count: 0, sectionsFailed: 0 };
+
+    const all: any[] = [];
+    let sectionsFailed = 0;
+
+    for (const section of sections) {
+      const concepts: any[] = Array.isArray(section?.concepts) ? section.concepts : [];
+
+      // Every page this section cites. The prompt offers these as the only legal anchors and the
+      // clamp below enforces it, so a question can always be checked against the PDF.
+      const pages = [
+        ...new Set(
+          [section?.ncertPageRef, ...concepts.map((c) => c?.ncertPageRef)]
+            .map((n) => Number(n))
+            .filter((n) => Number.isFinite(n) && n > 0),
+        ),
+      ].sort((a, b) => a - b);
+
+      const text = [
+        section?.intro || '',
+        ...concepts.map((c) =>
+          [c?.heading || '', ...(Array.isArray(c?.body) ? c.body : []), ...(Array.isArray(c?.bulletList) ? c.bulletList : [])]
+            .filter(Boolean)
+            .join('\n'),
+        ),
+      ].filter(Boolean).join('\n\n').trim();
+
+      // A section that is only a heading has nothing to ask about.
+      if (text.length < 200) continue;
+
+      const ctx: ExamSectionContext = {
+        title: section?.title || 'Section',
+        pageRef: pages[0] || 1,
+        pages,
+        text,
+      };
+
+      try {
+        const res = await callStructuredLLM<any>({
+          prompt: examQuestionsPrompt(ctx, chapterTitle),
+          model: 'gemini-2.5-flash',
+          validate: zodValidator(ExamQuestionSet),
+          label: 'asset_exam_questions_section',
+          context: { userId, notebookId, operation: 'asset_exam_questions' },
+        });
+
+        if (!res.ok || !Array.isArray(res.data)) { sectionsFailed++; continue; }
+
+        for (const q of res.data) {
+          // Enforce the anchor rather than trusting it. The model is told which pages are legal
+          // and mostly complies, but a question filed under a page it cannot be answered from
+          // sends the reader to the wrong place in the PDF — worse than no anchor at all.
+          const page = Number(q?.ncertPageRef);
+          const anchored = pages.includes(page) ? page : ctx.pageRef;
+          all.push({
+            ...q,
+            ncertPageRef: anchored,
+            // Ids come back as "q-1" from every section, so they collide once merged. React keys
+            // and the reveal/answer state in ExamMode are both keyed on this.
+            id: `${section?.id || 'sec'}-${q?.id || Math.random().toString(36).slice(2, 7)}`,
+          });
+        }
+      } catch (e: any) {
+        console.warn(`[asyncGenerateAssets] exam questions failed for section "${section?.title}":`, e?.message || e);
+        sectionsFailed++;
+      }
+    }
+
+    if (all.length === 0) return { count: 0, sectionsFailed };
+
+    all.sort((a, b) => a.ncertPageRef - b.ncertPageRef);
+    await this.writeAsset(notebookId, 'EXAM_QUESTIONS', `${chapterTitle} - Exam Questions`, { questions: all });
+    return { count: all.length, sectionsFailed };
+  }
+
+  /** Read this chapter's stored article back, for a run that did not regenerate it. */
+  private async loadArticle(notebookId: string, chapterTitle: string): Promise<any | null> {
+    const snap = await firebaseApp.firestore()
+      .collection('notebooks').doc(notebookId).collection('assets')
+      .where('type', '==', 'DOCUMENTARY_ARTICLE')
+      .where('title', '==', `${chapterTitle} - Documentary Article`)
+      .orderBy('createdAt', 'desc')
+      .limit(1)
+      .get();
+    if (snap.empty) return null;
+    return snap.docs[0].data()?.content?.article ?? null;
   }
 
   /** One asset document, in the shape the assets subcollection has always used. */
