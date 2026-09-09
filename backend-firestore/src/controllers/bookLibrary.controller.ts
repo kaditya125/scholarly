@@ -60,9 +60,14 @@ export class BookLibraryController {
     try {
       const { notebookId, sourceId } = req.params;
       const sourceService = new SourceService();
-      // Fire and forget
-      sourceService.asyncGenerateAssets(notebookId, sourceId).catch(console.error);
-      res.status(202).json({ message: 'Generation started' });
+      // force=true means the caller is deliberately regenerating (the reader's Retry button).
+      // Without it, generation skips assets this chapter already has — the reader fires this
+      // endpoint automatically for any chapter that is not READY, so an unguarded call would
+      // repeat all eight Gemini requests every time anyone opened it.
+      const force = req.body?.force === true || req.query?.force === 'true';
+      // Fire and forget: the client polls /status for progress.
+      sourceService.asyncGenerateAssets(notebookId, sourceId, { force }).catch(console.error);
+      res.status(202).json({ message: force ? 'Regeneration started' : 'Generation started', force });
     } catch (error) {
       next(error);
     }

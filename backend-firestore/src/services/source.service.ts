@@ -24,6 +24,21 @@ import { firebaseApp } from '../config/firebase';
  * Nothing on the server ever set them, so the reader's staged progress UI had states it could
  * never observe. These are those strings, so PreparingChapter shows real progress.
  */
+/**
+ * Chapters currently generating, as "notebookId/sourceId".
+ *
+ * The reader fires POST /generate automatically whenever it sees a chapter that is not READY,
+ * throttled only client-side and only per mount — so two students opening the same unprepared
+ * chapter, or one student with two tabs, each start a full eight-call generation of the same
+ * material. The existence check below cannot catch that on its own: neither request has written
+ * an asset yet when the other looks. This does.
+ *
+ * Process-local, which is enough here: PM2 runs sadhya-api as a single fork instance (cluster
+ * mode crash-looped on this box and was reverted). If it is ever scaled out, this needs to move
+ * to a Firestore lease or Redis lock — two instances would each keep their own Set.
+ */
+const GENERATION_IN_FLIGHT = new Set<string>();
+
 const STATUS_FOR_ASSET: Record<string, string> = {
   DOCUMENTARY_ARTICLE: 'GENERATING_ARTICLE',
   EXAM_QUESTIONS: 'GENERATING_EXAM_MODE',
@@ -371,14 +386,66 @@ export class SourceService {
    * is the only one the reader cannot open without. Everything else missing is READY_DEGRADED
    * at worst, which is what verification.service already treats DOCUMENTARY_ARTICLE as.
    */
-  async asyncGenerateAssets(notebookId: string, sourceId: string): Promise<void> {
+  async asyncGenerateAssets(
+    notebookId: string,
+    sourceId: string,
+    opts: { force?: boolean } = {},
+  ): Promise<void> {
     const db = firebaseApp.firestore();
+    const key = `${notebookId}/${sourceId}`;
+
+    if (GENERATION_IN_FLIGHT.has(key)) {
+      console.log(`[asyncGenerateAssets] already running for ${key}; ignoring duplicate request`);
+      return;
+    }
+
     const sourceRef = db.collection('notebooks').doc(notebookId).collection('sources').doc(sourceId);
     const snap = await sourceRef.get();
     if (!snap.exists) throw new Error(`Source ${sourceId} not found in notebook ${notebookId}`);
 
     const source: any = { id: sourceId, ...snap.data() };
     const chapterTitle: string = source.title || 'Chapter';
+
+    // Which of this chapter's assets already exist, by the title convention every spec writes.
+    // Without this, a repeat call regenerates all eight and ADDS them — getChapterStatus takes
+    // the newest by createdAt, so the old copies are never read again but are never removed
+    // either, and every call costs a full set of Gemini requests.
+    const existing = new Set<string>();
+    const assetsSnap = await db.collection('notebooks').doc(notebookId).collection('assets')
+      .where('title', '>=', `${chapterTitle} - `)
+      .where('title', '<=', `${chapterTitle} - \uf8ff`)
+      .select('title', 'type')
+      .get();
+    assetsSnap.forEach((d: any) => { const t = d.data()?.type; if (t) existing.add(t); });
+
+    const missing = RICH_ASSET_SPECS.filter((spec) => !existing.has(spec.type));
+
+    if (!opts.force && missing.length === 0) {
+      console.log(`[asyncGenerateAssets] "${chapterTitle}" already has all ${RICH_ASSET_SPECS.length} assets; nothing to do`);
+      // The reader polls until it sees a terminal status. If a chapter has every asset but was
+      // left mid-pipeline, saying so here is what stops it asking again every 60 seconds.
+      if (source.status !== 'READY' && source.status !== 'COMPLETED') {
+        await sourceRef.update({ status: 'READY' }).catch(() => { /* advisory */ });
+      }
+      return;
+    }
+
+    // force means "replace", not "add another". Delete this chapter's existing assets for the
+    // specs about to run, so a retry converges on one set instead of stacking copies.
+    if (opts.force) {
+      const stale = assetsSnap.docs.filter((d: any) =>
+        RICH_ASSET_SPECS.some((spec) => spec.type === d.data()?.type));
+      if (stale.length) {
+        const batch = db.batch();
+        stale.forEach((d: any) => batch.delete(d.ref));
+        await batch.commit().catch((e: any) =>
+          console.warn(`[asyncGenerateAssets] could not clear old assets for ${key}:`, e?.message || e));
+        console.log(`[asyncGenerateAssets] force: cleared ${stale.length} existing asset(s) for "${chapterTitle}"`);
+      }
+    }
+
+    const todo = opts.force ? RICH_ASSET_SPECS : missing;
+    GENERATION_IN_FLIGHT.add(key);
 
     const setStatus = (status: string) => sourceRef.update({ status }).catch(() => { /* status is advisory */ });
 
@@ -399,11 +466,11 @@ export class SourceService {
       // Exam Mode questions from only part of the chapter, which is the one thing it must not do.
       const text = fullText.length > 120_000 ? fullText.slice(0, 120_000) : fullText;
 
-      let articleOk = false;
+      let articleOk = !opts.force && existing.has('DOCUMENTARY_ARTICLE');
       let generated = 0;
       const failures: string[] = [];
 
-      for (const spec of RICH_ASSET_SPECS) {
+      for (const spec of todo) {
         await setStatus(STATUS_FOR_ASSET[spec.type] || 'GENERATING_ARTICLE');
         try {
           const title = `${chapterTitle} - ${spec.titleSuffix}`;
@@ -449,8 +516,9 @@ export class SourceService {
         ...(failures.length ? { assetFailures: failures } : {}),
       });
       console.log(
-        `[asyncGenerateAssets] "${chapterTitle}": ${generated}/${RICH_ASSET_SPECS.length} assets` +
-          (failures.length ? ` (failed: ${failures.join(', ')})` : ''),
+        `[asyncGenerateAssets] "${chapterTitle}": ${generated}/${todo.length} generated` +
+          (opts.force ? ' (forced)' : existing.size ? ` (${existing.size} already present)` : '') +
+          (failures.length ? ` — failed: ${failures.join(', ')}` : ''),
       );
     } catch (e: any) {
       console.error(`[asyncGenerateAssets] fatal for "${chapterTitle}":`, e);
@@ -460,6 +528,10 @@ export class SourceService {
         errorDetails: e?.message || String(e),
       }).catch(() => { /* the throw below is the real signal */ });
       throw e;
+    } finally {
+      // Released on every path, including the throw above — a key left behind would block this
+      // chapter from ever generating again for the life of the process.
+      GENERATION_IN_FLIGHT.delete(key);
     }
   }
 

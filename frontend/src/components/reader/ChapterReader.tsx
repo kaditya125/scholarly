@@ -502,7 +502,9 @@ export function ChapterReader({
 
   const handleForceRetry = () => {
     if (notebookId && sourceId) {
-      api.post(`/documents/books/${notebookId}/chapters/${sourceId}/generate`).catch(console.error);
+      // force: this is the user pressing Retry, so replace whatever is there. The automatic
+      // call further down deliberately omits it and only fills in what is missing.
+      api.post(`/documents/books/${notebookId}/chapters/${sourceId}/generate`, { force: true }).catch(console.error);
     }
   };
 
