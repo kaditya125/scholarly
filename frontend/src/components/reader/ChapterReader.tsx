@@ -462,6 +462,8 @@ export function ChapterReader({
   const [scale, setScale] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 640 ? 0.85 : 1.3));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  /** A page that loaded but would not paint. Distinct from the load error above, which means the file itself never arrived. */
+  const [renderError, setRenderError] = useState<string | null>(null);
   const [scanMode, setScanMode] = useState(false);
   const [sel, setSel] = useState<ClientRect | null>(null);
   const [crop, setCrop] = useState<string | null>(null);
@@ -676,8 +678,13 @@ export function ChapterReader({
   //   the indefinite "loader2" overlay).
   useEffect(() => {
     const controller = new AbortController();
+    // The comment above and the error copy below both promised a 25s timeout, and there was no
+    // setTimeout anywhere in this file — the controller was only aborted on unmount. A backend
+    // that accepted the connection and then stalled left the spinner turning indefinitely, which
+    // is the exact failure the comment claims to have fixed.
+    const timeoutId = setTimeout(() => controller.abort(), 25_000);
     let cancelled = false;
-    setLoading(true); setError(null); setNumPages(0); setPageNum(1);
+    setLoading(true); setError(null); setRenderError(null); setNumPages(0); setPageNum(1);
     (async () => {
       try {
         const token = await user?.getIdToken();
@@ -704,46 +711,82 @@ export function ChapterReader({
         const isTimeout = e?.name === 'AbortError';
         if (!cancelled) setError(isTimeout ? 'Loading the chapter PDF timed out after 25s — tap Scan or go Back and try again.' : (e?.message || 'Failed to load PDF'));
       } finally {
+        clearTimeout(timeoutId);
         if (!cancelled) setLoading(false);
       }
     })();
     return () => {
       cancelled = true;
+      clearTimeout(timeoutId);
       controller.abort();
       if (pdfRef.current) { try { pdfRef.current.destroy(); } catch { /* noop */ } pdfRef.current = null; }
     };
   }, [notebookId, sourceId, user]);
 
   // ── Render PDF page ──
+  //
+  // The cancellation here is the whole point of this effect, so it is worth stating plainly.
+  // pdf.js refuses to run two render() calls against one canvas — it throws "Cannot use the
+  // same canvas during multiple render() operations". The previous version cancelled the old
+  // task, but only *inside* the async body and only after `await pdf.getPage()` had resolved,
+  // and never in the effect cleanup at all. So a page change (or a scale change, or unmount)
+  // left the old task painting while the new one resized the canvas underneath it. The loser
+  // threw, the catch swallowed it into console.warn, and the panel sat blank on a PDF that had
+  // loaded perfectly — toolbar reading "5/9" over an empty canvas.
+  //
+  // Two changes: the in-flight task is cancelled in the cleanup, and the previous task is
+  // cancelled BEFORE the canvas is resized rather than after.
   useEffect(() => {
     const pdf = pdfRef.current;
     if (!pdf || !numPages) return;
+
     let cancelled = false;
+    let task: any = null;
+
     (async () => {
+      // Cancel whatever was painting before we touch the canvas at all. Resizing a canvas mid
+      // render is what produced the blank page.
+      if (renderTaskRef.current) {
+        try { renderTaskRef.current.cancel(); } catch { /* already settled */ }
+        renderTaskRef.current = null;
+      }
+
       try {
         const page = await pdf.getPage(pageNum);
         if (cancelled) return;
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const viewport = page.getViewport({ scale: scale * dpr });
+
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
+
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const viewport = page.getViewport({ scale: scale * dpr });
+
         canvas.width = Math.ceil(viewport.width);
         canvas.height = Math.ceil(viewport.height);
         canvas.style.width = `${Math.ceil(viewport.width / dpr)}px`;
         canvas.style.height = `${Math.ceil(viewport.height / dpr)}px`;
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        if (renderTaskRef.current) { try { renderTaskRef.current.cancel(); } catch { /* noop */ } }
-        const task = page.render({ canvas, canvasContext: ctx, viewport });
+
+        task = page.render({ canvas, canvasContext: ctx, viewport });
         renderTaskRef.current = task;
         await task.promise;
+        if (!cancelled) setRenderError(null);
       } catch (e: any) {
-        if (e?.name !== 'RenderingCancelledException' && !cancelled) console.warn('PDF page render error:', e);
+        // A cancelled render is the normal result of turning the page quickly; it is not a fault.
+        if (e?.name === 'RenderingCancelledException' || cancelled) return;
+        console.warn('PDF page render error:', e);
+        // Previously this was the end of it — warn and leave a blank panel with no explanation.
+        setRenderError(`Couldn't draw page ${pageNum}. Try turning the page, or reload.`);
       }
     })();
-    return () => { cancelled = true; };
+
+    return () => {
+      cancelled = true;
+      if (task) { try { task.cancel(); } catch { /* already settled */ } }
+    };
   }, [pageNum, scale, numPages]);
 
   const gotoPage = (p: number) => setPageNum(Math.max(1, Math.min(numPages || 1, p)));
@@ -1026,6 +1069,13 @@ export function ChapterReader({
                 <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
                   <X className="w-8 h-8 text-gray-500 mb-2" />
                   <p className="text-[14px] text-gray-300 max-w-xs">{error}</p>
+                </div>
+              )}
+              {!error && renderError && (
+                <div className="absolute inset-x-0 top-3 z-10 flex justify-center px-4">
+                  <p className="rounded-lg bg-amber-500/15 border border-amber-500/30 px-3 py-1.5 text-[12.5px] text-amber-200">
+                    {renderError}
+                  </p>
                 </div>
               )}
               <div
