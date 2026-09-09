@@ -88,6 +88,8 @@ export class BookLibraryController {
       
       let article = null;
       let youtubeVideos = [];
+      /** Exam Mode's questions. Absent until asyncGenerateAssets has run for this chapter. */
+      let examQuestions: any[] = [];
       if (status === 'READY' || status === 'READY_DEGRADED') {
         // Filter by the specific chapter's article title
         const expectedArticleTitle = `${chapterTitle} - Documentary Article`;
@@ -204,6 +206,24 @@ export class BookLibraryController {
             console.log(`[bookLibrary] No YOUTUBE_LINKS assets found in notebook ${notebookId}`);
           }
         }
+        // Exam Mode questions, written by asyncGenerateAssets under the EXAM_QUESTIONS spec.
+        // Same title convention as every other asset: "<chapter> - <titleSuffix>".
+        const expectedQuestionsTitle = `${sourceData.title} - Exam Questions`;
+        const eqSnap = await db.collection('notebooks').doc(notebookId).collection('assets')
+          .where('type', '==', 'EXAM_QUESTIONS')
+          .where('title', '==', expectedQuestionsTitle)
+          .orderBy('createdAt', 'desc')
+          .limit(1)
+          .get();
+        if (!eqSnap.empty) {
+          const eqData = eqSnap.docs[0].data();
+          if (Array.isArray(eqData?.content?.questions)) {
+            examQuestions = eqData.content.questions;
+            console.log(`[bookLibrary] Found ${examQuestions.length} exam questions for "${sourceData.title}"`);
+          }
+        } else {
+          console.log(`[bookLibrary] No EXAM_QUESTIONS asset for "${expectedQuestionsTitle}"`);
+        }
       }
       
       res.json({
@@ -211,7 +231,8 @@ export class BookLibraryController {
         failureReason: sourceData.failureReason || null,
         errorDetails: sourceData.errorDetails || null,
         article,
-        youtubeVideos
+        youtubeVideos,
+        examQuestions
       });
     } catch (error) {
       next(error);
