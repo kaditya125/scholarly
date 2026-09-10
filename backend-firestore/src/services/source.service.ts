@@ -517,7 +517,17 @@ export class SourceService {
               label: spec.operation,
               context: { userId: source.userId, notebookId, operation: spec.operation },
             });
-            if (!res.ok || res.data == null) { failures.push(spec.type); continue; }
+            if (!res.ok || res.data == null) {
+              // Log the reason. This previously discarded res.error, so a JSON spec that failed
+              // left no trace of WHY — which made the Hindi article regression undiagnosable
+              // from the logs and cost a 19-minute blind re-run to notice.
+              console.error(
+                `[asyncGenerateAssets] ${spec.type} failed for "${chapterTitle}": ` +
+                  `${res.error || 'unknown'} (repaired=${res.repaired} retried=${res.retried})`,
+              );
+              failures.push(spec.type);
+              continue;
+            }
 
             // An empty array is a legitimate answer (a chapter with no formulae) but not worth
             // storing — an absent asset and an empty one read the same to the client, and the
