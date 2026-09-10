@@ -18,6 +18,7 @@ import {
   type ExamSectionContext,
 } from './assetSpecs';
 import { callStructuredLLM } from './ai/structuredLlm';
+import { geminiLimiter } from '../utils/rateLimiter';
 import { RecordMetadata } from '@pinecone-database/pinecone';
 import { firebaseApp } from '../config/firebase';
 
@@ -491,6 +492,14 @@ export class SourceService {
           const title = `${chapterTitle} - ${spec.titleSuffix}`;
 
           if (spec.kind === 'prose') {
+            // The one call in this pipeline that does not go through callStructuredLLM, and so
+            // the only one that was never rate-limited. In the first bulk run that asymmetry
+            // showed up exactly where you would predict: REVISION_NOTES — the sole kind:'prose'
+            // spec — failed on 15 of the first 41 chapters, while the seven JSON specs sharing
+            // the limiter failed once or twice between them. generateResponse retries transient
+            // errors internally but nothing was pacing it, so three concurrent workers pushed it
+            // into sustained throttling and an empty reply is a hard failure here.
+            await geminiLimiter.acquire();
             const ai = new GeminiProvider();
             const res = await ai.generateResponse(
               [{ role: 'user', content: spec.prompt(text), timestamp: Date.now() }],
