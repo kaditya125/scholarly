@@ -201,7 +201,8 @@ export const RICH_ASSET_SPECS: AssetSpec[] = [
     schema: DocumentaryChapterSchema,
     prompt: (t) => `You are a world-class educator creating a premium documentary-style article from the provided NCERT chapter text. 
 Write engaging, flowing prose that feels human. Do NOT sound like an AI. Explain difficult concepts using analogies and stories.
-Preserve scientific accuracy. 
+Preserve scientific accuracy.
+LANGUAGE: write the entire article — titles, intros, headings and body — in the SAME language and script as the chapter text below. If the chapter is in Hindi (Devanagari), write in Hindi. If it is in Sanskrit, write in Sanskrit. If it is in English, write in English. Do not translate the chapter into another language. Proper nouns and established technical terms may stay in their usual form. The JSON keys below stay in English exactly as written; only the values follow the chapter language.
 Output ONLY a JSON object matching this schema:
 {
   "title": string,
@@ -276,6 +277,7 @@ Rules:
 - Set "ncertPageRef" to one of these exact pages: ${pageList}. Do not use any other number.
 - Mix types the way a real paper does: "mcq" (four options, exactly one correct), "short" (2-3 marks), "long" (5 marks), "assertion-reason" where the material suits it. Do not make them all MCQs.
 - Every question must be answerable from the section text below alone. Do not pull in outside facts.
+- LANGUAGE: write the questions, options, answers and explanations in the SAME language and script as the section text below. A Hindi section gets Hindi questions; an English section gets English questions. Do not translate. The JSON keys stay in English; only the values follow the section language.
 - "answer" is the actual answer, not a restatement of the question. For an MCQ it must match one of the options character for character.
 - "explanation" is why the answer is right, in one or two sentences.
 - "whyAsked" is one short line on why this point tends to be examined — a definition students confuse, an exception, a process with ordered steps.
