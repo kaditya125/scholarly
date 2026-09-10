@@ -25,6 +25,7 @@ import { auth } from '../../lib/firebase';
 import { signInAnonymously } from 'firebase/auth';
 import { chapterPdfUrl } from '../../lib/api/scan';
 import ExamMode, { type ExamQuestion } from './ExamMode';
+import { buildPrintedPageMap } from './printedPageMap';
 import { ScanPanel } from './ScanPanel';
 import { cn } from '../../lib/utils';
 import {
@@ -798,9 +799,71 @@ export function ChapterReader({
   const gotoPage = (p: number) => setPageNum(Math.max(1, Math.min(numPages || 1, p)));
   const zoom = (delta: number) => setScale((s) => Math.max(0.6, Math.min(3, s + delta)));
 
+  /**
+   * Printed textbook page -> index in this PDF.
+   *
+   * ─────────────────────────────────────────────────────────────────────────────────────────
+   *  THE BUG THIS FIXES, measured on NCERT Class 12 Biology Ch.12 in production:
+   *
+   *    the PDF          11 pages, indexed 1..11
+   *    article anchors  ncertPageRef 206..214 — the PRINTED folio, which is correct:
+   *                     PDF page 2 literally begins "206 BIOLOGY 12.1 ECOSYSTEM – STRUCTURE…"
+   *    gotoPage(206)    Math.min(numPages, 206) -> 11
+   *
+   *  So every anchored jump landed on the last page of the chapter. Not a wrong page — the same
+   *  wrong page, for all 24 generated questions, and for every TOC entry: scrollToSection has
+   *  always passed section.ncertPageRef straight into gotoPage, so this predates Exam Mode.
+   *
+   *  The two numbers were never the same unit. This reads the folio each page actually prints
+   *  and maps between them.
+   * ─────────────────────────────────────────────────────────────────────────────────────────
+   */
+  const printedToPdfRef = useRef<Map<number, number> | null>(null);
+  const pageOffsetRef = useRef<number>(0);
+
+  /** Build the map once per document, from the text pdf.js already has. */
+  useEffect(() => {
+    const pdf = pdfRef.current;
+    if (!pdf || !numPages) return;
+    let cancelled = false;
+
+    (async () => {
+      const { map, offset, agree } = await buildPrintedPageMap(pdf, numPages, {
+        onCancel: () => cancelled,
+      });
+      if (cancelled) return;
+      printedToPdfRef.current = map.size ? map : null;
+      pageOffsetRef.current = offset;
+      if (offset !== 0) {
+        console.info(
+          `[reader] printed->pdf offset ${offset} (printed ${1 + offset}..${numPages + offset}, ${agree} pages agree)`,
+        );
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [numPages]);
+
+  /**
+   * Jump to a PRINTED textbook page. Everything the article and the questions carry is a printed
+   * page, so this is what section and question navigation must call — never gotoPage, which
+   * indexes the PDF.
+   */
+  const gotoPrintedPage = (printed: number) => {
+    const map = printedToPdfRef.current;
+    const mapped = map?.get(printed);
+    if (mapped) { gotoPage(mapped); return; }
+    // No folios (a scanned chapter, or one whose numbering could not be trusted). If the anchor
+    // is beyond the document it cannot be an index either, so fall back to the offset implied by
+    // the article rather than silently clamping to the last page.
+    if (printed > numPages && pageOffsetRef.current) { gotoPage(printed - pageOffsetRef.current); return; }
+    gotoPage(printed);
+  };
+
+  /** `pageRef` is a PRINTED textbook page — every caller passes section.ncertPageRef. */
   const scrollToSection = (secId: string, pageRef: number) => {
     setActiveSectionId(secId);
-    gotoPage(pageRef);
+    gotoPrintedPage(pageRef);
     const el = document.getElementById(secId);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
@@ -1007,7 +1070,7 @@ export function ChapterReader({
             {docChapter || examQuestions.length > 0 ? (
               <ExamMode
                 questions={examQuestions}
-                onJumpToPage={(page) => { gotoPage(page); setMode('split'); }}
+                onJumpToPage={(page) => { gotoPrintedPage(page); setMode('split'); }}
               />
             ) : (
               <PreparingChapter

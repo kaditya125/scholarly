@@ -443,8 +443,11 @@ export class SourceService {
     // force means "replace", not "add another". Delete this chapter's existing assets for the
     // specs about to run, so a retry converges on one set instead of stacking copies.
     if (opts.force) {
-      const stale = assetsSnap.docs.filter((d: any) =>
-        RICH_ASSET_SPECS.some((spec) => spec.type === d.data()?.type));
+      // EXAM_QUESTIONS is generated per section and is deliberately NOT in RICH_ASSET_SPECS, so
+      // it has to be named here. Testing membership of that array alone let a second force run
+      // append a second questions asset rather than replace the first.
+      const REPLACEABLE = new Set<string>([...RICH_ASSET_SPECS.map((spec) => spec.type), 'EXAM_QUESTIONS']);
+      const stale = assetsSnap.docs.filter((d: any) => REPLACEABLE.has(d.data()?.type));
       if (stale.length) {
         const batch = db.batch();
         stale.forEach((d: any) => batch.delete(d.ref));
@@ -555,8 +558,11 @@ export class SourceService {
         assetsGeneratedAt: Date.now(),
         ...(failures.length ? { assetFailures: failures } : {}),
       });
+      // +1 for the per-section questions pass when it ran, which `todo` does not include —
+      // without it the first production run logged "8/7 generated".
+      const attempted = todo.length + (wantQuestions ? 1 : 0);
       console.log(
-        `[asyncGenerateAssets] "${chapterTitle}": ${generated}/${todo.length} generated` +
+        `[asyncGenerateAssets] "${chapterTitle}": ${generated}/${attempted} generated` +
           (opts.force ? ' (forced)' : existing.size ? ` (${existing.size} already present)` : '') +
           (failures.length ? ` — failed: ${failures.join(', ')}` : ''),
       );
