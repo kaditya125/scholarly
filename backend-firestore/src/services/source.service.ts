@@ -713,16 +713,50 @@ export class SourceService {
   }
 
   /**
-   * Rebuild a source's text from its indexed chunk vectors, so generation never re-downloads or
-   * re-parses the original PDF. Same approach as scripts/backfill_knowledge_graph.ts.
+   * Get a source's full text for generation, preferring the original file over the index.
+   *
+   * This used to read the chapter back out of Pinecone on the reasoning that re-parsing the PDF
+   * was the expensive path. Two things overturned that:
+   *
+   *   cost       Rebuilding a chapter pulls every one of its chunks, and a bulk run does that
+   *              for hundreds of chapters. It is the single largest consumer of Pinecone
+   *              egress, and on the Starter plan's 1GB/month it exhausted the budget — which
+   *              takes down reads account-wide, user-facing retrieval included. Storage has no
+   *              comparable per-read ceiling.
+   *   fidelity   Chunk text is a derived, lossy copy: split at 2,000 characters with overlap,
+   *              and written by whatever the extractor did at ingestion time. The PDF is the
+   *              source of truth, and re-parsing it picks up extractor fixes automatically —
+   *              the Hindi chapters decode from Kruti Dev now, and a chapter indexed before
+   *              that fix still holds glyph codes in its chunks.
+   *
+   * Pinecone remains the fallback for the ~27% of sources that predate storagePath being
+   * recorded, so nothing that works today stops working.
    */
   private async reconstructTextFromChunks(source: any): Promise<string> {
     const chunkCount: number = source.chunksExtracted || 0;
+
+    const storagePath: string = source.storagePath || source.filePath || '';
+    if (storagePath) {
+      try {
+        const [buffer] = await firebaseApp.storage().bucket().file(storagePath).download();
+        const pages = await FileParserService.extractText(
+          buffer.toString('base64'),
+          source.mimeType || 'application/pdf',
+          source.originalName || source.title || 'source.pdf'
+        );
+        const text = pages.map((p: any) => p.text).join('\n').trim();
+        if (text.length > 0) return text;
+        console.warn(`[reconstructText] "${source.title}": storage copy parsed to nothing, falling back to the index`);
+      } catch (e: any) {
+        console.warn(`[reconstructText] "${source.title}": storage read failed (${String(e?.message || e).slice(0, 120)}), falling back to the index`);
+      }
+    }
+
     if (chunkCount <= 0) return '';
 
-    // Metadata only. This reads every chunk of the chapter, and a bulk generation run does it
-    // for hundreds of chapters; pulling the 768-float vector alongside text nobody here looks at
-    // is what drained the monthly Pinecone egress budget.
+    // Metadata only. Pulling the 768-float vector alongside text nobody here looks at is what
+    // drained the egress budget; this path is now the exception rather than the rule, but there
+    // is no reason for it to be wasteful too.
     const recs = await pineconeService.fetchChunkMetadata(source.id, chunkCount, env.PINECONE_NAMESPACE);
 
     const collected: { idx: number; text: string }[] = [];
