@@ -81,14 +81,14 @@ export default function Blog() {
       <SiteHeader />
       <SkyAmbience />
 
-      <main className="relative z-10 max-w-3xl mx-auto px-6 pt-16 pb-24">
-        <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+      <main className="relative z-10 max-w-3xl mx-auto px-6 pt-16 pb-24 font-sans">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
           Engineering blog
         </p>
-        <h1 className="mt-3 text-[34px] sm:text-[42px] leading-[1.1] font-bold tracking-tight text-slate-900 dark:text-white">
+        <h1 className="mt-3 text-[32px] sm:text-[40px] leading-[1.12] font-semibold tracking-[-0.03em] text-slate-900 dark:text-white">
           How Sadhya is <Underline>built</Underline>
         </h1>
-        <p className="mt-5 text-[16px] leading-relaxed text-slate-600 dark:text-slate-300 max-w-2xl">
+        <p className="mt-4 text-[15.5px] leading-relaxed text-slate-600 dark:text-slate-300 max-w-2xl">
           Long-form notes on the parts of this product that were hard: getting a syllabus from the
           commission that set it, answering without inventing, holding a real-time conversation, and
           the failures along the way that shaped each of them.
@@ -101,8 +101,8 @@ export default function Blog() {
               onClick={() => go({ category: c })}
               className={
                 c === category
-                  ? 'px-3.5 py-1.5 rounded-full text-[13px] font-semibold bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-950'
-                  : 'px-3.5 py-1.5 rounded-full text-[13px] font-semibold border border-slate-200 dark:border-white/15 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors'
+                  ? 'px-3.5 py-1.5 rounded-full text-[12.5px] font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-950 transition-all cursor-pointer shadow-xs'
+                  : 'px-3.5 py-1.5 rounded-full text-[12.5px] font-medium border border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer'
               }
             >
               {c}
@@ -110,29 +110,31 @@ export default function Blog() {
           ))}
         </div>
 
-        <ul className="mt-10 space-y-2">
+        <ul className="mt-10 divide-y divide-slate-100 dark:divide-white/[0.07]">
           {posts.map((p) => (
-            <li key={p.slug}>
+            <li key={p.slug} className="py-7 first:pt-0 last:pb-0">
               <Link
                 to={`/blog/${p.slug}`}
-                className="group block rounded-2xl -mx-4 px-4 py-6 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+                className="group block rounded-xl -mx-4 px-4 py-3 hover:bg-slate-50/80 dark:hover:bg-white/[0.03] transition-colors"
               >
-                <div className="flex items-center gap-3 text-[12.5px] text-slate-400 dark:text-slate-500">
-                  <span className="font-semibold text-[#8ba32b] dark:text-[#c8e558]">{p.category}</span>
+                <div className="flex items-center gap-2.5 text-[12px] text-slate-400 dark:text-slate-500 font-medium">
+                  <span className="text-[#6ca855] dark:text-[#c8e558]">{p.category}</span>
+                  <span>·</span>
                   <span>{fmt(p.date)}</span>
+                  <span>·</span>
                   <span className="inline-flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> {p.readingMinutes} min
+                    <Clock className="w-3 h-3" /> {p.readingMinutes} min read
                   </span>
                 </div>
-                <h2 className="mt-2 text-[21px] font-bold tracking-tight text-slate-900 dark:text-white">
+                <h2 className="mt-2 text-[20px] sm:text-[21px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                   {p.title}
                 </h2>
-                <p className="mt-2 text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
+                <p className="mt-2 text-[14.5px] leading-relaxed text-slate-600 dark:text-slate-300 line-clamp-2">
                   {p.summary}
                 </p>
-                <span className="mt-3 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-slate-900 dark:text-white">
-                  Read
-                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                <span className="mt-3.5 inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-900 dark:text-white group-hover:translate-x-0.5 transition-transform">
+                  Read article
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
                 </span>
               </Link>
             </li>

@@ -18,8 +18,11 @@ import {
   Target,
   Sun,
   Moon,
-  ListTree
+  ListTree,
+  RotateCcw,
+  ClipboardCheck,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext';
 import { auth } from '../../lib/firebase';
 import { signInAnonymously } from 'firebase/auth';
@@ -440,6 +443,7 @@ export function ChapterReader({
   subject,
   onBack,
 }: ChapterReaderProps) {
+  const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   
   useEffect(() => {
@@ -447,7 +451,14 @@ export function ChapterReader({
       signInAnonymously(auth).catch(console.error);
     }
   }, [user, authLoading]);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [canvasMountedEpoch, setCanvasMountedEpoch] = useState<number>(0);
+  const canvasCallback = useCallback((node: HTMLCanvasElement | null) => {
+    canvasRef.current = node;
+    if (node) {
+      setCanvasMountedEpoch(Date.now());
+    }
+  }, []);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const articleScrollRef = useRef<HTMLDivElement>(null);
   const pdfRef = useRef<any>(null);
@@ -794,7 +805,7 @@ export function ChapterReader({
       cancelled = true;
       if (task) { try { task.cancel(); } catch { /* already settled */ } }
     };
-  }, [pageNum, scale, numPages]);
+  }, [pageNum, scale, numPages, mode, canvasMountedEpoch]);
 
   const gotoPage = (p: number) => setPageNum(Math.max(1, Math.min(numPages || 1, p)));
   const zoom = (delta: number) => setScale((s) => Math.max(0.6, Math.min(3, s + delta)));
@@ -1024,13 +1035,33 @@ export function ChapterReader({
             <Headphones className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Listen</span>
           </button>
+          {/* Revision Mode CTA (Flashcards + High-Yield Recall) */}
           <button
             onClick={() => setShowFlashcards(true)}
-            className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-[#D5D3CB] dark:border-white/10 text-[11px] sm:text-[12px] font-medium text-[#555] dark:text-gray-400 hover:bg-[#E9E8E3] dark:hover:bg-white/5 transition-colors touch-manipulation cursor-pointer"
-            title="Practice flashcards"
+            className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/70 dark:bg-indigo-950/40 text-[11px] sm:text-[12px] font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors touch-manipulation cursor-pointer"
+            title="Revision Mode (Flashcards & Key Takeaways)"
           >
-            <Layers className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Cards</span>
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Revision</span>
+          </button>
+          {/* Test Mode CTA */}
+          <button
+            onClick={() => {
+              navigate('/test', {
+                state: {
+                  mode: 'exam',
+                  topic: docChapter?.title || chapterTitle || 'Chapter Practice Test',
+                  notebookId,
+                  notebookTitle: bookTitle,
+                  count: 10,
+                },
+              });
+            }}
+            className="inline-flex items-center gap-1 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 text-[11px] sm:text-[12px] font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors touch-manipulation cursor-pointer shadow-xs"
+            title="Test Mode (Practice questions for this chapter)"
+          >
+            <ClipboardCheck className="w-3.5 h-3.5" />
+            <span>Take Test</span>
           </button>
         </div>
       </header>
@@ -1175,7 +1206,7 @@ export function ChapterReader({
                 className="relative h-fit shadow-2xl max-w-full"
                 style={{ display: loading || error ? 'none' : 'block' }}
               >
-                <canvas ref={canvasRef} className="block rounded-sm max-w-full" />
+                <canvas ref={canvasCallback} className="block rounded-sm max-w-full" />
                 {scanMode && (
                   <div
                     className="absolute inset-0 cursor-crosshair"
