@@ -1,6 +1,7 @@
 import { Pinecone, RecordMetadata } from '@pinecone-database/pinecone';
 import { env } from '../../config/env';
 import { getSecret } from '../runtimeSecrets.service';
+import { qdrantService } from './qdrant.service';
 
 export interface VectorDocument {
   id: string;
@@ -33,9 +34,12 @@ export class PineconeService {
   }
 
   /**
-   * Upsert vectors to Pinecone
+   * Upsert vectors to Vector Store (delegates to Qdrant if configured)
    */
   async upsertVectors(vectors: VectorDocument[], namespace?: string) {
+    if (env.VECTOR_STORE === 'qdrant') {
+      return qdrantService.upsertVectors(vectors, namespace);
+    }
     const index = this.getIndex();
     const target = namespace ? index.namespace(namespace) : index;
     // Pinecone allows a max of 1000 vectors per upsert request typically, chunking if necessary
@@ -48,9 +52,12 @@ export class PineconeService {
   }
 
   /**
-   * Query vectors in Pinecone with metadata filtering
+   * Query vectors in Vector Store with metadata filtering
    */
   async queryVectors(queryVector: number[], topK: number = 5, filter?: Record<string, any>, namespace?: string) {
+    if (env.VECTOR_STORE === 'qdrant') {
+      return qdrantService.queryVectors(queryVector, topK, filter, namespace) as any;
+    }
     const index = this.getIndex();
     const target = namespace ? index.namespace(namespace) : index;
     
@@ -70,6 +77,9 @@ export class PineconeService {
    */
   async deleteVectors(ids: string[], namespace?: string) {
     if (!ids || ids.length === 0) return;
+    if (env.VECTOR_STORE === 'qdrant') {
+      return qdrantService.deleteVectors(ids, namespace);
+    }
     const index = this.getIndex();
     const target = namespace ? index.namespace(namespace) : index;
     await (target as any).deleteMany({ ids });
@@ -79,6 +89,9 @@ export class PineconeService {
    * Delete all vectors in a namespace
    */
   async deleteAllVectors(namespace?: string) {
+    if (env.VECTOR_STORE === 'qdrant') {
+      return qdrantService.deleteAllVectors(namespace);
+    }
     const index = this.getIndex();
     const target = namespace ? index.namespace(namespace) : index;
     await target.deleteAll();
@@ -93,6 +106,9 @@ export class PineconeService {
     namespace?: string
   ): Promise<Record<string, { id: string; metadata?: RecordMetadata; values?: number[] }>> {
     if (ids.length === 0) return {};
+    if (env.VECTOR_STORE === 'qdrant') {
+      return qdrantService.fetchVectors(ids, namespace);
+    }
     const index = this.getIndex();
     const target = namespace ? index.namespace(namespace) : index;
     const res: any = await target.fetch({ ids });
@@ -121,6 +137,9 @@ export class PineconeService {
     namespace?: string
   ): Promise<{ id: string; metadata?: RecordMetadata }[]> {
     if (chunkCount <= 0) return [];
+    if (env.VECTOR_STORE === 'qdrant') {
+      return qdrantService.fetchChunkMetadata(sourceId, chunkCount, namespace);
+    }
 
     const index = this.getIndex();
     const target = namespace ? index.namespace(namespace) : index;
@@ -161,10 +180,13 @@ export class PineconeService {
   }
 
   /**
-   * Fetch real index statistics from Pinecone (namespaces, vector counts, dimension, fullness).
+   * Fetch real index statistics from Vector Store (namespaces, vector counts, dimension, fullness).
    * Used by the admin Vector DB dashboard.
    */
   async getIndexStats() {
+    if (env.VECTOR_STORE === 'qdrant') {
+      return qdrantService.getIndexStats();
+    }
     const index = this.getIndex();
     const stats = await index.describeIndexStats();
     return {
