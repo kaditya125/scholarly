@@ -17,12 +17,19 @@ import {
   PYQQuestionType,
 } from '../../types/pyq.types';
 import { logger } from '../../utils/logger';
+import { cacheService } from '../cache.service';
 
 export class PYQAnalyticsService {
   /**
    * Computes comprehensive PYQ analytics for an examination.
    */
   async computeExamAnalytics(examId: string): Promise<PYQExamAnalytics> {
+    const cacheKey = `pyq_analytics_${examId.toUpperCase()}`;
+    const cached = await cacheService.get<PYQExamAnalytics>(cacheKey).catch(() => null);
+    if (cached) {
+      return cached;
+    }
+
     const questions = await pyqRepository.listQuestions({ examId, limit: 10000 });
 
     if (questions.length === 0) {
@@ -142,8 +149,9 @@ export class PYQAnalyticsService {
       updatedAt: Date.now(),
     };
 
-    // Save cache to repository
+    // Save cache to repository and cacheService
     await pyqRepository.saveExamAnalytics(analytics);
+    await cacheService.set(cacheKey, analytics, 3600).catch(() => {});
     return analytics;
   }
 
@@ -174,6 +182,31 @@ export class PYQAnalyticsService {
     return {
       highYieldWeakTopics,
       masteryRecommendations,
+    };
+  }
+
+  /**
+   * Returns a standardized ExamPatternProfile for test generation blueprints and revision prioritization.
+   */
+  public async getExamPatternProfile(examId: string): Promise<any> {
+    const analytics = await this.computeExamAnalytics(examId);
+    return {
+      examId: analytics.examId,
+      totalQuestionsAnalyzed: analytics.totalQuestions,
+      yearsCovered: analytics.yearsCovered,
+      subjectDistribution: analytics.subjectDistribution,
+      difficultyDistribution: analytics.difficultyDistribution,
+      questionTypeDistribution: analytics.questionTypeDistribution,
+      highYieldTopics: analytics.topTopics.map(t => ({
+        topic: t.topic,
+        subject: t.subject,
+        questionCount: t.questionCount,
+        percentageWeight: t.percentageWeight,
+        yearsAppeared: t.yearsAppeared,
+      })),
+      recentTrends: analytics.topTopics.slice(0, 3).map(
+        t => `Frequently tested in recent cycles: ${t.topic} (${t.subject}, ~${t.percentageWeight}% weight)`
+      ),
     };
   }
 }

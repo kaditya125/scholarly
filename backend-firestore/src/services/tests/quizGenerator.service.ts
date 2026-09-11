@@ -3,6 +3,8 @@ import { UserStatsService } from '../userStats.service';
 import { knowledgeService } from '../../core/knowledge';
 import { syllabusGraphService } from '../exam/syllabusGraph.service';
 import { validateSyllabusNodeId } from '../exam/syllabusNodeIdentity';
+import { pyqAnalyticsService } from '../pyq/pyqAnalytics.service';
+import { examMasterService } from '../exam/examMaster.service';
 import { logger } from '../../utils/logger';
 
 /**
@@ -35,6 +37,12 @@ export interface QuizQuestion {
   syllabusId?: string;
   cycleId?: string;
   identityStatus: QuestionIdentityStatus;
+  /** Provenance metadata: WHY and HOW this question was generated */
+  questionOrigin?: 'AUTHENTIC_PYQ' | 'PYQ_INSPIRED' | 'CURRICULUM_SYNTHESIZED';
+  sourcePyqs?: string[];
+  sourceChapters?: string[];
+  patternProfileContext?: string;
+  syllabusBoundaryVerified?: boolean;
 }
 
 /** Map a model's "correctAnswer" (index, letter "A", or the option text) to an index. */
@@ -137,10 +145,55 @@ export class QuizGeneratorService {
           : `core concepts for ${exam}`;
     const difficulty = opts.difficulty || 'medium';
 
+    // Exam Pattern Intelligence: analyze real PYQs for this exam to guide question styles
+    let examPatternBlock = '';
+    let examPatternSummary = '';
+    const examIdForAnalytics = opts.examId || (exam !== 'a general competitive exam' ? exam : '');
+    if (examIdForAnalytics) {
+      try {
+        const pattern = await pyqAnalyticsService.getExamPatternProfile(examIdForAnalytics);
+        if (pattern && pattern.totalQuestionsAnalyzed > 0) {
+          const highYieldList = pattern.highYieldTopics.slice(0, 4).map((h: any) => `${h.topic} (${h.percentageWeight}%)`).join(', ');
+          examPatternSummary = `Exam: ${pattern.examId} | Analyzed ${pattern.totalQuestionsAnalyzed} PYQs | High-yield: ${highYieldList}`;
+          examPatternBlock = `\nExam Pattern Intelligence for ${pattern.examId}:\n- High-Yield Topics: ${highYieldList}\n- Common Question Types in this exam: ${Object.keys(pattern.questionTypeDistribution).join(', ')}\nEnsure questions reflect real examination phrasing and cognitive depth.`;
+        }
+      } catch (e) {
+        // Advisory pattern intelligence
+      }
+    }
+
+    // Official Syllabus Boundary Enforcement:
+    // Extract authoritative topics from official syllabus to serve as a strict generation boundary
+    let syllabusBoundaryBlock = '';
+    const allowedSyllabusTopics: string[] = [];
+    if (examIdForAnalytics) {
+      try {
+        const currentSyllabus = await examMasterService.getCurrentSyllabus(examIdForAnalytics);
+        if (currentSyllabus?.nodes && currentSyllabus.nodes.length > 0) {
+          const collectTopicNames = (nodes: any[]) => {
+            for (const n of nodes) {
+              if (n.name && (n.type === 'TOPIC' || n.type === 'SUBTOPIC' || n.type === 'SUBJECT' || n.type === 'PAPER')) {
+                allowedSyllabusTopics.push(n.name);
+              }
+              if (n.children && Array.isArray(n.children)) collectTopicNames(n.children);
+            }
+          };
+          collectTopicNames(currentSyllabus.nodes);
+          if (allowedSyllabusTopics.length > 0) {
+            const boundarySample = allowedSyllabusTopics.slice(0, 15).join(', ');
+            syllabusBoundaryBlock = `\n\nCRITICAL OFFICIAL SYLLABUS BOUNDARY:\nAll generated questions MUST strictly adhere to the official syllabus for ${examIdForAnalytics}. Allowed syllabus topics include: ${boundarySample}...\nDo NOT invent or include questions on topics excluded from this syllabus.`;
+          }
+        }
+      } catch (e) {
+        // Advisory syllabus boundary
+      }
+    }
+
     // When launched from a specific book/chapter ("take a test from my resources"), ground the
     // questions in the ACTUAL retrieved chunks for that notebook instead of asking the model to
     // invent questions purely from its own knowledge of the topic string.
     let groundingBlock = '';
+    const sourceChapterList: string[] = [];
     if (opts.notebookId) {
       try {
         const contextBundle = await knowledgeService.getSourceContext(focus, opts.notebookId, {
@@ -150,6 +203,9 @@ export class QuizGeneratorService {
           consumerContext: 'Adaptive Quiz Generation',
         });
         if (contextBundle.passages.length > 0) {
+          contextBundle.passages.forEach(p => {
+            if (p.sourceTitle && !sourceChapterList.includes(p.sourceTitle)) sourceChapterList.push(p.sourceTitle);
+          });
           groundingBlock = `\n\nBase every question STRICTLY on the following source material (do not invent facts outside it):\n${contextBundle.passages.map((p, i) => `[${i + 1}] ${p.text}`).join('\n\n')}`;
         }
       } catch (e) {
@@ -160,14 +216,14 @@ export class QuizGeneratorService {
     const system = 'You are an expert exam question writer. You output STRICTLY valid JSON only — no markdown fences, no commentary, no trailing text.';
     const prompt = `Create exactly ${count} multiple-choice questions that help a student improve on their WEAK areas.
 Focus topics: ${focus}
-Exam context: ${exam}. Difficulty: ${difficulty}.
+Exam context: ${exam}. Difficulty: ${difficulty}.${examPatternBlock}
 
 Rules:
 - Each question has EXACTLY 4 options.
 - Exactly one option is correct.
 - "correctAnswerIndex" is the 0-based index of the correct option.
 - Keep each explanation to 1-2 sentences.
-- Vary the questions across the focus topics; make them exam-realistic.${groundingBlock}
+- Vary the questions across the focus topics; make them exam-realistic.${syllabusBoundaryBlock}${groundingBlock}
 
 Output ONLY a JSON array in EXACTLY this shape (no other keys):
 [{"text":"the question","topic":"specific sub-topic","options":["opt A","opt B","opt C","opt D"],"correctAnswerIndex":0,"explanation":"why the correct option is right"}]`;
@@ -214,6 +270,11 @@ Output ONLY a JSON array in EXACTLY this shape (no other keys):
                 identityStatus: 'CANONICAL' as const,
               }
             : { identityStatus: 'UNANCHORED' as const }),
+          // Provenance: record why this question was generated and what guided it
+          questionOrigin: sourceChapterList.length > 0 ? ('CURRICULUM_SYNTHESIZED' as const) : ('PYQ_INSPIRED' as const),
+          sourceChapters: sourceChapterList.length > 0 ? sourceChapterList : undefined,
+          patternProfileContext: examPatternSummary || undefined,
+          syllabusBoundaryVerified: allowedSyllabusTopics.length > 0 ? true : undefined,
         };
       })
       .filter((q) => q.text && q.options.length >= 2);

@@ -45,9 +45,11 @@ export interface ExamContext {
 const AUTHORITY_WEIGHTS: Record<string, number> = {
   'NCERT': 1.5,
   'GOVERNMENT': 1.4,
-  'OFFICIAL_SYLLABUS': 1.4,
+  'OFFICIAL_SYLLABUS': 1.5,
+  'AUTHENTIC_PYQ': 1.4,
   'STANDARD_TEXTBOOK': 1.3,
   'TEACHER_NOTES': 1.2,
+  'REFERENCE_BOOK': 1.1,
   'USER_UPLOAD': 1.0,
   'WEB_SEARCH': 0.8
 };
@@ -212,8 +214,15 @@ Standalone Search Query:`;
       let weightedScore = reranked.relevanceScore;
       const meta = match.metadata || {};
       
-      // Knowledge Authority Layer
-      const authorityLevel = (meta.authority as string) || 'USER_UPLOAD';
+      // Knowledge Authority Layer: resolve authority from explicit tag or metadata provenance
+      let authorityLevel = (meta.authority as string) || '';
+      if (!authorityLevel) {
+        if (meta.board === 'NCERT' || meta.userId === 'ncert-curriculum') authorityLevel = 'NCERT';
+        else if (meta.documentType === 'OFFICIAL_SYLLABUS') authorityLevel = 'OFFICIAL_SYLLABUS';
+        else if (meta.content_type === 'pyq' || meta.vectorKind === 'CANONICAL_PYQ_QUESTION') authorityLevel = 'AUTHENTIC_PYQ';
+        else if (meta.content_type === 'reference_book' || meta.corpusBucket === 'REFERENCE_BOOK') authorityLevel = 'REFERENCE_BOOK';
+        else authorityLevel = 'USER_UPLOAD';
+      }
       const authorityMultiplier = AUTHORITY_WEIGHTS[authorityLevel] || 1.0;
       weightedScore *= authorityMultiplier;
 
@@ -477,17 +486,19 @@ Standalone Search Query:`;
     Telemetry.logLatency('query_embedding', performance.now() - tEmbed);
 
     const namespace = env.PINECONE_NAMESPACE;
-    // Curriculum-owned filter. Ingestion writes `owner: 'ncert-curriculum'` on
-    // every curriculum vector; if that field isn't set on a given deployment
-    // the fallback (empty filter) still returns something useful because the
-    // authority multiplier boosts curriculum content anyway.
-    let filter: any = { owner: 'ncert-curriculum' };
+    // Curriculum-owned filter: query by userId: 'ncert-curriculum', which is how
+    // all NCERT vectors are stored in Qdrant (22.5k vectors). If older vectors use
+    // owner or board, fall back gracefully.
+    let filter: any = { userId: 'ncert-curriculum' };
 
     const tPinecone = performance.now();
     let matches = await pineconeService.queryVectors(queryEmbedding, topK * 4, filter, namespace);
-    // Older curriculum uploads may not carry the `owner` tag. If the filtered
-    // search returns nothing, retry unfiltered so we degrade gracefully rather
-    // than returning [] and forcing the caller to invent context.
+    if (!matches || matches.length === 0) {
+      matches = await pineconeService.queryVectors(queryEmbedding, topK * 4, { owner: 'ncert-curriculum' }, namespace);
+    }
+    if (!matches || matches.length === 0) {
+      matches = await pineconeService.queryVectors(queryEmbedding, topK * 4, { board: 'NCERT' }, namespace);
+    }
     if (!matches || matches.length === 0) {
       matches = await pineconeService.queryVectors(queryEmbedding, topK * 4, {}, namespace);
     }

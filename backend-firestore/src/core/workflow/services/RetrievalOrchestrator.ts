@@ -2,7 +2,8 @@ import { WorkflowEvent, WorkflowStage, WorkflowRequest } from '../types';
 import { AgentContext } from '../../agents/IAgent';
 import { KnowledgeGraphAgent } from '../../agents/KnowledgeGraphAgent';
 import { RetrievalService } from '../../../services/rag/retrieval.service';
-import { knowledgeService, KnowledgeService } from '../../knowledge';
+import { referenceBooksService } from '../../../services/rag/referenceBooks.service';
+import { knowledgeService, KnowledgeService, knowledgeRouter } from '../../knowledge';
 import { Telemetry } from '../../../lib/telemetry';
 import { QueryPlan } from './QueryPlanningService';
 import { RetrievalError } from '../../errors/providerErrors';
@@ -139,7 +140,28 @@ export class RetrievalOrchestrator {
       // other user's private notebooks are exposed) instead of relying purely on the
       // model's own knowledge. Skipped when a file is attached (that file is the context).
       try {
-        const curriculumResults = await this.retrievalService.retrieveCurriculumContext(req.query, 5);
+        const routePlan = knowledgeRouter.route({ query: req.query, notebookId: req.notebookId });
+        
+        // Parallel multi-corpus retrieval execution
+        const [curriculumOutcome, refOutcome, syllabusOutcome] = await Promise.allSettled([
+          this.retrievalService.retrieveCurriculumContext(req.query, 5),
+          routePlan.useReferenceBooks
+            ? referenceBooksService.retrieveReferenceContext(req.query, {
+                topK: 2,
+                book: routePlan.referenceBookFilters?.books,
+                publisher: routePlan.referenceBookFilters?.publisher,
+              })
+            : Promise.resolve([]),
+          (routePlan.useOfficialSyllabus && routePlan.targetExamId)
+            ? this.retrievalService.retrieveOfficialSyllabusContext(routePlan.targetExamId, req.query, 2)
+            : Promise.resolve([]),
+        ]);
+
+        const curriculumResults = curriculumOutcome.status === 'fulfilled' ? curriculumOutcome.value : [];
+        const refResults = refOutcome.status === 'fulfilled' ? refOutcome.value : [];
+        const syllabusResults = syllabusOutcome.status === 'fulfilled' ? syllabusOutcome.value : [];
+
+        // 1. NCERT Curriculum
         if (curriculumResults.length > 0) {
           contextStr += "=== NCERT CURRICULUM CONTEXT ===\n";
           for (const r of curriculumResults) {
@@ -148,11 +170,10 @@ export class RetrievalOrchestrator {
               source: r.source,
               text: r.text,
               score: r.score,
-              authorityScore: r.metadata?.authority || 1.4,
+              authorityScore: r.metadata?.authority || 1.5,
               selectionReasoning: r.selectionReasoning || 'Relevant passage from the NCERT curriculum.',
               pageNumber: r.metadata?.pageNumber,
               paragraphIndex: r.metadata?.paragraphIndex,
-              // Identifiers so the UI can deep-link a cited source into the reader (/read).
               sourceId: r.metadata?.sourceId,
               notebookId: r.metadata?.notebookId,
               title: r.metadata?.sourceTitle || r.source,
@@ -161,8 +182,50 @@ export class RetrievalOrchestrator {
             yield { type: 'citation', citation: citationData };
           }
         }
+
+        // 2. Reference Books (Augmentation)
+        if (refResults.length > 0) {
+          contextStr += "=== REFERENCE BOOK CONTEXT (LUCENT / S. CHAND) ===\n";
+          for (const r of refResults) {
+            contextStr += `[Citation: ${r.source}]\n${r.text}\n\n`;
+            const citationData = {
+              source: r.source,
+              text: r.text,
+              score: r.score,
+              authorityScore: 1.1,
+              selectionReasoning: r.selectionReasoning || 'Supplementary reference context.',
+              pageNumber: r.metadata?.pageNumber,
+              figureAssetUrl: r.metadata?.figureAssetUrl || null,
+              sourceId: r.metadata?.book || 'reference_book',
+              notebookId: 'reference_books',
+              title: r.source,
+            };
+            citationsList.push(citationData);
+            yield { type: 'citation', citation: citationData };
+          }
+        }
+
+        // 3. Official Syllabus
+        if (syllabusResults.length > 0 && routePlan.targetExamId) {
+          contextStr += `=== OFFICIAL SYLLABUS CONTEXT (${routePlan.targetExamId}) ===\n`;
+          for (const s of syllabusResults) {
+            contextStr += `[Citation: ${s.source}]\n${s.text}\n\n`;
+            const citationData = {
+              source: s.source,
+              text: s.text,
+              score: s.score,
+              authorityScore: 1.5,
+              selectionReasoning: `Official Syllabus item for ${routePlan.targetExamId}`,
+              sourceId: s.metadata?.sourceId || s.metadata?.syllabusVersionId,
+              notebookId: `exam-${routePlan.targetExamId.toLowerCase()}`,
+              title: s.source,
+            };
+            citationsList.push(citationData);
+            yield { type: 'citation', citation: citationData };
+          }
+        }
       } catch (err) {
-        console.warn('Curriculum retrieval failed (non-fatal):', err);
+        console.warn('Multi-corpus retrieval failed (non-fatal):', err);
       }
     }
 
