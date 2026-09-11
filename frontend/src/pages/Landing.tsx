@@ -885,23 +885,27 @@ export default function LandingPage() {
         {/* ══ Aspiration ═════════════════════════════════════════════════════ */}
         <section className="max-w-[1160px] mx-auto px-5 sm:px-8 py-16 sm:py-20">
           <Reveal>
-            <div className="relative rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm">
+            <div className="max-w-[36rem]">
+              <Eyebrow>17+ exams, one tutor</Eyebrow>
+              <SectionHeading>Every path starts with the syllabus in front of you.</SectionHeading>
+            </div>
+            {/*
+              A wide banner strip (source is ~3:1), not a tall card — left at its natural
+              h-auto ratio rather than forced/cropped into a fixed aspect box, so nothing
+              awkwardly crops on any viewport width; it just gets proportionally shorter on
+              narrow screens. Text lives above it in normal flow (the same Eyebrow ->
+              SectionHeading rhythm every other section on this page uses) rather than
+              overlaid on the photo, which is both simpler to keep legible at every
+              breakpoint and more consistent with how this page reads everywhere else.
+            */}
+            <div className="mt-8 sm:mt-10 rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm">
               <img
-                src={theme === 'dark' ? '/sadhya-hero-aspiration-dark.webp' : '/sadhya-hero-aspiration-light.webp'}
+                src={theme === 'dark' ? '/section-dark.webp' : '/section-light.webp'}
                 alt="A doctor, an engineer, a police officer and students — the people every exam here actually leads to"
                 className="w-full h-auto block"
                 loading="lazy"
                 decoding="async"
               />
-              {/* Scrim: guarantees the overlaid heading reads regardless of exactly how bright
-                  the sky is at that point in the photo. */}
-              <div className="absolute inset-0 bg-gradient-to-b from-white/55 dark:from-black/55 via-transparent to-transparent" />
-              <div className="absolute inset-x-0 top-0 p-6 sm:p-10 lg:p-12 max-w-[24rem]">
-                <Eyebrow>17+ exams, one tutor</Eyebrow>
-                <h2 className="mt-2.5 text-[22px] sm:text-[28px] lg:text-[32px] leading-[1.18] font-semibold tracking-[-0.03em] text-slate-900 dark:text-white">
-                  Every path starts with the syllabus in front of you.
-                </h2>
-              </div>
             </div>
           </Reveal>
         </section>
