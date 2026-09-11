@@ -6,10 +6,16 @@ import { getSubjectMeta } from './subjectMeta';
 import { useChapterCover } from '../../hooks/ai/useChapterCover';
 import { cn } from '../../lib/utils';
 
+/**
+ * Difficulty is one of the few things on this card that genuinely encodes state, so it keeps a
+ * semantic scale — but muted, and as text rather than a filled chip. A solid amber badge on every
+ * Medium chapter reads as a warning and pulls attention from the accent, which is the only thing
+ * on the page that should be claiming it.
+ */
 const DIFFICULTY_STYLE: Record<string, string> = {
-  Easy: 'text-emerald-700 bg-emerald-100',
-  Medium: 'text-amber-700 bg-amber-100',
-  Hard: 'text-rose-700 bg-rose-100',
+  Easy: 'text-emerald-600 dark:text-emerald-400',
+  Medium: 'text-slate-500 dark:text-slate-400',
+  Hard: 'text-rose-600 dark:text-rose-400',
 };
 
 interface ChapterFileCardProps {
@@ -69,11 +75,11 @@ export function ChapterFileCard({ book, chapter, index, onRead, onLearn, onTest,
       <button
         onClick={onRead}
         title={`Read ${label}`}
-        className="relative block w-full aspect-[4/3] rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/20 shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500/40 transition-all"
+        className="relative block w-full aspect-[4/3] rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/20 hover:border-[#8ba32b]/45 dark:hover:border-[#c8e558]/35 transition-colors"
       >
         <div className="absolute inset-0 bg-white">
           {/* subject-branded top strip */}
-          <div className={cn('h-1.5 w-full bg-gradient-to-r', meta.gradient)} />
+          <div className="h-1.5 w-full bg-[#8ba32b]/25 dark:bg-[#c8e558]/25" />
           {/* dog-ear */}
           <div className="absolute top-1.5 right-0 w-5 h-5 bg-slate-100" style={{ clipPath: 'polygon(100% 0, 0 0, 100% 100%)' }} />
           <div className="p-3">
@@ -121,11 +127,11 @@ export function ChapterFileCard({ book, chapter, index, onRead, onLearn, onTest,
 
       {/* Footer — PDF tag + title + meta + menu */}
       <div className="flex items-center gap-2 mt-2.5">
-        <div className="w-7 h-8 rounded-[5px] bg-red-500 flex items-center justify-center shrink-0 shadow-sm">
+        <div className="w-7 h-8 rounded-[5px] bg-red-500 flex items-center justify-center shrink-0">
           <span className="text-white text-[7px] font-black tracking-tight">PDF</span>
         </div>
         <button onClick={onOpen} className="min-w-0 flex-1 text-left">
-          <p className="text-[13px] font-bold text-slate-800 dark:text-gray-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+          <p className="text-[13px] font-bold text-slate-800 dark:text-gray-100 truncate group-hover:text-[#8ba32b] dark:group-hover:text-[#c8e558] transition-colors">
             {label}
           </p>
           <p className="text-[11px] text-slate-400 dark:text-gray-500 truncate">
@@ -147,7 +153,7 @@ export function ChapterFileCard({ book, chapter, index, onRead, onLearn, onTest,
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
-              <div className="absolute right-0 top-8 z-40 w-40 rounded-xl bg-white dark:bg-[#1e1e1f] border border-slate-200 dark:border-white/10 shadow-xl py-1">
+              <div className="absolute right-0 top-8 z-40 w-40 rounded-xl bg-white dark:bg-[#1e1e1f] border border-slate-200 dark:border-white/10 py-1">
                 <MenuItem icon={<BookOpen className="w-3.5 h-3.5" />} text="Read" onClick={onRead} />
                 <MenuItem icon={<GraduationCap className="w-3.5 h-3.5" />} text="Learn" onClick={onLearn} />
                 <MenuItem icon={<ClipboardCheck className="w-3.5 h-3.5" />} text="Take test" onClick={onTest} />

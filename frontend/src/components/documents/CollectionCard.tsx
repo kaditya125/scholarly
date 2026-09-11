@@ -75,7 +75,7 @@ export function CollectionCard({ subject, books, onOpen, index }: CollectionCard
         >
           {/* Back flap of the folder */}
           <div
-            className={cn('absolute inset-0 rounded-xl bg-gradient-to-br shadow-lg dark:shadow-2xl', meta.gradient)}
+            className={cn('absolute inset-0 rounded-xl bg-gradient-to-br shadow-lg dark:shadow-2xl', 'from-slate-300 to-slate-400')}
             style={{ transform: 'translateZ(-15px) translateX(11px)' }}
           >
             <div className="absolute inset-0 rounded-xl bg-black/15 dark:bg-black/40" />
@@ -109,7 +109,7 @@ export function CollectionCard({ subject, books, onOpen, index }: CollectionCard
             style={{ transform: 'translateZ(12px)' }}
           >
             <div className="absolute inset-0 bg-white/55 dark:bg-black/30" />
-            <div className={cn('absolute inset-0 bg-gradient-to-br opacity-35 dark:opacity-40', meta.gradient)} />
+            <div className={cn('absolute inset-0 bg-gradient-to-br opacity-35 dark:opacity-40', 'from-slate-300 to-slate-400')} />
             <div className="absolute inset-0 bg-gradient-to-br from-white/55 dark:from-white/10 via-transparent to-transparent" />
             <div className="absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white/25 dark:from-white/5 to-transparent" />
 

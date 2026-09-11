@@ -104,7 +104,7 @@ export function BookDetailView({ notebookId, onBack }: BookDetailViewProps) {
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
           {/* Left: Book Cover */}
           <div className="lg:w-[240px] shrink-0 flex items-start justify-center lg:justify-start">
-            <div className="w-full max-w-[220px] aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border-2 border-slate-200/80 dark:border-white/10">
+            <div className="w-full max-w-[220px] aspect-[3/4] rounded-2xl overflow-hidden border border-slate-200/80 dark:border-white/10">
               <BookCover
                 notebookId={book.notebookId}
                 subject={book.subject}
@@ -122,12 +122,12 @@ export function BookDetailView({ notebookId, onBack }: BookDetailViewProps) {
               className={cn(
                 'absolute top-0 right-0 w-10 h-10 rounded-xl flex items-center justify-center border transition-all cursor-pointer shadow-2xs',
                 isBookmarked
-                  ? 'bg-rose-50 dark:bg-rose-500/15 text-rose-600 border-rose-200 dark:border-rose-500/30'
+                  ? 'bg-[#8ba32b]/10 dark:bg-[#c8e558]/10 text-[#6ca855] dark:text-[#c8e558] border-[#8ba32b]/25 dark:border-[#c8e558]/25'
                   : 'bg-slate-50 dark:bg-[#232328] text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 border-slate-200/80 dark:border-white/[0.08]'
               )}
               title={isBookmarked ? 'Remove Bookmark' : 'Bookmark Book'}
             >
-              <Bookmark className={cn('w-4 h-4', isBookmarked && 'fill-rose-600')} />
+              <Bookmark className={cn('w-4 h-4', isBookmarked && 'fill-current')} />
             </button>
 
             {/* Title */}
@@ -155,7 +155,7 @@ export function BookDetailView({ notebookId, onBack }: BookDetailViewProps) {
                   className={cn(
                     'w-4 h-4',
                     i < Math.floor(rating)
-                      ? 'fill-amber-500 text-amber-500'
+                      ? 'fill-[#8ba32b] text-[#8ba32b] dark:fill-[#c8e558] dark:text-[#c8e558]'
                       : 'text-slate-300 dark:text-slate-600'
                   )}
                 />
@@ -182,7 +182,7 @@ export function BookDetailView({ notebookId, onBack }: BookDetailViewProps) {
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={() => handleLearn()}
-                className="inline-flex items-center justify-center gap-2 px-7 py-3 bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-950 rounded-full text-[13.5px] font-bold transition-all shadow-md hover:opacity-90 cursor-pointer active:scale-98"
+                className="inline-flex items-center justify-center gap-2 px-7 py-3 bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-950 rounded-full text-[13.5px] font-bold transition-opacity hover:opacity-90 cursor-pointer active:scale-98"
               >
                 <GraduationCap className="w-4 h-4" />
                 <span>Start AI Learning Session</span>
@@ -213,7 +213,7 @@ export function BookDetailView({ notebookId, onBack }: BookDetailViewProps) {
         <div className="p-4 rounded-2xl bg-white dark:bg-[#1a1a1e] border border-slate-200/90 dark:border-white/[0.08] shadow-2xs">
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">Study Hours</div>
           <div className="text-[16px] font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-            <Clock3 className="w-4 h-4 text-amber-500" />
+            <Clock3 className="w-4 h-4 text-slate-400 dark:text-slate-500" />
             <span>~{book.estimatedStudyHours || 24}h</span>
           </div>
         </div>

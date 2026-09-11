@@ -40,7 +40,7 @@ export function BookCard({ book, onOpen, index }: BookCardProps) {
       </div>
 
       <div className="flex flex-col gap-2 p-3.5">
-        <span className={cn('inline-flex items-center gap-1 self-start text-[10.5px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full', meta.accent)}>
+        <span className={cn('inline-flex items-center gap-1 self-start text-[10.5px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full', meta.tint)}>
           <meta.icon className="w-3 h-3" /> {book.subject}
         </span>
         <h3 className="font-bold text-[14.5px] text-slate-900 dark:text-gray-100 leading-snug line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
