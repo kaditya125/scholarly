@@ -11,6 +11,7 @@
  */
 
 import { BaseExtractor, ExtractionContext, ExtractionError } from './BaseExtractor';
+import { krutiDevToUnicode, detectKrutiDev } from './krutiDev';
 import { ExtractedBlock, ExtractedBlockType, ExtractedDocumentResult } from '../types';
 
 export class PdfExtractor extends BaseExtractor {
@@ -76,6 +77,36 @@ export class PdfExtractor extends BaseExtractor {
       } else {
         warnings.push('No selectable text layer found in PDF. Document might be scanned or image-based.');
       }
+    }
+
+    // ── Legacy font decoding ────────────────────────────────────────────────────────────
+    // The NCERT Hindi books were typeset in Kruti Dev, which maps Devanagari glyphs onto ASCII.
+    // Extracting them yields "eSaus gSjku gksdj ns[kk" for "मैंने हैरान होकर देखा" — readable to
+    // the font, gibberish to everything downstream. Decode here, before blocks are built:
+    // classifyBlockType below matches headings and questions by regex, and those regexes match
+    // at random against Kruti bytes, so a later conversion would leave the document's structure
+    // derived from the undecoded text.
+    //
+    // Detection runs on the whole document, conversion page by page. The corpus is mixed —
+    // some of these books have Unicode pages sitting beside legacy ones — and detectKrutiDev
+    // declines any page that is already Devanagari, so a mixed PDF converts only what needs it.
+    const documentDetection = detectKrutiDev(fullRawText);
+    if (documentDetection.isKruti) {
+      let convertedPages = 0;
+      for (const page of pagesData) {
+        if (!page.text) continue;
+        const pageDetection = detectKrutiDev(page.text);
+        // Short pages rarely carry enough signature words to detect on their own, so the
+        // document-level verdict carries them; the Devanagari check still protects Unicode pages.
+        if (pageDetection.devanagariRatio > 0.2) continue;
+        page.text = krutiDevToUnicode(page.text);
+        convertedPages++;
+      }
+      fullRawText = krutiDevToUnicode(fullRawText);
+      warnings.push(
+        `Kruti Dev legacy font detected (${documentDetection.hits} signature matches); ` +
+        `converted ${convertedPages}/${pagesData.length} pages to Unicode Devanagari.`
+      );
     }
 
     const blocks: ExtractedBlock[] = [];
