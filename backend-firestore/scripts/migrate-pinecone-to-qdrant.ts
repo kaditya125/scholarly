@@ -81,7 +81,17 @@ interface Checkpoint {
   readUnits: number;
   startedAt: string;
   updatedAt: string;
-  status: 'running' | 'stopped_at_limit' | 'complete' | 'complete_with_failures';
+  /**
+   * What the LAST write to this file knew.
+   *
+   * `running` is written before the first batch and left there for the duration, so a file still
+   * saying `running` means the process died without reaching its own report — which is exactly
+   * what an interrupted run looks like, and is worth saying rather than leaving to inference.
+   *
+   * The per-namespace `done` flags are the authoritative record of progress; this field is a
+   * summary of how the run ENDED, and must never claim more than they do.
+   */
+  status: 'running' | 'stopped_at_limit' | 'partial' | 'complete' | 'complete_with_failures';
 }
 
 function loadCheckpoint(): Checkpoint | null {
@@ -208,6 +218,12 @@ async function run() {
 
   const resuming = Object.values(cp.namespaces).some((n) => n.migratedCount > 0);
   if (resuming) {
+    // A checkpoint still reading `running` was written by a process that never reached its own
+    // report — it was killed, crashed, or the box went down. Say so, because the alternative is
+    // the operator inferring it from a timestamp.
+    if (cp.status === 'running') {
+      log('CHECKPOINT', `the previous run did not finish (status was left at "running", last write ${cp.updatedAt}) — resuming from where it stopped`);
+    }
     log('CHECKPOINT', `resuming — ${Object.values(cp.namespaces).map((n) => `${n.namespace}: ${n.migratedCount}/${n.discoveredCount}`).join(', ')}`);
     log('CHECKPOINT', `egress already spent by previous runs: ${mb(cp.bytesTransferred)}`);
   }
@@ -230,6 +246,12 @@ async function run() {
     console.log('\nNothing was written. Re-run without --dry-run to migrate.');
     return;
   }
+
+  // Claim the file as in-progress BEFORE any batch. Without this every intermediate save carries
+  // whatever terminal status the previous run left behind — a resumed run would sit at
+  // "complete" for its entire duration while thousands of vectors were still outstanding.
+  cp.status = 'running';
+  saveCheckpoint(cp);
 
   // ── prepare the destination ───────────────────────────────────────────────────────────────
   const { created } = await qdrant.ensureCollection();
@@ -350,7 +372,18 @@ async function run() {
   }
 
   // ── report ────────────────────────────────────────────────────────────────────────────────
-  cp.status = stoppedAtLimit ? 'stopped_at_limit' : totalFailed > 0 ? 'complete_with_failures' : 'complete';
+  // `complete` is reserved for the one case that actually earns it: every namespace enumerated
+  // to exhaustion, every discovered vector accounted for, no failures, and no --limit truncating
+  // the run. Anything short of that is `partial`, so the field can never claim more than the
+  // per-namespace `done` flags support.
+  const everyNamespaceFinished = Object.values(cp.namespaces)
+    .every((n) => n.done && n.migratedCount >= n.discoveredCount);
+
+  cp.status =
+    stoppedAtLimit ? 'stopped_at_limit'
+    : totalFailed > 0 ? 'complete_with_failures'
+    : everyNamespaceFinished && !LIMIT ? 'complete'
+    : 'partial';
   saveCheckpoint(cp);
 
   console.log('\n' + '='.repeat(78));
@@ -376,8 +409,9 @@ async function run() {
     log('ERROR', `${totalFailed} vectors failed and are listed in the failure log.`);
     console.log('\nSTATUS: NOT COMPLETE — failures recorded');
   } else {
-    const allDone = Object.values(cp.namespaces).every((n) => n.done && n.migratedCount >= n.discoveredCount);
-    if (allDone && !LIMIT) {
+    // Same condition that set cp.status above — computed once so the printed verdict and the
+    // stored field can never disagree.
+    if (everyNamespaceFinished && !LIMIT) {
       log('COMPLETE', 'All namespaces migrated. Run verify-migration.ts before trusting this.');
       console.log('\nSTATUS: COPIED — verification still required');
     } else {
