@@ -1,0 +1,34 @@
+# Qdrant configuration for the Sadhya VM.
+#
+# Two decisions matter more than the rest:
+#
+#   host: 127.0.0.1   Qdrant has NO authentication until an api_key is set, and even with one it
+#                     is a database. Binding to loopback means the only way in is from processes
+#                     on this box — the API included — regardless of what the cloud firewall
+#                     happens to allow. Nothing needs to reach it from outside.
+#
+#   api_key           Defence in depth, not the primary control. It stops another local process
+#                     or a compromised dependency from reading the corpus over loopback.
+#
+# The VM has 2 vCPU / 7.8GB RAM and the collection is ~48.7k points at 768d — roughly 150MB of
+# vectors. Defaults are appropriate at this size; nothing here is tuned for scale it will not see.
+
+log_level: INFO
+
+storage:
+  # Dedicated directory, outside the application tree so a redeploy cannot touch it.
+  storage_path: /var/lib/qdrant/storage
+  snapshots_path: /var/lib/qdrant/snapshots
+  # Payload on disk keeps RAM for the HNSW graph. Chunk `text` is the largest payload field and
+  # is only read on a hit, so this trades a little read latency for a lot of headroom.
+  on_disk_payload: true
+
+service:
+  host: 127.0.0.1
+  http_port: 6333
+  grpc_port: 6334
+  # Replaced at install time with a generated key. Never commit a real key here.
+  api_key: REPLACE_ME_AT_INSTALL
+  # Read-only key is left unset: the application both reads and writes.
+
+telemetry_disabled: true

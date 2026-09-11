@@ -35,6 +35,10 @@ export const MANAGEABLE_SECRET_KEYS = [
   'GROQ_API_KEY',
   'GEMINI_API_KEY',
   'PINECONE_API_KEY',
+  // Same treatment as PINECONE_API_KEY: the Qdrant backend rebuilds its client per call, so a
+  // key rotated here takes effect without a restart. Listing it also means the self-hosted
+  // store cannot end up as the one credential with no rotation path.
+  'QDRANT_API_KEY',
   'COHERE_API_KEY',
   'TAVILY_API_KEY',
   'RAZORPAY_KEY_ID',

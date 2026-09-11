@@ -8,7 +8,10 @@
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
     "test": "jest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "migrate:pinecone:qdrant": "tsx scripts/migrate-pinecone-to-qdrant.ts",
+    "verify:migration": "tsx scripts/verify-migration.ts",
+    "test:qdrant": "tsx scripts/test-qdrant-synthetic.ts"
   },
   "dependencies": {
     "@100mslive/server-sdk": "^0.3.0",
@@ -16,6 +19,7 @@
     "@google-cloud/vertexai": "^1.12.0",
     "@google/genai": "^2.10.0",
     "@pinecone-database/pinecone": "^8.0.0",
+    "@qdrant/js-client-rest": "^1.19.0",
     "@types/multer": "^2.2.0",
     "axios": "^1.18.1",
     "bullmq": "^6.1.1",
