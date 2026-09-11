@@ -1,4 +1,5 @@
-import { Target, TrendingUp, TrendingDown, Minus, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Target, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { useTheme } from '../../lib/ThemeContext';
@@ -27,6 +28,7 @@ function TrendIcon({ trend }: { trend: 'improving' | 'declining' | 'steady' | nu
 }
 
 export function FocusAreasWidget() {
+  const navigate = useNavigate();
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
   const { learningState, isLoading, isError } = useLearningState();
@@ -68,14 +70,35 @@ export function FocusAreasWidget() {
 
       {!hasEvidence ? (
         <div className={cn(
-          'p-5 rounded-2xl border text-center',
+          'p-5 sm:p-6 rounded-2xl border text-center flex flex-col items-center justify-center',
           isDarkMode ? 'bg-[#161619] border-white/[0.08]' : 'bg-white border-slate-200/90',
         )}>
-          <Sparkles className="w-4 h-4 mx-auto text-slate-400 dark:text-gray-500" />
-          <p className="mt-2 text-[12.5px] text-slate-500 dark:text-gray-400 max-w-sm mx-auto leading-relaxed">
+          <div className="relative flex items-center justify-center mb-3">
+            <picture>
+              <source
+                srcSet={isDarkMode ? '/images/focus-areas-ai-dark.webp' : '/images/focus-areas-ai-light.webp'}
+                type="image/webp"
+              />
+              <img
+                src={isDarkMode ? '/images/focus-areas-ai-dark.png' : '/images/focus-areas-ai-light.png'}
+                alt="AI learning assistant"
+                className="w-32 sm:w-36 md:w-40 h-auto object-contain select-none pointer-events-none"
+                loading="lazy"
+              />
+            </picture>
+          </div>
+          <p className="text-[12.5px] text-slate-500 dark:text-gray-400 max-w-xs mx-auto leading-relaxed">
             Complete a few graded practice questions on a topic and this fills in with exactly
             what to work on next — backed by your actual results, not a guess.
           </p>
+          <button
+            type="button"
+            onClick={() => navigate('/tests')}
+            className="mt-4 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-[#c8e558] hover:bg-[#b8d548] text-slate-950 transition-colors shadow-xs cursor-pointer active:scale-95"
+          >
+            Start Practicing
+            <span aria-hidden="true">&rarr;</span>
+          </button>
         </div>
       ) : (
         <div className={cn(
