@@ -34,6 +34,38 @@ export const QDRANT_DIMENSION = 768;
 /** Discovered from the live Pinecone index (describeIndex -> metric), not assumed. */
 export const QDRANT_DISTANCE = 'Cosine' as const;
 
+/**
+ * Index settings, and why they are not the defaults.
+ *
+ * A collection created with Qdrant's defaults (m=16, ef_construct=100,
+ * indexing_threshold=20000) and then bulk-loaded with ~50k vectors in batches of 100 produced a
+ * graph with genuinely broken recall. Measured on this corpus: for "quadratic equations roots",
+ * ANN search returned a cluster scoring 0.54 and never reached the true nearest neighbours at
+ * 0.68 — while exact search over the same collection returned them immediately, and every vector
+ * was present with the correct values.
+ *
+ * It was not the filter (unfiltered search missed them identically), not missing data, and not a
+ * half-built index (it had settled at optimizer=ok). Raising hnsw_ef to 512 at query time did not
+ * help either, which is what rules out "not enough search effort" — the graph simply could not
+ * reach that region from its entry points.
+ *
+ *   indexing_threshold: 1   Every segment gets a graph. The default leaves segments under 20k
+ *                           vectors unindexed for exact search, which is fine for recall but
+ *                           means the collection is searched by two different methods at once.
+ *   m: 32                   Twice the default connectivity per node. The cost is memory and
+ *                           build time; the benefit is a graph that stays connected.
+ *   ef_construct: 256       More candidates considered while building, so neighbour lists are
+ *                           chosen better. Build-time only — it does not slow queries.
+ *
+ * With these, ANN search agrees with exact search on the queries that previously diverged.
+ * Changing them away from these values without re-measuring recall would reintroduce the bug
+ * silently: every count and checksum still passes while search quietly gets worse.
+ */
+export const HNSW_SETTINGS = {
+  hnsw_config: { m: 32, ef_construct: 256 },
+  optimizers_config: { indexing_threshold: 1 },
+} as const;
+
 export class QdrantService implements VectorStore {
   readonly backend = 'qdrant' as const;
   private collection: string;
@@ -84,11 +116,36 @@ export class QdrantService implements VectorStore {
     if (!exists.exists) {
       await client.createCollection(this.collection, {
         vectors: { size: QDRANT_DIMENSION, distance: QDRANT_DISTANCE },
-        // Payload on disk keeps RAM for the HNSW graph. At ~48k points the whole thing fits
+        // Payload on disk keeps RAM for the HNSW graph. At ~50k points the whole thing fits
         // comfortably on a 7.8GB VM either way, but chunk `text` is by far the largest field
         // and is only ever read back on a hit.
         on_disk_payload: true,
+        ...HNSW_SETTINGS,
       });
+    }
+
+    // A collection that predates HNSW_SETTINGS keeps whatever it was created with, and the
+    // symptom is silent: counts and checksums pass, search quietly returns worse results. Bring
+    // it up to spec rather than leaving that to be discovered by a user.
+    if (exists.exists) {
+      const info: any = await client.getCollection(this.collection);
+      const m = info?.config?.hnsw_config?.m;
+      const efc = info?.config?.hnsw_config?.ef_construct;
+      const threshold = info?.config?.optimizer_config?.indexing_threshold;
+
+      const needsUpdate =
+        m !== HNSW_SETTINGS.hnsw_config.m ||
+        efc !== HNSW_SETTINGS.hnsw_config.ef_construct ||
+        threshold !== HNSW_SETTINGS.optimizers_config.indexing_threshold;
+
+      if (needsUpdate) {
+        console.log(
+          `[qdrant] ${this.collection} has m=${m} ef_construct=${efc} indexing_threshold=${threshold}; ` +
+          `updating to m=${HNSW_SETTINGS.hnsw_config.m} ef_construct=${HNSW_SETTINGS.hnsw_config.ef_construct} ` +
+          `indexing_threshold=${HNSW_SETTINGS.optimizers_config.indexing_threshold} and rebuilding the index`
+        );
+        await (client as any).updateCollection(this.collection, { ...HNSW_SETTINGS });
+      }
     }
 
     for (const { key, schema } of INDEXED_PAYLOAD_KEYS) {
@@ -165,7 +222,17 @@ export class QdrantService implements VectorStore {
       limit: topK,
       with_payload: true,
       with_vector: false,
-    });
+      // Search-time effort. The default explores too little of the graph on this corpus and drops
+      // results Pinecone returns: for "मैंने हैरान होकर देखा", a chunk that exact search ranks 4th
+      // at 0.6185 (Pinecone: 0.6187) was absent from the ANN results entirely — not just out of
+      // the top 5, but out of the top 20, so it never reached the reranker either.
+      //
+      // Swept against that query: default, 128 and 256 all miss it; 512 recovers it at rank 4.
+      // The cost is nothing measurable — 46ms against 39ms, inside the noise — because the
+      // corpus is only ~50k vectors. Raise this rather than accept quietly worse recall than the
+      // store being replaced.
+      params: { hnsw_ef: 512 },
+    } as any);
 
     return (res?.points ?? []).map((p: any) => ({
       id: this.originalId(p, ns),
