@@ -71,6 +71,8 @@ export interface PyqQuestionQuery {
   shift?: string;
   subject?: string;
   limit?: number;
+  /** Drop the operator-only audit fields (~2/3 of each document). See the backend controller. */
+  compact?: boolean;
 }
 
 /**
