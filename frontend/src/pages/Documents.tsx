@@ -7,12 +7,14 @@ import { useNavigate } from 'react-router-dom';
 import { useBookLibrary } from '../hooks/ai/useDocuments';
 import { useNotebooks } from '../hooks/ai/useNotebook';
 import { usePyqSources } from '../hooks/ai/usePyqSources';
-import { paperLabel } from '../lib/api/pyq';
+import { paperLabel, PyqSource } from '../lib/api/pyq';
 import { DocumentTile } from '../components/documents/DocumentTile';
 import { DocumentTypeRail } from '../components/documents/DocumentTypeRail';
 import { PremiumBookCard } from '../components/documents/PremiumBookCard';
 import { SubjectBooksView } from '../components/documents/SubjectBooksView';
 import { BookDetailView } from '../components/documents/BookDetailView';
+import { PyqExamView } from '../components/documents/PyqExamView';
+import { PyqPaperView } from '../components/documents/PyqPaperView';
 import { BookSummary } from '../lib/api/documents';
 
 const classNum = (c?: string) => (c ? parseInt(c.replace(/\D/g, ''), 10) || 0 : 0);
@@ -48,6 +50,8 @@ export default function Documents() {
   const [type, setType] = useState<TypeId>('all');
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [selectedBook, setSelectedBook] = useState<BookSummary | null>(null);
+  const [selectedExam, setSelectedExam] = useState<string | null>(null);
+  const [selectedPaper, setSelectedPaper] = useState<PyqSource | null>(null);
 
   const q = search.trim().toLowerCase();
 
@@ -82,6 +86,29 @@ export default function Documents() {
         .sort((a, b) => (b.year || 0) - (a.year || 0) || (a.examName || '').localeCompare(b.examName || '')),
     [papers],
   );
+
+  // ── Papers grouped by exam ──────────────────────────────────────────────────────────────────
+  // 173 papers in one flat grid put the exam name first on every tile and pushed year, session and
+  // shift past the truncation point, so forty-odd JEE Main papers rendered as forty identical
+  // tiles. Exams are the level a student actually browses at.
+  const examGroups = useMemo(() => {
+    const map = new Map<string, PyqSource[]>();
+    for (const p of availablePapers) {
+      const key = p.examName || p.examId || 'Other';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(p);
+    }
+    return Array.from(map.entries())
+      .map(([examName, list]) => {
+        const years = list.map((p) => p.year).filter(Boolean) as number[];
+        return {
+          examName,
+          papers: list,
+          span: years.length ? { from: Math.min(...years), to: Math.max(...years) } : null,
+        };
+      })
+      .sort((a, b) => b.papers.length - a.papers.length || a.examName.localeCompare(b.examName));
+  }, [availablePapers]);
 
   // ── Search runs across every type, so a query is never silently scoped to the open tab ───────
   const matched = useMemo(() => {
@@ -124,6 +151,27 @@ export default function Documents() {
     return (
       <div className="w-full h-full max-w-5xl mx-auto pb-12 pt-4 px-4 sm:px-6">
         <BookDetailView notebookId={selectedBook.notebookId} onBack={() => setSelectedBook(null)} />
+      </div>
+    );
+  }
+
+  if (selectedPaper) {
+    return (
+      <div className="w-full max-w-4xl mx-auto pb-12 pt-4 px-4 sm:px-6">
+        <PyqPaperView paper={selectedPaper} onBack={() => setSelectedPaper(null)} />
+      </div>
+    );
+  }
+
+  if (selectedExam) {
+    return (
+      <div className="w-full max-w-7xl mx-auto pb-12 pt-4 px-4 sm:px-6">
+        <PyqExamView
+          examName={selectedExam}
+          papers={availablePapers.filter((p) => (p.examName || p.examId) === selectedExam)}
+          onBack={() => setSelectedExam(null)}
+          onOpenPaper={setSelectedPaper}
+        />
       </div>
     );
   }
@@ -296,7 +344,7 @@ export default function Documents() {
                                 ? { label: 'Available', tone: 'ready' }
                                 : { label: 'Partial', tone: 'pending' }
                             }
-                            onClick={() => navigate(`/tests?exam=${encodeURIComponent(p.examId)}`)}
+                            onClick={() => setSelectedPaper(p)}
                           />
                         ))}
                       </Grid>
@@ -358,33 +406,26 @@ export default function Documents() {
               )}
 
               {showPapers && (
-                <Section title="Question papers" count={availablePapers.length}>
-                  {availablePapers.length === 0 ? (
+                <Section title="Question papers" count={examGroups.length}>
+                  {examGroups.length === 0 ? (
                     <Empty line="No previous-year papers available yet." />
                   ) : (
                     <Grid>
-                      {availablePapers.slice(0, 48).map((p, i) => (
+                      {examGroups.map(({ examName, papers: list, span }, i) => (
                         <DocumentTile
-                          key={p.sourceId}
+                          key={examName}
                           index={i}
                           icon={ScrollText}
-                          title={paperLabel(p)}
-                          subtitle={p.authority}
-                          facts={[p.language, p.documentType]}
-                          status={
-                            p.availabilityStatus === 'AVAILABLE'
-                              ? { label: 'Available', tone: 'ready' }
-                              : { label: 'Partial', tone: 'pending' }
-                          }
-                          onClick={() => navigate(`/tests?exam=${encodeURIComponent(p.examId)}`)}
+                          title={examName}
+                          subtitle={`${list.length} paper${list.length === 1 ? '' : 's'}`}
+                          facts={[
+                            span ? (span.from === span.to ? `${span.from}` : `${span.from}–${span.to}`) : null,
+                            list[0]?.authority,
+                          ]}
+                          onClick={() => setSelectedExam(examName)}
                         />
                       ))}
                     </Grid>
-                  )}
-                  {availablePapers.length > 48 && (
-                    <p className="mt-3 text-[12px] text-slate-400 dark:text-slate-500">
-                      Showing 48 of {availablePapers.length}. Search to narrow by exam or year.
-                    </p>
                   )}
                 </Section>
               )}
