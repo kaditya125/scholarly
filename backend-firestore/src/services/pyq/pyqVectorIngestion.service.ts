@@ -100,9 +100,45 @@ export class PYQVectorIngestionService {
       `[PYQVectorIngestion] Starting vector indexing for ${approvedQuestions.length} approved questions (Namespace: ${namespace})`
     );
 
-    const vectorsBuffer: { id: string; values: number[]; metadata: any }[] = [];
+    const vectorsBuffer: { id: string; values: number[]; metadata: any; question: CanonicalPYQQuestion }[] = [];
 
     const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+    /**
+     * Upsert a batch, then mark exactly the questions in it — and only if the upsert succeeded.
+     *
+     * The flag is set here rather than at embed time so that `vectorIndexed` can never claim a
+     * vector that was not written. A failed upsert leaves those questions untouched, so the next
+     * run picks them up again instead of skipping them forever.
+     */
+    const flush = async (
+      batch: { id: string; values: number[]; metadata: any; question: CanonicalPYQQuestion }[],
+      ns: string,
+      total: number,
+      soFar: number,
+    ): Promise<number> => {
+      const store = getVectorStore();
+      try {
+        await store.upsertVectors(batch.map(({ id, values, metadata }) => ({ id, values, metadata })), ns);
+      } catch (err: any) {
+        logger.error(
+          `[PYQVectorIngestion] Upsert FAILED for ${batch.length} vectors; leaving them unmarked for retry:`,
+          err,
+        );
+        return 0;
+      }
+      const now = Date.now();
+      for (const { question } of batch) {
+        question.vectorIndexed = true;
+        question.vectorIndexedAt = now;
+        question.ingestionState = 'INDEXED';
+      }
+      await pyqRepository.saveCanonicalQuestionsBatch(batch.map((b) => b.question));
+      logger.info(
+        `[PYQVectorIngestion] Flushed and persisted ${soFar + batch.length}/${total} vectors to ${store.backend}`,
+      );
+      return batch.length;
+    };
 
     for (let i = 0; i < approvedQuestions.length; i++) {
       const q = approvedQuestions[i];
@@ -173,25 +209,27 @@ export class PYQVectorIngestionService {
           uploadedAt: q.createdAt && !isNaN(new Date(q.createdAt).getTime()) ? new Date(q.createdAt).toISOString() : new Date().toISOString(),
         };
 
+        // Carry the question with its vector. The write-back used to re-derive the batch as
+        // `approvedQuestions.slice(indexedCount - toUpsert.length, indexedCount)`, which assumes
+        // the successes are a contiguous run from the start of the list. One failure breaks that
+        // assumption in both directions: the failed question falls inside the slice and is marked
+        // vectorIndexed with no vector behind it, and an equal number of genuinely indexed
+        // questions fall outside it and are never marked. A live audit of the corpus found
+        // exactly that shape — 334 questions flagged indexed with no vector, and 269 with a
+        // vector but no flag. Pairing each vector with its own question removes the guesswork.
         vectorsBuffer.push({
           id: vectorId,
           values: embedding,
           metadata,
+          question: q,
         });
-
-        q.vectorIndexed = true;
-        q.vectorIndexedAt = Date.now();
-        q.ingestionState = 'INDEXED';
 
         // Flush incrementally to vector store and Firestore checkpoint
         if (vectorsBuffer.length >= batchSize) {
           const toUpsert = vectorsBuffer.splice(0);
-          const store = getVectorStore();
-          await store.upsertVectors(toUpsert, namespace);
-          indexedCount += toUpsert.length;
-          const flushedBatch = approvedQuestions.slice(indexedCount - toUpsert.length, indexedCount);
-          await pyqRepository.saveCanonicalQuestionsBatch(flushedBatch);
-          logger.info(`[PYQVectorIngestion] Flushed and persisted ${indexedCount}/${approvedQuestions.length} vectors to ${store.backend}`);
+          const written = await flush(toUpsert, namespace, approvedQuestions.length, indexedCount);
+          indexedCount += written;
+          failedCount += toUpsert.length - written;
         }
       } catch (err: any) {
         failedCount++;
@@ -200,13 +238,10 @@ export class PYQVectorIngestionService {
     }
 
     if (vectorsBuffer.length > 0) {
-      const remainingCount = vectorsBuffer.length;
-      const store = getVectorStore();
-      await store.upsertVectors(vectorsBuffer, namespace);
-      indexedCount += remainingCount;
-      const remainingFlushed = approvedQuestions.slice(indexedCount - remainingCount, indexedCount);
-      await pyqRepository.saveCanonicalQuestionsBatch(remainingFlushed);
-      logger.info(`[PYQVectorIngestion] Final flush: ${indexedCount}/${approvedQuestions.length} vectors persisted to ${store.backend}`);
+      const toUpsert = vectorsBuffer.splice(0);
+      const written = await flush(toUpsert, namespace, approvedQuestions.length, indexedCount);
+      indexedCount += written;
+      failedCount += toUpsert.length - written;
     }
 
     logger.info(
