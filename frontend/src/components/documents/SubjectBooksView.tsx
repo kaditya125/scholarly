@@ -55,7 +55,7 @@ export function SubjectBooksView({ subject, books, onBack, onOpenBook }: Subject
       {/* ── Ultra-Sleek & Premium Header Ribbon ───────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#1a1a1e] rounded-2xl border border-slate-200/90 dark:border-white/[0.08] p-3 sm:px-4 sm:py-3 shadow-2xs">
         <div className="flex items-center gap-3">
-          <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-br shadow-xs shrink-0', meta.gradient)}>
+          <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center shrink-0', meta.tint)}>
             <meta.icon className="w-5 h-5 text-white" />
           </div>
           <div>

@@ -18,7 +18,7 @@ export function SubjectCover({ subject, className, compact }: SubjectCoverProps)
   const Icon = meta.icon;
 
   return (
-    <div className={cn('relative w-full h-full overflow-hidden bg-gradient-to-br', meta.gradient, className)}>
+    <div className={cn('relative w-full h-full overflow-hidden bg-gradient-to-br', 'from-slate-300 to-slate-400', className)}>
       {/* Soft depth blobs */}
       <div className="absolute -top-8 -right-10 w-32 h-32 rounded-full bg-white/15 blur-2xl" />
       <div className="absolute -bottom-10 -left-8 w-32 h-32 rounded-full bg-black/10 blur-2xl" />

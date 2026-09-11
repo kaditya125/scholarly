@@ -15,9 +15,9 @@ interface ChapterOverviewProps {
 }
 
 const DIFFICULTY_STYLE: Record<string, string> = {
-  Easy: 'text-emerald-600 dark:text-emerald-300',
-  Medium: 'text-amber-600 dark:text-amber-300',
-  Hard: 'text-rose-600 dark:text-rose-300',
+  Easy: 'text-emerald-600 dark:text-emerald-400',
+  Medium: 'text-slate-500 dark:text-slate-400',
+  Hard: 'text-rose-600 dark:text-rose-400',
 };
 
 export function ChapterOverview({ book, chapter, onBack }: ChapterOverviewProps) {
@@ -60,12 +60,12 @@ export function ChapterOverview({ book, chapter, onBack }: ChapterOverviewProps)
         <ArrowLeft className="w-4 h-4" /> Back to {bookTitle}
       </button>
 
-      <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1a1a1b] shadow-sm overflow-hidden">
+      <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1a1a1b] overflow-hidden">
         <div className="p-6 md:p-8">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
             <div className="flex items-start gap-4 min-w-0">
-              <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br shadow-md shrink-0', meta.gradient)}>
+              <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center shrink-0', meta.tint)}>
                 <meta.icon className="w-6 h-6 text-white" />
               </div>
               <div className="min-w-0">
@@ -78,13 +78,13 @@ export function ChapterOverview({ book, chapter, onBack }: ChapterOverviewProps)
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => navigate(`/read?${new URLSearchParams({ notebookId: book.notebookId, sourceId: chapter.sourceId, title, book: bookTitle, subject: book.subject }).toString()}`)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13.5px] font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-indigo-300 dark:hover:border-indigo-500/40 text-slate-700 dark:text-gray-200 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13.5px] font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-[#8ba32b]/45 dark:hover:border-[#c8e558]/35 text-slate-700 dark:text-gray-200 transition-colors"
               >
                 <ScanLine className="w-4 h-4" /> Read &amp; Scan
               </button>
               <button
                 onClick={() => learn(`Give me a clear, structured overview of "${title}" from ${bookTitle} — the main ideas, then we'll go deeper together.`)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13.5px] font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors shadow-sm"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13.5px] font-semibold bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-950 hover:opacity-90 transition-opacity"
               >
                 <Sparkles className="w-4 h-4" /> Learn with AI
               </button>
@@ -112,7 +112,7 @@ export function ChapterOverview({ book, chapter, onBack }: ChapterOverviewProps)
               <ul className="space-y-2">
                 {chapter.learningObjectives.map((o, i) => (
                   <li key={i} className="flex gap-2.5 text-[13.5px] text-slate-600 dark:text-gray-300 leading-snug">
-                    <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> {o}
+                    <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" /> {o}
                   </li>
                 ))}
               </ul>
@@ -125,7 +125,7 @@ export function ChapterOverview({ book, chapter, onBack }: ChapterOverviewProps)
               <ul className="space-y-2">
                 {chapter.importantFacts.map((f, i) => (
                   <li key={i} className="flex gap-2.5 text-[13.5px] text-slate-600 dark:text-gray-300 leading-snug">
-                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" /> {f}
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#8ba32b]/50 dark:bg-[#c8e558]/50 shrink-0" /> {f}
                   </li>
                 ))}
               </ul>
@@ -151,7 +151,7 @@ export function ChapterOverview({ book, chapter, onBack }: ChapterOverviewProps)
               <div className="space-y-2.5">
                 {chapter.keyConcepts.map((c, i) => (
                   <div key={i} className="flex gap-3 p-3 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center text-white text-[13px] font-bold shrink-0 bg-gradient-to-br', meta.gradient)}>
+                    <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center text-[13px] font-bold shrink-0', meta.tint)}>
                       {c.term.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
@@ -220,11 +220,11 @@ function ActionCard({ icon: Icon, label, hint, onClick, primary }: { icon: any; 
       className={cn(
         'group flex flex-col items-start gap-1 text-left p-4 rounded-2xl border transition-all hover:-translate-y-0.5',
         primary
-          ? 'bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700'
-          : 'bg-white dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-800 dark:text-gray-100 hover:border-indigo-300 dark:hover:border-indigo-500/40'
+          ? 'bg-slate-900 border-slate-900 text-white dark:bg-[#c8e558] dark:border-[#c8e558] dark:text-slate-950 hover:opacity-90'
+          : 'bg-white dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-800 dark:text-gray-100 hover:border-[#8ba32b]/45 dark:hover:border-[#c8e558]/35'
       )}
     >
-      <Icon className={cn('w-5 h-5 mb-1', primary ? 'text-white' : 'text-indigo-500')} />
+      <Icon className={cn('w-5 h-5 mb-1', primary ? 'text-white dark:text-slate-950' : 'text-[#8ba32b] dark:text-[#c8e558]')} />
       <span className="text-[13.5px] font-bold">{label}</span>
       <span className={cn('text-[11.5px] leading-snug', primary ? 'text-white/75' : 'text-slate-500 dark:text-gray-400')}>{hint}</span>
     </button>
