@@ -1,0 +1,35 @@
+[Unit]
+Description=Qdrant vector database (Sadhya)
+Documentation=https://qdrant.tech/documentation/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=qdrant
+Group=qdrant
+ExecStart=/usr/local/bin/qdrant --config-path /etc/qdrant/config.yaml
+WorkingDirectory=/var/lib/qdrant
+
+# Survive a reboot and recover from a crash. The collection lives on disk, so a restart
+# reattaches to existing data rather than starting empty — that is the whole point of
+# storage_path being outside the application tree.
+Restart=always
+RestartSec=5
+
+# The data directory is the only thing this service should be able to write.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/qdrant
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LockPersonality=true
+
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

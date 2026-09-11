@@ -31,6 +31,24 @@ const envSchema = z.object({
   PINECONE_API_KEY: z.string().optional(),
   PINECONE_INDEX_NAME: z.string().default('edtech-ai-rag'),
   PINECONE_NAMESPACE: z.string().default('production'),
+
+  // ── Vector store selection ──────────────────────────────────────────────────────────────
+  // Defaults to pinecone so nothing changes until this is set deliberately. Both backends stay
+  // installed and usable side by side; flipping this is the whole cutover, and flipping it back
+  // is the whole rollback.
+  VECTOR_STORE: z.enum(['pinecone', 'qdrant']).default('pinecone'),
+  // Loopback by default. Qdrant has no authentication until an API key is configured, so a
+  // default of 0.0.0.0 would publish the entire corpus to anyone who found the port.
+  QDRANT_URL: z.string().default('http://127.0.0.1:6333'),
+  QDRANT_API_KEY: z.string().optional(),
+
+  // ── Pinecone -> Qdrant migration ────────────────────────────────────────────────────────
+  // The Starter plan caps monthly data egress, and exceeding it refuses reads account-wide —
+  // user-facing retrieval included, not just batch jobs. The migration tracks what it has
+  // pulled and stops cleanly at this ceiling rather than discovering the limit by hitting it.
+  PINECONE_MIGRATION_MAX_BYTES: z.coerce.number().default(700 * 1024 * 1024),
+  PINECONE_MIGRATION_BATCH_SIZE: z.coerce.number().default(100),
+  PINECONE_MIGRATION_CHECKPOINT: z.string().default('./.migration/pinecone-to-qdrant.json'),
   TAVILY_API_KEY: z.string().optional(),
   COHERE_API_KEY: z.string().optional(),
 
