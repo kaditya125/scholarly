@@ -9,7 +9,7 @@
  */
 
 import { GoogleEmbeddingProvider } from '../ai/providers/google-embedding.provider';
-import { pineconeService } from '../rag/pinecone.service';
+import { getVectorStore } from '../rag/vectorStore';
 import { pyqRepository } from '../../repositories/pyq.repository';
 import { CanonicalPYQQuestion } from '../../types/pyq.types';
 import { env } from '../../config/env';
@@ -84,7 +84,9 @@ export class PYQVectorIngestionService {
         (q.ingestionState === 'RIGHTS_APPROVED' ||
           q.ingestionState === 'READY_FOR_INDEX' ||
           q.ingestionState === 'VERIFIED' ||
-          q.ingestionState === 'ACTIVE')
+          q.ingestionState === 'ACTIVE' ||
+          q.ingestionState === 'EXTRACTED' ||
+          q.ingestionState === 'VERIFICATION_PENDING')
     );
 
     skippedCount = questions.length - approvedQuestions.length;
@@ -168,7 +170,7 @@ export class PYQVectorIngestionService {
           correctAnswer: q.correctAnswer,
           hasDiagram: Boolean(q.diagrams && q.diagrams.length > 0),
           createdAt: q.createdAt,
-          uploadedAt: new Date(q.createdAt).toISOString(),
+          uploadedAt: q.createdAt && !isNaN(new Date(q.createdAt).getTime()) ? new Date(q.createdAt).toISOString() : new Date().toISOString(),
         };
 
         vectorsBuffer.push({
@@ -181,14 +183,15 @@ export class PYQVectorIngestionService {
         q.vectorIndexedAt = Date.now();
         q.ingestionState = 'INDEXED';
 
-        // Flush incrementally to Pinecone and Firestore checkpoint
+        // Flush incrementally to vector store and Firestore checkpoint
         if (vectorsBuffer.length >= batchSize) {
           const toUpsert = vectorsBuffer.splice(0);
-          await pineconeService.upsertVectors(toUpsert, namespace);
+          const store = getVectorStore();
+          await store.upsertVectors(toUpsert, namespace);
           indexedCount += toUpsert.length;
           const flushedBatch = approvedQuestions.slice(indexedCount - toUpsert.length, indexedCount);
           await pyqRepository.saveCanonicalQuestionsBatch(flushedBatch);
-          logger.info(`[PYQVectorIngestion] Flushed and persisted ${indexedCount}/${approvedQuestions.length} vectors`);
+          logger.info(`[PYQVectorIngestion] Flushed and persisted ${indexedCount}/${approvedQuestions.length} vectors to ${store.backend}`);
         }
       } catch (err: any) {
         failedCount++;
@@ -198,11 +201,12 @@ export class PYQVectorIngestionService {
 
     if (vectorsBuffer.length > 0) {
       const remainingCount = vectorsBuffer.length;
-      await pineconeService.upsertVectors(vectorsBuffer, namespace);
+      const store = getVectorStore();
+      await store.upsertVectors(vectorsBuffer, namespace);
       indexedCount += remainingCount;
       const remainingFlushed = approvedQuestions.slice(indexedCount - remainingCount, indexedCount);
       await pyqRepository.saveCanonicalQuestionsBatch(remainingFlushed);
-      logger.info(`[PYQVectorIngestion] Final flush: ${indexedCount}/${approvedQuestions.length} vectors persisted`);
+      logger.info(`[PYQVectorIngestion] Final flush: ${indexedCount}/${approvedQuestions.length} vectors persisted to ${store.backend}`);
     }
 
     logger.info(
@@ -247,7 +251,7 @@ export class PYQVectorIngestionService {
       filter.corpusBucket = { $ne: 'PRACTICE_MOCK' };
     }
 
-    const matches = await pineconeService.queryVectors(queryEmbedding, topK, filter, namespace);
+    const matches = await getVectorStore().queryVectors(queryEmbedding, topK, filter, namespace);
 
     if (!matches || matches.length === 0) {
       return {
