@@ -100,6 +100,67 @@ export class PineconeService {
   }
 
   /**
+   * Read a source's chunk metadata WITHOUT the embedding values.
+   *
+   * `fetch` has no way to leave the vectors behind — its options are `ids` and `namespace` and
+   * nothing else — so every caller that only wanted `metadata.text` was paying for 768 floats
+   * per record as well. That is roughly three quarters of the bytes, and it is what exhausted
+   * this project's monthly Pinecone egress: rebuilding one chapter's text pulls every chunk, and
+   * a bulk generation run does that for hundreds of chapters.
+   *
+   * `query` does have the switch (`includeValues`, off by default), so this goes through query
+   * with a metadata filter instead. The probe vector is a throwaway — the filter is doing the
+   * selecting and callers sort by `chunkIndex` — so its direction is irrelevant, but it must be
+   * non-zero because a zero vector has no defined cosine similarity.
+   *
+   * Paged by `chunkIndex` rather than relying on a large topK, which servers cap.
+   */
+  async fetchChunkMetadata(
+    sourceId: string,
+    chunkCount: number,
+    namespace?: string
+  ): Promise<{ id: string; metadata?: RecordMetadata }[]> {
+    if (chunkCount <= 0) return [];
+
+    const index = this.getIndex();
+    const target = namespace ? index.namespace(namespace) : index;
+
+    const dimension = await this.getDimension();
+    if (!dimension) throw new Error('Pinecone index dimension unavailable; cannot build a probe vector');
+    const probe = new Array(dimension).fill(0);
+    probe[0] = 1;
+
+    const PAGE = 500;
+    const out: { id: string; metadata?: RecordMetadata }[] = [];
+
+    for (let start = 0; start < chunkCount; start += PAGE) {
+      const end = Math.min(start + PAGE, chunkCount);
+      const res = await target.query({
+        vector: probe,
+        topK: end - start,
+        filter: { sourceId, chunkIndex: { $gte: start, $lt: end } },
+        includeMetadata: true,
+        includeValues: false,
+      });
+      for (const m of res.matches ?? []) out.push({ id: m.id, metadata: m.metadata });
+    }
+
+    return out;
+  }
+
+  /**
+   * The index's vector dimension, read once. describeIndexStats is a control-plane call and does
+   * not count against data egress, but there is no reason to repeat it per query.
+   */
+  private cachedDimension: number | null = null;
+  private async getDimension(): Promise<number | null> {
+    if (this.cachedDimension) return this.cachedDimension;
+    const stats = await this.getIndexStats();
+    this.cachedDimension = stats.dimension;
+    return this.cachedDimension;
+  }
+
+  /**
    * Fetch real index statistics from Pinecone (namespaces, vector counts, dimension, fullness).
    * Used by the admin Vector DB dashboard.
    */

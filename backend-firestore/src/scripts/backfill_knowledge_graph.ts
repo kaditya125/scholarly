@@ -48,20 +48,16 @@ async function reconstructText(source: any): Promise<string> {
   const chunkCount: number = source.chunksExtracted || 0;
   if (chunkCount <= 0) return '';
 
-  const ids: string[] = [];
-  for (let i = 0; i < chunkCount; i++) ids.push(`${source.id}_chunk_${i}`);
+  // Metadata only — the embedding values are dead weight here, and this walks the whole corpus.
+  const recs = await pineconeService.fetchChunkMetadata(source.id, chunkCount, env.PINECONE_NAMESPACE);
 
   const collected: { idx: number; text: string }[] = [];
-  const BATCH = 100;
-  for (let i = 0; i < ids.length; i += BATCH) {
-    const recs = await pineconeService.fetchVectors(ids.slice(i, i + BATCH), env.PINECONE_NAMESPACE);
-    for (const rec of Object.values(recs)) {
-      const md: any = (rec as any)?.metadata || {};
-      const text = typeof md.text === 'string' ? md.text : '';
-      if (!text) continue;
-      const idx = typeof md.chunkIndex === 'number' ? md.chunkIndex : collected.length;
-      collected.push({ idx, text });
-    }
+  for (const rec of recs) {
+    const md: any = rec?.metadata || {};
+    const text = typeof md.text === 'string' ? md.text : '';
+    if (!text) continue;
+    const idx = typeof md.chunkIndex === 'number' ? md.chunkIndex : collected.length;
+    collected.push({ idx, text });
   }
   collected.sort((a, b) => a.idx - b.idx);
   return collected.map((c) => c.text).join('\n');
