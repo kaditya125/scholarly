@@ -720,20 +720,29 @@ export class SourceService {
     const chunkCount: number = source.chunksExtracted || 0;
     if (chunkCount <= 0) return '';
 
-    const ids: string[] = [];
-    for (let i = 0; i < chunkCount; i++) ids.push(`${source.id}_chunk_${i}`);
+    // Metadata only. This reads every chunk of the chapter, and a bulk generation run does it
+    // for hundreds of chapters; pulling the 768-float vector alongside text nobody here looks at
+    // is what drained the monthly Pinecone egress budget.
+    const recs = await pineconeService.fetchChunkMetadata(source.id, chunkCount, env.PINECONE_NAMESPACE);
 
     const collected: { idx: number; text: string }[] = [];
-    const BATCH = 100;
-    for (let i = 0; i < ids.length; i += BATCH) {
-      const recs = await pineconeService.fetchVectors(ids.slice(i, i + BATCH), env.PINECONE_NAMESPACE);
-      for (const rec of Object.values(recs)) {
-        const md: any = (rec as any)?.metadata || {};
-        const text = typeof md.text === 'string' ? md.text : '';
-        if (!text) continue;
-        const idx = typeof md.chunkIndex === 'number' ? md.chunkIndex : collected.length;
-        collected.push({ idx, text });
-      }
+    for (const rec of recs) {
+      const md: any = rec?.metadata || {};
+      const text = typeof md.text === 'string' ? md.text : '';
+      if (!text) continue;
+      const idx = typeof md.chunkIndex === 'number' ? md.chunkIndex : collected.length;
+      collected.push({ idx, text });
+    }
+
+    // Say so when the chapter comes back short. Empty text here surfaces downstream as a
+    // generation failure with no obvious cause, and this path now selects chunks by metadata
+    // filter rather than by id — so a chapter indexed without `sourceId` or `chunkIndex` in its
+    // metadata would silently retrieve nothing at all.
+    if (collected.length < chunkCount) {
+      console.warn(
+        `[reconstructTextFromChunks] "${source.title}": got ${collected.length}/${chunkCount} chunks` +
+        `${collected.length === 0 ? ' — check that its vectors carry sourceId and chunkIndex metadata' : ''}`
+      );
     }
     // Chunks come back in fetch order, not document order; the reader's page anchors depend on
     // the article seeing the chapter in sequence, so sort before joining.

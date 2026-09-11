@@ -173,16 +173,13 @@ class VerificationService {
     if (expected <= 0) return { ok: false, detail: 'chunksExtracted=0 (no vectors)', repairable: featureFlags.vectorRepair, critical: true };
 
     const ns = env.PINECONE_NAMESPACE;
-    const ids: string[] = [];
-    for (let i = 0; i < expected; i++) ids.push(`${source.id}_chunk_${i}`);
 
     let present = 0;
     try {
-      const batch = 200;
-      for (let i = 0; i < ids.length; i += batch) {
-        const rec = await pineconeService.fetchVectors(ids.slice(i, i + batch), ns);
-        present += Object.keys(rec || {}).length;
-      }
+      // This only ever counted how many records came back, so it never needed the vectors — or
+      // the metadata, for that matter. Metadata-only is the cheapest read available.
+      const recs = await pineconeService.fetchChunkMetadata(source.id, expected, ns);
+      present = recs.length;
     } catch (e: any) {
       // If Pinecone is unreachable we cannot assert — treat as a non-actionable warning, not a failure.
       return { ok: false, detail: `pinecone fetch error: ${String(e?.message || e).slice(0, 120)}`, repairable: false, critical: false };
