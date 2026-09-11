@@ -19,3 +19,10 @@ npm-debug.log*
 
 # Reports (generated)
 reports/*.json
+
+# Migration checkpoints (scripts/migrate-pinecone-to-qdrant.ts)
+# Resume state and the failure log for a run in progress. Machine-local by nature: the
+# checkpoint holds a live Pinecone pagination token, and the failure log lists vector ids from
+# whichever run produced it. Committing either would let one machine's partial progress be
+# mistaken for another's.
+.migration/
