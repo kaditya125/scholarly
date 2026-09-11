@@ -46,7 +46,7 @@ const KRUTI_MAP: [string, string][] = [
   ['isQ', 'फे'], ['iqQ', 'फु'], ['iQ', 'फ'],
 
   // ── Conjuncts and ligatures ────────────────────────────────────────────────────────────
-  ['{k', 'क्ष'], ['{', 'क्ष्'], ['=', 'त्र'], ['K', 'ज्ञ'], ['J', 'श्र'], ['Ùk', 'त्त'], ['Ù', 'त्त्'],
+  ['{k', 'क्ष'], ['{', 'क्ष्'], ['=k', 'त्र'], ['=', 'त्र्'], ['K', 'ज्ञ'], ['J', 'श्र'], ['Ùk', 'त्त'], ['Ù', 'त्त्'],
   ['Ø', 'क्र'], ['æ', 'द्र'], ['|', 'द्य'], ['}', 'द्व'], ['Ò', 'द्ध'], ['#', 'रु'],
   [':', 'रू'], ['z', '्र'],
 
@@ -57,6 +57,7 @@ const KRUTI_MAP: [string, string][] = [
   // ── Consonants, full forms ─────────────────────────────────────────────────────────────
   ['?k', 'घ'], ['Hk', 'भ'], ["'k", 'श'], ['"k', 'ष'], ['.k', 'ण'], ['Fk', 'थ'],
   ['/k', 'ध'], ['èk', 'ध'], ['[k', 'ख'],
+  ['Ük', 'श'], ['Xk', 'ग'],
   ['d', 'क'], ['x', 'ग'], ['p', 'च'], ['N', 'छ'], ['t', 'ज'], ['>', 'झ'],
   ['V', 'ट'], ['B', 'ठ'], ['M', 'ड'], ['<', 'ढ'], ['r', 'त'], ['n', 'द'],
   ['u', 'न'], ['i', 'प'], ['Q', 'फ'], ['c', 'ब'], ['e', 'म'], [';', 'य'],
@@ -74,7 +75,7 @@ const KRUTI_MAP: [string, string][] = [
   ['v', 'अ'], ['b', 'इ'], ['m', 'उ'], ['Å', 'ऊ'], ['_', 'ऋ'],
 
   // ── Matras ─────────────────────────────────────────────────────────────────────────────
-  ['ks', 'ो'], ['kS', 'ौ'], ['k', 'ा'], ['h', 'ी'], ['q', 'ु'], ['w', 'ू'],
+  ['kas', 'ों'], ['ks', 'ो'], ['kS', 'ौ'], ['k', 'ा'], ['h', 'ी'], ['q', 'ु'], ['w', 'ू'],
   ['`', 'ृ'], ['s', 'े'], ['S', 'ै'], ['kW', 'ॉ'], ['W', 'ॉ'], ['a', 'ं'], ['¡', 'ँ'], ['%', 'ः'],
   ['+', '़'],
 
@@ -103,10 +104,10 @@ const PRE_MAP: [string, string][] = [
   ['bZ', 'ई'],   // ई
   ['iZQ', 'र्फ'],     // fliZQ  सिर्फ  — reph already sits where Unicode wants it
   ['oZQ', 'र्क'],     // laioZQ संपर्क
-  ['~', HALANT],
-  ['¯', I_MATRA_ANUSVARA],
-  ['±', REPH + 'ं'],      // an explicitly typed halant, kept through dropStrayHalants
-  ['Z', REPH],        // every remaining Z really is a reph
+  ['~', HALANT],        // an explicitly typed halant, kept through dropStrayHalants
+  ['¯', I_MATRA_ANUSVARA], // v¯glk  अहिंसा — a pre-base ि that also carries an anusvara
+  ['±', REPH + 'ं'],       // o"kks±  वर्षों — a reph that also carries one
+  ['Z', REPH],          // every remaining Z really is a reph
   ['f', I_MATRA],
 ];
 
@@ -195,6 +196,14 @@ const SORTED_MAP: [string, string][] = [...KRUTI_MAP].sort((a, b) => b[0].length
  * A halant the author actually typed comes through as '~' and is carried on a placeholder until
  * after this pass, so "सन्" keeps its halant while "संबंध्" loses one.
  */
+function collapseVowelSigns(text: string): string {
+  // A consonant takes exactly one vowel sign, so a run of two is always wrong. What is left
+  // after the table is right is source-side: "gkssrk" and "vkèkqqfud" have a key struck twice
+  // in the original NCERT files. Keeping the first sign is the only repair available, and it
+  // beats emitting होेता for होता.
+  return text.replace(/([ा-ौॎॏ])[ा-ौॎॏ]+/g, '$1');
+}
+
 function dropStrayHalants(text: string): string {
   return text.replace(/्(?![क-हक़-य़ॹ-ॿ])/g, '');
 }
@@ -215,6 +224,7 @@ export function krutiDevToUnicode(input: string): string {
   text = reorderIMatra(text);
   text = reorderReph(text);
   text = dropStrayHalants(text);
+  text = collapseVowelSigns(text);
 
   return text.split(HALANT).join('्').split(SLASH).join('/');
 }
@@ -278,4 +288,34 @@ export function detectKrutiDev(text: string): KrutiDetection {
   if (devanagariRatio > 0.2) return { isKruti: false, hits, score, devanagariRatio };
 
   return { isKruti: hits >= 3 && score >= 0.5, hits, score, devanagariRatio };
+}
+
+/**
+ * Decode a document's pages in place, and report what happened.
+ *
+ * Shared by every extraction path so they cannot drift apart: detection runs once over the
+ * whole document, conversion page by page. Deciding per page alone would miss short pages that
+ * carry too few signature words to score, while converting every page unconditionally would
+ * damage the Unicode pages that sit beside legacy ones in the mixed books — so the document
+ * decides whether to convert, and each page keeps its own veto if it is already Devanagari.
+ *
+ * Returns null when the document is not Kruti Dev, so callers can skip logging entirely.
+ */
+export function decodeKrutiDevPages<T extends { text: string }>(
+  pages: T[],
+  fullText?: string,
+): { convertedPages: number; totalPages: number; hits: number } | null {
+  const whole = fullText ?? pages.map((p) => p.text).join('\n');
+  const detection = detectKrutiDev(whole);
+  if (!detection.isKruti) return null;
+
+  let convertedPages = 0;
+  for (const page of pages) {
+    if (!page.text) continue;
+    if (detectKrutiDev(page.text).devanagariRatio > 0.2) continue; // already Unicode, leave it
+    page.text = krutiDevToUnicode(page.text);
+    convertedPages++;
+  }
+
+  return { convertedPages, totalPages: pages.length, hits: detection.hits };
 }
