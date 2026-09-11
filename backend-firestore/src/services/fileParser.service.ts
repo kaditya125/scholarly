@@ -3,6 +3,7 @@
 const { PDFParse } = require('pdf-parse');
 import mammoth from 'mammoth';
 import Tesseract from 'tesseract.js';
+import { decodeKrutiDevPages } from '../core/pipeline/extractors/krutiDev';
 
 export interface ParsedPage {
   pageNumber: number;
@@ -35,7 +36,20 @@ export class FileParserService {
             return [{ pageNumber: 1, text: text.trim() }];
           }
 
-          return pages.length > 0 ? pages : [{ pageNumber: 1, text: (result.text || '').trim() }];
+          const out = pages.length > 0 ? pages : [{ pageNumber: 1, text: (result.text || '').trim() }];
+
+          // The NCERT Hindi books carry no Unicode text layer — they were typeset in Kruti Dev,
+          // which maps Devanagari glyphs onto ASCII, so the text above reads as "eSaus gSjku"
+          // where the page says "मैंने हैरान". Decode before the caller chunks and embeds it;
+          // once it is in Pinecone as gibberish, nothing downstream can recover it.
+          const decoded = decodeKrutiDevPages(out);
+          if (decoded) {
+            console.log(
+              `[FileParser] Kruti Dev detected in ${filename} (${decoded.hits} signature matches); ` +
+              `converted ${decoded.convertedPages}/${decoded.totalPages} pages to Unicode Devanagari.`
+            );
+          }
+          return out;
         } finally {
           if (typeof parser.destroy === 'function') {
             try { await parser.destroy(); } catch { /* ignore cleanup errors */ }
@@ -44,7 +58,9 @@ export class FileParserService {
       } 
       else if (ext === 'docx' || mimeType.includes('wordprocessingml')) {
         const result = await mammoth.extractRawText({ buffer });
-        return [{ pageNumber: 1, text: result.value }];
+        const out = [{ pageNumber: 1, text: result.value }];
+        decodeKrutiDevPages(out); // legacy Hindi fonts are, if anything, commoner in .docx
+        return out;
       }
       else if (['png', 'jpg', 'jpeg'].includes(ext) || mimeType.startsWith('image/')) {
         const result = await Tesseract.recognize(buffer, 'eng');

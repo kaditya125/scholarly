@@ -11,7 +11,7 @@
  */
 
 import { BaseExtractor, ExtractionContext, ExtractionError } from './BaseExtractor';
-import { krutiDevToUnicode, detectKrutiDev } from './krutiDev';
+import { krutiDevToUnicode, decodeKrutiDevPages } from './krutiDev';
 import { ExtractedBlock, ExtractedBlockType, ExtractedDocumentResult } from '../types';
 
 export class PdfExtractor extends BaseExtractor {
@@ -90,22 +90,12 @@ export class PdfExtractor extends BaseExtractor {
     // Detection runs on the whole document, conversion page by page. The corpus is mixed —
     // some of these books have Unicode pages sitting beside legacy ones — and detectKrutiDev
     // declines any page that is already Devanagari, so a mixed PDF converts only what needs it.
-    const documentDetection = detectKrutiDev(fullRawText);
-    if (documentDetection.isKruti) {
-      let convertedPages = 0;
-      for (const page of pagesData) {
-        if (!page.text) continue;
-        const pageDetection = detectKrutiDev(page.text);
-        // Short pages rarely carry enough signature words to detect on their own, so the
-        // document-level verdict carries them; the Devanagari check still protects Unicode pages.
-        if (pageDetection.devanagariRatio > 0.2) continue;
-        page.text = krutiDevToUnicode(page.text);
-        convertedPages++;
-      }
+    const decoded = decodeKrutiDevPages(pagesData, fullRawText);
+    if (decoded) {
       fullRawText = krutiDevToUnicode(fullRawText);
       warnings.push(
-        `Kruti Dev legacy font detected (${documentDetection.hits} signature matches); ` +
-        `converted ${convertedPages}/${pagesData.length} pages to Unicode Devanagari.`
+        `Kruti Dev legacy font detected (${decoded.hits} signature matches); ` +
+        `converted ${decoded.convertedPages}/${decoded.totalPages} pages to Unicode Devanagari.`
       );
     }
 
