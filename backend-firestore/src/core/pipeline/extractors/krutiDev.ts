@@ -234,6 +234,13 @@ export function krutiDevToUnicode(input: string): string {
  * English prose hits none, because "osQ" and "vkSj" are not English letter sequences. That
  * makes them a far safer signal than a character-frequency score, which flags any text with an
  * unusual letter distribution — code listings and tables included.
+ *
+ * Deliberately excluded: "ml" (उस), "fd" (कि) and "ls" (से). Two plain lowercase letters occur
+ * on their own in scientific notation, and a sweep of the whole index caught exactly that —
+ * "n = 4, l = 1, ml = 0" in a chemistry chapter (the magnetic quantum number) and "fd" in a
+ * geography chapter's frequency-times-deviation tables, both scoring high enough to be called
+ * Hindi. Real Kruti pages hit the remaining signatures dozens to hundreds of times, so dropping
+ * three costs nothing and closes the only false-positive route found.
  */
 const SIGNATURES = [
   'osQ',    // के
@@ -242,11 +249,8 @@ const SIGNATURES = [
   'vkSj',   // और
   'ugha',   // नहीं
   'dks',    // को
-  'ls',     // से
-  'fd',     // कि
   'gksrk',  // होता
   'oqQN',   // कुछ
-  'ml',     // उस
   ';g',     // यह
   'Fkk',    // था
   'djus',   // करने
@@ -287,35 +291,49 @@ export function detectKrutiDev(text: string): KrutiDetection {
   // Already Unicode Hindi — leave it alone whatever the Latin residue looks like.
   if (devanagariRatio > 0.2) return { isKruti: false, hits, score, devanagariRatio };
 
-  return { isKruti: hits >= 3 && score >= 0.5, hits, score, devanagariRatio };
+  // Three distinct hits is the ordinary bar. A short run — a single poem page, one chunk — can
+  // only fit two, so density stands in for count there: two of these sequences in a few hundred
+  // characters is not something English produces, now that the two-letter signatures which
+  // could are gone.
+  return { isKruti: hits >= 3 || (hits >= 2 && score >= 2), hits, score, devanagariRatio };
 }
 
 /**
  * Decode a document's pages in place, and report what happened.
  *
- * Shared by every extraction path so they cannot drift apart: detection runs once over the
- * whole document, conversion page by page. Deciding per page alone would miss short pages that
- * carry too few signature words to score, while converting every page unconditionally would
- * damage the Unicode pages that sit beside legacy ones in the mixed books — so the document
- * decides whether to convert, and each page keeps its own veto if it is already Devanagari.
+ * Shared by every extraction path so they cannot drift apart. A page is converted when either
+ * test says so, because each catches what the other misses:
  *
- * Returns null when the document is not Kruti Dev, so callers can skip logging entirely.
+ *   the document scores   carries the short pages — a half-page of Kruti may not hit three
+ *                         signature words on its own, but it is not in a different font from
+ *                         the chapter around it.
+ *   the page scores       catches Hindi embedded in an English book. The Class 7 English reader
+ *                         prints Maithili Sharan Gupt's "Chaah Nahi" in Kruti Dev, and a Class 5
+ *                         EVS chapter has a Hindi passage on malaria; judged as whole documents
+ *                         both are overwhelmingly English and would never be looked at.
+ *
+ * A page that is already Devanagari vetoes either way, which is what protects the mixed books
+ * where Unicode pages sit beside legacy ones.
+ *
+ * Returns null when nothing was converted, so callers can skip logging entirely.
  */
 export function decodeKrutiDevPages<T extends { text: string }>(
   pages: T[],
   fullText?: string,
 ): { convertedPages: number; totalPages: number; hits: number } | null {
   const whole = fullText ?? pages.map((p) => p.text).join('\n');
-  const detection = detectKrutiDev(whole);
-  if (!detection.isKruti) return null;
+  const document = detectKrutiDev(whole);
 
   let convertedPages = 0;
   for (const page of pages) {
     if (!page.text) continue;
-    if (detectKrutiDev(page.text).devanagariRatio > 0.2) continue; // already Unicode, leave it
+    const detection = detectKrutiDev(page.text);
+    if (detection.devanagariRatio > 0.2) continue; // already Unicode, leave it
+    if (!document.isKruti && !detection.isKruti) continue;
     page.text = krutiDevToUnicode(page.text);
     convertedPages++;
   }
 
-  return { convertedPages, totalPages: pages.length, hits: detection.hits };
+  if (convertedPages === 0) return null;
+  return { convertedPages, totalPages: pages.length, hits: document.hits };
 }
