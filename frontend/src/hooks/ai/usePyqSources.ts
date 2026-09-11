@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { pyqApi, PyqSource, PyqSourceQuery } from '../../lib/api/pyq';
+import { pyqApi, PyqSource, PyqSourceQuery, PyqQuestion, PyqQuestionQuery } from '../../lib/api/pyq';
 import { useAuth } from '../../lib/AuthContext';
 
 /**
@@ -27,6 +27,30 @@ export function usePyqSources(query: PyqSourceQuery = {}) {
 
   return {
     sources: q.data || [],
+    isLoading: q.isLoading,
+    isError: q.isError,
+  };
+}
+
+/**
+ * The questions inside one paper.
+ *
+ * Only fetched once a paper is actually opened — the registry has 173 papers and tens of
+ * thousands of questions between them, so this is deliberately not prefetched.
+ */
+export function usePyqQuestions(query: PyqQuestionQuery | null) {
+  const { user } = useAuth();
+
+  const q = useQuery<PyqQuestion[]>({
+    queryKey: ['pyq_questions', query],
+    queryFn: () => pyqApi.listQuestions(query!),
+    enabled: !!user?.uid && !!query,
+    staleTime: 1000 * 60 * 10,
+    retry: 1,
+  });
+
+  return {
+    questions: q.data || [],
     isLoading: q.isLoading,
     isError: q.isError,
   };
