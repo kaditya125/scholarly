@@ -73,19 +73,7 @@ export function FocusAreasWidget() {
           'p-5 sm:p-6 rounded-2xl border text-center flex flex-col items-center justify-center',
           isDarkMode ? 'bg-[#161619] border-white/[0.08]' : 'bg-white border-slate-200/90',
         )}>
-          <motion.div
-            className="relative flex items-center justify-center mb-3"
-            animate={{
-              y: [0, -5, 0, -2.5, 0],
-              rotate: [0, 2.2, 0, -1.8, 0],
-            }}
-            transition={{
-              duration: 4.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            style={{ transformOrigin: "50% 85%" }}
-          >
+          <div className="relative flex items-center justify-center mb-3">
             <picture>
               <source
                 srcSet={isDarkMode ? '/images/focus-areas-ai-dark.webp?v=4' : '/images/focus-areas-ai-light.webp?v=4'}
@@ -98,7 +86,7 @@ export function FocusAreasWidget() {
                 loading="eager"
               />
             </picture>
-          </motion.div>
+          </div>
           <p className="text-[12.5px] text-slate-500 dark:text-gray-400 max-w-xs mx-auto leading-relaxed">
             Complete a few graded practice questions on a topic and this fills in with exactly
             what to work on next — backed by your actual results, not a guess.
