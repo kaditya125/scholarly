@@ -17,6 +17,7 @@ import { ExamLogo } from '../components/brand/ExamLogo';
 import { EXAM_CHIPS } from '../lib/examChips';
 import { useSeo } from '../lib/useSeo';
 import { useAuth } from '../lib/AuthContext';
+import { useTheme } from '../lib/ThemeContext';
 import { SITE } from '../lib/siteConfig';
 import { cn } from '../lib/utils';
 
@@ -326,6 +327,7 @@ export default function LandingPage() {
   });
 
   const { user, role } = useAuth();
+  const { theme } = useTheme();
   const destination = user ? (role === 'teacher' ? '/teach' : '/dashboard') : '/signup';
   const [studentCount, setStudentCount] = useState<number>(32);
   const [activeStudents, setActiveStudents] = useState<number | null>(null);
@@ -879,6 +881,30 @@ export default function LandingPage() {
             <PricingSection showComparison={false} />
           </Suspense>
         </div>
+
+        {/* ══ Aspiration ═════════════════════════════════════════════════════ */}
+        <section className="max-w-[1160px] mx-auto px-5 sm:px-8 py-16 sm:py-20">
+          <Reveal>
+            <div className="relative rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm">
+              <img
+                src={theme === 'dark' ? '/sadhya-hero-aspiration-dark.webp' : '/sadhya-hero-aspiration-light.webp'}
+                alt="A doctor, an engineer, a police officer and students — the people every exam here actually leads to"
+                className="w-full h-auto block"
+                loading="lazy"
+                decoding="async"
+              />
+              {/* Scrim: guarantees the overlaid heading reads regardless of exactly how bright
+                  the sky is at that point in the photo. */}
+              <div className="absolute inset-0 bg-gradient-to-b from-white/55 dark:from-black/55 via-transparent to-transparent" />
+              <div className="absolute inset-x-0 top-0 p-6 sm:p-10 lg:p-12 max-w-[24rem]">
+                <Eyebrow>17+ exams, one tutor</Eyebrow>
+                <h2 className="mt-2.5 text-[22px] sm:text-[28px] lg:text-[32px] leading-[1.18] font-semibold tracking-[-0.03em] text-slate-900 dark:text-white">
+                  Every path starts with the syllabus in front of you.
+                </h2>
+              </div>
+            </div>
+          </Reveal>
+        </section>
 
         {/* ══ Final CTA ══════════════════════════════════════════════════════ */}
         <section className="max-w-[1160px] mx-auto px-5 sm:px-8 py-24 sm:py-32">
