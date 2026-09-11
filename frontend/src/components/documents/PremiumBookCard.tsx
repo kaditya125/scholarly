@@ -3,8 +3,6 @@ import { BookOpen, Clock3, ChevronRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { BookSummary } from '../../lib/api/documents';
 import { BookCover } from './BookCover';
-import { getSubjectMeta } from './subjectMeta';
-import { cn } from '../../lib/utils';
 
 interface PremiumBookCardProps {
   book: BookSummary;
@@ -12,28 +10,36 @@ interface PremiumBookCardProps {
   index: number;
 }
 
+const EASE = [0.16, 1, 0.3, 1] as const;
+
 /**
- * Ultra-sleek, compact, and minimalist academic book card.
+ * A single book.
+ *
+ * The cover here is the real thing — the first page of the book's own PDF, rasterised — so unlike
+ * the invented artwork this replaced elsewhere on the page, it carries information. A student
+ * recognises their textbook by its cover faster than by its title, so it stays.
+ *
+ * What went: a hover shadow (the rest of the app lifts by border, not elevation), an amber clock
+ * that put a second accent beside the lime, a scrim gradient over the cover with no text on it to
+ * make legible, and a `getSubjectMeta` call whose result was never read.
  */
 export function PremiumBookCard({ book, onOpen, index }: PremiumBookCardProps) {
-  const meta = getSubjectMeta(book.subject);
-
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.025, 0.3), duration: 0.25 }}
+      transition={{ delay: Math.min(index, 12) * 0.022, duration: 0.32, ease: EASE }}
       onClick={() => onOpen(book)}
-      className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 dark:border-white/[0.08] bg-white dark:bg-[#1a1a1e] p-2.5 sm:p-3 shadow-2xs hover:shadow-md hover:border-slate-300 dark:hover:border-white/20 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer overflow-hidden text-left"
+      className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 dark:border-white/[0.08] bg-white dark:bg-[#1a1a1e] p-2.5 sm:p-3 hover:border-[#8ba32b]/45 dark:hover:border-[#c8e558]/35 transition-colors duration-200 cursor-pointer overflow-hidden text-left"
     >
       <div>
         {/* ── Cover Artwork Thumbnail ──────────────────────────── */}
-        <div className="relative w-full h-36 sm:h-40 rounded-xl overflow-hidden bg-slate-100 dark:bg-[#161619] border border-slate-200/70 dark:border-white/[0.06] mb-2.5 shadow-2xs">
+        <div className="relative w-full h-36 sm:h-40 rounded-xl overflow-hidden bg-slate-100 dark:bg-[#161619] border border-slate-200/70 dark:border-white/[0.06] mb-2.5">
           <BookCover
             notebookId={book.notebookId}
             subject={book.subject}
             title={book.bookName || book.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-full object-cover"
           />
 
           {/* Floating Badges */}
@@ -48,8 +54,6 @@ export function PremiumBookCard({ book, onOpen, index }: PremiumBookCardProps) {
             </span>
           </div>
 
-          {/* Bottom Gradient overlay */}
-          <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/35 to-transparent pointer-events-none" />
         </div>
 
         {/* ── Title & Subject ─────────────────────────────────── */}
@@ -77,13 +81,13 @@ export function PremiumBookCard({ book, onOpen, index }: PremiumBookCardProps) {
           </span>
           {book.estimatedStudyHours > 0 && (
             <span className="inline-flex items-center gap-1">
-              <Clock3 className="w-3 h-3 text-amber-500" />
+              <Clock3 className="w-3 h-3 text-slate-400 dark:text-slate-500" />
               <span>{book.estimatedStudyHours}h</span>
             </span>
           )}
         </div>
 
-        <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 group-hover:bg-slate-900 group-hover:text-white dark:group-hover:bg-[#c8e558] dark:group-hover:text-slate-950 transition-all flex items-center justify-center shrink-0 shadow-2xs">
+        <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 group-hover:bg-slate-900 group-hover:text-white dark:group-hover:bg-[#c8e558] dark:group-hover:text-slate-950 transition-colors flex items-center justify-center shrink-0">
           <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
         </div>
       </div>
