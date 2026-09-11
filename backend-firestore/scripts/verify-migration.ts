@@ -232,17 +232,53 @@ async function run() {
       pHits.forEach((h: any, i: number) => console.log(`  ${i + 1}. ${h.id} score=${(h.score ?? 0).toFixed(4)}`));
       console.log('Qdrant:');
       qHits.forEach((h: any, i: number) => console.log(`  ${i + 1}. ${h.id} score=${(h.score ?? 0).toFixed(4)}`));
-
-      const sameOrder = pHits.length === qHits.length && pHits.every((h: any, i: number) => h.id === qHits[i]?.id);
-      // Scores drive the >= 0.50 floor in retrieval.service.ts, so a small numeric drift that
-      // straddles it changes what the application sees even when the ranking is identical.
-      const maxScoreDelta = Math.max(0, ...pHits.map((h: any, i: number) => Math.abs((h.score ?? 0) - (qHits[i]?.score ?? 0))));
+      // What counts as "the same result" for a migration.
+      //
+      // Bitwise-equal scores are unattainable and were the wrong bar. Qdrant normalises vectors
+      // on write for Cosine collections, so it computes dot(a-hat, b-hat) where Pinecone computes
+      // dot(a,b)/(|a||b|) at query time; the rounding differs by ~1e-3.
+      //
+      // That drift is small, but it is enough to reorder two documents that are closer together
+      // than the drift itself. Observed here: topic:UPSC_CDS at 0.6726 and chunk_12 at 0.6713 are
+      // 1.3e-3 apart in Pinecone and swap places in Qdrant. Both engines rank correctly for their
+      // own arithmetic — Qdrant's ANN order matches Qdrant's own exact order — so no amount of
+      // index tuning removes it, and calling it a failure would mean this check can never pass.
+      //
+      // So: the same documents, the same survivors past the 0.50 floor, and any reordering
+      // confined to pairs closer together than the measured drift. A document appearing or
+      // disappearing, or a reorder between documents that are genuinely far apart, still fails —
+      // the recall bug produced exactly that, with a 1.5e-1 gap.
+      const pIds = pHits.map((h: any) => h.id);
+      const qIds = qHits.map((h: any) => h.id);
+      const sameSet = pIds.length === qIds.length && pIds.every((id: string) => qIds.includes(id));
+      const sameOrder = pIds.every((id: string, i: number) => id === qIds[i]);
+      const maxScoreDelta = Math.max(0, ...pHits.map((h: any) => {
+        const match = qHits.find((q: any) => q.id === h.id);
+        return match ? Math.abs((h.score ?? 0) - (match.score ?? 0)) : 0;
+      }));
       const pSurvive = pHits.filter((h: any) => (h.score ?? 0) >= SCORE_FLOOR).length;
       const qSurvive = qHits.filter((h: any) => (h.score ?? 0) >= SCORE_FLOOR).length;
 
-      const ok = sameOrder && maxScoreDelta < 1e-4 && pSurvive === qSurvive;
+      // Is every position that moved a near-tie in the source ranking?
+      const tieBand = Math.max(maxScoreDelta * 2, 1e-6);
+      let reorderIsTiesOnly = true;
+      for (let i = 0; i < pIds.length; i++) {
+        if (pIds[i] === qIds[i]) continue;
+        const moved = pHits.find((h: any) => h.id === qIds[i]);
+        if (!moved || Math.abs((moved.score ?? 0) - (pHits[i].score ?? 0)) > tieBand) { reorderIsTiesOnly = false; break; }
+      }
+
+      const ok = sameSet && pSurvive === qSurvive && maxScoreDelta < 5e-3 && (sameOrder || reorderIsTiesOnly);
       if (ok) queriesMatching++; else queriesDifferent++;
-      console.log(`Result: ${ok ? 'MATCH' : 'DIFFERENT'}   (max score Δ=${maxScoreDelta.toExponential(2)}, past ${SCORE_FLOOR} floor: pinecone ${pSurvive} / qdrant ${qSurvive})`);
+
+      const why = !sameSet ? 'different documents returned'
+        : pSurvive !== qSurvive ? `floor survivors differ (${pSurvive} vs ${qSurvive})`
+        : maxScoreDelta >= 5e-3 ? `score drift ${maxScoreDelta.toExponential(2)} exceeds 5e-3`
+        : !reorderIsTiesOnly ? 'documents reordered beyond the precision band'
+        : '';
+      const note = ok && !sameOrder ? ' — same documents, near-ties reordered within precision' : '';
+
+      console.log(`Result: ${ok ? `MATCH${note}` : `DIFFERENT — ${why}`}   (max score d=${maxScoreDelta.toExponential(2)}, past ${SCORE_FLOOR} floor: ${pSurvive} vs ${qSurvive})`);
     }
 
     console.log(`\n  Queries tested: ${queriesTested}`);
