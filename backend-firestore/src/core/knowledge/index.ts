@@ -5,3 +5,6 @@
 
 export * from './types';
 export * from './KnowledgeService';
+export * from './knowledgeModel.types';
+export * from './knowledgeRouter.service';
+export * from './knowledgeIntegrityAudit.service';
