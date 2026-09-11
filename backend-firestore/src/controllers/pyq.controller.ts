@@ -11,6 +11,27 @@ import { pyqVectorIngestionService } from '../services/pyq/pyqVectorIngestion.se
 import { pyqAnalyticsService } from '../services/pyq/pyqAnalytics.service';
 import { PYQVerificationStatus, PYQRightsStatus, PYQIngestionState } from '../types/pyq.types';
 
+/**
+ * The fields a reader actually sees, for `GET /questions?compact=true`.
+ *
+ * A stored question averages ~3.1KB, of which provenanceRecords, contentHash, extraction scores
+ * and ingestion bookkeeping are ~2.3KB that exist for auditing, not for reading. Browsing a
+ * paper needs a wide window over the corpus — a single JEE Main year holds over 3,000 questions —
+ * so sending the audit trail with every one of them is most of the payload for none of the page.
+ */
+const BROWSING_FIELDS = [
+  'questionId', 'examId', 'examName', 'year', 'session', 'shift', 'paper',
+  'subject', 'topic', 'language', 'questionNumber', 'questionText', 'options',
+  'correctAnswer', 'marks', 'negativeMarks', 'difficulty', 'verificationStatus',
+  'rightsStatus', 'corpusBucket', 'sourceUrl',
+] as const;
+
+function toBrowsingShape(q: Record<string, any>): Record<string, any> {
+  const out: Record<string, any> = {};
+  for (const k of BROWSING_FIELDS) if (q[k] !== undefined) out[k] = q[k];
+  return out;
+}
+
 export class PYQController {
   /**
    * GET /api/pyq/matrix
@@ -77,6 +98,7 @@ export class PYQController {
         ingestionState,
         vectorIndexed,
         limit,
+        compact,
       } = req.query;
 
       const questions = await pyqRepository.listQuestions({
@@ -93,7 +115,13 @@ export class PYQController {
         limit: limit ? parseInt(limit as string, 10) : 100,
       });
 
-      res.json({ questions, count: questions.length });
+      // `compact` drops the operator-only audit fields — provenanceRecords alone is ~950 bytes a
+      // question, roughly a third of the document, and no browsing surface renders any of it.
+      // Opt-in, so anything already reading the full shape keeps getting it.
+      res.json({
+        questions: compact === 'true' ? questions.map(toBrowsingShape) : questions,
+        count: questions.length,
+      });
     } catch (error: any) {
       res.status(500).json({ error: error.message || 'Failed to query questions' });
     }
