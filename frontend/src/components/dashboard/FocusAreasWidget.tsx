@@ -76,11 +76,11 @@ export function FocusAreasWidget() {
           <motion.div
             className="relative flex items-center justify-center mb-3"
             animate={{
-              y: [0, -4, 0, -2, 0],
-              rotate: [0, 1.8, 0, -1.5, 0],
+              y: [0, -5, 0, -2.5, 0],
+              rotate: [0, 2.2, 0, -1.8, 0],
             }}
             transition={{
-              duration: 5,
+              duration: 4.5,
               repeat: Infinity,
               ease: "easeInOut",
             }}
@@ -88,11 +88,11 @@ export function FocusAreasWidget() {
           >
             <picture>
               <source
-                srcSet={isDarkMode ? '/images/focus-areas-ai-dark.webp' : '/images/focus-areas-ai-light.webp'}
+                srcSet={isDarkMode ? '/images/focus-areas-ai-dark.webp?v=4' : '/images/focus-areas-ai-light.webp?v=4'}
                 type="image/webp"
               />
               <img
-                src={isDarkMode ? '/images/focus-areas-ai-dark.png' : '/images/focus-areas-ai-light.png'}
+                src={isDarkMode ? '/images/focus-areas-ai-dark.png?v=4' : '/images/focus-areas-ai-light.png?v=4'}
                 alt="AI learning assistant"
                 className="w-32 sm:w-36 md:w-40 h-auto object-contain select-none pointer-events-none drop-shadow-xs"
                 loading="eager"
