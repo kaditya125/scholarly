@@ -73,7 +73,19 @@ export function FocusAreasWidget() {
           'p-5 sm:p-6 rounded-2xl border text-center flex flex-col items-center justify-center',
           isDarkMode ? 'bg-[#161619] border-white/[0.08]' : 'bg-white border-slate-200/90',
         )}>
-          <div className="relative flex items-center justify-center mb-3">
+          <motion.div
+            className="relative flex items-center justify-center mb-3"
+            animate={{
+              y: [0, -4, 0, -2, 0],
+              rotate: [0, 1.8, 0, -1.5, 0],
+            }}
+            transition={{
+              duration: 5,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            style={{ transformOrigin: "50% 85%" }}
+          >
             <picture>
               <source
                 srcSet={isDarkMode ? '/images/focus-areas-ai-dark.webp' : '/images/focus-areas-ai-light.webp'}
@@ -82,11 +94,11 @@ export function FocusAreasWidget() {
               <img
                 src={isDarkMode ? '/images/focus-areas-ai-dark.png' : '/images/focus-areas-ai-light.png'}
                 alt="AI learning assistant"
-                className="w-32 sm:w-36 md:w-40 h-auto object-contain select-none pointer-events-none"
-                loading="lazy"
+                className="w-32 sm:w-36 md:w-40 h-auto object-contain select-none pointer-events-none drop-shadow-xs"
+                loading="eager"
               />
             </picture>
-          </div>
+          </motion.div>
           <p className="text-[12.5px] text-slate-500 dark:text-gray-400 max-w-xs mx-auto leading-relaxed">
             Complete a few graded practice questions on a topic and this fills in with exactly
             what to work on next — backed by your actual results, not a guess.
