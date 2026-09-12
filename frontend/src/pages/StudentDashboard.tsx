@@ -174,8 +174,8 @@ export default function StudentDashboard() {
           transition={{ duration: 0.3 }}
           className="flex items-center gap-0 sm:gap-1 relative"
         >
-          {/* Mascot Robot on Left */}
-          <div className="shrink-0 relative z-10 -mr-6 sm:-mr-8 md:-mr-9 self-center">
+          {/* Mascot Robot on Left (Static, hand resting on top-left of 'Good') */}
+          <div className="shrink-0 relative z-10 -mr-3 sm:-mr-4 md:-mr-4.5 self-center">
             <GreetingRobot />
           </div>
 
