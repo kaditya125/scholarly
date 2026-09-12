@@ -142,8 +142,13 @@ export class RetrievalOrchestrator {
       try {
         const routePlan = knowledgeRouter.route({ query: req.query, notebookId: req.notebookId });
         
-        // Parallel multi-corpus retrieval execution
-        const [curriculumOutcome, refOutcome, syllabusOutcome] = await Promise.allSettled([
+        // Parallel multi-corpus retrieval execution.
+        //
+        // PYQs were missing from this list: the router computed `usePYQs` and nothing ever read
+        // it, so 22,000 indexed past-paper vectors could not reach an answer no matter what the
+        // router decided. They are retrieved official-only here — a practice question is useful
+        // for drilling, but it should not be quoted back to a student as a past paper.
+        const [curriculumOutcome, refOutcome, syllabusOutcome, pyqOutcome] = await Promise.allSettled([
           this.retrievalService.retrieveCurriculumContext(req.query, 5),
           routePlan.useReferenceBooks
             ? referenceBooksService.retrieveReferenceContext(req.query, {
@@ -155,11 +160,20 @@ export class RetrievalOrchestrator {
           (routePlan.useOfficialSyllabus && routePlan.targetExamId)
             ? this.retrievalService.retrieveOfficialSyllabusContext(routePlan.targetExamId, req.query, 2)
             : Promise.resolve([]),
+          routePlan.usePYQs
+            ? this.retrievalService.retrievePyqContext(req.query, {
+                examId: routePlan.targetExamId,
+                subject: routePlan.targetSubject,
+                officialOnly: true,
+                topK: 3,
+              })
+            : Promise.resolve([]),
         ]);
 
         const curriculumResults = curriculumOutcome.status === 'fulfilled' ? curriculumOutcome.value : [];
         const refResults = refOutcome.status === 'fulfilled' ? refOutcome.value : [];
         const syllabusResults = syllabusOutcome.status === 'fulfilled' ? syllabusOutcome.value : [];
+        const pyqResults = pyqOutcome.status === 'fulfilled' ? pyqOutcome.value : [];
 
         // 1. NCERT Curriculum
         if (curriculumResults.length > 0) {
@@ -199,6 +213,29 @@ export class RetrievalOrchestrator {
               sourceId: r.metadata?.book || 'reference_book',
               notebookId: 'reference_books',
               title: r.source,
+            };
+            citationsList.push(citationData);
+            yield { type: 'citation', citation: citationData };
+          }
+        }
+
+        // 2b. Authentic previous-year questions
+        if (pyqResults.length > 0) {
+          contextStr += '=== PREVIOUS YEAR QUESTIONS (VERIFIED OFFICIAL) ===\n';
+          for (const p of pyqResults) {
+            const m = p.metadata || {};
+            const sitting = [m.examId, m.year, m.session, m.shift].filter(Boolean).join(' ');
+            contextStr += `[Citation: ${sitting || p.source}]\n${p.text}\n\n`;
+            const citationData = {
+              source: sitting || p.source,
+              text: p.text,
+              score: p.score,
+              authorityScore: 1.4,
+              selectionReasoning:
+                p.selectionReasoning || `Verified official past-paper question (${sitting}).`,
+              sourceId: m.canonicalPaperId || m.sourceId,
+              notebookId: m.notebookId,
+              title: sitting || p.source,
             };
             citationsList.push(citationData);
             yield { type: 'citation', citation: citationData };

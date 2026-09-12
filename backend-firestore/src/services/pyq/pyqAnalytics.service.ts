@@ -30,7 +30,11 @@ export class PYQAnalyticsService {
       return cached;
     }
 
-    const questions = await pyqRepository.listQuestions({ examId, limit: 10000 });
+    // Paged, not capped. The previous `limit: 10000` silently excluded 4,009 of SSC CGL's 14,009
+    // questions from its own pattern profile — and a truncated distribution still looks plausible,
+    // so nothing downstream could notice.
+    const questions = await pyqRepository.listAllQuestions({ examId });
+    logger.info('[PYQAnalytics] corpus loaded for pattern analysis', { examId, questionCount: questions.length });
 
     if (questions.length === 0) {
       return {

@@ -48,10 +48,32 @@ const AUTHORITY_WEIGHTS: Record<string, number> = {
   'OFFICIAL_SYLLABUS': 1.5,
   'AUTHENTIC_PYQ': 1.4,
   'STANDARD_TEXTBOOK': 1.3,
+  'SECONDARY_PYQ': 1.2,
   'TEACHER_NOTES': 1.2,
   'REFERENCE_BOOK': 1.1,
   'USER_UPLOAD': 1.0,
+  'PRACTICE_QUESTION': 1.0,
   'WEB_SEARCH': 0.8
+};
+
+/**
+ * Authority earned from provenance, not from corpus membership.
+ *
+ * `AUTHENTIC_PYQ` used to be granted to anything carrying `content_type: 'pyq'`, which meant
+ * 5,050 practice and template questions sitting in the PYQ corpus were ranked as authentic past
+ * papers. Being in the PYQ corpus says where a question lives; only `provenanceClass` says what
+ * it is. Anything unclassified falls to PRACTICE_QUESTION (1.0) rather than inheriting a boost,
+ * so an un-backfilled vector degrades to neutral instead of to "official".
+ */
+const PROVENANCE_AUTHORITY: Record<string, string> = {
+  VERIFIED_OFFICIAL_PYQ: 'AUTHENTIC_PYQ',
+  VERIFIED_SECONDARY_PYQ: 'SECONDARY_PYQ',
+  PYQ_INSPIRED: 'PRACTICE_QUESTION',
+  PRACTICE_MOCK: 'PRACTICE_QUESTION',
+  GENERATED: 'PRACTICE_QUESTION',
+  SYNTHETIC: 'PRACTICE_QUESTION',
+  UNKNOWN: 'PRACTICE_QUESTION',
+  UNRESOLVED: 'PRACTICE_QUESTION',
 };
 
 /**
@@ -219,7 +241,9 @@ Standalone Search Query:`;
       if (!authorityLevel) {
         if (meta.board === 'NCERT' || meta.userId === 'ncert-curriculum') authorityLevel = 'NCERT';
         else if (meta.documentType === 'OFFICIAL_SYLLABUS') authorityLevel = 'OFFICIAL_SYLLABUS';
-        else if (meta.content_type === 'pyq' || meta.vectorKind === 'CANONICAL_PYQ_QUESTION') authorityLevel = 'AUTHENTIC_PYQ';
+        else if (meta.content_type === 'pyq' || meta.vectorKind === 'CANONICAL_PYQ_QUESTION') {
+          authorityLevel = PROVENANCE_AUTHORITY[String(meta.provenanceClass ?? '')] ?? 'PRACTICE_QUESTION';
+        }
         else if (meta.content_type === 'reference_book' || meta.corpusBucket === 'REFERENCE_BOOK') authorityLevel = 'REFERENCE_BOOK';
         else authorityLevel = 'USER_UPLOAD';
       }
@@ -320,6 +344,81 @@ Standalone Search Query:`;
       },
       topK
     );
+  }
+
+  /**
+   * Retrieves previous-year questions, optionally scoped to one specific sitting.
+   *
+   * Two things this deliberately does not do.
+   *
+   * It does not broaden. When `canonicalPaperId` is supplied the filter carries it, and if that
+   * yields nothing the answer is nothing — falling back to exam+year would return a different
+   * sitting's questions under the heading of the one that was asked for, which is how a paper ends
+   * up appearing to contain questions it never held. `strictPaper: false` is the documented opt-out
+   * for callers that genuinely want the broader set (analytics, discovery), and it is explicit.
+   *
+   * It does not treat corpus membership as authenticity. `officialOnly` filters on
+   * `isAuthenticPyq`, which is written from provenance, rather than on `content_type: 'pyq'`,
+   * which 5,050 practice questions also carry.
+   */
+  async retrievePyqContext(
+    query: string,
+    opts: {
+      examId?: string;
+      year?: number;
+      canonicalPaperId?: string;
+      sittingId?: string;
+      subject?: string;
+      officialOnly?: boolean;
+      strictPaper?: boolean;
+      topK?: number;
+    } = {}
+  ): Promise<RetrievalResult[]> {
+    const { canonicalPaperId, sittingId, strictPaper = true, topK = 5 } = opts;
+
+    const filter: Record<string, any> = { content_type: 'pyq' };
+    if (opts.examId) filter.examId = opts.examId.trim().toUpperCase().replace(/[\s_-]+/g, '_');
+    if (opts.year) filter.year = opts.year;
+    if (opts.subject) filter.subject = opts.subject;
+    if (opts.officialOnly) filter.isAuthenticPyq = true;
+
+    // Paper scope is applied at the vector store, not trimmed afterwards, so a paper with few
+    // matches returns its own few rather than topK of the whole exam.
+    if (sittingId) filter.sittingId = sittingId;
+    else if (canonicalPaperId) filter.canonicalPaperId = canonicalPaperId;
+
+    // `retrieveContext` only accepts the fixed ExamContext shape, so the store is queried directly
+    // — these filter keys (content_type, canonicalPaperId, isAuthenticPyq) have no ExamContext
+    // equivalent and squeezing them through it would mean they were silently dropped.
+    const queryEmbedding = await this.embeddingProvider.generateEmbedding(query);
+    const namespace = env.PINECONE_NAMESPACE;
+
+    const toResults = (matches: any[]): RetrievalResult[] =>
+      (matches ?? []).map((m: any) => {
+        const meta = m.metadata || {};
+        const sitting = [meta.examId, meta.year, meta.session, meta.shift].filter(Boolean).join(' ');
+        const authority = meta.isAuthenticPyq ? 'AUTHENTIC_PYQ' : 'PRACTICE_QUESTION';
+        return {
+          text: this.sanitizeContext(String(meta.text || '')),
+          source: sitting || String(meta.sourceId || 'Previous year question'),
+          score: m.score ?? 0,
+          metadata: meta,
+          weightedScore: (m.score ?? 0) * (AUTHORITY_WEIGHTS[authority] || 1.0),
+          selectionReasoning: meta.isAuthenticPyq
+            ? `Verified official past-paper question (${sitting}).`
+            : `Practice question from the PYQ corpus (${sitting}); not an authentic past paper.`,
+        } as RetrievalResult;
+      }).sort((a, b) => (b.weightedScore || 0) - (a.weightedScore || 0));
+
+    const matches = await pineconeService.queryVectors(queryEmbedding, topK, filter, namespace);
+    const results = toResults(matches);
+
+    if (results.length === 0 && (canonicalPaperId || sittingId) && !strictPaper) {
+      const { canonicalPaperId: _c, sittingId: _s, ...broader } = filter;
+      const wider = await pineconeService.queryVectors(queryEmbedding, topK, broader, namespace);
+      return toResults(wider);
+    }
+    return results;
   }
 
   /**
