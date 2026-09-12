@@ -9,10 +9,10 @@ export const GreetingRobot: React.FC<GreetingRobotProps> = ({ className = "" }) 
   const { theme } = useTheme();
   const isDarkMode = theme === "dark";
 
-  // Pristine high-resolution unmultiplied assets (270 x 274 Retina resolution)
+  // Pristine high-resolution studio 3D render (cache-busted URL to prevent browser caching old image)
   const imageSrc = isDarkMode
-    ? "/images/greeting-robot-dark.webp"
-    : "/images/greeting-robot-light.webp";
+    ? "/images/mascot-waving-dark-v2.webp"
+    : "/images/mascot-waving-light-v2.webp";
 
   return (
     <div
