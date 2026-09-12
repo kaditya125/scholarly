@@ -8,62 +8,25 @@ interface GreetingRobotProps {
 
 export const GreetingRobot: React.FC<GreetingRobotProps> = ({ className = "" }) => {
   const { theme } = useTheme();
-  const isDarkMode = theme === 'dark';
+  const isDarkMode = theme === "dark";
   const shouldReduceMotion = useReducedMotion();
   const [animationFinished, setAnimationFinished] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Asset paths based on active theme
-  const mode = isDarkMode ? "dark" : "light";
-  const bodySrc = `/images/greeting-robot-${mode}-body.webp`;
-  const headSrc = `/images/greeting-robot-${mode}-head.webp`;
-  const armSrc = `/images/greeting-robot-${mode}-arm.webp`;
-  const finalSrc = `/images/greeting-robot-${mode}-final.webp`;
-
-  // Exact relative percentages for layers based on 215 x 295 master canvas
-  // Dark: Head box (39, 54, 157, 94), pivot (76, 88); Arm box (144, 130, 57, 32), pivot (14, 14)
-  // Light: Head box (37, 52, 137, 96), pivot (68, 88); Arm box (142, 129, 61, 33), pivot (14, 14)
-  const headStyle = isDarkMode
-    ? {
-        left: "18.14%",
-        top: "18.31%",
-        width: "73.02%",
-        height: "31.86%",
-        transformOrigin: "48.41% 93.62%",
-      }
-    : {
-        left: "17.21%",
-        top: "17.63%",
-        width: "63.72%",
-        height: "32.54%",
-        transformOrigin: "49.64% 91.67%",
-      };
-
-  const armStyle = isDarkMode
-    ? {
-        left: "66.98%",
-        top: "44.07%",
-        width: "26.51%",
-        height: "10.85%",
-        transformOrigin: "24.56% 43.75%",
-      }
-    : {
-        left: "66.05%",
-        top: "43.73%",
-        width: "28.37%",
-        height: "11.19%",
-        transformOrigin: "22.95% 42.42%",
-      };
+  // Pristine unmultiplied assets (270 x 274 Retina resolution)
+  const imageSrc = isDarkMode
+    ? "/images/greeting-robot-dark.webp"
+    : "/images/greeting-robot-light.webp";
 
   // If user prefers reduced motion, render clean static resting pose directly
   if (shouldReduceMotion) {
     return (
       <div 
-        className={`relative shrink-0 select-none aspect-[215/295] w-[62px] sm:w-[74px] md:w-[82px] -mr-1.5 sm:-mr-2 ${className}`}
+        className={`relative shrink-0 select-none aspect-[270/274] w-[105px] sm:w-[125px] md:w-[140px] pointer-events-auto ${className}`}
         aria-label="Sadhya AI mascot greeting"
       >
         <img
-          src={finalSrc}
+          src={imageSrc}
           alt="Sadhya AI mascot"
           className="w-full h-full object-contain pointer-events-none drop-shadow-sm"
           loading="eager"
@@ -72,83 +35,116 @@ export const GreetingRobot: React.FC<GreetingRobotProps> = ({ className = "" }) 
     );
   }
 
-  // Motion animation definitions:
-  // Timeline:
-  // 0.0s - 0.5s: Stands naturally in initial pose
-  // 0.5s - 0.9s: Arm rises
-  // 0.9s - 2.1s: Waves 2-3 times
-  // 2.1s - 2.5s: Arm returns down
-  // 2.1s - 3.6s: Head looks Left (+8°), Right (-8°), and Centers (0°)
-  // 3.6s - 4.4s: Robot subtly leans/glides toward greeting text (x: 0 -> 8px, rotate: 0 -> 1.2°)
-  // 4.0s - 4.8s: Arm settles hand gently leaning near/on "Good Morning"
-  // 4.8s+: Settled into permanent friendly resting pose with gentle idle breathing
+  // Animation sequence:
+  // 0.0s - 0.5s: Appears smoothly beside the greeting
+  // 0.5s - 1.0s: Notice/curious gesture (cute bounce & tilt)
+  // 1.0s - 2.1s: Friendly waving interaction (2-3 gentle waves)
+  // 2.1s - 2.8s: Looks left
+  // 2.8s - 3.6s: Looks right
+  // 3.6s - 4.2s: Glides toward text, aligning hand with "Good Morning"
+  // 4.2s - 4.8s: Hand rests directly on top of the "G" in "Good Morning"
+  // 4.8s+: Settles into resting pose
+  // 5.0s onward: Subtle idle breathing only (4.2s cycle)
 
-  const armKeyframes = animationFinished
-    ? isHovered
-      ? [0, -28, 0]
-      : [0, 0]
-    : [
-        0,    // 0.0s: idle resting
-        0,    // 0.5s: begins noticing
-        -65,  // 0.9s: arm raised
-        -82,  // 1.15s: wave left
-        -52,  // 1.4s: wave right
-        -82,  // 1.65s: wave left
-        -52,  // 1.9s: wave right
-        -65,  // 2.1s: end waving
-        0,    // 2.5s: lowers back
-        0,    // 3.6s: resting
-        -6,   // 4.2s: gentle adjust onto text
-        0,    // 4.8s: resting securely on greeting
-      ];
+  const introX = [
+    -10, // 0.0s: slightly to the left
+    -10, // 0.5s: starts greeting
+    -10, // 1.0s
+    -10, // 2.1s: during waves
+    -10, // 2.8s: look left
+    -10, // 3.6s: look right
+    2,   // 4.2s: glides toward greeting
+    4,   // 4.8s: resting position with hand on 'G'
+  ];
 
-  const armTimes = animationFinished
-    ? [0, 0.5, 1.0]
-    : [0, 0.1, 0.19, 0.24, 0.29, 0.34, 0.40, 0.44, 0.52, 0.75, 0.88, 1.0];
+  const introY = [
+    0,   // 0.0s
+    -6,  // 0.6s: buoyant notice bounce
+    0,   // 0.9s
+    -7,  // 1.3s: wave peak 1
+    0,   // 1.6s
+    -5,  // 1.9s: wave peak 2
+    0,   // 2.2s
+    0,   // 4.8s
+  ];
 
-  const headKeyframes = animationFinished
-    ? isHovered
-      ? [0, -6, 0]
-      : [0, 0]
-    : [
-        0,   // 0.0s: forward
-        0,   // 2.1s: still looking forward during wave
-        8,   // 2.6s: looks Left
-        -8,  // 3.2s: looks Right
-        0,   // 3.6s: looks back at student
-        0,   // 4.8s: stays forward
-      ];
+  const introRotate = [
+    0,   // 0.0s
+    -4,  // 0.6s: curious tilt
+    0,   // 0.9s
+    -7,  // 1.25s: wave left
+    6,   // 1.55s: wave right
+    -7,  // 1.85s: wave left
+    4,   // 2.15s: wave right
+    6,   // 2.6s: look left
+    -6,  // 3.2s: look right
+    0,   // 3.6s: look back at user
+    1.2, // 4.4s: lean gently toward text
+    1.2, // 4.8s: resting securely on "Good Morning"
+  ];
 
-  const headTimes = animationFinished
-    ? [0, 0.5, 1.0]
-    : [0, 0.44, 0.54, 0.67, 0.75, 1.0];
+  const introScale = [
+    0.95, // 0.0s
+    1.02, // 0.6s
+    1.0,  // 0.9s
+    1.03, // 1.3s
+    1.0,  // 1.6s
+    1.02, // 1.9s
+    1.0,  // 2.2s
+    1.0,  // 4.8s
+  ];
 
-  const bodyKeyframes = animationFinished
-    ? { x: 8, rotate: 1.2 }
-    : {
-        x: [0, 0, 0, 8, 8],
-        rotate: [0, 0, 0, 1.2, 1.2],
-      };
-
-  const bodyTimes = [0, 0.44, 0.75, 0.92, 1.0];
+  const timesX = [0, 0.1, 0.2, 0.44, 0.58, 0.75, 0.88, 1.0];
+  const timesY = [0, 0.12, 0.19, 0.27, 0.33, 0.40, 0.46, 1.0];
+  const timesRotate = [0, 0.12, 0.19, 0.26, 0.32, 0.39, 0.45, 0.54, 0.67, 0.75, 0.92, 1.0];
+  const timesScale = [0, 0.12, 0.19, 0.27, 0.33, 0.40, 0.46, 1.0];
 
   return (
     <div
-      className={`relative shrink-0 select-none aspect-[215/295] w-[62px] sm:w-[74px] md:w-[82px] -mr-1.5 sm:-mr-2.5 z-10 cursor-pointer ${className}`}
+      className={`relative shrink-0 select-none aspect-[270/274] w-[105px] sm:w-[125px] md:w-[140px] pointer-events-auto cursor-pointer z-20 ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       title="Sadhya AI Assistant"
       aria-label="Sadhya AI mascot greeting"
     >
-      {/* Root animated body container with lean/glide and idle breathing */}
       <motion.div
         className="w-full h-full relative"
-        initial={{ x: 0, rotate: 0 }}
-        animate={bodyKeyframes}
+        initial={{ opacity: 0, x: -10, scale: 0.95 }}
+        animate={
+          animationFinished
+            ? isHovered
+              ? {
+                  x: 4,
+                  y: [0, -3, 0],
+                  rotate: [1.2, -4, 4, 1.2],
+                  scale: [1, 1.02, 1],
+                  opacity: 1,
+                }
+              : {
+                  x: 4,
+                  rotate: 1.2,
+                  opacity: 1,
+                }
+            : {
+                x: introX,
+                y: introY,
+                rotate: introRotate,
+                scale: introScale,
+                opacity: 1,
+              }
+        }
         transition={
           animationFinished
-            ? { duration: 0.2 }
-            : { duration: 4.8, times: bodyTimes, ease: "easeInOut" }
+            ? isHovered
+              ? { duration: 0.6, ease: "easeInOut" }
+              : { duration: 0.3 }
+            : {
+                x: { duration: 4.8, times: timesX, ease: "easeInOut" },
+                y: { duration: 4.8, times: timesY, ease: "easeInOut" },
+                rotate: { duration: 4.8, times: timesRotate, ease: "easeInOut" },
+                scale: { duration: 4.8, times: timesScale, ease: "easeInOut" },
+                opacity: { duration: 0.4, ease: "easeOut" },
+              }
         }
         onAnimationComplete={() => {
           if (!animationFinished) {
@@ -173,51 +169,13 @@ export const GreetingRobot: React.FC<GreetingRobotProps> = ({ className = "" }) 
             ease: "easeInOut",
           }}
         >
-          {/* Base Layer: Body, Torso, Legs, Left Arm, Elbow & Neck Sockets */}
           <img
-            src={bodySrc}
-            alt=""
-            className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-sm"
+            src={imageSrc}
+            alt="Sadhya AI mascot greeting"
+            className="w-full h-full object-contain pointer-events-none drop-shadow-sm select-none"
             loading="eager"
+            draggable={false}
           />
-
-          {/* Right Arm & Hand Layer (Waves, then rests casually on greeting) */}
-          <motion.div
-            className="absolute pointer-events-none"
-            style={armStyle}
-            animate={{ rotate: armKeyframes }}
-            transition={
-              animationFinished
-                ? { duration: 0.7, ease: "easeInOut" }
-                : { duration: 4.8, times: armTimes, ease: "easeInOut" }
-            }
-          >
-            <img
-              src={armSrc}
-              alt=""
-              className="w-full h-full object-contain pointer-events-none"
-              loading="eager"
-            />
-          </motion.div>
-
-          {/* Head & Helmet Layer (Turns to look left, right, then back at student) */}
-          <motion.div
-            className="absolute pointer-events-none"
-            style={headStyle}
-            animate={{ rotate: headKeyframes }}
-            transition={
-              animationFinished
-                ? { duration: 0.6, ease: "easeInOut" }
-                : { duration: 4.8, times: headTimes, ease: "easeInOut" }
-            }
-          >
-            <img
-              src={headSrc}
-              alt=""
-              className="w-full h-full object-contain pointer-events-none"
-              loading="eager"
-            />
-          </motion.div>
         </motion.div>
       </motion.div>
     </div>
