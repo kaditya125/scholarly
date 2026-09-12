@@ -16,7 +16,7 @@ export const GreetingRobot: React.FC<GreetingRobotProps> = ({ className = "" }) 
 
   return (
     <div
-      className={`relative shrink-0 select-none aspect-[270/274] w-[105px] sm:w-[122px] md:w-[136px] pointer-events-none ${className}`}
+      className={`relative shrink-0 select-none aspect-[494/613] w-[110px] sm:w-[126px] md:w-[140px] pointer-events-none ${className}`}
       aria-label="Sadhya AI mascot greeting"
     >
       <img
