@@ -48,6 +48,7 @@ import { useAdaptiveAssessment } from "../hooks/api/useAdaptiveAssessment";
 import { OnboardingChecklist } from "../components/dashboard/OnboardingChecklist";
 import { LearningVelocityWidget } from "../components/dashboard/LearningVelocityWidget";
 import { FocusAreasWidget } from "../components/dashboard/FocusAreasWidget";
+import { GreetingRobot } from "../components/dashboard/GreetingRobot";
 import { AiRecommendedDrills } from "../components/dashboard/AiRecommendedDrills";
 import { AchievementsMilestones } from "../components/dashboard/AchievementsMilestones";
 
@@ -185,12 +186,15 @@ export default function StudentDashboard() {
             </div>
           </div>
 
-          <h1 className="text-[28px] sm:text-[34px] font-semibold tracking-[-0.035em] leading-[1.1] text-slate-900 dark:text-white">
-            {getGreeting()},{' '}
-            <span className="text-[#6ca855] dark:text-[#c8e558]">
-              {firstName}
-            </span>
-          </h1>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <GreetingRobot />
+            <h1 className="text-[28px] sm:text-[34px] font-semibold tracking-[-0.035em] leading-[1.1] text-slate-900 dark:text-white">
+              {getGreeting()},{' '}
+              <span className="text-[#6ca855] dark:text-[#c8e558]">
+                {firstName}
+              </span>
+            </h1>
+          </div>
 
           {/* Sleek Minimalist Briefing Line (100% Real Live Data) */}
           <motion.div
