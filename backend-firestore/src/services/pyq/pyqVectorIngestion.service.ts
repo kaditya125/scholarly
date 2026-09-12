@@ -12,6 +12,7 @@ import { GoogleEmbeddingProvider } from '../ai/providers/google-embedding.provid
 import { getVectorStore } from '../rag/vectorStore';
 import { pyqRepository } from '../../repositories/pyq.repository';
 import { CanonicalPYQQuestion } from '../../types/pyq.types';
+import { classifyProvenance, isAuthenticPyq } from './paperIdentity';
 import { env } from '../../config/env';
 import { logger } from '../../utils/logger';
 import { requireNoIndexer } from '../../../scripts/phase4a/_embedding-guard';
@@ -177,6 +178,26 @@ export class PYQVectorIngestionService {
         // STRICT METADATA CONTRACT
         const metadata = {
           content_type: 'pyq', // Explicit distinction from textbook
+
+          /*
+           * Provenance travels with the vector.
+           *
+           * Ranking reads the payload, not Firestore, so a vector written without these fields is
+           * unclassified at retrieval time — and `content_type: 'pyq'` alone used to earn the 1.4x
+           * authentic-past-paper boost, which is how 5,050 practice questions came to be ranked as
+           * official. Classifying here means a newly indexed question is never briefly authentic
+           * by default while it waits for a backfill: an overnight run that predated this wrote
+           * 1,660 vectors with no class at all.
+           */
+          provenanceClass: (q as any).provenanceClass ?? classifyProvenance(q as any),
+          isAuthenticPyq: isAuthenticPyq((q as any).provenanceClass ?? classifyProvenance(q as any)),
+          canonicalPaperId: (q as any).canonicalPaperId ?? null,
+          paperIdentityStatus: (q as any).paperIdentityStatus ?? 'UNRESOLVED',
+          sittingId: (q as any).sittingId ?? null,
+          normalizedSession: (q as any).normalizedSession ?? null,
+          normalizedShift: (q as any).normalizedShift ?? null,
+          normalizedSittingDate: (q as any).normalizedSittingDate ?? null,
+
           corpusBucket: q.corpusBucket || 'OFFICIAL_PYQ',
           vectorKind: q.corpusBucket === 'PRACTICE_MOCK' ? 'PRACTICE_QUESTION' : 'CANONICAL_PYQ_QUESTION',
           public: true,        // Public examination record
