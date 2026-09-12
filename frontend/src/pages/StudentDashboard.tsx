@@ -172,29 +172,33 @@ export default function StudentDashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="space-y-2.5"
+          className="flex items-center gap-0 sm:gap-1 relative"
         >
-          <div className="flex flex-wrap items-center gap-2">
-            <div className={cn(
-              "inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[12px] font-medium border transition-colors shadow-2xs",
-              isDarkMode
-                ? "bg-white/[0.04] border-white/10 text-slate-200"
-                : "bg-white border-slate-200/90 text-slate-700"
-            )}>
-              <span className="w-1.5 h-1.5 rounded-full bg-[#6ca855] dark:bg-[#c8e558] animate-pulse" />
-              <span>Preparing for <strong className="font-semibold text-slate-900 dark:text-white">{targetExam} 2026</strong></span>
-            </div>
+          {/* Mascot Robot on Left */}
+          <div className="shrink-0 relative z-10 -mr-6 sm:-mr-8 md:-mr-9 self-center">
+            <GreetingRobot />
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <GreetingRobot />
+          {/* Right Content Stack: Badge, Heading, Briefing line (100% aligned with Pic 3) */}
+          <div className="space-y-1.5 sm:space-y-2 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className={cn(
+                "inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[12px] font-medium border transition-colors shadow-2xs",
+                isDarkMode
+                  ? "bg-white/[0.04] border-white/10 text-slate-200"
+                  : "bg-white border-slate-200/90 text-slate-700"
+              )}>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#6ca855] dark:bg-[#c8e558] animate-pulse" />
+                <span>Preparing for <strong className="font-semibold text-slate-900 dark:text-white">{targetExam} 2026</strong></span>
+              </div>
+            </div>
+
             <h1 className="text-[28px] sm:text-[34px] font-semibold tracking-[-0.035em] leading-[1.1] text-slate-900 dark:text-white">
               {getGreeting()},{' '}
               <span className="text-[#6ca855] dark:text-[#c8e558]">
                 {firstName}
               </span>
             </h1>
-          </div>
 
           {/* Sleek Minimalist Briefing Line (100% Real Live Data) */}
           <motion.div
@@ -251,7 +255,8 @@ export default function StudentDashboard() {
               </>
             ) : null}
           </motion.div>
-        </motion.div>
+        </div>
+      </motion.div>
 
         {/* 2. Onboarding Checklist (Hides when 5/5 done) */}
         <OnboardingChecklist />
