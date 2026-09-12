@@ -148,7 +148,8 @@ export default function Onboarding() {
         }).catch(() => {});
       }
     } catch { /* non-fatal — the partial autosaves already persisted their data */ }
-    // Keep the generation animation on screen for a short smooth beat.
+    // Mark onboarding completed for first-time celebration trigger on dashboard
+    sessionStorage.setItem('onboarding_completed', 'true');
     const elapsed = Date.now() - startedAt;
     const wait = Math.max(0, 2400 - elapsed);
     setTimeout(() => navigate('/baseline-assessment', { replace: true }), wait);

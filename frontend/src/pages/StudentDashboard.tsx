@@ -1,5 +1,5 @@
-import React, { useMemo, useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useMemo, useState, useEffect, useRef } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { 
   UploadCloud,
   Film,
@@ -48,7 +48,8 @@ import { useAdaptiveAssessment } from "../hooks/api/useAdaptiveAssessment";
 import { OnboardingChecklist } from "../components/dashboard/OnboardingChecklist";
 import { LearningVelocityWidget } from "../components/dashboard/LearningVelocityWidget";
 import { FocusAreasWidget } from "../components/dashboard/FocusAreasWidget";
-import { GreetingRobot } from "../components/dashboard/GreetingRobot";
+import { GreetingRobot, RobotState } from "../components/dashboard/GreetingRobot";
+import { OnboardingCelebrationModal } from "../components/dashboard/OnboardingCelebrationModal";
 import { AiRecommendedDrills } from "../components/dashboard/AiRecommendedDrills";
 import { AchievementsMilestones } from "../components/dashboard/AchievementsMilestones";
 
@@ -103,10 +104,77 @@ export default function StudentDashboard() {
   const [prompt, setPrompt] = useState("");
   
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const { profile } = useProfile();
+  const { profile, updateProfile } = useProfile();
   const { stats } = useUserStats();
   const launch = useLaunchTest();
+
+  // Reference to greeting robot DOM container to compute destination for flight
+  const greetingTargetRef = useRef<HTMLDivElement | null>(null);
+
+  // First-time onboarding celebration state
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [robotState, setRobotState] = useState<RobotState>('greeting');
+  const [flightStartRect, setFlightStartRect] = useState<DOMRect | null>(null);
+
+  // Check if first-time onboarding celebration should appear
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    // Manual test override via query param ?celebrate=1
+    if (searchParams.get('celebrate') === '1') {
+      setShowCelebration(true);
+      setRobotState('celebrating');
+      return;
+    }
+
+    const localKey = `sadhya_celebrated_${user.uid}`;
+    const hasCelebratedLocal = localStorage.getItem(localKey) === 'true';
+    const hasCelebratedProfile = profile?.hasCelebratedOnboarding === true;
+
+    // Check if newly onboarded
+    const justOnboarded = sessionStorage.getItem('onboarding_completed') === 'true';
+
+    if (!hasCelebratedLocal && !hasCelebratedProfile && (justOnboarded || profile?.isComplete)) {
+      setShowCelebration(true);
+      setRobotState('celebrating');
+    }
+  }, [user?.uid, profile?.isComplete, profile?.hasCelebratedOnboarding, searchParams]);
+
+  const handleStartFlight = (destRect: DOMRect | null) => {
+    if (!user?.uid) return;
+
+    // Compute center-top of viewport as the celebration robot starting position
+    const startRect = {
+      left: window.innerWidth / 2 - 85,
+      top: window.innerHeight * 0.32 - 100,
+      width: 170,
+      height: 195,
+      right: window.innerWidth / 2 + 85,
+      bottom: window.innerHeight * 0.32 + 95,
+      x: window.innerWidth / 2 - 85,
+      y: window.innerHeight * 0.32 - 100,
+      toJSON: () => {},
+    } as DOMRect;
+
+    setFlightStartRect(startRect);
+    setRobotState('flying');
+
+    // Persist completion
+    localStorage.setItem(`sadhya_celebrated_${user.uid}`, 'true');
+    sessionStorage.removeItem('onboarding_completed');
+    updateProfile({ hasCelebratedOnboarding: true }).catch(() => {});
+
+    // Close modal after transition initiates
+    setTimeout(() => {
+      setShowCelebration(false);
+    }, 450);
+  };
+
+  const handleFlightComplete = () => {
+    setRobotState('greeting');
+  };
 
   const firstName = useMemo(() => {
     return (user?.displayName || '').trim().split(' ')[0] || 'Scholar';
@@ -174,9 +242,13 @@ export default function StudentDashboard() {
           transition={{ duration: 0.3 }}
           className="flex items-center gap-0 sm:gap-1 relative"
         >
-          {/* Mascot Robot on Left (Static, friendly greeting) */}
-          <div className="shrink-0 relative z-10 mr-1 sm:mr-2 self-center">
-            <GreetingRobot />
+          {/* Mascot Robot on Left (Continuous AI companion) */}
+          <div ref={greetingTargetRef} className="shrink-0 relative z-10 mr-1 sm:mr-2 self-center">
+            <GreetingRobot
+              state={robotState}
+              flightStartRect={flightStartRect}
+              onFlightComplete={handleFlightComplete}
+            />
           </div>
 
           {/* Right Content Stack: Badge, Heading, Briefing line (100% aligned with Pic 3) */}
@@ -527,6 +599,14 @@ export default function StudentDashboard() {
         </motion.div>
 
       </div>
+
+      {/* 9. First-Time User Onboarding Celebration Modal */}
+      <OnboardingCelebrationModal
+        isOpen={showCelebration}
+        userName={firstName}
+        onStartFlight={handleStartFlight}
+        greetingTargetRef={greetingTargetRef}
+      />
     </div>
   );
 }

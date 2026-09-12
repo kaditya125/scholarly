@@ -27,6 +27,7 @@ export interface LearningProfile {
   weakAreas?: string[];
   onboardedAt?: string;
   isComplete?: boolean;
+  hasCelebratedOnboarding?: boolean;
 }
 
 // ─── Option lists ────────────────────────────────────────────────────────────
