@@ -1,0 +1,189 @@
+exam,year,session,shift,paperId,paper,firestoreCount,qdrantCount,matchedCount,missingVectors,orphanVectors,duplicateVectors,provenanceErrors,trustTierErrors,acceptedCount,coveragePercent,status
+RRB_NTPC,2021,,,src_rrb_ntpc_2021_main_paper_railway_recruitm,Main Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
+JEE_MAIN,2026,Session 2 (Apr),Shift 2,src_jee_main_2026_session_2_apr_shift_2_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UPSC_CSE,2022,,,src_upsc_cse_2022_gs_paper_1_2_detailed_explanations_drishti_ias_edit,GS Paper 1 & 2 Detailed Explanations,242,154,154,0,0,0,0,0,154,100,COMPLETE
+SSC_CGL,2024,,Shift 3,src_ssc_cgl_2024_shift_3_tier_1_cbt_ssc_official_tie,Tier 1 CBT,3182,1452,1452,1698,0,0,0,0,3150,46.1,PARTIAL
+BPSC_CCE,2023,,,src_bpsc_cce_2023_solved_practice_paper_drishti_ias_bpsc,Solved Practice Paper,351,313,313,0,0,0,300,51,313,100,COMPLETE
+SSC_CGL,2020,,Shift 2,src_ssc_cgl_2020_shift_2_tier_1_cbt_ssc_official_tie,Tier 1 CBT,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+NEET_UG,2014,,,src_neet_ug_2014_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,211,26,26,0,0,0,0,211,26,100,COMPLETE
+NEET_UG,2025,,,src_neet_ug_2025_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,180,155,155,0,0,0,0,0,155,100,COMPLETE
+JEE_ADVANCED,2021,,,src_jee_advanced_2021_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,6,3,3,0,0,0,0,6,3,100,COMPLETE
+UPSC_CSE,2021,,,src_upsc_cse_2021_csat_paper_2_prelims_upsc_official_cs,CSAT Paper 2 (Prelims),239,128,128,0,0,0,0,0,128,100,COMPLETE
+NEET_UG,2017,,,src_neet_ug_2017_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,215,15,15,0,0,0,0,215,15,100,COMPLETE
+JEE_MAIN,2021,Session 1 & 2,,src_jee_main_2021_session_1_2_testbook_verifie,,2312,2315,2312,0,3,0,0,0,2312,100,COMPLETE
+SSC_CGL,2021,,,src_ssc_cgl_2021_tier_1_tier_2_solved_papers_adda247_ssc_edit,Tier 1 & Tier 2 Solved Papers,1831,819,819,817,0,0,0,0,1636,50.1,PARTIAL
+IBPS_PO,2025,,,src_ibps_po_2025_solved_practice_paper_adda247_bankersa,Solved Practice Paper,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+BPSC_CCE,2024,,,src_bpsc_cce_2024_main_paper_bihar_public_ser,Main Paper,201,158,158,0,0,0,150,51,158,100,COMPLETE
+JEE_MAIN,2021,Session 2 (Apr),Shift 1,src_jee_main_2021_session_2_apr_shift_1_nta_official_que,,532,535,532,0,3,0,0,0,532,100,COMPLETE
+BPSC_CCE,2019,,,src_bpsc_cce_2019_solved_practice_paper_drishti_ias_bpsc,Solved Practice Paper,51,5,5,0,0,0,0,51,5,100,COMPLETE
+JEE_MAIN,2020,Session 1 (Jan),Shift 1,src_jee_main_2020_session_1_jan_shift_1_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+IBPS_PO,2025,,,src_ibps_po_2025_main_paper_institute_of_ban,Main Paper,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+JEE_ADVANCED,2025,,,src_jee_advanced_2025_paper_1_iit_official_arc,Paper 1,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+BPSC_CCE,2021,,,src_bpsc_cce_2021_solved_practice_paper_testbook_bpsc_so,Solved Practice Paper,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+JEE_ADVANCED,2024,,,src_jee_advanced_2024_paper_2_iit_official_arc,Paper 2,13,9,9,0,0,0,0,13,9,100,COMPLETE
+UPSC_CSE,2025,,,src_upsc_cse_2025_gs_paper_1_prelims_upsc_official_cs,GS Paper 1 (Prelims),96,96,96,0,0,0,0,0,96,100,COMPLETE
+BPSC_CCE,2021,,,src_bpsc_cce_2021_main_paper_bihar_public_ser,Main Paper,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+JEE_MAIN,2019,Session 1 (Jan),Shift 1,src_jee_main_2019_session_1_jan_shift_1_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+BPSC_CCE,2020,,,src_bpsc_cce_2020_solved_practice_paper_drishti_ias_bpsc,Solved Practice Paper,201,165,165,0,0,0,150,51,165,100,COMPLETE
+JEE_ADVANCED,2022,,,src_jee_advanced_2022_paper_2_iit_official_arc,Paper 2,6,3,3,0,0,0,0,6,3,100,COMPLETE
+NEET_UG,2020,,,src_neet_ug_2020_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,217,26,26,0,0,0,0,217,26,100,COMPLETE
+JEE_ADVANCED,2023,,,src_jee_advanced_2023_paper_1_iit_official_arc,Paper 1,10,5,5,0,0,0,0,10,5,100,COMPLETE
+IBPS_PO,2025,,,src_ibps_po_2025_solved_practice_paper_testbook_solved_,Solved Practice Paper,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UPSC_CSE,2022,,,src_upsc_cse_2022_gs_paper_1_prelims_upsc_official_cs,GS Paper 1 (Prelims),242,154,154,0,0,0,0,0,154,100,COMPLETE
+JEE_MAIN,2020,Session 1 & 2,,src_jee_main_2020_session_1_2_testbook_verifie,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+SSC_CGL,2021,,Shift 1,src_ssc_cgl_2021_shift_1_tier_1_cbt_ssc_official_tie,Tier 1 CBT,1044,565,565,379,0,0,0,0,944,59.9,PARTIAL
+JEE_MAIN,2025,Session 2 (Apr),Shift 2,src_jee_main_2025_session_2_apr_shift_2_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+NEET_UG,2014,,,src_neet_ug_2014_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,211,26,26,0,0,0,0,211,26,100,COMPLETE
+JEE_MAIN,2024,Session 1 (Jan),Shift 2,src_jee_main_2024_session_1_jan_shift_2_nta_official_que,,823,976,822,1,154,0,1,0,823,99.9,PARTIAL
+JEE_ADVANCED,2020,,,src_jee_advanced_2020_paper_2_iit_official_arc,Paper 2,7,4,4,0,0,0,0,7,4,100,COMPLETE
+JEE_ADVANCED,2019,,,src_jee_advanced_2019_paper_2_iit_official_arc,Paper 2,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+SSC_CGL,2023,,Shift 3,src_ssc_cgl_2023_shift_3_tier_1_cbt_ssc_official_tie,Tier 1 CBT,2212,1053,1053,1116,0,0,0,0,2169,48.5,PARTIAL
+SSC_CGL,2025,,,src_ssc_cgl_2025_tier_1_tier_2_solved_papers_adda247_ssc_edit,Tier 1 & Tier 2 Solved Papers,1600,619,619,981,0,0,0,0,1600,38.7,PARTIAL
+RRB_NTPC,2025,,,src_rrb_ntpc_2025_solved_practice_paper_testbook_solved_,Solved Practice Paper,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+NEET_UG,2019,,,src_neet_ug_2019_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,214,20,20,0,0,0,0,214,20,100,COMPLETE
+JEE_MAIN,2019,Session 1 & 2,,src_jee_main_2019_session_1_2_testbook_verifie,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+JEE_ADVANCED,2018,,,src_jee_advanced_2018_paper_1_iit_official_arc,Paper 1,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UPSC_CSE,2019,,,src_upsc_cse_2019_csat_paper_2_prelims_upsc_official_cs,CSAT Paper 2 (Prelims),100,100,100,0,0,0,0,0,100,100,COMPLETE
+BPSC_CCE,2022,,,src_bpsc_cce_2022_solved_practice_paper_testbook_bpsc_so,Solved Practice Paper,201,160,160,0,0,0,150,51,160,100,COMPLETE
+JEE_ADVANCED,2021,,,src_jee_advanced_2021_paper_1_iit_official_arc,Paper 1,6,3,3,0,0,0,0,6,3,100,COMPLETE
+JEE_MAIN,2022,Session 2 (Apr),Shift 1,src_jee_main_2022_session_2_apr_shift_1_nta_official_que,,1066,1069,1066,0,3,0,0,0,1066,100,COMPLETE
+NEET_UG,2013,,,src_neet_ug_2013_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,211,17,17,0,0,0,0,211,17,100,COMPLETE
+JEE_MAIN,2023,Session 1 (Jan),Shift 1,src_jee_main_2023_session_1_jan_shift_1_nta_official_que,,981,986,981,0,5,0,0,0,981,100,COMPLETE
+JEE_MAIN,2026,Session 1 (Jan),Shift 1,src_jee_main_2026_session_1_jan_shift_1_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+SSC_CGL,2025,,Shift 1,src_ssc_cgl_2025_shift_1_tier_1_cbt_ssc_official_tie,Tier 1 CBT,1600,619,619,981,0,0,0,0,1600,38.7,PARTIAL
+UPSC_CSE,2020,,,src_upsc_cse_2020_csat_paper_2_prelims_upsc_official_cs,CSAT Paper 2 (Prelims),100,100,100,0,0,0,0,0,100,100,COMPLETE
+JEE_ADVANCED,2022,,,src_jee_advanced_2022_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,6,3,3,0,0,0,0,6,3,100,COMPLETE
+BPSC_CCE,2020,,,src_bpsc_cce_2020_main_paper_bihar_public_ser,Main Paper,201,165,165,0,0,0,150,51,165,100,COMPLETE
+NEET_UG,2024,,,src_neet_ug_2024_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,221,30,30,0,0,0,0,221,30,100,COMPLETE
+IBPS_PO,2023,,,src_ibps_po_2023_solved_practice_paper_adda247_bankersa,Solved Practice Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
+SSC_CGL,2024,,,src_ssc_cgl_2024_tier_1_tier_2_solved_papers_adda247_ssc_edit,Tier 1 & Tier 2 Solved Papers,4040,1706,1706,2138,0,0,0,0,3844,44.4,PARTIAL
+NEET_UG,2020,,,src_neet_ug_2020_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,217,26,26,0,0,0,0,217,26,100,COMPLETE
+JEE_MAIN,2021,Session 1 (Jan),Shift 2,src_jee_main_2021_session_1_jan_shift_2_nta_official_que,,535,538,535,0,3,0,0,0,535,100,COMPLETE
+SSC_CGL,2023,,Shift 2,src_ssc_cgl_2023_shift_2_tier_1_cbt_ssc_official_tie,Tier 1 CBT,2225,1054,1054,1109,0,0,0,0,2163,48.7,PARTIAL
+JEE_MAIN,2020,Session 2 (Apr),Shift 2,src_jee_main_2020_session_2_apr_shift_2_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+NEET_UG,2017,,,src_neet_ug_2017_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,215,15,15,0,0,0,0,215,15,100,COMPLETE
+JEE_MAIN,2022,Session 1 & 2,,src_jee_main_2022_session_1_2_testbook_verifie,,2049,2052,2049,0,3,0,0,0,2049,100,COMPLETE
+JEE_ADVANCED,2025,,,src_jee_advanced_2025_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+RRB_NTPC,2025,,,src_rrb_ntpc_2025_main_paper_railway_recruitm,Main Paper,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+SSC_CGL,2024,,Shift 2,src_ssc_cgl_2024_shift_2_tier_1_cbt_ssc_official_tie,Tier 1 CBT,3305,1485,1485,1765,0,0,0,0,3250,45.7,PARTIAL
+JEE_MAIN,2019,Session 2 (Apr),Shift 2,src_jee_main_2019_session_2_apr_shift_2_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+JEE_MAIN,2023,Session 1 & 2,,src_jee_main_2023_session_1_2_testbook_verifie,,3318,3323,3318,0,5,0,0,0,3318,100,COMPLETE
+SSC_CGL,2020,,Shift 3,src_ssc_cgl_2020_shift_3_tier_1_cbt_ssc_official_tie,Tier 1 CBT,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+BPSC_CCE,2024,,,src_bpsc_cce_2024_solved_practice_paper_testbook_bpsc_so,Solved Practice Paper,201,158,158,0,0,0,150,51,158,100,COMPLETE
+JEE_MAIN,2025,Session 1 (Jan),Shift 1,src_jee_main_2025_session_1_jan_shift_1_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+JEE_MAIN,2024,Session 2 (Apr),Shift 1,src_jee_main_2024_session_2_apr_shift_1_nta_official_que,,896,1049,895,1,154,0,1,0,896,99.9,PARTIAL
+JEE_ADVANCED,2019,,,src_jee_advanced_2019_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+SSC_CGL,2020,,,src_ssc_cgl_2020_tier_1_tier_2_solved_papers_adda247_ssc_edit,Tier 1 & Tier 2 Solved Papers,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UPSC_CSE,2021,,,src_upsc_cse_2021_gs_paper_1_prelims_upsc_official_cs,GS Paper 1 (Prelims),239,128,128,0,0,0,0,0,128,100,COMPLETE
+NEET_UG,2023,,,src_neet_ug_2023_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,224,30,30,0,0,0,0,224,30,100,COMPLETE
+NEET_UG,2023,,,src_neet_ug_2023_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,224,30,30,0,0,0,0,224,30,100,COMPLETE
+NEET_UG,2019,,,src_neet_ug_2019_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,214,20,20,0,0,0,0,214,20,100,COMPLETE
+SSC_CGL,2022,,Shift 1,src_ssc_cgl_2022_shift_1_tier_1_cbt_ssc_official_tie,Tier 1 CBT,696,394,394,194,0,0,0,0,588,67,PARTIAL
+IBPS_PO,2024,,,src_ibps_po_2024_main_paper_institute_of_ban,Main Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
+JEE_MAIN,2022,Session 1 (Jan),Shift 2,src_jee_main_2022_session_1_jan_shift_2_nta_official_que,,1,4,1,0,3,0,0,0,1,100,COMPLETE
+UPSC_CSE,2023,,,src_upsc_cse_2023_gs_paper_1_2_detailed_explanations_drishti_ias_edit,GS Paper 1 & 2 Detailed Explanations,242,142,142,0,0,0,0,0,142,100,COMPLETE
+JEE_MAIN,2023,Session 2 (Apr),Shift 2,src_jee_main_2023_session_2_apr_shift_2_nta_official_que,,593,598,593,0,5,0,0,0,593,100,COMPLETE
+IBPS_PO,2023,,,src_ibps_po_2023_solved_practice_paper_testbook_solved_,Solved Practice Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
+RRB_NTPC,2019,,,src_rrb_ntpc_2019_solved_practice_paper_testbook_solved_,Solved Practice Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
+JEE_MAIN,2025,Session 1 (Jan),Shift 2,src_jee_main_2025_session_1_jan_shift_2_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+JEE_MAIN,2024,Session 2 (Apr),Shift 2,src_jee_main_2024_session_2_apr_shift_2_nta_official_que,,818,971,817,1,154,0,1,0,818,99.9,PARTIAL
+JEE_ADVANCED,2020,,,src_jee_advanced_2020_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,7,4,4,0,0,0,0,7,4,100,COMPLETE
+BPSC_CCE,2022,,,src_bpsc_cce_2022_main_paper_bihar_public_ser,Main Paper,201,160,160,0,0,0,150,51,160,100,COMPLETE
+IBPS_PO,2024,,,src_ibps_po_2024_solved_practice_paper_testbook_solved_,Solved Practice Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
+UPSC_CSE,2021,,,src_upsc_cse_2021_gs_paper_1_2_detailed_explanations_drishti_ias_edit,GS Paper 1 & 2 Detailed Explanations,239,128,128,0,0,0,0,0,128,100,COMPLETE
+SSC_CGL,2025,,Shift 3,src_ssc_cgl_2025_shift_3_tier_1_cbt_ssc_official_tie,Tier 1 CBT,1600,619,619,981,0,0,0,0,1600,38.7,PARTIAL
+IBPS_PO,2023,,,src_ibps_po_2023_main_paper_institute_of_ban,Main Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
+NEET_UG,2015,,,src_neet_ug_2015_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,214,18,18,0,0,0,0,214,18,100,COMPLETE
+SSC_CGL,2021,,Shift 2,src_ssc_cgl_2021_shift_2_tier_1_cbt_ssc_official_tie,Tier 1 CBT,704,458,458,189,0,0,0,0,647,70.8,PARTIAL
+BPSC_CCE,2021,,,src_bpsc_cce_2021_solved_practice_paper_drishti_ias_bpsc,Solved Practice Paper,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+NEET_UG,2015,,,src_neet_ug_2015_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,214,18,18,0,0,0,0,214,18,100,COMPLETE
+JEE_MAIN,2019,Session 2 (Apr),Shift 1,src_jee_main_2019_session_2_apr_shift_1_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+BPSC_CCE,2019,,,src_bpsc_cce_2019_solved_practice_paper_testbook_bpsc_so,Solved Practice Paper,51,5,5,0,0,0,0,51,5,100,COMPLETE
+JEE_MAIN,2022,Session 1 (Jan),Shift 1,src_jee_main_2022_session_1_jan_shift_1_nta_official_que,,2,5,2,0,3,0,0,0,2,100,COMPLETE
+JEE_MAIN,2023,Session 2 (Apr),Shift 1,src_jee_main_2023_session_2_apr_shift_1_nta_official_que,,770,775,770,0,5,0,0,0,770,100,COMPLETE
+SSC_CGL,2022,,,src_ssc_cgl_2022_tier_1_tier_2_solved_papers_adda247_ssc_edit,Tier 1 & Tier 2 Solved Papers,1399,626,626,557,0,0,0,0,1183,52.9,PARTIAL
+BPSC_CCE,2023,,,src_bpsc_cce_2023_solved_practice_paper_testbook_bpsc_so,Solved Practice Paper,351,313,313,0,0,0,300,51,313,100,COMPLETE
+UPSC_CSE,2023,,,src_upsc_cse_2023_csat_paper_2_prelims_upsc_official_cs,CSAT Paper 2 (Prelims),242,142,142,0,0,0,0,0,142,100,COMPLETE
+UPSC_CSE,2024,,,src_upsc_cse_2024_gs_paper_1_prelims_upsc_official_cs,GS Paper 1 (Prelims),241,113,113,0,0,0,0,0,113,100,COMPLETE
+UPSC_CSE,2024,,,src_upsc_cse_2024_csat_paper_2_prelims_upsc_official_cs,CSAT Paper 2 (Prelims),241,113,113,0,0,0,0,0,113,100,COMPLETE
+RRB_NTPC,2022,,,src_rrb_ntpc_2022_main_paper_railway_recruitm,Main Paper,4,3,3,0,0,0,0,4,3,100,COMPLETE
+JEE_MAIN,2026,Session 1 & 2,,src_jee_main_2026_session_1_2_testbook_verifie,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+BPSC_CCE,2022,,,src_bpsc_cce_2022_solved_practice_paper_drishti_ias_bpsc,Solved Practice Paper,201,160,160,0,0,0,150,51,160,100,COMPLETE
+UPSC_CSE,2025,,,src_upsc_cse_2025_gs_paper_1_2_detailed_explanations_drishti_ias_edit,GS Paper 1 & 2 Detailed Explanations,96,96,96,0,0,0,0,0,96,100,COMPLETE
+NEET_UG,2021,,,src_neet_ug_2021_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,223,30,30,0,0,0,0,223,30,100,COMPLETE
+JEE_MAIN,2026,Session 1 (Jan),Shift 2,src_jee_main_2026_session_1_jan_shift_2_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UPSC_CSE,2023,,,src_upsc_cse_2023_gs_paper_1_prelims_upsc_official_cs,GS Paper 1 (Prelims),242,142,142,0,0,0,0,0,142,100,COMPLETE
+SSC_CGL,2020,,Shift 1,src_ssc_cgl_2020_shift_1_tier_1_cbt_ssc_official_tie,Tier 1 CBT,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+NEET_UG,2024,,,src_neet_ug_2024_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,221,30,30,0,0,0,0,221,30,100,COMPLETE
+SSC_CGL,2022,,Shift 3,src_ssc_cgl_2022_shift_3_tier_1_cbt_ssc_official_tie,Tier 1 CBT,430,324,324,65,0,0,0,0,389,83.3,PARTIAL
+NEET_UG,2016,,,src_neet_ug_2016_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,212,16,16,0,0,0,0,212,16,100,COMPLETE
+BPSC_CCE,2020,,,src_bpsc_cce_2020_solved_practice_paper_testbook_bpsc_so,Solved Practice Paper,201,165,165,0,0,0,150,51,165,100,COMPLETE
+NEET_UG,2018,,,src_neet_ug_2018_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,214,23,23,0,0,0,0,214,23,100,COMPLETE
+JEE_MAIN,2021,Session 1 (Jan),Shift 1,src_jee_main_2021_session_1_jan_shift_1_nta_official_que,,535,538,535,0,3,0,0,0,535,100,COMPLETE
+JEE_MAIN,2020,Session 2 (Apr),Shift 1,src_jee_main_2020_session_2_apr_shift_1_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+IBPS_PO,2024,,,src_ibps_po_2024_solved_practice_paper_adda247_bankersa,Solved Practice Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
+SSC_CGL,2024,,Shift 1,src_ssc_cgl_2024_shift_1_tier_1_cbt_ssc_official_tie,Tier 1 CBT,3257,1447,1447,1701,0,0,0,0,3148,46,PARTIAL
+JEE_ADVANCED,2023,,,src_jee_advanced_2023_paper_2_iit_official_arc,Paper 2,10,5,5,0,0,0,0,10,5,100,COMPLETE
+JEE_MAIN,2025,Session 2 (Apr),Shift 1,src_jee_main_2025_session_2_apr_shift_1_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UPSC_CSE,2019,,,src_upsc_cse_2019_gs_paper_1_2_detailed_explanations_drishti_ias_edit,GS Paper 1 & 2 Detailed Explanations,100,100,100,0,0,0,0,0,100,100,COMPLETE
+JEE_MAIN,2024,Session 1 (Jan),Shift 1,src_jee_main_2024_session_1_jan_shift_1_nta_official_que,,823,976,822,1,154,0,1,0,823,99.9,PARTIAL
+NEET_UG,2025,,,src_neet_ug_2025_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,180,155,155,0,0,0,0,0,155,100,COMPLETE
+JEE_MAIN,2019,Session 1 (Jan),Shift 2,src_jee_main_2019_session_1_jan_shift_2_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+BPSC_CCE,2019,,,src_bpsc_cce_2019_main_paper_bihar_public_ser,Main Paper,51,5,5,0,0,0,0,51,5,100,COMPLETE
+RRB_NTPC,2022,,,src_rrb_ntpc_2022_solved_practice_paper_testbook_solved_,Solved Practice Paper,4,3,3,0,0,0,0,4,3,100,COMPLETE
+JEE_ADVANCED,2023,,,src_jee_advanced_2023_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,10,5,5,0,0,0,0,10,5,100,COMPLETE
+JEE_ADVANCED,2022,,,src_jee_advanced_2022_paper_1_iit_official_arc,Paper 1,6,3,3,0,0,0,0,6,3,100,COMPLETE
+NEET_UG,2018,,,src_neet_ug_2018_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,214,23,23,0,0,0,0,214,23,100,COMPLETE
+IBPS_PO,2022,,,src_ibps_po_2022_solved_practice_paper_testbook_solved_,Solved Practice Paper,2,1,1,0,0,0,0,2,1,100,COMPLETE
+NEET_UG,2022,,,src_neet_ug_2022_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,224,36,36,0,0,0,0,224,36,100,COMPLETE
+NEET_UG,2016,,,src_neet_ug_2016_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,212,16,16,0,0,0,0,212,16,100,COMPLETE
+SSC_CGL,2022,,Shift 2,src_ssc_cgl_2022_shift_2_tier_1_cbt_ssc_official_tie,Tier 1 CBT,455,329,329,59,0,0,0,0,388,84.8,PARTIAL
+JEE_MAIN,2022,Session 2 (Apr),Shift 2,src_jee_main_2022_session_2_apr_shift_2_nta_official_que,,980,983,980,0,3,0,0,0,980,100,COMPLETE
+JEE_MAIN,2023,Session 1 (Jan),Shift 2,src_jee_main_2023_session_1_jan_shift_2_nta_official_que,,974,979,974,0,5,0,0,0,974,100,COMPLETE
+JEE_ADVANCED,2018,,,src_jee_advanced_2018_paper_2_iit_official_arc,Paper 2,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+JEE_ADVANCED,2021,,,src_jee_advanced_2021_paper_2_iit_official_arc,Paper 2,6,3,3,0,0,0,0,6,3,100,COMPLETE
+UPSC_CSE,2024,,,src_upsc_cse_2024_gs_paper_1_2_detailed_explanations_drishti_ias_edit,GS Paper 1 & 2 Detailed Explanations,241,113,113,0,0,0,0,0,113,100,COMPLETE
+JEE_ADVANCED,2024,,,src_jee_advanced_2024_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,13,9,9,0,0,0,0,13,9,100,COMPLETE
+JEE_ADVANCED,2020,,,src_jee_advanced_2020_paper_1_iit_official_arc,Paper 1,7,4,4,0,0,0,0,7,4,100,COMPLETE
+JEE_ADVANCED,2019,,,src_jee_advanced_2019_paper_1_iit_official_arc,Paper 1,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UPSC_CSE,2022,,,src_upsc_cse_2022_csat_paper_2_prelims_upsc_official_cs,CSAT Paper 2 (Prelims),242,154,154,0,0,0,0,0,154,100,COMPLETE
+JEE_MAIN,2024,Session 1 & 2,,src_jee_main_2024_session_1_2_testbook_verifie,,3357,3510,3356,1,154,0,1,0,3357,100,PARTIAL
+UPSC_CSE,2019,,,src_upsc_cse_2019_gs_paper_1_prelims_upsc_official_cs,GS Paper 1 (Prelims),100,100,100,0,0,0,0,0,100,100,COMPLETE
+JEE_MAIN,2025,Session 1 & 2,,src_jee_main_2025_session_1_2_testbook_verifie,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+IBPS_PO,2022,,,src_ibps_po_2022_main_paper_institute_of_ban,Main Paper,2,1,1,0,0,0,0,2,1,100,COMPLETE
+SSC_CGL,2025,,Shift 2,src_ssc_cgl_2025_shift_2_tier_1_cbt_ssc_official_tie,Tier 1 CBT,1600,619,619,981,0,0,0,0,1600,38.7,PARTIAL
+BPSC_CCE,2023,,,src_bpsc_cce_2023_main_paper_bihar_public_ser,Main Paper,351,313,313,0,0,0,300,51,313,100,COMPLETE
+JEE_ADVANCED,2018,,,src_jee_advanced_2018_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+RRB_NTPC,2021,,,src_rrb_ntpc_2021_solved_practice_paper_testbook_solved_,Solved Practice Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
+SSC_CGL,2021,,Shift 3,src_ssc_cgl_2021_shift_3_tier_1_cbt_ssc_official_tie,Tier 1 CBT,783,496,496,249,0,0,0,0,745,66.6,PARTIAL
+IBPS_PO,2022,,,src_ibps_po_2022_solved_practice_paper_adda247_bankersa,Solved Practice Paper,2,1,1,0,0,0,0,2,1,100,COMPLETE
+RRB_NTPC,2019,,,src_rrb_ntpc_2019_main_paper_railway_recruitm,Main Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
+SSC_CGL,2023,,,src_ssc_cgl_2023_tier_1_tier_2_solved_papers_adda247_ssc_edit,Tier 1 & Tier 2 Solved Papers,5139,2129,2129,2805,0,0,0,0,4934,43.1,PARTIAL
+JEE_MAIN,2026,Session 2 (Apr),Shift 1,src_jee_main_2026_session_2_apr_shift_1_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UPSC_CSE,2025,,,src_upsc_cse_2025_csat_paper_2_prelims_upsc_official_cs,CSAT Paper 2 (Prelims),96,96,96,0,0,0,0,0,96,100,COMPLETE
+NEET_UG,2021,,,src_neet_ug_2021_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,223,30,30,0,0,0,0,223,30,100,COMPLETE
+JEE_ADVANCED,2024,,,src_jee_advanced_2024_paper_1_iit_official_arc,Paper 1,13,9,9,0,0,0,0,13,9,100,COMPLETE
+UPSC_CSE,2020,,,src_upsc_cse_2020_gs_paper_1_prelims_upsc_official_cs,GS Paper 1 (Prelims),100,100,100,0,0,0,0,0,100,100,COMPLETE
+NEET_UG,2022,,,src_neet_ug_2022_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,224,36,36,0,0,0,0,224,36,100,COMPLETE
+NEET_UG,2013,,,src_neet_ug_2013_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,211,17,17,0,0,0,0,211,17,100,COMPLETE
+BPSC_CCE,2024,,,src_bpsc_cce_2024_solved_practice_paper_drishti_ias_bpsc,Solved Practice Paper,201,158,158,0,0,0,150,51,158,100,COMPLETE
+SSC_CGL,2023,,Shift 1,src_ssc_cgl_2023_shift_1_tier_1_cbt_ssc_official_tie,Tier 1 CBT,2368,1085,1085,1183,0,0,0,0,2268,47.8,PARTIAL
+UPSC_CSE,2020,,,src_upsc_cse_2020_gs_paper_1_2_detailed_explanations_drishti_ias_edit,GS Paper 1 & 2 Detailed Explanations,100,100,100,0,0,0,0,0,100,100,COMPLETE
+JEE_ADVANCED,2025,,,src_jee_advanced_2025_paper_2_iit_official_arc,Paper 2,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+JEE_MAIN,2021,Session 2 (Apr),Shift 2,src_jee_main_2021_session_2_apr_shift_2_nta_official_que,,710,713,710,0,3,0,0,0,710,100,COMPLETE
+JEE_MAIN,2020,Session 1 (Jan),Shift 2,src_jee_main_2020_session_1_jan_shift_2_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+BPSC_CCE,2025,71st Integrated CCE Prelims,,,General Studies (Paper 1),150,150,150,0,0,0,150,0,150,100,NOT_IN_REGISTRY
+IBPS_PO,2021,Prelims,Concept Drill,,Practice Set,1,1,1,0,0,0,0,1,1,100,NOT_IN_REGISTRY
+undefined,,,Concept Drill,,Practice Set,1,1,1,0,0,0,1,0,1,100,NOT_IN_REGISTRY
+undefined,,,,,,3,0,0,0,0,0,3,0,0,0,NOT_IN_REGISTRY
+NEET_UG,2026,Main,,,NEET UG 2026 (Code 13),180,157,157,0,0,0,0,0,157,100,NOT_IN_REGISTRY
+NEET_UG,2026,Re-NEET,,,NEET UG 2026 Re-NEET (Code 50),180,146,146,0,0,0,0,0,146,100,NOT_IN_REGISTRY
+SSC_CHSL,2025,Practice Bank,,,Tier 1 Complete,1595,1595,1595,0,0,0,0,0,1595,100,NOT_IN_REGISTRY
+UPSC_CSE,2011,General Studies Paper I,Set A,,General Studies Paper I,100,100,100,0,0,0,0,0,100,100,NOT_IN_REGISTRY
+UPSC_CSE,2012,General Studies Paper I,Set A,,General Studies Paper I,100,100,100,0,0,0,0,0,100,100,NOT_IN_REGISTRY
+UPSC_CSE,2013,General Studies Paper I,Set A,,General Studies Paper I,100,100,100,0,0,0,0,0,100,100,NOT_IN_REGISTRY
+UPSC_CSE,2014,General Studies Paper I,Set A,,General Studies Paper I,97,97,97,0,0,0,0,0,97,100,NOT_IN_REGISTRY
+UPSC_CSE,2015,General Studies Paper I,Set A,,General Studies Paper I,99,99,99,0,0,0,0,0,99,100,NOT_IN_REGISTRY
+UPSC_CSE,2016,General Studies Paper I,Set A,,General Studies Paper I,100,100,100,0,0,0,0,0,100,100,NOT_IN_REGISTRY
+UPSC_CSE,2017,General Studies Paper I,Set A,,General Studies Paper I,93,93,93,0,0,0,0,0,93,100,NOT_IN_REGISTRY
+UPSC_CSE,2018,General Studies Paper I,Set A,,General Studies Paper I,99,99,99,0,0,0,0,0,99,100,NOT_IN_REGISTRY

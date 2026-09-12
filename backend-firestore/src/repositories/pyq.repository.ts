@@ -184,6 +184,41 @@ export class PYQRepository {
     return snap.docs.map((d) => d.data() as CanonicalPYQQuestion);
   }
 
+  /**
+   * Every question matching the filter, paged rather than capped.
+   *
+   * `listQuestions` takes a `limit` and callers pick a number they hope is large enough.
+   * Analytics picked 10,000 — but SSC CGL holds 14,009, so its pattern profile was computed from
+   * 71% of the corpus with nothing to indicate the other 29% had been dropped. A silent truncation
+   * is worse than a slow query here: the numbers still look plausible.
+   *
+   * Pages by document id so it is stable under concurrent writes, and streams each page into the
+   * accumulator rather than issuing one enormous query.
+   */
+  async listAllQuestions(
+    filter: { examId?: string; year?: number; ingestionState?: PYQIngestionState; vectorIndexed?: boolean } = {},
+    pageSize = 2000,
+  ): Promise<CanonicalPYQQuestion[]> {
+    let base: FirebaseFirestore.Query = this.questionsCol;
+    if (filter.examId) base = base.where('examId', '==', filter.examId);
+    if (filter.year) base = base.where('year', '==', filter.year);
+    if (filter.ingestionState) base = base.where('ingestionState', '==', filter.ingestionState);
+    if (filter.vectorIndexed !== undefined) base = base.where('vectorIndexed', '==', filter.vectorIndexed);
+    base = base.orderBy('__name__');
+
+    const out: CanonicalPYQQuestion[] = [];
+    let cursor: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+    while (true) {
+      const page: FirebaseFirestore.Query = cursor ? base.startAfter(cursor).limit(pageSize) : base.limit(pageSize);
+      const snap: FirebaseFirestore.QuerySnapshot = await page.get();
+      if (snap.empty) break;
+      for (const d of snap.docs) out.push(d.data() as CanonicalPYQQuestion);
+      cursor = snap.docs[snap.docs.length - 1];
+      if (snap.size < pageSize) break;
+    }
+    return out;
+  }
+
   async countQuestions(filter: {
     examId?: string;
     year?: number;
