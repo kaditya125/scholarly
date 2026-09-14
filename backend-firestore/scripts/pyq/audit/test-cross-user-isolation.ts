@@ -121,6 +121,32 @@ async function main() {
   if (wrongExam.length) failures++;
   results.push({ test: 'exam isolation', leaked: wrongExam.length > 0, wrongExamCitations: wrongExam.length });
 
+  /*
+   * ── 4. The invariant behind vulnerability 2, asserted directly ────────────────────────────
+   *
+   * Case 3 exercises this end-to-end, but end-to-end only proves that *today's* router happens to
+   * resolve the exam. The rule that actually protects the corpus is narrower and belongs at the
+   * retrieval boundary: an unknown exam must never widen into a search across every exam. This
+   * asserts it on the function itself, so the guarantee survives any future change to intent
+   * detection upstream.
+   */
+  console.log('4. INVARIANT: retrievePyqContext with no exam identity must not search across exams');
+  const { retrievalService } = await import('../../../src/services/rag/retrieval.service');
+  const unrestricted = await (retrievalService as any).retrievePyqContext('probability questions', { topK: 5 });
+  const restricted = await (retrievalService as any).retrievePyqContext('probability questions', { examId: 'SSC_CGL', topK: 5 });
+  const invariantHeld = Array.isArray(unrestricted) && unrestricted.length === 0;
+  const filteredStillWorks = Array.isArray(restricted) && restricted.length > 0;
+  const wrongExam = (restricted ?? []).filter((r: any) => r.metadata?.examId && r.metadata.examId !== 'SSC_CGL');
+  console.log(`   no examId  -> ${unrestricted.length} results (must be 0)`);
+  console.log(`   examId set -> ${restricted.length} results, ${wrongExam.length} from another exam (must be 0)`);
+  const invariantOk = invariantHeld && wrongExam.length === 0;
+  console.log(`   ${invariantOk ? 'PASS' : 'FAIL'}${filteredStillWorks ? '' : '  (note: filtered search returned nothing — corpus/quota issue, not an isolation failure)'}\n`);
+  if (!invariantOk) failures++;
+  results.push({
+    test: 'unfiltered PYQ retrieval refused', leaked: !invariantOk,
+    unrestrictedResults: unrestricted.length, restrictedResults: restricted.length, wrongExamResults: wrongExam.length,
+  });
+
   fs.mkdirSync(`${__dirname}/out`, { recursive: true });
   fs.writeFileSync(`${__dirname}/out/cross-user-isolation.json`,
     JSON.stringify({ generatedAt: new Date().toISOString(), victimNotebook: victim.id, results }, null, 2));
