@@ -6,6 +6,8 @@ import { TeacherAgent } from '../agents/TeacherAgent';
 import { VerificationAgent } from '../agents/VerificationAgent';
 import { ResponseFormatter } from '../agents/ResponseFormatter';
 import { KnowledgeGraphAgent } from '../agents/KnowledgeGraphAgent';
+import { retrievalOrchestrator } from './services/RetrievalOrchestrator';
+import { QueryPlanningService } from './services/QueryPlanningService';
 import { RetrievalService } from '../../services/rag/retrieval.service';
 import { StudentContextService } from '../../services/studentContext.service';
 import { TeacherContextService } from '../../services/teacherContext.service';
@@ -528,76 +530,38 @@ export class WorkflowEngine {
       const graphAgent = new KnowledgeGraphAgent();
       await graphAgent.execute(agentContext);
       
-      // ── Stage 5: Vector Retrieval (RAG) ────────────────────────────────
-      yield { type: 'progress', stage: WorkflowStage.RAG_RETRIEVAL, message: 'Searching memory and the web...' };
-      const retrievalStartTime = Date.now();
+      /*
+       * ── Stage 5: Retrieval ─────────────────────────────────────────────────────────────────
+       *
+       * This block used to run its own retrieval inline, and it gated ALL of it behind
+       * `if (req.notebookId)`. A student with no notebook attached — the ordinary case — got no
+       * retrieval of any kind: not curriculum, not syllabus, not the 63,000-question verified PYQ
+       * corpus. `retrievedContext` was set to the literal string 'No specific context found.',
+       * and the prompt layer then instructed the model to answer confidently from its own
+       * knowledge and never refuse. That is why asking for "SSC CGL 2022 PYQ" produced invented
+       * questions while the real 1,399-question paper sat in Firestore unqueried.
+       *
+       * Meanwhile RetrievalOrchestrator already owned exactly the right logic — notebook,
+       * curriculum, official syllabus, reference books, canonical PYQ lookup, graph fusion — and
+       * had zero callers. So this is a rewiring, not a new retrieval path: notebook search becomes
+       * one source among several rather than the switch that enables the whole subsystem.
+       */
+      // Still needed below for post-generation claim verification, which is a separate concern
+      // from Stage 5 retrieval and was previously sharing this block's instance.
       const retrievalService = new RetrievalService();
-      let contextStr = '';
+      const queryPlan = new QueryPlanningService().plan(req.query, String(mode));
+      const retrievalOutcome = yield* retrievalOrchestrator.stream(req, agentContext, queryPlan);
+      const citationsList: any[] = retrievalOutcome.citationsList;
+      const retrievalLatencyMs = retrievalOutcome.retrievalLatencyMs;
 
-      // Check if query needs web search (news, latest, current) or mode is research
-      const queryLower = req.query.toLowerCase();
-      const needsWebSearch = mode === 'RESEARCH' || mode === 'research' || 
-        /(news|current|latest|update|today|recent|now)/.test(queryLower);
-
-      if (needsWebSearch) {
-        try {
-          const webResults = await retrievalService.retrieveWebContext(req.query);
-          if (webResults.length > 0) {
-            contextStr += "=== LATEST WEB SEARCH RESULTS ===\n";
-            webResults.forEach(r => {
-              contextStr += `[Source: ${r.source}]\n${r.text}\n\n`;
-            });
-          }
-        } catch (err) {
-          console.warn("Web search failed", err);
-        }
-      }
-
-      // If we have a notebookId, retrieve hierarchical context
-      let citationsList: any[] = [];
-      if (req.notebookId) {
-        const notebookResults = await retrievalService.retrieveContext(req.query, req.notebookId, undefined, 5);
-        if (notebookResults.length > 0) {
-          contextStr += "=== NOTEBOOK CONTEXT ===\n";
-          for (const r of notebookResults) {
-            contextStr += `[Citation: ${r.source} (Page ${r.metadata?.pageNumber || 1})]\n${r.text}\n\n`;
-            const citationData = {
-              source: r.source,
-              text: r.text,
-              score: r.score,
-              authorityScore: r.metadata?.authority || 0.8,
-              selectionReasoning: r.selectionReasoning || 'Highly relevant to your query.',
-              pageNumber: r.metadata?.pageNumber,
-              paragraphIndex: r.metadata?.paragraphIndex
-            };
-            citationsList.push(citationData);
-            yield { type: 'citation', citation: citationData };
-          }
-        }
-      }
-
-      // ── Hybrid GraphRAG (Phase 1): fuse Knowledge Graph context ────────
-      // The KnowledgeGraphAgent (Stage 4) placed notebook-scoped graph context
-      // into shared state. Prepend it so concepts + relationships + definitions
-      // reach the TeacherAgent alongside the vector chunks. Graph retrieval is
-      // pure Firestore + string ops (zero extra Gemini cost).
-      const graphContextStr = (agentContext.sharedState['graphContext'] as string) || '';
-      if (graphContextStr) {
-        const graphMeta = (agentContext.sharedState['graphMeta'] as any) || {};
-        Telemetry.logLatency('graph_retrieval', graphMeta.traversalMs || 0, {
-          notebookId: req.notebookId,
-          nodeCount: graphMeta.nodeCount || 0,
-          edgeCount: graphMeta.edgeCount || 0,
-          matched: graphMeta.matched || 0,
-        });
-        contextStr = `=== KNOWLEDGE GRAPH CONTEXT ===\n${graphContextStr}\n\n${contextStr}`;
-      }
-
-      agentContext.retrievedContext = contextStr || 'No specific context found.';
+      // Carried to the generation stage so the prompt can demand the right behaviour: present
+      // canonical records verbatim, or say plainly that the corpus does not hold them.
+      agentContext.sharedState['groundingState'] = retrievalOutcome.groundingState;
+      agentContext.sharedState['groundingDetail'] = retrievalOutcome.groundingDetail;
+      agentContext.sharedState['retrievalTrace'] = retrievalOutcome.trace;
 
       // Real retrieval-phase measurements. Reranking / pinecone / embedding sub-spans are
       // recorded inside RetrievalService via Telemetry.logLatency; we read them back here.
-      const retrievalLatencyMs = Date.now() - retrievalStartTime;
       const retrievalSpans = Telemetry.metrics.slice(telemetryMark);
       const sumSpan = (op: string) =>
         retrievalSpans.filter((m: any) => m.operation === op).reduce((a: number, m: any) => a + (m.durationMs || 0), 0);

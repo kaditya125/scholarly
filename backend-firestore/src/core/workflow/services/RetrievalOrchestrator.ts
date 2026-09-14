@@ -9,10 +9,50 @@ import { QueryPlan } from './QueryPlanningService';
 import { RetrievalError } from '../../errors/providerErrors';
 import { featureFlags } from '../../../config/featureFlags';
 import { ExecutionPlan } from '../../intelligence/types';
+import { parsePyqQuery } from '../../../services/pyq/pyqQueryParser';
+import { canonicalPyqRetrievalService } from '../../../services/pyq/canonicalPyqRetrieval.service';
+import { GroundingState } from '../../../config/prompts';
+import { logger } from '../../../utils/logger';
 
 export interface RetrievalOutcome {
   citationsList: any[];
   retrievalLatencyMs: number;
+  /** What kind of evidence backs this turn; drives the grounding instructions in the prompt. */
+  groundingState: GroundingState;
+  /** One line of specifics for the grounding instruction (counts, what was missing). */
+  groundingDetail?: string;
+  /** Developer-facing record of what was planned, called and found. Never shown to a student. */
+  trace: RetrievalTrace;
+}
+
+/**
+ * Why an answer came out the way it did, in one object.
+ *
+ * The original failure was invisible from the outside: retrieval silently did not run, and the
+ * only observable symptom was a confident wrong answer. This is the evidence trail that makes
+ * that diagnosable — intent, what was called, what came back, and which grounding state the
+ * prompt was given. Carries ids and counts only; no question text, no student profile fields.
+ */
+export interface RetrievalTrace {
+  intent: string;
+  examId: string | null;
+  year: number | null;
+  shift: number | null;
+  paper: string | null;
+  topic: string | null;
+  strategy: string;
+  canonicalLookupRan: boolean;
+  canonicalStatus: string | null;
+  canonicalPaperId: string | null;
+  canonicalRecords: number;
+  expectedRecords: number | null;
+  vectorSearchRan: boolean;
+  vectorHits: number;
+  notebookSearchRan: boolean;
+  webSearchRan: boolean;
+  contextChars: number;
+  groundingState: GroundingState;
+  fallbackReason?: string;
 }
 
 /**
@@ -70,6 +110,9 @@ export class RetrievalOrchestrator {
     yield { type: 'progress', stage: WorkflowStage.RAG_RETRIEVAL, message: 'Searching memory and the web...' };
     const retrievalStartTime = Date.now();
     let contextStr = '';
+    // Declared here rather than beside the vector branch: the canonical branch below runs first
+    // and emits its own citations.
+    const citationsList: any[] = [];
 
     const { needsWebSearch, hasAttachment } = plan;
 
@@ -79,8 +122,110 @@ export class RetrievalOrchestrator {
     const routingOn = featureFlags.intelligenceRetrievalRouting && !!execPlan;
     const strategy = routingOn ? execPlan!.retrievalStrategy : 'graphrag';
     const doWeb = needsWebSearch || strategy === 'graph_web';
-    const doVector = strategy !== 'none';
+    let doVector = strategy !== 'none';
     const doGraphFusion = strategy !== 'none' && strategy !== 'vector' && strategy !== 'notebook';
+
+    /*
+     * ── Canonical lookup, before any semantic search ──────────────────────────────────────────
+     *
+     * A request that names a sitting ("SSC CGL 2022 Shift 1") is a request for specific records,
+     * not for whatever is semantically nearest. It is answered from Firestore by canonicalPaperId,
+     * in question-number order. Nearest-neighbour search cannot answer it correctly even in
+     * principle: it would assemble a set of real questions that never sat together.
+     *
+     * This runs first and, when it succeeds, suppresses the vector branch entirely — mixing
+     * curriculum passages into a paper listing only invites the model to blur the two.
+     */
+    const parsed = await parsePyqQuery(req.query);
+    const trace: RetrievalTrace = {
+      intent: parsed.intent, examId: parsed.examId, year: parsed.year, shift: parsed.shift,
+      paper: parsed.paper, topic: parsed.topic, strategy,
+      canonicalLookupRan: false, canonicalStatus: null, canonicalPaperId: null,
+      canonicalRecords: 0, expectedRecords: null,
+      vectorSearchRan: false, vectorHits: 0, notebookSearchRan: false, webSearchRan: doWeb,
+      contextChars: 0, groundingState: 'GENERAL_KNOWLEDGE',
+    };
+    let groundingState: GroundingState = 'GENERAL_KNOWLEDGE';
+    let groundingDetail: string | undefined;
+
+    if (parsed.intent === 'EXACT_PYQ' && !parsed.examId) {
+      /*
+       * A past-paper request naming an exam the corpus does not contain — "GATE CS 2024 paper".
+       * There is nothing to look up, but "nothing to look up" must not mean "answer from memory":
+       * that is precisely how an invented GATE paper reaches a student. The absence is stated as a
+       * fact and the grounding instructions forbid reconstruction.
+       */
+      trace.canonicalLookupRan = true;
+      trace.canonicalStatus = 'NOT_AVAILABLE_IN_VERIFIED_CORPUS';
+      const named = parsed.unresolvedExamHint ?? 'that exam';
+      groundingState = 'CANONICAL_NOT_FOUND';
+      groundingDetail = `Sadhya's verified corpus contains no questions for ${named}.`;
+      doVector = false;
+      contextStr += `=== CANONICAL LOOKUP RESULT ===\nStatus: NOT_AVAILABLE_IN_VERIFIED_CORPUS\n` +
+        `Sadhya's verified corpus contains no questions for ${named}.\n\n`;
+    } else if (parsed.intent === 'EXACT_PYQ' && parsed.examId) {
+      trace.canonicalLookupRan = true;
+      yield { type: 'progress', stage: WorkflowStage.RAG_RETRIEVAL, message: 'Checking Sadhya\'s verified question corpus...' };
+      try {
+        const canonical = await canonicalPyqRetrievalService.retrieve({
+          examId: parsed.examId, year: parsed.year, shift: parsed.shift,
+          paper: parsed.paper, wantsFullPaper: parsed.wantsFullPaper,
+        });
+        trace.canonicalStatus = canonical.status;
+        trace.canonicalRecords = canonical.retrievedCount;
+        trace.expectedRecords = canonical.expectedCount;
+        trace.canonicalPaperId = (canonical.questions[0] as any)?.canonicalPaperId ?? null;
+
+        if (canonical.status === 'CANONICAL_RETRIEVED' || canonical.status === 'PARTIAL_CANONICAL_PAPER') {
+          const block = canonicalPyqRetrievalService.toContextBlock(canonical);
+          if (block) {
+            contextStr += block;
+            doVector = false; // the paper is the answer; do not dilute it
+            groundingState = canonical.status === 'CANONICAL_RETRIEVED' ? 'CANONICAL_RETRIEVED' : 'PARTIAL_CANONICAL';
+            groundingDetail = canonical.diagnostics;
+            for (const q of canonical.questions.slice(0, 5) as any[]) {
+              const citation = {
+                source: [q.examName || q.examId, q.year, q.shift].filter(Boolean).join(' · '),
+                text: String(q.questionText ?? '').slice(0, 300),
+                score: 1, authorityScore: 1.5,
+                selectionReasoning: 'Canonical record retrieved from Sadhya\'s verified corpus.',
+                sourceId: q.canonicalPaperId, questionId: q.questionId,
+                contentOrigin: 'CANONICAL_PYQ',
+              };
+              citationsList.push(citation);
+              yield { type: 'citation', citation };
+            }
+          }
+        } else {
+          // AMBIGUOUS_PAPER or NOT_AVAILABLE_IN_VERIFIED_CORPUS. Either way the model must not
+          // reconstruct the paper, so the corpus's own answer is what goes into context.
+          groundingState = 'CANONICAL_NOT_FOUND';
+          groundingDetail = canonical.diagnostics;
+          doVector = false;
+          contextStr += `=== CANONICAL LOOKUP RESULT ===\nStatus: ${canonical.status}\n${canonical.diagnostics}\n`;
+          if (canonical.papers.length > 0) {
+            contextStr += `Papers that ARE available for this exam/year:\n`;
+            for (const p of canonical.papers.slice(0, 10)) {
+              contextStr += `  - ${[p.year, p.session, p.shift, p.paper].filter(Boolean).join(' · ') || p.canonicalPaperId} (${p.questionCount} questions)\n`;
+            }
+          }
+          contextStr += '\n';
+        }
+      } catch (e: any) {
+        // A failed lookup must not degrade into "answer from memory" — that is the original bug.
+        trace.fallbackReason = `canonical lookup error: ${String(e?.message ?? e).slice(0, 120)}`;
+        groundingState = 'CANONICAL_NOT_FOUND';
+        groundingDetail = 'The verified corpus could not be queried for this request.';
+        doVector = false;
+        contextStr += `=== CANONICAL LOOKUP RESULT ===\nStatus: LOOKUP_FAILED\n`;
+        logger.error('[RetrievalOrchestrator] canonical lookup failed', { error: String(e?.message ?? e) });
+      }
+    } else if (parsed.intent === 'GENERATED_PRACTICE') {
+      groundingState = 'GENERATED';
+      groundingDetail = parsed.examId
+        ? `Generation constrained to ${parsed.examId}${parsed.topic ? ` / ${parsed.topic}` : ''}.`
+        : undefined;
+    }
 
     if (doWeb) {
       try {
@@ -97,8 +242,9 @@ export class RetrievalOrchestrator {
     }
 
     // If we have a notebookId, retrieve hierarchical context
-    let citationsList: any[] = [];
     if (doVector && req.notebookId) {
+      trace.notebookSearchRan = true;
+      trace.vectorSearchRan = true;
       // Phase 2: pass graph-neighbor expansion terms (from KnowledgeGraphAgent,
       // Stage 4) so vector recall is widened via the graph — zero extra API cost.
       const expansionTerms = (agentContext.sharedState['graphExpansionTerms'] as string[]) || [];
@@ -135,6 +281,7 @@ export class RetrievalOrchestrator {
         }
       }
     } else if (doVector && !hasAttachment) {
+      trace.vectorSearchRan = true;
       // No notebook attached and no uploaded file — ground the answer in the shared,
       // admin-ingested NCERT curriculum corpus (scoped to the curriculum owner, so no
       // other user's private notebooks are exposed) instead of relying purely on the
@@ -285,6 +432,35 @@ export class RetrievalOrchestrator {
 
     agentContext.retrievedContext = contextStr || 'No specific context found.';
 
+    /*
+     * Settle the grounding state.
+     *
+     * A canonical verdict (retrieved / partial / not-found) is authoritative and is never
+     * downgraded by what semantic search did or did not find — "the corpus does not hold this
+     * paper" stays true regardless of how many curriculum passages matched. Everything else is
+     * decided by what actually reached the model.
+     */
+    const canonicalDecided = groundingState === 'CANONICAL_RETRIEVED'
+      || groundingState === 'PARTIAL_CANONICAL'
+      || groundingState === 'CANONICAL_NOT_FOUND'
+      || groundingState === 'GENERATED';
+    if (!canonicalDecided) {
+      if (req.notebookId && citationsList.length > 0) groundingState = 'NOTEBOOK';
+      else if (citationsList.length > 0) groundingState = 'GENERAL_KNOWLEDGE';
+      else {
+        groundingState = 'GENERAL_KNOWLEDGE';
+        trace.fallbackReason = trace.vectorSearchRan
+          ? 'semantic search returned no passages above threshold'
+          : 'no retrieval source applied to this query';
+      }
+    }
+    trace.vectorHits = citationsList.length;
+    trace.contextChars = contextStr.length;
+    trace.groundingState = groundingState;
+
+    // Developer-facing only: ids and counts, no question text and no student profile fields.
+    logger.info('[Retrieval] trace', { sessionId: req.sessionId, ...trace });
+
     {
       if (hasAttachment) {
         yield {
@@ -316,7 +492,7 @@ export class RetrievalOrchestrator {
     }
 
     const retrievalLatencyMs = Date.now() - retrievalStartTime;
-    return { citationsList, retrievalLatencyMs };
+    return { citationsList, retrievalLatencyMs, groundingState, groundingDetail, trace };
   }
 }
 

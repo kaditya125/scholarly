@@ -52,6 +52,11 @@ export class TeacherAgent implements IAgent {
           teacherContext: context.teacherContext,
           retrievedContext: context.retrievedContext,
           hasNotebookContext: computeHasNotebookContext(context.retrievedContext),
+          // Set by RetrievalOrchestrator from what the canonical lookup actually returned. When
+          // present it decides the grounding instructions — in particular, a canonical request
+          // that found nothing must be answered by saying so rather than from model memory.
+          groundingState: context.sharedState?.['groundingState'] as any,
+          groundingDetail: context.sharedState?.['groundingDetail'] as any,
         });
 
     const response = await aiProvider.generateResponse([
@@ -94,6 +99,11 @@ export class TeacherAgent implements IAgent {
           teacherContext: context.teacherContext,
           retrievedContext: context.retrievedContext,
           hasNotebookContext: computeHasNotebookContext(context.retrievedContext),
+          // Set by RetrievalOrchestrator from what the canonical lookup actually returned. When
+          // present it decides the grounding instructions — in particular, a canonical request
+          // that found nothing must be answered by saying so rather than from model memory.
+          groundingState: context.sharedState?.['groundingState'] as any,
+          groundingDetail: context.sharedState?.['groundingDetail'] as any,
         });
 
     const messages = [
