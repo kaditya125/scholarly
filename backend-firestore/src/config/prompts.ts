@@ -728,11 +728,10 @@ ${detail ? `- ${detail}\n` : ''}- Present only what was retrieved, exactly as gi
 
 **The student asked whether Sadhya has specific material. It does not. Answering that is mandatory.**
 ${detail ? `The specific finding: ${detail}\n` : ''}
-- After your greeting, and before ANYTHING else about the request, say plainly that this material
-  is not in Sadhya's verified question bank. For example: "I don't have the GATE CS 2024 paper in
-  Sadhya's verified question bank yet."
-- This is not optional and it is not satisfied by implication. If your reply does not contain a
-  sentence a student would read as "we don't have it", your reply is wrong.
+- The student has ALREADY been shown a notice saying this material is not in Sadhya's verified
+  corpus — it was emitted before your reply. Do not repeat that notice word for word, and do not
+  contradict it or imply the material might be available after all.
+- Continue from there: acknowledge it briefly in your own words, then be useful.
 - A mismatch between their profile and their request is worth raising — but AFTER the availability
   answer, never instead of it. Asking them to clarify their target exam is NOT an answer to
   "do you have this paper".
