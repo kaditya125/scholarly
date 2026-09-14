@@ -35,6 +35,7 @@ import { GoogleEmbeddingProvider } from '../../../src/services/ai/providers/goog
 import { getVectorStore } from '../../../src/services/rag/vectorStore';
 import { env } from '../../../src/config/env';
 import { classifyProvenance, isAuthenticPyq } from '../../../src/services/pyq/paperIdentity';
+import { acquireIndexerLock } from '../../phase4a/_embedding-guard';
 
 const arg = (name: string, dflt?: string) =>
   process.argv.find((a) => a.startsWith(`--${name}=`))?.split('=')[1] ?? dflt;
@@ -178,6 +179,17 @@ async function main() {
     console.log(`At ${PACE_MS}ms pacing this run would take ~${Math.round((work.length * PACE_MS) / 60000)} minutes.`);
     return;
   }
+
+  /*
+   * Hold the indexer lock for the whole run.
+   *
+   * `requireNoIndexer()` is how every audit and verification script decides whether it may spend
+   * embedding quota. Nothing was taking the lock, so those scripts had no way to know a backfill
+   * was in flight and would happily compete with it for the same per-minute ceiling — which is
+   * exactly how a long run gets pushed into 429s by a one-off diagnostic. The guard releases it on
+   * exit, including on SIGINT, so an interrupted run does not leave the lock stranded.
+   */
+  acquireIndexerLock(`pyq-index-worker:${JOB_ID}`);
 
   state.status = 'running';
   state.totalQueued = work.length;
