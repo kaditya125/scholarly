@@ -23,6 +23,16 @@ set -uo pipefail
 cd "$(dirname "$0")/../../.." || exit 1
 
 PACE_MS="${PACE_MS:-10000}"
+
+# Which exam to finish before doing the rest.
+#
+# The worker walks the queue in Firestore document-id order, which is alphabetical and has nothing
+# to do with need. Left alone it spent its first four hours on JEE Main — already at 90% coverage —
+# while UGC NET sat at 0.65%, meaning the one corpus that is actually unusable would have been
+# reached last, three days in. Draining the starved exam first makes UGC NET searchable in hours
+# instead of days; the total work is identical either way.
+EXAM_PRIORITY="${EXAM_PRIORITY:-UGC_NET}"
+
 OUT_DIR="scripts/pyq/audit/out"
 LOG="$OUT_DIR/backfill.log"
 STOP_FILE="scripts/pyq/audit/.backfill.stop"
@@ -50,15 +60,22 @@ trap 'rm -f "$PID_FILE"; echo "[supervisor] exiting" >> "$LOG"' EXIT
 } >> "$LOG"
 
 restarts=0
+phase=1
 while [ "$restarts" -lt "$MAX_RESTARTS" ]; do
   if [ -f "$STOP_FILE" ]; then
     echo "[supervisor] stop file present — halting after $restarts pass(es)" >> "$LOG"
     break
   fi
 
-  echo "[supervisor] pass $((restarts + 1)) starting $(date -u +%H:%M:%SZ)" >> "$LOG"
+  # Phase 1 drains the prioritised exam; phase 2 does everything else.
+  exam_arg=""
+  if [ -n "$EXAM_PRIORITY" ] && [ "$phase" = "1" ]; then
+    exam_arg="--exam=$EXAM_PRIORITY"
+  fi
+
+  echo "[supervisor] pass $((restarts + 1)) phase=$phase ${exam_arg:-(all exams)} starting $(date -u +%H:%M:%SZ)" >> "$LOG"
   node ./node_modules/tsx/dist/cli.mjs scripts/pyq/audit/index-worker.ts \
-    --execute --pace="$PACE_MS" >> "$LOG" 2>&1
+    --execute --pace="$PACE_MS" $exam_arg >> "$LOG" 2>&1
   code=$?
   echo "[supervisor] pass $((restarts + 1)) exited code=$code $(date -u +%H:%M:%SZ)" >> "$LOG"
 
@@ -66,6 +83,11 @@ while [ "$restarts" -lt "$MAX_RESTARTS" ]; do
   # left to do and re-running would only rescan the corpus every 30 seconds forever.
   remaining=$(grep -E "QUEUE \(eligible, no vector\)" "$LOG" | tail -1 | grep -oE '[0-9]+$' || echo "unknown")
   if [ "$remaining" = "0" ]; then
+    if [ "$phase" = "1" ] && [ -n "$EXAM_PRIORITY" ]; then
+      echo "[supervisor] $EXAM_PRIORITY drained — moving to the remaining exams $(date -u +%H:%M:%SZ)" >> "$LOG"
+      phase=2
+      continue
+    fi
     echo "[supervisor] queue empty — backfill complete $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$LOG"
     break
   fi
