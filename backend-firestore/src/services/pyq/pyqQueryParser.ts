@@ -63,7 +63,11 @@ const SOFT_GENERATE_RE = /\b(practice|mock|sample|custom|new)\s+(questions?|mcqs
 
 /** Freshness requests belong to web search, not to the question corpus. */
 const NEWS_RE = /\b(notification|admit\s*card|result|vacancy|apply|application\s*form|eligibility|exam\s*date|latest\s*news|cut\s*off\s*(date)?|registration)\b/i;
-const PYQ_RE = /\b(pyq|pyqs|previous\s*year|past\s*(year|paper)|previous\s*paper|question\s*paper|actual\s*paper|real\s*paper)\b/i;
+// "repetitive/repeated/frequently asked" etc. is how students actually phrase this — "which
+// questions keep coming back across shifts and years" — not with the word "PYQ" or "previous
+// year" at all. A query using only these words still requires examId to do anything (see
+// asksPyq's use at the intent decision below), so this stays safe without the exam+year anchor.
+const PYQ_RE = /\b(pyq|pyqs|previous\s*year|past\s*(year|paper)|previous\s*paper|question\s*paper|actual\s*paper|real\s*paper|repetitive|repeats?(?:ed|ing)?|recurring|frequently\s*asked|commonly\s*asked|most\s*asked|most\s*common(?:ly)?|keeps?\s+(?:coming|repeating)|comes?\s+(?:again\s+and\s+again|up\s+often|back))\b/i;
 const FULL_PAPER_RE = /\b(whole|full|complete|entire|all)\b[^.?!]{0,20}\b(paper|test|set|questions?)\b|\bpaper\b[^.?!]{0,10}\bin\s+full\b/i;
 const SYLLABUS_RE = /\bsyllabus|curriculum\s+for|topics?\s+covered|what\s+(is|are)\s+.{0,30}\bsyllabus\b/i;
 const PATTERN_RE = /\b(exam\s*pattern|marking\s*scheme|how\s*many\s*questions|negative\s*marking|paper\s*pattern|duration|total\s*marks)\b/i;
@@ -77,6 +81,17 @@ const STOPWORDS = new Set([
   'mcqs', 'practice', 'generate', 'create', 'make', 'new', 'sample', 'mock', 'do', 'you', 'have',
   'check', 'db', 'database', 'available', 'availability', 'whether', 'is', 'are', 'there',
   'extract', 'give', 'list', 'find', 'search', 'want', 'like', 'can', 'could', 'would', 'my',
+  // Greeting/filler and the frequency-language PYQ_RE now matches — none of these name a subject,
+  // so leaving them in let "hello help most repetitive ..." become the `topic` filter. topic is
+  // an exact-match metadata filter server-side (retrieval.service.ts), so a leftover phrase like
+  // that matches zero real PYQ records and silently empties out a search that should have worked.
+  'hello', 'hi', 'hey', 'help', 'most', 'many', 'which', 'come', 'comes', 'coming', 'back',
+  'keep', 'keeps', 'actual', 'actually', 'common', 'commonly', 'recurring', 'frequently',
+  'repetitive', 'repeated', 'repeatedly', 'repeat', 'repeats', 'asked', 'again', 'what', 'why',
+  'when', 'where', 'who', 'how', 'across', 'every', 'that', 'this', 'different', 'various',
+  // "diffrent" is the actual typo a real report used ("different" misspelled) — not a general
+  // typo-correction pass, just closing the one gap that was actually observed.
+  'diffrent',
 ]);
 
 function extractYear(q: string): number | null {
