@@ -41,7 +41,7 @@ const arg = (name: string, dflt?: string) =>
 
 const EXECUTE = process.argv.includes('--execute');
 const LIMIT = Number(arg('limit', '0'));
-const PACE_MS = Number(arg('pace', '13000'));
+const PACE_MS = Number(arg('pace', '7000'));
 const EXAM = arg('exam');
 const MAX_ATTEMPTS = 3;
 
@@ -63,6 +63,24 @@ interface JobState {
   totalQueued: number;
   completed: string[];
   failed: { questionId: string; error: string; attempts: number }[];
+}
+
+/**
+ * Strip keys the vector store will reject.
+ *
+ * A null metadata value is not ignored, it is an error — "Metadata value must be a string, number,
+ * boolean or list of strings, got 'null'" — and because the upsert is batched, one question with
+ * no canonical paper failed its 19 batch-mates too. Omitting the key says the same thing (this
+ * record has no sitting) without the blast radius.
+ */
+function scrubMetadata(m: Record<string, any>): Record<string, any> {
+  const out: Record<string, any> = {};
+  for (const [k, v] of Object.entries(m)) {
+    if (v === null || v === undefined) continue;
+    if (Array.isArray(v) && v.some((x) => typeof x !== 'string')) { out[k] = v.map((x) => String(x)); continue; }
+    out[k] = v;
+  }
+  return out;
 }
 
 function embeddingText(q: any): string {
@@ -94,6 +112,7 @@ async function main() {
   }
 
   const queue: any[] = [];
+  const excluded = { notAccepted: 0, alreadyIndexed: 0, noText: 0, suspectEncoding: 0 };
   let scanned = 0;
   let last: any = null;
   while (true) {
@@ -105,9 +124,31 @@ async function main() {
     for (const d of s.docs) {
       const x: any = d.data();
       scanned++;
-      if (!ACCEPTED.has(String(x.ingestionState))) continue;
-      if (present.has(derive(x.questionId))) continue;
-      if (!x.questionText) continue; // nothing to embed; recorded below, never silently "done"
+      if (!ACCEPTED.has(String(x.ingestionState))) { excluded.notAccepted++; continue; }
+
+      /*
+       * Already indexed — established from Qdrant, not from `vectorIndexed`.
+       *
+       * The flag was written positionally by the previous indexer and is not trustworthy as an
+       * input; deriving the point id and asking the store is the only way to know. This is also
+       * what makes the worker idempotent: a re-run recomputes the queue and skips whatever is
+       * genuinely present, so an interrupted run costs nothing to restart.
+       */
+      if (present.has(derive(x.questionId))) { excluded.alreadyIndexed++; continue; }
+
+      if (!x.questionText || String(x.questionText).trim().length < 5) { excluded.noText++; continue; }
+
+      /*
+       * Mis-decoded text is excluded deliberately.
+       *
+       * 2,613 records (87% of UGC NET Sanskrit, 84% of Hindi) hold text that came through the
+       * wrong code page. Embedding "ÃÖÖ×ÆüŸµÖê×ŸÖÆüÖÃÖ" produces a vector for mojibake: it will
+       * never match a real query, it costs the same quota as a good record, and once written it is
+       * indistinguishable from a legitimate vector. They are skipped and counted, so the coverage
+       * target stays honest and a re-decoding pass can find them.
+       */
+      if (x.textIntegrity === 'SUSPECT_ENCODING') { excluded.suspectEncoding++; continue; }
+
       queue.push(x);
     }
     last = s.docs[s.docs.length - 1];
@@ -123,12 +164,14 @@ async function main() {
   const work = queue.filter((q) => !deadLettered.has(q.questionId));
 
   console.log(`  scanned ${scanned} questions`);
-  console.log(`  already carry a valid vector: ${scanned - queue.length - 0}`);
-  console.log(`  QUEUE (accepted, no vector):  ${queue.length}`);
+  console.log(`  excluded — not an accepted state : ${excluded.notAccepted}`);
+  console.log(`  excluded — already indexed       : ${excluded.alreadyIndexed}`);
+  console.log(`  excluded — no question text      : ${excluded.noText}`);
+  console.log(`  excluded — suspect encoding      : ${excluded.suspectEncoding}`);
+  console.log(`  QUEUE (eligible, no vector)      : ${queue.length}`);
   console.log(`  previously dead-lettered:     ${deadLettered.size}`);
   console.log(`  to process this run:          ${LIMIT ? Math.min(LIMIT, work.length) : work.length}`);
-  const noText = queue.length - work.length;
-  if (noText > 0) console.log(`  skipped (no question text):   ${noText}`);
+
 
   if (!EXECUTE) {
     console.log('\nDRY RUN — nothing embedded or written. Pass --execute to run.');
@@ -175,19 +218,19 @@ async function main() {
       buffered.push({
         id: `vec_${q.questionId.replace(/[^a-zA-Z0-9_-]/g, '_')}`,
         values: embedding,
-        metadata: {
+        metadata: scrubMetadata({
           content_type: 'pyq',
           corpusBucket: q.corpusBucket || 'OFFICIAL_PYQ',
           vectorKind: q.corpusBucket === 'PRACTICE_MOCK' ? 'PRACTICE_QUESTION' : 'CANONICAL_PYQ_QUESTION',
           // Written at ingestion so a new vector is never ranked as authentic by default.
           provenanceClass: cls,
           isAuthenticPyq: isAuthenticPyq(cls),
-          canonicalPaperId: q.canonicalPaperId ?? null,
+          canonicalPaperId: q.canonicalPaperId,
           paperIdentityStatus: q.paperIdentityStatus ?? 'UNRESOLVED',
-          sittingId: q.sittingId ?? null,
-          normalizedSession: q.normalizedSession ?? null,
-          normalizedShift: q.normalizedShift ?? null,
-          normalizedSittingDate: q.normalizedSittingDate ?? null,
+          sittingId: q.sittingId,
+          normalizedSession: q.normalizedSession,
+          normalizedShift: q.normalizedShift,
+          normalizedSittingDate: q.normalizedSittingDate,
           public: true, owner: 'sadhya-exam-intel', userId: '',
           notebookId: `exam-${String(q.examId).toLowerCase()}`,
           sourceId: q.sourceId, examId: q.examId, examName: q.examName, year: q.year,
@@ -199,7 +242,7 @@ async function main() {
           verificationStatus: q.verificationStatus, rightsStatus: q.rightsStatus,
           text: q.questionText, options: q.options || [], correctAnswer: q.correctAnswer,
           createdAt: q.createdAt,
-        },
+        }),
         question: q,
       });
     }
