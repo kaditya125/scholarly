@@ -1,179 +1,762 @@
 exam,year,session,shift,paperId,paper,firestoreCount,qdrantCount,matchedCount,missingVectors,orphanVectors,duplicateVectors,provenanceErrors,trustTierErrors,acceptedCount,coveragePercent,status
-RRB_NTPC,2021,,,src_rrb_ntpc_2021_main_paper_railway_recruitm,Main Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
+RRB_NTPC,2021,,,src_rrb_ntpc_2021_main_paper_railway_recruitm,Main Paper,3,2,2,0,0,0,0,0,2,100,COMPLETE
+UGC_NET,2009,June,,src_ugc_net_sociology_05_2009_june_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2017,January,,src_ugc_net_education_09_2017_january_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2016,July,,src_ugc_net_history_06_2016_july_paper_iii,Paper III,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2010,June,,src_ugc_net_geography_80_2010_june_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2011,December,,src_ugc_net_psychology_04_2011_december_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_psychology_04_2013_june_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2009,December,,src_ugc_net_history_06_2009_december_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2014,June,,src_ugc_net_commerce_08_2014_june_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2013,December,,src_ugc_net_philosophy_03_2013_december_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2009,December,,src_ugc_net_psychology_04_2009_december_paper_iii,Paper III,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2014,December,,src_ugc_net_management_17_2014_december_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
 JEE_MAIN,2026,Session 2 (Apr),Shift 2,src_jee_main_2026_session_2_apr_shift_2_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2010,December,,src_ugc_net_sociology_05_2010_december_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2012,June,,src_ugc_net_education_09_2012_june_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2017,January,,src_ugc_net_sociology_05_2017_january_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
 UPSC_CSE,2022,,,src_upsc_cse_2022_gs_paper_1_2_detailed_explanations_drishti_ias_edit,GS Paper 1 & 2 Detailed Explanations,242,154,154,0,0,0,0,0,154,100,COMPLETE
-SSC_CGL,2024,,Shift 3,src_ssc_cgl_2024_shift_3_tier_1_cbt_ssc_official_tie,Tier 1 CBT,3182,1452,1452,1698,0,0,0,0,3150,46.1,PARTIAL
-BPSC_CCE,2023,,,src_bpsc_cce_2023_solved_practice_paper_drishti_ias_bpsc,Solved Practice Paper,351,313,313,0,0,0,300,51,313,100,COMPLETE
+SSC_CGL,2024,,Shift 3,src_ssc_cgl_2024_shift_3_tier_1_cbt_ssc_official_tie,Tier 1 CBT,3182,2993,2993,157,0,0,0,0,3150,95,PARTIAL
+UGC_NET,2012,June,,src_ugc_net_philosophy_03_2012_june_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2010,December,,src_ugc_net_economics_01_2010_december_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2015,December,,src_ugc_net_economics_01_2015_december_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2015,December,,src_ugc_net_english_30_2015_december_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2018,July,,src_ugc_net_general_00_2018_july_paper_i_set_r_3,Paper I,1374,79,71,87,8,0,1284,0,158,44.9,PARTIAL
+UGC_NET,2011,June,,src_ugc_net_population_studies_15_2011_june_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2012,December,,src_ugc_net_english_30_2012_december_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2011,December,,src_ugc_net_general_00_2011_december_paper_i_set_w_1,Paper I,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2017,November,,src_ugc_net_cs_87_2017_november_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2011,December,,src_ugc_net_home_science_12_2011_december_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2012,December,,src_ugc_net_law_58_2012_december_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2014,June,,src_ugc_net_sociology_05_2014_june_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2016,July,,src_ugc_net_commerce_08_2016_july_paper_ii,Paper II,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+BPSC_CCE,2023,,,src_bpsc_cce_2023_solved_practice_paper_drishti_ias_bpsc,Solved Practice Paper,351,313,313,0,0,0,300,0,313,100,COMPLETE
+UGC_NET,2011,June,,src_ugc_net_history_06_2011_june_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2013,December,,src_ugc_net_law_58_2013_december_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
 SSC_CGL,2020,,Shift 2,src_ssc_cgl_2020_shift_2_tier_1_cbt_ssc_official_tie,Tier 1 CBT,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-NEET_UG,2014,,,src_neet_ug_2014_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,211,26,26,0,0,0,0,211,26,100,COMPLETE
+UGC_NET,2013,December,,src_ugc_net_sociology_05_2013_december_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2009,Dec,,src_ugc_net_commerce_08_2009_dec_paper_iii,Paper III,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+NEET_UG,2014,,,src_neet_ug_2014_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,211,26,26,0,0,0,0,0,26,100,COMPLETE
+UGC_NET,2016,July,,src_ugc_net_philosophy_03_2016_july_paper_ii,Paper II,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
 NEET_UG,2025,,,src_neet_ug_2025_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,180,155,155,0,0,0,0,0,155,100,COMPLETE
-JEE_ADVANCED,2021,,,src_jee_advanced_2021_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,6,3,3,0,0,0,0,6,3,100,COMPLETE
+UGC_NET,2015,December,,src_ugc_net_political_science_02_2015_december_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2012,December,,src_ugc_net_public_admin_14_2012_december_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+JEE_ADVANCED,2021,,,src_jee_advanced_2021_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,6,3,3,0,0,0,0,0,3,100,COMPLETE
 UPSC_CSE,2021,,,src_upsc_cse_2021_csat_paper_2_prelims_upsc_official_cs,CSAT Paper 2 (Prelims),239,128,128,0,0,0,0,0,128,100,COMPLETE
-NEET_UG,2017,,,src_neet_ug_2017_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,215,15,15,0,0,0,0,215,15,100,COMPLETE
+UGC_NET,2010,June,,src_ugc_net_public_admin_14_2010_june_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2014,June,,src_ugc_net_home_science_12_2014_june_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2017,November,,src_ugc_net_management_17_2017_november_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2013,June,,src_ugc_net_cs_87_2013_june_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+NEET_UG,2017,,,src_neet_ug_2017_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,215,15,15,0,0,0,0,0,15,100,COMPLETE
 JEE_MAIN,2021,Session 1 & 2,,src_jee_main_2021_session_1_2_testbook_verifie,,2312,2315,2312,0,3,0,0,0,2312,100,COMPLETE
-SSC_CGL,2021,,,src_ssc_cgl_2021_tier_1_tier_2_solved_papers_adda247_ssc_edit,Tier 1 & Tier 2 Solved Papers,1831,819,819,817,0,0,0,0,1636,50.1,PARTIAL
+UGC_NET,2015,June,,src_ugc_net_public_admin_14_2015_june_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2016,July,,src_ugc_net_law_58_2016_july_paper_ii,Paper II,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+SSC_CGL,2021,,,src_ssc_cgl_2021_tier_1_tier_2_solved_papers_adda247_ssc_edit,Tier 1 & Tier 2 Solved Papers,1831,1554,1554,82,0,0,0,0,1636,95,PARTIAL
+UGC_NET,2015,December,,src_ugc_net_cs_87_2015_december_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2011,December,,src_ugc_net_population_studies_15_2011_december_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2014,June,,src_ugc_net_population_studies_15_2014_june_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
 IBPS_PO,2025,,,src_ibps_po_2025_solved_practice_paper_adda247_bankersa,Solved Practice Paper,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-BPSC_CCE,2024,,,src_bpsc_cce_2024_main_paper_bihar_public_ser,Main Paper,201,158,158,0,0,0,150,51,158,100,COMPLETE
+UGC_NET,2012,December,,src_ugc_net_public_admin_14_2012_december_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2010,December,,src_ugc_net_education_09_2010_december_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2013,December,,src_ugc_net_home_science_12_2013_december_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+BPSC_CCE,2024,,,src_bpsc_cce_2024_main_paper_bihar_public_ser,Main Paper,201,158,158,0,0,0,150,0,158,100,COMPLETE
+UGC_NET,2018,July,,src_ugc_net_population_studies_15_2018_july_paper_ii,Paper II,1374,79,71,87,8,0,1284,0,158,44.9,PARTIAL
 JEE_MAIN,2021,Session 2 (Apr),Shift 1,src_jee_main_2021_session_2_apr_shift_1_nta_official_que,,532,535,532,0,3,0,0,0,532,100,COMPLETE
-BPSC_CCE,2019,,,src_bpsc_cce_2019_solved_practice_paper_drishti_ias_bpsc,Solved Practice Paper,51,5,5,0,0,0,0,51,5,100,COMPLETE
-JEE_MAIN,2020,Session 1 (Jan),Shift 1,src_jee_main_2020_session_1_jan_shift_1_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+BPSC_CCE,2019,,,src_bpsc_cce_2019_solved_practice_paper_drishti_ias_bpsc,Solved Practice Paper,51,5,5,0,0,0,0,0,5,100,COMPLETE
+JEE_MAIN,2020,Session 1 (Jan),Shift 1,src_jee_main_2020_session_1_jan_shift_1_nta_official_que,,222,0,0,222,0,0,0,0,222,0,PARTIAL_UNINDEXED
+UGC_NET,2014,December,,src_ugc_net_cs_87_2014_december_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2015,June,,src_ugc_net_law_58_2015_june_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2012,June,,src_ugc_net_population_studies_15_2012_june_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2017,January,,src_ugc_net_sociology_05_2017_january_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
 IBPS_PO,2025,,,src_ibps_po_2025_main_paper_institute_of_ban,Main Paper,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
 JEE_ADVANCED,2025,,,src_jee_advanced_2025_paper_1_iit_official_arc,Paper 1,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
 BPSC_CCE,2021,,,src_bpsc_cce_2021_solved_practice_paper_testbook_bpsc_so,Solved Practice Paper,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-JEE_ADVANCED,2024,,,src_jee_advanced_2024_paper_2_iit_official_arc,Paper 2,13,9,9,0,0,0,0,13,9,100,COMPLETE
+UGC_NET,2015,December,,src_ugc_net_geography_80_2015_december_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2015,December,,src_ugc_net_philosophy_03_2015_december_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2012,June,,src_ugc_net_history_06_2012_june_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2012,December,,src_ugc_net_geography_80_2012_december_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2016,July,,src_ugc_net_psychology_04_2016_july_paper_ii,Paper II,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2010,June,,src_ugc_net_history_06_2010_june_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2018,July,,src_ugc_net_history_06_2018_july_paper_ii,Paper II,1374,79,71,87,8,0,1284,0,158,44.9,PARTIAL
+UGC_NET,2016,July,,src_ugc_net_geography_80_2016_july_paper_iii,Paper III,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+JEE_ADVANCED,2024,,,src_jee_advanced_2024_paper_2_iit_official_arc,Paper 2,13,9,9,0,0,0,0,0,9,100,COMPLETE
+UGC_NET,2013,December,,src_ugc_net_history_06_2013_december_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2009,June,,src_ugc_net_political_science_02_2009_june_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2012,June,,src_ugc_net_general_00_2012_june_paper_i_set_y_3,Paper I,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_english_30_2013_june_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_public_admin_14_2013_june_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
 UPSC_CSE,2025,,,src_upsc_cse_2025_gs_paper_1_prelims_upsc_official_cs,GS Paper 1 (Prelims),96,96,96,0,0,0,0,0,96,100,COMPLETE
+UGC_NET,2014,June,,src_ugc_net_general_00_2014_june_paper_i_set_x_2,Paper I,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
 BPSC_CCE,2021,,,src_bpsc_cce_2021_main_paper_bihar_public_ser,Main Paper,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-JEE_MAIN,2019,Session 1 (Jan),Shift 1,src_jee_main_2019_session_1_jan_shift_1_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-BPSC_CCE,2020,,,src_bpsc_cce_2020_solved_practice_paper_drishti_ias_bpsc,Solved Practice Paper,201,165,165,0,0,0,150,51,165,100,COMPLETE
-JEE_ADVANCED,2022,,,src_jee_advanced_2022_paper_2_iit_official_arc,Paper 2,6,3,3,0,0,0,0,6,3,100,COMPLETE
-NEET_UG,2020,,,src_neet_ug_2020_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,217,26,26,0,0,0,0,217,26,100,COMPLETE
-JEE_ADVANCED,2023,,,src_jee_advanced_2023_paper_1_iit_official_arc,Paper 1,10,5,5,0,0,0,0,10,5,100,COMPLETE
+UGC_NET,2016,July,,src_ugc_net_cs_87_2016_july_paper_iii,Paper III,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2011,June,,src_ugc_net_general_00_2011_june_paper_i_set_y_3,Paper I,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2016,July,,src_ugc_net_management_17_2016_july_paper_ii,Paper II,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+JEE_MAIN,2019,Session 1 (Jan),Shift 1,src_jee_main_2019_session_1_jan_shift_1_nta_official_que,,356,12,12,344,0,0,0,0,356,3.4,PARTIAL
+BPSC_CCE,2020,,,src_bpsc_cce_2020_solved_practice_paper_drishti_ias_bpsc,Solved Practice Paper,201,165,165,0,0,0,150,0,165,100,COMPLETE
+UGC_NET,2017,January,,src_ugc_net_geography_80_2017_january_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2012,December,,src_ugc_net_education_09_2012_december_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+JEE_ADVANCED,2022,,,src_jee_advanced_2022_paper_2_iit_official_arc,Paper 2,6,3,3,0,0,0,0,0,3,100,COMPLETE
+UGC_NET,2016,July,,src_ugc_net_economics_01_2016_july_paper_ii,Paper II,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2015,December,,src_ugc_net_general_00_2015_december_paper_i_set_main_2,Paper I,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2010,December,,src_ugc_net_philosophy_03_2010_december_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2016,July,,src_ugc_net_english_30_2016_july_paper_ii,Paper II,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2010,December,,src_ugc_net_political_science_02_2010_december_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2010,December,,src_ugc_net_geography_80_2010_december_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2013,December,,src_ugc_net_management_17_2013_december_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+NEET_UG,2020,,,src_neet_ug_2020_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,217,26,26,0,0,0,0,0,26,100,COMPLETE
+UGC_NET,2010,June,,src_ugc_net_psychology_04_2010_june_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2011,December,,src_ugc_net_management_17_2011_december_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2013,December,,src_ugc_net_population_studies_15_2013_december_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+JEE_ADVANCED,2023,,,src_jee_advanced_2023_paper_1_iit_official_arc,Paper 1,10,5,5,0,0,0,0,0,5,100,COMPLETE
+UGC_NET,2013,June,,src_ugc_net_geography_80_2013_june_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2015,June,,src_ugc_net_political_science_02_2015_june_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2012,December,,src_ugc_net_psychology_04_2012_december_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2017,January,,src_ugc_net_political_science_02_2017_january_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2017,January,,src_ugc_net_general_00_2017_january_paper_i_set_z_4,Paper I,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
 IBPS_PO,2025,,,src_ibps_po_2025_solved_practice_paper_testbook_solved_,Solved Practice Paper,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2009,December,,src_ugc_net_management_17_2009_december_paper_iii,Paper III,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2017,January,,src_ugc_net_english_30_2017_january_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2017,January,,src_ugc_net_economics_01_2017_january_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2014,December,,src_ugc_net_psychology_04_2014_december_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
 UPSC_CSE,2022,,,src_upsc_cse_2022_gs_paper_1_prelims_upsc_official_cs,GS Paper 1 (Prelims),242,154,154,0,0,0,0,0,154,100,COMPLETE
-JEE_MAIN,2020,Session 1 & 2,,src_jee_main_2020_session_1_2_testbook_verifie,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-SSC_CGL,2021,,Shift 1,src_ssc_cgl_2021_shift_1_tier_1_cbt_ssc_official_tie,Tier 1 CBT,1044,565,565,379,0,0,0,0,944,59.9,PARTIAL
+UGC_NET,2011,December,,src_ugc_net_cs_87_2011_december_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2017,November,,src_ugc_net_home_science_12_2017_november_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2014,December,,src_ugc_net_population_studies_15_2014_december_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2013,June,,src_ugc_net_general_00_2013_june_paper_i_set_main_4,Paper I,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+JEE_MAIN,2020,Session 1 & 2,,src_jee_main_2020_session_1_2_testbook_verifie,,1182,0,0,1182,0,0,0,0,1182,0,PARTIAL_UNINDEXED
+UGC_NET,2016,July,,src_ugc_net_english_30_2016_july_paper_iii,Paper III,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2011,June,,src_ugc_net_education_09_2011_june_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2015,December,,src_ugc_net_education_09_2015_december_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2013,December,,src_ugc_net_general_00_2013_december_paper_i_set_main_1,Paper I,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2014,December,,src_ugc_net_general_00_2014_december_paper_i_set_y_3,Paper I,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+SSC_CGL,2021,,Shift 1,src_ssc_cgl_2021_shift_1_tier_1_cbt_ssc_official_tie,Tier 1 CBT,1044,899,899,45,0,0,0,0,944,95.2,PARTIAL
 JEE_MAIN,2025,Session 2 (Apr),Shift 2,src_jee_main_2025_session_2_apr_shift_2_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-NEET_UG,2014,,,src_neet_ug_2014_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,211,26,26,0,0,0,0,211,26,100,COMPLETE
+NEET_UG,2014,,,src_neet_ug_2014_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,211,26,26,0,0,0,0,0,26,100,COMPLETE
 JEE_MAIN,2024,Session 1 (Jan),Shift 2,src_jee_main_2024_session_1_jan_shift_2_nta_official_que,,823,976,822,1,154,0,1,0,823,99.9,PARTIAL
-JEE_ADVANCED,2020,,,src_jee_advanced_2020_paper_2_iit_official_arc,Paper 2,7,4,4,0,0,0,0,7,4,100,COMPLETE
+UGC_NET,2011,June,,src_ugc_net_philosophy_03_2011_june_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+JEE_ADVANCED,2020,,,src_jee_advanced_2020_paper_2_iit_official_arc,Paper 2,7,4,4,0,0,0,0,0,4,100,COMPLETE
+UGC_NET,2009,June,,src_ugc_net_education_09_2009_june_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
 JEE_ADVANCED,2019,,,src_jee_advanced_2019_paper_2_iit_official_arc,Paper 2,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-SSC_CGL,2023,,Shift 3,src_ssc_cgl_2023_shift_3_tier_1_cbt_ssc_official_tie,Tier 1 CBT,2212,1053,1053,1116,0,0,0,0,2169,48.5,PARTIAL
-SSC_CGL,2025,,,src_ssc_cgl_2025_tier_1_tier_2_solved_papers_adda247_ssc_edit,Tier 1 & Tier 2 Solved Papers,1600,619,619,981,0,0,0,0,1600,38.7,PARTIAL
+SSC_CGL,2023,,Shift 3,src_ssc_cgl_2023_shift_3_tier_1_cbt_ssc_official_tie,Tier 1 CBT,2212,2073,2073,96,0,0,0,0,2169,95.6,PARTIAL
+UGC_NET,2015,June,,src_ugc_net_management_17_2015_june_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2016,July,,src_ugc_net_psychology_04_2016_july_paper_iii,Paper III,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_history_06_2013_june_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2017,January,,src_ugc_net_geography_80_2017_january_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2014,June,,src_ugc_net_population_studies_15_2014_june_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2017,January,,src_ugc_net_philosophy_03_2017_january_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+SSC_CGL,2025,,,src_ssc_cgl_2025_tier_1_tier_2_solved_papers_adda247_ssc_edit,Tier 1 & Tier 2 Solved Papers,1600,1490,1490,110,0,0,0,0,1600,93.1,PARTIAL
+UGC_NET,2015,June,,src_ugc_net_economics_01_2015_june_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
 RRB_NTPC,2025,,,src_rrb_ntpc_2025_solved_practice_paper_testbook_solved_,Solved Practice Paper,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-NEET_UG,2019,,,src_neet_ug_2019_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,214,20,20,0,0,0,0,214,20,100,COMPLETE
-JEE_MAIN,2019,Session 1 & 2,,src_jee_main_2019_session_1_2_testbook_verifie,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2015,June,,src_ugc_net_general_00_2015_june_paper_i_set_main_1,Paper I,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2010,June,,src_ugc_net_english_30_2010_june_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2013,December,,src_ugc_net_history_06_2013_december_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2009,June,,src_ugc_net_geography_80_2009_june_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2010,December,,src_ugc_net_economics_01_2010_december_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2013,Dec,,src_ugc_net_commerce_08_2013_dec_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2010,December,,src_ugc_net_english_30_2010_december_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+NEET_UG,2019,,,src_neet_ug_2019_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,214,20,20,0,0,0,0,0,20,100,COMPLETE
+UGC_NET,2017,November,,src_ugc_net_psychology_04_2017_november_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2016,July,,src_ugc_net_home_science_12_2016_july_paper_ii,Paper II,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2014,December,,src_ugc_net_home_science_12_2014_december_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2010,December,,src_ugc_net_cs_87_2010_december_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2015,December,,src_ugc_net_sociology_05_2015_december_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2014,June,,src_ugc_net_history_06_2014_june_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2012,December,,src_ugc_net_political_science_02_2012_december_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+JEE_MAIN,2019,Session 1 & 2,,src_jee_main_2019_session_1_2_testbook_verifie,,1422,40,40,1382,0,0,0,0,1422,2.8,PARTIAL
+UGC_NET,2015,June,,src_ugc_net_public_admin_14_2015_june_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
 JEE_ADVANCED,2018,,,src_jee_advanced_2018_paper_1_iit_official_arc,Paper 1,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
 UPSC_CSE,2019,,,src_upsc_cse_2019_csat_paper_2_prelims_upsc_official_cs,CSAT Paper 2 (Prelims),100,100,100,0,0,0,0,0,100,100,COMPLETE
-BPSC_CCE,2022,,,src_bpsc_cce_2022_solved_practice_paper_testbook_bpsc_so,Solved Practice Paper,201,160,160,0,0,0,150,51,160,100,COMPLETE
-JEE_ADVANCED,2021,,,src_jee_advanced_2021_paper_1_iit_official_arc,Paper 1,6,3,3,0,0,0,0,6,3,100,COMPLETE
+BPSC_CCE,2022,,,src_bpsc_cce_2022_solved_practice_paper_testbook_bpsc_so,Solved Practice Paper,201,160,160,0,0,0,150,0,160,100,COMPLETE
+JEE_ADVANCED,2021,,,src_jee_advanced_2021_paper_1_iit_official_arc,Paper 1,6,3,3,0,0,0,0,0,3,100,COMPLETE
+UGC_NET,2016,July,,src_ugc_net_cs_87_2016_july_paper_ii,Paper II,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
 JEE_MAIN,2022,Session 2 (Apr),Shift 1,src_jee_main_2022_session_2_apr_shift_1_nta_official_que,,1066,1069,1066,0,3,0,0,0,1066,100,COMPLETE
-NEET_UG,2013,,,src_neet_ug_2013_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,211,17,17,0,0,0,0,211,17,100,COMPLETE
+UGC_NET,2017,November,,src_ugc_net_population_studies_15_2017_november_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2012,December,,src_ugc_net_general_00_2012_december_paper_i_set_main_4,Paper I,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2009,December,,src_ugc_net_management_17_2009_december_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+NEET_UG,2013,,,src_neet_ug_2013_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,211,17,17,0,0,0,0,0,17,100,COMPLETE
 JEE_MAIN,2023,Session 1 (Jan),Shift 1,src_jee_main_2023_session_1_jan_shift_1_nta_official_que,,981,986,981,0,5,0,0,0,981,100,COMPLETE
 JEE_MAIN,2026,Session 1 (Jan),Shift 1,src_jee_main_2026_session_1_jan_shift_1_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-SSC_CGL,2025,,Shift 1,src_ssc_cgl_2025_shift_1_tier_1_cbt_ssc_official_tie,Tier 1 CBT,1600,619,619,981,0,0,0,0,1600,38.7,PARTIAL
+UGC_NET,2012,June,,src_ugc_net_population_studies_15_2012_june_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+SSC_CGL,2025,,Shift 1,src_ssc_cgl_2025_shift_1_tier_1_cbt_ssc_official_tie,Tier 1 CBT,1600,1490,1490,110,0,0,0,0,1600,93.1,PARTIAL
 UPSC_CSE,2020,,,src_upsc_cse_2020_csat_paper_2_prelims_upsc_official_cs,CSAT Paper 2 (Prelims),100,100,100,0,0,0,0,0,100,100,COMPLETE
-JEE_ADVANCED,2022,,,src_jee_advanced_2022_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,6,3,3,0,0,0,0,6,3,100,COMPLETE
-BPSC_CCE,2020,,,src_bpsc_cce_2020_main_paper_bihar_public_ser,Main Paper,201,165,165,0,0,0,150,51,165,100,COMPLETE
-NEET_UG,2024,,,src_neet_ug_2024_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,221,30,30,0,0,0,0,221,30,100,COMPLETE
-IBPS_PO,2023,,,src_ibps_po_2023_solved_practice_paper_adda247_bankersa,Solved Practice Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
-SSC_CGL,2024,,,src_ssc_cgl_2024_tier_1_tier_2_solved_papers_adda247_ssc_edit,Tier 1 & Tier 2 Solved Papers,4040,1706,1706,2138,0,0,0,0,3844,44.4,PARTIAL
-NEET_UG,2020,,,src_neet_ug_2020_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,217,26,26,0,0,0,0,217,26,100,COMPLETE
+UGC_NET,2013,December,,src_ugc_net_education_09_2013_december_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2012,June,,src_ugc_net_education_09_2012_june_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2009,December,,src_ugc_net_political_science_02_2009_december_paper_iii,Paper III,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_public_admin_14_2013_june_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+JEE_ADVANCED,2022,,,src_jee_advanced_2022_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,6,3,3,0,0,0,0,0,3,100,COMPLETE
+UGC_NET,2017,November,,src_ugc_net_history_06_2017_november_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+BPSC_CCE,2020,,,src_bpsc_cce_2020_main_paper_bihar_public_ser,Main Paper,201,165,165,0,0,0,150,0,165,100,COMPLETE
+UGC_NET,2015,June,,src_ugc_net_cs_87_2015_june_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2018,July,,src_ugc_net_education_09_2018_july_paper_ii,Paper II,1374,79,71,87,8,0,1284,0,158,44.9,PARTIAL
+UGC_NET,2017,November,,src_ugc_net_general_00_2017_november_paper_i_set_dddd_4,Paper I,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2012,June,,src_ugc_net_home_science_12_2012_june_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2011,December,,src_ugc_net_political_science_02_2011_december_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2010,Dec,,src_ugc_net_commerce_08_2010_dec_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_law_58_2013_june_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+NEET_UG,2024,,,src_neet_ug_2024_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,221,30,30,0,0,0,0,0,30,100,COMPLETE
+IBPS_PO,2023,,,src_ibps_po_2023_solved_practice_paper_adda247_bankersa,Solved Practice Paper,3,2,2,0,0,0,0,0,2,100,COMPLETE
+UGC_NET,2009,December,,src_ugc_net_cs_87_2009_december_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_law_58_2013_june_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2017,Nov,,src_ugc_net_commerce_08_2017_nov_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2015,June,,src_ugc_net_general_00_2015_june_paper_i_set_main_4,Paper I,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2014,December,,src_ugc_net_economics_01_2014_december_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2012,June,,src_ugc_net_geography_80_2012_june_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2010,June,,src_ugc_net_management_17_2010_june_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2016,July,,src_ugc_net_public_admin_14_2016_july_paper_ii,Paper II,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2014,June,,src_ugc_net_political_science_02_2014_june_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2015,June,,src_ugc_net_cs_87_2015_june_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2016,July,,src_ugc_net_political_science_02_2016_july_paper_iii,Paper III,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+SSC_CGL,2024,,,src_ssc_cgl_2024_tier_1_tier_2_solved_papers_adda247_ssc_edit,Tier 1 & Tier 2 Solved Papers,4040,3645,3645,199,0,0,0,0,3844,94.8,PARTIAL
+UGC_NET,2018,July,,src_ugc_net_geography_80_2018_july_paper_ii,Paper II,1374,79,71,87,8,0,1284,0,158,44.9,PARTIAL
+UGC_NET,2010,June,,src_ugc_net_philosophy_03_2010_june_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2010,June,,src_ugc_net_economics_01_2010_june_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2012,December,,src_ugc_net_economics_01_2012_december_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+NEET_UG,2020,,,src_neet_ug_2020_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,217,26,26,0,0,0,0,0,26,100,COMPLETE
+UGC_NET,2012,December,,src_ugc_net_english_30_2012_december_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2012,December,,src_ugc_net_population_studies_15_2012_december_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2010,December,,src_ugc_net_management_17_2010_december_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2015,June,,src_ugc_net_home_science_12_2015_june_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2015,December,,src_ugc_net_law_58_2015_december_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2015,June,,src_ugc_net_english_30_2015_june_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2012,December,,src_ugc_net_general_00_2012_december_paper_i_set_main_1,Paper I,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2017,January,,src_ugc_net_psychology_04_2017_january_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2013,June,,src_ugc_net_psychology_04_2013_june_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2010,December,,src_ugc_net_political_science_02_2010_december_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2015,December,,src_ugc_net_psychology_04_2015_december_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
 JEE_MAIN,2021,Session 1 (Jan),Shift 2,src_jee_main_2021_session_1_jan_shift_2_nta_official_que,,535,538,535,0,3,0,0,0,535,100,COMPLETE
-SSC_CGL,2023,,Shift 2,src_ssc_cgl_2023_shift_2_tier_1_cbt_ssc_official_tie,Tier 1 CBT,2225,1054,1054,1109,0,0,0,0,2163,48.7,PARTIAL
-JEE_MAIN,2020,Session 2 (Apr),Shift 2,src_jee_main_2020_session_2_apr_shift_2_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-NEET_UG,2017,,,src_neet_ug_2017_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,215,15,15,0,0,0,0,215,15,100,COMPLETE
+UGC_NET,2011,June,,src_ugc_net_education_09_2011_june_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2014,December,,src_ugc_net_history_06_2014_december_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+SSC_CGL,2023,,Shift 2,src_ssc_cgl_2023_shift_2_tier_1_cbt_ssc_official_tie,Tier 1 CBT,2225,2059,2059,104,0,0,0,0,2163,95.2,PARTIAL
+JEE_MAIN,2020,Session 2 (Apr),Shift 2,src_jee_main_2020_session_2_apr_shift_2_nta_official_que,,369,0,0,369,0,0,0,0,369,0,PARTIAL_UNINDEXED
+UGC_NET,2012,June,,src_ugc_net_commerce_08_2012_june_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2015,June,,src_ugc_net_economics_01_2015_june_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+NEET_UG,2017,,,src_neet_ug_2017_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,215,15,15,0,0,0,0,0,15,100,COMPLETE
+UGC_NET,2015,June,,src_ugc_net_psychology_04_2015_june_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2012,December,,src_ugc_net_geography_80_2012_december_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2014,June,,src_ugc_net_sociology_05_2014_june_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2017,January,,src_ugc_net_general_00_2017_january_paper_i_set_w_1,Paper I,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2010,June,,src_ugc_net_political_science_02_2010_june_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2012,December,,src_ugc_net_history_06_2012_december_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2015,June,,src_ugc_net_english_30_2015_june_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2012,December,,src_ugc_net_philosophy_03_2012_december_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2015,December,,src_ugc_net_general_00_2015_december_paper_i_set_main_3,Paper I,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2011,December,,src_ugc_net_management_17_2011_december_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2016,July,,src_ugc_net_management_17_2016_july_paper_iii,Paper III,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2009,Dec,,src_ugc_net_commerce_08_2009_dec_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2011,June,,src_ugc_net_general_00_2011_june_paper_i_set_x_2,Paper I,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
 JEE_MAIN,2022,Session 1 & 2,,src_jee_main_2022_session_1_2_testbook_verifie,,2049,2052,2049,0,3,0,0,0,2049,100,COMPLETE
 JEE_ADVANCED,2025,,,src_jee_advanced_2025_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2014,June,,src_ugc_net_philosophy_03_2014_june_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2010,June,,src_ugc_net_law_58_2010_june_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2015,June,,src_ugc_net_management_17_2015_june_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2014,June,,src_ugc_net_education_09_2014_june_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2016,July,,src_ugc_net_economics_01_2016_july_paper_iii,Paper III,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
 RRB_NTPC,2025,,,src_rrb_ntpc_2025_main_paper_railway_recruitm,Main Paper,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-SSC_CGL,2024,,Shift 2,src_ssc_cgl_2024_shift_2_tier_1_cbt_ssc_official_tie,Tier 1 CBT,3305,1485,1485,1765,0,0,0,0,3250,45.7,PARTIAL
-JEE_MAIN,2019,Session 2 (Apr),Shift 2,src_jee_main_2019_session_2_apr_shift_2_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2014,December,,src_ugc_net_general_00_2014_december_paper_i_set_x_2,Paper I,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2014,Dec,,src_ugc_net_commerce_08_2014_dec_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2011,June,,src_ugc_net_geography_80_2011_june_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2015,December,,src_ugc_net_public_admin_14_2015_december_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2013,June,,src_ugc_net_philosophy_03_2013_june_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2017,November,,src_ugc_net_economics_01_2017_november_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2012,June,,src_ugc_net_sociology_05_2012_june_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2011,December,,src_ugc_net_cs_87_2011_december_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_general_00_2013_june_paper_i_set_main_1,Paper I,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2017,January,,src_ugc_net_political_science_02_2017_january_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2014,Dec,,src_ugc_net_commerce_08_2014_dec_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2010,December,,src_ugc_net_psychology_04_2010_december_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2013,December,,src_ugc_net_general_00_2013_december_paper_i_set_main_4,Paper I,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2010,June,,src_ugc_net_psychology_04_2010_june_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2009,December,,src_ugc_net_cs_87_2009_december_paper_iii,Paper III,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2013,December,,src_ugc_net_cs_87_2013_december_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_commerce_08_2013_june_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2015,June,,src_ugc_net_history_06_2015_june_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2013,June,,src_ugc_net_management_17_2013_june_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2010,June,,src_ugc_net_english_30_2010_june_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2011,June,,src_ugc_net_sociology_05_2011_june_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2017,January,,src_ugc_net_law_58_2017_january_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2009,December,,src_ugc_net_economics_01_2009_december_paper_iii,Paper III,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2010,June,,src_ugc_net_economics_01_2010_june_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2013,December,,src_ugc_net_english_30_2013_december_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2014,June,,src_ugc_net_education_09_2014_june_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2015,December,,src_ugc_net_psychology_04_2015_december_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2009,June,,src_ugc_net_cs_87_2009_june_paper_iii,Paper III,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2011,December,,src_ugc_net_economics_01_2011_december_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2010,December,,src_ugc_net_psychology_04_2010_december_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2017,November,,src_ugc_net_cs_87_2017_november_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+SSC_CGL,2024,,Shift 2,src_ssc_cgl_2024_shift_2_tier_1_cbt_ssc_official_tie,Tier 1 CBT,3305,3094,3094,156,0,0,0,0,3250,95.2,PARTIAL
+UGC_NET,2015,June,,src_ugc_net_law_58_2015_june_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2013,June,,src_ugc_net_economics_01_2013_june_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2010,June,,src_ugc_net_management_17_2010_june_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2013,December,,src_ugc_net_population_studies_15_2013_december_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2015,December,,src_ugc_net_management_17_2015_december_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2012,December,,src_ugc_net_education_09_2012_december_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+JEE_MAIN,2019,Session 2 (Apr),Shift 2,src_jee_main_2019_session_2_apr_shift_2_nta_official_que,,354,10,10,344,0,0,0,0,354,2.8,PARTIAL
+UGC_NET,2010,December,,src_ugc_net_public_admin_14_2010_december_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2009,June,,src_ugc_net_history_06_2009_june_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
 JEE_MAIN,2023,Session 1 & 2,,src_jee_main_2023_session_1_2_testbook_verifie,,3318,3323,3318,0,5,0,0,0,3318,100,COMPLETE
+UGC_NET,2014,December,,src_ugc_net_political_science_02_2014_december_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
 SSC_CGL,2020,,Shift 3,src_ssc_cgl_2020_shift_3_tier_1_cbt_ssc_official_tie,Tier 1 CBT,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-BPSC_CCE,2024,,,src_bpsc_cce_2024_solved_practice_paper_testbook_bpsc_so,Solved Practice Paper,201,158,158,0,0,0,150,51,158,100,COMPLETE
+BPSC_CCE,2024,,,src_bpsc_cce_2024_solved_practice_paper_testbook_bpsc_so,Solved Practice Paper,201,158,158,0,0,0,150,0,158,100,COMPLETE
+UGC_NET,2011,June,,src_ugc_net_population_studies_15_2011_june_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2018,July,,src_ugc_net_political_science_02_2018_july_paper_ii,Paper II,1374,79,71,87,8,0,1284,0,158,44.9,PARTIAL
+UGC_NET,2014,June,,src_ugc_net_general_00_2014_june_paper_i_set_y_3,Paper I,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2009,June,,src_ugc_net_economics_01_2009_june_paper_ii_alt,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2014,June,,src_ugc_net_geography_80_2014_june_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2011,Dec,,src_ugc_net_commerce_08_2011_dec_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2011,June,,src_ugc_net_home_science_12_2011_june_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
 JEE_MAIN,2025,Session 1 (Jan),Shift 1,src_jee_main_2025_session_1_jan_shift_1_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
 JEE_MAIN,2024,Session 2 (Apr),Shift 1,src_jee_main_2024_session_2_apr_shift_1_nta_official_que,,896,1049,895,1,154,0,1,0,896,99.9,PARTIAL
+UGC_NET,2010,June,,src_ugc_net_public_admin_14_2010_june_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_cs_87_2013_june_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2009,December,,src_ugc_net_home_science_12_2009_december_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2013,December,,src_ugc_net_public_admin_14_2013_december_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
 JEE_ADVANCED,2019,,,src_jee_advanced_2019_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2012,June,,src_ugc_net_political_science_02_2012_june_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2010,June,,src_ugc_net_law_58_2010_june_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2014,December,,src_ugc_net_management_17_2014_december_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2015,June,,src_ugc_net_psychology_04_2015_june_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
 SSC_CGL,2020,,,src_ssc_cgl_2020_tier_1_tier_2_solved_papers_adda247_ssc_edit,Tier 1 & Tier 2 Solved Papers,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2012,December,,src_ugc_net_sociology_05_2012_december_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2011,December,,src_ugc_net_history_06_2011_december_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2012,December,,src_ugc_net_law_58_2012_december_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_home_science_12_2013_june_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2016,July,,src_ugc_net_public_admin_14_2016_july_paper_iii,Paper III,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2012,December,,src_ugc_net_sociology_05_2012_december_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_english_30_2013_june_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2012,June,,src_ugc_net_sociology_05_2012_june_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
 UPSC_CSE,2021,,,src_upsc_cse_2021_gs_paper_1_prelims_upsc_official_cs,GS Paper 1 (Prelims),239,128,128,0,0,0,0,0,128,100,COMPLETE
-NEET_UG,2023,,,src_neet_ug_2023_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,224,30,30,0,0,0,0,224,30,100,COMPLETE
-NEET_UG,2023,,,src_neet_ug_2023_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,224,30,30,0,0,0,0,224,30,100,COMPLETE
-NEET_UG,2019,,,src_neet_ug_2019_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,214,20,20,0,0,0,0,214,20,100,COMPLETE
-SSC_CGL,2022,,Shift 1,src_ssc_cgl_2022_shift_1_tier_1_cbt_ssc_official_tie,Tier 1 CBT,696,394,394,194,0,0,0,0,588,67,PARTIAL
-IBPS_PO,2024,,,src_ibps_po_2024_main_paper_institute_of_ban,Main Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
+UGC_NET,2012,December,,src_ugc_net_home_science_12_2012_december_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2015,December,,src_ugc_net_political_science_02_2015_december_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2018,July,,src_ugc_net_sociology_05_2018_july_paper_ii,Paper II,1374,79,71,87,8,0,1284,0,158,44.9,PARTIAL
+NEET_UG,2023,,,src_neet_ug_2023_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,224,30,30,0,0,0,0,0,30,100,COMPLETE
+UGC_NET,2018,July,,src_ugc_net_general_00_2018_july_paper_i_set_q_2,Paper I,1374,79,71,87,8,0,1284,0,158,44.9,PARTIAL
+UGC_NET,2011,June,,src_ugc_net_sociology_05_2011_june_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_economics_01_2013_june_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+NEET_UG,2023,,,src_neet_ug_2023_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,224,30,30,0,0,0,0,0,30,100,COMPLETE
+UGC_NET,2010,December,,src_ugc_net_law_58_2010_december_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+NEET_UG,2019,,,src_neet_ug_2019_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,214,20,20,0,0,0,0,0,20,100,COMPLETE
+UGC_NET,2013,December,,src_ugc_net_home_science_12_2013_december_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_management_17_2013_june_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+SSC_CGL,2022,,Shift 1,src_ssc_cgl_2022_shift_1_tier_1_cbt_ssc_official_tie,Tier 1 CBT,696,563,563,25,0,0,0,0,588,95.7,PARTIAL
+IBPS_PO,2024,,,src_ibps_po_2024_main_paper_institute_of_ban,Main Paper,3,2,2,0,0,0,0,0,2,100,COMPLETE
+UGC_NET,2017,January,,src_ugc_net_public_admin_14_2017_january_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2016,July,,src_ugc_net_law_58_2016_july_paper_iii,Paper III,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2014,December,,src_ugc_net_cs_87_2014_december_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2015,June,,src_ugc_net_philosophy_03_2015_june_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2011,June,,src_ugc_net_commerce_08_2011_june_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
 JEE_MAIN,2022,Session 1 (Jan),Shift 2,src_jee_main_2022_session_1_jan_shift_2_nta_official_que,,1,4,1,0,3,0,0,0,1,100,COMPLETE
+UGC_NET,2011,June,,src_ugc_net_political_science_02_2011_june_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2017,Jan,,src_ugc_net_commerce_08_2017_jan_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
 UPSC_CSE,2023,,,src_upsc_cse_2023_gs_paper_1_2_detailed_explanations_drishti_ias_edit,GS Paper 1 & 2 Detailed Explanations,242,142,142,0,0,0,0,0,142,100,COMPLETE
+UGC_NET,2017,November,,src_ugc_net_political_science_02_2017_november_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2012,Dec,,src_ugc_net_commerce_08_2012_dec_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_political_science_02_2013_june_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2015,June,,src_ugc_net_geography_80_2015_june_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
 JEE_MAIN,2023,Session 2 (Apr),Shift 2,src_jee_main_2023_session_2_apr_shift_2_nta_official_que,,593,598,593,0,5,0,0,0,593,100,COMPLETE
-IBPS_PO,2023,,,src_ibps_po_2023_solved_practice_paper_testbook_solved_,Solved Practice Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
-RRB_NTPC,2019,,,src_rrb_ntpc_2019_solved_practice_paper_testbook_solved_,Solved Practice Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
+UGC_NET,2015,June,,src_ugc_net_commerce_08_2015_june_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2013,December,,src_ugc_net_geography_80_2013_december_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2009,December,,src_ugc_net_population_studies_15_2009_december_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2010,June,,src_ugc_net_home_science_12_2010_june_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+IBPS_PO,2023,,,src_ibps_po_2023_solved_practice_paper_testbook_solved_,Solved Practice Paper,3,2,2,0,0,0,0,0,2,100,COMPLETE
+UGC_NET,2017,November,,src_ugc_net_management_17_2017_november_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+RRB_NTPC,2019,,,src_rrb_ntpc_2019_solved_practice_paper_testbook_solved_,Solved Practice Paper,3,2,2,0,0,0,0,0,2,100,COMPLETE
+UGC_NET,2011,December,,src_ugc_net_general_00_2011_december_paper_i_set_z_4,Paper I,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
 JEE_MAIN,2025,Session 1 (Jan),Shift 2,src_jee_main_2025_session_1_jan_shift_2_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2017,January,,src_ugc_net_history_06_2017_january_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
 JEE_MAIN,2024,Session 2 (Apr),Shift 2,src_jee_main_2024_session_2_apr_shift_2_nta_official_que,,818,971,817,1,154,0,1,0,818,99.9,PARTIAL
-JEE_ADVANCED,2020,,,src_jee_advanced_2020_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,7,4,4,0,0,0,0,7,4,100,COMPLETE
-BPSC_CCE,2022,,,src_bpsc_cce_2022_main_paper_bihar_public_ser,Main Paper,201,160,160,0,0,0,150,51,160,100,COMPLETE
-IBPS_PO,2024,,,src_ibps_po_2024_solved_practice_paper_testbook_solved_,Solved Practice Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
+UGC_NET,2010,June,,src_ugc_net_philosophy_03_2010_june_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+JEE_ADVANCED,2020,,,src_jee_advanced_2020_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,7,4,4,0,0,0,0,0,4,100,COMPLETE
+UGC_NET,2014,December,,src_ugc_net_english_30_2014_december_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2009,December,,src_ugc_net_economics_01_2009_december_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2010,June,,src_ugc_net_education_09_2010_june_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2009,December,,src_ugc_net_english_30_2009_december_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2015,June,,src_ugc_net_history_06_2015_june_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2016,July,,src_ugc_net_political_science_02_2016_july_paper_ii,Paper II,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2010,December,,src_ugc_net_management_17_2010_december_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+BPSC_CCE,2022,,,src_bpsc_cce_2022_main_paper_bihar_public_ser,Main Paper,201,160,160,0,0,0,150,0,160,100,COMPLETE
+IBPS_PO,2024,,,src_ibps_po_2024_solved_practice_paper_testbook_solved_,Solved Practice Paper,3,2,2,0,0,0,0,0,2,100,COMPLETE
+UGC_NET,2013,December,,src_ugc_net_philosophy_03_2013_december_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2014,June,,src_ugc_net_public_admin_14_2014_june_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2013,December,,src_ugc_net_geography_80_2013_december_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2009,June,,src_ugc_net_psychology_04_2009_june_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2011,June,,src_ugc_net_psychology_04_2011_june_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2012,June,,src_ugc_net_geography_80_2012_june_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2014,June,,src_ugc_net_political_science_02_2014_june_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
 UPSC_CSE,2021,,,src_upsc_cse_2021_gs_paper_1_2_detailed_explanations_drishti_ias_edit,GS Paper 1 & 2 Detailed Explanations,239,128,128,0,0,0,0,0,128,100,COMPLETE
-SSC_CGL,2025,,Shift 3,src_ssc_cgl_2025_shift_3_tier_1_cbt_ssc_official_tie,Tier 1 CBT,1600,619,619,981,0,0,0,0,1600,38.7,PARTIAL
-IBPS_PO,2023,,,src_ibps_po_2023_main_paper_institute_of_ban,Main Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
-NEET_UG,2015,,,src_neet_ug_2015_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,214,18,18,0,0,0,0,214,18,100,COMPLETE
-SSC_CGL,2021,,Shift 2,src_ssc_cgl_2021_shift_2_tier_1_cbt_ssc_official_tie,Tier 1 CBT,704,458,458,189,0,0,0,0,647,70.8,PARTIAL
+UGC_NET,2015,December,,src_ugc_net_philosophy_03_2015_december_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+SSC_CGL,2025,,Shift 3,src_ssc_cgl_2025_shift_3_tier_1_cbt_ssc_official_tie,Tier 1 CBT,1600,1490,1490,110,0,0,0,0,1600,93.1,PARTIAL
+IBPS_PO,2023,,,src_ibps_po_2023_main_paper_institute_of_ban,Main Paper,3,2,2,0,0,0,0,0,2,100,COMPLETE
+UGC_NET,2015,December,,src_ugc_net_history_06_2015_december_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2017,January,,src_ugc_net_home_science_12_2017_january_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2010,December,,src_ugc_net_population_studies_15_2010_december_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2012,June,,src_ugc_net_general_00_2012_june_paper_i_set_z_4,Paper I,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2012,December,,src_ugc_net_management_17_2012_december_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2017,November,,src_ugc_net_law_58_2017_november_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2012,December,,src_ugc_net_cs_87_2012_december_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2013,December,,src_ugc_net_political_science_02_2013_december_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2009,December,,src_ugc_net_education_09_2009_december_paper_iii,Paper III,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2011,December,,src_ugc_net_psychology_04_2011_december_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2014,December,,src_ugc_net_public_admin_14_2014_december_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2011,December,,src_ugc_net_education_09_2011_december_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+NEET_UG,2015,,,src_neet_ug_2015_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,214,18,18,0,0,0,0,0,18,100,COMPLETE
+SSC_CGL,2021,,Shift 2,src_ssc_cgl_2021_shift_2_tier_1_cbt_ssc_official_tie,Tier 1 CBT,704,632,632,15,0,0,0,0,647,97.7,PARTIAL
+UGC_NET,2017,January,,src_ugc_net_management_17_2017_january_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
 BPSC_CCE,2021,,,src_bpsc_cce_2021_solved_practice_paper_drishti_ias_bpsc,Solved Practice Paper,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-NEET_UG,2015,,,src_neet_ug_2015_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,214,18,18,0,0,0,0,214,18,100,COMPLETE
-JEE_MAIN,2019,Session 2 (Apr),Shift 1,src_jee_main_2019_session_2_apr_shift_1_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-BPSC_CCE,2019,,,src_bpsc_cce_2019_solved_practice_paper_testbook_bpsc_so,Solved Practice Paper,51,5,5,0,0,0,0,51,5,100,COMPLETE
+UGC_NET,2009,June,,src_ugc_net_commerce_08_2009_june_paper_iii,Paper III,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+NEET_UG,2015,,,src_neet_ug_2015_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,214,18,18,0,0,0,0,0,18,100,COMPLETE
+UGC_NET,2015,June,,src_ugc_net_population_studies_15_2015_june_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2014,June,,src_ugc_net_general_00_2014_june_paper_i_set_w_1,Paper I,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2017,Jan,,src_ugc_net_commerce_08_2017_jan_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+JEE_MAIN,2019,Session 2 (Apr),Shift 1,src_jee_main_2019_session_2_apr_shift_1_nta_official_que,,356,4,4,352,0,0,0,0,356,1.1,PARTIAL
+UGC_NET,2014,December,,src_ugc_net_public_admin_14_2014_december_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+BPSC_CCE,2019,,,src_bpsc_cce_2019_solved_practice_paper_testbook_bpsc_so,Solved Practice Paper,51,5,5,0,0,0,0,0,5,100,COMPLETE
+UGC_NET,2009,June,,src_ugc_net_law_58_2009_june_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2015,December,,src_ugc_net_law_58_2015_december_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2015,December,,src_ugc_net_sociology_05_2015_december_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2017,November,,src_ugc_net_geography_80_2017_november_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2015,December,,src_ugc_net_home_science_12_2015_december_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2017,November,,src_ugc_net_english_30_2017_november_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
 JEE_MAIN,2022,Session 1 (Jan),Shift 1,src_jee_main_2022_session_1_jan_shift_1_nta_official_que,,2,5,2,0,3,0,0,0,2,100,COMPLETE
 JEE_MAIN,2023,Session 2 (Apr),Shift 1,src_jee_main_2023_session_2_apr_shift_1_nta_official_que,,770,775,770,0,5,0,0,0,770,100,COMPLETE
-SSC_CGL,2022,,,src_ssc_cgl_2022_tier_1_tier_2_solved_papers_adda247_ssc_edit,Tier 1 & Tier 2 Solved Papers,1399,626,626,557,0,0,0,0,1183,52.9,PARTIAL
-BPSC_CCE,2023,,,src_bpsc_cce_2023_solved_practice_paper_testbook_bpsc_so,Solved Practice Paper,351,313,313,0,0,0,300,51,313,100,COMPLETE
+SSC_CGL,2022,,,src_ssc_cgl_2022_tier_1_tier_2_solved_papers_adda247_ssc_edit,Tier 1 & Tier 2 Solved Papers,1399,1113,1113,70,0,0,0,0,1183,94.1,PARTIAL
+BPSC_CCE,2023,,,src_bpsc_cce_2023_solved_practice_paper_testbook_bpsc_so,Solved Practice Paper,351,313,313,0,0,0,300,0,313,100,COMPLETE
 UPSC_CSE,2023,,,src_upsc_cse_2023_csat_paper_2_prelims_upsc_official_cs,CSAT Paper 2 (Prelims),242,142,142,0,0,0,0,0,142,100,COMPLETE
+UGC_NET,2009,June,,src_ugc_net_philosophy_03_2009_june_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2011,December,,src_ugc_net_general_00_2011_december_paper_i_set_x_2,Paper I,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2013,December,,src_ugc_net_cs_87_2013_december_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2017,January,,src_ugc_net_management_17_2017_january_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2009,June,,src_ugc_net_commerce_08_2009_june_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2011,June,,src_ugc_net_cs_87_2011_june_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2014,June,,src_ugc_net_economics_01_2014_june_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2011,December,,src_ugc_net_political_science_02_2011_december_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2010,December,,src_ugc_net_history_06_2010_december_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2016,July,,src_ugc_net_education_09_2016_july_paper_iii,Paper III,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2018,July,,src_ugc_net_general_00_2018_july_paper_i_set_s_4,Paper I,1374,79,71,87,8,0,1284,0,158,44.9,PARTIAL
+UGC_NET,2017,November,,src_ugc_net_public_admin_14_2017_november_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2011,June,,src_ugc_net_english_30_2011_june_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2014,December,,src_ugc_net_law_58_2014_december_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2017,November,,src_ugc_net_general_00_2017_november_paper_i_set_aaaa_1,Paper I,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2016,July,,src_ugc_net_philosophy_03_2016_july_paper_iii,Paper III,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2013,December,,src_ugc_net_economics_01_2013_december_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2017,November,,src_ugc_net_public_admin_14_2017_november_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2014,December,,src_ugc_net_geography_80_2014_december_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2014,June,,src_ugc_net_management_17_2014_june_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2009,December,,src_ugc_net_philosophy_03_2009_december_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2009,December,,src_ugc_net_geography_80_2009_december_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2012,June,,src_ugc_net_history_06_2012_june_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2016,July,,src_ugc_net_sociology_05_2016_july_paper_ii,Paper II,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
 UPSC_CSE,2024,,,src_upsc_cse_2024_gs_paper_1_prelims_upsc_official_cs,GS Paper 1 (Prelims),241,113,113,0,0,0,0,0,113,100,COMPLETE
 UPSC_CSE,2024,,,src_upsc_cse_2024_csat_paper_2_prelims_upsc_official_cs,CSAT Paper 2 (Prelims),241,113,113,0,0,0,0,0,113,100,COMPLETE
-RRB_NTPC,2022,,,src_rrb_ntpc_2022_main_paper_railway_recruitm,Main Paper,4,3,3,0,0,0,0,4,3,100,COMPLETE
+UGC_NET,2012,December,,src_ugc_net_general_00_2012_december_paper_i_set_main_3,Paper I,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2014,December,,src_ugc_net_education_09_2014_december_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2013,June,,src_ugc_net_history_06_2013_june_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2011,December,,src_ugc_net_public_admin_14_2011_december_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2009,June,,src_ugc_net_cs_87_2009_june_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2009,December,,src_ugc_net_public_admin_14_2009_december_paper_iii,Paper III,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2012,December,,src_ugc_net_home_science_12_2012_december_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2011,December,,src_ugc_net_law_58_2011_december_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2010,December,,src_ugc_net_sociology_05_2010_december_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+RRB_NTPC,2022,,,src_rrb_ntpc_2022_main_paper_railway_recruitm,Main Paper,4,3,3,0,0,0,0,0,3,100,COMPLETE
+UGC_NET,2012,Dec,,src_ugc_net_commerce_08_2012_dec_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2010,December,,src_ugc_net_law_58_2010_december_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2018,July,,src_ugc_net_public_admin_14_2018_july_paper_ii,Paper II,1374,79,71,87,8,0,1284,0,158,44.9,PARTIAL
 JEE_MAIN,2026,Session 1 & 2,,src_jee_main_2026_session_1_2_testbook_verifie,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-BPSC_CCE,2022,,,src_bpsc_cce_2022_solved_practice_paper_drishti_ias_bpsc,Solved Practice Paper,201,160,160,0,0,0,150,51,160,100,COMPLETE
+UGC_NET,2015,June,,src_ugc_net_sociology_05_2015_june_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2017,November,,src_ugc_net_psychology_04_2017_november_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2009,June,,src_ugc_net_home_science_12_2009_june_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+BPSC_CCE,2022,,,src_bpsc_cce_2022_solved_practice_paper_drishti_ias_bpsc,Solved Practice Paper,201,160,160,0,0,0,150,0,160,100,COMPLETE
 UPSC_CSE,2025,,,src_upsc_cse_2025_gs_paper_1_2_detailed_explanations_drishti_ias_edit,GS Paper 1 & 2 Detailed Explanations,96,96,96,0,0,0,0,0,96,100,COMPLETE
-NEET_UG,2021,,,src_neet_ug_2021_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,223,30,30,0,0,0,0,223,30,100,COMPLETE
+UGC_NET,2014,December,,src_ugc_net_political_science_02_2014_december_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2016,July,,src_ugc_net_geography_80_2016_july_paper_ii,Paper II,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2012,June,,src_ugc_net_public_admin_14_2012_june_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2013,December,,src_ugc_net_sociology_05_2013_december_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_philosophy_03_2013_june_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2011,December,,src_ugc_net_english_30_2011_december_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2009,December,,src_ugc_net_education_09_2009_december_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+NEET_UG,2021,,,src_neet_ug_2021_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,223,30,30,0,0,0,0,0,30,100,COMPLETE
+UGC_NET,2013,December,,src_ugc_net_economics_01_2013_december_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2009,December,,src_ugc_net_english_30_2009_december_paper_iii,Paper III,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
 JEE_MAIN,2026,Session 1 (Jan),Shift 2,src_jee_main_2026_session_1_jan_shift_2_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2013,June,,src_ugc_net_education_09_2013_june_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2017,January,,src_ugc_net_history_06_2017_january_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
 UPSC_CSE,2023,,,src_upsc_cse_2023_gs_paper_1_prelims_upsc_official_cs,GS Paper 1 (Prelims),242,142,142,0,0,0,0,0,142,100,COMPLETE
+UGC_NET,2015,December,,src_ugc_net_population_studies_15_2015_december_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2015,June,,src_ugc_net_commerce_08_2015_june_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2010,December,,src_ugc_net_philosophy_03_2010_december_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2015,June,,src_ugc_net_general_00_2015_june_paper_i_set_main_2,Paper I,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2016,July,,src_ugc_net_education_09_2016_july_paper_ii,Paper II,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
 SSC_CGL,2020,,Shift 1,src_ssc_cgl_2020_shift_1_tier_1_cbt_ssc_official_tie,Tier 1 CBT,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-NEET_UG,2024,,,src_neet_ug_2024_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,221,30,30,0,0,0,0,221,30,100,COMPLETE
-SSC_CGL,2022,,Shift 3,src_ssc_cgl_2022_shift_3_tier_1_cbt_ssc_official_tie,Tier 1 CBT,430,324,324,65,0,0,0,0,389,83.3,PARTIAL
-NEET_UG,2016,,,src_neet_ug_2016_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,212,16,16,0,0,0,0,212,16,100,COMPLETE
-BPSC_CCE,2020,,,src_bpsc_cce_2020_solved_practice_paper_testbook_bpsc_so,Solved Practice Paper,201,165,165,0,0,0,150,51,165,100,COMPLETE
-NEET_UG,2018,,,src_neet_ug_2018_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,214,23,23,0,0,0,0,214,23,100,COMPLETE
+UGC_NET,2012,December,,src_ugc_net_psychology_04_2012_december_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2011,June,,src_ugc_net_geography_80_2011_june_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+NEET_UG,2024,,,src_neet_ug_2024_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,221,30,30,0,0,0,0,0,30,100,COMPLETE
+UGC_NET,2013,June,,src_ugc_net_population_studies_15_2013_june_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2012,June,,src_ugc_net_psychology_04_2012_june_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2012,June,,src_ugc_net_english_30_2012_june_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2010,June,,src_ugc_net_history_06_2010_june_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2011,December,,src_ugc_net_public_admin_14_2011_december_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2013,December,,src_ugc_net_education_09_2013_december_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2017,January,,src_ugc_net_economics_01_2017_january_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2012,December,,src_ugc_net_population_studies_15_2012_december_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2014,December,,src_ugc_net_general_00_2014_december_paper_i_set_z_4,Paper I,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2013,June,,src_ugc_net_general_00_2013_june_paper_i_set_main_3,Paper I,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+SSC_CGL,2022,,Shift 3,src_ssc_cgl_2022_shift_3_tier_1_cbt_ssc_official_tie,Tier 1 CBT,430,385,385,4,0,0,0,0,389,99,PARTIAL
+NEET_UG,2016,,,src_neet_ug_2016_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,212,16,16,0,0,0,0,0,16,100,COMPLETE
+UGC_NET,2017,November,,src_ugc_net_education_09_2017_november_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2015,December,,src_ugc_net_history_06_2015_december_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2011,June,,src_ugc_net_history_06_2011_june_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2014,December,,src_ugc_net_psychology_04_2014_december_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2013,December,,src_ugc_net_general_00_2013_december_paper_i_set_main_2,Paper I,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2017,November,,src_ugc_net_political_science_02_2017_november_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2009,December,,src_ugc_net_geography_80_2009_december_paper_iii,Paper III,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2017,January,,src_ugc_net_general_00_2017_january_paper_i_set_y_3,Paper I,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2011,June,,src_ugc_net_public_admin_14_2011_june_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+BPSC_CCE,2020,,,src_bpsc_cce_2020_solved_practice_paper_testbook_bpsc_so,Solved Practice Paper,201,165,165,0,0,0,150,0,165,100,COMPLETE
+UGC_NET,2014,June,,src_ugc_net_law_58_2014_june_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2009,June,,src_ugc_net_english_30_2009_june_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+NEET_UG,2018,,,src_neet_ug_2018_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,214,23,23,0,0,0,0,0,23,100,COMPLETE
+UGC_NET,2010,December,,src_ugc_net_history_06_2010_december_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
 JEE_MAIN,2021,Session 1 (Jan),Shift 1,src_jee_main_2021_session_1_jan_shift_1_nta_official_que,,535,538,535,0,3,0,0,0,535,100,COMPLETE
-JEE_MAIN,2020,Session 2 (Apr),Shift 1,src_jee_main_2020_session_2_apr_shift_1_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-IBPS_PO,2024,,,src_ibps_po_2024_solved_practice_paper_adda247_bankersa,Solved Practice Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
-SSC_CGL,2024,,Shift 1,src_ssc_cgl_2024_shift_1_tier_1_cbt_ssc_official_tie,Tier 1 CBT,3257,1447,1447,1701,0,0,0,0,3148,46,PARTIAL
-JEE_ADVANCED,2023,,,src_jee_advanced_2023_paper_2_iit_official_arc,Paper 2,10,5,5,0,0,0,0,10,5,100,COMPLETE
+UGC_NET,2009,June,,src_ugc_net_economics_01_2009_june_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2015,December,,src_ugc_net_management_17_2015_december_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+JEE_MAIN,2020,Session 2 (Apr),Shift 1,src_jee_main_2020_session_2_apr_shift_1_nta_official_que,,369,0,0,369,0,0,0,0,369,0,PARTIAL_UNINDEXED
+UGC_NET,2010,December,,src_ugc_net_home_science_12_2010_december_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2015,December,,src_ugc_net_general_00_2015_december_paper_i_set_main_1,Paper I,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+IBPS_PO,2024,,,src_ibps_po_2024_solved_practice_paper_adda247_bankersa,Solved Practice Paper,3,2,2,0,0,0,0,0,2,100,COMPLETE
+UGC_NET,2015,June,,src_ugc_net_population_studies_15_2015_june_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2009,June,,src_ugc_net_management_17_2009_june_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2015,June,,src_ugc_net_home_science_12_2015_june_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2011,June,,src_ugc_net_general_00_2011_june_paper_i_set_z_4,Paper I,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2012,June,,src_ugc_net_cs_87_2012_june_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2014,June,,src_ugc_net_public_admin_14_2014_june_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2009,December,,src_ugc_net_sociology_05_2009_december_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2011,December,,src_ugc_net_law_58_2011_december_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+SSC_CGL,2024,,Shift 1,src_ssc_cgl_2024_shift_1_tier_1_cbt_ssc_official_tie,Tier 1 CBT,3257,2994,2994,154,0,0,0,0,3148,95.1,PARTIAL
+UGC_NET,2015,Dec,,src_ugc_net_commerce_08_2015_dec_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2017,January,,src_ugc_net_general_00_2017_january_paper_i_set_x_2,Paper I,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2014,June,,src_ugc_net_philosophy_03_2014_june_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2011,December,,src_ugc_net_sociology_05_2011_december_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2009,December,,src_ugc_net_law_58_2009_december_paper_iii,Paper III,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+JEE_ADVANCED,2023,,,src_jee_advanced_2023_paper_2_iit_official_arc,Paper 2,10,5,5,0,0,0,0,0,5,100,COMPLETE
+UGC_NET,2011,June,,src_ugc_net_law_58_2011_june_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2017,January,,src_ugc_net_home_science_12_2017_january_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2015,December,,src_ugc_net_cs_87_2015_december_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2013,Dec,,src_ugc_net_commerce_08_2013_dec_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2011,June,,src_ugc_net_cs_87_2011_june_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2017,November,,src_ugc_net_english_30_2017_november_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2010,June,,src_ugc_net_political_science_02_2010_june_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2017,November,,src_ugc_net_economics_01_2017_november_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2013,December,,src_ugc_net_general_00_2013_december_paper_i_set_main_3,Paper I,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2009,December,,src_ugc_net_sociology_05_2009_december_paper_iii,Paper III,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2011,December,,src_ugc_net_education_09_2011_december_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2010,December,,src_ugc_net_public_admin_14_2010_december_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2010,June,,src_ugc_net_home_science_12_2010_june_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2013,December,,src_ugc_net_public_admin_14_2013_december_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
 JEE_MAIN,2025,Session 2 (Apr),Shift 1,src_jee_main_2025_session_2_apr_shift_1_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
 UPSC_CSE,2019,,,src_upsc_cse_2019_gs_paper_1_2_detailed_explanations_drishti_ias_edit,GS Paper 1 & 2 Detailed Explanations,100,100,100,0,0,0,0,0,100,100,COMPLETE
+UGC_NET,2014,June,,src_ugc_net_commerce_08_2014_june_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2011,June,,src_ugc_net_public_admin_14_2011_june_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2010,December,,src_ugc_net_population_studies_15_2010_december_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2015,December,,src_ugc_net_education_09_2015_december_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2013,June,,src_ugc_net_general_00_2013_june_paper_i_set_main_2,Paper I,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
 JEE_MAIN,2024,Session 1 (Jan),Shift 1,src_jee_main_2024_session_1_jan_shift_1_nta_official_que,,823,976,822,1,154,0,1,0,823,99.9,PARTIAL
+UGC_NET,2017,November,,src_ugc_net_history_06_2017_november_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2011,June,,src_ugc_net_general_00_2011_june_paper_i_set_w_1,Paper I,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
 NEET_UG,2025,,,src_neet_ug_2025_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,180,155,155,0,0,0,0,0,155,100,COMPLETE
-JEE_MAIN,2019,Session 1 (Jan),Shift 2,src_jee_main_2019_session_1_jan_shift_2_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-BPSC_CCE,2019,,,src_bpsc_cce_2019_main_paper_bihar_public_ser,Main Paper,51,5,5,0,0,0,0,51,5,100,COMPLETE
-RRB_NTPC,2022,,,src_rrb_ntpc_2022_solved_practice_paper_testbook_solved_,Solved Practice Paper,4,3,3,0,0,0,0,4,3,100,COMPLETE
-JEE_ADVANCED,2023,,,src_jee_advanced_2023_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,10,5,5,0,0,0,0,10,5,100,COMPLETE
-JEE_ADVANCED,2022,,,src_jee_advanced_2022_paper_1_iit_official_arc,Paper 1,6,3,3,0,0,0,0,6,3,100,COMPLETE
-NEET_UG,2018,,,src_neet_ug_2018_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,214,23,23,0,0,0,0,214,23,100,COMPLETE
-IBPS_PO,2022,,,src_ibps_po_2022_solved_practice_paper_testbook_solved_,Solved Practice Paper,2,1,1,0,0,0,0,2,1,100,COMPLETE
-NEET_UG,2022,,,src_neet_ug_2022_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,224,36,36,0,0,0,0,224,36,100,COMPLETE
-NEET_UG,2016,,,src_neet_ug_2016_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,212,16,16,0,0,0,0,212,16,100,COMPLETE
-SSC_CGL,2022,,Shift 2,src_ssc_cgl_2022_shift_2_tier_1_cbt_ssc_official_tie,Tier 1 CBT,455,329,329,59,0,0,0,0,388,84.8,PARTIAL
+UGC_NET,2011,June,,src_ugc_net_home_science_12_2011_june_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2016,July,,src_ugc_net_sociology_05_2016_july_paper_iii,Paper III,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2011,December,,src_ugc_net_philosophy_03_2011_december_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2018,July,,src_ugc_net_economics_01_2018_july_paper_ii,Paper II,1374,79,71,87,8,0,1284,0,158,44.9,PARTIAL
+UGC_NET,2009,December,,src_ugc_net_law_58_2009_december_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_sociology_05_2013_june_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2014,December,,src_ugc_net_population_studies_15_2014_december_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+JEE_MAIN,2019,Session 1 (Jan),Shift 2,src_jee_main_2019_session_1_jan_shift_2_nta_official_que,,356,14,14,342,0,0,0,0,356,3.9,PARTIAL
+UGC_NET,2012,June,,src_ugc_net_english_30_2012_june_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2009,December,,src_ugc_net_philosophy_03_2009_december_paper_iii,Paper III,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+BPSC_CCE,2019,,,src_bpsc_cce_2019_main_paper_bihar_public_ser,Main Paper,51,5,5,0,0,0,0,0,5,100,COMPLETE
+UGC_NET,2012,June,,src_ugc_net_economics_01_2012_june_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2014,December,,src_ugc_net_general_00_2014_december_paper_i_set_w_1,Paper I,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2018,July,,src_ugc_net_english_30_2018_july_paper_ii,Paper II,1374,79,71,87,8,0,1284,0,158,44.9,PARTIAL
+UGC_NET,2013,December,,src_ugc_net_psychology_04_2013_december_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2012,June,,src_ugc_net_economics_01_2012_june_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2012,December,,src_ugc_net_economics_01_2012_december_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2017,January,,src_ugc_net_population_studies_15_2017_january_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2015,December,,src_ugc_net_general_00_2015_december_paper_i_set_main_4,Paper I,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+RRB_NTPC,2022,,,src_rrb_ntpc_2022_solved_practice_paper_testbook_solved_,Solved Practice Paper,4,3,3,0,0,0,0,0,3,100,COMPLETE
+UGC_NET,2012,December,,src_ugc_net_history_06_2012_december_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2012,June,,src_ugc_net_management_17_2012_june_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2016,July,,src_ugc_net_commerce_08_2016_july_paper_iii,Paper III,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2010,December,,src_ugc_net_english_30_2010_december_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2014,June,,src_ugc_net_history_06_2014_june_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+JEE_ADVANCED,2023,,,src_jee_advanced_2023_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,10,5,5,0,0,0,0,0,5,100,COMPLETE
+UGC_NET,2014,December,,src_ugc_net_philosophy_03_2014_december_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2012,June,,src_ugc_net_management_17_2012_june_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+JEE_ADVANCED,2022,,,src_jee_advanced_2022_paper_1_iit_official_arc,Paper 1,6,3,3,0,0,0,0,0,3,100,COMPLETE
+UGC_NET,2018,July,,src_ugc_net_management_17_2018_july_paper_ii,Paper II,1374,79,71,87,8,0,1284,0,158,44.9,PARTIAL
+UGC_NET,2014,December,,src_ugc_net_geography_80_2014_december_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2013,December,,src_ugc_net_law_58_2013_december_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+NEET_UG,2018,,,src_neet_ug_2018_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,214,23,23,0,0,0,0,0,23,100,COMPLETE
+IBPS_PO,2022,,,src_ibps_po_2022_solved_practice_paper_testbook_solved_,Solved Practice Paper,2,1,1,0,0,0,0,0,1,100,COMPLETE
+UGC_NET,2018,July,,src_ugc_net_cs_87_2018_july_paper_ii,Paper II,1374,79,71,87,8,0,1284,0,158,44.9,PARTIAL
+UGC_NET,2010,December,,src_ugc_net_home_science_12_2010_december_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+NEET_UG,2022,,,src_neet_ug_2022_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,224,36,36,0,0,0,0,0,36,100,COMPLETE
+UGC_NET,2014,December,,src_ugc_net_english_30_2014_december_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+NEET_UG,2016,,,src_neet_ug_2016_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,212,16,16,0,0,0,0,0,16,100,COMPLETE
+UGC_NET,2014,December,,src_ugc_net_economics_01_2014_december_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+SSC_CGL,2022,,Shift 2,src_ssc_cgl_2022_shift_2_tier_1_cbt_ssc_official_tie,Tier 1 CBT,455,381,381,7,0,0,0,0,388,98.2,PARTIAL
+UGC_NET,2013,June,,src_ugc_net_political_science_02_2013_june_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2012,June,,src_ugc_net_cs_87_2012_june_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2017,November,,src_ugc_net_general_00_2017_november_paper_i_set_bbbb_2,Paper I,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2011,December,,src_ugc_net_sociology_05_2011_december_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2015,June,,src_ugc_net_geography_80_2015_june_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2010,Dec,,src_ugc_net_commerce_08_2010_dec_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2014,June,,src_ugc_net_psychology_04_2014_june_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2017,January,,src_ugc_net_law_58_2017_january_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2018,July,,src_ugc_net_home_science_12_2018_july_paper_ii,Paper II,1374,79,71,87,8,0,1284,0,158,44.9,PARTIAL
 JEE_MAIN,2022,Session 2 (Apr),Shift 2,src_jee_main_2022_session_2_apr_shift_2_nta_official_que,,980,983,980,0,3,0,0,0,980,100,COMPLETE
+UGC_NET,2012,June,,src_ugc_net_political_science_02_2012_june_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2014,June,,src_ugc_net_geography_80_2014_june_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
 JEE_MAIN,2023,Session 1 (Jan),Shift 2,src_jee_main_2023_session_1_jan_shift_2_nta_official_que,,974,979,974,0,5,0,0,0,974,100,COMPLETE
+UGC_NET,2012,June,,src_ugc_net_home_science_12_2012_june_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2014,December,,src_ugc_net_history_06_2014_december_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
 JEE_ADVANCED,2018,,,src_jee_advanced_2018_paper_2_iit_official_arc,Paper 2,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-JEE_ADVANCED,2021,,,src_jee_advanced_2021_paper_2_iit_official_arc,Paper 2,6,3,3,0,0,0,0,6,3,100,COMPLETE
+JEE_ADVANCED,2021,,,src_jee_advanced_2021_paper_2_iit_official_arc,Paper 2,6,3,3,0,0,0,0,0,3,100,COMPLETE
+UGC_NET,2012,December,,src_ugc_net_general_00_2012_december_paper_i_set_main_2,Paper I,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2017,January,,src_ugc_net_population_studies_15_2017_january_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2009,June,,src_ugc_net_public_admin_14_2009_june_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2010,June,,src_ugc_net_sociology_05_2010_june_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
 UPSC_CSE,2024,,,src_upsc_cse_2024_gs_paper_1_2_detailed_explanations_drishti_ias_edit,GS Paper 1 & 2 Detailed Explanations,241,113,113,0,0,0,0,0,113,100,COMPLETE
-JEE_ADVANCED,2024,,,src_jee_advanced_2024_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,13,9,9,0,0,0,0,13,9,100,COMPLETE
-JEE_ADVANCED,2020,,,src_jee_advanced_2020_paper_1_iit_official_arc,Paper 1,7,4,4,0,0,0,0,7,4,100,COMPLETE
+UGC_NET,2011,June,,src_ugc_net_english_30_2011_june_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2011,Dec,,src_ugc_net_commerce_08_2011_dec_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2015,June,,src_ugc_net_general_00_2015_june_paper_i_set_main_3,Paper I,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+JEE_ADVANCED,2024,,,src_jee_advanced_2024_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,13,9,9,0,0,0,0,0,9,100,COMPLETE
+UGC_NET,2017,November,,src_ugc_net_population_studies_15_2017_november_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2015,June,,src_ugc_net_education_09_2015_june_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+JEE_ADVANCED,2020,,,src_jee_advanced_2020_paper_1_iit_official_arc,Paper 1,7,4,4,0,0,0,0,0,4,100,COMPLETE
 JEE_ADVANCED,2019,,,src_jee_advanced_2019_paper_1_iit_official_arc,Paper 1,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2011,June,,src_ugc_net_economics_01_2011_june_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2010,June,,src_ugc_net_sociology_05_2010_june_paper_iii,Paper III,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2011,June,,src_ugc_net_management_17_2011_june_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2016,July,,src_ugc_net_population_studies_15_2016_july_paper_iii,Paper III,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
 UPSC_CSE,2022,,,src_upsc_cse_2022_csat_paper_2_prelims_upsc_official_cs,CSAT Paper 2 (Prelims),242,154,154,0,0,0,0,0,154,100,COMPLETE
+UGC_NET,2014,June,,src_ugc_net_law_58_2014_june_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2009,December,,src_ugc_net_public_admin_14_2009_december_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2009,December,,src_ugc_net_home_science_12_2009_december_paper_iii,Paper III,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
 JEE_MAIN,2024,Session 1 & 2,,src_jee_main_2024_session_1_2_testbook_verifie,,3357,3510,3356,1,154,0,1,0,3357,100,PARTIAL
+UGC_NET,2017,November,,src_ugc_net_philosophy_03_2017_november_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2017,November,,src_ugc_net_geography_80_2017_november_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2011,December,,src_ugc_net_home_science_12_2011_december_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2017,January,,src_ugc_net_education_09_2017_january_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2016,July,,src_ugc_net_home_science_12_2016_july_paper_iii,Paper III,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2015,Dec,,src_ugc_net_commerce_08_2015_dec_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2010,June,,src_ugc_net_geography_80_2010_june_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
 UPSC_CSE,2019,,,src_upsc_cse_2019_gs_paper_1_prelims_upsc_official_cs,GS Paper 1 (Prelims),100,100,100,0,0,0,0,0,100,100,COMPLETE
+UGC_NET,2009,December,,src_ugc_net_population_studies_15_2009_december_paper_iii,Paper III,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
 JEE_MAIN,2025,Session 1 & 2,,src_jee_main_2025_session_1_2_testbook_verifie,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-IBPS_PO,2022,,,src_ibps_po_2022_main_paper_institute_of_ban,Main Paper,2,1,1,0,0,0,0,2,1,100,COMPLETE
-SSC_CGL,2025,,Shift 2,src_ssc_cgl_2025_shift_2_tier_1_cbt_ssc_official_tie,Tier 1 CBT,1600,619,619,981,0,0,0,0,1600,38.7,PARTIAL
-BPSC_CCE,2023,,,src_bpsc_cce_2023_main_paper_bihar_public_ser,Main Paper,351,313,313,0,0,0,300,51,313,100,COMPLETE
+UGC_NET,2018,July,,src_ugc_net_philosophy_03_2018_july_paper_ii,Paper II,1374,79,71,87,8,0,1284,0,158,44.9,PARTIAL
+UGC_NET,2011,June,,src_ugc_net_economics_01_2011_june_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2013,December,,src_ugc_net_management_17_2013_december_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2011,December,,src_ugc_net_population_studies_15_2011_december_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2012,June,,src_ugc_net_philosophy_03_2012_june_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2014,June,,src_ugc_net_english_30_2014_june_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2014,December,,src_ugc_net_philosophy_03_2014_december_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2011,December,,src_ugc_net_general_00_2011_december_paper_i_set_y_3,Paper I,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+IBPS_PO,2022,,,src_ibps_po_2022_main_paper_institute_of_ban,Main Paper,2,1,1,0,0,0,0,0,1,100,COMPLETE
+UGC_NET,2018,July,,src_ugc_net_commerce_08_2018_july_paper_ii,Paper II,1374,79,71,87,8,0,1284,0,158,44.9,PARTIAL
+SSC_CGL,2025,,Shift 2,src_ssc_cgl_2025_shift_2_tier_1_cbt_ssc_official_tie,Tier 1 CBT,1600,1490,1490,110,0,0,0,0,1600,93.1,PARTIAL
+BPSC_CCE,2023,,,src_bpsc_cce_2023_main_paper_bihar_public_ser,Main Paper,351,313,313,0,0,0,300,0,313,100,COMPLETE
 JEE_ADVANCED,2018,,,src_jee_advanced_2018_paper_1_2_solutions_careers360_acade,Paper 1 & 2 Solutions,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
-RRB_NTPC,2021,,,src_rrb_ntpc_2021_solved_practice_paper_testbook_solved_,Solved Practice Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
-SSC_CGL,2021,,Shift 3,src_ssc_cgl_2021_shift_3_tier_1_cbt_ssc_official_tie,Tier 1 CBT,783,496,496,249,0,0,0,0,745,66.6,PARTIAL
-IBPS_PO,2022,,,src_ibps_po_2022_solved_practice_paper_adda247_bankersa,Solved Practice Paper,2,1,1,0,0,0,0,2,1,100,COMPLETE
-RRB_NTPC,2019,,,src_rrb_ntpc_2019_main_paper_railway_recruitm,Main Paper,3,2,2,0,0,0,0,3,2,100,COMPLETE
-SSC_CGL,2023,,,src_ssc_cgl_2023_tier_1_tier_2_solved_papers_adda247_ssc_edit,Tier 1 & Tier 2 Solved Papers,5139,2129,2129,2805,0,0,0,0,4934,43.1,PARTIAL
+UGC_NET,2012,June,,src_ugc_net_commerce_08_2012_june_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2017,November,,src_ugc_net_home_science_12_2017_november_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+RRB_NTPC,2021,,,src_rrb_ntpc_2021_solved_practice_paper_testbook_solved_,Solved Practice Paper,3,2,2,0,0,0,0,0,2,100,COMPLETE
+UGC_NET,2017,January,,src_ugc_net_cs_87_2017_january_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2015,December,,src_ugc_net_english_30_2015_december_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2011,June,,src_ugc_net_management_17_2011_june_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2009,December,,src_ugc_net_psychology_04_2009_december_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2011,June,,src_ugc_net_psychology_04_2011_june_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2014,June,,src_ugc_net_economics_01_2014_june_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+SSC_CGL,2021,,Shift 3,src_ssc_cgl_2021_shift_3_tier_1_cbt_ssc_official_tie,Tier 1 CBT,783,723,723,22,0,0,0,0,745,97,PARTIAL
+UGC_NET,2017,November,,src_ugc_net_education_09_2017_november_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2017,Nov,,src_ugc_net_commerce_08_2017_nov_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2010,June,,src_ugc_net_education_09_2010_june_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+IBPS_PO,2022,,,src_ibps_po_2022_solved_practice_paper_adda247_bankersa,Solved Practice Paper,2,1,1,0,0,0,0,0,1,100,COMPLETE
+UGC_NET,2014,December,,src_ugc_net_sociology_05_2014_december_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+RRB_NTPC,2019,,,src_rrb_ntpc_2019_main_paper_railway_recruitm,Main Paper,3,2,2,0,0,0,0,0,2,100,COMPLETE
+UGC_NET,2018,July,,src_ugc_net_general_00_2018_july_paper_i_set_p_1,Paper I,1374,79,71,87,8,0,1284,0,158,44.9,PARTIAL
+UGC_NET,2017,November,,src_ugc_net_general_00_2017_november_paper_i_set_cccc_3,Paper I,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2014,June,,src_ugc_net_english_30_2014_june_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2014,December,,src_ugc_net_law_58_2014_december_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2015,June,,src_ugc_net_sociology_05_2015_june_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2012,June,,src_ugc_net_law_58_2012_june_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2012,December,,src_ugc_net_political_science_02_2012_december_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2012,June,,src_ugc_net_public_admin_14_2012_june_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2013,December,,src_ugc_net_political_science_02_2013_december_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2014,June,,src_ugc_net_cs_87_2014_june_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2013,June,,src_ugc_net_home_science_12_2013_june_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2014,December,,src_ugc_net_sociology_05_2014_december_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2015,December,,src_ugc_net_home_science_12_2015_december_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+SSC_CGL,2023,,,src_ssc_cgl_2023_tier_1_tier_2_solved_papers_adda247_ssc_edit,Tier 1 & Tier 2 Solved Papers,5139,4662,4662,272,0,0,0,0,4934,94.5,PARTIAL
+UGC_NET,2013,June,,src_ugc_net_population_studies_15_2013_june_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
 JEE_MAIN,2026,Session 2 (Apr),Shift 1,src_jee_main_2026_session_2_apr_shift_1_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2017,January,,src_ugc_net_cs_87_2017_january_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
 UPSC_CSE,2025,,,src_upsc_cse_2025_csat_paper_2_prelims_upsc_official_cs,CSAT Paper 2 (Prelims),96,96,96,0,0,0,0,0,96,100,COMPLETE
-NEET_UG,2021,,,src_neet_ug_2021_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,223,30,30,0,0,0,0,223,30,100,COMPLETE
-JEE_ADVANCED,2024,,,src_jee_advanced_2024_paper_1_iit_official_arc,Paper 1,13,9,9,0,0,0,0,13,9,100,COMPLETE
+NEET_UG,2021,,,src_neet_ug_2021_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,223,30,30,0,0,0,0,0,30,100,COMPLETE
+UGC_NET,2015,December,,src_ugc_net_public_admin_14_2015_december_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2014,June,,src_ugc_net_management_17_2014_june_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2011,December,,src_ugc_net_english_30_2011_december_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2011,June,,src_ugc_net_law_58_2011_june_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2011,December,,src_ugc_net_economics_01_2011_december_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2017,January,,src_ugc_net_english_30_2017_january_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+JEE_ADVANCED,2024,,,src_jee_advanced_2024_paper_1_iit_official_arc,Paper 1,13,9,9,0,0,0,0,0,9,100,COMPLETE
+UGC_NET,2014,June,,src_ugc_net_cs_87_2014_june_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2012,December,,src_ugc_net_management_17_2012_december_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2015,June,,src_ugc_net_political_science_02_2015_june_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2017,November,,src_ugc_net_philosophy_03_2017_november_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2011,December,,src_ugc_net_geography_80_2011_december_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_geography_80_2013_june_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
 UPSC_CSE,2020,,,src_upsc_cse_2020_gs_paper_1_prelims_upsc_official_cs,GS Paper 1 (Prelims),100,100,100,0,0,0,0,0,100,100,COMPLETE
-NEET_UG,2022,,,src_neet_ug_2022_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,224,36,36,0,0,0,0,224,36,100,COMPLETE
-NEET_UG,2013,,,src_neet_ug_2013_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,211,17,17,0,0,0,0,211,17,100,COMPLETE
-BPSC_CCE,2024,,,src_bpsc_cce_2024_solved_practice_paper_drishti_ias_bpsc,Solved Practice Paper,201,158,158,0,0,0,150,51,158,100,COMPLETE
-SSC_CGL,2023,,Shift 1,src_ssc_cgl_2023_shift_1_tier_1_cbt_ssc_official_tie,Tier 1 CBT,2368,1085,1085,1183,0,0,0,0,2268,47.8,PARTIAL
+UGC_NET,2011,December,,src_ugc_net_philosophy_03_2011_december_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2011,June,,src_ugc_net_philosophy_03_2011_june_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+NEET_UG,2022,,,src_neet_ug_2022_neet_ug_full_paper_nta_neet_officia,NEET UG Full Paper,224,36,36,0,0,0,0,0,36,100,COMPLETE
+NEET_UG,2013,,,src_neet_ug_2013_neet_ug_solutions_analysis_testbook_medical,NEET UG Solutions & Analysis,211,17,17,0,0,0,0,0,17,100,COMPLETE
+UGC_NET,2012,December,,src_ugc_net_cs_87_2012_december_paper_iii,Paper III,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+BPSC_CCE,2024,,,src_bpsc_cce_2024_solved_practice_paper_drishti_ias_bpsc,Solved Practice Paper,201,158,158,0,0,0,150,0,158,100,COMPLETE
+SSC_CGL,2023,,Shift 1,src_ssc_cgl_2023_shift_1_tier_1_cbt_ssc_official_tie,Tier 1 CBT,2368,2158,2158,110,0,0,0,0,2268,95.1,PARTIAL
+UGC_NET,2009,December,,src_ugc_net_political_science_02_2009_december_paper_ii,Paper II,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2014,June,,src_ugc_net_home_science_12_2014_june_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2014,June,,src_ugc_net_general_00_2014_june_paper_i_set_z_4,Paper I,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2014,December,,src_ugc_net_home_science_12_2014_december_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2013,June,,src_ugc_net_sociology_05_2013_june_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2017,January,,src_ugc_net_psychology_04_2017_january_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2012,June,,src_ugc_net_psychology_04_2012_june_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2016,July,,src_ugc_net_history_06_2016_july_paper_ii,Paper II,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2011,June,,src_ugc_net_commerce_08_2011_june_paper_ii,Paper II,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_education_09_2013_june_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
 UPSC_CSE,2020,,,src_upsc_cse_2020_gs_paper_1_2_detailed_explanations_drishti_ias_edit,GS Paper 1 & 2 Detailed Explanations,100,100,100,0,0,0,0,0,100,100,COMPLETE
+UGC_NET,2017,January,,src_ugc_net_public_admin_14_2017_january_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2017,November,,src_ugc_net_law_58_2017_november_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2017,November,,src_ugc_net_sociology_05_2017_november_paper_iii,Paper III,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+UGC_NET,2015,June,,src_ugc_net_education_09_2015_june_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2015,December,,src_ugc_net_geography_80_2015_december_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2016,July,,src_ugc_net_population_studies_15_2016_july_paper_ii,Paper II,1952,0,0,110,0,0,1842,0,110,0,PARTIAL_UNINDEXED
+UGC_NET,2014,December,,src_ugc_net_education_09_2014_december_paper_ii,Paper II,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2015,June,,src_ugc_net_philosophy_03_2015_june_paper_iii,Paper III,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2015,December,,src_ugc_net_population_studies_15_2015_december_paper_ii,Paper II,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2010,December,,src_ugc_net_cs_87_2010_december_paper_ii,Paper II,1340,0,0,46,0,0,1294,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2018,July,,src_ugc_net_law_58_2018_july_paper_ii,Paper II,1374,79,71,87,8,0,1284,0,158,44.9,PARTIAL
+UGC_NET,2014,June,,src_ugc_net_psychology_04_2014_june_paper_iii,Paper III,3749,1,1,232,0,0,3517,0,233,0.4,PARTIAL
+UGC_NET,2011,June,,src_ugc_net_political_science_02_2011_june_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
+UGC_NET,2011,December,,src_ugc_net_history_06_2011_december_paper_iii,Paper III,1562,0,0,100,0,0,1462,0,100,0,PARTIAL_UNINDEXED
 JEE_ADVANCED,2025,,,src_jee_advanced_2025_paper_2_iit_official_arc,Paper 2,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
 JEE_MAIN,2021,Session 2 (Apr),Shift 2,src_jee_main_2021_session_2_apr_shift_2_nta_official_que,,710,713,710,0,3,0,0,0,710,100,COMPLETE
-JEE_MAIN,2020,Session 1 (Jan),Shift 2,src_jee_main_2020_session_1_jan_shift_2_nta_official_que,,0,0,0,0,0,0,0,0,0,0,SOURCE_AVAILABLE_NOT_INGESTED
+UGC_NET,2013,December,,src_ugc_net_psychology_04_2013_december_paper_ii,Paper II,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2012,June,,src_ugc_net_law_58_2012_june_paper_ii,Paper II,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2009,December,,src_ugc_net_history_06_2009_december_paper_iii,Paper III,724,0,0,46,0,0,678,0,46,0,PARTIAL_UNINDEXED
+UGC_NET,2012,June,,src_ugc_net_general_00_2012_june_paper_i_set_w_1,Paper I,3646,0,0,247,0,0,3399,0,247,0,PARTIAL_UNINDEXED
+UGC_NET,2013,June,,src_ugc_net_commerce_08_2013_june_paper_iii,Paper III,3756,0,0,246,0,0,3510,0,246,0,PARTIAL_UNINDEXED
+UGC_NET,2017,November,,src_ugc_net_sociology_05_2017_november_paper_ii,Paper II,3875,11,11,232,0,0,3643,0,243,4.5,PARTIAL
+JEE_MAIN,2020,Session 1 (Jan),Shift 2,src_jee_main_2020_session_1_jan_shift_2_nta_official_que,,222,0,0,222,0,0,0,0,222,0,PARTIAL_UNINDEXED
 BPSC_CCE,2025,71st Integrated CCE Prelims,,,General Studies (Paper 1),150,150,150,0,0,0,150,0,150,100,NOT_IN_REGISTRY
-IBPS_PO,2021,Prelims,Concept Drill,,Practice Set,1,1,1,0,0,0,0,1,1,100,NOT_IN_REGISTRY
+IBPS_PO,2021,Prelims,Concept Drill,,Practice Set,1,1,1,0,0,0,0,0,1,100,NOT_IN_REGISTRY
 undefined,,,Concept Drill,,Practice Set,1,1,1,0,0,0,1,0,1,100,NOT_IN_REGISTRY
 undefined,,,,,,3,0,0,0,0,0,3,0,0,0,NOT_IN_REGISTRY
 NEET_UG,2026,Main,,,NEET UG 2026 (Code 13),180,157,157,0,0,0,0,0,157,100,NOT_IN_REGISTRY

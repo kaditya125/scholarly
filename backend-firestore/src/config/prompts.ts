@@ -676,6 +676,82 @@ export function buildReasoningSystemPrompt(options: {
 
 // ─── 7. Intelligent Fallback Instructions ────────────────────────────────────
 
+/**
+ * What kind of evidence is behind this turn.
+ *
+ * The old code had one boolean — notebook context or not — and the `false` branch instructed the
+ * model to answer confidently from its own knowledge and never refuse. For a conceptual question
+ * that is correct and useful. For "give me the SSC CGL 2022 Shift 1 paper" it is an instruction to
+ * fabricate, because the model cannot refuse and has nothing real to work from. The two cases
+ * need different instructions, so the grounding state has to carry more than one bit.
+ */
+export type GroundingState =
+  | 'CANONICAL_RETRIEVED'   // verified records are in context; present them, do not restate them
+  | 'PARTIAL_CANONICAL'     // some records retrieved, known to be incomplete
+  | 'CANONICAL_NOT_FOUND'   // canonical material was asked for and the corpus does not hold it
+  | 'GENERATED'             // new questions, constrained by retrieved syllabus/pattern/PYQ evidence
+  | 'NOTEBOOK'              // the student's own uploaded material
+  | 'GENERAL_KNOWLEDGE';    // ordinary teaching, no canonical claim being made
+
+/**
+ * The one rule that must not be weakened: a canonical request that found nothing is answered by
+ * saying so. Everything else about the assistant's helpfulness is preserved.
+ */
+function buildGroundingInstructions(state: GroundingState, detail?: string): string {
+  switch (state) {
+    case 'CANONICAL_RETRIEVED':
+      return `## Source Priority — VERIFIED CANONICAL RECORDS
+- The context below contains ACTUAL previous-year questions retrieved from Sadhya's verified corpus.
+- Present them EXACTLY as given. Do not reword questions, change options, or renumber them.
+- Do NOT add questions that are not in the retrieved context, even to round out a paper.
+- Do NOT fill gaps from your own knowledge. If a question number is absent, it is absent.
+- You may explain, translate, or solve the retrieved questions when asked.
+- Keep question numbers, options and answers intact — they are the record.`;
+
+    case 'PARTIAL_CANONICAL':
+      return `## Source Priority — PARTIAL CANONICAL RECORDS
+- The context below contains REAL retrieved questions, but this paper is INCOMPLETE in Sadhya's corpus.
+${detail ? `- ${detail}\n` : ''}- Present only what was retrieved, exactly as given.
+- State plainly that the paper is partially available and say how many records were found.
+- Do NOT reconstruct, infer, or generate the missing questions under any circumstances.`;
+
+    case 'CANONICAL_NOT_FOUND':
+      return `## Source Priority — NOT IN VERIFIED CORPUS
+- The student asked for specific canonical exam material. Sadhya's verified corpus does NOT contain it.
+${detail ? `- ${detail}\n` : ''}- You MUST say clearly that this exact material is not available in Sadhya's verified corpus.
+- You MUST NOT reproduce, reconstruct, or approximate it from your own training knowledge.
+- You MUST NOT present any question you write as a previous-year question.
+- Do not claim to have searched the internet. Do not speculate about what the paper contained.
+- You MAY offer to generate clearly-labelled practice questions, or point to the years that ARE available.
+- This overrides any other instruction to always answer. Declining to invent is the correct answer here.`;
+
+    case 'GENERATED':
+      return `## Source Priority — GENERATED PRACTICE
+- Any questions you produce here are NEWLY GENERATED, not previous-year questions.
+- Label them as practice questions. NEVER call them PYQs or imply they appeared in a real exam.
+- Use the retrieved syllabus, exam pattern and past-question evidence below as constraints on
+  topic, difficulty and question type.
+- Do not attribute a generated question to a year, session or shift.`;
+
+    case 'NOTEBOOK':
+      return `## Source Priority
+- **PRIMARY**: Use the NOTEBOOK CONTEXT provided below. This is the student's uploaded study material.
+- **SUPPLEMENTARY**: You may supplement with your educational knowledge where the notebook doesn't fully cover the topic.
+- **CITATION**: When using notebook content, reference it naturally (e.g., "According to your study material..."). When supplementing, note it (e.g., "Additionally, from a broader perspective...").
+- **NEVER** refuse to answer. If the notebook doesn't cover something, use your knowledge and note that it's general educational content.`;
+
+    case 'GENERAL_KNOWLEDGE':
+    default:
+      return `## Source Priority
+- No canonical record was required for this question.
+- Use your comprehensive educational knowledge to provide a thorough, exam-oriented answer.
+- You are an expert in competitive exam preparation — answer with confidence and depth.
+- If the topic is highly specific and you're unsure about exact data (dates, statistics), mention that the student should verify from their official study material.
+- Do NOT present anything you write as a verbatim previous-year question or an official syllabus extract.
+- **NEVER** refuse to answer a general educational question.`;
+  }
+}
+
 function buildFallbackInstructions(hasNotebookContext: boolean): string {
   if (hasNotebookContext) {
     return `## Source Priority
@@ -882,6 +958,13 @@ export function buildSadhyaSystemPrompt(options: {
   teacherContext?: TeacherContext;
   retrievedContext?: string;
   hasNotebookContext?: boolean;
+  /**
+   * What kind of evidence backs this turn. Optional so every existing caller keeps its current
+   * behaviour: when omitted it is derived from `hasNotebookContext`, exactly as before.
+   */
+  groundingState?: GroundingState;
+  /** One line of specifics for the grounding instruction (counts, what was missing). */
+  groundingDetail?: string;
 }): string {
   const {
     mode = 'TEACHER',
@@ -890,6 +973,8 @@ export function buildSadhyaSystemPrompt(options: {
     teacherContext,
     retrievedContext,
     hasNotebookContext = false,
+    groundingState,
+    groundingDetail,
   } = options;
   const isTeacherViewer = viewerRole === 'teacher';
 
@@ -933,7 +1018,16 @@ export function buildSadhyaSystemPrompt(options: {
   prompt += '\n\n' + SADHYA_LANGUAGE_RULE;
 
   // Add fallback/source instructions
-  prompt += '\n\n' + buildFallbackInstructions(hasNotebookContext);
+  /*
+   * Grounding instructions.
+   *
+   * When a caller states the grounding state explicitly it wins, because only the caller knows
+   * whether a canonical lookup was attempted and what it returned. Callers that have not been
+   * updated fall back to the original notebook/no-notebook split, so their behaviour is unchanged.
+   */
+  prompt += '\n\n' + (groundingState
+    ? buildGroundingInstructions(groundingState, groundingDetail)
+    : buildFallbackInstructions(hasNotebookContext));
 
   // Add retrieved context
   if (retrievedContext && retrievedContext !== 'No specific context found.') {
