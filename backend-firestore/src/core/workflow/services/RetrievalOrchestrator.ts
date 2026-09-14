@@ -161,8 +161,11 @@ export class RetrievalOrchestrator {
       groundingState = 'CANONICAL_NOT_FOUND';
       groundingDetail = `Sadhya's verified corpus contains no questions for ${named}.`;
       doVector = false;
-      contextStr += `=== CANONICAL LOOKUP RESULT ===\nStatus: NOT_AVAILABLE_IN_VERIFIED_CORPUS\n` +
-        `Sadhya's verified corpus contains no questions for ${named}.\n\n`;
+      contextStr += `=== CANONICAL LOOKUP RESULT (AUTHORITATIVE) ===\n` +
+        `Query: ${named}${parsed.year ? ` ${parsed.year}` : ''}\n` +
+        `Records found: 0\n` +
+        `Sadhya's verified question bank contains NO questions for ${named}. The corpus was queried\n` +
+        `and holds nothing for this exam. This is a checked fact, not an absence of effort.\n\n`;
     } else if (parsed.intent === 'EXACT_PYQ' && parsed.examId) {
       trace.canonicalLookupRan = true;
       yield { type: 'progress', stage: WorkflowStage.RAG_RETRIEVAL, message: 'Checking Sadhya\'s verified question corpus...' };

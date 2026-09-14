@@ -568,6 +568,29 @@ export class WorkflowEngine {
       const rerankingLatencyMs = sumSpan('cohere_rerank');
       const retrievalCacheHit = retrievalSpans.some((m: any) => m.operation === 'retrieval_cache_hit');
 
+      /*
+       * ── The unavailability answer is emitted by the backend, not asked of the model ─────────
+       *
+       * When a student asks for canonical material Sadhya does not hold, they must be told so.
+       * Instructing the model to say it works most of the time — but "most of the time" is not a
+       * guarantee, and across runs it sometimes opened by noting the student's target exam differs
+       * and asking them to clarify, never answering what was asked. The model reliably declines to
+       * FABRICATE (that held in every run); it is the plain statement of absence that drifted.
+       *
+       * So the statement is emitted here, deterministically, from the retrieval result itself. The
+       * model's answer then follows and adds whatever is genuinely useful. A guarantee a student
+       * depends on should not be a matter of prompt adherence.
+       */
+      if (retrievalOutcome.groundingState === 'CANONICAL_NOT_FOUND') {
+        // The detail already names the corpus when it exists ("Sadhya's verified corpus contains
+        // no questions for GATE"), so prefixing it with the same words reads as a stutter.
+        const detail = retrievalOutcome.groundingDetail?.trim();
+        const notice = detail
+          ? `**${detail.replace(/\.?$/, '.')}**\n\n`
+          : `**I don't have that material in Sadhya's verified question bank.**\n\n`;
+        yield { type: 'chunk', chunk: notice };
+      }
+
       // ── Stage 6: Agent Execution ───────────────────────────────────────
       yield { type: 'progress', stage: WorkflowStage.AGENT_EXECUTION, message: `Sadhya AI ${mode} mode preparing explanation...` };
 
