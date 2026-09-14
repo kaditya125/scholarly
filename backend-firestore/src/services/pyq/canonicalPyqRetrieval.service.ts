@@ -55,6 +55,16 @@ export interface CanonicalPyqResult {
 
 const MAX_PAPER_QUESTIONS = 400;
 
+/**
+ * How many questions go into one prompt.
+ *
+ * A full SSC CGL 2022 Shift 1 group is 299 records — 137KB of context, which made generation fail
+ * outright: the student got citations and then silence. A capped, explicitly-labelled slice is
+ * both answerable and honest; the count of what was withheld is stated so nothing looks complete
+ * when it is not.
+ */
+const MAX_CONTEXT_QUESTIONS = 40;
+
 /** Firestore equality queries only; no ordering constraint that would need a composite index. */
 async function queryQuestions(
   filters: Array<[string, FirebaseFirestore.WhereFilterOp, any]>,
@@ -222,7 +232,7 @@ export class CanonicalPyqRetrievalService {
    * records, not to recall them, and the question number, options, answer and source are the
    * difference between presenting and reciting.
    */
-  toContextBlock(result: CanonicalPyqResult): string {
+  toContextBlock(result: CanonicalPyqResult, maxQuestions = MAX_CONTEXT_QUESTIONS): string {
     if (result.questions.length === 0) return '';
     const first = result.questions[0] as any;
     const header = [

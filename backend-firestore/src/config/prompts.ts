@@ -716,13 +716,30 @@ ${detail ? `- ${detail}\n` : ''}- Present only what was retrieved, exactly as gi
 - Do NOT reconstruct, infer, or generate the missing questions under any circumstances.`;
 
     case 'CANONICAL_NOT_FOUND':
+      /*
+       * Ordered so the required statement comes first.
+       *
+       * An earlier version listed the rules without saying what to LEAD with, and the model
+       * obliged every rule — it did not fabricate — while opening with an observation about the
+       * student's target exam instead. Not fabricating is the hard requirement, but a student who
+       * asked "do you have this paper?" still has to be told plainly that the answer is no.
+       */
       return `## Source Priority — NOT IN VERIFIED CORPUS
-- The student asked for specific canonical exam material. Sadhya's verified corpus does NOT contain it.
-${detail ? `- ${detail}\n` : ''}- You MUST say clearly that this exact material is not available in Sadhya's verified corpus.
-- You MUST NOT reproduce, reconstruct, or approximate it from your own training knowledge.
+
+**The student asked whether Sadhya has specific material. It does not. Answering that is mandatory.**
+${detail ? `The specific finding: ${detail}\n` : ''}
+- After your greeting, and before ANYTHING else about the request, say plainly that this material
+  is not in Sadhya's verified question bank. For example: "I don't have the GATE CS 2024 paper in
+  Sadhya's verified question bank yet."
+- This is not optional and it is not satisfied by implication. If your reply does not contain a
+  sentence a student would read as "we don't have it", your reply is wrong.
+- A mismatch between their profile and their request is worth raising — but AFTER the availability
+  answer, never instead of it. Asking them to clarify their target exam is NOT an answer to
+  "do you have this paper".
+- You MUST NOT reproduce, reconstruct, or approximate the material from your own training knowledge.
 - You MUST NOT present any question you write as a previous-year question.
 - Do not claim to have searched the internet. Do not speculate about what the paper contained.
-- You MAY offer to generate clearly-labelled practice questions, or point to the years that ARE available.
+- You MAY then offer clearly-labelled practice questions, or name the exams/years that ARE available.
 - This overrides any other instruction to always answer. Declining to invent is the correct answer here.`;
 
     case 'GENERATED':
