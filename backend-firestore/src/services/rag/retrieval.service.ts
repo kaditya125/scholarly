@@ -7,6 +7,7 @@ import { cacheService } from '../cache.service';
 import { ChatMessage } from '../../types';
 import { env } from '../../config/env';
 import { Telemetry } from '../../lib/telemetry';
+import { logger } from '../../utils/logger';
 
 export interface RetrievalResult {
   text: string;
@@ -369,6 +370,7 @@ Standalone Search Query:`;
       canonicalPaperId?: string;
       sittingId?: string;
       subject?: string;
+      topic?: string;
       officialOnly?: boolean;
       strictPaper?: boolean;
       topK?: number;
@@ -377,7 +379,18 @@ Standalone Search Query:`;
     const { canonicalPaperId, sittingId, strictPaper = true, topK = 5 } = opts;
 
     const filter: Record<string, any> = { content_type: 'pyq' };
+    /*
+     * An unknown exam means an unfiltered search, and an unfiltered search over a shared corpus
+     * returns whatever is nearest — which for a UGC NET query (0.4% indexed) was JEE Main. When
+     * the caller could not identify the exam, semantic PYQ search is refused rather than run
+     * wide: returning another exam's questions is worse than returning none.
+     */
+    if (!opts.examId && !canonicalPaperId && !sittingId) {
+      logger.warn('[Retrieval] PYQ search requested without an exam filter; refusing to search across exams');
+      return [];
+    }
     if (opts.examId) filter.examId = opts.examId.trim().toUpperCase().replace(/[\s_-]+/g, '_');
+    if (opts.topic) filter.topic = opts.topic;
     if (opts.year) filter.year = opts.year;
     if (opts.subject) filter.subject = opts.subject;
     if (opts.officialOnly) filter.isAuthenticPyq = true;

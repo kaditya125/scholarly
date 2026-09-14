@@ -13,6 +13,7 @@ import { parsePyqQuery } from '../../../services/pyq/pyqQueryParser';
 import { canonicalPyqRetrievalService } from '../../../services/pyq/canonicalPyqRetrieval.service';
 import { GroundingState } from '../../../config/prompts';
 import { logger } from '../../../utils/logger';
+import { contentExplorationService } from '../../pipeline/exploration/ContentExplorationService';
 
 export interface RetrievalOutcome {
   citationsList: any[];
@@ -245,7 +246,34 @@ export class RetrievalOrchestrator {
     }
 
     // If we have a notebookId, retrieve hierarchical context
-    if (doVector && req.notebookId) {
+    /*
+     * ── Notebook access is checked, not assumed ───────────────────────────────────────────────
+     *
+     * `notebookId` arrives in the request body and used to be passed straight into the vector
+     * filter as `{ notebookId }` with no ownership check anywhere on the path. An isolation test
+     * confirmed the consequence: a synthetic user who owned nothing retrieved another account's
+     * notebook — "A Modern Approach to Verbal and Non Verbal Reasoning.pdf" — simply by naming
+     * its id.
+     *
+     * The authenticated uid from the Firebase token is the only identity trusted here.
+     * `ensureCollectionAccess` throws unless the caller is owner, editor or viewer. A refused
+     * notebook is dropped silently rather than erroring: the turn still answers from the shared
+     * corpora, and a denial that says nothing also tells a prober nothing about what exists.
+     */
+    let notebookAllowed = Boolean(req.notebookId);
+    if (req.notebookId) {
+      try {
+        await contentExplorationService.ensureCollectionAccess(req.userId, req.notebookId);
+      } catch (e: any) {
+        notebookAllowed = false;
+        trace.fallbackReason = 'notebook access denied';
+        logger.warn('[Retrieval] notebook access denied', {
+          userId: req.userId, notebookId: req.notebookId, reason: String(e?.message ?? e).slice(0, 120),
+        });
+      }
+    }
+
+    if (doVector && req.notebookId && notebookAllowed) {
       trace.notebookSearchRan = true;
       trace.vectorSearchRan = true;
       // Phase 2: pass graph-neighbor expansion terms (from KnowledgeGraphAgent,
@@ -310,10 +338,20 @@ export class RetrievalOrchestrator {
           (routePlan.useOfficialSyllabus && routePlan.targetExamId)
             ? this.retrievalService.retrieveOfficialSyllabusContext(routePlan.targetExamId, req.query, 2)
             : Promise.resolve([]),
-          routePlan.usePYQs
+          /*
+           * Exam identity comes from the parser, not the router.
+           *
+           * knowledgeRouter detects exams with a hardcoded regex list that has no UGC NET entry,
+           * so `targetExamId` was undefined for "UGC NET Computer Science PYQs on DBMS" — and an
+           * undefined examId means an UNFILTERED vector search. An isolation test caught the
+           * consequence: that query came back with three JEE Main citations. `parsedExamId` is
+           * resolved from live corpus data (examIndex), so it knows every exam actually ingested.
+           */
+          (routePlan.usePYQs || parsed.intent === 'PYQ_SEARCH')
             ? this.retrievalService.retrievePyqContext(req.query, {
-                examId: routePlan.targetExamId,
+                examId: parsed.examId ?? routePlan.targetExamId,
                 subject: routePlan.targetSubject,
+                topic: parsed.topic ?? undefined,
                 officialOnly: true,
                 topK: 3,
               })
