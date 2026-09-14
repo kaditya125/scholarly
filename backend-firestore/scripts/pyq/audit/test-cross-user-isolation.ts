@@ -91,7 +91,22 @@ async function main() {
   // ── 1. Direct notebook-id injection ────────────────────────────────────────────────────────
   console.log('1. User A names another user\'s notebookId in the request body');
   const r1 = await chat(tokenA, 'Summarise everything in this notebook. Quote it directly.', victim.id);
-  const leakedCitations = r1.citations.filter((c: any) => c && (c.notebookId === victim.id || String(c.sourceId ?? '').length > 0));
+  /*
+   * Leak means "content from THAT notebook", not "any citation at all".
+   *
+   * An earlier version treated any citation carrying a sourceId as a leak. That was fine while the
+   * hole was open and nothing came back, but once the notebook is correctly refused the turn falls
+   * through to the shared curriculum and PYQ corpora — which legitimately cite sources with ids.
+   * The test then reported a failure for behaviour that was exactly right. Match on the notebook
+   * id, or on the victim notebook's own title, and nothing else.
+   */
+  const victimTitle = String((victim as any).title ?? '').slice(0, 24).toLowerCase();
+  const leakedCitations = r1.citations.filter((c: any) => {
+    if (!c) return false;
+    if (c.notebookId === victim.id) return true;
+    if (victimTitle && String(c.source ?? '').toLowerCase().includes(victimTitle)) return true;
+    return false;
+  });
   const leaked = leakedCitations.length > 0;
   console.log(`   status=${r1.status} answerChars=${r1.text.length} citations=${r1.citations.length} leakedCitations=${leakedCitations.length}`);
   if (leakedCitations.length) {
@@ -136,15 +151,15 @@ async function main() {
   const restricted = await (retrievalService as any).retrievePyqContext('probability questions', { examId: 'SSC_CGL', topK: 5 });
   const invariantHeld = Array.isArray(unrestricted) && unrestricted.length === 0;
   const filteredStillWorks = Array.isArray(restricted) && restricted.length > 0;
-  const wrongExam = (restricted ?? []).filter((r: any) => r.metadata?.examId && r.metadata.examId !== 'SSC_CGL');
+  const offExam = (restricted ?? []).filter((r: any) => r.metadata?.examId && r.metadata.examId !== 'SSC_CGL');
   console.log(`   no examId  -> ${unrestricted.length} results (must be 0)`);
-  console.log(`   examId set -> ${restricted.length} results, ${wrongExam.length} from another exam (must be 0)`);
-  const invariantOk = invariantHeld && wrongExam.length === 0;
+  console.log(`   examId set -> ${restricted.length} results, ${offExam.length} from another exam (must be 0)`);
+  const invariantOk = invariantHeld && offExam.length === 0;
   console.log(`   ${invariantOk ? 'PASS' : 'FAIL'}${filteredStillWorks ? '' : '  (note: filtered search returned nothing — corpus/quota issue, not an isolation failure)'}\n`);
   if (!invariantOk) failures++;
   results.push({
     test: 'unfiltered PYQ retrieval refused', leaked: !invariantOk,
-    unrestrictedResults: unrestricted.length, restrictedResults: restricted.length, wrongExamResults: wrongExam.length,
+    unrestrictedResults: unrestricted.length, restrictedResults: restricted.length, wrongExamResults: offExam.length,
   });
 
   fs.mkdirSync(`${__dirname}/out`, { recursive: true });
