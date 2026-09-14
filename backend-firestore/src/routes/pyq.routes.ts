@@ -23,6 +23,11 @@ const router = Router();
 router.get('/matrix', requireAuth, (req, res) => pyqController.getAvailabilityMatrix(req, res));
 router.get('/sources', requireAuth, (req, res) => pyqController.listSources(req, res));
 router.get('/questions', requireAuth, (req, res) => pyqController.listQuestions(req, res));
+// Coverage is a diagnostic: live vector-coverage figures by exam/year/subject.
+router.get('/coverage', requireAuth, (req, res) => pyqController.getCoverage(req, res));
+// A canonical paper as a paged document, independent of any LLM context limit.
+router.get('/papers/by-sitting/:sittingId', requireAuth, (req, res) => pyqController.getCanonicalPaper(req, res));
+router.get('/papers/:canonicalPaperId', requireAuth, (req, res) => pyqController.getCanonicalPaper(req, res));
 router.get('/questions/:questionId', requireAuth, (req, res) => pyqController.getQuestion(req, res));
 router.get('/analytics/:examId', requireAuth, (req, res) => pyqController.getAnalytics(req, res));
 

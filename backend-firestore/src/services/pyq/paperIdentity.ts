@@ -315,3 +315,89 @@ export function classifyProvenance(q: {
 export function isAuthenticPyq(cls: ProvenanceClass): boolean {
   return cls === 'VERIFIED_OFFICIAL_PYQ';
 }
+
+// ─── Sitting recovery from identifiers ───────────────────────────────────────────────────────
+
+/** How a sitting was established — evidence, not a guess, in every case. */
+export type SittingSource =
+  | 'QUESTION_METADATA'  // the question's own shift string carried a date ("29 January Shift 1")
+  | 'IDENTIFIER'         // the date is inside the questionId / sourceId the ingestion assigned
+  | 'UNRESOLVED';
+
+export interface RecoveredSitting {
+  sittingId: string;
+  /** `YYYY-MM-DD` when the identifier gave a full date, otherwise `MM-DD`. */
+  date: string;
+  shift: number | null;
+  source: SittingSource;
+  /** The exact substring the date came from, so the derivation stays auditable. */
+  evidence: string;
+}
+
+const MONTH_RE = '(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*';
+
+/**
+ * Recover the sitting from the identifiers an ingestion already assigned.
+ *
+ * Several thousand records carry their sitting inside the id and nowhere else —
+ * `pyq:ssc_cgl:2021:2022_04_11_1:q100` is SSC CGL 2021 sat on 11 April 2022, shift 1, and
+ * `pyq:jee_main:2019:10_april_shift_1:q10` is 10 April, shift 1. Reading that is recovery, not
+ * inference: the date was written by whoever ingested the paper, and this only relocates it into
+ * a field the retrieval layer can filter on.
+ *
+ * Note the year trap: for SSC CGL the *exam* year and the *sitting* year differ (the 2021 exam was
+ * held in 2022), so when the identifier supplies a full date it is kept whole rather than being
+ * folded into the exam year.
+ *
+ * Returns null rather than a low-confidence answer. A paper with no recoverable date must stay
+ * UNRESOLVED; attaching real questions to a sitting that never held them is the failure this whole
+ * identity effort exists to prevent.
+ */
+export function recoverSittingFromIdentifiers(q: {
+  examId?: string; year?: number; questionId?: string; sourceId?: string; shift?: string | null;
+}): RecoveredSitting | null {
+  if (!q.examId) return null;
+  const haystacks = [String(q.questionId ?? ''), String(q.sourceId ?? '')].filter(Boolean);
+  const shiftFromField = normalizeShift(q.shift).shift;
+
+  for (const h of haystacks) {
+    // 1. YYYY_MM_DD[_shift] — "2022_04_11_1", "2022-04-11_2"
+    const full = h.match(/(20\d{2})[_-](\d{1,2})[_-](\d{1,2})(?:[_-](\d))?/);
+    if (full) {
+      const [, y, mo, da, sh] = full;
+      const month = Number(mo), day = Number(da);
+      if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+        const date = `${y}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const shift = sh ? Number(sh) : shiftFromField;
+        return {
+          sittingId: `sitting:${q.examId}:${q.year ?? y}:${date}:${shift ?? 'na'}`,
+          date, shift, source: 'IDENTIFIER', evidence: full[0],
+        };
+      }
+    }
+
+    /*
+     * 2. DD_month[_shift_N] — "10_april_shift_1", "02_dec_1"
+     *
+     * The leading `(?<!\d)` is doing real work. Without it, `\d{1,2}` happily carves a day out of
+     * a year: `ugc_net_sanskrit_20_2013_december_paper_iii` matched "13_december" and produced a
+     * sitting date of 13 December for 26,291 UGC NET records whose sessions are month-only and
+     * carry no day at all. That is not recovery, it is invention — the exact failure this module
+     * exists to prevent — and it passed a dry run looking entirely plausible.
+     */
+    const named = h.match(new RegExp(`(?<!\\d)(\\d{1,2})[_-]${MONTH_RE}(?:[_-]shift)?[_-]?(\\d)?`, 'i'));
+    if (named) {
+      const day = Number(named[1]);
+      const mon = MONTHS[named[2].toLowerCase()];
+      if (mon && day >= 1 && day <= 31) {
+        const date = `${String(mon).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const shift = named[3] ? Number(named[3]) : shiftFromField;
+        return {
+          sittingId: `sitting:${q.examId}:${q.year ?? ''}:${date}:${shift ?? 'na'}`,
+          date, shift, source: 'IDENTIFIER', evidence: named[0],
+        };
+      }
+    }
+  }
+  return null;
+}

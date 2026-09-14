@@ -54,6 +54,20 @@ export interface RetrievalTrace {
   contextChars: number;
   groundingState: GroundingState;
   fallbackReason?: string;
+  /**
+   * Per-stage milliseconds.
+   *
+   * The Phase 1 report could only say a full-paper turn took 54-152s, which is not actionable:
+   * it does not distinguish a slow Firestore scan from a slow model. Each stage is timed
+   * separately so the next optimisation is aimed at evidence rather than at a guess.
+   */
+  timings: {
+    intentParse: number;
+    canonicalLookup: number;
+    vectorSearch: number;
+    contextBuild: number;
+    totalRetrieval: number;
+  };
 }
 
 /**
@@ -137,7 +151,9 @@ export class RetrievalOrchestrator {
      * This runs first and, when it succeeds, suppresses the vector branch entirely — mixing
      * curriculum passages into a paper listing only invites the model to blur the two.
      */
+    const tParse = Date.now();
     const parsed = await parsePyqQuery(req.query);
+    const parseMs = Date.now() - tParse;
     const trace: RetrievalTrace = {
       intent: parsed.intent, examId: parsed.examId, year: parsed.year, shift: parsed.shift,
       paper: parsed.paper, topic: parsed.topic, strategy,
@@ -145,10 +161,12 @@ export class RetrievalOrchestrator {
       canonicalRecords: 0, expectedRecords: null,
       vectorSearchRan: false, vectorHits: 0, notebookSearchRan: false, webSearchRan: doWeb,
       contextChars: 0, groundingState: 'GENERAL_KNOWLEDGE',
+      timings: { intentParse: 0, canonicalLookup: 0, vectorSearch: 0, contextBuild: 0, totalRetrieval: 0 },
     };
     let groundingState: GroundingState = 'GENERAL_KNOWLEDGE';
     let groundingDetail: string | undefined;
 
+    const tCanonicalStart = Date.now();
     if (parsed.intent === 'EXACT_PYQ' && !parsed.examId) {
       /*
        * A past-paper request naming an exam the corpus does not contain — "GATE CS 2024 paper".
@@ -246,6 +264,8 @@ export class RetrievalOrchestrator {
     }
 
     // If we have a notebookId, retrieve hierarchical context
+    trace.timings.canonicalLookup = Date.now() - tCanonicalStart;
+
     /*
      * ── Notebook access is checked, not assumed ───────────────────────────────────────────────
      *
@@ -326,6 +346,7 @@ export class RetrievalOrchestrator {
         // it, so 22,000 indexed past-paper vectors could not reach an answer no matter what the
         // router decided. They are retrieved official-only here — a practice question is useful
         // for drilling, but it should not be quoted back to a student as a past paper.
+        const tVector = Date.now();
         const [curriculumOutcome, refOutcome, syllabusOutcome, pyqOutcome] = await Promise.allSettled([
           this.retrievalService.retrieveCurriculumContext(req.query, 5),
           routePlan.useReferenceBooks
@@ -358,6 +379,7 @@ export class RetrievalOrchestrator {
             : Promise.resolve([]),
         ]);
 
+        trace.timings.vectorSearch = Date.now() - tVector;
         const curriculumResults = curriculumOutcome.status === 'fulfilled' ? curriculumOutcome.value : [];
         const refResults = refOutcome.status === 'fulfilled' ? refOutcome.value : [];
         const syllabusResults = syllabusOutcome.status === 'fulfilled' ? syllabusOutcome.value : [];
@@ -498,6 +520,12 @@ export class RetrievalOrchestrator {
     trace.vectorHits = citationsList.length;
     trace.contextChars = contextStr.length;
     trace.groundingState = groundingState;
+    trace.timings.intentParse = parseMs;
+    trace.timings.totalRetrieval = Date.now() - retrievalStartTime;
+    trace.timings.contextBuild = Math.max(
+      0,
+      trace.timings.totalRetrieval - trace.timings.intentParse - trace.timings.canonicalLookup - trace.timings.vectorSearch,
+    );
 
     // Developer-facing only: ids and counts, no question text and no student profile fields.
     logger.info('[Retrieval] trace', { sessionId: req.sessionId, ...trace });

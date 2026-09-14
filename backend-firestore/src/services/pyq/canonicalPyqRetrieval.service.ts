@@ -136,6 +136,74 @@ export class CanonicalPyqRetrievalService {
     return rows.sort(byQuestionNumber);
   }
 
+  /**
+   * A paper as a document the UI can render, paged — not as LLM context.
+   *
+   * These are two different problems that were being solved by one mechanism. The 40-question cap
+   * exists because a 299-record paper is 137KB of prompt and generation returns nothing; it should
+   * never have been the limit on what a *student* can see. This path has no model in it, so it
+   * carries the whole paper a page at a time with every field intact.
+   *
+   * `sittingId` narrows further than `canonicalPaperId` can: a registry paper group such as
+   * "Session 1, Shift 1" spans several dated sittings, and asking for one of them should return
+   * that sitting rather than the group.
+   */
+  async getPaperPage(params: {
+    canonicalPaperId?: string;
+    sittingId?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{
+    paper: {
+      canonicalPaperId: string | null; sittingId: string | null;
+      examId: string | null; examName: string | null; year: number | null;
+      session: string | null; shift: string | null; paper: string | null;
+      sittingDate: string | null; sittingSource: string | null;
+    } | null;
+    totalQuestions: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    /** Records present but lacking text — surfaced, never silently dropped from the count. */
+    incompleteCount: number;
+    distinctSittings: string[];
+    questions: CanonicalPYQQuestion[];
+  }> {
+    const page = Math.max(1, Number(params.page ?? 1));
+    const pageSize = Math.min(200, Math.max(1, Number(params.pageSize ?? 40)));
+
+    const field = params.sittingId ? 'sittingId' : 'canonicalPaperId';
+    const value = params.sittingId ?? params.canonicalPaperId;
+    if (!value) {
+      return { paper: null, totalQuestions: 0, page, pageSize, totalPages: 0, incompleteCount: 0, distinctSittings: [], questions: [] };
+    }
+
+    const all = (await queryQuestions([[field, '==', value]], MAX_PAPER_QUESTIONS)).sort(byQuestionNumber);
+    if (all.length === 0) {
+      return { paper: null, totalQuestions: 0, page, pageSize, totalPages: 0, incompleteCount: 0, distinctSittings: [], questions: [] };
+    }
+
+    const first = all[0] as any;
+    const incompleteCount = all.filter((q) => !q.questionText || String(q.questionText).trim().length < 5).length;
+    const distinctSittings = [...new Set(all.map((q: any) => q.sittingId).filter(Boolean))] as string[];
+
+    return {
+      paper: {
+        canonicalPaperId: first.canonicalPaperId ?? null,
+        sittingId: params.sittingId ?? (distinctSittings.length === 1 ? distinctSittings[0] : null),
+        examId: first.examId ?? null, examName: first.examName ?? null, year: first.year ?? null,
+        session: first.session ?? null, shift: first.shift ?? null, paper: first.paper ?? null,
+        sittingDate: first.normalizedSittingDate ?? null, sittingSource: first.sittingSource ?? null,
+      },
+      totalQuestions: all.length,
+      page, pageSize,
+      totalPages: Math.ceil(all.length / pageSize),
+      incompleteCount,
+      distinctSittings,
+      questions: all.slice((page - 1) * pageSize, page * pageSize),
+    };
+  }
+
   /** The registry's own expectation for a paper, when it records one. */
   private async expectedCountFor(examId: string, year: number | null): Promise<number | null> {
     if (!year) return null;

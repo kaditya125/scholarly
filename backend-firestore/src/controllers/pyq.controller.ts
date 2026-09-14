@@ -10,6 +10,8 @@ import { pyqRightsGovernanceService } from '../services/pyq/pyqRightsGovernance.
 import { pyqVectorIngestionService } from '../services/pyq/pyqVectorIngestion.service';
 import { pyqAnalyticsService } from '../services/pyq/pyqAnalytics.service';
 import { PYQVerificationStatus, PYQRightsStatus, PYQIngestionState } from '../types/pyq.types';
+import { corpusCoverageService } from '../services/pyq/corpusCoverage.service';
+import { canonicalPyqRetrievalService } from '../services/pyq/canonicalPyqRetrieval.service';
 
 /**
  * The fields a reader actually sees, for `GET /questions?compact=true`.
@@ -33,6 +35,49 @@ function toBrowsingShape(q: Record<string, any>): Record<string, any> {
 }
 
 export class PYQController {
+  /**
+   * GET /api/pyq/coverage
+   * Vector coverage by exam / exam+year / exam+subject, computed live. Diagnostic: it answers
+   * "is the backfill working?" with a current number rather than a remembered one.
+   */
+  async getCoverage(req: Request, res: Response) {
+    try {
+      const report = await corpusCoverageService.compute(req.query.force === 'true');
+      const scope = String(req.query.scope ?? 'exam');
+      res.json({
+        generatedAt: report.generatedAt,
+        totals: report.totals,
+        metadata: report.metadata,
+        rows: scope === 'year' ? report.byExamYear : scope === 'subject' ? report.byExamSubject : report.byExam,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to compute coverage' });
+    }
+  }
+
+  /**
+   * GET /api/pyq/papers/:canonicalPaperId?page=1&pageSize=40
+   * GET /api/pyq/papers/by-sitting/:sittingId?page=1&pageSize=40
+   *
+   * The paper as a document, paged. Deliberately separate from the chat path: the 40-question
+   * context cap exists because a 299-record paper is 137KB of prompt, which is a constraint on the
+   * model and never should have been a constraint on what a student can see.
+   */
+  async getCanonicalPaper(req: Request, res: Response) {
+    try {
+      const { canonicalPaperId, sittingId } = req.params as Record<string, string>;
+      const result = await canonicalPyqRetrievalService.getPaperPage({
+        canonicalPaperId, sittingId,
+        page: req.query.page ? parseInt(String(req.query.page), 10) : 1,
+        pageSize: req.query.pageSize ? parseInt(String(req.query.pageSize), 10) : 40,
+      });
+      if (!result.paper) return res.status(404).json({ error: 'No canonical paper found for that identifier' });
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to fetch canonical paper' });
+    }
+  }
+
   /**
    * GET /api/pyq/matrix
    * Returns human- and machine-readable PYQ availability matrix.
