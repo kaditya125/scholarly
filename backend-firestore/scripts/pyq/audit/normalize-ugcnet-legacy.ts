@@ -78,12 +78,31 @@ async function main() {
   const updates: { docId: string; patch: Record<string, any> }[] = [];
   const stats = {
     alreadyCanonical: 0, normalised: 0, textCopied: 0, answerCopied: 0,
-    topicFromUnit: 0, sourceCopied: 0, suspectEncoding: 0, cleanText: 0, skippedNoText: 0,
+    topicFromUnit: 0, sourceCopied: 0, suspectEncoding: 0, cleanText: 0, skippedNoText: 0, lifecycleCopied: 0,
     topicSource: {} as Record<string, number>,
   };
 
   for (const { docId, d } of rows) {
     const patch: Record<string, any> = {};
+
+    /*
+     * Lifecycle state, applied before any early return.
+     *
+     * The legacy contract records lifecycle under `status`, and 26,191 records carry
+     * `status: 'ACTIVE'` with no `ingestionState`. The indexing worker gates on `ingestionState`,
+     * so all of them were excluded as "not an accepted state" — the corpus had text, answers and
+     * topics but was still unreachable by the backfill.
+     *
+     * This sits above the canonical-contract early return deliberately. On the first run those
+     * records had no `questionText` and fell through to the rename block; now that they do, they
+     * take the early return, and a lifecycle fix placed after it would silently apply to nobody.
+     * `ACTIVE` is already a member of PYQIngestionState, so this is a rename, not a judgement about
+     * whether the record is ready.
+     */
+    if (!has(d.ingestionState) && d.status === 'ACTIVE') {
+      patch.ingestionState = 'ACTIVE';
+      stats.lifecycleCopied++;
+    }
 
     // Records already on the canonical contract only need mapping provenance stated.
     if (has(d.questionText)) {
@@ -151,6 +170,7 @@ async function main() {
   console.log(`    correctAnswer from correctOption ${stats.answerCopied}`);
   console.log(`    topic from unitName             ${stats.topicFromUnit}`);
   console.log(`    sourceId from sourcePaperId     ${stats.sourceCopied}`);
+  console.log(`    ingestionState from status      ${stats.lifecycleCopied}`);
   console.log(`  skipped (no text at all)          ${stats.skippedNoText}`);
   console.log(`\n  topicSource distribution: ${JSON.stringify(stats.topicSource)}`);
   console.log(`  documents to write: ${updates.length}`);

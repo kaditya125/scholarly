@@ -191,12 +191,17 @@ export class PYQVectorIngestionService {
            */
           provenanceClass: (q as any).provenanceClass ?? classifyProvenance(q as any),
           isAuthenticPyq: isAuthenticPyq((q as any).provenanceClass ?? classifyProvenance(q as any)),
-          canonicalPaperId: (q as any).canonicalPaperId ?? null,
+          // Written only when present. The vector store rejects a null metadata value outright
+          // ("Metadata value must be a string, number, boolean or list of strings, got 'null'"),
+          // which failed the whole batch rather than the one field — a paper-less question took
+          // its 19 batch-mates down with it.
+          ...((q as any).canonicalPaperId ? { canonicalPaperId: (q as any).canonicalPaperId } : {}),
           paperIdentityStatus: (q as any).paperIdentityStatus ?? 'UNRESOLVED',
-          sittingId: (q as any).sittingId ?? null,
-          normalizedSession: (q as any).normalizedSession ?? null,
-          normalizedShift: (q as any).normalizedShift ?? null,
-          normalizedSittingDate: (q as any).normalizedSittingDate ?? null,
+          ...((q as any).sittingId ? { sittingId: (q as any).sittingId } : {}),
+          ...((q as any).normalizedSession ? { normalizedSession: (q as any).normalizedSession } : {}),
+          ...((q as any).normalizedShift !== undefined && (q as any).normalizedShift !== null
+            ? { normalizedShift: (q as any).normalizedShift } : {}),
+          ...((q as any).normalizedSittingDate ? { normalizedSittingDate: (q as any).normalizedSittingDate } : {}),
 
           corpusBucket: q.corpusBucket || 'OFFICIAL_PYQ',
           vectorKind: q.corpusBucket === 'PRACTICE_MOCK' ? 'PRACTICE_QUESTION' : 'CANONICAL_PYQ_QUESTION',
