@@ -235,16 +235,16 @@ function socialMain(): string {
   return [
     `<p style="${EYEBROW}">Official channels</p>`,
     `<h1 style="${H1}">Where to find Sadhya.</h1>`,
-    p('Sadhya is built by one founder, so the list is short. These are the only channels we run — an account elsewhere using the Sadhya name is not ours.'),
+    p('These are the only channels Sadhya runs. An account elsewhere using the Sadhya name that isn’t listed here is not ours.'),
     ul([
       `<strong>Website</strong> — ${a('/', SITE.domain)}`,
-      ...SITE.social.map((s) => `<strong>${esc(s.name)}</strong> — ${a(s.href, `${SITE.name} company page`, { external: true })}`),
+      ...SITE.social.map((s) => `<strong>${esc(s.name)}</strong> — ${a(s.href, s.handle, { external: true })}`),
       `<strong>Email</strong> — ${a(`mailto:${SITE.email.support}`, SITE.email.support)}`,
       `<strong>Engineering blog</strong> — ${a('/blog', `${SITE.domain}/blog`)}`,
     ]),
     h2('The founder'),
     p(`${a('/our-team', SITE.founder.name)}, ${esc(SITE.founder.role)} · ${founderProfileLinks()}`),
-    p(`Sadhya doesn’t run official X, Instagram, Facebook or YouTube accounts yet. When it does, they will be listed on this page first. If you come across an account using our name, tell us at ${a(`mailto:${SITE.email.security}`, SITE.email.security)}.`),
+    p(`Sadhya doesn’t run a YouTube channel yet. When it does, it will be listed on this page first. If you come across an account using our name that isn’t listed here, tell us at ${a(`mailto:${SITE.email.security}`, SITE.email.security)}.`),
   ].join('');
 }
 

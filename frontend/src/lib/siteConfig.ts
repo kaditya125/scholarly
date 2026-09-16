@@ -121,14 +121,18 @@ export const SITE = {
   /**
    * Official social profiles — only accounts that actually exist and are run by Sadhya.
    *
-   * The footer renders exactly what's in this array, so a row here is a public claim that the
-   * account is ours. On 16 Sep 2026 every @sadhyalearn handle this used to list (X, Instagram,
-   * Facebook, YouTube, GitHub, linkedin.com/company/sadhyalearn) was checked while logged out and
-   * none of them exists. Add a row only after the account is live and links back to sadhya.app.
+   * The footer, /social, the static HTML and Organization.sameAs all render exactly this array, so a
+   * row here is a public claim that the account is ours. On 16 Sep 2026 every @sadhyalearn handle this
+   * used to list was checked while logged out and none of them existed. The rows below were created by
+   * the founder and verified signed-out on 17 Sep 2026: each profile loads publicly and links to
+   * https://sadhya.app. Add a row only after the same check. (No YouTube channel yet.)
    */
   social: [
-    { name: 'LinkedIn', href: 'https://www.linkedin.com/company/sadhya/', icon: 'linkedin' },
-  ] as { name: string; href: string; icon: SocialIcon }[],
+    { name: 'LinkedIn', handle: 'linkedin.com/company/sadhya', href: 'https://www.linkedin.com/company/sadhya/', icon: 'linkedin' },
+    { name: 'X', handle: '@sadhyaapp', href: 'https://x.com/sadhyaapp', icon: 'x' },
+    { name: 'Instagram', handle: '@sadhyahq', href: 'https://www.instagram.com/sadhyahq/', icon: 'instagram' },
+    { name: 'Facebook', handle: 'facebook.com/sadhyaapp', href: 'https://www.facebook.com/sadhyaapp', icon: 'facebook' },
+  ] as { name: string; handle: string; href: string; icon: SocialIcon }[],
 
   /** Shown as "Last updated" on every legal page. Bump when you revise them. */
   legalLastUpdated: '12 August 2026',

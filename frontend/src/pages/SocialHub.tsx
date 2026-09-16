@@ -4,35 +4,48 @@ import type { LucideIcon } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
 import SkyAmbience from '../components/landing/sky';
 import SiteFooter from '../components/landing/SiteFooter';
-import { SITE } from '../lib/siteConfig';
+import { SITE, type SocialIcon } from '../lib/siteConfig';
 import { useSeo } from '../lib/useSeo';
 import { Underline } from '../components/landing/Annotate';
+import { BRAND_PATHS } from '../components/brand/brandPaths';
 
 /**
  * /social — Sadhya's official channels.
  *
  * WHAT THIS PAGE USED TO BE, AND WHY IT ISN'T ANY MORE
  * It rendered mock feeds for X, LinkedIn, Instagram, Facebook, YouTube and GitHub accounts under
- * @sadhyalearn — with follower counts, likes, video views and repository stars. On 16 Sep 2026
- * every one of those accounts was checked while logged out and none of them exists; the numbers
- * were invented. A page that verifiers are sent to from the footer cannot show activity that did
- * not happen, so it now lists only channels that are real and run by Sadhya.
+ * @sadhyalearn — with follower counts, likes, video views and repository stars. On 16 Sep 2026 every one of
+ * those accounts was checked while logged out and none of them existed; the numbers were invented. A page that
+ * verifiers are sent to from the footer cannot show activity that did not happen, so it lists only channels
+ * that are real and run by Sadhya — the social rows come straight from SITE.social.
  *
- * THE RULE: a channel appears here only once it is live, is run by Sadhya, and links back to
- * sadhya.app. Counts, posts and previews of third-party feeds are never hard-coded.
+ * THE RULE: a channel appears here only once it is live, is run by Sadhya, and links back to sadhya.app.
+ * Counts, posts and previews of third-party feeds are never hard-coded.
  * Old /social?tab=… links still land here; the parameter is simply ignored.
  */
 
 interface Channel {
-  icon: LucideIcon;
   name: string;
   handle: string;
   body: string;
   href: string;
+  cta: string;
+  /** A lucide icon, or a brand glyph for social networks. */
+  icon?: LucideIcon;
+  brand?: SocialIcon;
   /** Internal routes use the router; everything else opens in a new tab. */
   internal?: boolean;
-  cta: string;
+  /** Spans the full grid width. */
+  wide?: boolean;
 }
+
+/** What each network is for, in words that promise no particular volume or kind of posting. */
+const SOCIAL_BODY: Partial<Record<SocialIcon, string>> = {
+  linkedin: 'Company updates from Sadhya. LinkedIn may ask you to sign in before it shows the page.',
+  x: 'Announcements and short updates from Sadhya.',
+  instagram: 'Posts and updates from Sadhya.',
+  facebook: 'The Sadhya Page — announcements and updates.',
+};
 
 const CHANNELS: Channel[] = [
   {
@@ -43,15 +56,16 @@ const CHANNELS: Channel[] = [
     href: '/',
     internal: true,
     cta: 'Open sadhya.app',
+    wide: true,
   },
-  {
-    icon: Linkedin,
-    name: 'LinkedIn',
-    handle: 'Sadhya company page',
-    body: 'Company updates from Sadhya. LinkedIn may ask you to sign in before it shows the page.',
-    href: SITE.linkedinCompany,
-    cta: 'Open LinkedIn',
-  },
+  ...SITE.social.map((s) => ({
+    brand: s.icon,
+    name: s.name,
+    handle: s.handle,
+    body: SOCIAL_BODY[s.icon] ?? `Sadhya on ${s.name}.`,
+    href: s.href,
+    cta: `Open ${s.name}`,
+  })),
   {
     icon: Mail,
     name: 'Email',
@@ -74,7 +88,19 @@ const CHANNELS: Channel[] = [
 const CARD =
   'rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] p-6 sm:p-7 shadow-xs';
 
-const DESCRIPTION = `Where to find ${SITE.name}: the website, the LinkedIn company page, support email, and the founder's public profiles. These are the only channels ${SITE.name} runs.`;
+const DESCRIPTION = `Where to find ${SITE.name}: the website, LinkedIn, X, Instagram and Facebook, support email, and the founder's public profiles. These are the only channels ${SITE.name} runs.`;
+
+function ChannelIcon({ channel }: { channel: Channel }) {
+  if (channel.brand) {
+    return (
+      <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] text-slate-700 dark:text-gray-200" fill="currentColor" aria-hidden>
+        <path d={BRAND_PATHS[channel.brand]} />
+      </svg>
+    );
+  }
+  const Icon = channel.icon ?? Globe;
+  return <Icon className="w-5 h-5 text-slate-700 dark:text-gray-200" strokeWidth={1.9} aria-hidden />;
+}
 
 function ChannelLink({ channel }: { channel: Channel }) {
   const className =
@@ -128,8 +154,8 @@ export default function SocialHub() {
             </h1>
 
             <p className="mt-4 text-[15px] sm:text-[17px] leading-relaxed text-slate-500 dark:text-gray-400 max-w-[40rem] mx-auto">
-              Sadhya is built by one founder, so the list is short. These are the only channels we run — an account
-              elsewhere using the Sadhya name is not ours.
+              These are the only channels Sadhya runs. An account elsewhere using the Sadhya name that isn&rsquo;t
+              listed here is not ours.
             </p>
           </div>
         </section>
@@ -138,10 +164,10 @@ export default function SocialHub() {
         <section className="max-w-[1160px] mx-auto px-5 sm:px-8 py-12 sm:py-16">
           <div className="grid sm:grid-cols-2 gap-5">
             {CHANNELS.map((c) => (
-              <div key={c.name} className={CARD}>
+              <div key={c.name} className={`${CARD}${c.wide ? ' sm:col-span-2' : ''}`}>
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] flex items-center justify-center">
-                    <c.icon className="w-5 h-5 text-slate-700 dark:text-gray-200" strokeWidth={1.9} aria-hidden />
+                    <ChannelIcon channel={c} />
                   </div>
                   <div className="min-w-0">
                     <h2 className="text-[16px] font-semibold text-slate-900 dark:text-white">{c.name}</h2>
@@ -196,8 +222,8 @@ export default function SocialHub() {
           <div className="mt-5 rounded-2xl border border-dashed border-slate-300 dark:border-white/15 p-6 sm:p-7 flex items-start gap-3">
             <ShieldCheck className="w-5 h-5 mt-0.5 shrink-0 text-[#8ba32b] dark:text-[#c8e558]" strokeWidth={1.9} aria-hidden />
             <p className="text-[14px] leading-relaxed text-slate-600 dark:text-gray-300">
-              Sadhya doesn&rsquo;t run official X, Instagram, Facebook or YouTube accounts yet. When it does, they will be
-              listed on this page first. If you come across an account using our name, tell us at{' '}
+              Sadhya doesn&rsquo;t run a YouTube channel yet. When it does, it will be listed on this page first. If you
+              come across an account using our name that isn&rsquo;t listed here, tell us at{' '}
               <a
                 href={`mailto:${SITE.email.security}`}
                 className="font-semibold text-slate-900 dark:text-white underline decoration-[#c8e558] underline-offset-2"

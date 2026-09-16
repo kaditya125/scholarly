@@ -162,19 +162,19 @@ const STATIC_ROUTES: SeoRoute[] = [
     // Mirrors the useSeo() call in SocialHub.tsx.
     path: '/social',
     title: `Official channels — ${SITE.name}`,
-    description: `Where to find ${SITE.name}: the website, the LinkedIn company page, support email, and the founder's public profiles. These are the only channels ${SITE.name} runs.`,
+    description: `Where to find ${SITE.name}: the website, LinkedIn, X, Instagram and Facebook, support email, and the founder's public profiles. These are the only channels ${SITE.name} runs.`,
     changefreq: 'monthly',
     priority: 0.5,
-    lastmod: '2026-09-16',
+    lastmod: '2026-09-17',
   },
   {
     path: '/community/social',
     title: `Official channels — ${SITE.name}`,
-    description: `Where to find ${SITE.name}: the website, the LinkedIn company page, support email, and the founder's public profiles. These are the only channels ${SITE.name} runs.`,
+    description: `Where to find ${SITE.name}: the website, LinkedIn, X, Instagram and Facebook, support email, and the founder's public profiles. These are the only channels ${SITE.name} runs.`,
     canonical: `${SITE.url}/social`,
     changefreq: 'monthly',
     priority: 0.5,
-    lastmod: '2026-09-16',
+    lastmod: '2026-09-17',
     inSitemap: false,
   },
   {
