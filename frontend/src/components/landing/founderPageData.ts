@@ -3,6 +3,7 @@ import {
   Code2, BookOpenCheck, PenTool, MessagesSquare, Linkedin, Github,
   type LucideIcon,
 } from 'lucide-react';
+import { SITE } from '../../lib/siteConfig';
 
 /**
  * Content for /our-team — the "Meet the Founder" page.
@@ -79,20 +80,18 @@ export interface Person {
     alt: string;
   } | null;
   /**
-   * Public professional profiles.
+   * Public professional profiles, supplied by the founder (SITE.founder in lib/siteConfig.ts).
    *
-   * Empty on purpose. The only handle derivable from this repository is a personal GitHub
-   * account on the git remote, which is infrastructure rather than a published founder
-   * link, and no LinkedIn/X handle for the founder exists anywhere in the project. The page
-   * therefore routes people to the real /contact form instead of shipping a guessed URL.
-   * To add one later: append { label, href, icon } and the profile card renders it.
+   * These are the third-party links a verifier follows to confirm the founder is real, so they
+   * come from the same record as the JSON-LD and the prerendered HTML rather than being typed
+   * here a second time. Never add a profile that doesn't exist or that someone else runs.
    */
   links: { label: string; href: string; icon: LucideIcon }[];
 }
 
 export const FOUNDER: Person = {
-  name: 'Aditya Kumar',
-  role: 'Founder & Product Engineer',
+  name: SITE.founder.name,
+  role: SITE.founder.role,
   blurb:
     'Building Sadhya across product, engineering, AI-powered learning systems, syllabus intelligence, PYQ infrastructure, personalized mastery, study planning, and the student experience.',
   initials: 'AK',
@@ -115,16 +114,8 @@ export const FOUNDER: Person = {
     alt: 'seated at a workbench in the Sadhya workspace, beside a laptop, with the Sadhya logo and the line "Every goal, attainable." on the wall behind',
   },
   links: [
-    {
-      label: 'LinkedIn',
-      href: 'https://www.linkedin.com/in/aditya-kumar-122370267/',
-      icon: Linkedin,
-    },
-    {
-      label: 'GitHub',
-      href: 'https://github.com/kaditya125',
-      icon: Github,
-    },
+    { label: 'LinkedIn', href: SITE.founder.linkedin, icon: Linkedin },
+    { label: 'GitHub', href: SITE.founder.github, icon: Github },
   ],
 };
 

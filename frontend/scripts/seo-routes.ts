@@ -77,8 +77,10 @@ const STATIC_ROUTES: SeoRoute[] = [
     // before truncating. Landing.tsx's useSeo() was overriding it with a 237-character version
     // on every page load; both now say this. See the note at the foot of this file.
     title: `${SITE.name} — ${SITE.tagline}`,
+    // "No hallucinations" was removed on 16 Sep 2026: no language-model product can promise that,
+    // and an absolute claim a reviewer can falsify costs more trust than it earns.
     description:
-      'AI-powered prep for UPSC, SSC CGL, JEE, NEET, BPSC. Every answer grounded in the official syllabus. No hallucinations.',
+      'AI-powered prep for UPSC, SSC CGL, JEE, NEET, BPSC. Answers grounded in the official syllabus, with their sources shown.',
     changefreq: 'weekly',
     priority: 1.0,
     lastmod: '2026-08-29',
@@ -135,7 +137,7 @@ const STATIC_ROUTES: SeoRoute[] = [
     type: 'profile',
     changefreq: 'monthly',
     priority: 0.6,
-    lastmod: '2026-08-29',
+    lastmod: '2026-09-16',
   },
   {
     path: '/blog',
@@ -157,22 +159,22 @@ const STATIC_ROUTES: SeoRoute[] = [
     lastmod: '2026-08-29',
   },
   {
-    // SocialHub.tsx likewise has no useSeo() call.
+    // Mirrors the useSeo() call in SocialHub.tsx.
     path: '/social',
-    title: `${SITE.name} on social — updates, walkthroughs and exam notes`,
-    description: `Follow ${SITE.name} across X, LinkedIn, Instagram, YouTube and GitHub — product updates, feature walkthroughs, exam notifications and preparation notes, gathered in one place.`,
-    changefreq: 'weekly',
+    title: `Official channels — ${SITE.name}`,
+    description: `Where to find ${SITE.name}: the website, the LinkedIn company page, support email, and the founder's public profiles. These are the only channels ${SITE.name} runs.`,
+    changefreq: 'monthly',
     priority: 0.5,
-    lastmod: '2026-08-29',
+    lastmod: '2026-09-16',
   },
   {
     path: '/community/social',
-    title: `${SITE.name} on social — updates, walkthroughs and exam notes`,
-    description: `Follow ${SITE.name} across X, LinkedIn, Instagram, YouTube and GitHub — product updates, feature walkthroughs, exam notifications and preparation notes, gathered in one place.`,
+    title: `Official channels — ${SITE.name}`,
+    description: `Where to find ${SITE.name}: the website, the LinkedIn company page, support email, and the founder's public profiles. These are the only channels ${SITE.name} runs.`,
     canonical: `${SITE.url}/social`,
-    changefreq: 'weekly',
+    changefreq: 'monthly',
     priority: 0.5,
-    lastmod: '2026-08-29',
+    lastmod: '2026-09-16',
     inSitemap: false,
   },
   {

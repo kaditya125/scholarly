@@ -427,6 +427,19 @@ export default function OurTeam() {
                       <span>{l.label}</span>
                     </a>
                   ))}
+                  {/* The founder's business address on the company domain — the same one the prerendered
+                      HTML and the JSON-LD publish. Not a new tab, so it sits apart from the profile links. */}
+                  <a
+                    href={`mailto:${SITE.founder.email}`}
+                    title={`Email ${FOUNDER.name}`}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] text-[12.5px] font-medium text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-all shadow-2xs cursor-pointer',
+                      FOCUS,
+                    )}
+                  >
+                    <Mail className="w-3.5 h-3.5 text-slate-700 dark:text-gray-300" />
+                    <span>{SITE.founder.email}</span>
+                  </a>
                 </div>
 
                 <Lede className="max-w-[34rem]">{FOUNDER.blurb}</Lede>
@@ -748,7 +761,7 @@ export default function OurTeam() {
                   <ArrowRight className="w-4 h-4" strokeWidth={2.25} aria-hidden />
                 </Link>
                 <a
-                  href="https://www.linkedin.com/in/aditya-kumar-122370267/"
+                  href={SITE.founder.linkedin}
                   target="_blank"
                   rel="noopener noreferrer me"
                   className={cn(
