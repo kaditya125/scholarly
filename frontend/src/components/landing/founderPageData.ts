@@ -1,6 +1,6 @@
 import {
   Network, FileSearch, Target, CalendarRange, Bot, Users,
-  Code2, BookOpenCheck, PenTool, MessagesSquare, Linkedin,
+  Code2, BookOpenCheck, PenTool, MessagesSquare, Linkedin, Github,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -119,6 +119,11 @@ export const FOUNDER: Person = {
       label: 'LinkedIn',
       href: 'https://www.linkedin.com/in/aditya-kumar-122370267/',
       icon: Linkedin,
+    },
+    {
+      label: 'GitHub',
+      href: 'https://github.com/kaditya125',
+      icon: Github,
     },
   ],
 };
