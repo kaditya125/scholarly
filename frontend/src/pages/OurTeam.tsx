@@ -1,7 +1,7 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
-import { ArrowRight, Mail, MessageSquare, Linkedin } from 'lucide-react';
+import { ArrowRight, Mail, MessageSquare, Linkedin, Github } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
 import SkyAmbience from '../components/landing/sky';
 import SiteFooter from '../components/landing/SiteFooter';
@@ -411,19 +411,22 @@ export default function OurTeam() {
                     {FOUNDER.name}
                   </h2>
                   <span className="text-[14px] font-medium text-[#5f7415] dark:text-[#c8e558]">{FOUNDER.role}</span>
-                  <a
-                    href="https://www.linkedin.com/in/aditya-kumar-122370267/"
-                    target="_blank"
-                    rel="noopener noreferrer me"
-                    title="Aditya Kumar on LinkedIn"
-                    className={cn(
-                      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] text-[12.5px] font-medium text-slate-600 dark:text-gray-300 hover:text-[#0077b5] dark:hover:text-[#38a6e6] hover:border-[#0077b5]/40 hover:bg-[#0077b5]/5 transition-all shadow-2xs cursor-pointer',
-                      FOCUS,
-                    )}
-                  >
-                    <Linkedin className="w-3.5 h-3.5 text-[#0077b5] dark:text-[#38a6e6]" />
-                    <span>LinkedIn</span>
-                  </a>
+                  {FOUNDER.links.map((l) => (
+                    <a
+                      key={l.label}
+                      href={l.href}
+                      target="_blank"
+                      rel="noopener noreferrer me"
+                      title={`${FOUNDER.name} on ${l.label}`}
+                      className={cn(
+                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] text-[12.5px] font-medium text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-all shadow-2xs cursor-pointer',
+                        FOCUS,
+                      )}
+                    >
+                      <l.icon className="w-3.5 h-3.5 text-slate-700 dark:text-gray-300" />
+                      <span>{l.label}</span>
+                    </a>
+                  ))}
                 </div>
 
                 <Lede className="max-w-[34rem]">{FOUNDER.blurb}</Lede>
