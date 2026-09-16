@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Sadhya — Every goal, attainable.</title>
-    <meta name="description" content="AI-powered prep for UPSC, SSC CGL, JEE, NEET, BPSC. Every answer grounded in the official syllabus. No hallucinations." />
+    <meta name="description" content="AI-powered prep for UPSC, SSC CGL, JEE, NEET, BPSC. Answers grounded in the official syllabus, with their sources shown." />
     <link rel="canonical" href="https://sadhya.app/" />
     <!-- Open Graph / Facebook / WhatsApp / LinkedIn -->
     <meta property="og:type" content="website" />
@@ -19,9 +19,9 @@
     <meta property="og:image:alt" content="Sadhya — Every goal, attainable. AI-powered prep for UPSC, SSC, JEE, NEET, BPSC" />
     <meta property="og:locale" content="en_IN" />
     <!-- Twitter / X Card -->
+    <!-- No twitter:site / twitter:creator: @sadhyalearn does not exist (checked 16 Sep 2026). Add them back
+         only with a real account. -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@sadhyalearn" />
-    <meta name="twitter:creator" content="@sadhyalearn" />
     <meta name="twitter:title" content="Sadhya — Every goal, attainable." />
     <meta name="twitter:description" content="AI-powered prep for UPSC, SSC CGL, JEE, NEET &amp; BPSC. Grounded in the official syllabus." />
     <meta name="twitter:image" content="https://sadhya.app/og-banner.jpg" />
@@ -73,51 +73,66 @@
         }
       })();
     </script>
+    <!--
+      Structured identity. Kept in step with SITE / SITE.founder in src/lib/siteConfig.ts — the SEO prerender
+      parses this block and fails the build if the founder's name, profile links or the company page drift.
+      Organization.sameAs lists only profiles run BY Sadhya; the founder's personal profiles belong on the Person.
+    -->
     <script type="application/ld+json">
       [
         {
           "@context": "https://schema.org",
           "@type": "Organization",
+          "@id": "https://sadhya.app/#organization",
           "name": "Sadhya",
-          "url": "https://sadhya.app",
-          "logo": "https://sadhya.app/favicon.svg",
+          "url": "https://sadhya.app/",
+          "logo": "https://sadhya.app/sadhya-logo-512x512.png",
           "description": "AI-powered learning platform for competitive exam preparation — NEET, JEE, UPSC, SSC, banking, teaching exams and school boards.",
-          "founder": {
-            "@type": "Person",
-            "name": "Aditya Kumar",
-            "jobTitle": "Founder & Product Engineer",
-            "url": "https://sadhya.app/our-team",
-            "sameAs": [
-              "https://www.linkedin.com/in/aditya-kumar-122370267/",
-              "https://github.com/kaditya125"
-            ]
+          "email": "support@sadhya.app",
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "email": "support@sadhya.app",
+            "telephone": "+91-91022-02267",
+            "areaServed": "IN"
           },
+          "founder": { "@id": "https://sadhya.app/our-team#aditya-kumar" },
+          "sameAs": ["https://www.linkedin.com/company/143600923/"]
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "Person",
+          "@id": "https://sadhya.app/our-team#aditya-kumar",
+          "name": "Aditya Kumar",
+          "jobTitle": "Founder & Product Engineer",
+          "worksFor": { "@id": "https://sadhya.app/#organization" },
+          "url": "https://sadhya.app/our-team",
+          "image": "https://sadhya.app/founder.jpg",
+          "email": "mailto:aditya@sadhya.app",
           "sameAs": [
-            "https://www.linkedin.com/company/143600923/",
+            "https://www.linkedin.com/in/aditya-kumar-122370267/",
             "https://github.com/kaditya125"
           ]
         },
         {
           "@context": "https://schema.org",
-          "@type": "Person",
-          "name": "Aditya Kumar",
-          "jobTitle": "Founder & Product Engineer",
-          "worksFor": {
-            "@type": "Organization",
-            "name": "Sadhya",
-            "url": "https://sadhya.app"
-          },
-          "url": "https://sadhya.app/our-team",
-          "sameAs": [
-            "https://www.linkedin.com/in/aditya-kumar-122370267/",
-            "https://github.com/kaditya125"
-          ]
+          "@type": "WebSite",
+          "@id": "https://sadhya.app/#website",
+          "name": "Sadhya",
+          "url": "https://sadhya.app/",
+          "publisher": { "@id": "https://sadhya.app/#organization" }
         }
       ]
     </script>
   </head>
   <body style="background-color:#131314;color:#ffffff;margin:0;">
     <div id="root">
+      <!--
+        static-body:start — everything up to static-body:end is what a visitor (or a crawler that does not run
+        JavaScript) sees before React mounts; createRoot replaces it. scripts/seo-prerender.ts swaps this region for
+        route-specific content in every dist/<path>/index.html, so /our-team does not arrive as the home page.
+        What remains here is the dev-server and SPA-fallback version.
+      -->
       <div style="min-height:100vh;background:#131314;color:#ffffff;font-family:Inter,system-ui,-apple-system,sans-serif;box-sizing:border-box;">
         <header style="max-width:1160px;margin:0 auto;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
           <div style="display:flex;align-items:center;gap:8px;font-size:18px;font-weight:700;letter-spacing:-0.02em;color:#ffffff;">
@@ -130,10 +145,6 @@
           </div>
         </header>
         <main style="max-width:1160px;margin:0 auto;padding:24px 20px 60px;">
-          <div style="display:inline-flex;align-items:center;gap:8px;padding:5px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:999px;font-size:12px;font-weight:500;color:#cbd5e1;margin-bottom:20px;">
-            <span style="width:6px;height:6px;border-radius:50%;background:#c8e558;display:inline-block;"></span>
-            <span><strong>26 students</strong> registered &amp; learning · <a href="/signup" style="color:#ffffff;font-weight:600;text-decoration:none;">Join now &rarr;</a></span>
-          </div>
           <style>
             @keyframes drawHeroUnderline {
               0% { stroke-dasharray: 105; stroke-dashoffset: 105; opacity: 0; }
@@ -165,6 +176,7 @@
           </div>
         </main>
       </div>
+      <!-- static-body:end -->
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

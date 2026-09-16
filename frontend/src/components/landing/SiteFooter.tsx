@@ -232,6 +232,21 @@ export default function SiteFooter() {
               Sadhya is a product of {SITE.parentBrand}, operated by {SITE.legalEntity}
               {SITE.udyam ? <> · Udyam {SITE.udyam}</> : null}
             </p>
+            {/* The founder, on every page, with the third-party profiles that confirm him. */}
+            <p>
+              Founded by{' '}
+              <Link to="/our-team" className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white">
+                {SITE.founder.name}
+              </Link>
+              {' · '}
+              <a href={SITE.founder.linkedin} target="_blank" rel="noopener noreferrer me" className="hover:text-slate-900 dark:hover:text-white">
+                LinkedIn
+              </a>
+              {' · '}
+              <a href={SITE.founder.github} target="_blank" rel="noopener noreferrer me" className="hover:text-slate-900 dark:hover:text-white">
+                GitHub
+              </a>
+            </p>
           </div>
 
           <div className="sm:ml-auto flex flex-wrap items-center gap-x-5 gap-y-2">

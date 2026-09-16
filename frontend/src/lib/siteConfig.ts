@@ -95,26 +95,42 @@ export const SITE = {
   },
 
   /**
-   * Social profiles.
+   * The founder, exactly as /our-team, the structured data and the prerendered HTML publish him.
    *
-   * TODO: replace every URL with your real handle, and DELETE any row you don't have.
-   * The footer renders exactly what's in this array — removing an entry removes the
-   * icon, so there is never a dead link pointing at a profile that doesn't exist.
+   * One record so the page, the JSON-LD and the static HTML crawlers read cannot drift apart —
+   * scripts/seo-prerender.ts fails the build if index.html's Person markup stops matching this.
+   * The profile URLs were supplied by the founder. LinkedIn shows logged-out visitors a sign-in
+   * wall, so neither LinkedIn URL can be checked from outside; the GitHub account is public.
+   */
+  founder: {
+    name: 'Aditya Kumar',
+    role: 'Founder & Product Engineer',
+    email: 'aditya@sadhya.app',
+    linkedin: 'https://www.linkedin.com/in/aditya-kumar-122370267/',
+    github: 'https://github.com/kaditya125',
+  },
+
+  /** Sadhya's LinkedIn company page (added by the founder on 16 Sep 2026). */
+  linkedinCompany: 'https://www.linkedin.com/company/143600923/',
+
+  /**
+   * Official social profiles — only accounts that actually exist and are run by Sadhya.
+   *
+   * The footer renders exactly what's in this array, so a row here is a public claim that the
+   * account is ours. On 16 Sep 2026 every @sadhyalearn handle this used to list (X, Instagram,
+   * Facebook, YouTube, GitHub, linkedin.com/company/sadhyalearn) was checked while logged out and
+   * none of them exists. Add a row only after the account is live and links back to sadhya.app.
    */
   social: [
-    { name: 'X (Twitter)', href: '/social?tab=x', icon: 'x' },
-    { name: 'LinkedIn', href: '/social?tab=linkedin', icon: 'linkedin' },
-    { name: 'Instagram', href: '/social?tab=instagram', icon: 'instagram' },
-    { name: 'Facebook', href: '/social?tab=facebook', icon: 'facebook' },
-    { name: 'YouTube', href: '/social?tab=youtube', icon: 'youtube' },
-    { name: 'GitHub', href: '/social?tab=github', icon: 'github' },
-  ] as const,
+    { name: 'LinkedIn', href: 'https://www.linkedin.com/company/143600923/', icon: 'linkedin' },
+  ] as { name: string; href: string; icon: SocialIcon }[],
 
   /** Shown as "Last updated" on every legal page. Bump when you revise them. */
   legalLastUpdated: '12 August 2026',
 } as const;
 
-export type SocialIcon = (typeof SITE.social)[number]['icon'];
+/** Every brand glyph the footer knows how to draw — independent of which accounts exist today. */
+export type SocialIcon = 'x' | 'linkedin' | 'instagram' | 'facebook' | 'youtube' | 'github';
 
 /** Formats the registered address as a single line (footer) or block (contact page). */
 export const formatAddress = (join = ', ') =>

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
-import { ArrowRight, Eye, Compass, Layers, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Eye, Compass, Layers, ShieldCheck, Linkedin, Github } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
 import SkyAmbience from '../components/landing/sky';
 import SiteFooter from '../components/landing/SiteFooter';
@@ -9,35 +9,16 @@ import { useSeo } from '../lib/useSeo';
 import { SITE } from '../lib/siteConfig';
 import { useAuth } from '../lib/AuthContext';
 import { Underline } from '../components/landing/Annotate';
+import { ABOUT_INTRO, ABOUT_PRINCIPLES } from '../content/aboutContent';
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 /**
- * About page.
+ * About page. The words live in content/aboutContent.ts so the static HTML crawlers receive says the same.
  */
 
-const PRINCIPLES = [
-  {
-    icon: Eye,
-    title: 'Show the working',
-    body: 'Every answer carries the sources it was built from and the six steps taken to reach it. If a student can’t check the reasoning, they’re being asked to trust a black box — which is exactly the habit an exam punishes.',
-  },
-  {
-    icon: Compass,
-    title: 'Built for a specific syllabus',
-    body: 'An answer grounded in a generic large model is dangerous in an exam where negative marking applies. Everything here is indexed against the actual syllabus, previous papers and official textbooks for your exam.',
-  },
-  {
-    icon: Layers,
-    title: 'Adaptive, not uniform',
-    body: 'Two students preparing for the same exam have different gaps. The baseline assessment, revision cycles and mock tests adjust to where you are, not where an imaginary average student would be.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Say only what’s true',
-    body: 'No invented success rates, no stock-photo testimonials, no features listed before they work. When something is still being built, this site says so — including on this page.',
-  },
-];
+const PRINCIPLE_ICONS = [Eye, Compass, Layers, ShieldCheck];
+const PRINCIPLES = ABOUT_PRINCIPLES.map((p, i) => ({ ...p, icon: PRINCIPLE_ICONS[i] }));
 
 export default function About() {
   const reduced = useReducedMotion();
@@ -71,16 +52,11 @@ export default function About() {
             <h1 className="mt-3 text-[34px] sm:text-[46px] lg:text-[52px] leading-[1.07] font-semibold tracking-[-0.035em]">
               Most students don&rsquo;t need more content. They need someone to <Underline>explain</Underline> it.
             </h1>
-            <p className="mt-6 text-[16.5px] leading-relaxed text-slate-500 dark:text-gray-400">
-              There is no shortage of material for NEET, JEE, UPSC or a Class 12 board paper. There
-              are more books, videos and question banks than anyone could work through in a decade.
-              What&rsquo;s scarce is someone patient enough to explain the same idea a third time, in
-              the way that finally lands, at the exact level you&rsquo;re at.
-            </p>
-            <p className="mt-5 text-[16.5px] leading-relaxed text-slate-500 dark:text-gray-400">
-              That is the whole of what Sadhya is trying to be — and the reason it insists on
-              showing you where every answer came from.
-            </p>
+            {ABOUT_INTRO.map((para, i) => (
+              <p key={i} className={`${i === 0 ? 'mt-6' : 'mt-5'} text-[16.5px] leading-relaxed text-slate-500 dark:text-gray-400`}>
+                {para}
+              </p>
+            ))}
           </motion.div>
         </section>
 
@@ -115,6 +91,50 @@ export default function About() {
                   </p>
                 </motion.div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Who is behind it. An About page that never says who builds the product is the first thing a
+            verifier notices; this names the founder and the operator, and links to the profiles that
+            confirm them. The same facts appear in the static HTML and the JSON-LD. */}
+        <section className="max-w-[1160px] mx-auto px-5 sm:px-8 pt-16 sm:pt-20">
+          <div className="max-w-[42rem]">
+            <h2 className="text-[24px] sm:text-[30px] leading-[1.15] font-semibold tracking-[-0.03em]">
+              Who builds Sadhya.
+            </h2>
+            <p className="mt-4 text-[15.5px] leading-relaxed text-slate-500 dark:text-gray-400">
+              Sadhya was founded and is built by{' '}
+              <Link to="/our-team" className="font-semibold text-slate-900 dark:text-white underline decoration-[#c8e558] underline-offset-2">
+                {SITE.founder.name}
+              </Link>
+              , {SITE.founder.role}. It is a product of {SITE.parentBrand}, operated by {SITE.legalEntity}
+              {SITE.udyam ? ` (Udyam ${SITE.udyam})` : ''}, {SITE.address.city}, {SITE.address.state}, {SITE.address.country}.
+            </p>
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              {[
+                { label: 'LinkedIn', href: SITE.founder.linkedin, Icon: Linkedin },
+                { label: 'GitHub', href: SITE.founder.github, Icon: Github },
+              ].map(({ label, href, Icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer me"
+                  aria-label={`${SITE.founder.name} on ${label}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-[12.5px] font-medium text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-white/20 transition-colors"
+                >
+                  <Icon className="w-4 h-4" strokeWidth={1.9} aria-hidden />
+                  {label}
+                </a>
+              ))}
+              <Link
+                to="/our-team"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-semibold text-slate-900 dark:text-white hover:text-[#5f7415] dark:hover:text-[#c8e558] transition-colors"
+              >
+                Meet the founder
+                <ArrowRight className="w-3.5 h-3.5" strokeWidth={2.25} aria-hidden />
+              </Link>
             </div>
           </div>
         </section>

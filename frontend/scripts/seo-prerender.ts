@@ -39,11 +39,18 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { SEO_ROUTES, assertRoutesAreSane, canonicalFor, type SeoRoute } from './seo-routes';
+import { renderStaticBody } from './seo-static-body';
 import { EXAM_CATALOG } from '../src/lib/examCatalog';
 import { hasWrittenDescription } from '../src/lib/examSeo';
 import { SITE } from '../src/lib/siteConfig';
 
-const DIST = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
+/**
+ * dist/ by default. SEO_DIST points it at another build directory, so production can build into a
+ * scratch directory and swap it in whole instead of emptying the directory nginx is serving from.
+ */
+const DIST = process.env.SEO_DIST
+  ? resolve(process.env.SEO_DIST)
+  : resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
 
 /** Escapes a value for use inside a double-quoted HTML attribute. */
 function attr(value: string): string {
@@ -133,7 +140,58 @@ function renderRoute(template: string, route: SeoRoute): string {
     `<meta name="twitter:description" content="${attr(description)}" />`,
     'twitter:description',
   );
+  // The body, too: without this every route shipped index.html's home-page hero, so the raw HTML of /our-team
+  // carried no founder at all. See scripts/seo-static-body.ts. The markers stay, which keeps a re-run idempotent.
+  const bodyRegion = /(<!--\s*static-body:start[\s\S]*?-->)[\s\S]*?(<!--\s*static-body:end\s*-->)/;
+  const markers = html.match(bodyRegion);
+  if (!markers) throw new Error('index.html has no static-body:start/end markers — SEO prerender cannot continue.');
+  // replaceOnce substitutes through a function, so $1/$2 would be inserted literally; build the string instead.
+  html = replaceOnce(html, bodyRegion, `${markers[1]}\n${renderStaticBody(route)}\n      ${markers[2]}`, 'static-body marker');
   return html;
+}
+
+/**
+ * What a verifier must be able to read in the raw HTML, checked on the files actually written.
+ *
+ * Google for Startups declined Sadhya on 16 Sep 2026 because founder information was not verifiable from the
+ * domain. These fail the build rather than let that regress silently: the founder's name and role on /our-team,
+ * his third-party profile links and the operator on every page, and structured data that agrees with SITE.
+ */
+function assertIdentity(route: SeoRoute, html: string): void {
+  const fail = (what: string) => {
+    throw new Error(`[seo] ${route.path}: raw HTML is missing ${what} — founder/company verification would regress.`);
+  };
+  const body = html.slice(html.indexOf('static-body:start'));
+  for (const url of [SITE.founder.linkedin, SITE.founder.github]) {
+    if (!body.includes(`href="${attr(url)}"`)) fail(`a link to ${url}`);
+  }
+  if (!body.includes('href="/our-team"')) fail('a link to /our-team');
+  if (!body.includes(text(SITE.legalEntity))) fail(`the operator (${SITE.legalEntity})`);
+  if (route.path === '/our-team') {
+    if (!body.includes(`>${text(SITE.founder.name)}<`)) fail(`the founder's name as page text`);
+    if (!body.includes(text(SITE.founder.role))) fail(`the founder's role`);
+    if (!body.includes(`mailto:${SITE.founder.email}`)) fail(`the founder's email`);
+  }
+}
+
+/** The JSON-LD in index.html is hand-written; this keeps it honest against SITE. */
+function assertStructuredData(template: string): void {
+  const match = template.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+  if (!match) throw new Error('[seo] index.html has no JSON-LD block.');
+  const graph = JSON.parse(match[1]) as Record<string, any>[];
+  const person = graph.find((n) => n['@type'] === 'Person');
+  const org = graph.find((n) => n['@type'] === 'Organization');
+  const same = (a: string[] = [], b: string[]) => a.length === b.length && a.every((x, i) => x === b[i]);
+  if (!person || person.name !== SITE.founder.name || person.jobTitle !== SITE.founder.role) {
+    throw new Error('[seo] JSON-LD Person does not match SITE.founder (name / jobTitle).');
+  }
+  if (!same(person.sameAs, [SITE.founder.linkedin, SITE.founder.github])) {
+    throw new Error('[seo] JSON-LD Person.sameAs does not match SITE.founder profile links.');
+  }
+  const companyProfiles = SITE.social.map((s) => s.href);
+  if (!org || !same(org.sameAs, companyProfiles)) {
+    throw new Error('[seo] JSON-LD Organization.sameAs must list exactly SITE.social (profiles run by Sadhya).');
+  }
 }
 
 /** dist/pricing/index.html for /pricing; dist/index.html for /. */
@@ -172,9 +230,15 @@ function main(): void {
     throw new Error(`No built shell at ${templatePath}. Run vite build before this script.`);
   }
 
+  assertStructuredData(template);
+
   // Render every route from the ORIGINAL template. '/' overwrites dist/index.html last-ish, so
   // reading it up front is what keeps one route's tags out of the next route's file.
   const rendered = SEO_ROUTES.map((route) => ({ route, html: renderRoute(template, route) }));
+
+  for (const { route, html } of rendered) {
+    assertIdentity(route, html);
+  }
 
   for (const { route, html } of rendered) {
     const out = outputPathFor(route);

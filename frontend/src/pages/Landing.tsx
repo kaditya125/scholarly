@@ -322,7 +322,7 @@ export default function LandingPage() {
     // link unfurler actually read. The previous 237-character version was truncated in
     // results and disagreed with the served HTML.
     description:
-      'AI-powered prep for UPSC, SSC CGL, JEE, NEET, BPSC. Every answer grounded in the official syllabus. No hallucinations.',
+      'AI-powered prep for UPSC, SSC CGL, JEE, NEET, BPSC. Answers grounded in the official syllabus, with their sources shown.',
     url: SITE.url,
   });
 
