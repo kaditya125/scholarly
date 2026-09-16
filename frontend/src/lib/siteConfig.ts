@@ -110,8 +110,13 @@ export const SITE = {
     github: 'https://github.com/kaditya125',
   },
 
-  /** Sadhya's LinkedIn company page (added by the founder on 16 Sep 2026). */
-  linkedinCompany: 'https://www.linkedin.com/company/143600923/',
+  /**
+   * Sadhya's LinkedIn company page, by its vanity URL. Verified 16 Sep 2026 from the founder's admin session:
+   * name Sadhya, website https://sadhya.app, founded 2026. Use this form, not the numeric id (143600923): signed
+   * out, the vanity URL returns the public page (200) while the numeric one only redirects to a login wall — so
+   * only this link lets someone outside LinkedIn confirm the page exists.
+   */
+  linkedinCompany: 'https://www.linkedin.com/company/sadhya/',
 
   /**
    * Official social profiles — only accounts that actually exist and are run by Sadhya.
@@ -122,7 +127,7 @@ export const SITE = {
    * none of them exists. Add a row only after the account is live and links back to sadhya.app.
    */
   social: [
-    { name: 'LinkedIn', href: 'https://www.linkedin.com/company/143600923/', icon: 'linkedin' },
+    { name: 'LinkedIn', href: 'https://www.linkedin.com/company/sadhya/', icon: 'linkedin' },
   ] as { name: string; href: string; icon: SocialIcon }[],
 
   /** Shown as "Last updated" on every legal page. Bump when you revise them. */
