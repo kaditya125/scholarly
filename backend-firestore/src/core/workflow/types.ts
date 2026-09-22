@@ -43,6 +43,13 @@ export interface WorkflowRequest {
   scopeSourceIds?: string[];
   /** Which product surface the caller belongs to — decides the AI's persona (see prompts.ts). */
   productRole?: ProductRole;
+  /**
+   * Experimental: opt this turn into the agentic tool-calling retrieval loop
+   * (AgenticRetrievalOrchestrator) instead of the deterministic RetrievalOrchestrator pipeline.
+   * Only takes effect when featureFlags.agenticRetrieval is ALSO true — this field alone cannot
+   * enable it, since it comes straight from the request body and must not be trusted alone.
+   */
+  agenticRetrieval?: boolean;
 }
 
 export interface WorkflowEvent {

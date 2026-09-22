@@ -7,7 +7,9 @@ import { VerificationAgent } from '../agents/VerificationAgent';
 import { ResponseFormatter } from '../agents/ResponseFormatter';
 import { KnowledgeGraphAgent } from '../agents/KnowledgeGraphAgent';
 import { retrievalOrchestrator } from './services/RetrievalOrchestrator';
+import { agenticRetrievalOrchestrator } from './services/AgenticRetrievalOrchestrator';
 import { QueryPlanningService } from './services/QueryPlanningService';
+import { featureFlags } from '../../config/featureFlags';
 import { RetrievalService } from '../../services/rag/retrieval.service';
 import { StudentContextService } from '../../services/studentContext.service';
 import { TeacherContextService } from '../../services/teacherContext.service';
@@ -428,6 +430,49 @@ export class WorkflowEngine {
             isOnboarded: false,
           };
         }
+      }
+
+      // ── AGENTIC branch (experimental) ──────────────────────────────────
+      // Structural sibling of the PODCAST branch above: self-contained, own event sequence, own
+      // telemetry, early return. Requires BOTH the per-request opt-in (set by the client) AND the
+      // feature flag (server-side kill switch) — the field alone can never enable this, since it
+      // comes straight from the request body. Placed after context loading (studentContext /
+      // teacherContext, just populated above) because the agentic system prompt needs them for
+      // persona, exactly like the deterministic path does downstream.
+      if (req.agenticRetrieval && featureFlags.agenticRetrieval) {
+        const agenticContext: AgentContext = {
+          request: req,
+          retrievedContext: 'No specific context found.',
+          sharedState: {},
+          studentContext,
+          teacherContext,
+        };
+
+        let agenticCitationCount = 0;
+        for await (const ev of agenticRetrievalOrchestrator.stream(req, agenticContext)) {
+          if (ev.type === 'citation') agenticCitationCount++;
+          if (ev.type === 'chunk' && !firstChunkAt) {
+            firstChunkAt = Date.now();
+            Telemetry.logTTFT('agentic_retrieval', firstChunkAt - workflowStartTime, { userId: req.userId });
+          }
+          yield ev;
+        }
+
+        const aGen = this.deriveGenCost(costMark);
+        void this.persistTelemetry(req, {
+          provider: aGen.provider,
+          model: aGen.model,
+          promptVersion: 'agentic_retrieval',
+          totalLatencyMs: Date.now() - workflowStartTime,
+          timeToFirstTokenMs: firstChunkAt ? firstChunkAt - workflowStartTime : 0,
+          promptTokens: aGen.promptTokens,
+          completionTokens: aGen.completionTokens,
+          estimatedCostUSD: aGen.totalCostUSD,
+          citationCount: agenticCitationCount,
+          verificationPassed: true,
+        });
+
+        return;
       }
 
       // ── Greeting / Onboarding Detection (students only — teachers have no onboarding

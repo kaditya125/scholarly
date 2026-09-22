@@ -60,7 +60,9 @@ export class ChatController {
       const userId = req.user?.uid;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-      const { sessionId, message, model, topicType, attachments, notebookId } = req.body;
+      const { sessionId, message, model, topicType, attachments, notebookId, agenticRetrieval } = req.body;
+      // Never trust the raw body type — coerce like isWeakAreaDrill in quiz.controller.ts.
+      const agenticRetrievalFlag = agenticRetrieval === true || agenticRetrieval === 'true';
 
       if (!sessionId || (!message && (!attachments || attachments.length === 0)) || !model || !topicType) {
         return res.status(400).json({ error: "Missing required fields: sessionId, message, model, topicType" });
@@ -122,7 +124,7 @@ export class ChatController {
 
       const traceId = req.headers['x-trace-id'] as string;
 
-      await this.service.processChatStream(userId, sessionId, finalMessage, model, topicType, res, notebookId, traceId, productRoleOf(req));
+      await this.service.processChatStream(userId, sessionId, finalMessage, model, topicType, res, notebookId, traceId, productRoleOf(req), agenticRetrievalFlag);
 
     } catch (error) {
       console.error("Chat Stream Error:", error);

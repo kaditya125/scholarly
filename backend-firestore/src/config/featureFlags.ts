@@ -171,6 +171,18 @@ export const featureFlags = {
    * AI_DIRECTOR_ARCHITECTURE.md §18 risk 2. Default OFF.
    */
   get emotionVoices(): boolean { return boolEnv('EMOTION_VOICES_ENABLED', false); },
+
+  // ── Agentic retrieval (experimental) ────────────────────────────────────────
+  /**
+   * Let the chat model call retrieval tools itself in a loop (src/core/workflow/services/
+   * AgenticRetrievalOrchestrator.ts) instead of always running the fixed deterministic
+   * RetrievalOrchestrator pipeline. Purely additive — the deterministic pipeline stays the
+   * default and is completely unmodified either way. Taking effect ALSO requires the caller to
+   * set WorkflowRequest.agenticRetrieval on the individual request (see WorkflowEngine's AGENTIC
+   * branch) — this flag alone does not enable it for any traffic, it only permits the per-request
+   * opt-in to work. Default OFF.
+   */
+  get agenticRetrieval(): boolean { return boolEnv('ENABLE_AGENTIC_RETRIEVAL', false); },
 };
 
 /**

@@ -148,6 +148,106 @@ export class GeminiProvider implements AIProvider {
     };
   }
 
+  /**
+   * Additive — not part of the `AIProvider` interface. Runs a bounded tool-calling loop: the
+   * model may request function calls, which `executeTool` actually performs (the caller supplies
+   * this rather than this provider importing a retrieval layer directly, keeping the provider a
+   * leaf with no workflow-layer dependency), results are fed back as a follow-up turn, and this
+   * repeats until the model returns plain text or `maxIterations` is reached.
+   *
+   * If the cap is hit without a final answer, one last call is made with tools disabled so the
+   * model must synthesize whatever it has learned into a real answer instead of the turn ending
+   * silently.
+   */
+  async generateWithTools(
+    history: ChatMessage[],
+    systemPrompt: string,
+    toolDeclarations: Array<{ name: string; description: string; parameters: any }>,
+    executeTool: (name: string, args: Record<string, unknown>) => Promise<any>,
+    opts?: { traceId?: string; model?: string; userId?: string; maxIterations?: number },
+  ): Promise<{ text: string; functionCallTrace: Array<{ name: string; args: Record<string, unknown> }> }> {
+    assertAIEnabled('Gemini generateWithTools');
+    const start = Date.now();
+    const tid = opts?.traceId || `gemini_${start}`;
+    const uid = opts?.userId;
+    let modelToUse = opts?.model || this.modelName;
+    if (modelToUse === 'gemini' || modelToUse.toLowerCase() === 'gemini') {
+      modelToUse = 'gemini-2.5-flash';
+    } else if (modelToUse.includes('gemini-3.') || modelToUse.includes('gemini-1.5')) {
+      modelToUse = modelToUse.includes('pro') ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
+    }
+
+    const contents: any[] = history.map(msg => ({
+      role: msg.role === 'ai' ? 'model' : 'user',
+      parts: [{ text: msg.content }],
+    }));
+
+    const config: any = {
+      temperature: 0.7,
+      thinkingConfig: { thinkingBudget: 0 },
+      tools: [{ functionDeclarations: toolDeclarations }],
+    };
+    if (systemPrompt && systemPrompt.trim().length > 0) {
+      config.systemInstruction = systemPrompt;
+    }
+
+    const maxIterations = opts?.maxIterations ?? 5;
+    const functionCallTrace: Array<{ name: string; args: Record<string, unknown> }> = [];
+
+    const recordUsage = (response: any) => {
+      const inTok = response.usageMetadata?.promptTokenCount || 0;
+      const outTok = response.usageMetadata?.candidatesTokenCount || 0;
+      Telemetry.logCost('gemini', inTok, 'input', { model: modelToUse, traceId: tid, userId: uid });
+      Telemetry.logCost('gemini', outTok, 'output', { model: modelToUse, traceId: tid, userId: uid });
+    };
+
+    for (let iteration = 0; iteration < maxIterations; iteration++) {
+      const response = await withRetry(
+        () => this.buildClient().models.generateContent({ model: modelToUse, contents, config }),
+        { retries: 2, baseDelayMs: 800, label: 'gemini.generateWithTools' },
+      );
+      recordUsage(response);
+
+      const calls = response.functionCalls;
+      if (!calls || calls.length === 0) {
+        return { text: response.text || '', functionCallTrace };
+      }
+
+      // Carry the model's own turn (its functionCall parts) forward so the follow-up request
+      // has the full exchange, then execute every requested call for real and feed the results
+      // back as one user turn.
+      const modelContent = response.candidates?.[0]?.content;
+      if (modelContent) contents.push(modelContent);
+
+      const responseParts: any[] = [];
+      for (const call of calls) {
+        const name = call.name || '';
+        const args = (call.args || {}) as Record<string, unknown>;
+        functionCallTrace.push({ name, args });
+        let output: any;
+        try {
+          output = await executeTool(name, args);
+        } catch (e: any) {
+          output = { ok: false, error: String(e?.message || e).slice(0, 200) };
+        }
+        responseParts.push({ functionResponse: { id: call.id, name, response: { output } } });
+      }
+      contents.push({ role: 'user', parts: responseParts });
+    }
+
+    // Iteration cap reached without a final text answer. Ask once more with tools disabled so
+    // the model must synthesize a real answer from what it already learned rather than the turn
+    // ending silently or looping past the cap.
+    const finalConfig = { ...config };
+    delete finalConfig.tools;
+    const finalResponse = await withRetry(
+      () => this.buildClient().models.generateContent({ model: modelToUse, contents, config: finalConfig }),
+      { retries: 1, baseDelayMs: 500, label: 'gemini.generateWithTools.final' },
+    );
+    recordUsage(finalResponse);
+    return { text: finalResponse.text || '', functionCallTrace };
+  }
+
   async extractTextFromPdf(base64Data: string, mimeType: string = 'application/pdf'): Promise<string> {
     assertAIEnabled('Gemini extractTextFromPdf');
     const response = await this.buildClient().models.generateContent({
