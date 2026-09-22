@@ -19,15 +19,40 @@ import {
 import { logger } from '../../utils/logger';
 import { cacheService } from '../cache.service';
 
+/**
+ * How long a Firestore-persisted analytics document is trusted before a fresh full-corpus scan is
+ * forced. Matches the in-memory cache's own TTL (3600s) below, so both tiers agree on staleness.
+ */
+const ANALYTICS_TTL_MS = 3600 * 1000;
+
 export class PYQAnalyticsService {
   /**
    * Computes comprehensive PYQ analytics for an examination.
+   *
+   * Two cache tiers, cheapest first:
+   *  1. `cacheService` (in-memory per-process, or Redis when configured) — near-instant, but does
+   *     NOT survive a process restart. Every fresh process (a new MCP server invocation, a
+   *     redeploy, a dev-server restart) starts with this empty.
+   *  2. The `pyq_analytics` Firestore doc `saveExamAnalytics` already writes at the end of every
+   *     full computation below — durable, survives restarts, one Firestore read. This tier used
+   *     to be write-only: the doc was saved every time but never read back, so a full 14,000+
+   *     question corpus scan (SSC CGL: ~45s) ran on literally every cold process, discarding a
+   *     perfectly good result that was already sitting in Firestore from the last computation.
+   *
+   * Only when BOTH miss (first time ever for this exam, or the persisted doc is older than
+   * ANALYTICS_TTL_MS) does this fall through to the full scan.
    */
   async computeExamAnalytics(examId: string): Promise<PYQExamAnalytics> {
     const cacheKey = `pyq_analytics_${examId.toUpperCase()}`;
     const cached = await cacheService.get<PYQExamAnalytics>(cacheKey).catch(() => null);
     if (cached) {
       return cached;
+    }
+
+    const persisted = await pyqRepository.getExamAnalytics(examId).catch(() => null);
+    if (persisted && Date.now() - persisted.updatedAt < ANALYTICS_TTL_MS) {
+      await cacheService.set(cacheKey, persisted, 3600).catch(() => {});
+      return persisted;
     }
 
     // Paged, not capped. The previous `limit: 10000` silently excluded 4,009 of SSC CGL's 14,009

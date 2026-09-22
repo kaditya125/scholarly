@@ -71,7 +71,7 @@ export class ChatService {
     };
   }
 
-  async processChatStream(userId: string, sessionId: string, message: string, model: string, topicType: TopicType, res: any, notebookId?: string, traceId?: string, productRole?: ProductRole) {
+  async processChatStream(userId: string, sessionId: string, message: string, model: string, topicType: TopicType, res: any, notebookId?: string, traceId?: string, productRole?: ProductRole, agenticRetrieval?: boolean) {
     logger.info(`Starting stream workflow for user ${userId}`, { traceId, sessionId });
 
     // 1. Get or create session
@@ -102,7 +102,8 @@ export class ChatService {
       mode: topicType,
       model,
       traceId,
-      productRole
+      productRole,
+      agenticRetrieval
     };
 
     const stream = workflowEngine.executeStream(req);

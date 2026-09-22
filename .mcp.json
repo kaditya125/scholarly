@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "sadhya-retrieval": {
+      "command": "node",
+      "args": ["--import", "tsx", "scripts/mcp/server.ts"],
+      "cwd": "D:\\scholarly\\backend-firestore"
+    }
+  }
+}
