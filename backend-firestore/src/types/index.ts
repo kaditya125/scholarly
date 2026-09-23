@@ -238,6 +238,8 @@ export interface ChatMessage {
   role: "user" | "ai" | "system";
   content: string;
   timestamp: number;
+  /** AI replies only: the student's likely next messages, most likely first (composer ghost text). */
+  suggestions?: string[];
 }
 
 export interface ChatSession {

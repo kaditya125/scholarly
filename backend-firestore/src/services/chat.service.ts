@@ -111,8 +111,9 @@ export class ChatService {
     };
 
     const stream = workflowEngine.executeStream(req);
-    
+
     let fullReply = '';
+    let suggestions: string[] = [];
 
     try {
       for await (const event of stream) {
@@ -142,6 +143,7 @@ export class ChatService {
         } else if (event.type === 'warning') {
           res.write(`data: ${JSON.stringify({ type: 'warning', message: event.warning })}\n\n`);
         } else if (event.type === 'suggestions') {
+          suggestions = event.suggestions || [];
           res.write(`data: ${JSON.stringify({ type: 'suggestions', suggestions: event.suggestions })}\n\n`);
         } else if (event.type === 'done') {
           res.write(`data: ${JSON.stringify({ type: 'done', data: event.data })}\n\n`);
@@ -183,7 +185,9 @@ export class ChatService {
     const assistantMessage: ChatMessage = {
       role: 'ai',
       content: fullReply,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      // Saved so a reloaded conversation still offers the same next-message suggestion.
+      ...(suggestions.length > 0 ? { suggestions } : {}),
     };
 
     // Only save the assistant message since user message was saved earlier
