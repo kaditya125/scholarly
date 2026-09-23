@@ -102,7 +102,11 @@ function describeResult(entry: ToolCallLogEntry, ms: number): string {
     case 'search_sources': {
       const counts = new Map<string, number>();
       for (const r of d.results || []) counts.set(r.from, (counts.get(r.from) || 0) + 1);
-      const found = [...counts.entries()].map(([s, n]) => `${n} ${RESULT_NOUNS[s]?.[n === 1 ? 0 : 1] || s}`);
+      const officialWeb = (d.results || []).filter((r: any) => r.from === 'web' && r.official).length;
+      const found = [...counts.entries()].map(([s, n]) => {
+        const phrase = `${n} ${RESULT_NOUNS[s]?.[n === 1 ? 0 : 1] || s}`;
+        return s === 'web' && officialWeb > 0 ? `${phrase} (${officialWeb} from official sites)` : phrase;
+      });
       const empty = (Array.isArray(args.sources) ? args.sources : [])
         .map(String).filter((s) => !counts.has(s) && !d.errors?.[s]).map((s) => SOURCE_LABELS[s] || s);
       const failed = Object.keys(d.errors || {}).map((s) => `${SOURCE_LABELS[s] || s} unavailable`);
@@ -157,8 +161,8 @@ function toCitations(entry: ToolCallLogEntry): any[] {
       text: r.text,
       score: r.score,
       pageNumber: r.pageNumber,
-      authorityScore: r.from === 'web' ? 0.9 : 1.1,
-      selectionReasoning: `Deep search · ${SOURCE_LABELS[r.from] || r.from}${r.title ? ` · ${r.title}` : ''}`,
+      authorityScore: r.from === 'web' ? (r.official ? 1.3 : 0.9) : 1.1,
+      selectionReasoning: `Deep search · ${r.official ? 'official site' : SOURCE_LABELS[r.from] || r.from}${r.title ? ` · ${r.title}` : ''}`,
       sourceId: r.sourceId,
     }));
   }
@@ -223,8 +227,9 @@ How to answer:
 - Start directly with the answer. No greeting, no self-introduction, no "great question".
 - Ground every factual claim in what the tools returned and name the source in plain words where
   you use it (e.g. "the NCERT Class 11 Physics chapter on Laws of Motion", "SSC's notice on
-  ssc.gov.in"). For web results prefer official and recent sources, and give dates exactly as the
-  source states them — never guess a date.
+  ssc.gov.in"). Web results marked official: true come from government sites (ssc.gov.in,
+  upsc.gov.in, …) — they are authoritative: lead with them, and say when a detail comes only from a
+  coaching or news site. Give dates exactly as the source states them — never guess a date.
 - If the results don't answer the question, say so plainly, then give your best general
   explanation clearly marked as not coming from Sadhya's sources.
 - End with one short line offering the most useful next step.
