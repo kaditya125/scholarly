@@ -966,7 +966,7 @@ export default function Chat() {
 
       {/* Main Chat Area */}
       <div
-        className="flex-1 flex flex-col relative bg-transparent transition-all duration-300"
+        className="flex-1 min-w-0 flex flex-col relative bg-transparent transition-all duration-300"
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
@@ -1269,7 +1269,7 @@ export default function Chat() {
                           </button>
                           {/* Bubble keeps the refined dark surface + tighter radius from the
                               UI pass, alongside the edit affordance added on main. */}
-                          <div className="bg-slate-900 text-white dark:bg-[#18181b] dark:text-slate-100 border border-transparent dark:border-white/10 px-4.5 py-2.5 rounded-2xl rounded-tr-xs text-[14.5px] whitespace-pre-wrap tracking-wide shadow-xs">
+                          <div className="bg-slate-900 text-white dark:bg-[#18181b] dark:text-slate-100 border border-transparent dark:border-white/10 px-4.5 py-2.5 rounded-2xl rounded-tr-xs font-answer text-[15.5px] sm:text-[16px] leading-[1.6] whitespace-pre-wrap shadow-xs">
                             {msg.content}
                           </div>
                         </div>
