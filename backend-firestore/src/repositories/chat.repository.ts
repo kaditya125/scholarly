@@ -1,18 +1,41 @@
 import { db } from '../config/firebase';
 import { ChatSession, ChatMessage } from '../types';
 
+/**
+ * Thrown when a caller names a chat session that belongs to another user. The session id comes
+ * from the request body, so it must never be trusted to identify the owner: before this check,
+ * writing to (and generating from) someone else's conversation only required knowing its id.
+ */
+export class SessionAccessError extends Error {
+  readonly statusCode = 403;
+  readonly code = 'SESSION_FORBIDDEN';
+
+  constructor(message = 'This conversation belongs to another account.') {
+    super(message);
+    this.name = 'SessionAccessError';
+  }
+}
+
+/** A session with no recorded owner (legacy) is treated as claimable; any other owner mismatch is refused. */
+export function isForeignSession(session: { userId?: string } | null | undefined, userId: string): boolean {
+  return Boolean(session && session.userId && session.userId !== userId);
+}
+
 export class ChatRepository {
   private collection = db.collection('chat_sessions');
 
   /**
-   * Fetch an existing session or create a new one.
+   * Fetch an existing session or create a new one. An existing session owned by a different user is
+   * refused with SessionAccessError — it is never returned, read or appended to.
    */
   async getOrCreateSession(sessionId: string, userId: string, topicType: string, selectedModel: string): Promise<ChatSession> {
     const docRef = this.collection.doc(sessionId);
     const doc = await docRef.get();
 
     if (doc.exists) {
-      return { sessionId: doc.id, ...doc.data() } as ChatSession;
+      const existing = { sessionId: doc.id, ...doc.data() } as ChatSession;
+      if (isForeignSession(existing as any, userId)) throw new SessionAccessError();
+      return existing;
     }
 
     const newSession: ChatSession = {
