@@ -66,12 +66,17 @@ export class ResponseFormatter implements IAgent {
         hasNotebookContext,
       });
 
-      const systemPrompt = `${persona}
+      // No plan when the workflow judged the question simple enough to answer directly.
+      const systemPrompt = reasoning.trim()
+        ? `${persona}
 
 ## Your Private Reasoning (internal plan — do not repeat verbatim, do not mention "reasoning", "scratchpad", or "plan" to the ${audience})
 ${reasoning}
 
-Now write your final answer to the ${audience}, following the persona and mode instructions above and using the reasoning above as your plan — do not just restate it, and do not address the reasoning itself.${warningText}${recommendationsBlock}`;
+Now write your final answer to the ${audience}, following the persona and mode instructions above and using the reasoning above as your plan — do not just restate it, and do not address the reasoning itself.${warningText}${recommendationsBlock}`
+        : `${persona}
+
+Now write your answer to the ${audience}, following the persona and mode instructions above.${warningText}${recommendationsBlock}`;
 
       const messages = [
         ...context.request.history,

@@ -368,9 +368,12 @@ export class RetrievalOrchestrator {
            * consequence: that query came back with three JEE Main citations. `parsedExamId` is
            * resolved from live corpus data (examIndex), so it knows every exam actually ingested.
            */
+          // With no exam named in the query, the student's own target exam is the filter — never
+          // when they named an exam we could not resolve (that must not be searched as their exam).
           (routePlan.usePYQs || parsed.intent === 'PYQ_SEARCH')
             ? this.retrievalService.retrievePyqContext(req.query, {
-                examId: parsed.examId ?? routePlan.targetExamId,
+                examId: parsed.examId ?? routePlan.targetExamId
+                  ?? (parsed.unresolvedExamHint ? undefined : agentContext.studentContext?.examContext?.examId ?? undefined),
                 subject: routePlan.targetSubject,
                 topic: parsed.topic ?? undefined,
                 officialOnly: true,

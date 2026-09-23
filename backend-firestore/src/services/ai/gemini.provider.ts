@@ -270,7 +270,7 @@ export class GeminiProvider implements AIProvider {
     return response.text || '';
   }
 
-  async *generateStreamResponse(history: ChatMessage[], systemPrompt?: string, opts?: { traceId?: string, model?: string, userId?: string }): AsyncGenerator<string, void, unknown> {
+  async *generateStreamResponse(history: ChatMessage[], systemPrompt?: string, opts?: { traceId?: string, model?: string, userId?: string, maxOutputTokens?: number }): AsyncGenerator<string, void, unknown> {
     assertAIEnabled('Gemini generateStreamResponse');
     const start = Date.now();
     const tid = opts?.traceId || `gemini_${start}`;
@@ -297,6 +297,7 @@ export class GeminiProvider implements AIProvider {
       // where we want the text tokens directly. It also cuts TTFT noticeably.
       thinkingConfig: { thinkingBudget: 0 },
     };
+    if (opts?.maxOutputTokens) config.maxOutputTokens = opts.maxOutputTokens;
     if (systemPrompt && systemPrompt.trim().length > 0) {
       config.systemInstruction = systemPrompt;
     }

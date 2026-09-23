@@ -613,7 +613,7 @@ scratchpad — notes to yourself, not a message to anyone:
 5. If anything about the request is ambiguous, note the clarifying question you'll ask instead
    of guessing.
 
-Keep this SHORT (a few sentences to a short paragraph, not a full explanation) and written
+Keep this SHORT — under 80 words, a few terse lines, not a full explanation — and written
 like a note left for yourself, not a polished answer. Do not use markdown headings.
 
 ## Hard Rule: No Direct Address
@@ -1078,6 +1078,19 @@ export function isGreetingMessage(query: string): boolean {
   // Standalone farewells and acknowledgements
   const farewell = /^(bye|goodbye|see\s*you|see\s*ya|take\s*care|cya|later|ok\s*thanks?|okay\s*thanks?|thanks?(\s*so\s*much|\s*a\s*lot)?|thank\s*you(\s*so\s*much)?|cheers|alright|ok|okay|sure|got\s*it|noted|perfect|great|awesome|sounds\s*good)[.!?]*$/i;
   return farewell.test(q) || (greetingCore.test(q) && socialFiller.test(q)) || /^(hi+|hello+|hey+|hy+|yo+|sup|howdy|greetings|namaste|hola|good\s*(morning|afternoon|evening))\s*[.!?]*$/i.test(q);
+}
+
+/**
+ * A short, single, factual question the answer step can handle without a separate private plan.
+ * Conservative on purpose: anything asking to explain, compare, solve or reason keeps the plan,
+ * because the plan call costs 3–10 s before the first answer word and only pays off there.
+ */
+export function isSimpleFactualQuestion(query: string): boolean {
+  const q = query.trim();
+  if (!q || q.includes('\n') || q.includes('[File Attached:')) return false;
+  if (q.split(/\s+/).length > 14 || (q.match(/\?/g) || []).length > 1) return false;
+  if (/\b(explain|compare|comparison|differences?|differentiate|distinguish|vs|versus|why|how|solve|calculate|compute|derive|prove|analy[sz]e|evaluate|discuss|describe|elaborate|summari[sz]e|steps?|strategy|plan|essay|examples?|advantages?|disadvantages?|pros|cons|significance|importance|impact|causes?|effects?)\b/i.test(q)) return false;
+  return /^(who|what|when|where|which|name|define|full form)\b/i.test(q) || q.endsWith('?');
 }
 
 

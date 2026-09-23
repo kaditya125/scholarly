@@ -55,7 +55,10 @@ async function build(): Promise<ExamIndex> {
 
   const collect = async (collection: string, field: string | null) => {
     try {
-      const snap = await db.collection(collection).limit(1000).get();
+      // Only the one field is needed; registry documents are large, and every Firestore round
+      // trip from the server costs 0.3–1.5 s.
+      const base = db.collection(collection);
+      const snap = await (field ? base.select(field) : base.select()).limit(1000).get();
       for (const d of snap.docs) {
         const v = field ? (d.data() as any)[field] : d.id;
         if (v && typeof v === 'string') ids.add(v);
@@ -65,8 +68,7 @@ async function build(): Promise<ExamIndex> {
     }
   };
 
-  await collect('exams', null);
-  await collect('pyq_source_registry', 'examId');
+  await Promise.all([collect('exams', null), collect('pyq_source_registry', 'examId')]);
 
   const aliases: Record<string, string> = {};
   for (const id of ids) {
@@ -80,13 +82,38 @@ async function build(): Promise<ExamIndex> {
   return { aliases, examIds: [...ids].sort(), builtAt: Date.now() };
 }
 
+// Last good index, kept past its TTL. An expired index is served while a refresh runs in the
+// background, so only the very first build after boot ever makes a student wait for it.
+let lastGood: ExamIndex | null = null;
+let refreshing: Promise<ExamIndex> | null = null;
+
+function refresh(): Promise<ExamIndex> {
+  if (!refreshing) {
+    refreshing = build()
+      .then(async (built) => {
+        if (built.examIds.length) lastGood = built;
+        await cacheService.set(CACHE_KEY, built, TTL_SECONDS).catch(() => {});
+        logger.info('[ExamIndex] built', { examCount: built.examIds.length });
+        return built;
+      })
+      .finally(() => { refreshing = null; });
+  }
+  return refreshing;
+}
+
 export async function getExamIndex(): Promise<ExamIndex> {
   const cached = await cacheService.get<ExamIndex>(CACHE_KEY).catch(() => null);
   if (cached?.aliases) return cached;
-  const built = await build();
-  await cacheService.set(CACHE_KEY, built, TTL_SECONDS).catch(() => {});
-  logger.info('[ExamIndex] built', { examCount: built.examIds.length });
-  return built;
+  if (lastGood) {
+    refresh().catch((e) => logger.warn(`[ExamIndex] background refresh failed: ${e?.message}`));
+    return lastGood;
+  }
+  return refresh();
+}
+
+/** Build the index at boot so the first student question does not pay for it. */
+export function warmExamIndex(): void {
+  getExamIndex().catch((e) => logger.warn(`[ExamIndex] warm-up failed: ${e?.message}`));
 }
 
 /**
