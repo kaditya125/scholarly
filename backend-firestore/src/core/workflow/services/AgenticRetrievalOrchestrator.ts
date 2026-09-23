@@ -1,15 +1,14 @@
 /**
- * AgenticRetrievalOrchestrator — experimental sibling of RetrievalOrchestrator. Instead of a
- * fixed retrieval sequence, the model itself decides which of the shared retrieval tools
- * (src/core/tools/retrievalTools.ts) to call, in a bounded loop (GeminiProvider.generateWithTools).
- * Only reached from WorkflowEngine's AGENTIC branch, itself gated by BOTH
- * featureFlags.agenticRetrieval AND a per-request opt-in — the deterministic RetrievalOrchestrator
- * pipeline remains the default and is completely untouched by this file's existence.
+ * AgenticRetrievalOrchestrator — powers the chat's "Deep search" option. Instead of the fixed
+ * retrieval sequence of RetrievalOrchestrator, the model decides what to search — NCERT, PYQs,
+ * reference books, the official syllabus, the student's own notebooks and the live web (tools in
+ * src/core/tools/retrievalTools.ts) — in a bounded, streaming loop (GeminiProvider.streamWithTools).
+ * Only reached from WorkflowEngine's AGENTIC branch, gated by BOTH featureFlags.agenticRetrieval
+ * (server kill switch) AND the per-request opt-in the client sends when Deep search is selected.
  *
- * Exposes the same self-contained shape the existing PODCAST branch uses: an async generator
- * yielding WorkflowEvents directly (progress/chunk/citation/done), rather than a RetrievalOutcome
- * that would need to flow through the general teacher/formatter/verification stages built for the
- * deterministic path.
+ * What the student sees: each search as it starts ("Searching NCERT and the web for …"), its
+ * result count as it finishes, citations as they arrive, then the streamed answer — the same
+ * event shapes the deterministic pipeline emits, so the chat UI needs nothing special.
  *
  * ── Two-layer safety design ──────────────────────────────────────────────────────────────────
  *
@@ -25,11 +24,11 @@
  *     TeacherAgent/ResponseFormatter two-pass — the retrieval and grounding guarantees that
  *     matter for correctness are identical either way.
  *  2. For everything else, `lookup_canonical_pyq` stays available as a tool in case the model
- *     reaches for it mid-turn. After the loop ends, the call log is scanned: if that tool was
- *     called and reported `NOT_AVAILABLE_IN_VERIFIED_CORPUS`, the SAME deterministic notice the
- *     main pipeline emits (WorkflowEngine.ts's CANONICAL_NOT_FOUND handling) is force-emitted
- *     before the model's own text — the backend states absence, not the model, for the documented
- *     reason that phrasing of absence drifted across runs when left to prompt-following alone.
+ *     reaches for it mid-turn. Before the model's first word of answer, the call log is scanned:
+ *     if that tool reported `NOT_AVAILABLE_IN_VERIFIED_CORPUS`, the SAME deterministic notice the
+ *     main pipeline emits (WorkflowEngine.ts's CANONICAL_NOT_FOUND handling) is emitted first —
+ *     the backend states absence, not the model, because phrasing of absence drifted across runs
+ *     when left to prompt-following alone.
  */
 import { AgentContext } from '../../agents/IAgent';
 import { WorkflowEvent, WorkflowRequest, WorkflowStage } from '../types';
@@ -38,10 +37,12 @@ import { queryPlanningService } from './QueryPlanningService';
 import { parsePyqQuery } from '../../../services/pyq/pyqQueryParser';
 import { buildSadhyaSystemPrompt } from '../../../config/prompts';
 import { GeminiProvider } from '../../../services/ai/gemini.provider';
-import { GEMINI_RETRIEVAL_TOOL_DECLARATIONS, executeRetrievalTool } from '../../tools/retrievalTools';
+import { GEMINI_DEEP_SEARCH_TOOL_DECLARATIONS, executeRetrievalTool } from '../../tools/retrievalTools';
 import { ChatMessage } from '../../../types';
 
-const MAX_TOOL_ITERATIONS = 5;
+/** Tool-calling turns before the answer is forced; parallel calls allowed per turn. */
+const MAX_TOOL_TURNS = 3;
+const MAX_CALLS_PER_TURN = 3;
 
 interface ToolCallLogEntry {
   name: string;
@@ -49,18 +50,97 @@ interface ToolCallLogEntry {
   result: { ok: boolean; data?: any; error?: string };
 }
 
+const SOURCE_LABELS: Record<string, string> = {
+  ncert: 'NCERT',
+  pyq: 'PYQs',
+  reference_books: 'reference books',
+  syllabus: 'the syllabus',
+  my_notebooks: 'your notebooks',
+  web: 'the web',
+};
+
+const RESULT_NOUNS: Record<string, [string, string]> = {
+  ncert: ['NCERT passage', 'NCERT passages'],
+  pyq: ['PYQ', 'PYQs'],
+  reference_books: ['reference-book passage', 'reference-book passages'],
+  syllabus: ['syllabus entry', 'syllabus entries'],
+  my_notebooks: ['passage from your notebooks', 'passages from your notebooks'],
+  web: ['web result', 'web results'],
+};
+
+const prettyExam = (examId: unknown) => String(examId || '').replace(/_/g, ' ').trim();
+
+function listPhrase(items: string[]): string {
+  if (items.length <= 1) return items.join('');
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
+/** The live activity line while a tool runs — what the student reads in the "Read files" row. */
+function describeCall(name: string, args: Record<string, unknown>): string {
+  switch (name) {
+    case 'search_sources': {
+      const sources = (Array.isArray(args.sources) ? args.sources : []).map((s) => SOURCE_LABELS[String(s)] || String(s));
+      const query = String(args.query || '').slice(0, 70);
+      return `Searching ${listPhrase(sources) || 'sources'} for “${query}”`;
+    }
+    case 'resolve_exam_id': return 'Identifying the exam…';
+    case 'lookup_canonical_pyq':
+      return `Looking up the ${prettyExam(args.examId)}${args.year ? ` ${args.year}` : ''} paper…`;
+    case 'get_exam_pattern_analytics': return `Analysing ${prettyExam(args.examId)} question patterns…`;
+    case 'get_exam_syllabus': return `Reading the ${prettyExam(args.examId)} official syllabus…`;
+    default: return `Running ${name}…`;
+  }
+}
+
+/** One finished-step line for the expandable steps list. */
+function describeResult(entry: ToolCallLogEntry, ms: number): string {
+  const secs = `(${(ms / 1000).toFixed(1)} s)`;
+  const { name, args, result } = entry;
+  if (!result.ok) return `${describeCall(name, args).replace(/…$/, '')} failed: ${result.error || 'unknown error'} ${secs}`;
+  const d = result.data || {};
+  switch (name) {
+    case 'search_sources': {
+      const counts = new Map<string, number>();
+      for (const r of d.results || []) counts.set(r.from, (counts.get(r.from) || 0) + 1);
+      const found = [...counts.entries()].map(([s, n]) => `${n} ${RESULT_NOUNS[s]?.[n === 1 ? 0 : 1] || s}`);
+      const empty = (Array.isArray(args.sources) ? args.sources : [])
+        .map(String).filter((s) => !counts.has(s) && !d.errors?.[s]).map((s) => SOURCE_LABELS[s] || s);
+      const failed = Object.keys(d.errors || {}).map((s) => `${SOURCE_LABELS[s] || s} unavailable`);
+      const parts = [
+        found.length ? `Found ${listPhrase(found)}` : '',
+        empty.length ? `nothing in ${listPhrase(empty)}` : '',
+        ...failed,
+      ].filter(Boolean);
+      return `${parts.join('; ') || 'No results'} ${secs}`;
+    }
+    case 'resolve_exam_id':
+      return `${d.examId ? `Exam: ${prettyExam(d.examId)}` : 'No specific exam named'} ${secs}`;
+    case 'lookup_canonical_pyq':
+      return `${d.status === 'NOT_AVAILABLE_IN_VERIFIED_CORPUS'
+        ? 'Not in the verified question bank'
+        : `${d.retrievedCount ?? (d.questions || []).length} verified questions retrieved`} ${secs}`;
+    case 'get_exam_pattern_analytics':
+      return `Analysed ${Number(d.totalQuestionsAnalyzed || 0).toLocaleString('en-IN')} ${prettyExam(d.examId || args.examId)} PYQs ${secs}`;
+    case 'get_exam_syllabus':
+      return `${d.available ? `Official syllabus: ${d.nodeCount} entries` : 'No official syllabus on file'} ${secs}`;
+    default:
+      return `${name} done ${secs}`;
+  }
+}
+
 function toCitations(entry: ToolCallLogEntry): any[] {
-  const { name, result } = entry;
+  const { name, args, result } = entry;
   if (!result.ok || !result.data) return [];
+  const d = result.data;
 
   if (name === 'lookup_canonical_pyq') {
-    const status = result.data.status;
+    const status = d.status;
     if (status !== 'CANONICAL_RETRIEVED' && status !== 'PARTIAL_CANONICAL_PAPER') return [];
-    const paper = result.data.papers?.[0];
+    const paper = d.papers?.[0];
     const header = paper
       ? [paper.examId, paper.year, paper.session, paper.shift, paper.paper].filter(Boolean).join(' · ')
-      : (result.data.examId || 'Verified corpus');
-    return (result.data.questions || []).slice(0, 5).map((q: any) => ({
+      : (d.examId || 'Verified corpus');
+    return (d.questions || []).slice(0, 5).map((q: any) => ({
       source: header,
       text: String(q.questionText ?? '').slice(0, 300),
       score: 1,
@@ -71,24 +151,46 @@ function toCitations(entry: ToolCallLogEntry): any[] {
     }));
   }
 
-  if (Array.isArray(result.data.results)) {
-    return result.data.results.map((r: any) => ({
-      source: r.source,
+  if (name === 'search_sources' && Array.isArray(d.results)) {
+    return d.results.map((r: any) => ({
+      source: r.url || r.source,
       text: r.text,
       score: r.score,
-      authorityScore: 1.1,
-      selectionReasoning: `Retrieved via ${name} during agentic retrieval.`,
+      pageNumber: r.pageNumber,
+      authorityScore: r.from === 'web' ? 0.9 : 1.1,
+      selectionReasoning: `Deep search · ${SOURCE_LABELS[r.from] || r.from}${r.title ? ` · ${r.title}` : ''}`,
       sourceId: r.sourceId,
     }));
+  }
+
+  if (name === 'get_exam_pattern_analytics') {
+    const topics = (d.highYieldTopics || []).slice(0, 5)
+      .map((t: any) => `${t.topic} (${t.percentageWeight}%)`).join(', ');
+    return [{
+      source: `${prettyExam(d.examId || args.examId)} pattern analysis — ${Number(d.totalQuestionsAnalyzed || 0).toLocaleString('en-IN')} PYQs`,
+      text: topics ? `High-yield topics: ${topics}` : 'Exam pattern analysis',
+      score: 1,
+      authorityScore: 1.2,
+      selectionReasoning: 'Measured from Sadhya\'s verified previous-year question corpus.',
+    }];
+  }
+
+  if (name === 'get_exam_syllabus' && d.available) {
+    return [{
+      source: `${prettyExam(d.examId || args.examId)} official syllabus${d.version ? ` (${d.version})` : ''}`,
+      text: `${d.nodeCount} syllabus entries${d.authority ? ` · ${d.authority}` : ''}`,
+      score: 1,
+      authorityScore: 1.4,
+      selectionReasoning: 'Official syllabus on file.',
+    }];
   }
 
   return [];
 }
 
-function buildAgenticSystemPrompt(agentContext: AgentContext, req: WorkflowRequest): string {
-  // Reuse the full persona/identity/exam-knowledge machinery — no groundingState/retrievedContext
-  // is passed (neither is known before the tool loop runs), so it falls back to the generic
-  // "answer confidently" instructions, which this appends tool-calling-specific rules on top of.
+function buildDeepSearchSystemPrompt(agentContext: AgentContext, req: WorkflowRequest): string {
+  // The full persona/identity/exam-knowledge prompt, without groundingState/retrievedContext
+  // (neither is known before the loop runs), plus Deep search's own rules on top.
   const base = buildSadhyaSystemPrompt({
     mode: String(req.mode || 'TEACHER'),
     viewerRole: req.productRole === 'teacher' ? 'teacher' : 'student',
@@ -96,22 +198,54 @@ function buildAgenticSystemPrompt(agentContext: AgentContext, req: WorkflowReque
     teacherContext: agentContext.teacherContext,
     hasNotebookContext: false,
   });
+  const today = new Date().toISOString().slice(0, 10);
 
   return `${base}
 
-## Agentic Retrieval Mode (experimental)
-You have retrieval tools available (resolve_exam_id, lookup_canonical_pyq, search_pyq,
-search_curriculum, search_reference_books, search_official_syllabus, get_exam_syllabus,
-get_exam_pattern_analytics). Call whichever are relevant before answering — do not guess an
-examId, call resolve_exam_id first when the exam isn't already known.
+## Deep search mode
+Today's date is ${today}. You answer by searching first. Tools: search_sources, resolve_exam_id,
+lookup_canonical_pyq, get_exam_pattern_analytics, get_exam_syllabus.
+
+How to search:
+- Always search before answering. Start with ONE search_sources call that covers every source the
+  question needs, with one well-phrased query. Search again (differently phrased, or other
+  sources) only if the first results are thin. At most three searches in total.
+- Choose sources by need: ncert for concepts and explanations; pyq for how a topic is asked
+  (needs examId); syllabus for what an exam officially covers (needs examId); reference_books for
+  GK, quant, reasoning and English facts and formulas; my_notebooks when the student refers to
+  their own notes or uploads; web for anything recent or time-sensitive (notifications, dates,
+  vacancies, cut-offs, news, current affairs) or not covered elsewhere.
+- If the question names or implies an exam and you need its id, call resolve_exam_id in the same
+  step as your first search. Independent tools can run together in one step.
+- For which topics matter most in an exam, use get_exam_pattern_analytics.
+
+How to answer:
+- Start directly with the answer. No greeting, no self-introduction, no "great question".
+- Ground every factual claim in what the tools returned and name the source in plain words where
+  you use it (e.g. "the NCERT Class 11 Physics chapter on Laws of Motion", "SSC's notice on
+  ssc.gov.in"). For web results prefer official and recent sources, and give dates exactly as the
+  source states them — never guess a date.
+- If the results don't answer the question, say so plainly, then give your best general
+  explanation clearly marked as not coming from Sadhya's sources.
+- End with one short line offering the most useful next step.
 
 **Non-negotiable rule**: if you call lookup_canonical_pyq and its status comes back
 NOT_AVAILABLE_IN_VERIFIED_CORPUS, you MUST state plainly that Sadhya's verified corpus does not
 have that material. You MUST NOT reproduce, reconstruct, or approximate the paper from your own
-training knowledge, and MUST NOT present anything you write as a previous-year question. This
-overrides any instinct to always give a complete-sounding answer — declining to invent is correct.
-If status is PARTIAL_CANONICAL_PAPER, say plainly how many records were found and do not invent
-the rest. Any question you generate yourself must be labeled as practice, never as a real PYQ.`;
+training knowledge, and MUST NOT present anything you write as a previous-year question. If status
+is PARTIAL_CANONICAL_PAPER, say plainly how many records were found and do not invent the rest.
+Any question you generate yourself must be labeled as practice, never as a real PYQ.`;
+}
+
+function canonicalNotice(callLog: ToolCallLogEntry[]): string | null {
+  const miss = callLog.find(
+    (e) => e.name === 'lookup_canonical_pyq' && e.result.ok && e.result.data?.status === 'NOT_AVAILABLE_IN_VERIFIED_CORPUS',
+  );
+  if (!miss) return null;
+  const detail = String(miss.result.data?.diagnostics || '').trim();
+  return detail
+    ? `**${detail.replace(/\.?$/, '.')}**\n\n`
+    : `**I don't have that material in Sadhya's verified question bank.**\n\n`;
 }
 
 class AgenticRetrievalOrchestrator {
@@ -151,18 +285,10 @@ class AgenticRetrievalOrchestrator {
 
     const provider = new GeminiProvider();
     const history: ChatMessage[] = [...req.history, { role: 'user', content: req.query, timestamp: Date.now() } as ChatMessage];
-    const anyProvider = provider as any;
-    if (typeof anyProvider.generateStreamResponse === 'function') {
-      for await (const chunk of anyProvider.generateStreamResponse(history, systemPrompt, {
-        traceId: req.traceId, model: req.model, userId: req.userId,
-      })) {
-        yield { type: 'chunk', chunk };
-      }
-    } else {
-      const res = await provider.generateResponse(history, systemPrompt, {
-        traceId: req.traceId, model: req.model, userId: req.userId,
-      });
-      yield { type: 'chunk', chunk: res.reply };
+    for await (const chunk of provider.generateStreamResponse(history, systemPrompt, {
+      traceId: req.traceId, model: req.model, userId: req.userId,
+    })) {
+      yield { type: 'chunk', chunk };
     }
 
     yield {
@@ -182,52 +308,55 @@ class AgenticRetrievalOrchestrator {
       return;
     }
 
-    yield { type: 'progress', stage: WorkflowStage.RAG_RETRIEVAL, message: 'Deciding which sources to search...' };
+    yield { type: 'progress', stage: WorkflowStage.INTENT_DETECTION, message: 'Planning the search…' };
 
-    const systemPrompt = buildAgenticSystemPrompt(agentContext, req);
+    const systemPrompt = buildDeepSearchSystemPrompt(agentContext, req);
     const callLog: ToolCallLogEntry[] = [];
-    const executeTool = async (name: string, args: Record<string, unknown>) => {
-      const result = await executeRetrievalTool(name, args, { userId: req.userId });
-      callLog.push({ name, args, result });
-      return result;
-    };
-
+    const citationsList: any[] = [];
     const provider = new GeminiProvider();
     const history: ChatMessage[] = [...req.history, { role: 'user', content: req.query, timestamp: Date.now() } as ChatMessage];
-    const { text } = await provider.generateWithTools(
+    let answering = false;
+
+    for await (const ev of provider.streamWithTools(
       history,
       systemPrompt,
-      GEMINI_RETRIEVAL_TOOL_DECLARATIONS as any,
-      executeTool,
-      { traceId: req.traceId, model: req.model, userId: req.userId, maxIterations: MAX_TOOL_ITERATIONS },
-    );
-
-    const citationsList: any[] = [];
-    for (const entry of callLog) {
-      yield {
-        type: 'progress', stage: WorkflowStage.RAG_RETRIEVAL, detail: true,
-        message: `Called ${entry.name}(${JSON.stringify(entry.args)})`,
-      };
-      for (const citation of toCitations(entry)) {
-        citationsList.push(citation);
-        yield { type: 'citation', citation };
+      GEMINI_DEEP_SEARCH_TOOL_DECLARATIONS as any,
+      (name, args) => executeRetrievalTool(name, args, { userId: req.userId }),
+      {
+        traceId: req.traceId, model: req.model, userId: req.userId,
+        maxIterations: MAX_TOOL_TURNS, maxCallsPerTurn: MAX_CALLS_PER_TURN, requireFirstCall: true,
+      },
+    )) {
+      if (ev.type === 'tool_call') {
+        yield { type: 'progress', stage: WorkflowStage.RAG_RETRIEVAL, message: describeCall(ev.name, ev.args) };
+      } else if (ev.type === 'tool_result') {
+        const entry: ToolCallLogEntry = { name: ev.name, args: ev.args, result: ev.output };
+        callLog.push(entry);
+        yield { type: 'progress', stage: WorkflowStage.RAG_RETRIEVAL, detail: true, message: describeResult(entry, ev.ms) };
+        for (const citation of toCitations(entry)) {
+          citationsList.push(citation);
+          yield { type: 'citation', citation };
+        }
+      } else if (ev.type === 'text') {
+        if (!answering) {
+          answering = true;
+          // Layer 2: every tool result is in by the time the answer turn starts, so the
+          // backend-stated absence notice lands before the model's first word.
+          const notice = canonicalNotice(callLog);
+          if (notice) yield { type: 'chunk', chunk: notice };
+          yield { type: 'progress', stage: WorkflowStage.AGENT_EXECUTION, message: 'Writing the answer…' };
+        }
+        yield { type: 'chunk', chunk: ev.text };
       }
     }
 
-    // ── Layer 2 safety net ──────────────────────────────────────────────────────────────────
-    const canonicalMiss = callLog.find(
-      (e) => e.name === 'lookup_canonical_pyq' && e.result.ok && e.result.data?.status === 'NOT_AVAILABLE_IN_VERIFIED_CORPUS',
-    );
-    if (canonicalMiss) {
-      const detail = String(canonicalMiss.result.data?.diagnostics || '').trim();
-      const notice = detail
-        ? `**${detail.replace(/\.?$/, '.')}**\n\n`
-        : `**I don't have that material in Sadhya's verified question bank.**\n\n`;
-      yield { type: 'chunk', chunk: notice };
+    if (!answering) {
+      const notice = canonicalNotice(callLog);
+      yield {
+        type: 'chunk',
+        chunk: notice || "I searched but couldn't put an answer together from the results. Try rephrasing the question.",
+      };
     }
-
-    yield { type: 'progress', stage: WorkflowStage.AGENT_EXECUTION, message: 'Composing the answer...' };
-    yield { type: 'chunk', chunk: text };
 
     yield {
       type: 'done',
