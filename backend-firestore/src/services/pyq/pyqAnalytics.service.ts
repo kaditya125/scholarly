@@ -39,8 +39,9 @@ export class PYQAnalyticsService {
    *     question corpus scan (SSC CGL: ~45s) ran on literally every cold process, discarding a
    *     perfectly good result that was already sitting in Firestore from the last computation.
    *
-   * Only when BOTH miss (first time ever for this exam, or the persisted doc is older than
-   * ANALYTICS_TTL_MS) does this fall through to the full scan.
+   * A persisted doc older than ANALYTICS_TTL_MS is still returned immediately, with a rescan
+   * started in the background. Only when no doc exists at all (first time ever for this exam)
+   * does a caller wait on the full scan.
    */
   async computeExamAnalytics(examId: string): Promise<PYQExamAnalytics> {
     const cacheKey = `pyq_analytics_${examId.toUpperCase()}`;
@@ -55,6 +56,32 @@ export class PYQAnalyticsService {
       return persisted;
     }
 
+    // Stale but present: serve it now and refresh in the background. The corpus changes on the
+    // scale of days, while a full rescan costs 30–45 s and ~14,000 Firestore reads — a student
+    // waiting on a chat answer (Deep search calls this) must never sit through that.
+    if (persisted) {
+      this.refreshInBackground(examId, cacheKey);
+      return persisted;
+    }
+    return this.recomputeExamAnalytics(examId, cacheKey);
+  }
+
+  /** One background rescan per exam at a time; concurrent stale reads share it. */
+  private refreshing = new Map<string, Promise<PYQExamAnalytics>>();
+
+  private refreshInBackground(examId: string, cacheKey: string): void {
+    const key = examId.toUpperCase();
+    if (this.refreshing.has(key)) return;
+    const run = this.recomputeExamAnalytics(examId, cacheKey)
+      .catch((e) => {
+        logger.warn('[PYQAnalytics] background refresh failed; stale analytics stay in use', { examId, error: String(e?.message || e) });
+        return null as any;
+      })
+      .finally(() => this.refreshing.delete(key));
+    this.refreshing.set(key, run);
+  }
+
+  private async recomputeExamAnalytics(examId: string, cacheKey: string): Promise<PYQExamAnalytics> {
     // Paged, not capped. The previous `limit: 10000` silently excluded 4,009 of SSC CGL's 14,009
     // questions from its own pattern profile — and a truncated distribution still looks plausible,
     // so nothing downstream could notice.

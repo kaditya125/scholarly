@@ -99,6 +99,9 @@ const MAX_CHARS = 4000;
  *  - 'web'      → sends topicType 'RESEARCH', which turns on Tavily web retrieval AND
  *                 switches the system prompt to DEEP RESEARCH mode (config/prompts.ts).
  *  - 'notebook' → sends notebookId, so RetrievalService scopes RAG to that one notebook.
+ *  - 'deep'     → sends agenticRetrieval, so the AI decides what to search (NCERT, PYQs,
+ *                 reference books, syllabus, the student's notebooks, the web) and shows each
+ *                 search live (AgenticRetrievalOrchestrator). Needs ENABLE_AGENTIC_RETRIEVAL.
  *
  * To make "All Web" the default (matching the reference mock literally), change
  * DEFAULT_SCOPE to { kind: 'web' } — but note that makes every message a research-mode
@@ -107,12 +110,13 @@ const MAX_CHARS = 4000;
 type Scope =
   | { kind: 'auto' }
   | { kind: 'web' }
+  | { kind: 'deep' }
   | { kind: 'notebook'; id: string; title: string };
 
 const DEFAULT_SCOPE: Scope = { kind: 'auto' };
 
 const scopeLabel = (s: Scope) =>
-  s.kind === 'web' ? 'All Web' : s.kind === 'notebook' ? s.title : 'Auto';
+  s.kind === 'web' ? 'All Web' : s.kind === 'deep' ? 'Deep search' : s.kind === 'notebook' ? s.title : 'Cloud';
 
 /**
  * Pool the four suggestion cards are drawn from. "Refresh Prompts" reshuffles and
@@ -841,6 +845,7 @@ export default function Chat() {
       // (chat.controller → chat.service → WorkflowEngine):
       //   'web'      → topicType 'RESEARCH' turns on Tavily retrieval + research prompt
       //   'notebook' → notebookId scopes RetrievalService to that notebook's vectors
+      //   'deep'     → agenticRetrieval hands the question to Deep search
       // 'auto' sends exactly what this page sent before, so default behaviour is unchanged.
       const { content, data, progress, reasoning, suggestions } = await stream.startStream({
         userId: user.uid,
@@ -849,6 +854,7 @@ export default function Chat() {
         model: selectedModel,
         topicType: scope.kind === 'web' ? 'RESEARCH' : typeParam,
         ...(scope.kind === 'notebook' ? { notebookId: scope.id } : {}),
+        ...(scope.kind === 'deep' ? { agenticRetrieval: true } : {}),
         attachments: sentAttachments
       });
 
@@ -1484,18 +1490,21 @@ export default function Chat() {
                   onClick={() => setIsScopeOpen(!isScopeOpen)}
                   className="inline-flex items-center gap-1 h-7 text-[14px] text-[#1a1c1f] hover:text-black dark:text-[#e6e7e9] dark:hover:text-white transition-colors cursor-pointer"
                 >
-                  <Cloud className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
-                  <span className="truncate max-w-[220px]">{scope.kind === 'notebook' ? (scope.title || 'Notebook') : scope.kind === 'web' ? 'All Web' : 'Cloud'}</span>
+                  {scope.kind === 'deep'
+                    ? <Telescope className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
+                    : <Cloud className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />}
+                  <span className="truncate max-w-[220px]">{scopeLabel(scope) || 'Notebook'}</span>
                   <ChevronDown className="w-4 h-4 shrink-0" strokeWidth={2} />
                 </button>
 
                 {isScopeOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsScopeOpen(false)} />
-                    <div className="absolute left-0 bottom-full mb-2 w-56 max-h-[280px] overflow-y-auto custom-scrollbar bg-white dark:bg-[#1a1a1b] rounded-xl shadow-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden z-50 py-1">
+                    <div className="absolute left-0 bottom-full mb-2 w-64 max-h-[320px] overflow-y-auto custom-scrollbar bg-white dark:bg-[#1a1a1b] rounded-xl shadow-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden z-50 py-1">
                       {([
-                        { key: 'auto', icon: Cloud, label: 'Cloud', hint: 'Default Cloud Mode' },
-                        { key: 'web', icon: Globe, label: 'All Web', hint: 'Deep web search' },
+                        { key: 'auto', icon: Cloud, label: 'Cloud', hint: 'Sadhya picks the sources' },
+                        { key: 'deep', icon: Telescope, label: 'Deep search', hint: 'Searches NCERT, PYQs, your notes and the web' },
+                        { key: 'web', icon: Globe, label: 'All Web', hint: 'Research across the web' },
                       ] as const).map((opt) => (
                         <button
                           key={opt.key}
@@ -1507,9 +1516,12 @@ export default function Chat() {
                               : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/[0.04]'
                           )}
                         >
-                          <div className="flex items-center gap-2">
-                            <opt.icon className="w-3.5 h-3.5 text-neutral-500" strokeWidth={1.75} />
-                            <span>{opt.label}</span>
+                          <div className="flex items-start gap-2 min-w-0">
+                            <opt.icon className="w-3.5 h-3.5 mt-[3px] text-neutral-500 shrink-0" strokeWidth={1.75} />
+                            <span className="flex flex-col min-w-0">
+                              <span>{opt.label}</span>
+                              <span className="text-[11.5px] font-normal text-neutral-400 dark:text-neutral-500 leading-snug">{opt.hint}</span>
+                            </span>
                           </div>
                           {scope.kind === opt.key && <Check className="w-3.5 h-3.5 text-neutral-800 dark:text-neutral-200" strokeWidth={2} />}
                         </button>

@@ -6,10 +6,11 @@
  * pass-through to an existing service method, trimmed to what a tool caller actually needs.
  *
  * Safety pattern (same as src/services/voice/voiceTools.ts): caller identity (`userId`) is
- * injected by the caller via `ToolContext`, never a tool parameter the model can set. None of
- * these 8 tools touch a user's private notebook (no `ensureCollectionAccess` in their call
- * chain) — they only read shared/admin corpora (PYQ corpus, NCERT curriculum, reference books,
- * official syllabi, exam analytics) — so there is no per-user authorization decision here.
+ * injected by the caller via `ToolContext`, never a tool parameter the model can set. The 8
+ * per-source tools only read shared/admin corpora (PYQ corpus, NCERT curriculum, reference books,
+ * official syllabi, exam analytics). Deep search's `search_sources` can also read `my_notebooks`:
+ * only notebooks whose `userId` equals `ctx.userId` (the verified uid), so the model can never
+ * name or reach another account's notebook.
  *
  * `lookup_canonical_pyq`'s `status` field is the load-bearing signal: both the MCP client and the
  * agentic orchestrator's safety net branch on `NOT_AVAILABLE_IN_VERIFIED_CORPUS` to decide whether
@@ -258,6 +259,110 @@ export const GEMINI_RETRIEVAL_TOOL_DECLARATIONS = RETRIEVAL_TOOL_SPECS.map((s) =
   parameters: s.parameters,
 }));
 
+// ── Deep search ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Deep search's entry point into the same services: ONE query, several sources, searched in
+ * parallel. Every source embeds the identical query text and the embedding provider coalesces
+ * identical texts (single-flight + cache), so one call costs ONE embedding however many sources
+ * it covers. That is why this exists beside the per-source tools: Vertex embeddings are capped at
+ * roughly 10/min project-wide and shared with live chat, and a model calling four search tools
+ * with four phrasings would spend four. Web search (Tavily) embeds nothing.
+ *
+ * Deep-search only — not registered on the MCP server, which keeps its eight per-source tools.
+ */
+export const DEEP_SEARCH_SOURCES = ['ncert', 'pyq', 'reference_books', 'syllabus', 'my_notebooks', 'web'] as const;
+export type DeepSearchSource = typeof DEEP_SEARCH_SOURCES[number];
+
+const SEARCH_SOURCES_DECLARATION = {
+  name: 'search_sources',
+  description:
+    'Search several sources at once with ONE query (they are searched in parallel). Sources: ' +
+    'ncert = NCERT textbooks (concepts, explanations, worked examples); ' +
+    'pyq = verified previous-year questions for a topic (needs examId); ' +
+    'reference_books = Lucent / S. Chand books (GK, Quant, Reasoning, English, Science facts and formulas); ' +
+    'syllabus = the official exam syllabus (needs examId); ' +
+    "my_notebooks = the student's own uploaded notes and documents; " +
+    'web = live web search for anything recent or time-sensitive (notifications, dates, cut-offs, news) ' +
+    'or not covered by the others. Pick every source the question needs in a single call rather than ' +
+    'calling this repeatedly with different phrasings.',
+  parameters: {
+    type: 'OBJECT',
+    properties: {
+      query: { type: 'STRING', description: 'One well-phrased search query covering the question.' },
+      sources: {
+        type: 'ARRAY',
+        items: { type: 'STRING', enum: [...DEEP_SEARCH_SOURCES] },
+        description: 'Which sources to search.',
+      },
+      examId: { type: 'STRING', description: 'Canonical exam id from resolve_exam_id — required for pyq and syllabus.' },
+    },
+    required: ['query', 'sources'],
+  },
+};
+
+/** The tool set Deep search offers the model: search_sources plus the non-search lookups. */
+export const GEMINI_DEEP_SEARCH_TOOL_DECLARATIONS = [
+  SEARCH_SOURCES_DECLARATION,
+  ...GEMINI_RETRIEVAL_TOOL_DECLARATIONS.filter((d) =>
+    ['resolve_exam_id', 'lookup_canonical_pyq', 'get_exam_syllabus', 'get_exam_pattern_analytics'].includes(d.name)),
+];
+
+const DEEP_SEARCH_TOP_K = 5;
+
+async function searchOneSource(
+  source: DeepSearchSource,
+  query: string,
+  examId: string | undefined,
+  ctx: ToolContext,
+): Promise<Array<Record<string, unknown>>> {
+  switch (source) {
+    case 'ncert': {
+      const retrievalService = await getRetrievalService();
+      return toCompactResults(await retrievalService.retrieveCurriculumContext(query, DEEP_SEARCH_TOP_K));
+    }
+    case 'pyq': {
+      if (!examId) throw new Error('pyq needs examId — call resolve_exam_id first');
+      const retrievalService = await getRetrievalService();
+      return toCompactResults(await retrievalService.retrievePyqContext(query, { examId, topK: DEEP_SEARCH_TOP_K }));
+    }
+    case 'reference_books': {
+      const referenceBooksService = await getReferenceBooksService();
+      return toCompactResults(await referenceBooksService.retrieveReferenceContext(query, { topK: DEEP_SEARCH_TOP_K }));
+    }
+    case 'syllabus': {
+      if (!examId) throw new Error('syllabus needs examId — call resolve_exam_id first');
+      const retrievalService = await getRetrievalService();
+      return toCompactResults(await retrievalService.retrieveOfficialSyllabusContext(examId, query, DEEP_SEARCH_TOP_K));
+    }
+    case 'my_notebooks': {
+      // Only notebooks this user OWNS, selected by the verified uid from ToolContext — never by an
+      // id the model supplies, so there is no way to steer this at someone else's notebook.
+      if (!ctx.userId || ctx.userId.startsWith('mcp-')) return [];
+      const { db } = await import('../../config/firebase');
+      const snap = await db.collection('notebooks').where('userId', '==', ctx.userId).limit(5).get();
+      if (snap.empty) return [];
+      const retrievalService = await getRetrievalService();
+      const perNotebook = await Promise.all(snap.docs.map(async (doc) => {
+        const title = String(doc.data().title || doc.data().name || 'My notebook');
+        const results = await retrievalService.retrieveContext(query, doc.id, undefined, 3).catch(() => []);
+        return toCompactResults(results).map((r) => ({ ...r, source: `${title} › ${r.source}` }));
+      }));
+      return perNotebook.flat().sort((a, b) => Number(b.score || 0) - Number(a.score || 0)).slice(0, DEEP_SEARCH_TOP_K);
+    }
+    case 'web': {
+      const { searchService } = await import('../../services/rag/search.service');
+      const web = await searchService.search(query, 4);
+      return (web || []).map((w: any) => ({
+        text: trimText(w.content),
+        source: w.url,
+        title: w.title,
+        url: w.url,
+        score: w.score,
+      }));
+    }
+  }
+}
+
 /**
  * Executes one named retrieval tool against real Firestore/Pinecone data.
  *
@@ -397,6 +502,30 @@ export async function executeRetrievalTool(
         return {
           ok: true,
           data: { ...profile, highYieldTopics: (profile.highYieldTopics || []).slice(0, 15) },
+        };
+      }
+
+      case 'search_sources': {
+        const query = trimText(args?.query, 300);
+        if (!query) return { ok: false, error: 'no query supplied' };
+        const requested = Array.isArray(args?.sources) ? (args.sources as unknown[]).map(String) : [];
+        const sources = DEEP_SEARCH_SOURCES.filter((s) => requested.includes(s));
+        if (sources.length === 0) {
+          return { ok: false, error: `sources must include at least one of: ${DEEP_SEARCH_SOURCES.join(', ')}` };
+        }
+        const examId = String(args?.examId ?? '').trim() || undefined;
+        const errors: Record<string, string> = {};
+        const bySource = await Promise.all(sources.map(async (source) => {
+          try {
+            return (await searchOneSource(source, query, examId, ctx)).map((r) => ({ from: source, ...r }));
+          } catch (e: any) {
+            errors[source] = String(e?.message || e).slice(0, 160);
+            return [];
+          }
+        }));
+        return {
+          ok: true,
+          data: { query, results: bySource.flat(), ...(Object.keys(errors).length ? { errors } : {}) },
         };
       }
 

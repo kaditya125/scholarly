@@ -457,7 +457,7 @@ Return ONLY a JSON array of 3 strings — no markdown, no commentary, no numberi
         }
       }
 
-      // ── AGENTIC branch (experimental) ──────────────────────────────────
+      // ── AGENTIC branch — the chat's "Deep search" option ───────────────
       // Structural sibling of the PODCAST branch above: self-contained, own event sequence, own
       // telemetry, early return. Requires BOTH the per-request opt-in (set by the client) AND the
       // feature flag (server-side kill switch) — the field alone can never enable this, since it
@@ -474,14 +474,27 @@ Return ONLY a JSON array of 3 strings — no markdown, no commentary, no numberi
         };
 
         let agenticCitationCount = 0;
+        let agenticReply = '';
+        let doneEvent: WorkflowEvent | null = null;
         for await (const ev of agenticRetrievalOrchestrator.stream(req, agenticContext)) {
           if (ev.type === 'citation') agenticCitationCount++;
-          if (ev.type === 'chunk' && !firstChunkAt) {
-            firstChunkAt = Date.now();
-            Telemetry.logTTFT('agentic_retrieval', firstChunkAt - workflowStartTime, { userId: req.userId });
+          if (ev.type === 'chunk') {
+            agenticReply += ev.chunk || '';
+            if (!firstChunkAt) {
+              firstChunkAt = Date.now();
+              Telemetry.logTTFT('agentic_retrieval', firstChunkAt - workflowStartTime, { userId: req.userId });
+            }
           }
+          // Held back so the next-message suggestions go out before it, as on the main path.
+          if (ev.type === 'done') { doneEvent = ev; continue; }
           yield ev;
         }
+
+        const agenticSuggestions = agenticReply
+          ? await this.generateFollowUpSuggestions(req.query, agenticReply, mode)
+          : [];
+        if (agenticSuggestions.length > 0) yield { type: 'suggestions', suggestions: agenticSuggestions };
+        if (doneEvent) yield doneEvent;
 
         const aGen = this.deriveGenCost(costMark);
         void this.persistTelemetry(req, {

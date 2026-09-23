@@ -248,6 +248,154 @@ export class GeminiProvider implements AIProvider {
     return { text: finalResponse.text || '', functionCallTrace };
   }
 
+  /**
+   * Streaming, parallel sibling of generateWithTools, built for Deep search. Instead of running
+   * the whole tool loop silently and returning at the end, it yields events as they happen:
+   *   tool_call    — the model asked for a tool (emitted before it runs, so the UI can say
+   *                  "Searching the web for …" while the search is in flight)
+   *   tool_result  — that tool finished (calls from one model turn run in parallel and are
+   *                  reported in completion order)
+   *   text         — the final answer, streamed
+   *
+   * `requireFirstCall` forces a tool call on the first turn (functionCallingConfig ANY) — without
+   * it the model sometimes answered "explain X from the NCERT textbook" without searching at all.
+   * The last turn runs with tools disabled so the loop always ends in a real answer.
+   *
+   * Text is held back until ~160 characters arrive with no function call, so a short preamble
+   * ("Let me look that up") on a tool turn is dropped instead of leaking into the answer; once
+   * the threshold passes, the rest streams through as it arrives.
+   */
+  async *streamWithTools(
+    history: ChatMessage[],
+    systemPrompt: string,
+    toolDeclarations: Array<{ name: string; description: string; parameters: any }>,
+    executeTool: (name: string, args: Record<string, unknown>) => Promise<any>,
+    opts?: {
+      traceId?: string; model?: string; userId?: string;
+      maxIterations?: number; maxCallsPerTurn?: number; requireFirstCall?: boolean;
+    },
+  ): AsyncGenerator<
+    | { type: 'tool_call'; id: string; name: string; args: Record<string, unknown> }
+    | { type: 'tool_result'; id: string; name: string; args: Record<string, unknown>; output: any; ms: number }
+    | { type: 'text'; text: string },
+    void,
+    unknown
+  > {
+    assertAIEnabled('Gemini streamWithTools');
+    const tid = opts?.traceId || `gemini_${Date.now()}`;
+    const uid = opts?.userId;
+    let modelToUse = opts?.model || this.modelName;
+    if (modelToUse === 'gemini' || modelToUse.toLowerCase() === 'gemini') {
+      modelToUse = 'gemini-2.5-flash';
+    } else if (modelToUse.includes('gemini-3.') || modelToUse.includes('gemini-1.5')) {
+      modelToUse = modelToUse.includes('pro') ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
+    }
+
+    const contents: any[] = history.map(msg => ({
+      role: msg.role === 'ai' ? 'model' : 'user',
+      parts: [{ text: msg.content }],
+    }));
+    const baseConfig: any = { temperature: 0.4, thinkingConfig: { thinkingBudget: 0 } };
+    if (systemPrompt && systemPrompt.trim().length > 0) baseConfig.systemInstruction = systemPrompt;
+
+    const maxIterations = opts?.maxIterations ?? 4;
+    const maxCallsPerTurn = opts?.maxCallsPerTurn ?? 4;
+    const HOLD_CHARS = 160;
+    let callSeq = 0;
+
+    for (let iteration = 0; iteration <= maxIterations; iteration++) {
+      const config: any = { ...baseConfig };
+      if (iteration < maxIterations) {
+        config.tools = [{ functionDeclarations: toolDeclarations }];
+        if (iteration === 0 && opts?.requireFirstCall) {
+          config.toolConfig = { functionCallingConfig: { mode: 'ANY' } };
+        }
+      }
+
+      // Same retry boundary as generateStreamResponse: only acquiring the stream and its first
+      // chunk is retried, never a stream that has already produced output.
+      const { iterator, first } = await withRetry(async () => {
+        const stream = await this.buildClient().models.generateContentStream({ model: modelToUse, contents, config });
+        const it = stream[Symbol.asyncIterator]();
+        return { iterator: it, first: await it.next() };
+      }, { retries: 2, baseDelayMs: 800, label: 'gemini.streamWithTools' });
+
+      const modelParts: any[] = [];
+      const calls: Array<{ id?: string; name: string; args: Record<string, unknown> }> = [];
+      let held = '';
+      let flushing = false;
+      let usage: any;
+      for (let r = first; !r.done; r = await iterator.next()) {
+        const chunk: any = r.value;
+        if (chunk.usageMetadata) usage = chunk.usageMetadata;
+        for (const part of chunk.candidates?.[0]?.content?.parts || []) {
+          modelParts.push(part);
+          if (part.functionCall) {
+            calls.push({ id: part.functionCall.id, name: part.functionCall.name || '', args: part.functionCall.args || {} });
+          } else if (typeof part.text === 'string' && !part.thought && calls.length === 0) {
+            if (flushing) {
+              yield { type: 'text', text: part.text };
+            } else {
+              held += part.text;
+              if (held.length >= HOLD_CHARS) {
+                flushing = true;
+                yield { type: 'text', text: held };
+                held = '';
+              }
+            }
+          }
+        }
+      }
+      Telemetry.logCost('gemini', usage?.promptTokenCount || 0, 'input', { model: modelToUse, traceId: tid, userId: uid });
+      Telemetry.logCost('gemini', usage?.candidatesTokenCount || 0, 'output', { model: modelToUse, traceId: tid, userId: uid });
+
+      if (calls.length === 0) {
+        if (held) yield { type: 'text', text: held };
+        return;
+      }
+
+      contents.push({ role: 'model', parts: modelParts });
+
+      // Run this turn's calls in parallel, reporting each as it starts and as it finishes.
+      const turn = calls.slice(0, maxCallsPerTurn).map((c) => ({ ...c, localId: c.id || `call_${++callSeq}` }));
+      for (const c of turn) yield { type: 'tool_call', id: c.localId, name: c.name, args: c.args };
+      const outputs: any[] = new Array(turn.length);
+      const pending = new Map<number, Promise<{ i: number; output: any; ms: number }>>();
+      turn.forEach((c, i) => pending.set(i, (async () => {
+        const t = Date.now();
+        let output: any;
+        try {
+          output = await executeTool(c.name, c.args);
+        } catch (e: any) {
+          output = { ok: false, error: String(e?.message || e).slice(0, 200) };
+        }
+        return { i, output, ms: Date.now() - t };
+      })()));
+      while (pending.size > 0) {
+        const done = await Promise.race(pending.values());
+        pending.delete(done.i);
+        outputs[done.i] = done.output;
+        const c = turn[done.i];
+        yield { type: 'tool_result', id: c.localId, name: c.name, args: c.args, output: done.output, ms: done.ms };
+      }
+
+      contents.push({
+        role: 'user',
+        parts: calls.map((c, i) => ({
+          functionResponse: {
+            id: c.id,
+            name: c.name,
+            response: {
+              output: i < turn.length
+                ? outputs[i]
+                : { ok: false, error: `Skipped: at most ${maxCallsPerTurn} tool calls run per step.` },
+            },
+          },
+        })),
+      });
+    }
+  }
+
   async extractTextFromPdf(base64Data: string, mimeType: string = 'application/pdf'): Promise<string> {
     assertAIEnabled('Gemini extractTextFromPdf');
     const response = await this.buildClient().models.generateContent({
