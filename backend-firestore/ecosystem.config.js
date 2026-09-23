@@ -9,8 +9,8 @@
 // Reverted here; multi-instance needs to be root-caused off-hours before retrying. See
 // [[sadhya-production-deployment]] memory for the incident.
 //
-// Deploy: pm2 start ecosystem.config.js  (or `pm2 reload ecosystem.config.js` for a
-// zero-downtime restart once multi-instance is safe to use again).
+// Deploy: `bash deploy/redeploy.sh` on the server (zero-downtime via the standby below). First
+// start only: pm2 start ecosystem.config.js --only sadhya-api — never start the whole file.
 module.exports = {
   apps: [
     {
@@ -31,6 +31,36 @@ module.exports = {
         NODE_ENV: 'production',
       },
       max_memory_restart: '1500M',
+      // server.ts closes the listener on SIGINT and exits once open requests finish (10 s cap).
+      // PM2's default 1.6 s would SIGKILL in-flight chat streams mid-answer on every deploy.
+      kill_timeout: 11000,
+    },
+    {
+      // Deploy-time standby ONLY — started by deploy/redeploy.sh just before `sadhya-api`
+      // restarts and deleted once it is healthy again. nginx lists it as a `backup` upstream, so
+      // it takes traffic only while the main instance refuses connections: one active instance at
+      // a time, as the payment note above requires. It must never be left running.
+      //   EVENTBUS_LOCAL_ONLY  — no Redis pub/sub subscription, so the two never both handle an
+      //                          event; its own events still dispatch locally and BullMQ jobs
+      //                          still enqueue through REDIS_URL.
+      //   NODE_APP_INSTANCE=1  — server.ts skips the BullMQ workers (the main instance owns them).
+      //                          `instance_var` is renamed because PM2 otherwise overwrites
+      //                          NODE_APP_INSTANCE with 0 even in fork mode.
+      name: 'sadhya-api-standby',
+      script: './node_modules/tsx/dist/cli.mjs',
+      args: 'src/server.ts',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: false,
+      instance_var: 'SADHYA_PM2_INSTANCE',
+      env: {
+        NODE_ENV: 'production',
+        PORT: '8081',
+        NODE_APP_INSTANCE: '1',
+        EVENTBUS_LOCAL_ONLY: 'true',
+      },
+      max_memory_restart: '1500M',
+      kill_timeout: 11000,
     },
   ],
 };
