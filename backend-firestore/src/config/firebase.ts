@@ -47,5 +47,7 @@ export const firebaseApp = FirebaseAdminSingleton.getInstance();
 export const db = firebaseApp.firestore();
 export const auth = firebaseApp.auth();
 
-// Configure firestore settings if needed
-db.settings({ databaseId: 'default', ignoreUndefinedProperties: true });
+// preferRest: HTTP/1.1 instead of gRPC. Measured from the production VM on the same document:
+// median read 700 ms over gRPC vs 415 ms over REST. The client switches to gRPC by itself only
+// for onSnapshot listeners, which the backend does not use.
+db.settings({ databaseId: 'default', ignoreUndefinedProperties: true, preferRest: true });
