@@ -4,6 +4,7 @@ import { FileParserService } from '../services/fileParser.service';
 import { PRODUCT_ROLE_CLAIM, ProductRole, isProductRole } from '../types/roles';
 import { usageService } from '../services/usage.service';
 import { entitlementService, PLAN_LIMITS } from '../services/entitlement.service';
+import { SessionAccessError } from '../repositories/chat.repository';
 
 /** Same claim capability.ts's middleware reads — decoded from the verified Firebase token. */
 function productRoleOf(req: Request): ProductRole | undefined {
@@ -50,6 +51,7 @@ export class ChatController {
 
       res.json(response);
     } catch (error) {
+      if (error instanceof SessionAccessError) return res.status(403).json({ code: error.code, error: error.message });
       console.error("Chat Error:", error);
       next(error);
     }
@@ -127,6 +129,13 @@ export class ChatController {
       await this.service.processChatStream(userId, sessionId, finalMessage, model, topicType, res, notebookId, traceId, productRoleOf(req), agenticRetrievalFlag);
 
     } catch (error) {
+      // Ownership is enforced when the session is loaded, after SSE headers are sent, so the
+      // refusal usually arrives as a stream event rather than a 403.
+      if (error instanceof SessionAccessError) {
+        if (!res.headersSent) return res.status(403).json({ code: error.code, error: error.message });
+        res.write(`data: ${JSON.stringify({ type: 'error', code: error.code, error: error.message, message: error.message })}\n\n`);
+        return res.end();
+      }
       console.error("Chat Stream Error:", error);
       // Can't reliably send JSON if headers were already sent for SSE
       if (!res.headersSent) {
