@@ -14,14 +14,17 @@ export function useProfile() {
   const queryClient = useQueryClient();
   const key = ['learningProfile', user?.uid];
 
+  // This hook is mounted by ~15 components, so 'always' refetch-on-mount plus a 5 s poll sent a
+  // dozen profile requests per chat message — each a slow Firestore read on the server. Edits made
+  // here land via setQueryData below; the poll only matters while onboarding can still complete
+  // the profile server-side (profile extraction from the onboarding chat).
   const query = useQuery<LearningProfile>({
     queryKey: key,
     queryFn: () => profileApi.get(user!.uid),
     enabled: !!user?.uid,
-    staleTime: 1000 * 3,
-    refetchOnMount: 'always',
+    staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: true,
-    refetchInterval: 5000,
+    refetchInterval: (q) => (q.state.data?.isComplete ? false : 5000),
   });
 
   const updateMutation = useMutation({
