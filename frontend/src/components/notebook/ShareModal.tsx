@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Copy, Mail, Link as LinkIcon, UserPlus } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
+import { API_BASE_URL } from '../../lib/api/client';
 
 interface ShareModalProps {
   notebookId: string;
@@ -15,7 +16,7 @@ export function ShareModal({ notebookId, onClose }: ShareModalProps) {
   const shareMutation = useMutation({
     mutationFn: async () => {
       const token = localStorage.getItem('token');
-      const res = await fetch(`/api/notebooks/${notebookId}/share`, {
+      const res = await fetch(`${API_BASE_URL}/notebooks/${notebookId}/share`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -31,7 +32,7 @@ export function ShareModal({ notebookId, onClose }: ShareModalProps) {
   const linkMutation = useMutation({
     mutationFn: async () => {
       const token = localStorage.getItem('token');
-      const res = await fetch(`/api/notebooks/${notebookId}/share-link`, {
+      const res = await fetch(`${API_BASE_URL}/notebooks/${notebookId}/share-link`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,11 +1,10 @@
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json());
 
@@ -40,8 +39,10 @@ async function startServer() {
     }
   });
 
-  // Vite middleware for development
+  // Vite middleware for development. Imported lazily so a production deploy (which only ever
+  // serves the prebuilt dist/) never needs the vite devDependency installed at runtime.
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",

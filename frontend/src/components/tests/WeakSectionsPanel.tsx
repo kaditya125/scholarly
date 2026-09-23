@@ -64,7 +64,10 @@ export function WeakSectionsPanel() {
                   <div className="h-full rounded-full bg-rose-500" style={{ width: `${Math.round(s.accuracy)}%` }} />
                 </div>
                 <button
-                  onClick={() => launch({ topic: s.topic, mode: 'exam', count: 10 })}
+                  onClick={() => launch({
+                    topic: s.topic, mode: 'exam', count: 10,
+                    syllabusNodeId: s.syllabusNodeId, examId: s.examId, isWeakAreaDrill: true,
+                  })}
                   className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 text-[12px] font-semibold transition-all cursor-pointer shadow-xs"
                 >
                   Targeted Drill ({s.topic.length > 20 ? s.topic.slice(0, 20) + '…' : s.topic}) <ArrowRight className="w-3 h-3" />

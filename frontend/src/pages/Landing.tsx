@@ -20,6 +20,7 @@ import { useAuth } from '../lib/AuthContext';
 import { useTheme } from '../lib/ThemeContext';
 import { SITE } from '../lib/siteConfig';
 import { cn } from '../lib/utils';
+import { API_BASE_URL } from '../lib/api/client';
 
 // Below-the-fold sections lazy-loaded to optimize initial mobile paint
 const PricingSection = lazy(() => import('../components/landing/PricingSection'));
@@ -353,7 +354,7 @@ export default function LandingPage() {
 
     const fetchStats = async () => {
       try {
-        const res = await fetch('/api/public/stats');
+        const res = await fetch(`${API_BASE_URL}/public/stats`);
         if (res.ok) {
           const data = await res.json();
           if (isMounted) {

@@ -48,7 +48,13 @@ import {
   Pencil,
   ArrowDown,
   AlertTriangle,
-  ShieldCheck
+  ShieldCheck,
+  PanelRight,
+  Cloud,
+  CircleGauge,
+  CloudUpload,
+  MoreHorizontal,
+  Folder
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -306,6 +312,7 @@ export default function Chat() {
   // ─── Retrieval scope (the "All Web" pill) ──────────────────────────────────
   const [scope, setScope] = useState<Scope>(DEFAULT_SCOPE);
   const [isScopeOpen, setIsScopeOpen] = useState(false);
+  const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
   const [notebooks, setNotebooks] = useState<{ id: string; title: string }[]>([]);
 
   // First name for the greeting — same derivation the onboarding wizard uses.
@@ -979,63 +986,85 @@ export default function Chat() {
           </div>
         )}
 
-        {/* Header — with mobile menu button integrated directly into the heading bar */}
-        <div className="flex items-center gap-2 px-3 sm:px-6 h-12 sm:h-14 shrink-0 border-b border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-[#141416]/90 backdrop-blur-md z-10">
-          <button
-            onClick={() => window.dispatchEvent(new CustomEvent('open-mobile-sidebar'))}
-            className="md:hidden p-2 -ml-1 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.08] rounded-lg transition-colors shrink-0"
-            title="Open Menu"
-            aria-label="Open navigation menu"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+        {/* Header — exact reference styling */}
+        <div className="flex items-center justify-between px-4 sm:px-6 h-12 shrink-0 border-b border-neutral-200/70 dark:border-neutral-800 bg-white dark:bg-[#0f0f10] z-10">
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('open-mobile-sidebar'))}
+              className="md:hidden p-1.5 -ml-1 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md transition-colors shrink-0"
+              title="Open Menu"
+              aria-label="Open navigation menu"
+            >
+              <Menu className="w-4 h-4" />
+            </button>
 
-          <span className="text-[13.5px] font-semibold text-slate-900 dark:text-white truncate max-w-[150px] sm:max-w-[280px] md:max-w-none">
-            {sessions.find((s) => s.sessionId === currentSessionId)?.title || 'New AI chat'}
-          </span>
+            <span className="text-[14px] font-medium text-neutral-900 dark:text-neutral-100 tracking-[-0.01em] truncate max-w-[200px] sm:max-w-[400px]">
+              {sessions.find((s) => s.sessionId === currentSessionId)?.title || 'Determine available features'}
+            </span>
 
-          <span className="hidden sm:inline-flex items-center gap-1 shrink-0 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] border border-slate-200/60 dark:border-white/10 text-slate-500 dark:text-slate-400 text-[11px] font-medium">
-            <Lock className="w-3 h-3 text-slate-400 dark:text-slate-500" strokeWidth={2} />
-            Private
-          </span>
+            {/* ··· Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setIsHeaderMenuOpen(!isHeaderMenuOpen)}
+                className="p-1 text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                title="Chat options"
+              >
+                <MoreHorizontal className="w-4 h-4" />
+              </button>
 
-          <div className="ml-auto flex items-center gap-1 shrink-0">
+              {isHeaderMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsHeaderMenuOpen(false)} />
+                  <div className="absolute left-0 top-full mt-1.5 w-44 bg-white dark:bg-[#18181b] rounded-xl shadow-lg border border-neutral-200 dark:border-neutral-800 py-1 z-50">
+                    <button
+                      onClick={() => { handleNewChat(); setIsHeaderMenuOpen(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-[12.5px] text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-white/5 transition-colors text-left"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      New chat
+                    </button>
+                    {currentSessionId && (
+                      <button
+                        onClick={(e) => { handleDeleteSession(e, currentSessionId); setIsHeaderMenuOpen(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-[12.5px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors text-left"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Delete chat
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {/* 🌐 Open button */}
             <button
               onClick={() => setIsShareOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12.5px] font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
-              title="Share"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[12.5px] font-medium text-neutral-700 dark:text-neutral-200 shadow-2xs transition-colors cursor-pointer"
+              title="Open / Share"
             >
-              <Share2 className="w-3.5 h-3.5" strokeWidth={1.75} />
-              <span className="hidden sm:inline">Share</span>
+              <Globe className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" strokeWidth={1.75} />
+              <span>Open</span>
+            </button>
+
+            {/* Side panel toggle */}
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('toggle-sidebar'))}
+              className="p-1 rounded-md text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              title="Toggle sidebar"
+            >
+              <PanelRight className="w-4 h-4" strokeWidth={1.75} />
             </button>
 
             <button
               onClick={toggleTheme}
-              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.08] dark:text-slate-400 dark:hover:text-white transition-colors"
-              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              aria-label="Toggle colour theme"
+              className="p-1 rounded-md text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
             >
-              {theme === 'dark'
-                ? <Sun className="w-4 h-4 text-slate-300" strokeWidth={1.75} />
-                : <Moon className="w-4 h-4 text-slate-600" strokeWidth={1.75} />}
+              {theme === 'dark' ? <Sun className="w-4 h-4" strokeWidth={1.75} /> : <Moon className="w-4 h-4" strokeWidth={1.75} />}
             </button>
-
-            <button
-              onClick={handleNewChat}
-              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.08] dark:text-slate-400 dark:hover:text-white transition-colors"
-              title="New chat"
-            >
-              <Plus className="w-4 h-4" strokeWidth={2} />
-            </button>
-            {currentSessionId && (
-              <button
-                onClick={(e) => handleDeleteSession(e, currentSessionId)}
-                className="p-1.5 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400 transition-colors"
-                title="Delete this chat"
-              >
-                <Trash2 className="w-4 h-4" strokeWidth={1.75} />
-              </button>
-            )}
           </div>
         </div>
 
@@ -1267,9 +1296,8 @@ export default function Chat() {
                           >
                             <Pencil className="w-3.5 h-3.5" strokeWidth={1.75} />
                           </button>
-                          {/* Bubble keeps the refined dark surface + tighter radius from the
-                              UI pass, alongside the edit affordance added on main. */}
-                          <div className="bg-slate-900 text-white dark:bg-[#18181b] dark:text-slate-100 border border-transparent dark:border-white/10 px-4.5 py-2.5 rounded-2xl rounded-tr-xs font-answer text-[15.5px] sm:text-[16px] leading-[1.6] whitespace-pre-wrap shadow-xs">
+                          {/* Exact reference user bubble: soft light blue tint, 14px font, rounded-2xl */}
+                          <div className="bg-[#eff4fe] text-[#1e293b] dark:bg-[#1e293b]/70 dark:text-[#93c5fd] border border-blue-100/50 dark:border-blue-500/10 px-4 py-2 sm:px-4.5 sm:py-2.5 rounded-2xl text-[13.5px] sm:text-[14px] leading-[1.5] whitespace-pre-wrap shadow-none">
                             {msg.content}
                           </div>
                         </div>
@@ -1293,41 +1321,24 @@ export default function Chat() {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-4 w-full min-w-0">
-                      {/* Mobile top AI identity badge */}
-                      <div className="flex items-center gap-2 sm:hidden mb-0.5">
-                        <div className="w-6 h-6 rounded-lg bg-slate-900 text-[#c8e558] dark:bg-white dark:text-slate-900 flex items-center justify-center shadow-2xs shrink-0">
-                          <Sparkles className="w-3.5 h-3.5" />
-                        </div>
-                        <span className="text-[12.5px] font-semibold text-slate-800 dark:text-slate-200">Sadhya AI</span>
-                      </div>
-
-                      {/* Desktop Avatar beside message */}
-                      <div className="hidden sm:flex w-8 h-8 rounded-xl bg-slate-900 text-[#c8e558] dark:bg-white dark:text-slate-900 items-center justify-center shrink-0 mt-1 shadow-2xs">
-                        <Sparkles className="w-4 h-4" />
-                      </div>
-
-                      <div className="flex flex-col text-slate-800 dark:text-slate-100 w-full min-w-0">
-                        {/* Reasoning timeline, sources, answer body and action bar all
-                            live in AssistantReply — see components/chat/AssistantReply.tsx. */}
-                        <AssistantReply
-                          content={msg.content}
-                          streaming={!!msg.isTyping}
-                          steps={msg.steps || []}
-                          reasoning={msg.reasoning}
-                          citations={msg.citations || []}
-                          suggestions={msg.suggestions || []}
-                          onSuggestionClick={handleSuggestionClick}
-                          onCopy={() => handleCopy(msg.content, i)}
-                          copied={copiedIndex === i}
-                          onSpeak={() => handleSpeak(msg.content, i)}
-                          speaking={speakingIndex === i}
-                          onRegenerate={() => handleRegenerate(i)}
-                          onRate={msg.id ? (r) => handleRate(msg.id, r) : undefined}
-                          rating={msg.id ? ratings[msg.id] ?? null : null}
-                          onQuote={setQuotedText}
-                        />
-                      </div>
+                    <div className="flex flex-col text-neutral-800 dark:text-neutral-100 w-full min-w-0">
+                      <AssistantReply
+                        content={msg.content}
+                        streaming={!!msg.isTyping}
+                        steps={msg.steps || []}
+                        reasoning={msg.reasoning}
+                        citations={msg.citations || []}
+                        suggestions={msg.suggestions || []}
+                        onSuggestionClick={handleSuggestionClick}
+                        onCopy={() => handleCopy(msg.content, i)}
+                        copied={copiedIndex === i}
+                        onSpeak={() => handleSpeak(msg.content, i)}
+                        speaking={speakingIndex === i}
+                        onRegenerate={() => handleRegenerate(i)}
+                        onRate={msg.id ? (r) => handleRate(msg.id, r) : undefined}
+                        rating={msg.id ? ratings[msg.id] ?? null : null}
+                        onQuote={setQuotedText}
+                      />
                     </div>
                   )}
                 </div>
@@ -1336,38 +1347,18 @@ export default function Chat() {
               {/* LIVE STREAMING BLOCK */}
               {(stream.isStreaming || pendingFinal) && (
                 <div className="flex w-full justify-start">
-                  <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-4 w-full min-w-0">
-                    {/* Mobile top AI streaming identity badge */}
-                    <div className="flex items-center gap-2 sm:hidden mb-0.5">
-                      <div className="relative w-6 h-6 shrink-0">
-                        <span className="absolute inset-0 rounded-lg bg-[#8ba32b]/25 dark:bg-[#c8e558]/25 animate-ping [animation-duration:2s]" aria-hidden />
-                        <span className="relative w-6 h-6 rounded-lg bg-slate-900 text-[#c8e558] dark:bg-white dark:text-slate-900 ring-1 ring-[#8ba32b]/40 dark:ring-[#c8e558]/40 flex items-center justify-center shadow-2xs">
-                          <Sparkles className="w-3.5 h-3.5" />
-                        </span>
-                      </div>
-                      <span className="text-[12.5px] font-semibold text-slate-800 dark:text-slate-200">Sadhya AI</span>
-                    </div>
-
-                    {/* Thinking-mode avatar on desktop */}
-                    <div className="hidden sm:block relative w-8 h-8 shrink-0 mt-1">
-                      <span className="absolute inset-0 rounded-xl bg-[#8ba32b]/25 dark:bg-[#c8e558]/25 animate-ping [animation-duration:2s]" aria-hidden />
-                      <span className="relative w-8 h-8 rounded-xl bg-slate-900 text-[#c8e558] dark:bg-white dark:text-slate-900 ring-1 ring-[#8ba32b]/40 dark:ring-[#c8e558]/40 flex items-center justify-center shadow-2xs">
-                        <Sparkles className="w-4 h-4" />
-                      </span>
-                    </div>
-                    <div className="flex flex-col text-slate-800 dark:text-slate-100 w-full min-w-0">
-                      <AssistantReply
-                        content={pendingFinal ? pendingFinal.content : stream.content}
-                        streaming={stream.isStreaming}
-                        steps={pendingFinal ? pendingFinal.steps : stream.progressEvents}
-                        statusMessage={stream.isStreaming ? stream.progressEvents[stream.progressEvents.length - 1]?.message : undefined}
-                        reasoning={pendingFinal ? pendingFinal.reasoning : stream.reasoning}
-                        citations={pendingFinal ? pendingFinal.citations || [] : stream.citations}
-                        suggestions={pendingFinal ? pendingFinal.suggestions || [] : stream.suggestions}
-                        onSuggestionClick={handleSuggestionClick}
-                        onRevealDone={commitPending}
-                      />
-                    </div>
+                  <div className="flex flex-col text-neutral-800 dark:text-neutral-100 w-full min-w-0">
+                    <AssistantReply
+                      content={pendingFinal ? pendingFinal.content : stream.content}
+                      streaming={stream.isStreaming}
+                      steps={pendingFinal ? pendingFinal.steps : stream.progressEvents}
+                      statusMessage={stream.isStreaming ? stream.progressEvents[stream.progressEvents.length - 1]?.message : undefined}
+                      reasoning={pendingFinal ? pendingFinal.reasoning : stream.reasoning}
+                      citations={pendingFinal ? pendingFinal.citations || [] : stream.citations}
+                      suggestions={pendingFinal ? pendingFinal.suggestions || [] : stream.suggestions}
+                      onSuggestionClick={handleSuggestionClick}
+                      onRevealDone={commitPending}
+                    />
                   </div>
                 </div>
               )}
@@ -1389,218 +1380,139 @@ export default function Chat() {
           </button>
         )}
 
-        {/* Input Box - absolute positioned at bottom */}
-        <div className="absolute bottom-2.5 sm:bottom-3 left-0 right-0 flex flex-col items-center px-3 sm:px-4 md:px-8 pointer-events-none z-20">
-          <div className="w-full max-w-3xl bg-white dark:bg-[#141416] border border-slate-200/90 dark:border-white/10 rounded-2xl sm:rounded-3xl flex flex-col shadow-xs focus-within:border-slate-400 dark:focus-within:border-white/25 focus-within:shadow-sm transition-all pointer-events-auto">
+        {/* Input & Controls — exact reference bottom layout */}
+        <div className="absolute bottom-3 left-0 right-0 flex flex-col items-center px-3 sm:px-4 md:px-8 pointer-events-none z-20">
+          <div className="w-full max-w-[760px] flex flex-col pointer-events-auto">
 
-              {/* Scope pill — top-right */}
-              <div className="flex items-start justify-end px-3 pt-3 -mb-1">
-                <div className="relative">
-                  <button
-                    onClick={() => setIsScopeOpen(!isScopeOpen)}
-                    className="flex items-center gap-1.5 max-w-[190px] text-[11.5px] font-semibold px-2.5 py-1 rounded-full bg-slate-100/90 dark:bg-white/[0.06] border border-slate-200/60 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-white/10 transition-colors"
-                    title="Choose what this chat is grounded in"
-                  >
-                    {scope.kind === 'notebook'
-                      ? <Notebook className="w-3.5 h-3.5 shrink-0 text-[#8ba32b] dark:text-[#c8e558]" strokeWidth={1.75} />
-                      : <Globe className="w-3.5 h-3.5 shrink-0 text-[#8ba32b] dark:text-[#c8e558]" strokeWidth={1.75} />}
-                    <span className="truncate">{scopeLabel(scope)}</span>
-                    <ChevronDown className="w-3 h-3 shrink-0" strokeWidth={2.5} />
-                  </button>
-
-                  {isScopeOpen && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setIsScopeOpen(false)} />
-                      <div className="absolute right-0 top-full mt-2 w-60 max-h-[280px] overflow-y-auto custom-scrollbar bg-white dark:bg-[#1a1a1b] rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 overflow-hidden z-50 py-1.5">
-                        {([
-                          { key: 'auto', icon: Sparkles, label: 'Auto', hint: 'Let Sadhya decide' },
-                          { key: 'web', icon: Globe, label: 'All Web', hint: 'Search the web (research mode)' },
-                        ] as const).map((opt) => (
-                          <button
-                            key={opt.key}
-                            onClick={() => { setScope({ kind: opt.key } as Scope); setIsScopeOpen(false); }}
-                            className={cn(
-                              'w-full flex items-start gap-2.5 px-3 py-2 text-left transition-colors',
-                              scope.kind === opt.key
-                                ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white font-semibold'
-                                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
-                            )}
-                          >
-                            <opt.icon className="w-3.5 h-3.5 mt-0.5 shrink-0 text-[#8ba32b] dark:text-[#c8e558]" strokeWidth={1.75} />
-                            <span className="flex-1 min-w-0">
-                              <span className="block text-[13px] font-medium">{opt.label}</span>
-                              <span className="block text-[11px] text-slate-400 dark:text-slate-500 truncate">{opt.hint}</span>
-                            </span>
-                            {scope.kind === opt.key && <Check className="w-3.5 h-3.5 mt-0.5 shrink-0 text-[#8ba32b] dark:text-[#c8e558]" strokeWidth={2.5} />}
-                          </button>
-                        ))}
-
-                        {notebooks.length > 0 && (
-                          <>
-                            <div className="px-3 pt-2 pb-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-400 dark:text-slate-500">
-                              My Notebooks
-                            </div>
-                            {notebooks.map((nb) => (
-                              <button
-                                key={nb.id}
-                                onClick={() => { setScope({ kind: 'notebook', id: nb.id, title: nb.title }); setIsScopeOpen(false); }}
-                                className={cn(
-                                  'w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors',
-                                  scope.kind === 'notebook' && scope.id === nb.id
-                                    ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white font-semibold'
-                                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
-                                )}
-                              >
-                                <Notebook className="w-3.5 h-3.5 shrink-0 text-[#8ba32b] dark:text-[#c8e558]" strokeWidth={1.75} />
-                                <span className="flex-1 text-[13px] truncate">{nb.title}</span>
-                                {scope.kind === 'notebook' && scope.id === nb.id && (
-                                  <Check className="w-3.5 h-3.5 shrink-0 text-[#8ba32b] dark:text-[#c8e558]" strokeWidth={2.5} />
-                                )}
-                              </button>
-                            ))}
-                          </>
-                        )}
-                      </div>
-                    </>
-                  )}
+            {/* Quota / Notification Card: exact reference UI with gauge icon and Upgrade button */}
+            <div className="w-full mb-2.5 border border-neutral-200/90 dark:border-neutral-800 rounded-2xl bg-white dark:bg-[#141416] p-3 px-4 sm:px-5 flex items-center justify-between gap-3 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+              <div className="flex items-center gap-3 min-w-0">
+                <CircleGauge className="w-4 h-4 text-neutral-700 dark:text-neutral-300 shrink-0" strokeWidth={1.75} />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[13px] font-semibold text-neutral-900 dark:text-white leading-tight truncate">
+                    {!isPro && usage.chat.remaining <= 0
+                      ? "You're out of AI Chat usage"
+                      : "You're out of Codex and Work usage"}
+                  </span>
+                  <span className="text-[12px] text-neutral-500 dark:text-neutral-400 leading-tight truncate mt-0.5">
+                    {!isPro && usage.chat.remaining <= 0
+                      ? `Upgrade for more now, or wait for usage to reset on ${new Date(resetsAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}, 2:22 AM`
+                      : "Upgrade for more now, or wait for usage to reset on Oct 5, 2:22 AM"}
+                  </span>
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => { setUpgradeSource('chat_limit'); setIsUpgradeModalOpen(true); }}
+                className="px-4 py-1.5 rounded-full bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-neutral-900 text-[12px] font-medium transition-all shrink-0 cursor-pointer shadow-2xs"
+              >
+                Upgrade
+              </button>
+            </div>
 
-              
-              {/* Quota warning banner (80% used: 80 to 99 messages) */}
-              {!isPro && usage.chat.used >= 80 && usage.chat.remaining > 0 && (
-                <div className="mx-3 mt-3 p-3 rounded-2xl bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
-                  <div className="flex items-start gap-2.5">
-                    <div className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0 mt-0.5">
-                      <Sparkles className="w-3.5 h-3.5" />
+            {/* Model / Scope Selector: "☁ Cloud ⌵" placed directly above the composer on the left */}
+            <div className="flex items-center justify-between px-1 mb-1.5">
+              <div className="relative">
+                <button
+                  onClick={() => setIsScopeOpen(!isScopeOpen)}
+                  className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors cursor-pointer"
+                >
+                  <Cloud className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" strokeWidth={1.75} />
+                  <span>{scope.kind === 'notebook' ? (scope.title || 'Notebook') : scope.kind === 'web' ? 'All Web' : 'Cloud'}</span>
+                  <ChevronDown className="w-3 h-3 text-neutral-400" strokeWidth={2} />
+                </button>
+
+                {isScopeOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsScopeOpen(false)} />
+                    <div className="absolute left-0 bottom-full mb-2 w-56 max-h-[280px] overflow-y-auto custom-scrollbar bg-white dark:bg-[#1a1a1b] rounded-xl shadow-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden z-50 py-1">
+                      {([
+                        { key: 'auto', icon: Cloud, label: 'Cloud', hint: 'Default Cloud Mode' },
+                        { key: 'web', icon: Globe, label: 'All Web', hint: 'Deep web search' },
+                      ] as const).map((opt) => (
+                        <button
+                          key={opt.key}
+                          onClick={() => { setScope({ kind: opt.key } as Scope); setIsScopeOpen(false); }}
+                          className={cn(
+                            'w-full flex items-center justify-between px-3 py-2 text-left text-[12.5px] transition-colors',
+                            scope.kind === opt.key
+                              ? 'bg-neutral-100 dark:bg-white/[0.08] text-neutral-900 dark:text-white font-medium'
+                              : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/[0.04]'
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <opt.icon className="w-3.5 h-3.5 text-neutral-500" strokeWidth={1.75} />
+                            <span>{opt.label}</span>
+                          </div>
+                          {scope.kind === opt.key && <Check className="w-3.5 h-3.5 text-neutral-800 dark:text-neutral-200" strokeWidth={2} />}
+                        </button>
+                      ))}
+
+                      {notebooks.length > 0 && (
+                        <>
+                          <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+                            Notebooks
+                          </div>
+                          {notebooks.map((nb) => (
+                            <button
+                              key={nb.id}
+                              onClick={() => { setScope({ kind: 'notebook', id: nb.id, title: nb.title }); setIsScopeOpen(false); }}
+                              className={cn(
+                                'w-full flex items-center justify-between px-3 py-2 text-left text-[12.5px] transition-colors',
+                                scope.kind === 'notebook' && scope.id === nb.id
+                                  ? 'bg-neutral-100 dark:bg-white/[0.08] text-neutral-900 dark:text-white font-medium'
+                                  : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-white/[0.04]'
+                              )}
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                <Notebook className="w-3.5 h-3.5 text-neutral-500 shrink-0" strokeWidth={1.75} />
+                                <span className="truncate">{nb.title}</span>
+                              </div>
+                              {scope.kind === 'notebook' && scope.id === nb.id && (
+                                <Check className="w-3.5 h-3.5 text-neutral-800 dark:text-neutral-200 shrink-0" strokeWidth={2} />
+                              )}
+                            </button>
+                          ))}
+                        </>
+                      )}
                     </div>
-                    <div className="text-[12.5px] leading-relaxed text-amber-900 dark:text-amber-200">
-                      <span>
-                        You have <strong className="font-semibold text-amber-950 dark:text-amber-100">{usage.chat.remaining} AI questions</strong> remaining this month ({usage.chat.used}/100 used).
-                      </span>
-                      <span className="block text-[11.5px] text-amber-800/80 dark:text-amber-300/80 mt-0.5">
-                        Need continuous doubt solving? Sadhya Pro includes up to 2,000 messages/mo with our <strong>7-Day 100% Refund Policy</strong>.
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => { setUpgradeSource('chat_limit'); setIsUpgradeModalOpen(true); }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-900/10 dark:bg-amber-100/15 hover:bg-amber-900/15 dark:hover:bg-amber-100/20 text-amber-950 dark:text-amber-100 text-[12px] font-bold shrink-0 transition-all border border-amber-500/30 cursor-pointer"
-                  >
-                    <Sparkles className="w-3 h-3 text-amber-700 dark:text-amber-300" />
-                    <span>Upgrade to Pro · ₹199</span>
-                  </button>
-                </div>
-              )}
+                  </>
+                )}
+              </div>
+            </div>
 
-              {/* Quota exhausted card (100% used) */}
-              {!isPro && usage.chat.remaining <= 0 && (
-                <div className="mx-3 mt-3 p-4 rounded-2xl bg-white dark:bg-[#18181b] border border-[#8ba32b]/40 dark:border-[#8ba32b]/50 shadow-sm space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-[#8ba32b]/15 dark:bg-[#8ba32b]/25 text-[#8ba32b] dark:text-[#c8e558] flex items-center justify-center shrink-0">
-                      <Sparkles className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-[#8ba32b]/15 text-[#60721c] dark:text-[#c8e558] uppercase mb-1">
-                        Free AI Chat Allowance Reached
-                      </div>
-                      <h4 className="text-[14px] font-bold text-slate-900 dark:text-white">
-                        You've completed your 100 Free AI Chat questions for this month!
-                      </h4>
-                      <p className="text-[12.5px] text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
-                        Your free allowance automatically resets on <strong className="font-semibold text-slate-900 dark:text-white">{new Date(resetsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}</strong>.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 text-[12px] text-slate-600 dark:text-slate-400 flex items-start gap-2.5">
-                    <ShieldCheck className="w-4 h-4 text-[#8ba32b] shrink-0 mt-0.5" />
-                    <div className="flex-1 leading-relaxed">
-                      <strong>7-Day 100% Refund Policy:</strong> Upgrade to Sadhya Pro for up to <strong>2,000 AI Chat messages/mo</strong>, 5 hours of Voice Tutoring, and 1,000 mock tests at <strong>₹199/month</strong>. If it doesn't help your preparation, claim a 100% refund in 1 click within 7 days.{' '}
-                      <Link to="/refunds" className="text-[#8ba32b] dark:text-[#c8e558] font-semibold underline hover:opacity-80">
-                        View Terms
-                      </Link>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-3 pt-1">
-                    <span className="text-[11.5px] text-slate-400 dark:text-slate-500">
-                      Official PYQs & Study Circles remain <strong>100% Free &amp; Unlimited</strong>.
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => { setUpgradeSource('chat_limit'); setIsUpgradeModalOpen(true); }}
-                      className="px-4 py-2 rounded-xl bg-slate-950 dark:bg-white text-white dark:text-slate-950 text-[12.5px] font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-xs cursor-pointer shrink-0"
-                    >
-                      Upgrade to Pro (₹199/mo)
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Quoted reply */}
-              {quotedText && (
-                <div className="flex items-start gap-2 mx-3 mt-3 px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.04] border-l-2 border-[#8ba32b] dark:border-[#c8e558]">
-                  <CornerUpLeft className="w-3.5 h-3.5 mt-0.5 shrink-0 text-[#8ba32b] dark:text-[#c8e558]" strokeWidth={1.75} />
-                  <span className="flex-1 min-w-0 text-[12.5px] leading-snug text-slate-600 dark:text-slate-300 line-clamp-2">
-                    {quotedText}
-                  </span>
-                  <button
-                    onClick={() => setQuotedText(null)}
-                    className="shrink-0 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
-                    title="Remove quote"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )}
-
+            {/* Input Box / Composer */}
+            <div className="w-full bg-white dark:bg-[#141416] border border-neutral-200/90 dark:border-neutral-800 rounded-2xl sm:rounded-[20px] p-3 sm:p-3.5 shadow-xs transition-all focus-within:border-neutral-300 dark:focus-within:border-neutral-700 focus-within:shadow-sm">
+              {/* Attachment Preview Chips */}
               {(attachments.length > 0 || isUploadingFile) && (
-                <div className="flex flex-wrap gap-2 p-3 pb-0">
+                <div className="flex flex-wrap gap-2 pb-2">
                   {attachments.map((att, i) => (
                     <div
                       key={i}
-                      className="group relative flex items-center gap-2.5 pl-2.5 pr-8 py-2 rounded-xl bg-white dark:bg-white/[0.06] border border-slate-200 dark:border-white/10 shadow-xs animate-in fade-in zoom-in duration-200"
+                      className="group relative flex items-center gap-2 pl-2.5 pr-7 py-1.5 rounded-lg bg-neutral-50 dark:bg-white/[0.06] border border-neutral-200 dark:border-white/10 text-[12.5px]"
                     >
-                      <span className={cn(
-                        'w-7 h-7 rounded-lg flex items-center justify-center shrink-0',
-                        att.mimeType?.startsWith('image/')
-                          ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400'
-                          : att.mimeType === 'application/pdf'
-                            ? 'bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400'
-                            : 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300'
-                      )}>
-                        {att.mimeType?.startsWith('image/')
-                          ? <ImageIcon className="w-3.5 h-3.5" strokeWidth={1.75} />
-                          : <FileText className="w-3.5 h-3.5" strokeWidth={1.75} />}
-                      </span>
-                      <span className="flex flex-col min-w-0">
-                        <span className="text-[12.5px] font-medium text-slate-800 dark:text-slate-100 truncate max-w-[150px] leading-tight">
-                          {att.name}
-                        </span>
-                        <span className="text-[11px] text-slate-400 dark:text-slate-500 leading-tight">
-                          {new Date().toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </span>
+                      <span className="font-medium text-neutral-800 dark:text-neutral-100 truncate max-w-[140px]">
+                        {att.name}
                       </span>
                       <button
                         onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500 transition-colors"
-                        title="Remove attachment"
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-red-500 transition-colors cursor-pointer"
+                        title="Remove"
                       >
-                        <X className="w-3.5 h-3.5" />
+                        <X className="w-3 h-3" />
                       </button>
                     </div>
                   ))}
                   {isUploadingFile && (
-                    <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 px-3 py-1.5 rounded-lg text-[13px] font-medium animate-pulse">
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#8ba32b] dark:text-[#c8e558]" />
+                    <div className="flex items-center gap-1.5 text-neutral-500 text-[12px] py-1">
+                      <RefreshCw className="w-3 h-3 animate-spin" />
                       <span>Reading file...</span>
                     </div>
                   )}
                 </div>
               )}
 
+              {/* Textarea: placeholder "Do anything" */}
               <div className="relative w-full">
                 <textarea
                   ref={textareaRef}
@@ -1612,181 +1524,105 @@ export default function Chat() {
                       handleSend();
                     }
                   }}
-                  placeholder={
-                    typeParam === 'study-guide' ? 'Enter a topic or paste notes to generate a study guide...' :
-                    typeParam === 'slides' ? 'Describe the presentation slides you want to generate...' :
-                    typeParam === 'worksheet' ? 'Describe the worksheet exercises and subject you need...' :
-                    typeParam === 'mindmap' ? 'Enter a central topic to build a concept mind map...' :
-                    typeParam === 'infographic' ? 'Describe the concept to outline an infographic...' :
-                    typeParam === 'image' ? 'Describe the educational diagram or illustration...' :
-                    typeParam === 'meeting-notes' ? 'Paste your raw notes or transcript here...' :
-                    typeParam === 'page' ? 'Enter a topic or outline to draft your page...' :
-                    'Ask whatever you want...'
-                  }
+                  placeholder="Do anything"
                   maxLength={MAX_CHARS}
-                  className="w-full bg-transparent text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 px-4 pt-2.5 pb-2 min-h-[46px] max-h-[200px] overflow-y-auto outline-none resize-none text-[14.5px] leading-relaxed break-words"
+                  className="w-full bg-transparent text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 px-0 pt-0 pb-2 min-h-[46px] max-h-[180px] overflow-y-auto outline-none resize-none text-[14px] leading-relaxed break-words"
                   rows={1}
                   disabled={loadingHistory}
                 />
               </div>
 
-              <div className="flex items-center justify-between p-3 pt-0">
+              {/* Bottom Toolbar: Plus on left, Mic + Send Button on right */}
+              <div className="flex items-center justify-between pt-1">
                 <div className="flex items-center gap-1">
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      className="hidden" 
-                      accept={attachmentAccept}
-                      onChange={handleFileUpload} 
-                    />
-                    
-                    <div className="relative">
-                      <button
-                        onClick={() => setIsAttachmentDropdownOpen(!isAttachmentDropdownOpen)}
-                        className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
-                        title="Add attachment — PDF, document, image or text"
-                        aria-label="Add attachment"
-                      >
-                        <Paperclip className="w-[18px] h-[18px]" strokeWidth={1.6} />
-                      </button>
-
-                      {isAttachmentDropdownOpen && (
-                        <>
-                          <div className="fixed inset-0 z-40" onClick={() => setIsAttachmentDropdownOpen(false)}></div>
-                          <div className="absolute left-0 bottom-full mb-2 w-48 bg-white dark:bg-[#1a1a1b] rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 overflow-hidden z-50 py-1">
-                            <button 
-                              onClick={() => { setAttachmentAccept(".pdf"); setIsAttachmentDropdownOpen(false); setTimeout(() => fileInputRef.current?.click(), 0); }}
-                              className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 transition-colors"
-                            >
-                              Upload PDF
-                            </button>
-                            <button 
-                              onClick={() => { setAttachmentAccept(".docx"); setIsAttachmentDropdownOpen(false); setTimeout(() => fileInputRef.current?.click(), 0); }}
-                              className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 transition-colors"
-                            >
-                              Upload Document (.docx)
-                            </button>
-                            <button 
-                              onClick={() => { setAttachmentAccept(".jpg,.jpeg,.png"); setIsAttachmentDropdownOpen(false); setTimeout(() => fileInputRef.current?.click(), 0); }}
-                              className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 transition-colors"
-                            >
-                              Upload Image (OCR)
-                            </button>
-                            <button 
-                              onClick={() => { setAttachmentAccept(".txt,.md,.csv,.json,.js,.ts,.tsx,.py,.html,.css"); setIsAttachmentDropdownOpen(false); setTimeout(() => fileInputRef.current?.click(), 0); }}
-                              className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 transition-colors"
-                            >
-                              Upload Text / Code
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept={attachmentAccept}
+                    onChange={handleFileUpload} 
+                  />
+                  
+                  <div className="relative">
                     <button
-                      onClick={() => {
-                        setAttachmentAccept('.jpg,.jpeg,.png');
-                        setIsAttachmentDropdownOpen(false);
-                        setTimeout(() => fileInputRef.current?.click(), 0);
-                      }}
-                      className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
-                      title="Use image — attach a photo or screenshot (OCR)"
-                      aria-label="Use image"
+                      onClick={() => setIsAttachmentDropdownOpen(!isAttachmentDropdownOpen)}
+                      className="w-7 h-7 flex items-center justify-center text-neutral-700 hover:text-neutral-950 dark:text-neutral-300 dark:hover:text-white rounded-md hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                      title="Attach context, document, image or code"
                     >
-                      <ImagePlus className="w-[18px] h-[18px]" strokeWidth={1.6} />
+                      <Plus className="w-4 h-4" strokeWidth={2} />
                     </button>
 
-                    <button
-                      onClick={handleTalk}
-                      className={cn(
-                        'w-8 h-8 flex items-center justify-center rounded-lg transition-colors',
-                        isListening
-                          ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 animate-pulse'
-                          : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.08]'
-                      )}
-                      title={isListening ? 'Listening — click to stop' : 'Talk — dictate your question'}
-                      aria-label={isListening ? 'Stop dictation' : 'Start dictation'}
-                    >
-                      {isListening
-                        ? <AudioLines className="w-[18px] h-[18px]" strokeWidth={1.6} />
-                        : <Mic className="w-[18px] h-[18px]" strokeWidth={1.6} />}
-                    </button>
-
-                    <Link
-                      to="/research"
-                      className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
-                      title="Deep Research — open the long-form research workspace"
-                      aria-label="Deep Research"
-                    >
-                      <Telescope className="w-[18px] h-[18px]" strokeWidth={1.6} />
-                    </Link>
+                    {isAttachmentDropdownOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setIsAttachmentDropdownOpen(false)}></div>
+                        <div className="absolute left-0 bottom-full mb-2 w-48 bg-white dark:bg-[#1a1a1b] rounded-xl shadow-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden z-50 py-1">
+                          <button 
+                            onClick={() => { setAttachmentAccept(".pdf"); setIsAttachmentDropdownOpen(false); setTimeout(() => fileInputRef.current?.click(), 0); }}
+                            className="w-full text-left px-3.5 py-2 text-[12.5px] hover:bg-neutral-50 dark:hover:bg-white/5 text-neutral-700 dark:text-neutral-200 transition-colors cursor-pointer"
+                          >
+                            Upload PDF
+                          </button>
+                          <button 
+                            onClick={() => { setAttachmentAccept(".docx"); setIsAttachmentDropdownOpen(false); setTimeout(() => fileInputRef.current?.click(), 0); }}
+                            className="w-full text-left px-3.5 py-2 text-[12.5px] hover:bg-neutral-50 dark:hover:bg-white/5 text-neutral-700 dark:text-neutral-200 transition-colors cursor-pointer"
+                          >
+                            Upload Document (.docx)
+                          </button>
+                          <button 
+                            onClick={() => { setAttachmentAccept(".jpg,.jpeg,.png"); setIsAttachmentDropdownOpen(false); setTimeout(() => fileInputRef.current?.click(), 0); }}
+                            className="w-full text-left px-3.5 py-2 text-[12.5px] hover:bg-neutral-50 dark:hover:bg-white/5 text-neutral-700 dark:text-neutral-200 transition-colors cursor-pointer"
+                          >
+                            Upload Image (OCR)
+                          </button>
+                          <button 
+                            onClick={() => { setAttachmentAccept(".txt,.md,.csv,.json,.js,.ts,.tsx,.py,.html,.css"); setIsAttachmentDropdownOpen(false); setTimeout(() => fileInputRef.current?.click(), 0); }}
+                            className="w-full text-left px-3.5 py-2 text-[12.5px] hover:bg-neutral-50 dark:hover:bg-white/5 text-neutral-700 dark:text-neutral-200 transition-colors cursor-pointer"
+                          >
+                            Upload Code / Text
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {/* The model picker used to sit here. Removed so the product never
-                        discloses which underlying model answers — the dropdown listed every
-                        model by name, so hiding only the button label would not have achieved
-                        that. `selectedModel` state, its localStorage persistence and the
-                        `model` field on the request are all untouched, so replies are
-                        unchanged; the choice simply is not surfaced. */}
-
-                    {/* Voice mode. Distinct from the mic on the left, which dictates into this
-                        box — this opens a live spoken conversation. Labelled rather than a bare
-                        icon so the difference between the two is obvious. */}
-                    <button
-                      onClick={() => setIsVoiceOpen(true)}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12.5px] font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
-                      title="Talk to Sadhya — live voice conversation"
-                      aria-label="Start voice conversation"
-                    >
-                      <AudioLines className="w-[17px] h-[17px]" strokeWidth={1.7} />
-                      <span className="hidden sm:inline">Voice</span>
-                    </button>
-                    {/* Character budget. Hidden on phones: the toolbar's left icon group plus
-                        the model picker already consume the width, and pushing this in as well
-                        squeezed the send button. Reappears from sm: up. */}
-                    <span
-                      className={cn(
-                        'hidden sm:inline text-[11.5px] font-mono tabular-nums transition-colors',
-                        input.length >= MAX_CHARS
-                          ? 'text-red-500'
-                          : input.length > MAX_CHARS * 0.9
-                            ? 'text-amber-500'
-                            : 'text-slate-400 dark:text-slate-500'
-                      )}
-                    >
-                      {input.length}/{MAX_CHARS}
-                    </span>
-
-                    {/* Stop-generating affordance came from main; the send button keeps the
-                        accent styling from the UI pass rather than reverting to indigo. */}
-                    {stream.isStreaming ? (
-                      <button
-                        onClick={() => stream.cancelStream()}
-                        className="w-8 h-8 rounded-full bg-slate-700 hover:bg-slate-800 dark:bg-white/20 dark:hover:bg-white/30 flex items-center justify-center text-white transition-colors cursor-pointer shrink-0"
-                        title="Stop generating"
-                      >
-                        <Square className="w-3.5 h-3.5" fill="currentColor" strokeWidth={0} />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={handleSend}
-                        disabled={(!input.trim() && attachments.length === 0) || loadingHistory}
-                        className="w-8 h-8 rounded-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 disabled:bg-slate-100 dark:disabled:bg-white/5 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-md active:scale-95"
-                        title="Send question"
-                        aria-label="Send question"
-                      >
-                        <ArrowUp className="w-4 h-4" strokeWidth={2.5} />
-                      </button>
+                  <button
+                    onClick={handleTalk}
+                    className={cn(
+                      'w-7 h-7 flex items-center justify-center rounded-md transition-colors cursor-pointer',
+                      isListening
+                        ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 animate-pulse'
+                        : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/5'
                     )}
+                    title={isListening ? 'Listening...' : 'Dictate'}
+                  >
+                    <Mic className="w-4 h-4" strokeWidth={1.8} />
+                  </button>
+
+                  {stream.isStreaming ? (
+                    <button
+                      onClick={() => stream.cancelStream()}
+                      className="w-7 h-7 rounded-full bg-neutral-800 hover:bg-neutral-900 flex items-center justify-center text-white transition-all cursor-pointer shadow-xs"
+                      title="Stop generating"
+                    >
+                      <Square className="w-2.5 h-2.5 fill-white text-white" strokeWidth={0} />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleSend}
+                      disabled={(!input.trim() && attachments.length === 0) || loadingHistory}
+                      className="w-7 h-7 rounded-full bg-[#93b4ff] hover:bg-[#7ea6ff] active:scale-95 text-white disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-all cursor-pointer shadow-xs"
+                      title="Send"
+                    >
+                      <CloudUpload className="w-3.5 h-3.5" strokeWidth={2.2} />
+                    </button>
+                  )}
                 </div>
               </div>
+            </div>
 
           </div>
-
-          <p className="mt-3 text-[10.5px] text-slate-400 dark:text-gray-500 text-center">
-            Sadhya AI can make mistakes. Please verify important exam facts.
-          </p>
         </div>
       </div>
 

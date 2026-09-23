@@ -228,6 +228,17 @@ export const examApi = {
     return res.data;
   },
 
+  /**
+   * Resolves free text to a canonical examId ONLY — works even when no full ExamMaster document
+   * exists for the exam (e.g. UGC NET, which has real PYQ corpus data but no master record).
+   * Never 404s: returns examId:null when nothing resolves, since callers should treat "unresolved"
+   * as "don't apply an exam filter", not as an error.
+   */
+  resolveExamId: async (query: string): Promise<{ examId: string | null }> => {
+    const res = await api.get(`/exams/resolve-id/${encodeURIComponent(query)}`);
+    return res.data;
+  },
+
   getExamCycles: async (examId: string): Promise<{ cycles: ExamCycle[] }> => {
     const res = await api.get(`/exams/${examId}/cycles`);
     return res.data;

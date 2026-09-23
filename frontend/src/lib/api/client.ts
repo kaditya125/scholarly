@@ -4,6 +4,10 @@ import { auth } from '../firebase';
 // Replace with your production URL when deployed
 const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
+// For raw fetch() calls. The frontend and API are on different hosts, so a relative '/api/...' path
+// hits the frontend server (which answers every GET with index.html), not the backend.
+export const API_BASE_URL = baseURL.replace(/\/+$/, '');
+
 export const api = axios.create({
   baseURL,
   headers: {

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   Brain,
   Zap,
@@ -21,6 +22,14 @@ import { useAdaptiveAssessment } from '../../hooks/api/useAdaptiveAssessment';
 import { useLaunchTest } from '../../hooks/ai/useLaunchTest';
 import { useTheme } from '../../lib/ThemeContext';
 import { EXAM_CATALOG } from '../../lib/examCatalog';
+import { examApi } from '../../lib/api/exams';
+import { quizApi } from '../../lib/api/quiz';
+
+/** "SSC_CGL" / "ssc-cgl" / "SSC CGL" all collapse to "ssccgl", matching the backend's own
+ *  normaliseExamToken (examIndex.ts) so a catalog slug and a canonical examId can be compared. */
+function normaliseExamToken(s: string): string {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
 
 interface DrillCard {
   id: string;
@@ -32,6 +41,10 @@ interface DrillCard {
   questionCount: number;
   isWeakArea: boolean;
   accuracyNote?: string;
+  /** Real canonical syllabus identity, when the weak area backing this card came from
+   *  GET /quiz/weak-areas rather than the client-side digitalTwin/stats/profile merge below. */
+  syllabusNodeId?: string;
+  examId?: string;
 }
 
 export function AiRecommendedDrills() {
@@ -48,26 +61,38 @@ export function AiRecommendedDrills() {
 
   const targetExam = profile?.goal || profile?.targetExam || 'Competitive Exams';
 
-  // 1. Find best matching exam entry in the catalog
+  /*
+   * 1. Resolve the student's exam through the SAME canonical registry PYQ/syllabus retrieval
+   *    uses (examIndex.ts, via GET /exams/resolve-id) — not a frontend-only fuzzy match against
+   *    this file's static catalog. This used to fall back to EXAM_CATALOG[0] (NEET) whenever the
+   *    match failed, which is why an unresolved "SSC CGL" profile showed NEET/Physics/Chemistry
+   *    content: the fallback silently substituted a DIFFERENT exam rather than showing nothing.
+   */
+  const { data: resolvedExamId } = useQuery({
+    queryKey: ['examResolve', targetExam],
+    queryFn: () => examApi.resolveExamId(targetExam).then((r) => r.examId),
+    enabled: !!profile?.goal || !!profile?.targetExam,
+    staleTime: 1000 * 60 * 10,
+  });
+
+  // 2. Match the resolved canonical id to this file's descriptive catalog (topics, high-yield
+  //    lists) — NEVER falls back to an unrelated exam's entry. No match => matchedExam is null,
+  //    and the component shows a neutral empty state instead of guessing.
   const matchedExam = useMemo(() => {
-    const norm = targetExam.toLowerCase().trim();
+    if (!resolvedExamId) return null;
+    const norm = normaliseExamToken(resolvedExamId);
     return (
       EXAM_CATALOG.find((e) => {
-        const slug = e.slug.toLowerCase();
-        const name = e.name.toLowerCase();
-        const full = e.fullName.toLowerCase();
-        return (
-          slug === norm ||
-          name === norm ||
-          full.includes(norm) ||
-          norm.includes(slug) ||
-          norm.includes(name)
-        );
-      }) || EXAM_CATALOG[0] // fallback to first exam catalog
+        const slug = normaliseExamToken(e.slug);
+        return slug === norm || norm.includes(slug) || slug.includes(norm);
+      }) ?? null
     );
-  }, [targetExam]);
+  }, [resolvedExamId]);
 
-  // 2. Identify student's active subjects
+  // 3. Identify student's active subjects. No hardcoded exam-shaped default (this used to default
+  //    to ['Physics','Chemistry','Mathematics','Biology'] — a NEET/JEE-shaped guess — whenever
+  //    neither profile.subjects nor a matched syllabus were available). Empty means the component
+  //    shows a "complete your profile" prompt rather than another exam's subjects.
   const studentSubjects = useMemo(() => {
     if (profile?.subjects && profile.subjects.length > 0) {
       return profile.subjects;
@@ -75,12 +100,33 @@ export function AiRecommendedDrills() {
     if (matchedExam?.syllabus && matchedExam.syllabus.length > 0) {
       return matchedExam.syllabus.map((s) => s.subject.split('(')[0].trim());
     }
-    return ['Physics', 'Chemistry', 'Mathematics', 'Biology'];
+    return [] as string[];
   }, [profile?.subjects, matchedExam]);
 
-  // 3. Extract real weak topics from telemetry & profile
+  // 3a. Real, exam-scoped weak areas with syllabus identity — GET /quiz/weak-areas, the same
+  // structured data QuestionMixer's WEAK_AREA_DRILL mode consumes server-side. Takes priority
+  // over the client-side signals below: those carry no syllabusNodeId, so a drill built from them
+  // alone can only ever be a fuzzy topic-string search, not a real scoped retrieval.
+  const { data: structuredWeakAreas } = useQuery({
+    queryKey: ['weakAreas', resolvedExamId],
+    queryFn: () => quizApi.getWeakAreas(resolvedExamId!).then((r) => r.weakAreas),
+    enabled: !!resolvedExamId,
+    staleTime: 1000 * 30,
+  });
+
+  // 3b. Extract real weak topics from telemetry & profile
   const recordedWeakAreas = useMemo(() => {
-    const weakList: { subject?: string; topic: string; accuracy?: number }[] = [];
+    const weakList: { subject?: string; topic: string; accuracy?: number; syllabusNodeId?: string; examId?: string }[] = [];
+
+    // Structured, backend-scoped weak areas first — these carry real syllabus identity.
+    if (structuredWeakAreas && structuredWeakAreas.length > 0) {
+      structuredWeakAreas.forEach((w) => {
+        weakList.push({
+          subject: w.subjectId, topic: w.topicName, accuracy: w.accuracy,
+          syllabusNodeId: w.syllabusNodeId, examId: w.examId,
+        });
+      });
+    }
 
     // From digital twin knowledge graph
     if (digitalTwin?.knowledgeGraph) {
@@ -117,7 +163,7 @@ export function AiRecommendedDrills() {
     }
 
     return weakList;
-  }, [digitalTwin?.knowledgeGraph, stats?.weakTopics, profile?.weakAreas]);
+  }, [structuredWeakAreas, digitalTwin?.knowledgeGraph, stats?.weakTopics, profile?.weakAreas]);
 
   // 4. Generate AI Drills tailored to student course & subjects
   const drills = useMemo(() => {
@@ -143,12 +189,17 @@ export function AiRecommendedDrills() {
           subj.toLowerCase().includes(s.subject.toLowerCase())
       );
 
-      // A) Check for measured weak area in this subject
+      // A) Check for measured weak area GENUINELY tagged to this subject. Subject-less weak
+      // topics (stats.weakTopics / profile.weakAreas carry no subject) used to satisfy `!w.subject`
+      // here and so matched EVERY subject — a real English weakness like "Punctuation" was
+      // stamped onto Physics and Chemistry cards for an SSC CGL student. They're collected
+      // separately below into one honestly-labelled card instead of being dropped or contaminating
+      // every subject.
       const weakMatch = recordedWeakAreas.find(
         (w) =>
-          !w.subject ||
-          w.subject.toLowerCase().includes(subj.toLowerCase()) ||
-          subj.toLowerCase().includes(w.subject.toLowerCase())
+          w.subject &&
+          (w.subject.toLowerCase().includes(subj.toLowerCase()) ||
+            subj.toLowerCase().includes(w.subject.toLowerCase()))
       );
 
       if (weakMatch) {
@@ -164,6 +215,8 @@ export function AiRecommendedDrills() {
           questionCount: 10,
           isWeakArea: true,
           accuracyNote: weakMatch.accuracy ? `${Math.round(weakMatch.accuracy)}% Accuracy` : undefined,
+          syllabusNodeId: weakMatch.syllabusNodeId,
+          examId: weakMatch.examId,
         });
       }
 
@@ -209,6 +262,31 @@ export function AiRecommendedDrills() {
       }
     });
 
+    // Subject-less weak topics (no subject match found above, in the "All" view) still get
+    // surfaced — real signal, just honestly labelled as unattributed rather than stamped onto a
+    // subject it may not belong to.
+    if (selectedSubject === 'All') {
+      const unattributed = recordedWeakAreas.filter((w) => !w.subject);
+      if (unattributed.length > 0) {
+        const top = unattributed[0];
+        list.push({
+          id: `weak-unattributed-${top.topic}`,
+          subject: 'General',
+          topic: top.topic,
+          badge: 'Weak Area Fix',
+          description: top.accuracy
+            ? `Calibrated to address your recent ${Math.round(top.accuracy)}% diagnostic accuracy in ${top.topic}.`
+            : `Targeted precision drill for a recently flagged weak area.`,
+          durationMins: 15,
+          questionCount: 10,
+          isWeakArea: true,
+          accuracyNote: top.accuracy ? `${Math.round(top.accuracy)}% Accuracy` : undefined,
+          syllabusNodeId: top.syllabusNodeId,
+          examId: top.examId,
+        });
+      }
+    }
+
     // Ensure we always have at least 2 distinct drills
     return list.slice(0, 4);
   }, [
@@ -222,9 +300,16 @@ export function AiRecommendedDrills() {
 
   const handleStartDrill = (drill: DrillCard) => {
     launch({
-      topic: `${drill.subject} - ${drill.topic}`,
+      // A real syllabusNodeId already pins WHERE precisely — concatenating subject+topic into
+      // one search string on top of it would just add noise to the mixer's exact-node retrieval.
+      // Falls back to the combined string for syllabus-catalog-derived cards (High Yield / Speed
+      // Booster / etc.), which never had a real node to begin with.
+      topic: drill.syllabusNodeId ? drill.topic : `${drill.subject} - ${drill.topic}`,
       count: drill.questionCount,
       mode: 'exam',
+      syllabusNodeId: drill.syllabusNodeId,
+      examId: drill.examId,
+      isWeakAreaDrill: drill.isWeakArea,
     });
   };
 
@@ -311,6 +396,22 @@ export function AiRecommendedDrills() {
               {subj}
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Empty state: no exam resolved and no subjects on the profile — show a prompt instead of
+          silently falling back to another exam's content (the previous behavior). */}
+      {drills.length === 0 && (
+        <div
+          className={cn(
+            "rounded-2xl border p-6 text-center",
+            isDarkMode ? "bg-[#1a1a1e] border-white/[0.08]" : "bg-white border-slate-200/90"
+          )}
+        >
+          <BookOpen className="w-5 h-5 mx-auto mb-2 text-slate-400" />
+          <p className="text-[12.5px] font-medium text-slate-600 dark:text-slate-300">
+            Set your target exam and subjects in your profile to see personalized practice drills.
+          </p>
         </div>
       )}
 

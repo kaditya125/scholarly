@@ -39,9 +39,25 @@ export const quizApi = {
   // ─── Quiz attempts (additive — see file header) ────────────────────────────────────
 
   /** Generates a fresh, personalized weak-area (or topic/notebook) quiz and starts an attempt. */
-  async generate(opts: { topic?: string; notebookId?: string; notebookTitle?: string; mode?: QuizMode; count?: number } = {}) {
+  async generate(opts: {
+    topic?: string; notebookId?: string; notebookTitle?: string; mode?: QuizMode; count?: number;
+    /** A real canonical syllabus node — from a weak-area recommendation or an explicit topic
+     *  pick, never guessed client-side. Pins WHERE the questions come from. */
+    syllabusNodeId?: string;
+    /** Canonical examId, when known (e.g. resolved via examApi.resolveExamId beforehand). */
+    examId?: string;
+    /** True when this request originated from a weak-area recommendation — keeps the
+     *  real-PYQ/reference-weighted source mix even when syllabusNodeId also narrows WHERE. */
+    isWeakAreaDrill?: boolean;
+  } = {}) {
     const { data } = await api.post('/quiz/generate', opts);
     return data as { attemptId: string; questions: Pick<StoredQuizQuestion, 'id' | 'text' | 'topic' | 'options'>[]; durationMinutes: number; title: string; topic?: string; totalQuestions: number };
+  },
+
+  /** Real, examId/syllabusNodeId-scoped weak areas — see quiz.controller.ts's getWeakAreas. */
+  async getWeakAreas(examQuery: string): Promise<{ examId: string | null; examResolved: boolean; weakAreas: WeakTopic[] }> {
+    const { data } = await api.get('/quiz/weak-areas', { params: { exam: examQuery } });
+    return data;
   },
 
   async listAttempts(): Promise<QuizAttemptSummary[]> {
@@ -145,6 +161,28 @@ export interface ProgressTopicMastery {
   correct: number;
   total: number;
   accuracy: number;
+  /** Present when at least one contributing attempt carried real syllabus identity — pass these
+   *  straight into quizApi.generate() instead of just `topic` to get a genuinely scoped drill. */
+  examId?: string;
+  syllabusNodeId?: string;
+  lastAttemptAt?: string;
+}
+
+/** The structured, exam-scoped weak-area shape — see WeakTopic in the backend's
+ *  quizAttempt.types.ts. What quiz.controller.ts's GET /quiz/weak-areas returns. */
+export interface WeakTopic {
+  examId?: string;
+  subjectId?: string;
+  syllabusNodeId?: string;
+  topicId?: string;
+  topicName: string;
+  attempts: number;
+  correct: number;
+  incorrect: number;
+  total: number;
+  accuracy: number;
+  confidence: number;
+  lastAttemptAt?: string;
 }
 
 export interface ProgressTrendPoint {
