@@ -39,7 +39,8 @@ export type EducationalIntent =
   | 'REVISION'
   | 'TEST_GENERATION'
   | 'FACTUAL_QUERY'
-  | 'GENERAL_LEARNING';
+  | 'GENERAL_LEARNING'
+  | 'CONVERSATIONAL';
 
 export interface CorpusRoutingDecision {
   useCurriculum: boolean;

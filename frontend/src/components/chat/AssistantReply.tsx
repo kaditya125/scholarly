@@ -222,13 +222,16 @@ export default function AssistantReply({
     const text = content || '';
     if (!text || text.length < 30) return null;
 
-    // Reject greetings and conversational pleasantries
-    const isGreeting = /^(welcome\s*back|hello|hi\s*there|hey|greetings|how\s*can\s*i\s*help|what\s*shall\s*we\s*master)/i.test(text.trim()) && !/syllabus|pattern|tier\s*[1I2II]|prelims|cutoff|eligibility|exam\s*date|vacancy|marking/i.test(text);
-    if (isGreeting) return null;
+    // Reject greetings, capability introductions, and conversational pleasantries
+    const isGreetingOrCapability =
+      /^(welcome\s*back|hello|hi\s*there|hey|greetings|how\s*can\s*i\s*help|what\s*shall\s*we\s*master)/i.test(text.trim()) ||
+      /(what\s*can\s*i\s*do\s*for\s*you|here['’]s\s*what\s*i\s*can\s*do|i\s*can\s*help\s*with|tell\s*me\s*what\s*you\s*want|ready\s*to\s*advance|ready\s*to\s*conquer|i\s*can\s*also|code\s*changes|troubleshooting)/i.test(text);
+    if (isGreetingOrCapability) return null;
 
-    // Must have substantive academic or examination focus
-    const hasExamSubstance = /syllabus|subtopic|pattern|cutoff|eligibility|age\s*limit|vacanc|tier\s*[1I2II]|prelims|mains|paper\s*[1-4]|admit\s*card|answer\s*key|official\s*(notice|notification|portal|website|calendar)|gov\.in|nic\.in|pyq|marking\s*scheme|exam\s*date|negative\s*marking|quantitative|reasoning|general\s*studies|physics|chemistry|biology|mathematics/i.test(text);
-    if (!hasExamSubstance) return null;
+    // Must be specifically focused on official notification, syllabus document or exam administration
+    const hasOfficialNoticeIntent =
+      /(official\s*(notice|notification|portal|gazette|bulletin|information)|canonical\s*syllabus|admit\s*card|exam\s*calendar|nta\.nic\.in|ssc\.gov\.in|bpsc\.bihar\.gov\.in|upsc\.gov\.in)/i.test(text);
+    if (!hasOfficialNoticeIntent) return null;
 
     const isBpsc = /\b(BPSC|Bihar Public Service|70th CCE|71st CCE|72nd CCE)\b/i.test(text);
     const isUppsc = /\b(UPPSC|Uttar Pradesh Public Service|UP PCS)\b/i.test(text);

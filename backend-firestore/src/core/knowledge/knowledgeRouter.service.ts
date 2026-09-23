@@ -36,14 +36,13 @@ export class KnowledgeRouterService {
 
     // 1. Detect Intent
     let intent: EducationalIntent = 'GENERAL_LEARNING';
-    if (mode === 'revision' || /(revise|revision|summary|formulae|key facts|quick review)/i.test(qLower)) {
+    if (/^(what\s*can\s*you\s*do|how\s*can\s*you\s*help|what\s*do\s*you\s*do|what\s*are\s*your\s*features|who\s*are\s*you|tell\s*me\s*about\s*yourself|what\s*is\s*sadhya|hello|hi|hey|greetings|help|guide\s*me|can\s*you\s*help|thank\s*you|thanks|bye|goodbye)\b/i.test(qLower)) {
+      intent = 'CONVERSATIONAL';
+    } else if (mode === 'revision' || /(revise|revision|summary|formulae|key facts|quick review)/i.test(qLower)) {
       intent = 'REVISION';
     } else if (mode === 'test' || /(test|quiz|mock|assessment|mcq)/i.test(qLower)) {
       intent = 'TEST_GENERATION';
     } else if (/(practice|solve|attempt)\s+(previous year|pyq|past paper)|pyq practice/i.test(qLower)) {
-      // `PYQ_PRACTICE` was in the intent union and handled in the switch below, but nothing ever
-      // produced it — the EXAM_PREPARATION branch matched "pyq" first, leaving its case
-      // unreachable. Routing for the two is identical; this just makes the distinction real.
       intent = 'PYQ_PRACTICE';
     } else if (mode === 'exam' || /(exam|paper|pattern|cutoff|previous year|pyq|question paper)/i.test(qLower)) {
       intent = 'EXAM_PREPARATION';
@@ -93,6 +92,16 @@ export class KnowledgeRouterService {
     const reasons: string[] = [];
 
     switch (intent) {
+      case 'CONVERSATIONAL':
+        useCurriculum = false;
+        useOfficialSyllabus = false;
+        usePYQs = false;
+        useReferenceBooks = false;
+        useStudyMaterials = false;
+        useUserNotebook = false;
+        reasons.push('Conversational/capability intent: bypassing textbook and curriculum retrieval.');
+        break;
+
       case 'EXAM_PREPARATION':
       case 'PYQ_PRACTICE':
         useOfficialSyllabus = Boolean(targetExamId);
