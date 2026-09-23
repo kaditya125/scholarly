@@ -665,9 +665,12 @@ export class WorkflowEngine {
       const simpleQuestion = !req.notebookId && isSimpleFactualQuestion(req.query);
       const skipPlan = isConversationalReasoningMode(mode) && simpleQuestion;
       // The default `chat` mode drafts a complete, grounded answer here and the formatter then
-      // rewrites it in full. For a simple question the draft is streamed as the answer itself and
-      // the rewrite skipped: one model call instead of two, same grounding instructions.
-      const draftIsAnswer = !isConversationalReasoningMode(mode) && String(mode).toLowerCase() === 'chat' && simpleQuestion;
+      // rewrote it in full — two whole generations before the student saw a finished reply. The
+      // draft is now streamed as the answer itself (same grounding instructions, plus the
+      // recommendations the rewrite used to append). Notebook turns keep the rewrite: it carries
+      // the claim-verification warnings.
+      const draftIsAnswer = !isConversationalReasoningMode(mode) && String(mode).toLowerCase() === 'chat' && !req.notebookId;
+      agentContext.sharedState['draftIsAnswer'] = draftIsAnswer;
       let fullReply = '';
       if (skipPlan) {
         agentContext.sharedState['teacherReasoning'] = '';
