@@ -662,7 +662,13 @@ export class WorkflowEngine {
       // A short factual question goes straight to the answer: the private plan would add a full
       // model call (3–10 s) before the first answer word for no gain. Notebook turns keep it
       // because claim verification below runs over that text.
-      const skipPlan = isConversationalReasoningMode(mode) && !req.notebookId && isSimpleFactualQuestion(req.query);
+      const simpleQuestion = !req.notebookId && isSimpleFactualQuestion(req.query);
+      const skipPlan = isConversationalReasoningMode(mode) && simpleQuestion;
+      // The default `chat` mode drafts a complete, grounded answer here and the formatter then
+      // rewrites it in full. For a simple question the draft is streamed as the answer itself and
+      // the rewrite skipped: one model call instead of two, same grounding instructions.
+      const draftIsAnswer = !isConversationalReasoningMode(mode) && String(mode).toLowerCase() === 'chat' && simpleQuestion;
+      let fullReply = '';
       if (skipPlan) {
         agentContext.sharedState['teacherReasoning'] = '';
       } else {
@@ -683,7 +689,17 @@ export class WorkflowEngine {
           const next = await Promise.race([teacherStream.next(), firstTokenWatchdog]);
           if (next.done) break;
           sawFirstToken = true;
-          if (next.value) yield { type: 'reasoning', text: next.value };
+          if (!next.value) continue;
+          if (draftIsAnswer) {
+            if (!firstChunkAt) {
+              firstChunkAt = Date.now();
+              Telemetry.logTTFT('chat_workflow', firstChunkAt - workflowStartTime, { userId: req.userId, notebookId: req.notebookId });
+            }
+            fullReply += next.value;
+            yield { type: 'chunk', chunk: next.value };
+          } else {
+            yield { type: 'reasoning', text: next.value };
+          }
         }
       }
 
@@ -722,8 +738,7 @@ export class WorkflowEngine {
       
       // ── Stage 9: Format & Stream Response ──────────────────────────────
       const formatter = new ResponseFormatter();
-      let fullReply = '';
-      if (formatter.executeStream) {
+      if (!draftIsAnswer && formatter.executeStream) {
         for await (const chunk of formatter.executeStream(agentContext)) {
           if (!firstChunkAt) {
             firstChunkAt = Date.now();
