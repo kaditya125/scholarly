@@ -237,8 +237,24 @@ export class ExamMasterService {
    * Resolves a student's free-text goal or legacy targetExam string to a canonical ExamMaster record.
    * e.g. "SSC CGL", "cgl", "ssc-cgl", "Combined Graduate Level" -> ExamMaster (SSC_CGL)
    */
+  // Every chat message resolves the student's target exam, and each lookup is a Firestore read
+  // (~1.3 s from the server), so resolutions are shared for 10 minutes. An admin edit to an exam
+  // record is picked up within that window.
+  private static readonly RESOLVE_TTL_MS = 10 * 60_000;
+  private resolveCache = new Map<string, { at: number; value: Promise<ExamMaster | null> }>();
+
   async resolveExam(query: string): Promise<ExamMaster | null> {
     if (!query || typeof query !== 'string') return null;
+    const key = query.trim().toLowerCase();
+    const hit = this.resolveCache.get(key);
+    if (hit && Date.now() - hit.at < ExamMasterService.RESOLVE_TTL_MS) return hit.value;
+    const value = this.resolveExamUncached(query);
+    this.resolveCache.set(key, { at: Date.now(), value });
+    value.catch(() => this.resolveCache.delete(key));
+    return value;
+  }
+
+  private async resolveExamUncached(query: string): Promise<ExamMaster | null> {
     const found = await this.repository.findExamByAlias(query);
     if (found) return found;
 

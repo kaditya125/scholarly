@@ -35,21 +35,45 @@ export class StudentContextService {
    * each field can be null.
    */
   async aggregateContext(userId: string): Promise<StudentContext> {
-    // Fetch everything in parallel for speed
-    const [identity, profile, memory, analytics, stats, planner, notebooks] = await Promise.all([
+    // Fetch everything in parallel for speed. The exam context depends only on profile and stats,
+    // so its own chain of reads starts as soon as those two land instead of after everything.
+    const profileP = this.fetchProfile(userId);
+    const statsP = this.fetchStats(userId);
+    const examContextP = Promise.all([profileP, statsP]).then(([p, s]) => this.resolveExamContext(p, s));
+    const [identity, profile, memory, analytics, stats, planner, notebooks, examContext] = await Promise.all([
       this.fetchIdentity(userId),
-      this.fetchProfile(userId),
+      profileP,
       this.fetchMemory(userId),
       this.fetchAnalytics(userId),
-      this.fetchStats(userId),
+      statsP,
       this.fetchPlannerSummary(userId),
       this.fetchNotebookSummary(userId),
+      examContextP,
     ]);
 
     const isOnboarded = !!(profile && profile.targetExam && profile.isComplete);
     const isFirstTimeUser = !profile;
 
-    // Resolve Canonical Exam Intelligence (Phases 1-3)
+    return {
+      userId,
+      identity,
+      profile,
+      memory,
+      analytics,
+      stats,
+      planner,
+      notebooks,
+      examContext,
+      isFirstTimeUser,
+      isOnboarded,
+    };
+  }
+
+  // Resolve Canonical Exam Intelligence (Phases 1-3)
+  private async resolveExamContext(
+    profile: StudentContext['profile'],
+    stats: StudentContext['stats'],
+  ): Promise<StudentContext['examContext']> {
     let examContext: StudentContext['examContext'] = null;
     const targetGoal = profile?.targetExam || profile?.goal || stats?.activeExam;
     if (targetGoal) {
@@ -99,20 +123,7 @@ export class StudentContextService {
         console.warn('StudentContext: Failed to resolve examContext', e);
       }
     }
-
-    return {
-      userId,
-      identity,
-      profile,
-      memory,
-      analytics,
-      stats,
-      planner,
-      notebooks,
-      examContext,
-      isFirstTimeUser,
-      isOnboarded,
-    };
+    return examContext;
   }
 
   // ─── Private Fetchers ──────────────────────────────────────────────────────
@@ -265,14 +276,10 @@ export class StudentContextService {
       }
 
       const notebookNames = snapshot.docs.map(doc => doc.data().title || doc.data().name || 'Untitled');
-      let totalSources = 0;
-
-      // Count sources across notebooks (lightweight query)
-      for (const doc of snapshot.docs.slice(0, 5)) {
-        const sourcesSnap = await db.collection('notebooks').doc(doc.id)
-          .collection('sources').limit(50).get();
-        totalSources += sourcesSnap.size;
-      }
+      // Count sources across notebooks (lightweight query), all notebooks at once
+      const sourceSnaps = await Promise.all(snapshot.docs.slice(0, 5).map((doc) =>
+        db.collection('notebooks').doc(doc.id).collection('sources').limit(50).get()));
+      const totalSources = sourceSnaps.reduce((sum, s) => sum + s.size, 0);
 
       return {
         totalNotebooks: snapshot.size,

@@ -116,6 +116,9 @@ export class TeacherAgent implements IAgent {
       let draft = '';
       for await (const chunk of anyProvider.generateStreamResponse(messages, systemPrompt, {
         traceId: context.request.traceId,
+        // Conversational modes produce only a private plan here — the answer is written after it,
+        // so every plan token delays the first answer word. Other modes' draft IS the content.
+        ...(isConversationalReasoningMode(mode) ? { maxOutputTokens: 300 } : {}),
       })) {
         draft += chunk;
         yield chunk;

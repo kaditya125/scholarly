@@ -19,6 +19,7 @@ import {
   isGreetingMessage,
   getGreetingOrOnboardingPrompt,
   isConversationalReasoningMode,
+  isSimpleFactualQuestion,
 } from '../../config/prompts';
 import { WorkflowStage, WorkflowEvent, WorkflowRequest } from './types';
 // Re-exported for backward compatibility — existing importers (chat.service.ts,
@@ -381,6 +382,16 @@ export class WorkflowEngine {
         return;
       }
 
+      // Session memory is needed only for the memory update after the answer, so it is fetched
+      // alongside context enrichment rather than blocking generation on another Firestore trip.
+      const memoryProvider = container.resolve<IMemoryProvider>(TOKENS.MemoryProvider);
+      const sessionMemoryPromise = memoryProvider
+        .getSessionMemory(req.userId, req.sessionId || 'default')
+        .catch((e: any) => {
+          console.warn('Session memory unavailable; this turn will not update it:', e?.message || e);
+          return null;
+        });
+
       // ── Stage 2: Context Enrichment (NEW) ──────────────────────────────
       const isTeacherRole = req.productRole === 'teacher';
       yield {
@@ -555,11 +566,7 @@ export class WorkflowEngine {
 
       // ── Stage 3: Memory Retrieval ──────────────────────────────────────
       yield { type: 'progress', stage: WorkflowStage.MEMORY_RETRIEVAL, message: 'Loading learning memory...' };
-      const memoryProvider = container.resolve<IMemoryProvider>(TOKENS.MemoryProvider);
-      
-      const sessionMemory = await memoryProvider.getSessionMemory(req.userId, req.sessionId || 'default');
-      const learningMetrics = await memoryProvider.getLearningAnalytics(req.userId);
-      
+
       // ── Stage 4: Graph Retrieval ───────────────────────────────────────
       yield { type: 'progress', stage: WorkflowStage.GRAPH_RETRIEVAL, message: 'Mapping concept relationships...' };
       
@@ -652,24 +659,32 @@ export class WorkflowEngine {
       // never returns left the SSE stream open forever with no error and no output, so
       // the UI sat on "preparing explanation…" indefinitely. Now a stalled provider
       // surfaces as a real error the client can display.
-      const FIRST_TOKEN_TIMEOUT_MS = 45_000;
-      let sawFirstToken = false;
-      const firstTokenWatchdog = new Promise<never>((_, reject) => {
-        const t = setTimeout(() => {
-          if (!sawFirstToken) {
-            reject(new Error('The AI provider did not respond in time. Please try again.'));
-          }
-        }, FIRST_TOKEN_TIMEOUT_MS);
-        // Unref so a completed request never holds the process open.
-        (t as any).unref?.();
-      });
+      // A short factual question goes straight to the answer: the private plan would add a full
+      // model call (3–10 s) before the first answer word for no gain. Notebook turns keep it
+      // because claim verification below runs over that text.
+      const skipPlan = isConversationalReasoningMode(mode) && !req.notebookId && isSimpleFactualQuestion(req.query);
+      if (skipPlan) {
+        agentContext.sharedState['teacherReasoning'] = '';
+      } else {
+        const FIRST_TOKEN_TIMEOUT_MS = 45_000;
+        let sawFirstToken = false;
+        const firstTokenWatchdog = new Promise<never>((_, reject) => {
+          const t = setTimeout(() => {
+            if (!sawFirstToken) {
+              reject(new Error('The AI provider did not respond in time. Please try again.'));
+            }
+          }, FIRST_TOKEN_TIMEOUT_MS);
+          // Unref so a completed request never holds the process open.
+          (t as any).unref?.();
+        });
 
-      const teacherStream = teacher.executeStream(agentContext);
-      while (true) {
-        const next = await Promise.race([teacherStream.next(), firstTokenWatchdog]);
-        if (next.done) break;
-        sawFirstToken = true;
-        if (next.value) yield { type: 'reasoning', text: next.value };
+        const teacherStream = teacher.executeStream(agentContext);
+        while (true) {
+          const next = await Promise.race([teacherStream.next(), firstTokenWatchdog]);
+          if (next.done) break;
+          sawFirstToken = true;
+          if (next.value) yield { type: 'reasoning', text: next.value };
+        }
       }
 
       const generatedResponse = agentContext.sharedState['teacherReasoning'] || '';
@@ -783,9 +798,12 @@ export class WorkflowEngine {
       
       // ── Stage 11: Memory Update ────────────────────────────────────────
       yield { type: 'progress', stage: WorkflowStage.MEMORY_UPDATE, message: 'Updating student memory...' };
-      await memoryProvider.updateSessionMemory(req.userId, req.sessionId || 'default', {
-        contextWindow: [...sessionMemory.contextWindow, req.query]
-      });
+      const sessionMemory = await sessionMemoryPromise;
+      if (sessionMemory) {
+        await memoryProvider.updateSessionMemory(req.userId, req.sessionId || 'default', {
+          contextWindow: [...sessionMemory.contextWindow, req.query]
+        });
+      }
 
       // Post-response profile extraction (fire and forget)
       if (!studentContext.isOnboarded && fullReply) {

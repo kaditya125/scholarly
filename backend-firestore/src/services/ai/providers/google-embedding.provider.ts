@@ -38,6 +38,12 @@ const EMBEDDING_DIM = 768;
 const EMBEDDING_CACHE_MAX_TEXT = Number(process.env.EMBEDDING_CACHE_MAX_TEXT || 512);
 const EMBEDDING_CACHE_ENABLED = process.env.EMBEDDING_CACHE_DISABLED !== 'true';
 
+// Requests for the same text that arrive while its embedding is still in flight share that one
+// call. Chat retrieval queries curriculum, reference books and PYQs in parallel with the same
+// query; each missed the cache at the same instant and paid for its own call against a
+// per-minute quota shared with every student.
+const inFlight = new Map<string, Promise<{ vector: number[]; cached: boolean }>>();
+
 export class GoogleEmbeddingProvider implements EmbeddingProvider {
   private modelName: string;
 
@@ -97,10 +103,25 @@ export class GoogleEmbeddingProvider implements EmbeddingProvider {
    */
   private async embedOnce(text: string, userId?: string): Promise<{ vector: number[]; cached: boolean }> {
     assertAIEnabled('embedding');
-    const { Telemetry } = require('../../../lib/telemetry');
-
     const cacheable = this.isCacheable(text);
-    const key = cacheable ? this.embeddingCacheKey(text) : '';
+    if (!cacheable) return this.embedUncoalesced(text, userId, false, '');
+
+    const key = this.embeddingCacheKey(text);
+    const pending = inFlight.get(key);
+    if (pending) return pending.then((r) => ({ vector: r.vector, cached: true }));
+
+    const call = this.embedUncoalesced(text, userId, true, key).finally(() => inFlight.delete(key));
+    inFlight.set(key, call);
+    return call;
+  }
+
+  private async embedUncoalesced(
+    text: string,
+    userId: string | undefined,
+    cacheable: boolean,
+    key: string,
+  ): Promise<{ vector: number[]; cached: boolean }> {
+    const { Telemetry } = require('../../../lib/telemetry');
 
     if (cacheable) {
       /*

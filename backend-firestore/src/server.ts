@@ -347,6 +347,8 @@ const server = app.listen(env.PORT, () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { warmupRag } = require('./services/rag/warmup');
     void warmupRag();
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    require('./services/pyq/examIndex').warmExamIndex();
   } catch (err: any) {
     console.warn('[rag] warm-up could not be scheduled:', err?.message || err);
   }

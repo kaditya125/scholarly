@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { ChatRepository } from '../repositories/chat.repository';
 import { WorkflowRequest, workflowEngine } from '../core/workflow/WorkflowEngine';
 import { ChatMessage, TopicType } from '../types';
@@ -74,22 +75,25 @@ export class ChatService {
   async processChatStream(userId: string, sessionId: string, message: string, model: string, topicType: TopicType, res: any, notebookId?: string, traceId?: string, productRole?: ProductRole, agenticRetrieval?: boolean) {
     logger.info(`Starting stream workflow for user ${userId}`, { traceId, sessionId });
 
-    // 1. Get or create session
+    // 1. Get or create session. Kept first and alone: the session must exist — and, where
+    //    ownership is enforced, belong to this user — before any of its messages are touched.
     await this.repository.getOrCreateSession(sessionId, userId, topicType, model);
 
-    // 2. Load conversation history
-    const history = await this.repository.getMessages(sessionId);
-
-    // 3. Create new user message and save it immediately
+    // 2+3. Load history and save the new user message (so it's not lost if AI fails) together —
+    //    each is a full Firestore round trip. Its id is fixed up front so the load can drop it
+    //    if the write lands first.
     const userMessage: ChatMessage = {
+      id: randomUUID(),
       role: 'user',
       content: message,
       timestamp: Date.now()
     };
-    
-    // Save user message immediately so it's not lost if AI fails
-    await this.repository.saveMessage(sessionId, userMessage);
-    
+    const [loaded] = await Promise.all([
+      this.repository.getMessages(sessionId),
+      this.repository.saveMessage(sessionId, userMessage),
+    ]);
+    const history = loaded.filter((m) => m.id !== userMessage.id);
+
     history.push(userMessage);
 
     // 4. Execute through Workflow Engine
