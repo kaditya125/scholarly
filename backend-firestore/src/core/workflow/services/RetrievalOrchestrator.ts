@@ -129,7 +129,19 @@ export class RetrievalOrchestrator {
     // and emits its own citations.
     const citationsList: any[] = [];
 
-    const { needsWebSearch, hasAttachment } = plan;
+    const { needsWebSearch, hasAttachment, isConversational } = plan;
+
+    if (isConversational) {
+      logger.info('[RetrievalOrchestrator] Conversational / capability query — skipping textbook & curriculum retrieval', {
+        query: req.query,
+      });
+      return {
+        citationsList: [],
+        retrievalLatencyMs: 0,
+        groundingState: 'GENERAL',
+        trace,
+      };
+    }
 
     // Adaptive retrieval routing (Increment 2), sub-flag default OFF. When OFF (or no plan) the
     // strategy is 'graphrag' → identical to today's pipeline. When ON, the Intelligence Layer's
