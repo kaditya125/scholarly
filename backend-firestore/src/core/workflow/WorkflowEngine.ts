@@ -220,19 +220,33 @@ export class WorkflowEngine {
   }
 
   /**
-   * Generates 2-3 short, first-person follow-up questions the student might
-   * naturally ask next, given the exchange that just happened. Cheap, non-streaming,
-   * independent of the main answer — any failure here (bad JSON, provider error)
-   * silently yields no suggestions rather than affecting the visible reply. Mirrors
-   * the ad-hoc-provider pattern already used by ChatService.generateAndSaveTitle().
+   * Predicts the 3 messages the student is most likely to send next, most likely first —
+   * the first becomes the composer's ghost text (Tab to accept), the rest the chips under
+   * the reply. Cheap, non-streaming, independent of the main answer — any failure here
+   * (bad JSON, provider error) silently yields no suggestions rather than affecting the
+   * visible reply. Mirrors the ad-hoc-provider pattern of ChatService.generateAndSaveTitle().
    */
   private async generateFollowUpSuggestions(query: string, answer: string, mode: string): Promise<string[]> {
     try {
       const { GeminiProvider } = await import('../../services/ai/gemini.provider');
       const llm = new GeminiProvider('gemini-2.5-flash-lite');
 
-      const truncatedAnswer = answer.length > 2000 ? answer.slice(0, 2000) + '…' : answer;
-      const prompt = `A student in "${mode}" mode just asked Scholarly AI:\n"${query}"\n\nAnd received this answer:\n"${truncatedAnswer}"\n\nSuggest 3 short follow-up questions this student might naturally want to ask next, phrased in first person exactly as the student would type them (max ~12 words each). Return ONLY a JSON array of 3 strings — no markdown, no commentary, no numbering.`;
+      // Keep the END of a long answer: that is where it asks "what would you prefer?" or
+      // offers options, which is exactly what the student's next message responds to.
+      const shownAnswer = answer.length > 2400 ? `${answer.slice(0, 1200)}\n…\n${answer.slice(-1200)}` : answer;
+      const prompt = `A student preparing for competitive exams is chatting with Sadhya AI ("${mode}" mode).
+
+The student asked:
+"${query}"
+
+Sadhya AI replied:
+"${shownAnswer}"
+
+Predict the 3 messages this student is most likely to send next, most likely first.
+- Write each exactly as the student would type it: first person, casual, at most 12 words, no surrounding quotes.
+- If the reply ends with a question or offers choices, the first message must answer it directly — pick the most useful choice (e.g. "Yes, give me 5 practice questions on ratios").
+- Be specific to this conversation and name the actual topic. Never generic ("Explain this with examples").
+Return ONLY a JSON array of 3 strings — no markdown, no commentary, no numbering.`;
 
       const response = await llm.generateResponse([
         { role: 'user', content: prompt, timestamp: Date.now() } as any,
@@ -756,9 +770,11 @@ export class WorkflowEngine {
 
       // Kick off follow-up suggestions concurrently with the analytics/telemetry/
       // memory-update work below — no data dependency on those, so overlapping
-      // avoids adding latency on the critical path. Only for conversational modes;
-      // other modes' output shapes don't fit generic "what's next" chips.
-      const suggestionsPromise = isConversationalReasoningMode(mode) && fullReply
+      // avoids adding latency on the critical path. Only for conversational modes,
+      // including the chat page's default `chat` mode (left out until 24 Sep 2026, so its
+      // composer always fell back to generic prompts); other modes' output shapes don't
+      // fit a "what's next" message.
+      const suggestionsPromise = (isConversationalReasoningMode(mode) || String(mode).toLowerCase() === 'chat') && fullReply
         ? this.generateFollowUpSuggestions(req.query, fullReply, mode)
         : Promise.resolve<string[]>([]);
 

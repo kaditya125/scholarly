@@ -297,67 +297,6 @@ export default function Chat() {
     el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
   }, [input]);
 
-  // ─── Dynamic Contextual Autocomplete Suggestions ───────────────────────────
-  // Automatically computes smart next queries based on the conversation history
-  const contextualSuggestions = useMemo<string[]>(() => {
-    // 1. If the latest AI message provided explicit follow-up suggestions, prioritize them
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const m = messages[i];
-      if (m.role === 'ai' && Array.isArray(m.suggestions) && m.suggestions.length > 0) {
-        return m.suggestions;
-      }
-    }
-    // 2. Suggestions actively streaming from the live model
-    if (stream.suggestions && stream.suggestions.length > 0) {
-      return stream.suggestions;
-    }
-    // 3. If there are prior messages in this conversation, generate intelligent contextual follow-ups
-    if (messages.length > 0) {
-      const lastAi = [...messages].reverse().find(m => m.role === 'ai');
-      if (lastAi?.content) {
-        return [
-          "Can you explain this with practical examples?",
-          "Give me 5 practice questions to test my understanding",
-          "What are the most common exam questions on this?",
-          "Summarize the key takeaways into bullet points"
-        ];
-      }
-    }
-    // 4. Initial template prompts for fresh chats based on exam / mode
-    if (examParam) {
-      return [
-        `Give me a high-yield study plan and key topics for ${examParam}`,
-        `What are the most important previous year topics for ${examParam}?`,
-        `Quiz me on core concepts for ${examParam}`
-      ];
-    }
-    if (typeParam === 'study-guide') {
-      return [
-        "Create a comprehensive study guide with formulas and key concepts",
-        "Summarize core high-yield exam topics"
-      ];
-    }
-    if (typeParam === 'worksheet') {
-      return [
-        "Generate a 10-question practice worksheet with solutions",
-        "Create multiple choice questions on this topic"
-      ];
-    }
-    return [
-      "What can you do for me?",
-      "Create a personalized study roadmap for my preparation",
-      "Explain the fundamental concepts step-by-step"
-    ];
-  }, [messages, stream.suggestions, examParam, typeParam]);
-
-  const [suggestionIndex, setSuggestionIndex] = useState(0);
-
-  // Reset index when messages change to pick the fresh suggestion
-  useEffect(() => {
-    setSuggestionIndex(0);
-  }, [messages.length]);
-
-  const activeGhostPrompt = contextualSuggestions[suggestionIndex % (contextualSuggestions.length || 1)] || '';
 
   // ─── Empty-state prompt cards ──────────────────────────────────────────────
   const activePromptPool = getPromptPoolForType(typeParam, isTeacher);
@@ -437,6 +376,55 @@ export default function Chat() {
    * message is never lost if the reveal stalls for any reason.
    */
   const [pendingFinal, setPendingFinal] = useState<any>(null);
+
+  // ─── Next-message suggestion (the composer's ghost text) ─────────────────────
+  // Like a coding assistant's prompt suggestion: the student's most likely next message,
+  // predicted server-side from the reply on screen (WorkflowEngine.generateFollowUpSuggestions)
+  // and saved with it. Only the LATEST reply counts — an older turn's suggestion would answer a
+  // question that is no longer on screen — and when that reply has none, the composer shows its
+  // plain placeholder instead of a generic guess.
+  const contextualSuggestions = useMemo<string[]>(() => {
+    // A reply that is streaming or settling owns the slot: its own suggestions, or none yet.
+    if (stream.isStreaming || pendingFinal) {
+      return pendingFinal?.suggestions?.length ? pendingFinal.suggestions : stream.suggestions || [];
+    }
+    const lastAi = [...messages].reverse().find(m => m.role === 'ai');
+    if (lastAi) return Array.isArray(lastAi.suggestions) ? lastAi.suggestions : [];
+    // Fresh chat: starter prompts for the exam / mode.
+    if (examParam) {
+      return [
+        `Give me a high-yield study plan and key topics for ${examParam}`,
+        `What are the most important previous year topics for ${examParam}?`,
+        `Quiz me on core concepts for ${examParam}`
+      ];
+    }
+    if (typeParam === 'study-guide') {
+      return [
+        "Create a comprehensive study guide with formulas and key concepts",
+        "Summarize core high-yield exam topics"
+      ];
+    }
+    if (typeParam === 'worksheet') {
+      return [
+        "Generate a 10-question practice worksheet with solutions",
+        "Create multiple choice questions on this topic"
+      ];
+    }
+    return [
+      "What can you do for me?",
+      "Create a personalized study roadmap for my preparation",
+      "Explain the fundamental concepts step-by-step"
+    ];
+  }, [messages, stream.isStreaming, stream.suggestions, pendingFinal, examParam, typeParam]);
+
+  const [suggestionIndex, setSuggestionIndex] = useState(0);
+
+  // Reset index when messages change to pick the fresh suggestion
+  useEffect(() => {
+    setSuggestionIndex(0);
+  }, [messages.length]);
+
+  const activeGhostPrompt = contextualSuggestions[suggestionIndex % (contextualSuggestions.length || 1)] || '';
   /** Mirrors pendingFinal for code that must know synchronously whether a reply is still
    *  uncommitted — see the message-id backfill in sendAIRequest. */
   const pendingFinalRef = useRef<any>(null);
