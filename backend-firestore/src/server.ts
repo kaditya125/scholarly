@@ -105,8 +105,14 @@ app.use(cors({
 // Set security HTTP headers
 app.use(helmet());
 
-// Compress response bodies
-app.use(compression());
+// Compress response bodies — but never Server-Sent Events. gzip holds output until the response
+// ends unless every write is flushed, which turned each chat stream into one burst at the end.
+app.use(compression({
+  filter: (req, res) => {
+    if (String(res.getHeader('Content-Type') || '').includes('text/event-stream')) return false;
+    return compression.filter(req, res);
+  },
+}));
 
 // Request logging
 app.use(morgan(env.NODE_ENV === 'development' ? 'dev' : 'combined'));
