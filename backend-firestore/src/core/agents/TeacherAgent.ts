@@ -4,6 +4,7 @@ import { container, TOKENS } from '../di/container';
 import {
   buildSadhyaSystemPrompt,
   buildReasoningSystemPrompt,
+  buildRecommendationsBlock,
   hasNotebookContext as computeHasNotebookContext,
   isConversationalReasoningMode,
 } from '../../config/prompts';
@@ -84,7 +85,7 @@ export class TeacherAgent implements IAgent {
 
     const mode = context.request.mode || 'TEACHER';
 
-    const systemPrompt = isConversationalReasoningMode(mode)
+    const basePrompt = isConversationalReasoningMode(mode)
       ? buildReasoningSystemPrompt({
           mode,
           viewerRole: context.request.productRole,
@@ -105,6 +106,13 @@ export class TeacherAgent implements IAgent {
           groundingState: context.sharedState?.['groundingState'] as any,
           groundingDetail: context.sharedState?.['groundingDetail'] as any,
         });
+
+    // When this draft is shown as the final answer there is no formatter pass to append the
+    // student's recommendations, so the same instruction the formatter used goes here.
+    const recommendations = context.sharedState?.['draftIsAnswer'] ? buildRecommendationsBlock(context.studentContext) : '';
+    const systemPrompt = recommendations
+      ? `${basePrompt}\n\n## Provided Recommendations\n(Append these under an "## Appendix" heading ONLY IF the query was educational. Ignore them if it was a casual greeting.)\n${recommendations}`
+      : basePrompt;
 
     const messages = [
       ...context.request.history,
