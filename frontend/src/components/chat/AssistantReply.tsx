@@ -14,6 +14,7 @@ import {
   ChevronsUpDown,
   Quote,
   Sparkles,
+  Folder,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import MarkdownMessage from './MarkdownMessage';
@@ -355,92 +356,73 @@ export default function AssistantReply({
 
   // Only consider fully revealed once typewriter has completed the full text
   const isFullyRevealed = !streaming && (content || '').length > 0 && revealed.length >= (content || '').length;
+  const [showDetails, setShowDetails] = useState(false);
 
   return (
-    <div className="flex flex-col w-full text-slate-800 dark:text-gray-100">
-      {/* ── Thought ─────────────────────────────────────────────────────────── */}
-      {hasReasoning && (
-        <ReasoningTimeline
-          steps={steps}
-          reasoningText={reasoning}
-          streaming={streaming}
-          hasAnswer={!!content}
-          paceMs={streaming ? 420 : 0}
-          showProgress
-        />
-      )}
-
-      {/* ── Viewed ──────────────────────────────────────────────────────────── */}
-      {sources.length > 0 && (
-        <div className="flex items-center flex-wrap gap-1.5 mb-3">
-          <span className="inline-flex items-center gap-1.5 text-[12.5px] text-slate-500 dark:text-gray-400 mr-0.5">
-            <Eye className="w-3.5 h-3.5" strokeWidth={1.75} />
-            Viewed
-          </span>
-          {sources.slice(0, 4).map((s) => (
-            <span
-              key={s.source}
-              title={s.selectionReasoning || s.source}
-              className="inline-flex items-center gap-1.5 max-w-[200px] px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 text-[12px] font-medium"
-            >
-              <SourceIcon source={s.source} className="w-3 h-3 shrink-0" />
-              <span className="truncate">{sourceLabel(s.source)}</span>
+    <div className="flex flex-col w-full text-neutral-800 dark:text-neutral-100">
+      {/* ── Step / Tool Indicator: exact "📁 Read files" styling ─────────────── */}
+      {(hasReasoning || sources.length > 0 || (streaming && statusMessage)) && (
+        <div className="mb-2.5">
+          <button
+            onClick={() => setShowDetails((prev) => !prev)}
+            className="inline-flex items-center gap-1.5 text-[12.5px] font-normal text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors cursor-pointer select-none group"
+          >
+            <Folder className="w-3.5 h-3.5 text-neutral-400 group-hover:text-neutral-600 dark:text-neutral-500 dark:group-hover:text-neutral-300" strokeWidth={1.8} />
+            <span>
+              {streaming && statusMessage
+                ? statusMessage
+                : sources.length > 0
+                  ? 'Read files'
+                  : 'Read files'}
             </span>
-          ))}
-          {sources.length > 4 && (
-            <span className="text-[12px] text-slate-400 dark:text-gray-500">+{sources.length - 4}</span>
+          </button>
+
+          {/* Expandable details when user clicks "Read files" */}
+          {showDetails && (
+            <div className="mt-2 pl-3.5 border-l border-neutral-200 dark:border-neutral-800 space-y-2">
+              {hasReasoning && (
+                <ReasoningTimeline
+                  steps={steps}
+                  reasoningText={reasoning}
+                  streaming={streaming}
+                  hasAnswer={!!content}
+                  paceMs={streaming ? 420 : 0}
+                  showProgress
+                />
+              )}
+              {sources.length > 0 && (
+                <div className="flex items-center flex-wrap gap-1.5 pt-1">
+                  {sources.map((s) => (
+                    <span
+                      key={s.source}
+                      title={s.selectionReasoning || s.source}
+                      className="inline-flex items-center gap-1.5 max-w-[200px] px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-[11.5px] font-medium"
+                    >
+                      <SourceIcon source={s.source} className="w-3 h-3 shrink-0" />
+                      <span className="truncate">{sourceLabel(s.source)}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
       )}
 
       {/* ── Live status line ────────────────────────────────────────────────── */}
       {streaming && statusMessage && (
-        <div className="flex items-center gap-2 mb-3 text-[13.5px] text-slate-500 dark:text-gray-400">
-          <span className="w-3.5 h-3.5 rounded-full border-2 border-slate-300 dark:border-white/20 border-t-indigo-500 animate-spin shrink-0" />
+        <div className="flex items-center gap-2 mb-2.5 text-[13px] text-neutral-500 dark:text-neutral-400">
+          <span className="w-3.5 h-3.5 rounded-full border-2 border-neutral-300 dark:border-neutral-700 border-t-neutral-800 dark:border-t-neutral-200 animate-spin shrink-0" />
           <span className="truncate">{statusMessage}</span>
         </div>
       )}
 
       {/* ── Answer body ─────────────────────────────────────────────────────── */}
-      {/* break-words covers long unbroken tokens (base64, identifiers, URLs without
-          hyphens) that offer the line-breaker no opportunity of its own. The structural
-          guard against sideways drift lives on the centred column in Chat.tsx; deliberately
-          no overflow-x here, since this subtree hosts the absolutely-positioned selection
-          popup and clipping would swallow it. */}
       <div ref={bodyRef} className="relative min-w-0 max-w-full break-words" onMouseUp={handleSelection}>
-        {!content && streaming ? (
-          /* Deliberately empty. The reasoning timeline above is the single "working"
-             signal — spinner, current step name, progress bar. The bouncing dots that
-             used to live here duplicated it and were the only thing visible during the
-             pre-stage window, which read as a hang. */
-          null
-        ) : (
-          // Typography matched to the reference UI: one sans family throughout, with
-          // weight and size carrying the hierarchy rather than a second face. `tracking-wide`
-          // used to be applied here, which is wrong for body prose — wide tracking loosens
-          // word shapes and makes long passages harder to scan.
-          // Heading sizes must carry their own `sm:prose-hN:` prefix. A bare `sm:text-[..]` placed
-          // after `prose-hN:` applies to this container, not the heading, which left ### smaller
-          // than body text.
-          <div className="font-answer text-[16px] sm:text-[16.5px] leading-[1.75] mb-3 text-slate-800 dark:text-slate-200 prose prose-slate dark:prose-invert max-w-none w-full min-w-0 break-words
-                          [&>*:first-child]:mt-0
-                          prose-headings:font-semibold prose-headings:tracking-[-0.018em] prose-headings:text-slate-900 dark:prose-headings:text-white prose-headings:leading-snug
-                          prose-h1:text-[22px] sm:prose-h1:text-[24px] prose-h1:mt-8 prose-h1:mb-3
-                          prose-h2:text-[19px] sm:prose-h2:text-[20.5px] prose-h2:mt-8 prose-h2:mb-3
-                          prose-h3:text-[17px] sm:prose-h3:text-[17.5px] prose-h3:mt-6 prose-h3:mb-2
-                          prose-p:my-3.5 prose-p:leading-[1.75] prose-p:break-words
-                          prose-ul:my-3.5 prose-ol:my-3.5 prose-li:my-1.5 prose-li:leading-[1.7] prose-li:marker:text-slate-400 prose-li:break-words
-                          prose-strong:font-semibold prose-strong:text-slate-900 dark:prose-strong:text-white
-                          prose-blockquote:not-italic prose-blockquote:font-normal prose-blockquote:border-l-indigo-400 prose-blockquote:text-slate-700 dark:prose-blockquote:text-slate-300
-                          prose-table:text-[14.5px]
-                          prose-a:text-indigo-600 dark:prose-a:text-indigo-400 prose-a:font-medium prose-a:no-underline hover:prose-a:underline
-                          prose-code:font-mono prose-code:text-[14px] prose-code:font-medium prose-code:bg-slate-100 dark:prose-code:bg-white/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:before:content-none prose-code:after:content-none
-                          prose-hr:border-slate-200 dark:prose-hr:border-white/10 prose-hr:my-7
-                          prose-img:rounded-2xl prose-img:shadow-md prose-img:max-w-full prose-img:object-cover
-                          [&_.katex-display]:overflow-x-auto [&_.katex-display]:overflow-y-hidden [&_.katex-display]:max-w-full [&_.katex-display]:py-1
-                          [&_pre]:max-w-full [&_table]:max-w-full">
+        {!content && streaming ? null : (
+          <div className="font-answer text-[14px] leading-[1.6] mb-2 text-neutral-800 dark:text-neutral-200 max-w-none w-full min-w-0 break-words">
             <MarkdownMessage content={revealed} />
-            {streaming && <span className="inline-block w-2 h-4 ml-1 bg-indigo-500 animate-pulse align-middle" />}
+            {streaming && <span className="inline-block w-1.5 h-3.5 ml-1 bg-neutral-400 animate-pulse align-middle" />}
           </div>
         )}
 
@@ -516,66 +498,68 @@ export default function AssistantReply({
         </div>
       )}
 
-      {/* ── Action bar ──────────────────────────────────────────────────────── */}
+      {/* ── Action bar: exact minimalist copy icon ───────────────────────── */}
       {!streaming && content && (
-        <div className="flex items-center gap-1 text-slate-400 dark:text-gray-500">
+        <div className="group/actions flex items-center gap-1.5 text-neutral-400 dark:text-neutral-500 mt-1">
           <button
             onClick={onCopy}
-            className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-gray-200 transition-colors"
+            className="p-1 -ml-1 rounded hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors cursor-pointer"
             title="Copy"
           >
-            {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" strokeWidth={1.75} />}
+            {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" strokeWidth={1.6} />}
           </button>
 
-          <button
-            onClick={() => onRate?.('thumbs_up')}
-            disabled={!onRate}
-            className={cn(
-              'p-1.5 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
-              rating === 'thumbs_up'
-                ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
-                : 'hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-gray-200'
+          {/* Secondary actions softly accessible on hover */}
+          <div className="opacity-0 group-hover/actions:opacity-100 flex items-center gap-1 transition-opacity duration-150">
+            <button
+              onClick={() => onRate?.('thumbs_up')}
+              disabled={!onRate}
+              className={cn(
+                'p-1 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
+                rating === 'thumbs_up'
+                  ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
+                  : 'hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-700 dark:hover:text-neutral-200'
+              )}
+              title={onRate ? 'Good response' : 'Rating available once saved'}
+            >
+              <ThumbsUp className="w-3.5 h-3.5" strokeWidth={1.6} />
+            </button>
+
+            <button
+              onClick={() => onRate?.('thumbs_down')}
+              disabled={!onRate}
+              className={cn(
+                'p-1 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
+                rating === 'thumbs_down'
+                  ? 'text-red-500 bg-red-50 dark:bg-red-500/10'
+                  : 'hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-700 dark:hover:text-neutral-200'
+              )}
+              title={onRate ? 'Bad response' : 'Rating available once saved'}
+            >
+              <ThumbsDown className="w-3.5 h-3.5" strokeWidth={1.6} />
+            </button>
+
+            <button
+              onClick={onSpeak}
+              className={cn(
+                'p-1 rounded hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors',
+                speaking && 'text-blue-500'
+              )}
+              title={speaking ? 'Stop' : 'Read aloud'}
+            >
+              {speaking ? <VolumeX className="w-3.5 h-3.5" strokeWidth={1.6} /> : <Volume2 className="w-3.5 h-3.5" strokeWidth={1.6} />}
+            </button>
+
+            {onRegenerate && (
+              <button
+                onClick={onRegenerate}
+                className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors"
+                title="Regenerate response"
+              >
+                <RefreshCw className="w-3.5 h-3.5" strokeWidth={1.6} />
+              </button>
             )}
-            title={onRate ? 'Good response' : 'Rating available once the reply is saved'}
-          >
-            <ThumbsUp className="w-4 h-4" strokeWidth={1.75} />
-          </button>
-
-          <button
-            onClick={() => onRate?.('thumbs_down')}
-            disabled={!onRate}
-            className={cn(
-              'p-1.5 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
-              rating === 'thumbs_down'
-                ? 'text-red-500 bg-red-50 dark:bg-red-500/10'
-                : 'hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-gray-200'
-            )}
-            title={onRate ? 'Bad response' : 'Rating available once the reply is saved'}
-          >
-            <ThumbsDown className="w-4 h-4" strokeWidth={1.75} />
-          </button>
-
-          <button
-            onClick={onSpeak}
-            className={cn(
-              'p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-gray-200 transition-colors',
-              speaking && 'text-indigo-500'
-            )}
-            title={speaking ? 'Stop' : 'Read aloud'}
-          >
-            {speaking ? <VolumeX className="w-4 h-4" strokeWidth={1.75} /> : <Volume2 className="w-4 h-4" strokeWidth={1.75} />}
-          </button>
-
-          <span className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
-
-          <button
-            onClick={onRegenerate}
-            className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-md text-[12.5px] font-medium hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-gray-200 transition-colors"
-            title="Regenerate response"
-          >
-            <RefreshCw className="w-3.5 h-3.5" strokeWidth={1.75} />
-            Regenerate
-          </button>
+          </div>
         </div>
       )}
 

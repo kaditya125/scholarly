@@ -18,6 +18,8 @@ export interface StreamState {
   warnings: string[];
   /** Short follow-up questions the student might ask next, from the `suggestions` event. */
   suggestions: string[];
+  /** Set when the backend turned this message into a background agent run (Agent mode). */
+  agentRun: { runId: string; workflowId?: string } | null;
   error: string | null;
   done: boolean;
   data: any | null; // Final metadata (citations, confidence)
@@ -33,11 +35,12 @@ export function useWorkflowStream() {
     citations: [],
     warnings: [],
     suggestions: [],
+    agentRun: null,
     error: null,
     done: false,
     data: null
   });
-  
+
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const startStream = useCallback(async (
@@ -51,6 +54,7 @@ export function useWorkflowStream() {
     citations: any[];
     warnings: string[];
     suggestions: string[];
+    agentRun?: { runId: string; workflowId?: string } | null;
   }> => {
     return new Promise(async (resolve, reject) => {
       // Reset state
@@ -62,6 +66,7 @@ export function useWorkflowStream() {
         citations: [],
         warnings: [],
         suggestions: [],
+        agentRun: null,
         error: null,
         done: false,
         data: null
@@ -75,6 +80,7 @@ export function useWorkflowStream() {
       const localCitations: any[] = [];
       const localWarnings: string[] = [];
       let localSuggestions: string[] = [];
+      let localAgentRun: { runId: string; workflowId?: string } | null = null;
       let localReasoning = '';
       let localReasoningMs = 0;
       const streamStartedAt = Date.now();
@@ -172,6 +178,9 @@ export function useWorkflowStream() {
               } else if (event.type === 'suggestions') {
                 localSuggestions = Array.isArray(event.suggestions) ? event.suggestions : [];
                 setState(s => ({ ...s, suggestions: localSuggestions }));
+              } else if (event.type === 'agent_run' && typeof event.runId === 'string') {
+                localAgentRun = { runId: event.runId, workflowId: event.workflowId };
+                setState(s => ({ ...s, agentRun: localAgentRun }));
               } else if (event.type === 'done') {
                 localReasoningMs = Date.now() - streamStartedAt;
                 if (event.data && typeof event.data === 'object') {
@@ -193,15 +202,19 @@ export function useWorkflowStream() {
                   citations: localCitations,
                   warnings: localWarnings,
                   suggestions: localSuggestions,
+                  agentRun: localAgentRun,
                 });
                 return; // Exit loop
-              } else if (event.type === 'error') {
-                 setState(s => ({
+              } else if (event.type === 'error' || (!event.type && typeof event.error === 'string')) {
+                // Older servers wrote mid-stream errors as a bare `{ error }` with no type, which
+                // this handler used to skip — the reply just stopped with no explanation.
+                const message: string = event.error || event.message || 'The AI response failed. Please try again.';
+                setState(s => ({
                   ...s,
-                  error: event.error,
+                  error: message,
                   isStreaming: false
                 }));
-                reject(new Error(event.error));
+                reject(new Error(message));
                 return;
               }
             } catch (e) {
@@ -220,6 +233,7 @@ export function useWorkflowStream() {
         citations: localCitations,
         warnings: localWarnings,
         suggestions: localSuggestions,
+        agentRun: localAgentRun,
       });
     } catch (err: any) {
       if (err.name !== 'AbortError') {
@@ -235,6 +249,7 @@ export function useWorkflowStream() {
           citations: localCitations,
           warnings: localWarnings,
           suggestions: localSuggestions,
+          agentRun: localAgentRun,
         });
       }
     }

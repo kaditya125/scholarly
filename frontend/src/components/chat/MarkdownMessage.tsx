@@ -223,6 +223,71 @@ const markdownComponents: any = {
       </blockquote>
     );
   },
+  input(props: any) {
+    if (props.type === 'checkbox') {
+      return (
+        <span
+          className={cn(
+            'inline-flex items-center justify-center w-4 h-4 rounded-[4px] mr-2 -mt-0.5 align-middle shrink-0 transition-colors',
+            props.checked
+              ? 'bg-[#22c55e] text-white shadow-2xs'
+              : 'border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800'
+          )}
+        >
+          {props.checked && <Check className="w-3 h-3 text-white stroke-[3]" />}
+        </span>
+      );
+    }
+    return <input {...props} />;
+  },
+  p(props: any) {
+    return <p className="my-2.5 text-[14px] leading-[1.6] text-neutral-800 dark:text-neutral-200">{props.children}</p>;
+  },
+  ul(props: any) {
+    return (
+      <ul className="my-2 space-y-1.5 pl-5 list-disc marker:text-neutral-800 dark:marker:text-neutral-300 text-[14px] leading-[1.6] text-neutral-800 dark:text-neutral-200">
+        {props.children}
+      </ul>
+    );
+  },
+  ol(props: any) {
+    return (
+      <ol className="my-2 space-y-1.5 pl-5 list-decimal marker:text-neutral-800 dark:marker:text-neutral-300 text-[14px] leading-[1.6] text-neutral-800 dark:text-neutral-200">
+        {props.children}
+      </ol>
+    );
+  },
+  li(props: any) {
+    return (
+      <li className="text-[14px] leading-[1.6] text-neutral-800 dark:text-neutral-200 pl-0.5">
+        {props.children}
+      </li>
+    );
+  },
+  h1(props: any) {
+    return (
+      <h1 className="text-[18px] font-semibold text-neutral-900 dark:text-white mt-4 mb-2 tracking-[-0.015em]">
+        {props.children}
+      </h1>
+    );
+  },
+  h2(props: any) {
+    return (
+      <h2 className="text-[16px] font-semibold text-neutral-900 dark:text-white mt-3.5 mb-2 tracking-[-0.015em]">
+        {props.children}
+      </h2>
+    );
+  },
+  h3(props: any) {
+    return (
+      <h3 className="text-[14px] font-semibold text-neutral-900 dark:text-white mt-3 mb-1.5 tracking-[-0.01em]">
+        {props.children}
+      </h3>
+    );
+  },
+  strong(props: any) {
+    return <strong className="font-semibold text-neutral-900 dark:text-white">{props.children}</strong>;
+  },
 };
 
 /**

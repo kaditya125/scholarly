@@ -20,6 +20,11 @@ export default function TestEngine() {
   const notebookTitle = (location.state?.notebookTitle as string | undefined) || searchParams.get('notebookTitle') || undefined;
   const count = (location.state?.count as number | undefined) || (searchParams.get('count') ? parseInt(searchParams.get('count')!, 10) : 10);
   const mode = (location.state?.mode as string | undefined) || searchParams.get('mode') || 'exam';
+  // Real syllabus identity + exam, and the weak-area-drill source-mix flag, when the launcher
+  // (a weak-area recommendation card) has them — see useLaunchTest.ts.
+  const syllabusNodeId = (location.state?.syllabusNodeId as string | undefined) || searchParams.get('syllabusNodeId') || undefined;
+  const examId = (location.state?.examId as string | undefined) || searchParams.get('examId') || undefined;
+  const isWeakAreaDrill = Boolean(location.state?.isWeakAreaDrill) || searchParams.get('isWeakAreaDrill') === 'true';
   const testTitle = topicParam || notebookTitle || 'AI Mock Practice Exam';
   const isStudyMode = mode === 'study';
 
@@ -47,11 +52,17 @@ export default function TestEngine() {
     setGenerateError(null);
 
     quizApi.generate({
-      topic: topicParam || 'General Knowledge & Exam Practice',
+      // No more hardcoded fallback topic. Passing a topic string here unconditionally used to
+      // mean the backend's real weak-areas default (triggered only when topic is genuinely
+      // absent) was unreachable from this screen — every launch looked like a topic search.
+      topic: topicParam,
       notebookId,
       notebookTitle,
       count,
       mode: mode as any,
+      syllabusNodeId,
+      examId,
+      isWeakAreaDrill,
     })
       .then((result) => {
         if (cancelled) return;

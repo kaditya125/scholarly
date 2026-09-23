@@ -16,6 +16,8 @@ export function AIRecommendedTests() {
     ? weakSections.slice(0, 2).map(ws => ({
         title: `${ws.topic} Remedial Set`,
         topic: ws.topic,
+        syllabusNodeId: ws.syllabusNodeId,
+        examId: ws.examId,
         reason: `Accuracy is at ${Math.round(ws.accuracy)}% across your past attempts. Recommended 10-question drill.`,
         type: 'Weak Area Booster',
         count: 10,
@@ -24,6 +26,8 @@ export function AIRecommendedTests() {
         {
           title: 'Speed & Quantitative Diagnostic',
           topic: 'Quantitative Aptitude',
+          syllabusNodeId: undefined as string | undefined,
+          examId: undefined as string | undefined,
           reason: 'Calibrated to test your mental math calculation speed and time management.',
           type: 'Speed Drill',
           count: 10,
@@ -31,6 +35,8 @@ export function AIRecommendedTests() {
         {
           title: 'High-Yield Reasoning Patterns',
           topic: 'Logical Reasoning',
+          syllabusNodeId: undefined as string | undefined,
+          examId: undefined as string | undefined,
           reason: 'Targeting high-frequency syllogisms, series, and puzzle arrangements.',
           type: 'Concept Focus',
           count: 10,
@@ -74,8 +80,12 @@ export function AIRecommendedTests() {
                   <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-white/10">
                     {rec.type}
                   </span>
-                  <button 
-                    onClick={() => launch({ topic: rec.topic, count: rec.count, mode: 'exam' })}
+                  <button
+                    onClick={() => launch({
+                      topic: rec.topic, count: rec.count, mode: 'exam',
+                      syllabusNodeId: rec.syllabusNodeId, examId: rec.examId,
+                      isWeakAreaDrill: weakSections.length > 0,
+                    })}
                     className="text-[12px] font-semibold text-slate-900 dark:text-[#c8e558] flex items-center gap-1 hover:gap-1.5 transition-all cursor-pointer"
                   >
                     Start Test <ArrowRight className="w-3.5 h-3.5" />
