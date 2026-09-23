@@ -124,10 +124,12 @@ export class ChatService {
           // Dropping `stage` here (as we used to) meant every stage arrived
           // as undefined, so every timeline row rendered as skipped even
           // though the backend was actually emitting them.
+          // `detail` marks a line that reports a completed stage's real result.
           res.write(`data: ${JSON.stringify({
             type: 'progress',
             stage: event.stage,
-            message: event.message
+            message: event.message,
+            ...(event.detail ? { detail: true } : {}),
           })}\n\n`);
         } else if (event.type === 'chunk') {
           fullReply += event.chunk;

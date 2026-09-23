@@ -350,18 +350,41 @@ async function searchOneSource(
       return perNotebook.flat().sort((a, b) => Number(b.score || 0) - Number(a.score || 0)).slice(0, DEEP_SEARCH_TOP_K);
     }
     case 'web': {
+      // Two searches in parallel: government sites only (where notifications, corrigenda and
+      // results are actually published — 'gov.in' also matches ssc.gov.in, sscsr.gov.in, …) and
+      // the open web minus video/social. Official results come first and are flagged, so the
+      // answer can prefer them; a plain search for "SSC CGL notification changes" returned only
+      // coaching sites and a YouTube video.
       const { searchService } = await import('../../services/rag/search.service');
-      const web = await searchService.search(query, 4);
-      return (web || []).map((w: any) => ({
-        text: trimText(w.content),
-        source: w.url,
-        title: w.title,
-        url: w.url,
-        score: w.score,
-      }));
+      const [official, general] = await Promise.all([
+        searchService.search(query, 3, { includeDomains: OFFICIAL_WEB_DOMAINS }),
+        searchService.search(query, 3, { excludeDomains: EXCLUDED_WEB_DOMAINS }),
+      ]);
+      const seen = new Set<string>();
+      return [
+        ...(official || []).map((w) => ({ ...w, official: true })),
+        ...(general || []).map((w) => ({ ...w, official: false })),
+      ]
+        .filter((w) => w.url && !seen.has(w.url) && seen.add(w.url))
+        .map((w) => ({
+          text: trimText(w.content),
+          source: w.url,
+          title: w.title,
+          url: w.url,
+          score: w.score,
+          official: w.official,
+          ...(w.published_date ? { publishedDate: w.published_date } : {}),
+        }));
     }
   }
 }
+
+/** Where Indian exam notifications are published (subdomains included). */
+const OFFICIAL_WEB_DOMAINS = ['gov.in', 'nic.in'];
+/** Video and social platforms — rarely a citable source for exam facts. */
+const EXCLUDED_WEB_DOMAINS = [
+  'youtube.com', 'facebook.com', 'instagram.com', 'x.com', 'twitter.com', 't.me', 'telegram.me', 'pinterest.com',
+];
 
 /**
  * Executes one named retrieval tool against real Firestore/Pinecone data.

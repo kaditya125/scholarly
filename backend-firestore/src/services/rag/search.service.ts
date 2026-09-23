@@ -22,9 +22,14 @@ export class SearchService {
   }
 
   /**
-   * Perform a web search using Tavily API
+   * Perform a web search using Tavily API. `includeDomains` / `excludeDomains` pass straight
+   * through; a suffix such as 'gov.in' matches every subdomain (ssc.gov.in, sscsr.gov.in, …).
    */
-  async search(query: string, limit: number = 5): Promise<SearchResult[]> {
+  async search(
+    query: string,
+    limit: number = 5,
+    opts?: { includeDomains?: string[]; excludeDomains?: string[] },
+  ): Promise<SearchResult[]> {
     if (!this.apiKey) {
       console.warn('TAVILY_API_KEY is not defined. Web search will fail.');
       return [];
@@ -44,6 +49,8 @@ export class SearchService {
           include_images: false,
           max_results: limit,
           include_raw_content: false,
+          ...(opts?.includeDomains?.length ? { include_domains: opts.includeDomains } : {}),
+          ...(opts?.excludeDomains?.length ? { exclude_domains: opts.excludeDomains } : {}),
         }),
       });
 
