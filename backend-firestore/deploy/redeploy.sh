@@ -27,7 +27,8 @@ main() {
   OLD=$(git rev-parse HEAD)
   git pull --ff-only origin main
   NEW=$(git rev-parse HEAD)
-  changed() { git diff --name-only "$OLD" "$NEW" -- "$1" | grep -q .; }
+  # -C: pathspecs are repo-root paths, but this is called from inside frontend/ and backend-firestore/.
+  changed() { git -C "$APP" diff --name-only "$OLD" "$NEW" -- "$1" | grep -q .; }
   echo "deploying $(git log --oneline -1)"
 
   # ── Frontend ────────────────────────────────────────────────────────────────────────────────
