@@ -206,7 +206,7 @@ export default function ReasoningTimeline({
       {/* Header */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center gap-2.5 text-[12.5px] text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200 transition-colors select-none"
+        className="w-full flex items-center gap-2.5 text-[13.5px] text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200 transition-colors select-none"
       >
         {activeIndex >= 0 ? (
           /* Round rotating spinner while reasoning is in progress. */
@@ -255,7 +255,7 @@ export default function ReasoningTimeline({
             />
           </span>
         )}
-        <span className={cn("text-slate-400 text-[11px] shrink-0", !(showProgress && activeIndex >= 0) && "ml-auto")}>{open ? '\u25be' : '\u25b8'}</span>
+        <span className={cn("text-slate-400 text-[12px] shrink-0", !(showProgress && activeIndex >= 0) && "ml-auto")}>{open ? '\u25be' : '\u25b8'}</span>
       </button>
 
       <AnimatePresence initial={false}>
@@ -299,16 +299,16 @@ export default function ReasoningTimeline({
                           : 'bg-slate-300/70 dark:bg-gray-600/70'
                       )} />
                       <span className={cn(
-                        'text-[12.5px] transition-colors',
+                        'text-[13.5px] transition-colors',
                         state === 'active' ? 'text-slate-700 dark:text-gray-200 font-medium'
-                          : state === 'done' ? 'text-slate-400 dark:text-gray-500'
+                          : state === 'done' ? 'text-slate-500 dark:text-gray-400'
                           : state === 'skipped' ? 'text-slate-300/60 dark:text-gray-600/60 line-through'
                           : 'text-slate-300 dark:text-gray-600'
                       )}>
                         {step.title}
                       </span>
                       {state === 'skipped' && (
-                        <span className="text-[10.5px] text-slate-300/70 dark:text-gray-600/70 shrink-0">not needed for this reply</span>
+                        <span className="text-[11.5px] text-slate-400/80 dark:text-gray-500/80 shrink-0">not needed for this reply</span>
                       )}
                     </div>
 
@@ -321,8 +321,8 @@ export default function ReasoningTimeline({
                           initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3 }}
                           className={cn(
-                            'text-[12px] leading-relaxed',
-                            state === 'active' ? 'text-slate-500 dark:text-gray-400' : 'text-slate-400/80 dark:text-gray-500/80'
+                            'text-[13px] leading-relaxed',
+                            state === 'active' ? 'text-slate-500 dark:text-gray-400' : 'text-slate-500/90 dark:text-gray-400/90'
                           )}
                         >
                           <TypedText text={step.detail} active={state === 'active' && !!streaming} />
@@ -335,7 +335,7 @@ export default function ReasoningTimeline({
                             key={k}
                             initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3 }}
-                            className="flex items-start gap-1.5 text-[12px] leading-relaxed text-slate-600 dark:text-gray-300"
+                            className="flex items-start gap-1.5 text-[13px] leading-relaxed text-slate-600 dark:text-gray-300"
                           >
                             <span className="text-emerald-500 dark:text-emerald-400 mt-[1px] shrink-0">{'\u2713'}</span>
                             <span>{msg}</span>
@@ -345,7 +345,7 @@ export default function ReasoningTimeline({
                     )}
 
                     {showReason && (
-                      <div className="ml-3.5 text-[13px] leading-[1.6] text-slate-500 dark:text-gray-400 prose prose-sm dark:prose-invert max-w-none prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0.5">
+                      <div className="ml-3.5 text-[14px] leading-[1.65] text-slate-600 dark:text-gray-300 prose prose-sm dark:prose-invert max-w-none prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0.5">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {state === 'active' ? (reasoningText || '').slice(0, shown) : (reasoningText || '')}
                         </ReactMarkdown>
