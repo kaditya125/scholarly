@@ -10,11 +10,10 @@ import {
   RefreshCw,
   FileText,
   Globe,
-  Eye,
-  ChevronsUpDown,
   Quote,
-  Sparkles,
-  Folder,
+  FolderClosed,
+  Brain,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import MarkdownMessage from './MarkdownMessage';
@@ -39,11 +38,11 @@ export type Rating = 'thumbs_up' | 'thumbs_down';
 
 export interface AssistantReplyProps {
   content: string;
-  /** True while this reply is still streaming — drives the caret and live status line. */
+  /** True while this reply is still streaming — drives the caret and the activity line. */
   streaming?: boolean;
   /** Backend progress events, mapped to the reasoning timeline's step model. */
   steps?: RStep[];
-  /** Most recent progress message, shown as the live status line. */
+  /** Most recent progress message, shown on the activity line while streaming. */
   statusMessage?: string;
   /** The model's pre-formatting draft, streamed into the reasoning timeline. */
   reasoning?: string;
@@ -136,12 +135,10 @@ const SourceIcon = ({ source, className }: { source: string; className?: string 
  * AssistantReply — the reply template for the AI chat surface.
  *
  * Layout, top to bottom:
- *   Thought ›            collapsible reasoning timeline (backend progress stages)
- *   Viewed  · chips      distinct sources the retrieval layer actually read
- *   status line          live "Searching your notebooks…" while streaming
- *   markdown body        the answer itself
- *   N results            the full retrieved-source list, collapsed behind "More"
- *   action bar           copy · rate · listen · regenerate
+ *   📁 Read files ›      one muted activity line — live backend status while streaming;
+ *                        click to expand the reasoning steps and every source used
+ *   markdown body        the answer itself (typography: `.chat-md` in index.css)
+ *   action bar           copy, with rate · listen · regenerate on hover
  *   follow-ups           clickable "what next" chips, once the reply has settled
  *
  * Every section is driven by data the backend genuinely emits. Sections with no
@@ -167,7 +164,6 @@ export default function AssistantReply({
   onQuote,
   onRevealDone,
 }: AssistantReplyProps) {
-  const [showAllSources, setShowAllSources] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
 
   // Floating "Reply" affordance for a text selection inside this reply.
@@ -214,7 +210,6 @@ export default function AssistantReply({
   }, [streaming, revealed, content, onRevealDone]);
 
   const sources = useMemo(() => distinctSources(citations), [citations]);
-  const visibleSources = showAllSources ? sources : sources.slice(0, 3);
   const hasReasoning = steps.length > 0 || streaming;
 
   // Detect specific examination with strict gating — never trigger on greetings or casual pleasantries
@@ -362,27 +357,35 @@ export default function AssistantReply({
   const [showDetails, setShowDetails] = useState(false);
 
   return (
-    <div className="flex flex-col w-full text-neutral-800 dark:text-neutral-100">
-      {/* ── Step / Tool Indicator: exact "📁 Read files" styling ─────────────── */}
-      {(hasReasoning || sources.length > 0 || (streaming && statusMessage)) && (
-        <div className="mb-2.5">
+    <div className="flex flex-col w-full">
+      {/* ── Activity line: the reference's "📁 Read files" row ─────────────────
+          Measured at 14px text / 16px icon in #767778, 28px tall, 13px above the answer.
+          While streaming it carries the live backend status; click for the steps + sources. */}
+      {(hasReasoning || sources.length > 0) && (
+        <div className={cn('flex flex-col items-start', content ? 'mb-[13px]' : 'mb-1')}>
           <button
             onClick={() => setShowDetails((prev) => !prev)}
-            className="inline-flex items-center gap-1.5 text-[12.5px] font-normal text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors cursor-pointer select-none group"
+            className="group inline-flex items-center gap-1.5 h-7 max-w-full text-[14px] text-[#767778] hover:text-[#1a1c1f] dark:text-[#9a9b9d] dark:hover:text-white transition-colors cursor-pointer select-none"
           >
-            <Folder className="w-3.5 h-3.5 text-neutral-400 group-hover:text-neutral-600 dark:text-neutral-500 dark:group-hover:text-neutral-300" strokeWidth={1.8} />
-            <span>
-              {streaming && statusMessage
-                ? statusMessage
+            {sources.length > 0 || streaming
+              ? <FolderClosed className="w-4 h-4 shrink-0" strokeWidth={1.75} />
+              : <Brain className="w-4 h-4 shrink-0" strokeWidth={1.75} />}
+            <span className={cn('truncate', streaming && 'chat-shimmer')}>
+              {streaming
+                ? statusMessage || 'Thinking'
                 : sources.length > 0
                   ? 'Read files'
-                  : 'Read files'}
+                  : 'Thought'}
             </span>
+            <ChevronRight
+              className={cn('w-3.5 h-3.5 shrink-0 opacity-0 group-hover:opacity-100 transition-all', showDetails && 'rotate-90 opacity-100')}
+              strokeWidth={2}
+            />
           </button>
 
-          {/* Expandable details when user clicks "Read files" */}
+          {/* Expandable details: the reasoning steps, then every source the answer drew on. */}
           {showDetails && (
-            <div className="mt-2 pl-3.5 border-l border-neutral-200 dark:border-neutral-800 space-y-2">
+            <div className="self-stretch mt-1 mb-1 ml-[7px] pl-3 border-l border-[#ececec] dark:border-white/10 space-y-2">
               {hasReasoning && (
                 <ReasoningTimeline
                   steps={steps}
@@ -394,16 +397,25 @@ export default function AssistantReply({
                 />
               )}
               {sources.length > 0 && (
-                <div className="flex items-center flex-wrap gap-1.5 pt-1">
+                <div className="flex flex-col gap-1">
                   {sources.map((s) => (
-                    <span
+                    <div
                       key={s.source}
                       title={s.selectionReasoning || s.source}
-                      className="inline-flex items-center gap-1.5 max-w-[200px] px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-[11.5px] font-medium"
+                      className="flex items-center gap-2 min-w-0 text-[13px] text-[#5d5e60] dark:text-[#a5a6a8]"
                     >
-                      <SourceIcon source={s.source} className="w-3 h-3 shrink-0" />
-                      <span className="truncate">{sourceLabel(s.source)}</span>
-                    </span>
+                      <SourceIcon source={s.source} className="w-3.5 h-3.5 shrink-0 text-[#8e8f90]" />
+                      {isUrl(s.source) ? (
+                        <a href={s.source} target="_blank" rel="noopener noreferrer" className="truncate hover:underline">
+                          {sourceLabel(s.source)}
+                        </a>
+                      ) : (
+                        <span className="truncate">{sourceLabel(s.source)}</span>
+                      )}
+                      {typeof s.pageNumber === 'number' && (
+                        <span className="text-[12px] text-[#8e8f90] shrink-0">p.{s.pageNumber}</span>
+                      )}
+                    </div>
                   ))}
                 </div>
               )}
@@ -412,18 +424,11 @@ export default function AssistantReply({
         </div>
       )}
 
-      {/* ── Live status line ────────────────────────────────────────────────── */}
-      {streaming && statusMessage && (
-        <div className="flex items-center gap-2 mb-2.5 text-[13px] text-neutral-500 dark:text-neutral-400">
-          <span className="w-3.5 h-3.5 rounded-full border-2 border-neutral-300 dark:border-neutral-700 border-t-neutral-800 dark:border-t-neutral-200 animate-spin shrink-0" />
-          <span className="truncate">{statusMessage}</span>
-        </div>
-      )}
-
       {/* ── Answer body ─────────────────────────────────────────────────────── */}
       <div ref={bodyRef} className="relative min-w-0 max-w-full break-words" onMouseUp={handleSelection}>
         {!content && streaming ? null : (
-          <div className="font-answer text-[14px] leading-[1.6] mb-2 text-neutral-800 dark:text-neutral-100 max-w-none w-full min-w-0 break-words">
+          // Typography lives in `.chat-md` (index.css), measured against the reference.
+          <div className="chat-md w-full min-w-0">
             <MarkdownMessage content={revealed} />
             {streaming && <span className="inline-block w-1.5 h-3.5 ml-1 bg-neutral-400 animate-pulse align-middle" />}
           </div>
@@ -443,7 +448,7 @@ export default function AssistantReply({
                 setSelection(null);
                 window.getSelection()?.removeAllRanges();
               }}
-              className="absolute z-30 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[12.5px] font-medium shadow-lg transition-colors"
+              className="absolute z-30 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#1a1c1f] hover:bg-black text-white text-[13px] font-medium shadow-lg transition-colors"
             >
               <Quote className="w-3.5 h-3.5" strokeWidth={2} />
               Reply
@@ -466,50 +471,16 @@ export default function AssistantReply({
         )}
       </AnimatePresence>
 
-      {/* ── N results ───────────────────────────────────────────────────────── */}
-      {sources.length > 0 && (
-        <div className="mb-3">
-          <div className="text-[11.5px] text-slate-400 dark:text-gray-500 mb-1.5">
-            {citations.length} {citations.length === 1 ? 'result' : 'results'}
-          </div>
-          <div className="space-y-0.5">
-            {visibleSources.map((s) => (
-              <div
-                key={s.source}
-                title={s.selectionReasoning || undefined}
-                className="flex items-center gap-2 text-[13px] text-slate-600 dark:text-gray-300 py-0.5 group"
-              >
-                <SourceIcon source={s.source} className="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-gray-500" />
-                <span className="truncate underline decoration-slate-200 dark:decoration-white/15 underline-offset-[3px] group-hover:decoration-slate-400 dark:group-hover:decoration-white/40 transition-colors">
-                  {sourceLabel(s.source)}
-                </span>
-                {typeof s.pageNumber === 'number' && (
-                  <span className="text-[11px] text-slate-400 dark:text-gray-500 shrink-0">p.{s.pageNumber}</span>
-                )}
-              </div>
-            ))}
-          </div>
-          {sources.length > 3 && (
-            <button
-              onClick={() => setShowAllSources((v) => !v)}
-              className="mt-1.5 inline-flex items-center gap-1.5 text-[12.5px] text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-200 transition-colors"
-            >
-              <ChevronsUpDown className="w-3.5 h-3.5" strokeWidth={1.75} />
-              {showAllSources ? 'Less' : 'More'}
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* ── Action bar: exact minimalist copy icon ───────────────────────── */}
+      {/* ── Action bar: the reference's lone copy icon (15px, #8e8f90, directly under the
+          text); the other actions appear on hover. ──────────────────────────────────── */}
       {!streaming && content && (
-        <div className="group/actions flex items-center gap-1.5 text-neutral-400 dark:text-neutral-500 mt-1">
+        <div className="group/actions flex items-center gap-0.5 text-[#8e8f90] dark:text-[#8b8c8e] mt-1">
           <button
             onClick={onCopy}
-            className="p-1 -ml-1 rounded hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors cursor-pointer"
+            className="p-1 -ml-0.5 rounded-md hover:bg-[#f2f3f5] dark:hover:bg-white/5 hover:text-[#1a1c1f] dark:hover:text-white transition-colors cursor-pointer"
             title="Copy"
           >
-            {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" strokeWidth={1.6} />}
+            {copied ? <Check className="w-[15px] h-[15px] text-emerald-500" /> : <Copy className="w-[15px] h-[15px]" strokeWidth={1.75} />}
           </button>
 
           {/* Secondary actions softly accessible on hover */}
@@ -518,48 +489,48 @@ export default function AssistantReply({
               onClick={() => onRate?.('thumbs_up')}
               disabled={!onRate}
               className={cn(
-                'p-1 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
+                'p-1 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
                 rating === 'thumbs_up'
                   ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
-                  : 'hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-700 dark:hover:text-neutral-200'
+                  : 'hover:bg-[#f2f3f5] dark:hover:bg-white/5 hover:text-[#1a1c1f] dark:hover:text-white'
               )}
               title={onRate ? 'Good response' : 'Rating available once saved'}
             >
-              <ThumbsUp className="w-3.5 h-3.5" strokeWidth={1.6} />
+              <ThumbsUp className="w-[15px] h-[15px]" strokeWidth={1.75} />
             </button>
 
             <button
               onClick={() => onRate?.('thumbs_down')}
               disabled={!onRate}
               className={cn(
-                'p-1 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
+                'p-1 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
                 rating === 'thumbs_down'
                   ? 'text-red-500 bg-red-50 dark:bg-red-500/10'
-                  : 'hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-700 dark:hover:text-neutral-200'
+                  : 'hover:bg-[#f2f3f5] dark:hover:bg-white/5 hover:text-[#1a1c1f] dark:hover:text-white'
               )}
               title={onRate ? 'Bad response' : 'Rating available once saved'}
             >
-              <ThumbsDown className="w-3.5 h-3.5" strokeWidth={1.6} />
+              <ThumbsDown className="w-[15px] h-[15px]" strokeWidth={1.75} />
             </button>
 
             <button
               onClick={onSpeak}
               className={cn(
-                'p-1 rounded hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors',
+                'p-1 rounded-md hover:bg-[#f2f3f5] dark:hover:bg-white/5 hover:text-[#1a1c1f] dark:hover:text-white transition-colors',
                 speaking && 'text-blue-500'
               )}
               title={speaking ? 'Stop' : 'Read aloud'}
             >
-              {speaking ? <VolumeX className="w-3.5 h-3.5" strokeWidth={1.6} /> : <Volume2 className="w-3.5 h-3.5" strokeWidth={1.6} />}
+              {speaking ? <VolumeX className="w-[15px] h-[15px]" strokeWidth={1.75} /> : <Volume2 className="w-[15px] h-[15px]" strokeWidth={1.75} />}
             </button>
 
             {onRegenerate && (
               <button
                 onClick={onRegenerate}
-                className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors"
+                className="p-1 rounded-md hover:bg-[#f2f3f5] dark:hover:bg-white/5 hover:text-[#1a1c1f] dark:hover:text-white transition-colors"
                 title="Regenerate response"
               >
-                <RefreshCw className="w-3.5 h-3.5" strokeWidth={1.6} />
+                <RefreshCw className="w-[15px] h-[15px]" strokeWidth={1.75} />
               </button>
             )}
           </div>
@@ -573,9 +544,8 @@ export default function AssistantReply({
             <button
               key={i}
               onClick={() => onSuggestionClick?.(s)}
-              className="inline-flex items-center gap-1.5 max-w-full px-2.5 py-1 rounded-md bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-gray-300 text-[12.5px] font-medium hover:bg-slate-200 dark:hover:bg-white/[0.1] hover:text-slate-800 dark:hover:text-gray-100 transition-colors text-left"
+              className="inline-flex items-center max-w-full h-7 px-3 rounded-full border border-[#ececec] dark:border-white/10 text-[13px] text-[#1a1c1f] dark:text-[#e6e7e9] hover:bg-[#f5f5f6] dark:hover:bg-white/[0.06] transition-colors text-left"
             >
-              <Sparkles className="w-3.5 h-3.5 shrink-0 text-indigo-500" strokeWidth={1.75} />
               <span className="truncate">{s}</span>
             </button>
           ))}

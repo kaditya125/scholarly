@@ -1031,11 +1031,12 @@ export default function Chat() {
     // Full-bleed conversation surface: no card wrapper, no page-local history rail.
     // Chat history lives in the AppLayout sidebar's "Recent" section, and AppLayout
     // drops its own top header on /chat so this owns the full viewport.
-    <div className="flex h-full w-full relative overflow-hidden">
+    // chat-type: the reference's system UI font (Segoe UI on Windows) with normal tracking.
+    <div className="chat-type flex h-full w-full relative overflow-hidden">
 
-      {/* Main Chat Area */}
+      {/* Main Chat Area — white, like the reference, instead of the app's tinted page colour */}
       <div
-        className="flex-1 min-w-0 flex flex-col relative bg-transparent transition-all duration-300"
+        className="flex-1 min-w-0 flex flex-col relative bg-white dark:bg-transparent transition-all duration-300"
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
@@ -1287,7 +1288,7 @@ export default function Chat() {
             onScroll={handleMessagesScroll}
             className="flex-1 min-h-0 h-full overflow-y-auto overflow-x-hidden overscroll-y-contain pb-36 px-3 sm:px-4 md:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] touch-pan-y w-full"
           >
-            <div className="flex flex-col gap-6 py-6 border-none w-full max-w-3xl mx-auto min-w-0">
+            <div className="flex flex-col gap-[34px] py-6 border-none w-full max-w-[736px] mx-auto min-w-0">
               {messages.map((msg, i) => (
                 <div key={i} className={cn("flex w-full", msg.role === 'user' ? "justify-end" : "justify-start")}>
                   {msg.role === 'user' ? (
@@ -1310,7 +1311,7 @@ export default function Chat() {
                           }}
                           autoFocus
                           rows={2}
-                          className="w-full bg-[#1e1e1e] dark:bg-[#1a1a1b] text-slate-100 dark:text-gray-200 px-4 py-2.5 rounded-2xl text-[15px] outline-none ring-2 ring-indigo-500 resize-none"
+                          className="w-full bg-white dark:bg-[#1e1e20] text-[#1a1c1f] dark:text-[#e6e7e9] border border-[#ececec] dark:border-white/10 px-4 py-2.5 rounded-[18px] text-[16px] sm:text-[14px] leading-[1.625] outline-none ring-2 ring-[#2563eb]/35 resize-none"
                         />
                         <div className="flex items-center gap-2">
                           <button
@@ -1326,7 +1327,7 @@ export default function Chat() {
                               setEditingIndex(null);
                               sendAIRequest(editingText.trim(), []);
                             }}
-                            className="px-3 py-1 rounded-lg text-[12.5px] font-medium bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+                            className="px-3 py-1 rounded-full text-[13px] font-medium bg-[#2563eb] hover:bg-[#1d4ed8] text-white transition-colors"
                           >
                             Save &amp; submit
                           </button>
@@ -1375,8 +1376,9 @@ export default function Chat() {
                           >
                             <Pencil className="w-3.5 h-3.5" strokeWidth={1.75} />
                           </button>
-                          {/* Exact reference user bubble: soft light blue tint, 14px font, rounded-2xl */}
-                          <div className="bg-[#eff4fe] text-[#1e293b] dark:bg-[#1e293b]/70 dark:text-[#93c5fd] border border-blue-100/50 dark:border-blue-500/10 px-4 py-2 sm:px-4.5 sm:py-2.5 rounded-2xl text-[13.5px] sm:text-[14px] leading-[1.5] whitespace-pre-wrap shadow-none">
+                          {/* Reference user bubble, measured: #eaf3fd / #132647, 16×10 padding,
+                              18px radius, 14px on a 1.625 line (15px on phones, like the answer). */}
+                          <div className="bg-[#eaf3fd] text-[#132647] dark:bg-[#1d2a3f] dark:text-[#dbe7fb] px-4 py-2.5 rounded-[18px] text-[15px] sm:text-[14px] leading-[1.625] whitespace-pre-wrap break-words">
                             {msg.content}
                           </div>
                         </div>
@@ -1461,42 +1463,41 @@ export default function Chat() {
 
         {/* Input & Controls — exact reference bottom layout */}
         <div className="absolute bottom-3 left-0 right-0 flex flex-col items-center px-3 sm:px-4 md:px-8 pointer-events-none z-20">
-          <div className="w-full max-w-[760px] flex flex-col pointer-events-auto">
+          {/* Same 736px column as the thread; banner, chip and composer measured from the reference. */}
+          <div className="w-full max-w-[736px] flex flex-col pointer-events-auto">
 
             {/* Quota / Consumption Card: ONLY rendered when credits are consumed or plan has expired */}
             {(!isPro && (usage?.chat?.remaining ?? 0) <= 0) && (
-              <div className="w-full mb-2.5 border border-neutral-200/90 dark:border-neutral-800 rounded-2xl bg-white dark:bg-[#141416] p-3 px-4 sm:px-5 flex items-center justify-between gap-3 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-                <div className="flex items-center gap-3 min-w-0">
-                  <CircleGauge className="w-4 h-4 text-neutral-700 dark:text-neutral-300 shrink-0" strokeWidth={1.75} />
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-[13px] font-semibold text-neutral-900 dark:text-white leading-tight truncate">
-                      You've reached your free AI Chat message limit
-                    </span>
-                    <span className="text-[12px] text-neutral-500 dark:text-neutral-400 leading-tight truncate mt-0.5">
-                      Upgrade to Sadhya Pro for unlimited access, or wait for usage to reset on {new Date(resetsAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}, 2:22 AM
-                    </span>
-                  </div>
+              <div className="w-full mb-[7px] border border-[#eaeaea] dark:border-white/10 rounded-[18px] bg-white dark:bg-[#1e1e20] py-4 pl-5 pr-3 flex items-center gap-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+                <CircleGauge className="w-4 h-4 text-[#1a1c1f] dark:text-[#e6e7e9] shrink-0" strokeWidth={1.75} />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[13px] font-bold leading-5 text-[#1a1c1f] dark:text-white truncate">
+                    You've reached your free AI Chat message limit
+                  </span>
+                  <span className="text-[13px] leading-5 text-[#8e8f90] truncate">
+                    Upgrade for more now, or wait for usage to reset on {new Date(resetsAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                  </span>
                 </div>
                 <button
                   type="button"
                   onClick={() => { setUpgradeSource('chat_limit'); setIsUpgradeModalOpen(true); }}
-                  className="px-4 py-1.5 rounded-full bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-neutral-900 text-[12px] font-medium transition-all shrink-0 cursor-pointer shadow-2xs"
+                  className="ml-auto h-6 px-2 rounded-full bg-[#1a1c1f] hover:bg-black dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-[#1a1c1f] text-[13px] font-semibold transition-colors shrink-0 cursor-pointer"
                 >
                   Upgrade
                 </button>
               </div>
             )}
 
-            {/* Model / Scope Selector: "☁ Cloud ⌵" placed directly above the composer on the left */}
-            <div className="flex items-center justify-between px-1 mb-1.5">
+            {/* Model / Scope Selector: "☁ Cloud ⌵" directly above the composer on the left */}
+            <div className="flex items-center h-7 pl-[18px] mb-2">
               <div className="relative">
                 <button
                   onClick={() => setIsScopeOpen(!isScopeOpen)}
-                  className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 h-7 text-[14px] text-[#1a1c1f] hover:text-black dark:text-[#e6e7e9] dark:hover:text-white transition-colors cursor-pointer"
                 >
-                  <Cloud className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" strokeWidth={1.75} />
-                  <span>{scope.kind === 'notebook' ? (scope.title || 'Notebook') : scope.kind === 'web' ? 'All Web' : 'Cloud'}</span>
-                  <ChevronDown className="w-3 h-3 text-neutral-400" strokeWidth={2} />
+                  <Cloud className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
+                  <span className="truncate max-w-[220px]">{scope.kind === 'notebook' ? (scope.title || 'Notebook') : scope.kind === 'web' ? 'All Web' : 'Cloud'}</span>
+                  <ChevronDown className="w-4 h-4 shrink-0" strokeWidth={2} />
                 </button>
 
                 {isScopeOpen && (
@@ -1559,10 +1560,12 @@ export default function Chat() {
             </div>
 
             {/* Input Box / Composer */}
-            <div className="w-full bg-white dark:bg-[#141416] border border-neutral-200/90 dark:border-neutral-800 rounded-2xl sm:rounded-[20px] p-3 sm:p-3.5 shadow-xs transition-all focus-within:border-neutral-300 dark:focus-within:border-neutral-700 focus-within:shadow-sm">
+            {/* Measured: 100px tall when empty, 22px radius, #ececec border, a tight shadow under
+                the edge plus a wide faint one. */}
+            <div className="w-full flex flex-col bg-white dark:bg-[#1e1e20] border border-[#ececec] dark:border-white/10 rounded-[22px] shadow-[0_2px_6px_-1px_rgba(0,0,0,0.07),0_6px_48px_rgba(0,0,0,0.03)] transition-colors focus-within:border-[#dcdcdd] dark:focus-within:border-white/20">
               {/* Attachment Preview Chips */}
               {(attachments.length > 0 || isUploadingFile) && (
-                <div className="flex flex-wrap gap-2 pb-2">
+                <div className="flex flex-wrap gap-2 px-3 pt-3">
                   {attachments.map((att, i) => (
                     <div
                       key={i}
@@ -1590,14 +1593,15 @@ export default function Chat() {
               )}
 
               {/* Textarea with contextual ghost template prompt suggestion */}
-              <div className="relative w-full min-h-[46px]">
+              {/* 16px on phones so iOS doesn't zoom the page on focus; 14px from sm: up. */}
+              <div className="relative w-full">
                 {!input && activeGhostPrompt && (
                   <div
                     onClick={() => {
                       setInput(activeGhostPrompt);
                       textareaRef.current?.focus();
                     }}
-                    className="absolute inset-0 pointer-events-auto cursor-text flex items-start justify-between text-[14px] leading-relaxed select-none text-neutral-400 dark:text-neutral-500 overflow-hidden pr-2 z-0 pt-0.5"
+                    className="absolute inset-0 pointer-events-auto cursor-text flex items-start justify-between gap-2 px-3 pt-3.5 text-[16px] sm:text-[14px] leading-[1.625] select-none text-[#b4b5b7] dark:text-neutral-500 overflow-hidden z-0"
                   >
                     <span className="truncate max-w-[calc(100%-80px)]">{activeGhostPrompt}</span>
                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 shrink-0 border border-neutral-200/80 dark:border-neutral-700/80 shadow-2xs">
@@ -1623,14 +1627,14 @@ export default function Chat() {
                   }}
                   placeholder={activeGhostPrompt ? '' : 'Do anything'}
                   maxLength={MAX_CHARS}
-                  className="relative z-10 w-full bg-transparent text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 px-0 pt-0 pb-2 min-h-[46px] max-h-[180px] overflow-y-auto outline-none resize-none text-[14px] leading-relaxed break-words"
+                  className="relative z-10 block w-full bg-transparent text-[#1a1c1f] dark:text-white placeholder:text-[#c7c7c8] dark:placeholder:text-neutral-500 px-3 pt-3.5 pb-0 min-h-[50px] max-h-[200px] overflow-y-auto outline-none resize-none text-[16px] sm:text-[14px] leading-[1.625] break-words"
                   rows={1}
                   disabled={loadingHistory}
                 />
               </div>
 
               {/* Bottom Toolbar: Plus on left, Voice + Mic + Send Button on right */}
-              <div className="flex items-center justify-between pt-1">
+              <div className="flex items-center justify-between px-2 pt-3 pb-2">
                 <div className="flex items-center gap-1">
                   <input 
                     type="file" 
@@ -1643,10 +1647,10 @@ export default function Chat() {
                   <div className="relative">
                     <button
                       onClick={() => setIsAttachmentDropdownOpen(!isAttachmentDropdownOpen)}
-                      className="w-7 h-7 flex items-center justify-center text-neutral-700 hover:text-neutral-950 dark:text-neutral-300 dark:hover:text-white rounded-md hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                      className="w-7 h-7 flex items-center justify-center text-[#1a1c1f] dark:text-[#e6e7e9] rounded-full hover:bg-[#f2f3f5] dark:hover:bg-white/10 transition-colors cursor-pointer"
                       title="Attach context, document, image or code"
                     >
-                      <Plus className="w-4 h-4" strokeWidth={2} />
+                      <Plus className="w-5 h-5" strokeWidth={1.75} />
                     </button>
 
                     {isAttachmentDropdownOpen && (
@@ -1683,47 +1687,49 @@ export default function Chat() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 sm:gap-2">
+                {/* Mic sits 8px left of send, both 28px, as measured. */}
+                <div className="flex items-center gap-2">
                   {/* Spoken Voice Mode */}
                   <button
                     onClick={() => setIsVoiceOpen(true)}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[12px] font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+                    className="inline-flex items-center gap-1 h-7 px-2 rounded-full text-[13px] text-[#5d5e60] hover:text-[#1a1c1f] dark:text-neutral-300 dark:hover:text-white hover:bg-[#f2f3f5] dark:hover:bg-white/10 transition-colors cursor-pointer shrink-0"
                     title="Talk to Sadhya — live voice conversation"
                     aria-label="Start voice conversation"
                   >
-                    <AudioLines className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" strokeWidth={2} />
+                    <AudioLines className="w-4 h-4" strokeWidth={1.75} />
                     <span className="hidden sm:inline">Voice</span>
                   </button>
 
                   <button
                     onClick={handleTalk}
                     className={cn(
-                      'w-7 h-7 flex items-center justify-center rounded-md transition-colors cursor-pointer shrink-0',
+                      'w-7 h-7 flex items-center justify-center rounded-full transition-colors cursor-pointer shrink-0',
                       isListening
                         ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 animate-pulse'
-                        : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/5'
+                        : 'text-[#1a1c1f] dark:text-[#e6e7e9] hover:bg-[#f2f3f5] dark:hover:bg-white/10'
                     )}
                     title={isListening ? 'Listening...' : 'Dictate'}
                   >
-                    <Mic className="w-4 h-4" strokeWidth={1.8} />
+                    <Mic className="w-[17px] h-[17px]" strokeWidth={1.75} />
                   </button>
 
                   {stream.isStreaming ? (
                     <button
                       onClick={() => stream.cancelStream()}
-                      className="w-7 h-7 rounded-full bg-neutral-800 hover:bg-neutral-900 flex items-center justify-center text-white transition-all cursor-pointer shadow-xs shrink-0"
+                      className="w-7 h-7 rounded-full bg-[#1a1c1f] hover:bg-black dark:bg-white dark:hover:bg-neutral-200 flex items-center justify-center text-white dark:text-[#1a1c1f] transition-colors cursor-pointer shrink-0"
                       title="Stop generating"
                     >
-                      <Square className="w-2.5 h-2.5 fill-white text-white" strokeWidth={0} />
+                      <Square className="w-2.5 h-2.5 fill-current" strokeWidth={0} />
                     </button>
                   ) : (
+                    // #2563eb at 40% is exactly the reference's idle #a6c0f7.
                     <button
                       onClick={handleSend}
                       disabled={(!input.trim() && attachments.length === 0) || loadingHistory}
-                      className="w-7 h-7 rounded-full bg-[#93b4ff] hover:bg-[#7ea6ff] active:scale-95 text-white disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-all cursor-pointer shadow-xs shrink-0"
+                      className="w-7 h-7 rounded-full bg-[#2563eb] hover:bg-[#1d4ed8] active:scale-95 text-white disabled:opacity-40 disabled:hover:bg-[#2563eb] disabled:cursor-not-allowed flex items-center justify-center transition-all cursor-pointer shrink-0"
                       title="Send"
                     >
-                      <CloudUpload className="w-3.5 h-3.5" strokeWidth={2.2} />
+                      <CloudUpload className="w-4 h-4" strokeWidth={2} />
                     </button>
                   )}
                 </div>
