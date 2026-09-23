@@ -209,7 +209,10 @@ export class EventBus extends EventEmitter {
   }
 
   private async initRedisPubSub() {
-    if (process.env.NODE_ENV === 'test' || !env.REDIS_URL) {
+    // EVENTBUS_LOCAL_ONLY: the deploy standby instance (ecosystem.config.js) runs next to the main
+    // one for a few seconds. Subscribing too would make both handle every event; locally it still
+    // dispatches its own events once and enqueues BullMQ jobs through REDIS_URL as usual.
+    if (process.env.NODE_ENV === 'test' || !env.REDIS_URL || process.env.EVENTBUS_LOCAL_ONLY === 'true') {
       return;
     }
     const redisUrl = env.REDIS_URL;
