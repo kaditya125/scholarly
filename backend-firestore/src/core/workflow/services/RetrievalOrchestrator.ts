@@ -121,27 +121,50 @@ export class RetrievalOrchestrator {
     plan: QueryPlan,
     execPlan?: ExecutionPlan,
   ): AsyncGenerator<WorkflowEvent, RetrievalOutcome, unknown> {
-    // ── Stage 5: Vector Retrieval (RAG) ────────────────────────────────
-    yield { type: 'progress', stage: WorkflowStage.RAG_RETRIEVAL, message: 'Searching memory and the web...' };
     const retrievalStartTime = Date.now();
-    let contextStr = '';
-    // Declared here rather than beside the vector branch: the canonical branch below runs first
-    // and emits its own citations.
-    const citationsList: any[] = [];
-
     const { needsWebSearch, hasAttachment, isConversational } = plan;
 
     if (isConversational) {
       logger.info('[RetrievalOrchestrator] Conversational / capability query — skipping textbook & curriculum retrieval', {
         query: req.query,
       });
+      yield { type: 'progress', stage: WorkflowStage.RAG_RETRIEVAL, message: 'Thinking...' };
+      agentContext.retrievedContext = '';
+      const conversationalTrace: RetrievalTrace = {
+        intent: 'CONVERSATIONAL',
+        examId: null,
+        year: null,
+        shift: null,
+        paper: null,
+        topic: null,
+        strategy: 'conversational',
+        canonicalLookupRan: false,
+        canonicalStatus: null,
+        canonicalPaperId: null,
+        canonicalRecords: 0,
+        expectedRecords: null,
+        vectorSearchRan: false,
+        vectorHits: 0,
+        notebookSearchRan: false,
+        webSearchRan: false,
+        contextChars: 0,
+        groundingState: 'GENERAL_KNOWLEDGE',
+        timings: { intentParse: 0, canonicalLookup: 0, vectorSearch: 0, contextBuild: 0, totalRetrieval: Date.now() - retrievalStartTime },
+      };
       return {
         citationsList: [],
-        retrievalLatencyMs: 0,
-        groundingState: 'GENERAL',
-        trace,
+        retrievalLatencyMs: Date.now() - retrievalStartTime,
+        groundingState: 'GENERAL_KNOWLEDGE',
+        trace: conversationalTrace,
       };
     }
+
+    // ── Stage 5: Vector Retrieval (RAG) ────────────────────────────────
+    yield { type: 'progress', stage: WorkflowStage.RAG_RETRIEVAL, message: 'Searching memory and the web...' };
+    let contextStr = '';
+    // Declared here rather than beside the vector branch: the canonical branch below runs first
+    // and emits its own citations.
+    const citationsList: any[] = [];
 
     // Adaptive retrieval routing (Increment 2), sub-flag default OFF. When OFF (or no plan) the
     // strategy is 'graphrag' → identical to today's pipeline. When ON, the Intelligence Layer's

@@ -27,7 +27,7 @@ export class QueryPlanningService {
     const hasAttachment = /\[File Attached:/i.test(query);
 
     const isConversational =
-      /^(what\s*can\s*you\s*do|how\s*can\s*you\s*help|what\s*do\s*you\s*do|what\s*are\s*your\s*features|who\s*are\s*you|tell\s*me\s*about\s*yourself|what\s*is\s*sadhya|hello|hi|hey|greetings|help|guide\s*me|can\s*you\s*help|thank\s*you|thanks|bye|goodbye)\b/i.test(queryLower);
+      /^(what\s*can\s*you\s*do|how\s*can\s*you\s*help|what\s*do\s*you\s*do|what\s*are\s*you|what\s*are\s*your\s*features|who\s*are\s*you|who\s*made\s*you|what\s*is\s*your\s*name|tell\s*me\s*about\s*yourself|what\s*is\s*sadhya|how\s*does\s*this\s*work|how\s*do\s*you\s*work|hello|hi|hey|greetings|help|guide\s*me|can\s*you\s*help|thank\s*you|thanks|bye|goodbye)\b/i.test(queryLower);
 
     return { needsWebSearch, hasAttachment, isConversational };
   }
