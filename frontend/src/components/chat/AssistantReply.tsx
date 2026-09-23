@@ -420,7 +420,7 @@ export default function AssistantReply({
       {/* ── Answer body ─────────────────────────────────────────────────────── */}
       <div ref={bodyRef} className="relative min-w-0 max-w-full break-words" onMouseUp={handleSelection}>
         {!content && streaming ? null : (
-          <div className="font-answer text-[14px] leading-[1.6] mb-2 text-neutral-800 dark:text-neutral-200 max-w-none w-full min-w-0 break-words">
+          <div className="font-answer text-[14px] leading-[1.6] mb-2 text-neutral-800 dark:text-neutral-100 max-w-none w-full min-w-0 break-words">
             <MarkdownMessage content={revealed} />
             {streaming && <span className="inline-block w-1.5 h-3.5 ml-1 bg-neutral-400 animate-pulse align-middle" />}
           </div>

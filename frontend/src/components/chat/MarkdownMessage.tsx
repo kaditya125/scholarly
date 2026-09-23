@@ -241,25 +241,25 @@ const markdownComponents: any = {
     return <input {...props} />;
   },
   p(props: any) {
-    return <p className="my-2.5 text-[14px] leading-[1.6] text-neutral-800 dark:text-neutral-200">{props.children}</p>;
+    return <p className="my-2 text-[14px] leading-[1.6] text-neutral-800 dark:text-neutral-100">{props.children}</p>;
   },
   ul(props: any) {
     return (
-      <ul className="my-2 space-y-1.5 pl-5 list-disc marker:text-neutral-800 dark:marker:text-neutral-300 text-[14px] leading-[1.6] text-neutral-800 dark:text-neutral-200">
+      <ul className="my-1.5 space-y-1 pl-5 list-disc marker:text-neutral-800 dark:marker:text-neutral-300 text-[14px] leading-[1.6] text-neutral-800 dark:text-neutral-100">
         {props.children}
       </ul>
     );
   },
   ol(props: any) {
     return (
-      <ol className="my-2 space-y-1.5 pl-5 list-decimal marker:text-neutral-800 dark:marker:text-neutral-300 text-[14px] leading-[1.6] text-neutral-800 dark:text-neutral-200">
+      <ol className="my-1.5 space-y-1 pl-5 list-decimal marker:text-neutral-800 dark:marker:text-neutral-300 text-[14px] leading-[1.6] text-neutral-800 dark:text-neutral-100">
         {props.children}
       </ol>
     );
   },
   li(props: any) {
     return (
-      <li className="text-[14px] leading-[1.6] text-neutral-800 dark:text-neutral-200 pl-0.5">
+      <li className="text-[14px] leading-[1.6] text-neutral-800 dark:text-neutral-100 pl-0.5">
         {props.children}
       </li>
     );

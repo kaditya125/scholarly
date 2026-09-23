@@ -297,6 +297,68 @@ export default function Chat() {
     el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
   }, [input]);
 
+  // ─── Dynamic Contextual Autocomplete Suggestions ───────────────────────────
+  // Automatically computes smart next queries based on the conversation history
+  const contextualSuggestions = useMemo<string[]>(() => {
+    // 1. If the latest AI message provided explicit follow-up suggestions, prioritize them
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.role === 'ai' && Array.isArray(m.suggestions) && m.suggestions.length > 0) {
+        return m.suggestions;
+      }
+    }
+    // 2. Suggestions actively streaming from the live model
+    if (stream.suggestions && stream.suggestions.length > 0) {
+      return stream.suggestions;
+    }
+    // 3. If there are prior messages in this conversation, generate intelligent contextual follow-ups
+    if (messages.length > 0) {
+      const lastAi = [...messages].reverse().find(m => m.role === 'ai');
+      if (lastAi?.content) {
+        return [
+          "Can you explain this with practical examples?",
+          "Give me 5 practice questions to test my understanding",
+          "What are the most common exam questions on this?",
+          "Summarize the key takeaways into bullet points"
+        ];
+      }
+    }
+    // 4. Initial template prompts for fresh chats based on exam / mode
+    if (examParam) {
+      return [
+        `Give me a high-yield study plan and key topics for ${examParam}`,
+        `What are the most important previous year topics for ${examParam}?`,
+        `Quiz me on core concepts for ${examParam}`
+      ];
+    }
+    if (typeParam === 'study-guide') {
+      return [
+        "Create a comprehensive study guide with formulas and key concepts",
+        "Summarize core high-yield exam topics"
+      ];
+    }
+    if (typeParam === 'worksheet') {
+      return [
+        "Generate a 10-question practice worksheet with solutions",
+        "Create multiple choice questions on this topic"
+      ];
+    }
+    return [
+      "What can you do for me?",
+      "Create a personalized study roadmap for my preparation",
+      "Explain the fundamental concepts step-by-step"
+    ];
+  }, [messages, stream.suggestions, examParam, typeParam]);
+
+  const [suggestionIndex, setSuggestionIndex] = useState(0);
+
+  // Reset index when messages change to pick the fresh suggestion
+  useEffect(() => {
+    setSuggestionIndex(0);
+  }, [messages.length]);
+
+  const activeGhostPrompt = contextualSuggestions[suggestionIndex % (contextualSuggestions.length || 1)] || '';
+
   // ─── Empty-state prompt cards ──────────────────────────────────────────────
   const activePromptPool = getPromptPoolForType(typeParam, isTeacher);
   const [visiblePrompts, setVisiblePrompts] = useState(() => pickPrompts(activePromptPool));
@@ -998,8 +1060,14 @@ export default function Chat() {
               <Menu className="w-4 h-4" />
             </button>
 
-            <span className="text-[14px] font-medium text-neutral-900 dark:text-neutral-100 tracking-[-0.01em] truncate max-w-[200px] sm:max-w-[400px]">
-              {sessions.find((s) => s.sessionId === currentSessionId)?.title || 'Determine available features'}
+            <span className="text-[14px] font-medium text-neutral-900 dark:text-neutral-100 tracking-[-0.01em] truncate max-w-[180px] sm:max-w-[340px]">
+              {sessions.find((s) => s.sessionId === currentSessionId)?.title || (examParam ? `AI assistance for ${examParam}` : 'Determine available features')}
+            </span>
+
+            {/* Private chat tag */}
+            <span className="hidden sm:inline-flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-white/[0.08] border border-neutral-200/80 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 text-[11px] font-medium select-none">
+              <Lock className="w-3 h-3 text-neutral-400 dark:text-neutral-500" strokeWidth={2} />
+              Private
             </span>
 
             {/* ··· Menu */}
@@ -1039,6 +1107,17 @@ export default function Chat() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {/* Voice Mode header button */}
+            <button
+              onClick={() => setIsVoiceOpen(true)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[12.5px] font-medium text-neutral-700 dark:text-neutral-200 shadow-2xs transition-colors cursor-pointer"
+              title="Voice Mode — live spoken conversation"
+              aria-label="Start voice conversation"
+            >
+              <AudioLines className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" strokeWidth={2} />
+              <span className="hidden sm:inline">Voice</span>
+            </button>
+
             {/* 🌐 Open button */}
             <button
               onClick={() => setIsShareOpen(true)}
@@ -1384,31 +1463,29 @@ export default function Chat() {
         <div className="absolute bottom-3 left-0 right-0 flex flex-col items-center px-3 sm:px-4 md:px-8 pointer-events-none z-20">
           <div className="w-full max-w-[760px] flex flex-col pointer-events-auto">
 
-            {/* Quota / Notification Card: exact reference UI with gauge icon and Upgrade button */}
-            <div className="w-full mb-2.5 border border-neutral-200/90 dark:border-neutral-800 rounded-2xl bg-white dark:bg-[#141416] p-3 px-4 sm:px-5 flex items-center justify-between gap-3 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-              <div className="flex items-center gap-3 min-w-0">
-                <CircleGauge className="w-4 h-4 text-neutral-700 dark:text-neutral-300 shrink-0" strokeWidth={1.75} />
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[13px] font-semibold text-neutral-900 dark:text-white leading-tight truncate">
-                    {!isPro && usage.chat.remaining <= 0
-                      ? "You're out of AI Chat usage"
-                      : "You're out of Codex and Work usage"}
-                  </span>
-                  <span className="text-[12px] text-neutral-500 dark:text-neutral-400 leading-tight truncate mt-0.5">
-                    {!isPro && usage.chat.remaining <= 0
-                      ? `Upgrade for more now, or wait for usage to reset on ${new Date(resetsAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}, 2:22 AM`
-                      : "Upgrade for more now, or wait for usage to reset on Oct 5, 2:22 AM"}
-                  </span>
+            {/* Quota / Consumption Card: ONLY rendered when credits are consumed or plan has expired */}
+            {(!isPro && (usage?.chat?.remaining ?? 0) <= 0) && (
+              <div className="w-full mb-2.5 border border-neutral-200/90 dark:border-neutral-800 rounded-2xl bg-white dark:bg-[#141416] p-3 px-4 sm:px-5 flex items-center justify-between gap-3 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+                <div className="flex items-center gap-3 min-w-0">
+                  <CircleGauge className="w-4 h-4 text-neutral-700 dark:text-neutral-300 shrink-0" strokeWidth={1.75} />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[13px] font-semibold text-neutral-900 dark:text-white leading-tight truncate">
+                      You've reached your free AI Chat message limit
+                    </span>
+                    <span className="text-[12px] text-neutral-500 dark:text-neutral-400 leading-tight truncate mt-0.5">
+                      Upgrade to Sadhya Pro for unlimited access, or wait for usage to reset on {new Date(resetsAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}, 2:22 AM
+                    </span>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => { setUpgradeSource('chat_limit'); setIsUpgradeModalOpen(true); }}
+                  className="px-4 py-1.5 rounded-full bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-neutral-900 text-[12px] font-medium transition-all shrink-0 cursor-pointer shadow-2xs"
+                >
+                  Upgrade
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => { setUpgradeSource('chat_limit'); setIsUpgradeModalOpen(true); }}
-                className="px-4 py-1.5 rounded-full bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-neutral-900 text-[12px] font-medium transition-all shrink-0 cursor-pointer shadow-2xs"
-              >
-                Upgrade
-              </button>
-            </div>
+            )}
 
             {/* Model / Scope Selector: "☁ Cloud ⌵" placed directly above the composer on the left */}
             <div className="flex items-center justify-between px-1 mb-1.5">
@@ -1512,27 +1589,47 @@ export default function Chat() {
                 </div>
               )}
 
-              {/* Textarea: placeholder "Do anything" */}
-              <div className="relative w-full">
+              {/* Textarea with contextual ghost template prompt suggestion */}
+              <div className="relative w-full min-h-[46px]">
+                {!input && activeGhostPrompt && (
+                  <div
+                    onClick={() => {
+                      setInput(activeGhostPrompt);
+                      textareaRef.current?.focus();
+                    }}
+                    className="absolute inset-0 pointer-events-auto cursor-text flex items-start justify-between text-[14px] leading-relaxed select-none text-neutral-400 dark:text-neutral-500 overflow-hidden pr-2 z-0 pt-0.5"
+                  >
+                    <span className="truncate max-w-[calc(100%-80px)]">{activeGhostPrompt}</span>
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 shrink-0 border border-neutral-200/80 dark:border-neutral-700/80 shadow-2xs">
+                      Tab ⇥ or ←
+                    </span>
+                  </div>
+                )}
                 <textarea
                   ref={textareaRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => {
+                    // Fill template prompt on Tab, Left Arrow or Right Arrow
+                    if (!input.trim() && activeGhostPrompt && (e.key === 'Tab' || e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+                      e.preventDefault();
+                      setInput(activeGhostPrompt);
+                      return;
+                    }
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
                       handleSend();
                     }
                   }}
-                  placeholder="Do anything"
+                  placeholder={activeGhostPrompt ? '' : 'Do anything'}
                   maxLength={MAX_CHARS}
-                  className="w-full bg-transparent text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 px-0 pt-0 pb-2 min-h-[46px] max-h-[180px] overflow-y-auto outline-none resize-none text-[14px] leading-relaxed break-words"
+                  className="relative z-10 w-full bg-transparent text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 px-0 pt-0 pb-2 min-h-[46px] max-h-[180px] overflow-y-auto outline-none resize-none text-[14px] leading-relaxed break-words"
                   rows={1}
                   disabled={loadingHistory}
                 />
               </div>
 
-              {/* Bottom Toolbar: Plus on left, Mic + Send Button on right */}
+              {/* Bottom Toolbar: Plus on left, Voice + Mic + Send Button on right */}
               <div className="flex items-center justify-between pt-1">
                 <div className="flex items-center gap-1">
                   <input 
@@ -1586,11 +1683,22 @@ export default function Chat() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  {/* Spoken Voice Mode */}
+                  <button
+                    onClick={() => setIsVoiceOpen(true)}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[12px] font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+                    title="Talk to Sadhya — live voice conversation"
+                    aria-label="Start voice conversation"
+                  >
+                    <AudioLines className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" strokeWidth={2} />
+                    <span className="hidden sm:inline">Voice</span>
+                  </button>
+
                   <button
                     onClick={handleTalk}
                     className={cn(
-                      'w-7 h-7 flex items-center justify-center rounded-md transition-colors cursor-pointer',
+                      'w-7 h-7 flex items-center justify-center rounded-md transition-colors cursor-pointer shrink-0',
                       isListening
                         ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 animate-pulse'
                         : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/5'
@@ -1603,7 +1711,7 @@ export default function Chat() {
                   {stream.isStreaming ? (
                     <button
                       onClick={() => stream.cancelStream()}
-                      className="w-7 h-7 rounded-full bg-neutral-800 hover:bg-neutral-900 flex items-center justify-center text-white transition-all cursor-pointer shadow-xs"
+                      className="w-7 h-7 rounded-full bg-neutral-800 hover:bg-neutral-900 flex items-center justify-center text-white transition-all cursor-pointer shadow-xs shrink-0"
                       title="Stop generating"
                     >
                       <Square className="w-2.5 h-2.5 fill-white text-white" strokeWidth={0} />
@@ -1612,7 +1720,7 @@ export default function Chat() {
                     <button
                       onClick={handleSend}
                       disabled={(!input.trim() && attachments.length === 0) || loadingHistory}
-                      className="w-7 h-7 rounded-full bg-[#93b4ff] hover:bg-[#7ea6ff] active:scale-95 text-white disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-all cursor-pointer shadow-xs"
+                      className="w-7 h-7 rounded-full bg-[#93b4ff] hover:bg-[#7ea6ff] active:scale-95 text-white disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-all cursor-pointer shadow-xs shrink-0"
                       title="Send"
                     >
                       <CloudUpload className="w-3.5 h-3.5" strokeWidth={2.2} />
