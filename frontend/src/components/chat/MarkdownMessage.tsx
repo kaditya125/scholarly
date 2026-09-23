@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, AlertTriangle, Brain, Lightbulb, BookOpen, Info } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import 'katex/dist/katex.min.css';
 // Enables the mhchem extension so chemical equations written as \ce{...} render correctly
@@ -115,22 +115,37 @@ function calloutLabel(node: any): { label: string; labelIndex: number } | null {
   return { label, labelIndex };
 }
 
-const CALLOUT_THEMES: Record<string, { box: string; label: string }> = {
+/**
+ * Callouts get their own face so an aside never reads as more answer text: an icon + small
+ * uppercase label, a 13px body (the answer is 14px), and bold lead-ins ("Subtopics:") in the
+ * callout's accent colour. `accent` sets --callout-accent, which `.chat-callout` in index.css
+ * uses for the label, bold runs and list markers.
+ */
+const CALLOUT_THEMES: Record<string, { box: string; accent: string; Icon: React.ComponentType<any> }> = {
   MISTAKE: {
-    box: 'bg-amber-50/80 dark:bg-amber-500/[0.07] border border-amber-100 dark:border-amber-500/15',
-    label: 'text-amber-700 dark:text-amber-400',
+    box: 'bg-amber-50/70 dark:bg-amber-400/[0.06] border-amber-200/70 dark:border-amber-400/15',
+    accent: '[--callout-accent:#b45309] dark:[--callout-accent:#fbbf24]',
+    Icon: AlertTriangle,
   },
   MEMORY: {
-    box: 'bg-violet-50/80 dark:bg-violet-500/[0.07] border border-violet-100 dark:border-violet-500/15',
-    label: 'text-violet-700 dark:text-violet-400',
+    box: 'bg-violet-50/70 dark:bg-violet-400/[0.06] border-violet-200/70 dark:border-violet-400/15',
+    accent: '[--callout-accent:#6d28d9] dark:[--callout-accent:#c4b5fd]',
+    Icon: Brain,
   },
   TIP: {
-    box: 'bg-emerald-50/80 dark:bg-emerald-500/[0.07] border border-emerald-100 dark:border-emerald-500/15',
-    label: 'text-emerald-700 dark:text-emerald-400',
+    box: 'bg-emerald-50/70 dark:bg-emerald-400/[0.06] border-emerald-200/70 dark:border-emerald-400/15',
+    accent: '[--callout-accent:#047857] dark:[--callout-accent:#6ee7b7]',
+    Icon: Lightbulb,
+  },
+  OFFICIAL: {
+    box: 'bg-blue-50/70 dark:bg-blue-400/[0.06] border-blue-200/70 dark:border-blue-400/15',
+    accent: '[--callout-accent:#1d4ed8] dark:[--callout-accent:#93c5fd]',
+    Icon: BookOpen,
   },
   DEFAULT: {
-    box: 'bg-indigo-50/70 dark:bg-indigo-500/[0.06] border border-indigo-100 dark:border-indigo-500/15',
-    label: 'text-indigo-700 dark:text-indigo-400',
+    box: 'bg-slate-50 dark:bg-white/[0.04] border-slate-200/80 dark:border-white/10',
+    accent: '[--callout-accent:#475569] dark:[--callout-accent:#cbd5e1]',
+    Icon: Info,
   },
 };
 
@@ -138,7 +153,8 @@ function calloutTheme(label: string) {
   const key = label.toUpperCase();
   if (key.includes('MISTAKE') || key.includes('ERROR') || key.includes('WATCH OUT')) return CALLOUT_THEMES.MISTAKE;
   if (key.includes('MEMORY') || key.includes('HOOK') || key.includes('MNEMONIC')) return CALLOUT_THEMES.MEMORY;
-  if (key.includes('TIP') || key.includes('SHORTCUT') || key.includes('STRATEGY')) return CALLOUT_THEMES.TIP;
+  if (key.includes('TIP') || key.includes('SHORTCUT') || key.includes('STRATEGY') || key.includes('PRO')) return CALLOUT_THEMES.TIP;
+  if (key.includes('OFFICIAL') || key.includes('SYLLABUS') || key.includes('TOPIC') || key.includes('PATTERN')) return CALLOUT_THEMES.OFFICIAL;
   return CALLOUT_THEMES.DEFAULT;
 }
 
@@ -207,19 +223,18 @@ const markdownComponents: any = {
       const body = React.Children.toArray(props.children).slice(found.labelIndex + 1);
       const theme = calloutTheme(found.label);
       return (
-        <div className={cn('not-prose my-4 rounded-xl px-4 py-3.5', theme.box)}>
-          <div className={cn('text-[11px] font-bold tracking-[0.06em] uppercase mb-1.5', theme.label)}>
-            {found.label}
+        <div className={cn('not-prose chat-callout my-4 rounded-xl border px-4 py-3', theme.box, theme.accent)}>
+          <div className="chat-callout-label">
+            <theme.Icon className="w-3.5 h-3.5 shrink-0" strokeWidth={2} />
+            <span>{found.label}</span>
           </div>
-          <div className="text-[14px] leading-[1.6] text-slate-700 dark:text-slate-300 [&>p]:m-0 [&>p+p]:mt-2">
-            {body}
-          </div>
+          <div className="chat-callout-body">{body}</div>
         </div>
       );
     }
     return (
-      <blockquote className="not-prose my-4 rounded-lg border-l-[3px] border-indigo-400 dark:border-indigo-500/60 bg-indigo-50/60 dark:bg-indigo-500/[0.06] px-4 py-3 text-[14px] leading-[1.6] text-slate-700 dark:text-slate-300 [&>p]:m-0 [&>p+p]:mt-2">
-        {props.children}
+      <blockquote className="not-prose chat-callout my-4 rounded-lg border-l-[3px] border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/[0.04] px-4 py-3 [--callout-accent:#334155] dark:[--callout-accent:#e2e8f0]">
+        <div className="chat-callout-body">{props.children}</div>
       </blockquote>
     );
   },

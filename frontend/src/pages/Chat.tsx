@@ -1449,20 +1449,21 @@ export default function Chat() {
           </div>
         )}
 
-        {/* Jump to bottom — appears once the reader has scrolled away from the
-            latest message, so following the live reply back down is one click. */}
-        {!isNearBottom && messages.length > 0 && (
-          <button
-            onClick={() => scrollToBottom()}
-            className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 w-9 h-9 rounded-full bg-white dark:bg-[#1e1e20] border border-slate-200 dark:border-white/10 shadow-md flex items-center justify-center text-slate-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-colors"
-            title="Jump to latest message"
-          >
-            <ArrowDown className="w-4 h-4" strokeWidth={2} />
-          </button>
-        )}
-
-        {/* Input & Controls — exact reference bottom layout */}
-        <div className="absolute bottom-3 left-0 right-0 flex flex-col items-center px-3 sm:px-4 md:px-8 pointer-events-none z-20">
+        {/* Input & Controls — exact reference bottom layout. The dock paints the page colour
+            behind itself (fading out over its top 24px), so the thread scrolls *under* the scope
+            chip and composer instead of showing through them. */}
+        <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center px-3 sm:px-4 md:px-8 pt-6 pb-3 pointer-events-none z-20 bg-[linear-gradient(to_top,#ffffff_calc(100%_-_24px),rgba(255,255,255,0))] dark:bg-[linear-gradient(to_top,#131314_calc(100%_-_24px),rgba(19,19,20,0))]">
+          {/* Jump to bottom — appears once the reader has scrolled away from the latest message.
+              It sits in the dock's fade, so it never covers the banner or the composer. */}
+          {!isNearBottom && messages.length > 0 && (
+            <button
+              onClick={() => scrollToBottom()}
+              className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto w-8 h-8 rounded-full bg-white dark:bg-[#1e1e20] border border-[#ececec] dark:border-white/10 shadow-sm flex items-center justify-center text-[#5d5e60] dark:text-gray-300 hover:bg-[#f5f5f6] dark:hover:bg-white/[0.08] transition-colors"
+              title="Jump to latest message"
+            >
+              <ArrowDown className="w-4 h-4" strokeWidth={2} />
+            </button>
+          )}
           {/* Same 736px column as the thread; banner, chip and composer measured from the reference. */}
           <div className="w-full max-w-[736px] flex flex-col pointer-events-auto">
 
