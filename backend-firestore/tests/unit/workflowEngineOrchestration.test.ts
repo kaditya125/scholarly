@@ -1,3 +1,17 @@
+// KNOWN BROKEN — 5 of the 6 tests below fail, and did not start failing here. Until uuid v14 made
+// the package ESM-only this suite could not load at all, so it silently stopped running and the
+// engine drifted out from under it. The mapper in jest.config.js makes it load again; these are the
+// pre-existing failures that were hiding behind the load error, not new breakage.
+//
+// Two separate gaps, both in this file's setup — fixing them is a test rewrite, deliberately not
+// bundled with the uuid mapper change:
+//   1. beforeEach clears the DI container but registers only ReasoningProvider and AIProvider,
+//      while WorkflowEngine resolves TOKENS.MemoryProvider directly (WorkflowEngine.ts:401,:546).
+//   2. The bigger one: WorkflowEngine.ts:441 does `const contextService = new StudentContextService()`,
+//      a local that SHADOWS the module mocked below — so the real service runs and blocks on
+//      Firestore until the 5s test timeout. Mocking ../../src/services/studentContext.service is
+//      what this needs, plus re-checking every assertion that names `contextService`/`memoryService`
+//      against what the engine actually calls today.
 jest.mock('../../src/utils/logger', () => ({
   logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn(), log: jest.fn() },
 }));

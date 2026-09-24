@@ -3,7 +3,12 @@
  * @description Unit tests for WorkflowNodeRegistry, Zod schema validation, and DAG validation.
  */
 
-jest.mock('uuid', () => ({ v4: () => '00000000-0000-4000-8000-000000000000' }));
+// Spreading the stand-in keeps v5 (and v5.URL) real: src/services/rag/qdrantFilter.ts derives a
+// namespace from uuidv5 at module load, so a v4-only factory makes that import throw.
+jest.mock('uuid', () => ({
+  ...jest.requireActual('../helpers/uuidCjs'),
+  v4: () => '00000000-0000-4000-8000-000000000000',
+}));
 jest.mock('../../src/core/knowledge', () => ({ knowledgeService: { getSourceContext: async () => null } }));
 jest.mock('../../src/core/notifications/EmailNotificationService', () => ({
   emailNotificationService: {

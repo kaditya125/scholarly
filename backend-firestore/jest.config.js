@@ -9,6 +9,14 @@ module.exports = {
   // comparison meaningless.
   testPathIgnorePatterns: ['/node_modules/', 'worktrees'],
   moduleFileExtensions: ['ts', 'js', 'json'],
+  // uuid v14 ships ESM only, which this CommonJS runtime cannot load ("Unexpected token 'export'"),
+  // so every suite whose import graph reaches it dies before a single test runs. The stand-in is
+  // byte-compatible — verified against the real package, including the uuidv5 that Qdrant point ids
+  // derive from — so mapping it here costs no fidelity. A suite with its own jest.mock('uuid', ...)
+  // overrides this and must supply v5 itself; see tests/helpers/uuidCjs.ts.
+  moduleNameMapper: {
+    '^uuid$': '<rootDir>/tests/helpers/uuidCjs.ts',
+  },
   setupFiles: ['<rootDir>/tests/setup.ts'],
   collectCoverageFrom: [
     'src/**/*.ts',
