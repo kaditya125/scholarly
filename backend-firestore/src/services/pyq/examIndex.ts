@@ -48,6 +48,8 @@ const EXTRA_ALIASES: Record<string, string[]> = {
   BPSC_CCE: ['bpsc'],
   RRB_NTPC: ['ntpc', 'rrb'],
   IBPS_PO: ['ibps', 'ibpspo'],
+  BPSC_TRE: ['tre', 'bpsctre', 'bpsc teacher', 'bihar teacher', 'bihar tre', 'bpsc tre 1', 'bpsc tre 2', 'bpsc tre 3', 'tre 1', 'tre 2', 'tre 3', 'tre1', 'tre2', 'tre3'],
+  BIHAR_STET: ['stet', 'bihar stet', 'bseb stet', 'stet paper 1', 'stet paper 2', 'stet 1', 'stet 2', 'stet1', 'stet2'],
 };
 
 async function build(): Promise<ExamIndex> {
