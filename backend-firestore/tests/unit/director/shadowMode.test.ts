@@ -215,6 +215,13 @@ function event(over: Partial<MusicEvent> = {}): MusicEvent {
     durationMs: 60_000,
     sceneId: 'scene_0',
     priority: 20,
+    requirement: {
+      kind: 'music',
+      category: 'educational',
+      durationMs: 60_000,
+      loopable: true,
+      tags: [],
+    },
     assetId: 'bed',
     category: 'educational',
     role: 'bed',

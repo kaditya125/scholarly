@@ -7,6 +7,7 @@
  */
 
 import * as crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 import { firebaseApp } from '../../config/firebase';
 import { env } from '../../config/env';
 import { withRetry } from '../../utils/retry';
