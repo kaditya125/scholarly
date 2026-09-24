@@ -158,12 +158,22 @@ export function normalizeFields(x: {
 
 /** The registry paper's own stable id. Derived from registry semantics, never from a question. */
 export function canonicalPaperIdFor(src: {
-  examId: string; year: number; session?: string | null; shift?: string | null; paper?: string | null;
+  examId: string;
+  year: number;
+  session?: string | null;
+  shift?: string | null;
+  paper?: string | null;
+  subject?: string | null;
 }): string {
   const sess = normalizeSession(src.session) ?? 'na';
   const { shift } = normalizeShift(src.shift);
   const pap = normalizePaper(src.paper) ?? 'na';
-  return `paper:${src.examId}:${src.year}:${sess}:${shift === null ? 'na' : `sh${shift}`}:${pap}`;
+  const subjSlug = src.subject ? slug(src.subject) : null;
+  const paperPart =
+    subjSlug && (pap === 'paper1' || pap === 'paper2' || pap === 'paper3')
+      ? `${pap}-${subjSlug}`
+      : pap;
+  return `paper:${src.examId}:${src.year}:${sess}:${shift === null ? 'na' : `sh${shift}`}:${paperPart}`;
 }
 
 /**
@@ -211,6 +221,8 @@ export function isConsistentWithPaper(
   if (sp && qp && KNOWN.has(sp) && KNOWN.has(qp) && sp !== qp) {
     if (!(sp === 'paper1+2' && (qp === 'paper1' || qp === 'paper2'))) return false;
   }
+
+  if (q.subject && src.subject && slug(q.subject) !== slug(src.subject)) return false;
 
   return true;
 }
