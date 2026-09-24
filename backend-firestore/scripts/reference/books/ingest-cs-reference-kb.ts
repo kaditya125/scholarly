@@ -635,10 +635,12 @@ export async function runCSReferenceIngestion(isExecute: boolean) {
   console.log(`Total Reference Vectors Upserted: ${vectorsWritten}`);
 }
 
-const isExecute = process.argv.includes('--execute');
-runCSReferenceIngestion(isExecute)
-  .then(() => process.exit(0))
-  .catch((err) => {
-    console.error('Fatal error during CS reference ingestion:', err);
-    process.exit(1);
-  });
+if (process.argv[1]?.includes('ingest-cs-reference-kb')) {
+  const isExecute = process.argv.includes('--execute');
+  runCSReferenceIngestion(isExecute)
+    .then(() => process.exit(0))
+    .catch((err) => {
+      console.error('Fatal error during CS reference ingestion:', err);
+      process.exit(1);
+    });
+}
