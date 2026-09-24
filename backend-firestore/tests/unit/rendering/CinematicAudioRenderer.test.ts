@@ -257,6 +257,8 @@ describe('CinematicAudioRenderer', () => {
                   kind: 'music' as const,
                   category: 'documentary' as const,
                   durationMs: 10_000,
+                  loopable: true,
+                  tags: [],
                 },
                 assetId: `music${i}`,
                 category: 'documentary' as const,

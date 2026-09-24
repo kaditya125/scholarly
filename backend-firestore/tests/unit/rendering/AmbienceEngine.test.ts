@@ -56,8 +56,10 @@ const mockAsset = (overrides: Partial<ResolvedAsset> = {}): ResolvedAsset => ({
 const mockLayer = (overrides: Partial<AmbienceLayer> = {}): AmbienceLayer => ({
   requirement: {
     kind: 'ambience' as const,
+    category: 'forest',
     tags: ['forest'],
     durationMs: 60_000,
+    loopable: true,
   },
   assetId: 'test-asset',
   layerRole: 'base' as const,
