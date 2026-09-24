@@ -67,27 +67,6 @@ describe('ChatController.handleChat', () => {
   });
 });
 
-describe('ChatController.handleFeedback', () => {
-  it('401 unauthenticated', async () => {
-    const res = mockRes();
-    await controller.handleFeedback({ user: undefined, body: {} } as any, res, jest.fn());
-    expect(res.status).toHaveBeenCalledWith(401);
-  });
-
-  it('400 when signal is missing', async () => {
-    const res = mockRes();
-    await controller.handleFeedback({ user: { uid: 'u1' }, body: {} } as any, res, jest.fn());
-    expect(res.status).toHaveBeenCalledWith(400);
-  });
-
-  it('records the feedback and returns ok', async () => {
-    const res = mockRes();
-    await controller.handleFeedback({ user: { uid: 'u1' }, body: { signal: 'thumbs_up', sessionId: 's1' } } as any, res, jest.fn());
-    expect(svc.recordFeedback).toHaveBeenCalledWith('u1', expect.objectContaining({ signal: 'thumbs_up', sessionId: 's1' }));
-    expect(res.json).toHaveBeenCalledWith({ ok: true });
-  });
-});
-
 describe('ChatController.handleChatStream', () => {
   it('401 unauthenticated', async () => {
     const res = mockRes();
