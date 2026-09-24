@@ -109,13 +109,86 @@ export function normalizeShift(raw?: string | null): { shift: number | null; dat
   return { shift, date };
 }
 
+function romanToDecimal(str: string): string {
+  return str.replace(/\b(viii|vii|vi|iv|v|ix|iii|ii|i)\b/gi, (m) => {
+    const map: Record<string, string> = {
+      i: '1', ii: '2', iii: '3', iv: '4', v: '5',
+      vi: '6', vii: '7', viii: '8', ix: '9',
+    };
+    return map[m.toLowerCase()] || m;
+  });
+}
+
 export function normalizePaper(raw?: string | null): string | null {
   if (!raw || !String(raw).trim()) return null;
-  const s = String(raw).trim();
-  if (/csat|paper\s*2/i.test(s)) return 'paper2';
-  if (/paper\s*1\s*&\s*2|paper\s*1\s*and\s*2/i.test(s)) return 'paper1+2';
-  if (/paper\s*1|gs\s*paper|b\.?e\.?\/?b\.?tech/i.test(s)) return 'paper1';
+  const s = romanToDecimal(String(raw).trim());
+  if (/csat/i.test(s)) return 'paper2';
+  if (/paper\s*1\s*&\s*2|paper\s*1\s*and\s*2|gs\s*paper\s*1\s*&\s*2|gs\s*1\s*&\s*2/i.test(s)) return 'paper1+2';
+  if (/paper\s*2|gs\s*2|b\.?arch|b\.?plan/i.test(s)) return 'paper2';
+  if (/paper\s*1|gs\s*paper|general\s*studies|gs\s*1|b\.?e\.?\/?b\.?tech/i.test(s)) return 'paper1';
+  if (/paper\s*3/i.test(s)) return 'paper3';
+  if (/paper\s*4/i.test(s)) return 'paper4';
+  if (/tier\s*1/i.test(s)) return 'tier1';
+  if (/tier\s*2/i.test(s)) return 'tier2';
+  if (/cbt\s*1|stage\s*1/i.test(s)) return 'cbt1';
+  if (/cbt\s*2|stage\s*2/i.test(s)) return 'cbt2';
+  if (/neet(\s*ug)?/i.test(s)) return 'full-paper';
   return slug(s);
+}
+
+/**
+ * Flexible matching for paper / tier requested by a student against question metadata.
+ * Matches exact slugs, tier prefixes (e.g. 'tier-1' against 'tier-1-cbt-2022-12-05-1'),
+ * canonicalPaperId suffixes, and session strings.
+ */
+export function matchesPaper(
+  requestedPaper?: string | null,
+  record?: {
+    normalizedPaper?: string | null;
+    canonicalPaperId?: string | null;
+    paper?: string | null;
+    session?: string | null;
+  } | null
+): boolean {
+  if (!requestedPaper || !record) return true;
+  const target = requestedPaper.toLowerCase().trim();
+  const targetNorm = normalizePaper(target) ?? target;
+  const targetAlpha = targetNorm.replace(/[^a-z0-9]/g, '');
+
+  const rawCandidates = [
+    record.normalizedPaper,
+    record.canonicalPaperId,
+    record.paper,
+    record.session,
+  ].filter(Boolean) as string[];
+
+  const normalizedCandidates = [
+    ...rawCandidates,
+    ...rawCandidates.map((c) => normalizePaper(c)).filter(Boolean) as string[],
+    ...rawCandidates.map((c) => normalizeSession(c)).filter(Boolean) as string[],
+  ].map((s) => s.toLowerCase().trim());
+
+  for (const c of normalizedCandidates) {
+    if (c === target || c === targetNorm) return true;
+    const cSlug = c.replace(/[^a-z0-9]+/g, '-');
+    if (
+      cSlug === target ||
+      cSlug === targetNorm ||
+      cSlug.startsWith(`${target}-`) ||
+      cSlug.startsWith(`${targetNorm}-`) ||
+      cSlug.endsWith(`-${target}`) ||
+      cSlug.endsWith(`-${targetNorm}`) ||
+      cSlug.includes(`-${target}-`) ||
+      cSlug.includes(`-${targetNorm}-`)
+    ) {
+      return true;
+    }
+    const cAlpha = c.replace(/[^a-z0-9]/g, '');
+    if (cAlpha === targetAlpha || cAlpha.startsWith(targetAlpha)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /** Is this row practice/drill material rather than a real sitting? */
@@ -123,9 +196,11 @@ export function looksLikePractice(x: {
   session?: string | null; shift?: string | null; paper?: string | null;
   corpusBucket?: string | null; origin?: string | null;
 }): boolean {
-  if (x.corpusBucket === 'PRACTICE_MOCK') return true;
-  if (x.origin === 'template' || x.origin === 'authored') return true;
-  return [x.session, x.shift, x.paper].some((v) => v && PRACTICE_MARKERS.test(String(v)));
+  if ([x.session, x.shift, x.paper].some((v) => v && PRACTICE_MARKERS.test(String(v)))) {
+    return true;
+  }
+  if (x.origin === 'authored') return true;
+  return false;
 }
 
 export function normalizeFields(x: {
@@ -189,8 +264,8 @@ export function canonicalPaperIdFor(src: {
  * finer vocabulary to disagree with. The shift ordinals must still match.
  */
 export function isConsistentWithPaper(
-  q: { examId?: string; year?: number; session?: string | null; shift?: string | null; paper?: string | null },
-  src: { examId: string; year: number; session?: string | null; shift?: string | null; paper?: string | null },
+  q: { examId?: string; year?: number; session?: string | null; shift?: string | null; paper?: string | null; subject?: string | null },
+  src: { examId: string; year: number; session?: string | null; shift?: string | null; paper?: string | null; subject?: string | null },
 ): boolean {
   if (q.examId !== src.examId) return false;
   if (Number(q.year) !== Number(src.year)) return false;
@@ -217,7 +292,7 @@ export function isConsistentWithPaper(
   // not Paper 2); two arbitrary slugs differing is naming drift, not evidence of a different paper.
   const qp = normalizePaper(q.paper);
   const sp = normalizePaper(src.paper);
-  const KNOWN = new Set(['paper1', 'paper2', 'paper1+2']);
+  const KNOWN = new Set(['paper1', 'paper2', 'paper3', 'paper4', 'paper1+2', 'tier1', 'tier2', 'cbt1', 'cbt2', 'full-paper']);
   if (sp && qp && KNOWN.has(sp) && KNOWN.has(qp) && sp !== qp) {
     if (!(sp === 'paper1+2' && (qp === 'paper1' || qp === 'paper2'))) return false;
   }
@@ -236,9 +311,19 @@ export function isConsistentWithPaper(
  * not "one paper is a coarser description of the other", so the most specific consistent paper
  * wins and ambiguity is reserved for a genuine tie.
  */
-function specificity(src: { session?: string | null; shift?: string | null; paper?: string | null }): number {
+function specificity(
+  src: { session?: string | null; shift?: string | null; paper?: string | null },
+  q?: { paper?: string | null }
+): number {
   const { shift } = normalizeShift(src.shift);
-  return (normalizeSession(src.session) ? 1 : 0) + (shift !== null ? 1 : 0) + (normalizePaper(src.paper) ? 1 : 0);
+  const pap = normalizePaper(src.paper);
+  const qp = q ? normalizePaper(q.paper) : null;
+  let papScore = 0;
+  if (pap) {
+    papScore = pap === 'paper1+2' ? 0.5 : 1;
+    if (qp && pap === qp) papScore += 1;
+  }
+  return (normalizeSession(src.session) ? 1 : 0) + (shift !== null ? 1 : 0) + papScore;
 }
 
 export interface PaperResolution {
@@ -268,8 +353,8 @@ export function resolvePaperIdentity(
 
   // Keep only the most specific consistent papers; a coarser umbrella row describing the same
   // sitting is not a competing candidate.
-  const best = Math.max(...consistent.map(specificity));
-  const bestIds = [...new Set(consistent.filter((s) => specificity(s) === best).map(canonicalPaperIdFor))];
+  const best = Math.max(...consistent.map((s) => specificity(s, q)));
+  const bestIds = [...new Set(consistent.filter((s) => specificity(s, q) === best).map(canonicalPaperIdFor))];
 
   if (bestIds.length === 1) {
     return { canonicalPaperId: bestIds[0], paperIdentityStatus: 'RESOLVED', candidatePaperIds: allIds };
