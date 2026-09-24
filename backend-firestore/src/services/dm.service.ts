@@ -142,7 +142,7 @@ export class DmService {
     const clean = (text || '').trim();
     const atts = attachmentService.sanitizeForMessage(attachments);
     if (!clean && atts.length === 0) throw new DmError(400, 'Message cannot be empty');
-    if (clean.length > 4000) throw new DmError(400, 'Message is too long (max 4000 characters)');
+    if (clean.length > 12000) throw new DmError(400, 'Message is too long');
 
     await this.assertCanMessage(uid, otherId);
     const id = conversationId(uid, otherId);
@@ -155,12 +155,17 @@ export class DmService {
     const sender = await connectionRepository.getDirectory(uid);
     const senderName = sender?.displayName || 'Someone';
 
+    const isEncrypted = clean.startsWith('e2ee:v1:');
+    const notificationBody = isEncrypted
+      ? (atts.length ? 'Sent an encrypted attachment' : 'Sent an encrypted message')
+      : clean || (atts.length ? 'Sent an attachment' : 'New message');
+
     eventBus.publish('notification.created', {
       userId: otherId,
       category: 'social',
       type: 'dm.received',
       title: `New Message from ${senderName}`,
-      body: clean || (atts.length ? 'Sent an attachment' : 'New message'),
+      body: notificationBody,
       actionUrl: `/messages/${uid}`,
       priority: 'high'
     });
@@ -172,7 +177,7 @@ export class DmService {
   async editMessage(uid: string, otherId: string, messageId: string, text: string): Promise<DmMessage> {
     const clean = (text || '').trim();
     if (!clean) throw new DmError(400, 'Message cannot be empty');
-    if (clean.length > 4000) throw new DmError(400, 'Message is too long (max 4000 characters)');
+    if (clean.length > 12000) throw new DmError(400, 'Message is too long');
 
     const id = conversationId(uid, otherId);
     const msg = await dmRepository.getMessage(id, messageId);

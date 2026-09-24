@@ -1,10 +1,15 @@
 import { Router } from 'express';
 import { dmController } from '../controllers/dm.controller';
+import { cryptoKeyController } from '../controllers/cryptoKey.controller';
 import { requireAuth } from '../middlewares/auth';
 
 const router = Router();
 
 router.use(requireAuth);
+
+// Public key exchange for client-side E2EE
+router.post('/keys', cryptoKeyController.publishKey);
+router.get('/keys/:otherId', cryptoKeyController.getKey);
 
 // Static routes first so they aren't shadowed by the `:otherId` param route.
 router.get('/conversations', dmController.conversations);

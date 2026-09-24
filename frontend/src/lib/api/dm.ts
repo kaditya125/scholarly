@@ -96,4 +96,14 @@ export const dmApi = {
     );
     return data;
   },
+  /** Publish caller's ECDH public key JWK for End-to-End Encryption */
+  async publishPublicKey(publicKeyJwk: string): Promise<{ success: boolean }> {
+    const { data } = await api.post('/dm/keys', { publicKeyJwk });
+    return data;
+  },
+  /** Fetch a peer's ECDH public key JWK */
+  async getPeerPublicKey(otherId: string): Promise<{ uid: string; publicKeyJwk: string; algorithm: string } | null> {
+    const { data } = await api.get(`/dm/keys/${otherId}`);
+    return data?.key || null;
+  },
 };

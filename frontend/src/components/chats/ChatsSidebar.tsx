@@ -87,8 +87,12 @@ function DmConversationRow({
   const isTyping = typing.typingUsers.some((u) => u.uid === conv.peer.uid);
   const peerFirstName = conv.peer.displayName?.split(" ")[0] || "Peer";
 
+  const rawText = conv.lastMessage?.text || "";
+  const isEncrypted = rawText.startsWith("e2ee:v1:");
+  const displaySnippet = isEncrypted ? "🔒 Encrypted message" : rawText || "Attachment";
+
   const preview = conv.lastMessage
-    ? `${mine ? "You: " : ""}${conv.lastMessage.text || "Attachment"}`
+    ? `${mine ? "You: " : ""}${displaySnippet}`
     : "Start conversation...";
 
   return (
