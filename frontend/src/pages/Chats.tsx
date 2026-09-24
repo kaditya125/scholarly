@@ -4,7 +4,7 @@ import { ArrowLeft, MessagesSquare, Loader2, Sparkles } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useAuth } from "../lib/AuthContext";
 import { useStudyGroups } from "../hooks/api/useStudyGroups";
-import { useConversations } from "../hooks/api/useDirectMessages";
+import { useConversations, useE2EEIdentity } from "../hooks/api/useDirectMessages";
 import { useGroupChannels } from "../hooks/api/useGroupChannels";
 import { ChatsSidebar, ChatsSelection } from "../components/chats/ChatsSidebar";
 import { DmThread } from "../components/chats/DmThread";
@@ -20,6 +20,7 @@ import { StudyCircle } from "../components/study-groups/StudyCircle";
  */
 export default function Chats() {
   const { user } = useAuth();
+  useE2EEIdentity();
   const [params, setParams] = useSearchParams();
   const { groups } = useStudyGroups();
   const { conversations } = useConversations();

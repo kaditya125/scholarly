@@ -9,6 +9,7 @@ import {
   Search,
   Image as ImageIcon,
   MoreVertical,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAuth } from "../../lib/AuthContext";
@@ -46,6 +47,7 @@ export function DmThread({ otherId, onBack, onOpenInfo, isInfoOpen }: DmThreadPr
     editMessage,
     deleteMessage,
     pinMessage,
+    isE2EE,
   } = useConversation(otherId);
 
   const onlineSet = useOnlineStatuses([otherId]);
@@ -174,8 +176,13 @@ export function DmThread({ otherId, onBack, onOpenInfo, isInfoOpen }: DmThreadPr
             </div>
 
             <div className="min-w-0 flex-1">
-              <h3 className="text-[14.5px] sm:text-[15px] font-bold text-slate-900 dark:text-white truncate leading-tight group-hover:text-[#186a52] dark:group-hover:text-[#c8e558] transition-colors">
-                {peerName}
+              <h3 className="text-[14.5px] sm:text-[15px] font-bold text-slate-900 dark:text-white truncate leading-tight group-hover:text-[#186a52] dark:group-hover:text-[#c8e558] transition-colors flex items-center gap-1.5">
+                <span>{peerName}</span>
+                {isE2EE && (
+                  <span title="End-to-End Encrypted" className="inline-flex items-center">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  </span>
+                )}
               </h3>
               <p className="text-[11px] sm:text-[11.5px] text-slate-500 dark:text-gray-400 truncate flex items-center gap-1.5 mt-0.5">
                 {isOnline ? (
@@ -270,27 +277,37 @@ export function DmThread({ otherId, onBack, onOpenInfo, isInfoOpen }: DmThreadPr
             </p>
           </div>
         ) : (
-          <ChatMessageList
-            messages={messages}
-            currentUid={user?.uid}
-            variant="dm"
-            resolveSender={resolveSender}
-            canEdit={(m) => m.senderId === user?.uid}
-            canDelete={(m) => m.senderId === user?.uid}
-            onReply={(m) => setReplyTo(m)}
-            onEdit={(m) => {
-              setEditing({ id: m.id, text: m.text });
-              setDraft(m.text);
-            }}
-            onDelete={(m) => deleteMessage(m.id)}
-            onReact={(messageId, emoji) => react({ messageId, emoji })}
-            onPin={(m) => pinMessage({ messageId: m.id, pinned: !m.pinned })}
-            onSave={handleSaveMessage}
-            isSaved={isSaved}
-            lastSeenMessageId={lastSeenMessageId}
-            isPeerOnline={isOnline}
-            peerLastReadAt={peerLastReadAt}
-          />
+          <>
+            {isE2EE && (
+              <div className="flex justify-center pt-3.5 pb-1 px-4">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-200/50 dark:bg-white/5 border border-slate-300/40 dark:border-white/10 text-[11px] text-slate-600 dark:text-slate-400 text-center shadow-3xs max-w-sm">
+                  <Lock className="w-3 h-3 text-emerald-600 dark:text-[#c8e558] shrink-0" />
+                  <span>Messages are end-to-end encrypted. No one outside this chat can read them.</span>
+                </div>
+              </div>
+            )}
+            <ChatMessageList
+              messages={messages}
+              currentUid={user?.uid}
+              variant="dm"
+              resolveSender={resolveSender}
+              canEdit={(m) => m.senderId === user?.uid}
+              canDelete={(m) => m.senderId === user?.uid}
+              onReply={(m) => setReplyTo(m)}
+              onEdit={(m) => {
+                setEditing({ id: m.id, text: m.text });
+                setDraft(m.text);
+              }}
+              onDelete={(m) => deleteMessage(m.id)}
+              onReact={(messageId, emoji) => react({ messageId, emoji })}
+              onPin={(m) => pinMessage({ messageId: m.id, pinned: !m.pinned })}
+              onSave={handleSaveMessage}
+              isSaved={isSaved}
+              lastSeenMessageId={lastSeenMessageId}
+              isPeerOnline={isOnline}
+              peerLastReadAt={peerLastReadAt}
+            />
+          </>
         )}
       </div>
 

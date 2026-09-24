@@ -1,10 +1,44 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { collection, query as fsQuery, where, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firestore';
 import { useAuth } from '../../lib/AuthContext';
 import { dmApi, ConversationSummary, ConversationThread, DmMessage, Attachment } from '../../lib/api/dm';
 import { toggleReactionLocal } from '../../lib/reactions';
+import { e2eeService } from '../../lib/crypto/e2eeService';
+
+/**
+ * Initializes the caller's local ECDH keypair and ensures it is published to the server.
+ */
+export function useE2EEIdentity() {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user?.uid || !e2eeService.isSupported()) return;
+
+    let isMounted = true;
+    (async () => {
+      try {
+        const cacheKey = `sadhya_e2ee_pub_v1_${user.uid}`;
+        const alreadyPublished = localStorage.getItem(cacheKey);
+
+        const { publicKeyJwk } = await e2eeService.getOrCreateIdentityKey(user.uid);
+        if (!isMounted) return;
+
+        if (!alreadyPublished) {
+          await dmApi.publishPublicKey(publicKeyJwk);
+          localStorage.setItem(cacheKey, 'true');
+        }
+      } catch (err) {
+        console.warn('Failed to initialize E2EE identity key:', err);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.uid]);
+}
 
 /**
  * The caller's conversation list. A Firestore snapshot listener refetches the enriched list the
@@ -80,6 +114,15 @@ export function useConversation(otherId?: string) {
     retry: false, // a 403 (not connected) shouldn't be retried
   });
 
+  // Query peer's public key for End-to-End Encryption
+  const peerKeyQuery = useQuery({
+    queryKey: ['dm', 'peerKey', otherId],
+    queryFn: () => dmApi.getPeerPublicKey(otherId as string),
+    enabled,
+    staleTime: 1000 * 60 * 10,
+  });
+  const peerPublicKeyJwk = peerKeyQuery.data?.publicKeyJwk;
+
   // Opening a thread marks it read server-side; refresh the list + badge so the unread count clears.
   useEffect(() => {
     if (query.data?.id) {
@@ -112,12 +155,27 @@ export function useConversation(otherId?: string) {
   }, [user?.uid, otherId, qc]);
 
   const send = useMutation({
-    mutationFn: (payload: {
+    mutationFn: async (payload: {
       text: string;
       attachments?: Attachment[];
       replyToId?: string;
       replyTo?: { id: string; senderId: string; text: string };
-    }) => dmApi.send(otherId as string, payload.text, payload.attachments, payload.replyToId),
+    }) => {
+      let textToSend = payload.text;
+      if (user?.uid && otherId && peerPublicKeyJwk && payload.text) {
+        try {
+          textToSend = await e2eeService.encrypt(
+            user.uid,
+            otherId,
+            peerPublicKeyJwk,
+            payload.text
+          );
+        } catch (err) {
+          console.warn('Failed to encrypt outgoing DM, falling back to plaintext:', err);
+        }
+      }
+      return dmApi.send(otherId as string, textToSend, payload.attachments, payload.replyToId);
+    },
     onMutate: async (payload) => {
       await qc.cancelQueries({ queryKey: threadKey });
       const prev = qc.getQueryData<ConversationThread>(threadKey);
@@ -251,9 +309,60 @@ export function useConversation(otherId?: string) {
     },
   });
 
+  // In-memory cache of decrypted messages
+  const [decryptedMap, setDecryptedMap] = useState<Record<string, string>>({});
+  const rawMessages = query.data?.messages || [];
+
+  useEffect(() => {
+    if (!user?.uid || !otherId || !peerPublicKeyJwk || rawMessages.length === 0) return;
+
+    let isMounted = true;
+    const toDecrypt = rawMessages.filter(
+      (m) => e2eeService.isEncrypted(m.text) && !decryptedMap[m.id]
+    );
+
+    if (toDecrypt.length === 0) return;
+
+    (async () => {
+      const updates: Record<string, string> = {};
+      for (const m of toDecrypt) {
+        try {
+          const plain = await e2eeService.decrypt(
+            user.uid,
+            otherId,
+            peerPublicKeyJwk,
+            m.text
+          );
+          updates[m.id] = plain;
+        } catch {
+          updates[m.id] = '🔒 Decryption failed';
+        }
+      }
+      if (isMounted && Object.keys(updates).length > 0) {
+        setDecryptedMap((prev) => ({ ...prev, ...updates }));
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [rawMessages, user?.uid, otherId, peerPublicKeyJwk, decryptedMap]);
+
+  const processedMessages = useMemo(() => {
+    return rawMessages.map((m) => {
+      if (e2eeService.isEncrypted(m.text)) {
+        return {
+          ...m,
+          text: decryptedMap[m.id] || '🔒 Decrypting...',
+        };
+      }
+      return m;
+    });
+  }, [rawMessages, decryptedMap]);
+
   return {
     thread: query.data,
-    messages: query.data?.messages || [],
+    messages: processedMessages,
     peer: query.data?.peer,
     peerLastReadAt: query.data?.peerLastReadAt,
     pinnedMessages: pinsQuery.data || [],
@@ -266,5 +375,6 @@ export function useConversation(otherId?: string) {
     editMessage: editMessage.mutateAsync,
     deleteMessage: deleteMessage.mutateAsync,
     pinMessage: pinMessage.mutateAsync,
+    isE2EE: Boolean(peerPublicKeyJwk),
   };
 }
