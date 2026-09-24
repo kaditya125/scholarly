@@ -720,11 +720,12 @@ export async function runCompleteStetIngestion(isExecute: boolean) {
     const portalName = 'Bihar School Examination Board (BSEB)';
 
     const specForId = {
-      examId: 'BIHAR_STET',
+      examId: 'BIHAR_STET' as const,
       year: def.year,
       session: def.session,
       shift: def.shift,
       paper: fullPaperName,
+      subject: def.subject,
     };
     const canonicalPaperId = canonicalPaperIdFor(specForId);
     const { shift: normShift, date: normDate } = normalizeShift(def.shift);
