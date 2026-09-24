@@ -103,7 +103,7 @@ const MAX_CHARS = 4000;
  *                 reference books, syllabus, the student's notebooks, the web) and shows each
  *                 search live (AgenticRetrievalOrchestrator). Needs ENABLE_AGENTIC_RETRIEVAL.
  *
- * To make "All Web" the default (matching the reference mock literally), change
+ * To make "Research" the default (matching the reference mock literally), change
  * DEFAULT_SCOPE to { kind: 'web' } — but note that makes every message a research-mode
  * message with a web search attached.
  */
@@ -116,7 +116,7 @@ type Scope =
 const DEFAULT_SCOPE: Scope = { kind: 'auto' };
 
 const scopeLabel = (s: Scope) =>
-  s.kind === 'web' ? 'All Web' : s.kind === 'deep' ? 'Deep search' : s.kind === 'notebook' ? s.title : 'Cloud';
+  s.kind === 'web' ? 'Research' : s.kind === 'deep' ? 'Deep search' : s.kind === 'notebook' ? s.title : 'Cloud';
 
 /**
  * Pool the four suggestion cards are drawn from. "Refresh Prompts" reshuffles and
@@ -314,7 +314,7 @@ export default function Chat() {
   const refreshPrompts = () =>
     setVisiblePrompts((cur) => pickPrompts(activePromptPool, cur.map((p) => p.text)));
 
-  // ─── Retrieval scope (the "All Web" pill) ──────────────────────────────────
+  // ─── Retrieval scope (the "Research" pill) ──────────────────────────────────
   const [scope, setScope] = useState<Scope>(DEFAULT_SCOPE);
   const [isScopeOpen, setIsScopeOpen] = useState(false);
   const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
@@ -636,7 +636,7 @@ export default function Chat() {
   }, [user]);
 
   // Notebooks power the scope picker. Failure is non-fatal — the picker simply
-  // falls back to Auto / All Web without a notebook list.
+  // falls back to Auto / Research without a notebook list.
   useEffect(() => {
     if (!user?.uid) return;
     let cancelled = false;
@@ -1504,7 +1504,7 @@ export default function Chat() {
                       {([
                         { key: 'auto', icon: Cloud, label: 'Cloud', hint: 'Sadhya picks the sources' },
                         { key: 'deep', icon: Telescope, label: 'Deep search', hint: 'Searches NCERT, PYQs, your notes and the web' },
-                        { key: 'web', icon: Globe, label: 'All Web', hint: 'Research across the web' },
+                        { key: 'web', icon: Globe, label: 'Research', hint: 'In-depth answer with web sources' },
                       ] as const).map((opt) => (
                         <button
                           key={opt.key}
