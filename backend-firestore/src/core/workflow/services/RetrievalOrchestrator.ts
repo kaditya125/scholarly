@@ -1,7 +1,7 @@
 import { WorkflowEvent, WorkflowStage, WorkflowRequest } from '../types';
 import { AgentContext } from '../../agents/IAgent';
 import { KnowledgeGraphAgent } from '../../agents/KnowledgeGraphAgent';
-import { RetrievalService } from '../../../services/rag/retrieval.service';
+import { RetrievalService, RetrievalResult } from '../../../services/rag/retrieval.service';
 import { referenceBooksService } from '../../../services/rag/referenceBooks.service';
 import { knowledgeService, KnowledgeService, knowledgeRouter } from '../../knowledge';
 import { Telemetry } from '../../../lib/telemetry';
@@ -14,6 +14,13 @@ import { canonicalPyqRetrievalService } from '../../../services/pyq/canonicalPyq
 import { GroundingState } from '../../../config/prompts';
 import { logger } from '../../../utils/logger';
 import { contentExplorationService } from '../../pipeline/exploration/ContentExplorationService';
+
+/**
+ * Corpus diagnostics carry internal ids ("No SSC_CGL 2022 questions…"); they are shown to the
+ * student verbatim in the not-available notice, so ids become plain words ("SSC CGL").
+ */
+export const plainDiagnostics = (text: string | undefined): string | undefined =>
+  text?.replace(/\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b/g, (id) => id.replace(/_/g, ' '));
 
 export interface RetrievalOutcome {
   citationsList: any[];
@@ -239,7 +246,7 @@ export class RetrievalOrchestrator {
             contextStr += block;
             doVector = false; // the paper is the answer; do not dilute it
             groundingState = canonical.status === 'CANONICAL_RETRIEVED' ? 'CANONICAL_RETRIEVED' : 'PARTIAL_CANONICAL';
-            groundingDetail = canonical.diagnostics;
+            groundingDetail = plainDiagnostics(canonical.diagnostics);
             for (const q of canonical.questions.slice(0, 5) as any[]) {
               const citation = {
                 source: [q.examName || q.examId, q.year, q.shift].filter(Boolean).join(' · '),
@@ -257,9 +264,9 @@ export class RetrievalOrchestrator {
           // AMBIGUOUS_PAPER or NOT_AVAILABLE_IN_VERIFIED_CORPUS. Either way the model must not
           // reconstruct the paper, so the corpus's own answer is what goes into context.
           groundingState = 'CANONICAL_NOT_FOUND';
-          groundingDetail = canonical.diagnostics;
+          groundingDetail = plainDiagnostics(canonical.diagnostics);
           doVector = false;
-          contextStr += `=== CANONICAL LOOKUP RESULT ===\nStatus: ${canonical.status}\n${canonical.diagnostics}\n`;
+          contextStr += `=== CANONICAL LOOKUP RESULT ===\nStatus: ${canonical.status === 'AMBIGUOUS_PAPER' ? 'more than one paper matches, so ask which one' : 'not in the verified corpus'}\n${plainDiagnostics(canonical.diagnostics)}\n`;
           if (canonical.papers.length > 0) {
             contextStr += `Papers that ARE available for this exam/year:\n`;
             for (const p of canonical.papers.slice(0, 10)) {
@@ -284,19 +291,15 @@ export class RetrievalOrchestrator {
         : undefined;
     }
 
-    if (doWeb) {
-      try {
-        const webResults = await this.retrievalService.retrieveWebContext(req.query);
-        if (webResults.length > 0) {
-          contextStr += "=== LATEST WEB SEARCH RESULTS ===\n";
-          webResults.forEach(r => {
-            contextStr += `[Source: ${r.source}]\n${r.text}\n\n`;
-          });
-        }
-      } catch (err) {
-        console.warn("Web search failed", err);
-      }
-    }
+    // Started now, awaited after the corpus searches, so the web and the corpora run in parallel.
+    // Its results are cited like every other source (below) — they used to reach the model only,
+    // so Research answers quoted web facts while the student saw nothing but NCERT sources.
+    const webPromise: Promise<RetrievalResult[]> = doWeb
+      ? this.retrievalService.retrieveWebContext(req.query).catch((err) => {
+          console.warn('Web search failed', err);
+          return [];
+        })
+      : Promise.resolve([]);
 
     // If we have a notebookId, retrieve hierarchical context
     trace.timings.canonicalLookup = Date.now() - tCanonicalStart;
@@ -514,6 +517,28 @@ export class RetrievalOrchestrator {
       }
     }
 
+    // ── Web results (started above, in parallel with the corpus searches) ──
+    const webResults = await webPromise;
+    if (webResults.length > 0) {
+      contextStr += '=== LATEST WEB SEARCH RESULTS (official = government site) ===\n';
+      for (const r of webResults) {
+        const official = Boolean(r.metadata?.official);
+        contextStr += `[Source: ${r.source}${official ? ' — official' : ''}]\n${r.text}\n\n`;
+        const citationData = {
+          source: r.source,
+          text: r.text,
+          score: r.score,
+          authorityScore: official ? 1.3 : 0.9,
+          selectionReasoning: official ? 'Official site, found by web search.' : 'Web search result.',
+          title: r.metadata?.title || r.source,
+          fromWeb: true,
+          official,
+        };
+        citationsList.push(citationData);
+        yield { type: 'citation', citation: citationData };
+      }
+    }
+
     // ── Hybrid GraphRAG (Phase 1): fuse Knowledge Graph context ────────
     // The KnowledgeGraphAgent (Stage 4) placed notebook-scoped graph context
     // into shared state. Prepend it so concepts + relationships + definitions
@@ -575,18 +600,31 @@ export class RetrievalOrchestrator {
           message: `Read the file you attached and used its contents as the primary source — no external retrieval needed.`,
         };
       } else if (citationsList.length > 0) {
-        const uniqueSources = Array.from(new Set(citationsList.map((c: any) => c.source).filter(Boolean)));
+        const corpusCites = citationsList.filter((c: any) => !c.fromWeb);
+        const webCites = citationsList.filter((c: any) => c.fromWeb);
+        const officialWeb = webCites.filter((c: any) => c.official).length;
+        const uniqueSources = Array.from(new Set(corpusCites.map((c: any) => c.source).filter(Boolean)));
         const shown = uniqueSources.slice(0, 3).join(', ');
         const more = uniqueSources.length > 3 ? ` +${uniqueSources.length - 3} more` : '';
-        const corpus = req.notebookId ? 'your material' : 'the NCERT curriculum';
+        // These passages can be NCERT, reference books, the official syllabus or PYQs.
+        const corpus = req.notebookId ? 'your material' : "Sadhya's library";
+        const parts = [
+          corpusCites.length > 0
+            ? `retrieved ${corpusCites.length} passage(s) from ${uniqueSources.length} source(s) (${shown}${more}), reranked by relevance`
+            : '',
+          webCites.length > 0
+            ? `${webCites.length} web result(s)${officialWeb > 0 ? ` (${officialWeb} from official sites)` : ''}`
+            : '',
+        ].filter(Boolean);
+        const searched = [corpusCites.length > 0 ? corpus : '', webCites.length > 0 ? 'the web' : ''].filter(Boolean).join(' and ');
         yield {
           type: 'progress', stage: WorkflowStage.RAG_RETRIEVAL, detail: true,
-          message: `Embedded your query and ran semantic search over ${corpus} — retrieved ${citationsList.length} passage(s) from ${uniqueSources.length} source(s) (${shown}${more}), reranked by relevance.`,
+          message: `Searched ${searched} — ${parts.join('; ')}.`,
         };
       } else if (doWeb) {
         yield {
           type: 'progress', stage: WorkflowStage.RAG_RETRIEVAL, detail: true,
-          message: `Ran a live web search for up-to-date information on this query.`,
+          message: `Searched the web and the curriculum but found nothing strongly matching — answering from general knowledge.`,
         };
       } else {
         yield {

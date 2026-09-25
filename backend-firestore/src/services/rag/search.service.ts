@@ -72,6 +72,33 @@ export class SearchService {
       return [];
     }
   }
+
+  /**
+   * The web search every chat mode uses: government sites only (where notifications, corrigenda
+   * and results are actually published) and the open web minus video/social/forum platforms, run
+   * in parallel, official results first and flagged. A plain search for "SSC CGL notification
+   * changes" returned only coaching sites and a YouTube video; this one leads with ssc.gov.in.
+   * Two advanced searches per call.
+   */
+  async searchOfficialFirst(query: string): Promise<Array<SearchResult & { official: boolean }>> {
+    const [official, general] = await Promise.all([
+      this.search(query, 3, { includeDomains: OFFICIAL_WEB_DOMAINS }),
+      this.search(query, 3, { excludeDomains: EXCLUDED_WEB_DOMAINS }),
+    ]);
+    const seen = new Set<string>();
+    return [
+      ...official.map((r) => ({ ...r, official: true })),
+      ...general.map((r) => ({ ...r, official: false })),
+    ].filter((r) => r.url && !seen.has(r.url) && seen.add(r.url));
+  }
 }
+
+/** Where Indian exam notifications are published ('gov.in' matches ssc.gov.in, sscsr.gov.in, …). */
+export const OFFICIAL_WEB_DOMAINS = ['gov.in', 'nic.in'];
+/** Video, social and forum platforms — not citable sources for exam facts. */
+export const EXCLUDED_WEB_DOMAINS = [
+  'youtube.com', 'facebook.com', 'instagram.com', 'x.com', 'twitter.com', 't.me', 'telegram.me',
+  'pinterest.com', 'quora.com', 'reddit.com',
+];
 
 export const searchService = new SearchService();

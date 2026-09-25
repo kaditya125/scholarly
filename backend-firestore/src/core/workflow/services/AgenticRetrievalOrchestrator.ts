@@ -32,7 +32,7 @@
  */
 import { AgentContext } from '../../agents/IAgent';
 import { WorkflowEvent, WorkflowRequest, WorkflowStage } from '../types';
-import { retrievalOrchestrator } from './RetrievalOrchestrator';
+import { retrievalOrchestrator, plainDiagnostics } from './RetrievalOrchestrator';
 import { queryPlanningService } from './QueryPlanningService';
 import { parsePyqQuery } from '../../../services/pyq/pyqQueryParser';
 import { buildSadhyaSystemPrompt } from '../../../config/prompts';
@@ -211,7 +211,8 @@ Today's date is ${today}. You answer by searching first. Tools: search_sources, 
 lookup_canonical_pyq, get_exam_pattern_analytics, get_exam_syllabus.
 
 How to search:
-- Always search before answering. Start with ONE search_sources call that covers every source the
+- Search before answering — except greetings, thanks and questions about Sadhya itself, which you
+  answer directly. Start with ONE search_sources call that covers every source the
   question needs, with one well-phrased query. Search again (differently phrased, or other
   sources) only if the first results are thin. At most three searches in total.
 - Choose sources by need: ncert for concepts and explanations; pyq for how a topic is asked
@@ -221,10 +222,14 @@ How to search:
   vacancies, cut-offs, news, current affairs) or not covered elsewhere.
 - If the question names or implies an exam and you need its id, call resolve_exam_id in the same
   step as your first search. Independent tools can run together in one step.
-- For which topics matter most in an exam, use get_exam_pattern_analytics.
+- For which topics matter most in an exam, use get_exam_pattern_analytics. For how a topic is asked
+  in an exam, pair it with a search_sources call on pyq (and reference_books) in the same step, so
+  the answer shows real questions, not just weightage.
 
 How to answer:
-- Start directly with the answer. No greeting, no self-introduction, no "great question".
+- Start directly with the answer. No greeting, no self-introduction, and no remark about the
+  question itself ("That's a great / very relevant question").
+- Never show internal codes (NOT_AVAILABLE_IN_VERIFIED_CORPUS, SSC_CGL); write them in plain words.
 - Ground every factual claim in what the tools returned and name the source in plain words where
   you use it (e.g. "the NCERT Class 11 Physics chapter on Laws of Motion", "SSC's notice on
   ssc.gov.in"). Web results marked official: true come from government sites (ssc.gov.in,
@@ -247,7 +252,7 @@ function canonicalNotice(callLog: ToolCallLogEntry[]): string | null {
     (e) => e.name === 'lookup_canonical_pyq' && e.result.ok && e.result.data?.status === 'NOT_AVAILABLE_IN_VERIFIED_CORPUS',
   );
   if (!miss) return null;
-  const detail = String(miss.result.data?.diagnostics || '').trim();
+  const detail = String(plainDiagnostics(miss.result.data?.diagnostics) || '').trim();
   return detail
     ? `**${detail.replace(/\.?$/, '.')}**\n\n`
     : `**I don't have that material in Sadhya's verified question bank.**\n\n`;
@@ -313,7 +318,12 @@ class AgenticRetrievalOrchestrator {
       return;
     }
 
-    yield { type: 'progress', stage: WorkflowStage.INTENT_DETECTION, message: 'Planning the search…' };
+    // Greetings and "what can you do" need no search; forcing one cost ~8 s of pointless lookups.
+    const conversational = queryPlanningService.plan(req.query, String(req.mode || 'TEACHER')).isConversational;
+    yield {
+      type: 'progress', stage: WorkflowStage.INTENT_DETECTION,
+      message: conversational ? 'Thinking…' : 'Planning the search…',
+    };
 
     const systemPrompt = buildDeepSearchSystemPrompt(agentContext, req);
     const callLog: ToolCallLogEntry[] = [];
@@ -329,7 +339,7 @@ class AgenticRetrievalOrchestrator {
       (name, args) => executeRetrievalTool(name, args, { userId: req.userId }),
       {
         traceId: req.traceId, model: req.model, userId: req.userId,
-        maxIterations: MAX_TOOL_TURNS, maxCallsPerTurn: MAX_CALLS_PER_TURN, requireFirstCall: true,
+        maxIterations: MAX_TOOL_TURNS, maxCallsPerTurn: MAX_CALLS_PER_TURN, requireFirstCall: !conversational,
       },
     )) {
       if (ev.type === 'tool_call') {
