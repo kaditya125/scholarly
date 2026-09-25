@@ -386,7 +386,9 @@ export class RetrievalOrchestrator {
         // for drilling, but it should not be quoted back to a student as a past paper.
         const tVector = Date.now();
         const [curriculumOutcome, refOutcome, syllabusOutcome, pyqOutcome] = await Promise.allSettled([
-          this.retrievalService.retrieveCurriculumContext(req.query, 5),
+          routePlan.useCurriculum
+            ? this.retrievalService.retrieveCurriculumContext(req.query, 5)
+            : Promise.resolve([]),
           routePlan.useReferenceBooks
             ? referenceBooksService.retrieveReferenceContext(req.query, {
                 topK: 2,
