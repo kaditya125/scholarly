@@ -77,9 +77,19 @@ export class ReferenceBooksService {
 
     let matches = (await pineconeService.queryVectors(queryEmbedding, topK * 4, filter, REFERENCE_NAMESPACE)) || [];
     if (!matches.length) {
-      // Degrade gracefully: drop the optional facets, keep the hard isolation flags + book.
+      /*
+       * Degrade gracefully: drop the optional facets (subject/category/knowledgeType — narrowing
+       * that can legitimately be too tight), but NOT examCode. examCode is a cross-exam isolation
+       * boundary, not a relevance hint: dropping it here let a JEE Main "Thermodynamics" query
+       * surface Lucent General Science content (exam_relevance ["SSC_CGL", ...] — JEE_MAIN not
+       * among them) purely on semantic similarity, once the strict query found nothing. A JEE
+       * student asking for reference material must get real JEE-relevant material or none — the
+       * mixer already handles "none" by falling through to GENERATED, which is honest; a
+       * plausible-looking wrong-exam passage presented as grounding is not.
+       */
       const bare: Record<string, any> = { corpusBucket: REFERENCE_CORPUS_BUCKET, is_pyq: false };
       if (opts.book) bare.book = filter.book;
+      if (opts.examCode) bare.exam_relevance = filter.exam_relevance;
       matches = (await pineconeService.queryVectors(queryEmbedding, topK * 4, bare, REFERENCE_NAMESPACE)) || [];
     }
 
@@ -128,20 +138,26 @@ export class ReferenceBooksService {
       const hierarchy = [md.book_title, md.chapter, md.section, md.topic].filter(Boolean).join(' › ');
       const figureAsset = typeof md.figure_asset === 'string' && md.figure_asset ? md.figure_asset : null;
       const figureAssetUrl = figureAsset && signUrl ? await signUrl(figureAsset) : null;
+      const pageCitation = md.page_start && md.page_end
+        ? ` (pp. ${md.page_start}–${md.page_end})`
+        : md.page_number
+          ? ` (p. ${md.page_number})`
+          : '';
+      const chapterOrSubject = md.chapter || md.section || (md.subject ? `[${md.subject}]` : 'reference');
       results.push({
         text: String(md.text || ''),
-        source: `${md.book_title || 'Reference'} — ${md.chapter || md.section || 'reference'}${md.page_number ? ` (p.${md.page_number})` : ''}`,
+        source: `${md.book_title || 'Reference'} — ${chapterOrSubject}${pageCitation}`,
         score: relevanceScore,
         weightedScore: relevanceScore * REFERENCE_AUTHORITY_MULTIPLIER,
         metadata: {
           ...md,
-          pageNumber: md.page_number,
+          pageNumber: md.page_number || md.page_start,
           authority: 'secondary_reference',
           hierarchyPath: hierarchy,
           figureAsset, // storage path
           figureAssetUrl, // signed read URL (6h) or null
         },
-        selectionReasoning: `Reference book (${md.publisher || ''}, ${md.knowledge_type || 'reference'})${figureAsset ? ' + page image' : ''} — ${hierarchy}. Secondary source: defer to official material on conflict.`,
+        selectionReasoning: `Reference book (${md.publisher || ''}, ${md.domain || md.knowledge_type || 'reference'})${figureAsset ? ' + page image' : ''} — ${hierarchy || md.book_title || 'Reference'}.`,
       } as RetrievalResult);
     }
     results.sort((a, b) => (b.weightedScore || 0) - (a.weightedScore || 0));

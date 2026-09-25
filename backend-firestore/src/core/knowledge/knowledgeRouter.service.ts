@@ -25,6 +25,17 @@ export interface RouteRequest {
 /** Subjects the curriculum and official syllabus already cover completely. */
 const STEM_SUBJECTS = new Set(['Physics', 'Chemistry', 'Biology', 'Mathematics', 'Science']);
 
+/** Computer Science & Teaching Methodology domains with dedicated reference textbooks in Qdrant. */
+const CS_SUBJECTS = new Set([
+  'computer_science',
+  'database_management',
+  'operating_systems',
+  'computer_networks',
+  'computer_architecture',
+  'data_structures',
+  'pedagogy',
+]);
+
 export class KnowledgeRouterService {
   /**
    * Plans which corpora to consult for this request.
@@ -57,7 +68,9 @@ export class KnowledgeRouterService {
     // 2. Normalise Exam ID if present
     let targetExamId = req.examId ? req.examId.toUpperCase().replace(/[\s-]+/g, '_') : undefined;
     if (!targetExamId) {
-      if (/(jee|iit|jee main|jee advanced)/i.test(qLower)) targetExamId = 'JEE_MAIN';
+      if (/(bpsc tre|bpsc_tre|bihar teacher|tre 1|tre 2|tre 3|tre 4)/i.test(qLower)) targetExamId = 'BPSC_TRE';
+      else if (/(stet|bihar stet)/i.test(qLower)) targetExamId = 'STET';
+      else if (/(jee|iit|jee main|jee advanced)/i.test(qLower)) targetExamId = 'JEE_MAIN';
       else if (/(ssc cgl|cgl|combined graduate)/i.test(qLower)) targetExamId = 'SSC_CGL';
       else if (/(ssc chsl|chsl)/i.test(qLower)) targetExamId = 'SSC_CHSL';
       else if (/(upsc|civil services|cse|ias|ips)/i.test(qLower)) targetExamId = 'UPSC_CSE';
@@ -68,7 +81,14 @@ export class KnowledgeRouterService {
     // 3. Normalise Subject
     let targetSubject = req.subject;
     if (!targetSubject) {
-      if (/(physics|mechanics|optics|thermodynamics|kinematics)/i.test(qLower)) targetSubject = 'Physics';
+      if (/(dbms|database|sql|relational|acid|transaction|normalization|bcnf|3nf)/i.test(qLower)) targetSubject = 'database_management';
+      else if (/(operating system|deadlock|virtual memory|paging|page fault|semaphore|cpu scheduling)/i.test(qLower)) targetSubject = 'operating_systems';
+      else if (/(computer network|networking|tcp|ip|osi|csma|udp|sliding window|routing|ip addressing)/i.test(qLower)) targetSubject = 'computer_networks';
+      else if (/(computer architecture|digital logic|flip.flop|dma|multiplexer|instruction cycle|register transfer)/i.test(qLower)) targetSubject = 'computer_architecture';
+      else if (/(data structure|binary search tree|avl|linked list|stack|queue|quicksort|sorting algorithm)/i.test(qLower)) targetSubject = 'data_structures';
+      else if (/(pedagogy|art of teaching|teaching methodology|micro teaching|lesson plan|bloom taxonomy)/i.test(qLower)) targetSubject = 'pedagogy';
+      else if (/(computer science|python|programming|coding|oop)/i.test(qLower)) targetSubject = 'computer_science';
+      else if (/(physics|mechanics|optics|thermodynamics|kinematics)/i.test(qLower)) targetSubject = 'Physics';
       else if (/(chemistry|organic|inorganic|chemical reactions|elements)/i.test(qLower)) targetSubject = 'Chemistry';
       else if (/(mathematics|math|calculus|algebra|geometry|trigonometry|integers)/i.test(qLower)) targetSubject = 'Mathematics';
       else if (/(biology|photosynthesis|cell|reproduction|zoology|botany)/i.test(qLower)) targetSubject = 'Biology';
@@ -139,10 +159,16 @@ export class KnowledgeRouterService {
       case 'GENERAL_LEARNING':
       default:
         useCurriculum = true;
-        // If query asks for GK, reasoning, or quantitative tricks, route to reference books
-        if (targetSubject === 'General Knowledge' || targetSubject === 'reasoning' || targetSubject === 'quantitative_aptitude' || /gk|lucent|trick|shortcut/i.test(qLower)) {
+        // If query asks for GK, reasoning, quantitative tricks, or CS/Pedagogy, route to reference books
+        if (
+          targetSubject === 'General Knowledge' ||
+          targetSubject === 'reasoning' ||
+          targetSubject === 'quantitative_aptitude' ||
+          CS_SUBJECTS.has(String(targetSubject)) ||
+          /gk|lucent|trick|shortcut|dbms|database|sql|operating system|computer network|data structure|computer architecture|pedagogy/i.test(qLower)
+        ) {
           useReferenceBooks = true;
-          reasons.push('Concept/GK query: consulting NCERT curriculum alongside Lucent / S. Chand reference material.');
+          reasons.push('Concept query: consulting curriculum alongside domain reference textbooks in Qdrant.');
         } else {
           reasons.push('Conceptual query: grounding in primary NCERT curriculum.');
         }
@@ -156,7 +182,21 @@ export class KnowledgeRouterService {
     // Configure Reference Book filters: Subject and Intent specific augmentation
     let referenceBookFilters: CorpusRoutingDecision['referenceBookFilters'] = undefined;
     if (useReferenceBooks) {
-      if (targetSubject === 'General Knowledge' || (/gk|lucent|static gk|dynasty|battle|capital|governor|amendment/i.test(qLower) && !/(physics|chemistry|biology|calculus|thermodynamics|optics|integration)/i.test(qLower))) {
+      if (targetSubject === 'database_management') {
+        referenceBookFilters = { books: ['silberschatz_dbms', 'ncert_cs_12'] };
+      } else if (targetSubject === 'operating_systems') {
+        referenceBookFilters = { books: ['galvin_os', 'ncert_cs_11'] };
+      } else if (targetSubject === 'computer_networks') {
+        referenceBookFilters = { books: ['forouzan_networks', 'ncert_cs_12'] };
+      } else if (targetSubject === 'computer_architecture') {
+        referenceBookFilters = { books: ['mano_architecture', 'ncert_cs_11'] };
+      } else if (targetSubject === 'data_structures') {
+        referenceBookFilters = { books: ['lipschutz_dsa', 'ncert_cs_12'] };
+      } else if (targetSubject === 'pedagogy') {
+        referenceBookFilters = { books: ['stet_pedagogy_guide'] };
+      } else if (targetSubject === 'computer_science') {
+        referenceBookFilters = { books: ['ncert_cs_11', 'ncert_cs_12', 'silberschatz_dbms', 'galvin_os', 'forouzan_networks', 'mano_architecture', 'lipschutz_dsa'] };
+      } else if (targetSubject === 'General Knowledge' || (/gk|lucent|static gk|dynasty|battle|capital|governor|amendment/i.test(qLower) && !/(physics|chemistry|biology|calculus|thermodynamics|optics|integration)/i.test(qLower))) {
         referenceBookFilters = { books: ['lucent_gk'] };
       } else if (targetSubject === 'reasoning' || /reasoning|puzzle|analogy|syllogism|blood relation|direction sense/i.test(qLower)) {
         referenceBookFilters = { books: ['schand_reasoning'] };
@@ -171,16 +211,6 @@ export class KnowledgeRouterService {
         // would only dilute the context.
         useReferenceBooks = false;
       } else if (intent === 'TEST_GENERATION' || intent === 'EXAM_PREPARATION' || intent === 'REVISION') {
-        /*
-         * These three intents switch reference books ON above, and this block used to switch them
-         * straight back OFF for any subject that was not explicitly GK, reasoning or quant —
-         * including the common case of no subject at all. A blueprint request would announce
-         * "routing to Exam Blueprint, Syllabus, and PYQ Pattern Intelligence" and then generate
-         * with no reference material at all.
-         *
-         * The router's stated decision now survives: books stay on, with no book filter, so the
-         * whole reference corpus is eligible and relevance decides which of it is used.
-         */
         referenceBookFilters = undefined;
       } else {
         // Any other unclassified subject: no reason to reach for a reference book.
