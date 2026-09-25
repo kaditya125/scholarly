@@ -12,6 +12,15 @@ export interface RerankedDocument {
   degraded?: boolean;
 }
 
+/**
+ * Reranker relevance below which a passage is dropped rather than cited or put in front of the
+ * model. Measured on production (24 Sep 2026): relevant NCERT passages scored 0.22–0.999, while
+ * the passages that got cited for "How are time and work questions asked in SSC CGL?" (Class 5
+ * English, Class 6 Hindi) and "latest SSC CGL notification" (Hindi, Political Science) scored
+ * 0.000–0.03. Callers must skip it for `degraded` results (see above).
+ */
+export const MIN_RERANK_RELEVANCE = 0.1;
+
 export interface RerankerProvider {
   /**
    * Reranks a list of documents against a query.

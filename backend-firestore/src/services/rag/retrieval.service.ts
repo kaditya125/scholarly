@@ -3,6 +3,7 @@ import { searchService, SearchResult } from './search.service';
 import { GoogleEmbeddingProvider } from '../ai/providers/google-embedding.provider';
 import { GeminiProvider } from '../ai/gemini.provider';
 import { CohereRerankerProvider } from '../ai/providers/cohere-reranker.provider';
+import { MIN_RERANK_RELEVANCE } from '../ai/reranker.provider.interface';
 import { cacheService } from '../cache.service';
 import { ChatMessage } from '../../types';
 import { env } from '../../config/env';
@@ -630,7 +631,10 @@ Standalone Search Query:`;
     const documentsToRerank = deduped.map(m => m.metadata?.text as string);
     const rerankedDocs = await this.rerankerProvider.rerank(expandedQuery, documentsToRerank, topK);
 
+    // The 0.45 vector pre-filter lets through passages that merely share words ("time" → a Class 5
+    // English poem); the reranker scores those near 0, so they are dropped here rather than cited.
     const results: RetrievalResult[] = rerankedDocs
+      .filter((reranked) => reranked.degraded || reranked.relevanceScore >= MIN_RERANK_RELEVANCE)
       .map((reranked) => {
         const match = deduped[reranked.index];
         if (!match) return null;
@@ -659,12 +663,12 @@ Standalone Search Query:`;
    * Optional Web Search using Tavily
    */
   async retrieveWebContext(query: string): Promise<RetrievalResult[]> {
-    const webResults = await searchService.search(query, 3);
+    const webResults = await searchService.searchOfficialFirst(query);
     return webResults.map(res => ({
       text: res.content,
       source: res.url,
       score: res.score || 0.8,
-      metadata: { title: res.title, url: res.url }
+      metadata: { title: res.title, url: res.url, official: res.official, publishedDate: res.published_date }
     }));
   }
 

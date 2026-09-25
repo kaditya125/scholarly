@@ -18,6 +18,7 @@
 import { pineconeService } from './pinecone.service';
 import { GoogleEmbeddingProvider } from '../ai/providers/google-embedding.provider';
 import { CohereRerankerProvider } from '../ai/providers/cohere-reranker.provider';
+import { MIN_RERANK_RELEVANCE } from '../ai/reranker.provider.interface';
 import { cacheService } from '../cache.service';
 import { RetrievalResult } from './retrieval.service';
 import { Telemetry } from '../../lib/telemetry';
@@ -26,6 +27,22 @@ import { Telemetry } from '../../lib/telemetry';
 export const REFERENCE_NAMESPACE = 'reference_books';
 export const REFERENCE_CORPUS_BUCKET = 'REFERENCE_BOOK';
 const REFERENCE_AUTHORITY_MULTIPLIER = 0.9;
+
+/** Below MIN_RERANK_RELEVANCE, a passage survives only on a chapter-title match — and not below this. */
+const REFERENCE_TITLE_MATCH_FLOOR = 0.02;
+/** Words too common in student questions to count as a chapter-title match. */
+const TITLE_STOPWORDS = new Set([
+  'the', 'and', 'for', 'with', 'how', 'what', 'why', 'which', 'when', 'are', 'was', 'were', 'does',
+  'can', 'you', 'give', 'explain', 'tell', 'about', 'questions', 'question', 'asked', 'exam', 'exams',
+  'latest', 'new', 'from', 'this', 'that', 'into', 'ssc', 'cgl', 'upsc', 'jee', 'neet', 'tier',
+]);
+const titleWords = (s: unknown) =>
+  String(s || '').toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !TITLE_STOPWORDS.has(w));
+/** "TIME AND WORK" matches "How are time and work questions asked…"; "Indian Economy" does not match "latest notification". */
+function chapterMatchesQuery(chapter: unknown, query: string): boolean {
+  const q = new Set(titleWords(query));
+  return titleWords(chapter).some((w) => q.has(w));
+}
 
 export interface ReferenceRetrievalOptions {
   topK?: number;
@@ -108,7 +125,19 @@ export class ReferenceBooksService {
       ordered = deduped.slice(0, topK).map((match) => ({ match, relevanceScore: match.score || 0 }));
     } else {
       const reranked = await this.reranker.rerank(query, deduped.map((m) => String(m.metadata?.text || '')), topK);
-      ordered = reranked.map((r) => ({ match: deduped[r.index], relevanceScore: r.relevanceScore })).filter((x) => x.match);
+      // Reference chunks score lower than NCERT prose, and a score alone cannot separate them:
+      // for "How are time and work questions asked in SSC CGL?" the right TIME AND WORK pages
+      // scored 0.064–0.077, while Lucent's Indian Economy page scored 0.064 for "latest SSC CGL
+      // notification". The chapter title does separate them, so a passage below the floor is
+      // kept only when its chapter shares a word with the question.
+      ordered = reranked
+        .filter((r) => {
+          if (r.degraded || r.relevanceScore >= MIN_RERANK_RELEVANCE) return true;
+          const md = deduped[r.index]?.metadata || {};
+          return r.relevanceScore >= REFERENCE_TITLE_MATCH_FLOOR && chapterMatchesQuery(md.chapter || md.section || md.subject, query);
+        })
+        .map((r) => ({ match: deduped[r.index], relevanceScore: r.relevanceScore }))
+        .filter((x) => x.match);
     }
 
     // Figure chunks (non-verbal reasoning, DI charts, geometry) carry a Firebase Storage path in
