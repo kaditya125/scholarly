@@ -11,11 +11,11 @@ function StatCard({ icon, label, value, accent, delay }: { icon: React.ReactNode
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay }}
-      className="p-4 rounded-2xl border bg-white border-slate-200/90 dark:bg-white/[0.04] dark:border-white/[0.07] shadow-xs"
+      className="p-3.5 rounded-xl border bg-white border-slate-200/80 dark:bg-white/[0.03] dark:border-white/[0.07]"
     >
-      <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center mb-2.5', accent)}>{icon}</div>
-      <div className="text-[20px] font-semibold text-slate-900 dark:text-white leading-none">{value}</div>
-      <div className="text-[12px] font-medium text-slate-500 dark:text-slate-400 mt-1.5">{label}</div>
+      <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center mb-2', accent)}>{icon}</div>
+      <div className="text-[19px] font-semibold text-slate-900 dark:text-white leading-none tabular-nums">{value}</div>
+      <div className="text-[11.5px] font-medium text-slate-500 dark:text-slate-400 mt-1">{label}</div>
     </motion.div>
   );
 }
@@ -24,7 +24,7 @@ function StatCard({ icon, label, value, accent, delay }: { icon: React.ReactNode
 function TrendSparkline({ trend }: { trend: ProgressTrendPoint[] }) {
   if (trend.length < 2) {
     return (
-      <div className="h-[100px] flex items-center justify-center text-[13px] text-slate-400 dark:text-slate-500">
+      <div className="h-[100px] flex items-center justify-center text-[12.5px] text-slate-400 dark:text-slate-500">
         Complete 2 or more tests to visualize your accuracy trajectory.
       </div>
     );
@@ -72,14 +72,14 @@ export function TestProgressOverview() {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-[96px] rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/60 dark:bg-white/5 animate-pulse" />
+          <div key={i} className="h-[88px] rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-100/60 dark:bg-white/5 animate-pulse" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 font-sans">
+    <div className="space-y-3">
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <StatCard delay={0.02} label="Tests Completed" value={String(totalTests)} icon={<CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />} accent="bg-emerald-500/10" />
         <StatCard delay={0.06} label="Average Accuracy" value={`${avgAccuracy}%`} icon={<Target className="w-4 h-4 text-[#8ba32b] dark:text-[#c8e558]" />} accent="bg-[#c8e558]/15" />
@@ -93,10 +93,10 @@ export function TestProgressOverview() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.24 }}
-        className="p-5 rounded-2xl border bg-white border-slate-200/90 dark:bg-white/[0.04] dark:border-white/[0.07] shadow-xs"
+        className="p-4 rounded-xl border bg-white border-slate-200/80 dark:bg-white/[0.03] dark:border-white/[0.07]"
       >
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-[14.5px] font-semibold text-slate-900 dark:text-white">Accuracy Trajectory</h3>
+          <h3 className="text-[14px] font-semibold text-slate-900 dark:text-white">Accuracy trajectory</h3>
           <span className="text-[11.5px] font-medium text-slate-400 dark:text-slate-500">last {report?.trend.length ?? 0} tests</span>
         </div>
         <TrendSparkline trend={report?.trend ?? []} />

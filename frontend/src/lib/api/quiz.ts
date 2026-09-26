@@ -1,43 +1,13 @@
 import { api } from './client';
 
 /**
- * Quiz client.
+ * Quiz client — matches the backend (quiz.controller.ts / quizAttempts.service.ts) route-for-route.
  *
- * `getQuestions`/`submitQuiz` are the ORIGINAL contents of this file, byte-for-byte — left
- * exactly as they were. `useQuiz.ts` (consumed by `TestEngine.tsx` and `Report.tsx`) depends on
- * them, and whatever behaviour they have today — including against `/quiz` and `/quiz/submit`,
- * which do not match the routes `quiz.routes.ts` actually mounts — is a pre-existing question
- * for those pages, not something to change as a side effect of unrelated work.
- *
- * Everything below that block is ADDITIVE: `hooks/api/useQuizAttempts.ts` already imports
- * `QuizAttempt`/`QuizAttemptSummary`/`ProgressReport` and calls `listAttempts`/
- * `getProgressReport`/`getAttempt` — none of which this file defined, so that hook (and its
- * three real consumers: WeakSectionsPanel, TestProgressOverview, AttemptHistoryList) could not
- * have compiled correctly before now. These match the real backend
- * (quiz.controller.ts / quizAttempts.service.ts) route-for-route.
+ * Note: `GET /quiz` and `POST /quiz/generate` both GENERATE and PERSIST a new in-progress
+ * attempt. Never call them just to read data — use getAttempt/listAttempts for that.
  */
 
-export interface Question {
-  id: string;
-  text: string;
-  topic: string;
-  options: string[];
-  correctAnswerIndex: number;
-  explanation: string;
-}
-
 export const quizApi = {
-  async getQuestions(): Promise<Question[]> {
-    const response = await api.get('/quiz');
-    return response.data;
-  },
-
-  async submitQuiz(payload: { answers: Record<string, number>, timeSpent: number }): Promise<void> {
-    await api.post('/quiz/submit', payload);
-  },
-
-  // ─── Quiz attempts (additive — see file header) ────────────────────────────────────
-
   /** Generates a fresh, personalized weak-area (or topic/notebook) quiz and starts an attempt. */
   async generate(opts: {
     topic?: string; notebookId?: string; notebookTitle?: string; mode?: QuizMode; count?: number;
