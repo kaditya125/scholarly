@@ -149,28 +149,28 @@ export function LearningVelocityWidget() {
   return (
     <div className="space-y-3 font-sans">
       {/* Title with Current Month */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
           <Activity className="w-3.5 h-3.5 text-[#6ca855] dark:text-[#c8e558]" />
           <h2 className="text-[13.5px] font-semibold text-slate-900 dark:text-white tracking-tight">
             Learning Velocity ({currentMonthName})
           </h2>
         </div>
 
-        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+        <span className="shrink-0 whitespace-nowrap text-[11px] font-medium text-slate-500 dark:text-slate-400">
           Days 1 – {daysInCurrentMonth}
         </span>
       </div>
 
       {/* Main Card */}
       <div className={cn(
-        "p-5 rounded-2xl border transition-all shadow-2xs",
+        "p-4 sm:p-5 rounded-xl sm:rounded-2xl border transition-all shadow-2xs",
         isDarkMode ? "bg-[#1a1a1e] border-white/[0.08]" : "bg-white border-slate-200/90"
       )}>
         {/* KPI Metrics */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5 pb-4 border-b border-slate-100 dark:border-white/5">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-5 pb-4 border-b border-slate-100 dark:border-white/5">
           <div>
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <span className="block text-[10px] sm:text-[11px] leading-tight font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Activities Completed
             </span>
             <div className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
@@ -179,7 +179,7 @@ export function LearningVelocityWidget() {
           </div>
 
           <div>
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <span className="block text-[10px] sm:text-[11px] leading-tight font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Average Accuracy
             </span>
             <div className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
@@ -188,7 +188,7 @@ export function LearningVelocityWidget() {
           </div>
 
           <div>
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <span className="block text-[10px] sm:text-[11px] leading-tight font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Study Streak
             </span>
             <div className="text-xl font-bold text-slate-900 dark:text-white mt-0.5 flex items-center gap-1.5">

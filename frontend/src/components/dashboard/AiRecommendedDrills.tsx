@@ -334,10 +334,10 @@ export function AiRecommendedDrills() {
       {/* Header bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <div>
-          <h2 className="text-[14px] font-semibold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+          <h2 className="text-[14px] font-semibold text-slate-900 dark:text-white tracking-tight flex flex-wrap items-center gap-x-2 gap-y-1">
             <Brain className="w-4 h-4 text-[#6ca855] dark:text-[#c8e558]" />
             <span>AI-Recommended Weak Area Drills</span>
-            <span className="text-[10.5px] font-semibold px-2.5 py-0.5 rounded-full bg-[#6ca855]/10 dark:bg-[#c8e558]/10 text-[#6ca855] dark:text-[#c8e558] border border-[#6ca855]/20 dark:border-[#c8e558]/20">
+            <span className="whitespace-nowrap text-[10.5px] font-semibold px-2.5 py-0.5 rounded-full bg-[#6ca855]/10 dark:bg-[#c8e558]/10 text-[#6ca855] dark:text-[#c8e558] border border-[#6ca855]/20 dark:border-[#c8e558]/20">
               Personalized for {targetExam}
             </span>
           </h2>
