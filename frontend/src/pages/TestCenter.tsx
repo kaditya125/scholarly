@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, Compass, BookOpen, Clock, Target, Play, BarChart2, Star, Zap, Activity, Brain, History, Sparkles } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useTheme } from '../lib/ThemeContext';
 import { useAuth } from '../lib/AuthContext';
+import { useProfile } from '../hooks/api/useProfile';
+import { resolveExamFromGoal } from '../lib/examPersonalization';
 import { HeroSection } from '../components/tests/HeroSection';
 import { ExamSelector } from '../components/tests/ExamSelector';
 import { FeaturedTestSeries } from '../components/tests/FeaturedTestSeries';
@@ -22,10 +24,25 @@ export default function TestCenter() {
   const { role } = useAuth();
   const isTeacher = role === 'teacher';
   const launch = useLaunchTest();
+  const { profile } = useProfile();
 
   const [selectedExam, setSelectedExam] = useState<string>(isTeacher ? '' : 'SSC CGL');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'explore' | 'analytics' | 'history'>('explore');
+
+  // Auto-scope to the student's declared exam goal once the profile loads. Only overrides the
+  // default once, on first resolution — after that the student's own ExamSelector pick (a
+  // session-scoped override) is left alone, so switching exams to browse doesn't get stomped by
+  // a slow-arriving profile fetch or a later re-render.
+  const appliedProfileExam = useRef(false);
+  useEffect(() => {
+    if (isTeacher || appliedProfileExam.current) return;
+    const resolved = resolveExamFromGoal(profile?.goal || profile?.targetExam);
+    if (resolved) {
+      setSelectedExam(resolved);
+      appliedProfileExam.current = true;
+    }
+  }, [isTeacher, profile?.goal, profile?.targetExam]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,15 +167,15 @@ export default function TestCenter() {
                 <FeaturedTestSeries selectedExam={selectedExam} />
                 
                 {/* Categories Grid */}
-                <CategoryGrid />
+                <CategoryGrid selectedExam={selectedExam} />
               </div>
 
               <div className="space-y-6">
                 {/* AI Adaptive Test Generator */}
-                <AdaptiveTestGenerator />
+                <AdaptiveTestGenerator selectedExam={selectedExam} />
 
                 {/* AI Coach Recommendations */}
-                <AIRecommendedTests />
+                <AIRecommendedTests selectedExam={selectedExam} />
               </div>
             </motion.div>
           )}

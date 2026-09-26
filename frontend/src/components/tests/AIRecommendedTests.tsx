@@ -3,12 +3,18 @@ import { cn } from '../../lib/utils';
 import { useTheme } from '../../lib/ThemeContext';
 import { useProgressReport } from '../../hooks/api/useQuizAttempts';
 import { useLaunchTest } from '../../hooks/ai/useLaunchTest';
+import { getExamConfig } from '../../lib/examPersonalization';
 
-export function AIRecommendedTests() {
+interface AIRecommendedTestsProps {
+  selectedExam: string;
+}
+
+export function AIRecommendedTests({ selectedExam }: AIRecommendedTestsProps) {
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
   const launch = useLaunchTest();
   const { report } = useProgressReport();
+  const { examId, fallbackRecommendations } = getExamConfig(selectedExam);
 
   const weakSections = report?.weakSections || [];
 
@@ -22,26 +28,11 @@ export function AIRecommendedTests() {
         type: 'Weak Area Booster',
         count: 10,
       }))
-    : [
-        {
-          title: 'Speed & Quantitative Diagnostic',
-          topic: 'Quantitative Aptitude',
-          syllabusNodeId: undefined as string | undefined,
-          examId: undefined as string | undefined,
-          reason: 'Calibrated to test your mental math calculation speed and time management.',
-          type: 'Speed Drill',
-          count: 10,
-        },
-        {
-          title: 'High-Yield Reasoning Patterns',
-          topic: 'Logical Reasoning',
-          syllabusNodeId: undefined as string | undefined,
-          examId: undefined as string | undefined,
-          reason: 'Targeting high-frequency syllogisms, series, and puzzle arrangements.',
-          type: 'Concept Focus',
-          count: 10,
-        }
-      ];
+    : fallbackRecommendations.map(rec => ({
+        ...rec,
+        syllabusNodeId: undefined as string | undefined,
+        examId,
+      }));
 
   return (
     <div className="space-y-4 font-sans">
