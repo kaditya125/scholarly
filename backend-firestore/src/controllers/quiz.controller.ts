@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { quizGeneratorService } from '../services/tests/quizGenerator.service';
 import { quizAttemptsService, QuizAttemptError } from '../services/tests/quizAttempts.service';
-import { QuizMode, QuizSource } from '../types/quizAttempt.types';
+import { QuizMode, QuizSource, PedagogicalDiagnostic } from '../types/quizAttempt.types';
+import { remediationDrillService } from '../services/pedagogy/remediationDrill.service';
 
 export class QuizController {
   /**
@@ -100,6 +101,41 @@ export class QuizController {
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
       const report = await quizAttemptsService.getProgressReport(userId);
       res.json(report);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * POST /quiz/remediation-drill
+   * Generates a validated 3-question remediation micro-drill for a diagnosed prerequisite gap
+   * and persists it as an in-progress attempt the student can take immediately.
+   *
+   * Takes the diagnostic object directly in the request body rather than looking one up from a
+   * stored attempt: the automatic root-cause-diagnosis-on-submit pipeline (conceptGraphService /
+   * quizAttempts.service pedagogicalDiagnostics) is separate, in-progress work not yet on this
+   * branch. This endpoint is what makes RemediationDrillService reachable over HTTP today — any
+   * caller that already has a PedagogicalDiagnostic (from that pipeline once it lands, or
+   * constructed directly) can invoke it now instead of the service being dead code.
+   */
+  public generateRemediationDrill = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as any).user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const diagnostic = req.body?.diagnostic as PedagogicalDiagnostic | undefined;
+      if (!diagnostic || !diagnostic.rootCauseTitle || !diagnostic.rootCauseChapter || !diagnostic.diagnosticMessage) {
+        return res.status(400).json({
+          error: 'diagnostic (with rootCauseTitle, rootCauseChapter, diagnosticMessage) is required',
+        });
+      }
+
+      const drill = await remediationDrillService.generateDrillForDiagnostic(userId, diagnostic);
+      if (!drill) {
+        return res.status(502).json({ error: 'Could not generate a verified remediation drill for this concept. Please try again.' });
+      }
+
+      res.json(drill);
     } catch (error) {
       next(error);
     }

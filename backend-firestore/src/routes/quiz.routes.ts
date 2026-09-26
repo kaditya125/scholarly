@@ -17,4 +17,7 @@ router.get('/progress', controller.getProgress);
 router.get('/attempts/:id', controller.getAttempt);
 router.post('/attempts/:id/submit', controller.submitAttempt);
 
+// Generate a validated remediation micro-drill for a diagnosed prerequisite gap.
+router.post('/remediation-drill', controller.generateRemediationDrill);
+
 export default router;
