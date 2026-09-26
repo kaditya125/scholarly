@@ -50,10 +50,16 @@ export const quizApi = {
     const { data } = await api.post(`/quiz/attempts/${attemptId}/submit`, payload);
     return data;
   },
+
+  /** Starts an attempt from a stored mock test's own questions (no generation). */
+  async startMockTest(testId: string, opts: { mode?: QuizMode } = {}) {
+    const { data } = await api.post(`/quiz/mock-tests/${encodeURIComponent(testId)}/start`, opts);
+    return data as { attemptId: string; questions: Pick<StoredQuizQuestion, 'id' | 'text' | 'topic' | 'options'>[]; durationMinutes: number; title: string; totalQuestions: number };
+  },
 };
 
 export type QuizAttemptStatus = 'in-progress' | 'completed';
-export type QuizSource = 'weak-areas' | 'topic' | 'notebook';
+export type QuizSource = 'weak-areas' | 'topic' | 'notebook' | 'mock-test';
 export type QuizMode = 'exam' | 'study';
 
 export interface StoredQuizQuestion {
