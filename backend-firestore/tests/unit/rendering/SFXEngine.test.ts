@@ -56,8 +56,11 @@ const mockEvent = (overrides: Partial<SFXEvent> = {}): SFXEvent => ({
   priority: 50,
   requirement: {
     kind: 'sfx' as const,
+    category: 'door',
     tags: ['door', 'close'],
     durationMs: 2_000,
+    // A one-shot cue, unlike an ambience bed.
+    loopable: false,
   },
   assetId: 'test-sfx',
   effectCategory: 'door' as const,

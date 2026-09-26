@@ -11,6 +11,21 @@
  * These run with NODE_ENV=test, so publish() dispatches in-process through the same
  * executeHandlers() the Redis path uses.
  */
+// The Automation Studio dispatcher is a SEPARATE subscriber with its own wiring, and it also takes
+// learning.test_completed and user.registered. It is not what this file is measuring, so it is
+// stubbed out to leave only the closures registerEventSubscribers() builds itself.
+//
+// It has to be stubbed explicitly now: subscribers.ts require()s it lazily inside a try/catch, and
+// that require used to throw here — its graph reaches uuid, which Jest could not load — so the
+// catch swallowed it and the dispatcher silently never subscribed under test. These assertions were
+// passing on that accident. Once jest.config.js maps uuid to a CommonJS stand-in the require
+// succeeds, the dispatcher subscribes exactly as it does in production, and a second (correct,
+// distinct) handler appears on those two events. Stubbing pins the suite to its actual subject
+// instead of to whether uuid happens to be loadable.
+jest.mock('../../src/core/automation/engine/AutomationTriggerDispatcher', () => ({
+  automationTriggerDispatcher: { initialize: jest.fn() },
+}));
+
 import { eventBus } from '../../src/core/events/EventBus';
 import { registerEventSubscribers } from '../../src/core/events/subscribers';
 

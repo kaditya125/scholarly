@@ -294,7 +294,11 @@ export * from "./observability";
 export * from "./exam.types";
 export * from "./pyq.types";
 
-export const isReadyStatus = (status: string) => status === 'READY' || status === 'READY_DEGRADED';
+/** The statuses that count as usable content. Exported so callers can enumerate, not just test. */
+export const READY_STATUSES = ['READY', 'READY_DEGRADED'] as const;
+// Takes an optional status because callers routinely pass a possibly-absent field; it already
+// returned false for undefined, the signature just did not admit it.
+export const isReadyStatus = (status?: string) => status === 'READY' || status === 'READY_DEGRADED';
 export type KGRelationshipType = string;
 
 export interface CircleChatTurn {
