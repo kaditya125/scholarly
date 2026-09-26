@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
+import { useTheme } from "../../lib/ThemeContext";
 
 export type RobotState = 'celebrating' | 'flying' | 'greeting' | 'hidden';
 
@@ -8,6 +9,18 @@ interface GreetingRobotProps {
   state?: RobotState;
   flightStartRect?: DOMRect | null;
   onFlightComplete?: () => void;
+  /**
+   * When set, the steady-state 'greeting' pose renders this exam-specific avatar instead of the
+   * mascot. 'flying'/'celebrating' still render the mascot — those states are driven by
+   * OnboardingCelebrationModal, which shows the mascot celebrating and has no per-exam art, so
+   * swapping mid-flight would show one character take off and a different one land. That seam is
+   * a one-time, first-login-only edge case; every later visit renders the avatar throughout.
+   */
+  avatarSrc?: string;
+  avatarAlt?: string;
+  /** Avatar width ÷ height. The avatar slot keeps a fixed height and takes this aspect, so every
+   *  exam's art shows whole — no cropping, no letterboxing — and the box is sized before load. */
+  avatarRatio?: number;
 }
 
 export const GreetingRobot: React.FC<GreetingRobotProps> = ({
@@ -15,7 +28,12 @@ export const GreetingRobot: React.FC<GreetingRobotProps> = ({
   state = "greeting",
   flightStartRect = null,
   onFlightComplete,
+  avatarSrc,
+  avatarAlt,
+  avatarRatio,
 }) => {
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark';
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const [flightDelta, setFlightDelta] = React.useState<{ x: number; y: number; scale: number } | null>(null);
   const [animState, setAnimState] = React.useState<RobotState>(state);
@@ -35,12 +53,18 @@ export const GreetingRobot: React.FC<GreetingRobotProps> = ({
   }, [state, flightStartRect]);
 
   const isFlying = animState === 'flying' && flightDelta;
+  const showAvatar = !!avatarSrc && !isFlying && animState !== 'celebrating';
+  const avatarSized = showAvatar && !!avatarRatio;
+  const sizeClass = avatarSized
+    ? 'h-[86px] sm:h-[140px] md:h-[156px]'
+    : 'aspect-[494/613] w-[76px] sm:w-[126px] md:w-[140px]';
 
   return (
     <div
       ref={containerRef}
-      className={`relative shrink-0 select-none aspect-[494/613] w-[76px] sm:w-[126px] md:w-[140px] pointer-events-none ${className}`}
-      aria-label="Sadhya AI mascot greeting"
+      className={`relative shrink-0 select-none ${sizeClass} pointer-events-none ${className}`}
+      style={avatarSized ? { aspectRatio: String(avatarRatio) } : undefined}
+      aria-label={showAvatar ? (avatarAlt || 'Sadhya student avatar') : 'Sadhya AI mascot greeting'}
     >
       <motion.div
         className="w-full h-full relative"
@@ -86,84 +110,108 @@ export const GreetingRobot: React.FC<GreetingRobotProps> = ({
           />
         )}
 
-        {/* 100% Static 3D Studio Body & Visor (Never shifts or moves when greeting) */}
-        <img
-          src="/images/mascot-body-v3.webp"
-          alt="Sadhya AI mascot"
-          className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-sm select-none"
-          loading="eager"
-          draggable={false}
-        />
+        {showAvatar ? (
+          <>
+            {/* Very subtle theme-aware glow — the avatar art itself is never recolored/filtered. */}
+            <div
+              className="absolute -inset-3 rounded-full pointer-events-none -z-10"
+              style={{
+                background: isDarkMode
+                  ? 'radial-gradient(circle, rgba(100,120,180,0.18), transparent 70%)'
+                  : 'radial-gradient(circle, rgba(220,240,255,0.35), transparent 70%)',
+              }}
+            />
+            <img
+              src={avatarSrc}
+              alt={avatarAlt || 'Sadhya student avatar'}
+              className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
+              loading="eager"
+              decoding="async"
+              draggable={false}
+            />
+          </>
+        ) : (
+          <>
+            {/* 100% Static 3D Studio Body & Visor (Never shifts or moves when greeting) */}
+            <img
+              src="/images/mascot-body-v3.webp"
+              alt="Sadhya AI mascot"
+              className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-sm select-none"
+              loading="eager"
+              draggable={false}
+            />
 
-        {/* Joyful, Excited Blinking Happy Eyes */}
-        <motion.img
-          src="/images/mascot-eyes-v3.webp"
-          alt="Sadhya AI mascot happy eyes"
-          className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none z-10"
-          loading="eager"
-          draggable={false}
-          initial={{ scaleY: 1, scaleX: 1, filter: "brightness(1) drop-shadow(0 0 0px #a3e635)" }}
-          animate={{
-            scaleY: [
-              1, 1, 1, 1,
-              0.08, 1, // Quick natural blink 1
-              1, 1,
-              1.14, 0.94, 1.12, 1, // Excited happy bounce / giggle squeeze!
-              1, 1,
-              0.08, 1, 0.08, 1, // Happy double blink!
-              1, 1, 1
-            ],
-            scaleX: [
-              1, 1, 1, 1,
-              1.06, 1,
-              1, 1,
-              1.08, 1.02, 1.05, 1,
-              1, 1,
-              1.05, 1, 1.05, 1,
-              1, 1, 1
-            ],
-            filter: [
-              "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
-              "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
-              "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
-              "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
-              "brightness(0.85) drop-shadow(0 0 0px transparent)",
-              "brightness(1.15) drop-shadow(0 0 5px rgba(163,230,53,0.6))",
-              "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
-              "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
-              "brightness(1.3) drop-shadow(0 0 8px rgba(190,242,100,0.85))",
-              "brightness(1.1) drop-shadow(0 0 4px rgba(163,230,53,0.5))",
-              "brightness(1.25) drop-shadow(0 0 7px rgba(190,242,100,0.8))",
-              "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
-              "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
-              "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
-              "brightness(0.85) drop-shadow(0 0 0px transparent)",
-              "brightness(1.15) drop-shadow(0 0 5px rgba(163,230,53,0.6))",
-              "brightness(0.85) drop-shadow(0 0 0px transparent)",
-              "brightness(1.2) drop-shadow(0 0 6px rgba(190,242,100,0.7))",
-              "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
-              "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
-              "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
-            ],
-          }}
-          transition={{
-            duration: 5.4,
-            repeat: Infinity,
-            ease: "easeInOut",
-            times: [
-              0, 0.2, 0.28, 0.3,
-              0.32, 0.35,
-              0.45, 0.52,
-              0.57, 0.61, 0.66, 0.72,
-              0.78, 0.84,
-              0.86, 0.89, 0.91, 0.94,
-              0.96, 0.98, 1
-            ],
-          }}
-          style={{
-            transformOrigin: "49% 27%",
-          }}
-        />
+            {/* Joyful, Excited Blinking Happy Eyes */}
+            <motion.img
+              src="/images/mascot-eyes-v3.webp"
+              alt="Sadhya AI mascot happy eyes"
+              className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none z-10"
+              loading="eager"
+              draggable={false}
+              initial={{ scaleY: 1, scaleX: 1, filter: "brightness(1) drop-shadow(0 0 0px #a3e635)" }}
+              animate={{
+                scaleY: [
+                  1, 1, 1, 1,
+                  0.08, 1, // Quick natural blink 1
+                  1, 1,
+                  1.14, 0.94, 1.12, 1, // Excited happy bounce / giggle squeeze!
+                  1, 1,
+                  0.08, 1, 0.08, 1, // Happy double blink!
+                  1, 1, 1
+                ],
+                scaleX: [
+                  1, 1, 1, 1,
+                  1.06, 1,
+                  1, 1,
+                  1.08, 1.02, 1.05, 1,
+                  1, 1,
+                  1.05, 1, 1.05, 1,
+                  1, 1, 1
+                ],
+                filter: [
+                  "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
+                  "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
+                  "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
+                  "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
+                  "brightness(0.85) drop-shadow(0 0 0px transparent)",
+                  "brightness(1.15) drop-shadow(0 0 5px rgba(163,230,53,0.6))",
+                  "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
+                  "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
+                  "brightness(1.3) drop-shadow(0 0 8px rgba(190,242,100,0.85))",
+                  "brightness(1.1) drop-shadow(0 0 4px rgba(163,230,53,0.5))",
+                  "brightness(1.25) drop-shadow(0 0 7px rgba(190,242,100,0.8))",
+                  "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
+                  "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
+                  "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
+                  "brightness(0.85) drop-shadow(0 0 0px transparent)",
+                  "brightness(1.15) drop-shadow(0 0 5px rgba(163,230,53,0.6))",
+                  "brightness(0.85) drop-shadow(0 0 0px transparent)",
+                  "brightness(1.2) drop-shadow(0 0 6px rgba(190,242,100,0.7))",
+                  "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
+                  "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
+                  "brightness(1) drop-shadow(0 0 2px rgba(163,230,53,0.3))",
+                ],
+              }}
+              transition={{
+                duration: 5.4,
+                repeat: Infinity,
+                ease: "easeInOut",
+                times: [
+                  0, 0.2, 0.28, 0.3,
+                  0.32, 0.35,
+                  0.45, 0.52,
+                  0.57, 0.61, 0.66, 0.72,
+                  0.78, 0.84,
+                  0.86, 0.89, 0.91, 0.94,
+                  0.96, 0.98, 1
+                ],
+              }}
+              style={{
+                transformOrigin: "49% 27%",
+              }}
+            />
+          </>
+        )}
       </motion.div>
     </div>
   );
