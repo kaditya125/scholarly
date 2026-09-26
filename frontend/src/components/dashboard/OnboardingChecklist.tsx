@@ -147,15 +147,16 @@ export function OnboardingChecklist() {
       {/* ── Step Cards ───────────────────────────────────────────────────── */}
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-[13px] font-semibold text-slate-900 dark:text-white tracking-tight">
+          <span className="text-[13px] font-semibold text-slate-900 dark:text-white tracking-tight min-w-0">
             Complete these steps to get the most out of Sadhya
           </span>
-          <span className="text-[11px] font-semibold px-2.5 py-0.5 bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 rounded-full border border-slate-200/80 dark:border-white/10">
+          <span className="shrink-0 whitespace-nowrap text-[11px] font-semibold px-2.5 py-0.5 bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 rounded-full border border-slate-200/80 dark:border-white/10">
             {completedCount}/{STEPS.length} done
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        {/* Phones get compact single-column rows; the two-column card grid left each card ~150px wide. */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
           {STEPS.map((step, i) => {
             const done = completedSteps[step.id];
             const Icon = step.icon;
@@ -169,14 +170,14 @@ export function OnboardingChecklist() {
                 <Link
                   to={step.path}
                   className={cn(
-                    'flex flex-col w-full h-full rounded-2xl p-4 border transition-all duration-200 group cursor-pointer relative shadow-2xs',
+                    'flex flex-row items-center gap-3 sm:flex-col sm:items-stretch sm:gap-0 w-full h-full rounded-xl sm:rounded-2xl p-3 sm:p-4 border transition-all duration-200 group cursor-pointer relative shadow-2xs',
                     done
                       ? 'bg-slate-50/60 dark:bg-white/[0.02] border-slate-200/60 dark:border-white/5 opacity-60'
                       : 'bg-white dark:bg-[#161619] border-slate-200/90 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50/80 dark:hover:bg-white/[0.04] hover:shadow-xs'
                   )}
                 >
                   {/* Time / Status badge */}
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="order-last sm:order-none shrink-0 flex items-center justify-between sm:mb-3">
                     <span className={cn(
                       'text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-md border',
                       done 
@@ -189,7 +190,7 @@ export function OnboardingChecklist() {
 
                   {/* Icon */}
                   <div className={cn(
-                    'w-8.5 h-8.5 rounded-xl flex items-center justify-center mb-3 border transition-all duration-200',
+                    'w-8.5 h-8.5 shrink-0 rounded-xl flex items-center justify-center sm:mb-3 border transition-all duration-200',
                     done 
                       ? 'bg-[#6ca855]/15 dark:bg-[#c8e558]/15 border-[#6ca855]/30 dark:border-[#c8e558]/30 text-[#6ca855] dark:text-[#c8e558]' 
                       : 'bg-slate-50 dark:bg-white/[0.04] border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300 group-hover:border-slate-300 dark:group-hover:border-[#c8e558]/40 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558]'
@@ -200,16 +201,18 @@ export function OnboardingChecklist() {
                   </div>
 
                   {/* Text */}
-                  <div className="font-semibold text-[13.5px] text-slate-900 dark:text-white mb-1 tracking-tight leading-snug">
-                    {step.label}
-                  </div>
-                  <div className="text-[12px] text-slate-500 dark:text-gray-400 leading-relaxed flex-1">
-                    {step.description}
+                  <div className="min-w-0 flex-1 flex flex-col">
+                    <div className="font-semibold text-[13.5px] text-slate-900 dark:text-white mb-0.5 sm:mb-1 tracking-tight leading-snug">
+                      {step.label}
+                    </div>
+                    <div className="text-[12px] text-slate-500 dark:text-gray-400 leading-snug sm:leading-relaxed flex-1">
+                      {step.description}
+                    </div>
                   </div>
 
                   {/* CTA link */}
                   {!done && (
-                    <div className="mt-3 flex items-center gap-1 text-[11.5px] font-semibold text-slate-700 dark:text-[#c8e558] opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="hidden sm:flex mt-3 items-center gap-1 text-[11.5px] font-semibold text-slate-700 dark:text-[#c8e558] opacity-0 group-hover:opacity-100 transition-opacity">
                       Start <ChevronRight className="w-3.5 h-3.5" />
                     </div>
                   )}
