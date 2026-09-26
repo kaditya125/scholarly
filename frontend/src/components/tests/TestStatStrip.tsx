@@ -5,8 +5,9 @@ import { useUserStats } from '../../hooks/api/useUserStats';
 
 function Kpi({ icon, label, value, hint, accent }: { icon: React.ReactNode; label: string; value: string; hint?: string; accent: string }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3 min-w-0 bg-white dark:bg-[#18181b]">
-      <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0', accent)}>{icon}</div>
+    <div className="flex items-center gap-3 px-3.5 sm:px-4 py-3 min-w-0 bg-white dark:bg-[#18181b]">
+      {/* Icons are dropped below sm: at phone width the two-column tile can't fit icon + label. */}
+      <div className={cn('hidden sm:flex w-8 h-8 rounded-lg items-center justify-center shrink-0', accent)}>{icon}</div>
       <div className="min-w-0">
         <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">{label}</div>
         <div className="flex items-baseline gap-1.5">
