@@ -40,7 +40,13 @@ export default function TestEngine() {
   // started at most once per navigation (+ explicit retry). Effect re-runs — StrictMode's double
   // mount, a user/auth object refresh — re-attach to the in-flight promise instead of firing a
   // second one. Without this, one visit could leave several orphaned attempts behind.
-  const inflightRef = useRef<{ key: string; promise: Promise<{ attemptId: string; questions: Pick<StoredQuizQuestion, 'id' | 'text' | 'topic' | 'options'>[] }> } | null>(null);
+  const inflightRef = useRef<{ key: string; promise: Promise<{ attemptId: string; questions: Pick<StoredQuizQuestion, 'id' | 'text' | 'topic' | 'options'>[]; durationMinutes?: number }> } | null>(null);
+  // Timer is anchored to the attempt, not the page: its end time is stored per attempt id so a
+  // refresh resumes the same clock, and it only starts once the questions are actually shown.
+  // Previously one global sessionStorage key held a single 30-minute end time shared by every
+  // test, so a 60-minute paper got 30 minutes and a leftover end time bled into the next test.
+  const endAtRef = useRef<number | null>(null);
+  const durationSecRef = useRef(30 * 60);
 
   const retryGeneration = () => {
     setRetryKey((k) => k + 1);
@@ -56,8 +62,16 @@ export default function TestEngine() {
 
     let cancelled = false;
 
-    const showQuestions = (attemptId: string, questions: Pick<StoredQuizQuestion, 'id' | 'text' | 'topic' | 'options'>[]) => {
+    const showQuestions = (attemptId: string, questions: Pick<StoredQuizQuestion, 'id' | 'text' | 'topic' | 'options'>[], durationMinutes?: number) => {
       attemptIdRef.current = attemptId;
+      const durationSec = Math.max(1, Math.round((durationMinutes || 30) * 60));
+      const timerKey = `testEngine_endAt::${attemptId}`;
+      const saved = Number(sessionStorage.getItem(timerKey));
+      const endAt = saved > 0 ? saved : Date.now() + durationSec * 1000;
+      sessionStorage.setItem(timerKey, String(endAt));
+      durationSecRef.current = durationSec;
+      endAtRef.current = endAt;
+      setTimeLeft(Math.max(0, Math.round((endAt - Date.now()) / 1000)));
       // Answer keys are masked server-side for in-progress attempts; fill dummies so the
       // full question type renders.
       setMockQuestions(questions.map((q) => ({ ...q, correctAnswerIndex: -1, explanation: '' })));
@@ -77,7 +91,7 @@ export default function TestEngine() {
             navigate('/report', { replace: true, state: { attemptId: attempt.id } });
             return;
           }
-          showQuestions(attempt.id, attempt.questions);
+          showQuestions(attempt.id, attempt.questions, attempt.durationMinutes);
         })
         .catch((err) => {
           if (cancelled) return;
@@ -93,20 +107,9 @@ export default function TestEngine() {
       setIsLoading(true);
       setGenerateError(null);
       const promise = mockTestId
-        // ── Branch A: a seeded Firestore mock test by ID (free SSC CGL mocks, PYQ papers) ──
-        ? fetch(`/api/tests/${mockTestId}`, { headers: { 'Content-Type': 'application/json' }, credentials: 'include' })
-            .then((res) => {
-              if (!res.ok) throw new Error(`Failed to load mock test: ${res.status}`);
-              return res.json();
-            })
-            // The generate endpoint resolves the question bank entries, applies auth, and
-            // creates the attempt.
-            .then((data) => quizApi.generate({
-              topic: topicParam || data.test?.title,
-              count: data.test?.totalQuestions || count,
-              mode: mode as any,
-              examId: examId || data.test?.examId,
-            }))
+        // ── Branch A: a stored mock test (e.g. the SSC free mocks). Starts an attempt from the
+        // test's own stored questions — never regenerates them from its title. ──
+        ? quizApi.startMockTest(mockTestId, { mode: mode as any })
         // ── Branch B: AI-generated quiz (default path) ──
         : quizApi.generate({
             // No hardcoded fallback topic: the backend's weak-areas default only triggers when
@@ -126,7 +129,7 @@ export default function TestEngine() {
     inflightRef.current.promise
       .then((result) => {
         if (cancelled) return;
-        showQuestions(result.attemptId, result.questions);
+        showQuestions(result.attemptId, result.questions, result.durationMinutes);
         // Pin the new attempt into this history entry so a refresh or back/forward resumes it
         // instead of generating yet another attempt.
         navigate(`${location.pathname}${location.search}`, {
@@ -164,14 +167,8 @@ export default function TestEngine() {
     const saved = sessionStorage.getItem('testEngine_bookmarked');
     return saved ? new Set(JSON.parse(saved)) : new Set();
   });
-  const [timeLeft, setTimeLeft] = useState(() => {
-    const savedEndDate = sessionStorage.getItem('testEngine_endDate');
-    if (savedEndDate) {
-      const remaining = Math.floor((parseInt(savedEndDate, 10) - Date.now()) / 1000);
-      return remaining > 0 ? remaining : 0;
-    }
-    return 30 * 60;
-  }); // 30 minutes
+  // Set from the attempt's duration once its questions load (see showQuestions).
+  const [timeLeft, setTimeLeft] = useState(30 * 60);
   const [isPaletteOpen, setIsPaletteOpen] = useState(true);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [isAiHelperOpen, setIsAiHelperOpen] = useState(false);
@@ -180,27 +177,24 @@ export default function TestEngine() {
 
   const studentName = user?.displayName || user?.email?.split('@')[0] || 'Scholar';
 
+  // Derive remaining time from the attempt's end timestamp rather than decrementing, so a
+  // throttled background tab can't drift. Idle until a test is loaded.
   useEffect(() => {
-    const savedEndDate = sessionStorage.getItem('testEngine_endDate');
-    if (!savedEndDate && timeLeft > 0) {
-      sessionStorage.setItem('testEngine_endDate', (Date.now() + timeLeft * 1000).toString());
-    }
-
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev === 5 * 60 + 1) { // Will become 5 minutes exactly
-          setShowWarning(true);
-          setTimeout(() => setShowWarning(false), 5000);
-        }
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
+      if (endAtRef.current == null) return;
+      setTimeLeft(Math.max(0, Math.round((endAtRef.current - Date.now()) / 1000)));
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  const warnedRef = useRef(false);
+  useEffect(() => {
+    if (endAtRef.current != null && timeLeft <= 5 * 60 && timeLeft > 0 && !warnedRef.current) {
+      warnedRef.current = true;
+      setShowWarning(true);
+      setTimeout(() => setShowWarning(false), 5000);
+    }
+  }, [timeLeft]);
 
   useEffect(() => {
     sessionStorage.setItem('testEngine_currentQIndex', currentQIndex.toString());
@@ -224,9 +218,9 @@ export default function TestEngine() {
     sessionStorage.removeItem('testEngine_answers');
     sessionStorage.removeItem('testEngine_marked');
     sessionStorage.removeItem('testEngine_bookmarked');
-    sessionStorage.removeItem('testEngine_endDate');
+    if (attemptIdRef.current) sessionStorage.removeItem(`testEngine_endAt::${attemptIdRef.current}`);
 
-    const timeSpentSeconds = Math.max(1, (30 * 60) - timeLeft);
+    const timeSpentSeconds = Math.max(1, durationSecRef.current - timeLeft);
 
     try {
       const attemptId = attemptIdRef.current;
@@ -262,8 +256,11 @@ export default function TestEngine() {
     });
   }, [timeLeft, answers, mockQuestions, navigate]);
 
+  const autoSubmittedRef = useRef(false);
   useEffect(() => {
-    if (timeLeft === 0) {
+    // Only a loaded test can time out; guard against double-submitting on re-render.
+    if (timeLeft === 0 && endAtRef.current != null && !autoSubmittedRef.current) {
+      autoSubmittedRef.current = true;
       handleSubmit();
     }
   }, [timeLeft, handleSubmit]);
