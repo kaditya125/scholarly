@@ -20,4 +20,7 @@ router.post('/attempts/:id/submit', controller.submitAttempt);
 // Generate a validated remediation micro-drill for a diagnosed prerequisite gap.
 router.post('/remediation-drill', controller.generateRemediationDrill);
 
+// Start an attempt from a stored mock test's own questions (no generation).
+router.post('/mock-tests/:testId/start', controller.startMockTest);
+
 export default router;

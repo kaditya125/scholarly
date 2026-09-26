@@ -62,6 +62,15 @@ export class TestsRepository {
     return questions;
   }
   
+  /** A mock test plus its questions, in the test's own questionIds order. */
+  async getTestWithQuestions(testId: string): Promise<{ test: MockTest; questions: Question[] } | null> {
+    const test = await this.getTestById(testId);
+    if (!test) return null;
+    const byId = new Map((await this.getQuestions(test.questionIds)).map(q => [q.id, q]));
+    const questions = test.questionIds.map(id => byId.get(id)).filter((q): q is Question => !!q);
+    return { test, questions };
+  }
+
   async getQuestionsBySubjectAndTopic(subject: string, topic?: string, limit = 20): Promise<Question[]> {
     let query: FirebaseFirestore.Query = this.questionsCollection.where('subject', '==', subject);
     if (topic) {
