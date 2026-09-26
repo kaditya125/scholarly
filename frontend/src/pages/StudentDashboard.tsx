@@ -265,7 +265,7 @@ export default function StudentDashboard() {
               </div>
             </div>
 
-            <h1 className="text-[28px] sm:text-[34px] font-semibold tracking-[-0.035em] leading-[1.1] text-slate-900 dark:text-white">
+            <h1 className="text-[24px] sm:text-[34px] font-semibold tracking-[-0.035em] leading-[1.1] text-slate-900 dark:text-white">
               {getGreeting()},{' '}
               <span className="text-[#6ca855] dark:text-[#c8e558]">
                 {firstName}
@@ -277,16 +277,17 @@ export default function StudentDashboard() {
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05, duration: 0.25 }}
-            className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pt-0.5 text-[13.5px] text-slate-500 dark:text-gray-400 font-normal leading-relaxed antialiased"
+            // Phones: one item per line so nothing is squeezed beside the mascot; wraps inline from sm.
+            className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-3 gap-y-1 sm:gap-y-1.5 pt-0.5 text-[13px] sm:text-[13.5px] text-slate-500 dark:text-gray-400 font-normal leading-relaxed antialiased min-w-0"
           >
             {latestSession ? (
-              <div className="inline-flex items-center gap-1.5">
-                <span>Recently worked on</span>
+              <div className="flex items-center gap-1.5 min-w-0 max-w-full">
+                <span className="shrink-0">Recently worked on</span>
                 <Link
                   to={`/chat?session=${latestSession.sessionId}`}
-                  className="font-medium text-slate-900 dark:text-white hover:text-[#6ca855] dark:hover:text-[#c8e558] hover:underline inline-flex items-center gap-1 transition-colors"
+                  className="font-medium text-slate-900 dark:text-white hover:text-[#6ca855] dark:hover:text-[#c8e558] hover:underline inline-flex items-center gap-1 transition-colors min-w-0"
                 >
-                  <span className="truncate max-w-[240px] sm:max-w-[340px]">{latestSession.title || (latestSession.topicType ? `${latestSession.topicType} session` : 'Study Session')}</span>
+                  <span className="truncate sm:max-w-[340px]">{latestSession.title || (latestSession.topicType ? `${latestSession.topicType} session` : 'Study Session')}</span>
                   <ArrowRight className="w-3.5 h-3.5 text-[#6ca855] dark:text-[#c8e558] shrink-0 inline" />
                 </Link>
               </div>
@@ -296,7 +297,7 @@ export default function StudentDashboard() {
 
             <span className="text-slate-300 dark:text-gray-700 hidden sm:inline">•</span>
 
-            <div className="inline-flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-x-1.5 min-w-0">
               <span>Preparation:</span>
               {realReadiness != null ? (
                 <>
@@ -447,89 +448,89 @@ export default function StudentDashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.3 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5"
         >
           <div 
             onClick={() => navigate('/notebooks')} 
             className={cn(
-              "p-5 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
+              "p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
               isDarkMode 
                 ? "bg-[#161619] border-white/[0.08] hover:border-white/20 hover:bg-white/[0.03]" 
                 : "bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs"
             )}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
                 <UploadCloud className="w-4.5 h-4.5" />
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
             </div>
             <div>
               <h3 className="font-semibold text-[14px] text-slate-900 dark:text-white tracking-tight">Upload &amp; Analyze</h3>
-              <p className="text-[12.5px] text-slate-500 dark:text-gray-400 mt-1 leading-relaxed">PDF, notes, syllabus &amp; web</p>
+              <p className="text-[12px] sm:text-[12.5px] text-slate-500 dark:text-gray-400 mt-0.5 sm:mt-1 leading-snug sm:leading-relaxed">PDF, notes, syllabus &amp; web</p>
             </div>
           </div>
 
           <div 
             onClick={() => navigate('/podcasts')} 
             className={cn(
-              "p-5 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
+              "p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
               isDarkMode 
                 ? "bg-[#161619] border-white/[0.08] hover:border-white/20 hover:bg-white/[0.03]" 
                 : "bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs"
             )}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
                 <Headphones className="w-4.5 h-4.5" />
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
             </div>
             <div>
               <h3 className="font-semibold text-[14px] text-slate-900 dark:text-white tracking-tight">AI Podcasts</h3>
-              <p className="text-[12.5px] text-slate-500 dark:text-gray-400 mt-1 leading-relaxed">Audio overview &amp; discussions</p>
+              <p className="text-[12px] sm:text-[12.5px] text-slate-500 dark:text-gray-400 mt-0.5 sm:mt-1 leading-snug sm:leading-relaxed">Audio overview &amp; discussions</p>
             </div>
           </div>
 
           <div 
             onClick={() => navigate('/tests')} 
             className={cn(
-              "p-5 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
+              "p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
               isDarkMode 
                 ? "bg-[#161619] border-white/[0.08] hover:border-white/20 hover:bg-white/[0.03]" 
                 : "bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs"
             )}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
                 <Zap className="w-4.5 h-4.5" />
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
             </div>
             <div>
               <h3 className="font-semibold text-[14px] text-slate-900 dark:text-white tracking-tight">Adaptive Tests</h3>
-              <p className="text-[12.5px] text-slate-500 dark:text-gray-400 mt-1 leading-relaxed">Mock papers &amp; AI diagnostics</p>
+              <p className="text-[12px] sm:text-[12.5px] text-slate-500 dark:text-gray-400 mt-0.5 sm:mt-1 leading-snug sm:leading-relaxed">Mock papers &amp; AI diagnostics</p>
             </div>
           </div>
 
           <div 
             onClick={() => navigate('/my-classes')} 
             className={cn(
-              "p-5 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
+              "p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
               isDarkMode 
                 ? "bg-[#161619] border-white/[0.08] hover:border-white/20 hover:bg-white/[0.03]" 
                 : "bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs"
             )}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
                 <Radio className="w-4.5 h-4.5" />
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
             </div>
             <div>
               <h3 className="font-semibold text-[14px] text-slate-900 dark:text-white tracking-tight">Live Classes</h3>
-              <p className="text-[12.5px] text-slate-500 dark:text-gray-400 mt-1 leading-relaxed">Interactive &amp; recordings</p>
+              <p className="text-[12px] sm:text-[12.5px] text-slate-500 dark:text-gray-400 mt-0.5 sm:mt-1 leading-snug sm:leading-relaxed">Interactive &amp; recordings</p>
             </div>
           </div>
         </motion.div>
