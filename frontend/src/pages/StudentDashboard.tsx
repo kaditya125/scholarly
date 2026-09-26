@@ -49,6 +49,9 @@ import { OnboardingChecklist } from "../components/dashboard/OnboardingChecklist
 import { LearningVelocityWidget } from "../components/dashboard/LearningVelocityWidget";
 import { FocusAreasWidget } from "../components/dashboard/FocusAreasWidget";
 import { GreetingRobot, RobotState } from "../components/dashboard/GreetingRobot";
+import { getExamAvatar } from "../lib/examAvatars";
+import { getExamDoubts } from "../lib/examDoubts";
+import { AvatarThoughtBubble } from "../components/dashboard/AvatarThoughtBubble";
 import { OnboardingCelebrationModal } from "../components/dashboard/OnboardingCelebrationModal";
 import { AiRecommendedDrills } from "../components/dashboard/AiRecommendedDrills";
 import { AchievementsMilestones } from "../components/dashboard/AchievementsMilestones";
@@ -181,6 +184,10 @@ export default function StudentDashboard() {
   }, [user?.displayName]);
 
   const targetExam = profile?.targetExam || 'Competitive Exams';
+  // Exam-specific professional avatar shown in the greeting; falls back to a generic student
+  // avatar when the goal has no dedicated one (College, Other, Olympiads, etc. — see examAvatars.ts).
+  const examAvatar = useMemo(() => getExamAvatar(profile?.targetExam || profile?.goal), [profile?.targetExam, profile?.goal]);
+  const examDoubts = useMemo(() => getExamDoubts(profile?.targetExam || profile?.goal), [profile?.targetExam, profile?.goal]);
 
   const { digitalTwin } = useAdaptiveAssessment();
 
@@ -240,14 +247,26 @@ export default function StudentDashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="flex items-center gap-0 sm:gap-1 relative"
+          // Top padding reserves room for the avatar's thought bubble so it never overlaps the header.
+          className="flex items-center gap-0 sm:gap-1 relative pt-[78px] sm:pt-[84px]"
         >
-          {/* Mascot Robot on Left (Continuous AI companion) */}
-          <div ref={greetingTargetRef} className="shrink-0 relative z-10 mr-1 sm:mr-2 self-center">
+          {/* Exam-specific avatar on the left (was a generic robot mascot) */}
+          <div ref={greetingTargetRef} className="shrink-0 relative z-10 mr-1 sm:mr-2 self-start sm:self-center">
+            {robotState === 'greeting' && (
+              <AvatarThoughtBubble
+                doubts={examDoubts}
+                isDarkMode={isDarkMode}
+                onAsk={(q) => navigate(`/chat?prompt=${encodeURIComponent(q)}&model=${selectedModel.id}`)}
+                className="absolute bottom-full left-[38%] mb-3 z-20"
+              />
+            )}
             <GreetingRobot
               state={robotState}
               flightStartRect={flightStartRect}
               onFlightComplete={handleFlightComplete}
+              avatarSrc={examAvatar.src}
+              avatarAlt={examAvatar.alt}
+              avatarRatio={examAvatar.ratio}
             />
           </div>
 
