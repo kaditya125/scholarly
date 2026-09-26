@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useLocation, Link, Navigate, useNavigate } from "react-router-dom";
 import { CheckCircle2, ChevronRight, Check, Sparkles, Loader2, ArrowLeft, RotateCcw, Clock, Award, Target, HelpCircle } from "lucide-react";
 import { cn } from "../lib/utils";
-import { useQuiz } from "../hooks/ai/useQuiz";
 import { useQuizAttempt } from "../hooks/api/useQuizAttempts";
 import { useLaunchTest } from "../hooks/ai/useLaunchTest";
 
@@ -34,15 +33,13 @@ export default function Report() {
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const { questions: legacyQuestions, isLoading: isLegacyLoading } = useQuiz();
-
-  const questions = state?.questions || fetchedAttempt?.questions || legacyQuestions || [];
+  const questions = state?.questions || fetchedAttempt?.questions || [];
   const score = state?.score ?? fetchedAttempt?.score ?? 0;
   const total = state?.total ?? fetchedAttempt?.totalQuestions ?? (questions.length || 1);
   const answers = state?.answers ?? fetchedAttempt?.answers ?? {};
   const timeSpentSeconds = state?.timeSpentSeconds ?? fetchedAttempt?.timeSpentSeconds ?? 0;
 
-  const isLoading = isAttemptLoading || (isLegacyLoading && !state?.questions && !fetchedAttempt);
+  const isLoading = isAttemptLoading;
 
   useEffect(() => {
     if (!state && !fetchedAttempt) return;
