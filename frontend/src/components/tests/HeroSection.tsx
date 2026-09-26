@@ -46,7 +46,7 @@ export function HeroSection({ examTarget }: HeroSectionProps) {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, delay: 0.05 }}
-        className="w-full lg:w-[380px] shrink-0 rounded-xl border border-slate-200/80 dark:border-white/[0.07] bg-white dark:bg-white/[0.03] p-3 flex items-center gap-3"
+        className="w-full lg:w-[380px] shrink-0 rounded-xl border border-slate-200/80 dark:border-white/[0.07] bg-white dark:bg-white/[0.03] p-3 flex flex-wrap sm:flex-nowrap items-center gap-3"
       >
         {activeAttempt ? (
           <>
@@ -62,13 +62,13 @@ export function HeroSection({ examTarget }: HeroSectionProps) {
               <span className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-slate-700 dark:text-slate-200 tabular-nums">{pct}%</span>
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-[10.5px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Resume where you left off</div>
-              <div className="text-[13px] font-semibold text-slate-900 dark:text-white truncate">{activeAttempt.title}</div>
+              <div className="text-[10.5px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 truncate">Resume where you left off</div>
+              <div className="text-[13px] font-semibold text-slate-900 dark:text-white line-clamp-2 sm:line-clamp-1 leading-snug">{activeAttempt.title}</div>
               <div className="text-[11.5px] text-slate-500 dark:text-slate-400">{answered}/{activeAttempt.totalQuestions} answered · <span className="capitalize">{activeAttempt.mode}</span></div>
             </div>
             <button
               onClick={() => launch({ resumeAttemptId: activeAttempt.id, mode: activeAttempt.mode })}
-              className="shrink-0 h-8 px-3 rounded-lg text-[12.5px] font-semibold flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 transition-colors cursor-pointer"
+              className="w-full sm:w-auto shrink-0 h-9 sm:h-8 px-3 rounded-lg text-[12.5px] font-semibold flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 transition-colors cursor-pointer"
             >
               <Play className="w-3 h-3 fill-current" /> Resume
             </button>
@@ -85,7 +85,7 @@ export function HeroSection({ examTarget }: HeroSectionProps) {
             </div>
             <button
               onClick={() => launch({ count: 10, mode: 'exam', topic: examTarget || 'General Aptitude' })}
-              className="shrink-0 h-8 px-3 rounded-lg text-[12.5px] font-semibold flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 transition-colors cursor-pointer"
+              className="w-full sm:w-auto shrink-0 h-9 sm:h-8 px-3 rounded-lg text-[12.5px] font-semibold flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 transition-colors cursor-pointer"
             >
               <Zap className="w-3 h-3 fill-current" /> Start
             </button>
