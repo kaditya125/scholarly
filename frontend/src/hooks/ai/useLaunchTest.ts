@@ -1,6 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../../lib/AuthContext';
 import { QuizMode } from '../../lib/api/quiz';
 
 interface LaunchOpts {
@@ -22,32 +20,22 @@ interface LaunchOpts {
 }
 
 /**
- * Central launcher for the /test engine. Keeps the sessionStorage attempt-id + react-query cache
- * in sync with intent so:
- *   - "Generate / Practice" always starts a FRESH test (clears any remembered attempt for the key)
- *   - "Resume" pins a specific persisted attempt so the engine reloads the same questions
+ * Central launcher for the /test engine.
+ *   - "Generate / Practice" starts a FRESH test (TestEngine generates and persists a new attempt)
+ *   - "Resume" passes `resumeAttemptId`, and TestEngine reloads that exact persisted attempt
+ *     instead of generating — previously the id was written to sessionStorage that nothing read,
+ *     so every Resume silently created another untitled "Weak Areas Practice" attempt.
  */
 export function useLaunchTest() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
 
   return (opts: LaunchOpts = {}) => {
     const mode: QuizMode = opts.mode || 'exam';
-    const quizKey = `${opts.notebookId || 'none'}::${opts.topic || 'weak-areas'}::${mode}`;
-    const storageKey = `quizAttemptId::${quizKey}`;
-
-    if (opts.resumeAttemptId) {
-      sessionStorage.setItem(storageKey, opts.resumeAttemptId);
-    } else {
-      sessionStorage.removeItem(storageKey);
-    }
-    // Drop any cached quiz for this key so useQuiz re-runs its generate-or-resume decision.
-    queryClient.removeQueries({ queryKey: ['quiz', user?.uid, quizKey] });
 
     navigate('/test', {
       state: {
         mode,
+        resumeAttemptId: opts.resumeAttemptId,
         topic: opts.topic,
         notebookId: opts.notebookId,
         notebookTitle: opts.notebookTitle,

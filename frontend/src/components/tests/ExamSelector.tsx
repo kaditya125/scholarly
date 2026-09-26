@@ -31,16 +31,16 @@ export function ExamSelector({ selectedExam, onSelect }: ExamSelectorProps) {
           setShowAll(false);
         }}
         className={cn(
-          "relative px-3.5 py-1.5 rounded-full text-[12px] font-medium transition-all duration-200 whitespace-nowrap cursor-pointer",
+          "relative h-7 px-3 rounded-lg text-[12px] font-medium transition-colors duration-150 whitespace-nowrap cursor-pointer",
           isSelected
-            ? "text-white dark:text-slate-900 shadow-xs font-semibold"
-            : "bg-white dark:bg-white/[0.04] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/[0.08] border border-slate-200/80 dark:border-white/10"
+            ? "text-white dark:text-slate-900 font-semibold"
+            : "bg-white dark:bg-white/[0.03] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/[0.07] border border-slate-200/80 dark:border-white/[0.08]"
         )}
       >
         {isSelected && (
           <motion.div
             layoutId="activeExam"
-            className="absolute inset-0 bg-slate-900 dark:bg-[#c8e558] rounded-full z-0"
+            className="absolute inset-0 bg-slate-900 dark:bg-[#c8e558] rounded-lg z-0"
             initial={false}
             transition={{ type: "spring", stiffness: 500, damping: 32 }}
           />
@@ -51,14 +51,14 @@ export function ExamSelector({ selectedExam, onSelect }: ExamSelectorProps) {
   };
 
   return (
-    <div className="w-full overflow-x-auto custom-scrollbar pb-2 pt-1 -mx-6 px-6 lg:mx-0 lg:px-0">
-      <div className="flex items-center gap-2 w-max">
+    <div className="max-w-full overflow-x-auto custom-scrollbar">
+      <div className="flex items-center gap-1.5 w-max">
         {visibleExams.map(renderPill)}
         {hasOverflow && (
           <button
             onClick={() => setShowAll((v) => !v)}
             className={cn(
-              "flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all whitespace-nowrap cursor-pointer border",
+              "flex items-center gap-1 h-7 px-2.5 rounded-lg text-[12px] font-medium transition-colors whitespace-nowrap cursor-pointer border border-dashed",
               isDarkMode
                 ? "bg-white/[0.02] border-white/10 text-slate-400 hover:text-white hover:bg-white/[0.06]"
                 : "bg-slate-50/60 border-slate-200/80 text-slate-500 hover:text-slate-900 hover:bg-slate-100"

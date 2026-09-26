@@ -15,6 +15,7 @@ export default function TestEngine() {
   const isDarkMode = theme === 'dark';
 
   const searchParams = new URLSearchParams(location.search);
+  const mockTestId = (location.state?.mockTestId as string | undefined) || searchParams.get('mockTestId') || undefined;
   const topicParam = (location.state?.topic as string | undefined) || searchParams.get('topic') || (searchParams.get('slug') ? `${searchParams.get('slug')?.replace(/-/g, ' ').toUpperCase()} Practice Exam` : undefined);
   const notebookId = (location.state?.notebookId as string | undefined) || searchParams.get('notebookId') || undefined;
   const notebookTitle = (location.state?.notebookTitle as string | undefined) || searchParams.get('notebookTitle') || undefined;
@@ -25,6 +26,7 @@ export default function TestEngine() {
   const syllabusNodeId = (location.state?.syllabusNodeId as string | undefined) || searchParams.get('syllabusNodeId') || undefined;
   const examId = (location.state?.examId as string | undefined) || searchParams.get('examId') || undefined;
   const isWeakAreaDrill = Boolean(location.state?.isWeakAreaDrill) || searchParams.get('isWeakAreaDrill') === 'true';
+  const resumeAttemptId = location.state?.resumeAttemptId as string | undefined;
   const testTitle = topicParam || notebookTitle || 'AI Mock Practice Exam';
   const isStudyMode = mode === 'study';
 
@@ -34,6 +36,11 @@ export default function TestEngine() {
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const attemptIdRef = useRef<string | null>(null);
+  // Every generate call persists a new in-progress attempt server-side, so a request must be
+  // started at most once per navigation (+ explicit retry). Effect re-runs — StrictMode's double
+  // mount, a user/auth object refresh — re-attach to the in-flight promise instead of firing a
+  // second one. Without this, one visit could leave several orphaned attempts behind.
+  const inflightRef = useRef<{ key: string; promise: Promise<{ attemptId: string; questions: Pick<StoredQuizQuestion, 'id' | 'text' | 'topic' | 'options'>[] }> } | null>(null);
 
   const retryGeneration = () => {
     setRetryKey((k) => k + 1);
@@ -48,35 +55,84 @@ export default function TestEngine() {
     }
 
     let cancelled = false;
-    setIsLoading(true);
-    setGenerateError(null);
 
-    quizApi.generate({
-      // No more hardcoded fallback topic. Passing a topic string here unconditionally used to
-      // mean the backend's real weak-areas default (triggered only when topic is genuinely
-      // absent) was unreachable from this screen — every launch looked like a topic search.
-      topic: topicParam,
-      notebookId,
-      notebookTitle,
-      count,
-      mode: mode as any,
-      syllabusNodeId,
-      examId,
-      isWeakAreaDrill,
-    })
+    const showQuestions = (attemptId: string, questions: Pick<StoredQuizQuestion, 'id' | 'text' | 'topic' | 'options'>[]) => {
+      attemptIdRef.current = attemptId;
+      // Answer keys are masked server-side for in-progress attempts; fill dummies so the
+      // full question type renders.
+      setMockQuestions(questions.map((q) => ({ ...q, correctAnswerIndex: -1, explanation: '' })));
+      setIsLoading(false);
+    };
+
+    // ── Resume: reload the exact persisted attempt rather than generating a new one ──
+    if (resumeAttemptId) {
+      // Already showing this attempt (we just generated it and pinned its id into history).
+      if (attemptIdRef.current === resumeAttemptId) return;
+      setIsLoading(true);
+      setGenerateError(null);
+      quizApi.getAttempt(resumeAttemptId)
+        .then((attempt) => {
+          if (cancelled) return;
+          if (attempt.status === 'completed') {
+            navigate('/report', { replace: true, state: { attemptId: attempt.id } });
+            return;
+          }
+          showQuestions(attempt.id, attempt.questions);
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          console.error('[TestEngine] resume failed:', err);
+          setGenerateError(err?.response?.data?.error || err?.message || 'Could not load this test. Please try again.');
+          setIsLoading(false);
+        });
+      return () => { cancelled = true; };
+    }
+
+    const key = `${location.key}:${retryKey}`;
+    if (!inflightRef.current || inflightRef.current.key !== key) {
+      setIsLoading(true);
+      setGenerateError(null);
+      const promise = mockTestId
+        // ── Branch A: a seeded Firestore mock test by ID (free SSC CGL mocks, PYQ papers) ──
+        ? fetch(`/api/tests/${mockTestId}`, { headers: { 'Content-Type': 'application/json' }, credentials: 'include' })
+            .then((res) => {
+              if (!res.ok) throw new Error(`Failed to load mock test: ${res.status}`);
+              return res.json();
+            })
+            // The generate endpoint resolves the question bank entries, applies auth, and
+            // creates the attempt.
+            .then((data) => quizApi.generate({
+              topic: topicParam || data.test?.title,
+              count: data.test?.totalQuestions || count,
+              mode: mode as any,
+              examId: examId || data.test?.examId,
+            }))
+        // ── Branch B: AI-generated quiz (default path) ──
+        : quizApi.generate({
+            // No hardcoded fallback topic: the backend's weak-areas default only triggers when
+            // topic is genuinely absent.
+            topic: topicParam,
+            notebookId,
+            notebookTitle,
+            count,
+            mode: mode as any,
+            syllabusNodeId,
+            examId,
+            isWeakAreaDrill,
+          });
+      inflightRef.current = { key, promise };
+    }
+
+    inflightRef.current.promise
       .then((result) => {
         if (cancelled) return;
-        attemptIdRef.current = result.attemptId;
-        // The generate endpoint returns answer-free questions; map them to the full type
-        // with dummy correctAnswerIndex/-1 (masked server-side) so TestEngine renders.
-        setMockQuestions(
-          result.questions.map((q) => ({
-            ...q,
-            correctAnswerIndex: -1,
-            explanation: '',
-          }))
-        );
-        setIsLoading(false);
+        showQuestions(result.attemptId, result.questions);
+        // Pin the new attempt into this history entry so a refresh or back/forward resumes it
+        // instead of generating yet another attempt.
+        navigate(`${location.pathname}${location.search}`, {
+          replace: true,
+          state: { ...(location.state || {}), resumeAttemptId: result.attemptId },
+        });
       })
       .catch((err) => {
         if (cancelled) return;
@@ -88,7 +144,9 @@ export default function TestEngine() {
       });
 
     return () => { cancelled = true; };
-  }, [user, authLoading, retryKey, topicParam, notebookId, notebookTitle, count, mode]);
+  }, [user, authLoading, retryKey, resumeAttemptId, mockTestId, topicParam, notebookId, notebookTitle, count, mode]);
+
+
 
   const [currentQIndex, setCurrentQIndex] = useState(() => {
     const saved = sessionStorage.getItem('testEngine_currentQIndex');

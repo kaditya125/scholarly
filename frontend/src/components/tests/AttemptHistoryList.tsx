@@ -1,10 +1,14 @@
+import { useState } from 'react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, Play, BarChart3, Clock3, Sparkles, BookOpen, Target } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useQuizAttempts } from '../../hooks/api/useQuizAttempts';
 import { useLaunchTest } from '../../hooks/ai/useLaunchTest';
+import { Pagination } from './Pagination';
 import type { QuizAttemptSummary, QuizSource } from '../../lib/api/quiz';
+
+const PAGE_SIZE = 8;
 
 const sourceMeta: Record<QuizSource, { label: string; icon: React.ReactNode; cls: string }> = {
   'weak-areas': { label: 'Weak areas', icon: <Target className="w-3 h-3" />, cls: 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40' },
@@ -34,7 +38,7 @@ function AttemptRow({ a, onResume, onReport, index }: { a: QuizAttemptSummary; o
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, delay: Math.min(index * 0.03, 0.3) }}
-      className="flex items-center gap-3.5 p-4 rounded-2xl border border-slate-200/90 dark:border-white/[0.07] bg-white dark:bg-white/[0.04] hover:border-slate-300 dark:hover:border-white/20 transition-all shadow-xs"
+      className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200/90 dark:border-white/[0.07] bg-white dark:bg-white/[0.04] hover:border-slate-300 dark:hover:border-white/20 transition-all shadow-xs"
     >
       <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center shrink-0', completed ? 'bg-slate-100 dark:bg-white/5' : 'bg-amber-500/10')}>
         {completed ? <FileText className="w-4.5 h-4.5 text-slate-500 dark:text-slate-400" /> : <Clock3 className="w-4.5 h-4.5 text-amber-500" />}
@@ -83,33 +87,39 @@ export function AttemptHistoryList() {
   const { attempts, isLoading } = useQuizAttempts();
   const launch = useLaunchTest();
   const navigate = useNavigate();
+  const [page, setPage] = useState(1);
+
+  const pageCount = Math.max(1, Math.ceil(attempts.length / PAGE_SIZE));
+  const clampedPage = Math.min(page, pageCount);
+  const start = (clampedPage - 1) * PAGE_SIZE;
+  const pageItems = attempts.slice(start, start + PAGE_SIZE);
 
   return (
     <div className="font-sans">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[17px] font-semibold text-slate-900 dark:text-white">Generated Practice Tests</h3>
-        {attempts.length > 0 && <span className="text-[12px] font-medium text-slate-400 dark:text-slate-500">{attempts.length} attempts recorded</span>}
+      <div className="flex items-center justify-between mb-3.5">
+        <h3 className="text-[15px] font-semibold text-slate-900 dark:text-white">Generated Practice Tests</h3>
+        {attempts.length > 0 && <span className="text-[11.5px] font-medium text-slate-400 dark:text-slate-500">{attempts.length} attempts recorded</span>}
       </div>
 
       {isLoading ? (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-[74px] rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-100/60 dark:bg-white/5 animate-pulse" />
+            <div key={i} className="h-[66px] rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-100/60 dark:bg-white/5 animate-pulse" />
           ))}
         </div>
       ) : attempts.length === 0 ? (
-        <div className="flex flex-col items-center justify-center text-center py-14 px-6 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02]">
+        <div className="flex flex-col items-center justify-center text-center py-14 px-6 rounded-xl border border-dashed border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02]">
           <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-3 text-slate-500">
             <FileText className="w-5 h-5" />
           </div>
-          <h4 className="text-[15px] font-semibold text-slate-900 dark:text-white mb-1">No tests recorded yet</h4>
-          <p className="text-[13px] text-slate-500 dark:text-slate-400 max-w-sm">
+          <h4 className="text-[13.5px] font-semibold text-slate-900 dark:text-white mb-1">No tests recorded yet</h4>
+          <p className="text-[12px] text-slate-500 dark:text-slate-400 max-w-sm">
             Generate your first test above — every test you take is tracked here with your performance score and detailed breakdown.
           </p>
         </div>
       ) : (
-        <div className="space-y-2.5">
-          {attempts.map((a, i) => (
+        <div className="space-y-2">
+          {pageItems.map((a, i) => (
             <AttemptRow
               key={a.id}
               a={a}
@@ -118,6 +128,15 @@ export function AttemptHistoryList() {
               onReport={() => navigate('/report', { state: { attemptId: a.id } })}
             />
           ))}
+
+          <div className="pt-3">
+            <Pagination
+              page={clampedPage}
+              pageCount={pageCount}
+              onChange={setPage}
+              rangeLabel={`${start + 1}–${Math.min(start + PAGE_SIZE, attempts.length)} of ${attempts.length}`}
+            />
+          </div>
         </div>
       )}
     </div>

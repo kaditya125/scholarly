@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Compass, BookOpen, Clock, Target, Play, BarChart2, Star, Zap, Activity, Brain, History, Sparkles } from 'lucide-react';
+import { Search, Compass, BarChart2, History, ArrowRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useTheme } from '../lib/ThemeContext';
 import { useAuth } from '../lib/AuthContext';
 import { useProfile } from '../hooks/api/useProfile';
 import { resolveExamFromGoal } from '../lib/examPersonalization';
 import { HeroSection } from '../components/tests/HeroSection';
+import { TestStatStrip } from '../components/tests/TestStatStrip';
 import { ExamSelector } from '../components/tests/ExamSelector';
 import { FeaturedTestSeries } from '../components/tests/FeaturedTestSeries';
 import { AdaptiveTestGenerator } from '../components/tests/AdaptiveTestGenerator';
@@ -18,6 +19,21 @@ import { WeakSectionsPanel } from '../components/tests/WeakSectionsPanel';
 import { AttemptHistoryList } from '../components/tests/AttemptHistoryList';
 import { useLaunchTest } from '../hooks/ai/useLaunchTest';
 
+type Tab = 'explore' | 'analytics' | 'history';
+
+const TABS: { id: Tab; label: string; icon: typeof Compass }[] = [
+  { id: 'explore', label: 'Practice & Mocks', icon: Compass },
+  { id: 'analytics', label: 'Accuracy & Weak Areas', icon: BarChart2 },
+  { id: 'history', label: 'Attempt History', icon: History },
+];
+
+const fade = {
+  initial: { opacity: 0, y: 6 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -6 },
+  transition: { duration: 0.18 },
+};
+
 export default function TestCenter() {
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
@@ -28,7 +44,7 @@ export default function TestCenter() {
 
   const [selectedExam, setSelectedExam] = useState<string>(isTeacher ? '' : 'SSC CGL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'explore' | 'analytics' | 'history'>('explore');
+  const [activeTab, setActiveTab] = useState<Tab>('explore');
 
   // Auto-scope to the student's declared exam goal once the profile loads. Only overrides the
   // default once, on first resolution — after that the student's own ExamSelector pick (a
@@ -56,156 +72,113 @@ export default function TestCenter() {
 
   return (
     <div className={cn(
-      "w-full h-full overflow-y-auto custom-scrollbar font-sans transition-colors duration-300 relative",
+      // chat-type opts this page out of the app-shell's global +1px font bump (index.css) so
+      // every text-[Npx] value below renders at the exact size written, the same way Chat.tsx
+      // does — instead of silently rendering ~1px larger than designed.
+      "chat-type w-full h-full overflow-y-auto custom-scrollbar transition-colors duration-300",
       isDarkMode ? "bg-[#131315] text-slate-100" : "bg-[#fafbfc] text-slate-900"
     )}>
-      {/* Subtle ambient light glow */}
-      {isDarkMode && (
-        <div className="absolute top-1/4 right-10 w-96 h-96 bg-[#c8e558]/[0.03] blur-[120px] rounded-full pointer-events-none" />
-      )}
+      <div className="max-w-[1320px] mx-auto px-4 sm:px-6 pt-6 pb-20 space-y-5">
+        <HeroSection examTarget={selectedExam} />
 
-      {/* 1. Hero Section (Welcome & Quick Resume) */}
-      <HeroSection examTarget={selectedExam} />
+        {/* The analytics tab renders its own, fuller metric grid — don't show the same numbers twice. */}
+        {activeTab !== 'analytics' && <TestStatStrip />}
 
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pb-24 space-y-6 -mt-5 relative z-20">
-        {/* 2. Intelligent AI Search Bar - Sleek Minimalist Capsule */}
-        <form onSubmit={handleSearchSubmit} className="max-w-xl mx-auto">
-          <div className={cn(
-            "flex items-center gap-2 p-1 pl-3.5 rounded-full border transition-all duration-200",
-            isDarkMode 
-              ? "bg-[#18181c]/95 border-white/[0.08] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.25)] focus-within:border-white/20 focus-within:ring-2 focus-within:ring-[#c8e558]/10" 
-              : "bg-white border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)] focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-900/5"
-          )}>
-            <div className="text-slate-400 dark:text-slate-500 shrink-0">
-              <Search className="w-4 h-4" />
+        {/* Toolbar: underline tabs on the left, generate-by-topic on the right */}
+        <div className="flex flex-col-reverse xl:flex-row xl:items-end justify-between gap-x-4 gap-y-3 border-b border-slate-200/80 dark:border-white/[0.07]">
+          <nav className="flex items-center gap-5 -mb-px overflow-x-auto shrink-0">
+            {TABS.map(({ id, label, icon: Icon }) => {
+              const active = activeTab === id;
+              return (
+                <button
+                  key={id}
+                  onClick={() => setActiveTab(id)}
+                  className={cn(
+                    "relative flex items-center gap-1.5 pb-2.5 pt-1 text-[13px] whitespace-nowrap transition-colors cursor-pointer",
+                    active
+                      ? "text-slate-900 dark:text-white font-semibold"
+                      : "text-slate-500 dark:text-slate-400 font-medium hover:text-slate-800 dark:hover:text-slate-200"
+                  )}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {label}
+                  {active && (
+                    <motion.span
+                      layoutId="testCenterTab"
+                      className="absolute left-0 right-0 -bottom-px h-[2px] rounded-full bg-slate-900 dark:bg-[#c8e558]"
+                      transition={{ type: 'spring', stiffness: 500, damping: 36 }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+
+          <form onSubmit={handleSearchSubmit} className="xl:pb-2.5 w-full xl:w-[340px]">
+            <div className={cn(
+              "flex items-center gap-1.5 h-8 pl-2.5 pr-1 rounded-lg border transition-colors",
+              isDarkMode
+                ? "bg-white/[0.03] border-white/[0.08] focus-within:border-white/25"
+                : "bg-white border-slate-200 focus-within:border-slate-400"
+            )}>
+              <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={isTeacher ? "Topic, chapter or question bank…" : "Generate a test on any topic…"}
+                className={cn(
+                  "flex-1 min-w-0 bg-transparent outline-none text-[13px]",
+                  isDarkMode ? "text-white placeholder:text-slate-500" : "text-slate-900 placeholder:text-slate-400"
+                )}
+              />
+              <button
+                type="submit"
+                disabled={!searchQuery.trim()}
+                className="h-6 px-2 rounded-md text-[12px] font-semibold flex items-center gap-1 bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-900 disabled:opacity-40 transition-opacity cursor-pointer disabled:cursor-default"
+              >
+                Generate <ArrowRight className="w-3 h-3" />
+              </button>
             </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={isTeacher ? "Search topics, syllabus chapters, question bank..." : "Search topics, subjects, PYQs (e.g. Percentage, Optics)..."}
-              className={cn(
-                "w-full bg-transparent border-none outline-none text-[12.5px] font-normal h-8.5 px-1.5",
-                isDarkMode ? "text-white placeholder:text-slate-500" : "text-slate-900 placeholder:text-slate-400"
-              )}
-            />
-            <button 
-              type="submit"
-              className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 rounded-full text-[12px] font-semibold transition-all shrink-0 cursor-pointer shadow-2xs active:scale-98"
-            >
-              Generate Test
-            </button>
-          </div>
-        </form>
-
-        {/* 3. View Switcher & Exam Selector */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
-          {/* Main Tabs */}
-          <div className="flex items-center p-0.5 rounded-full bg-slate-100/90 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 shrink-0">
-            <button
-              onClick={() => setActiveTab('explore')}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all cursor-pointer",
-                activeTab === 'explore'
-                  ? "bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-2xs font-semibold"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              )}
-            >
-              <Compass className="w-3.5 h-3.5" />
-              Practice & Mocks
-            </button>
-            <button
-              onClick={() => setActiveTab('analytics')}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all cursor-pointer",
-                activeTab === 'analytics'
-                  ? "bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-2xs font-semibold"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              )}
-            >
-              <BarChart2 className="w-3.5 h-3.5" />
-              Accuracy & Weak Areas
-            </button>
-            <button
-              onClick={() => setActiveTab('history')}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all cursor-pointer",
-                activeTab === 'history'
-                  ? "bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-2xs font-semibold"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              )}
-            >
-              <History className="w-3.5 h-3.5" />
-              Attempt History
-            </button>
-          </div>
-
-          {/* Exam Selector Pill Strip */}
-          {activeTab === 'explore' && (
-            <div className="w-full sm:w-auto overflow-hidden">
-              <ExamSelector selectedExam={selectedExam} onSelect={setSelectedExam} />
-            </div>
-          )}
+          </form>
         </div>
 
-        {/* Dynamic Tab Content */}
         <AnimatePresence mode="wait">
           {activeTab === 'explore' && (
-            <motion.div
-              key="explore"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25 }}
-              className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-            >
-              <div className="lg:col-span-2 space-y-8">
-                {/* Continue Incomplete Tests */}
-                <ContinueLearning />
-
-                {/* Featured Test Series */}
-                <FeaturedTestSeries selectedExam={selectedExam} />
-                
-                {/* Categories Grid */}
-                <CategoryGrid selectedExam={selectedExam} />
+            <motion.div key="explore" {...fade} className="space-y-5">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[12px] font-medium text-slate-500 dark:text-slate-400 shrink-0">Exam</span>
+                <div className="flex-1 min-w-0 flex justify-end">
+                  <ExamSelector selectedExam={selectedExam} onSelect={setSelectedExam} />
+                </div>
               </div>
 
-              <div className="space-y-6">
-                {/* AI Adaptive Test Generator */}
-                <AdaptiveTestGenerator selectedExam={selectedExam} />
+              <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-5 items-start">
+                <div className="space-y-6 min-w-0">
+                  <ContinueLearning />
+                  <FeaturedTestSeries selectedExam={selectedExam} />
+                  <CategoryGrid selectedExam={selectedExam} />
+                </div>
 
-                {/* AI Coach Recommendations */}
-                <AIRecommendedTests selectedExam={selectedExam} />
+                <aside className="space-y-5 xl:sticky xl:top-4">
+                  <AdaptiveTestGenerator selectedExam={selectedExam} />
+                  <AIRecommendedTests selectedExam={selectedExam} />
+                </aside>
               </div>
             </motion.div>
           )}
 
           {activeTab === 'analytics' && (
-            <motion.div
-              key="analytics"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25 }}
-              className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-            >
-              <div className="lg:col-span-2 space-y-6">
+            <motion.div key="analytics" {...fade} className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_380px] gap-5 items-start">
+              <div className="min-w-0">
                 <TestProgressOverview />
               </div>
-              <div className="space-y-6">
-                <WeakSectionsPanel />
-              </div>
+              <WeakSectionsPanel />
             </motion.div>
           )}
 
           {activeTab === 'history' && (
-            <motion.div
-              key="history"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25 }}
-            >
+            <motion.div key="history" {...fade}>
               <AttemptHistoryList />
             </motion.div>
           )}
