@@ -154,3 +154,28 @@ export interface ProgressReport {
   recentAttempts: QuizAttemptSummary[];
   narrative: string;
 }
+
+/**
+ * Root-cause diagnostic linking a failed quiz topic to its foundational prerequisite gap.
+ *
+ * Added alongside remediationDrill.service.ts's answer-key validation fix, which needs this
+ * type to compile. Scoped to just this interface — not the rest of this file's local,
+ * unrelated in-progress changes (PYQ provenance fields, exam-scoped mastery, etc.), which stay
+ * out of this PR.
+ */
+export interface PedagogicalDiagnostic {
+  topic: string;
+  accuracy: number;
+  rootCauseConceptId: string;
+  rootCauseTitle: string;
+  rootCauseChapter: string;
+  prerequisiteChain: Array<{
+    conceptId: string;
+    title: string;
+    chapter: string;
+  }>;
+  diagnosticMessage: string;
+  recommendedAction: string;
+  remediationDrillId?: string;
+  remediationDrillTitle?: string;
+}
