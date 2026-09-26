@@ -35,40 +35,30 @@ export function AIRecommendedTests({ selectedExam }: AIRecommendedTestsProps) {
       }));
 
   return (
-    <div className="space-y-4 font-sans">
-      <div className="flex items-center gap-2">
-        <div className="w-6 h-6 rounded-lg bg-slate-900 dark:bg-white flex items-center justify-center text-[#c8e558] dark:text-slate-900 shadow-2xs">
+    <div className={cn(
+      "rounded-xl border",
+      isDarkMode ? "bg-white/[0.03] border-white/[0.07]" : "bg-white border-slate-200/80"
+    )}>
+      <div className="flex items-center gap-2 px-4 pt-4 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
+        <div className="w-6 h-6 rounded-md bg-slate-900 dark:bg-white flex items-center justify-center text-[#c8e558] dark:text-slate-900">
           <Brain className="w-3.5 h-3.5" />
         </div>
-        <h2 className="text-[17px] font-semibold text-slate-900 dark:text-white">
-          AI Coach Recommendations
-        </h2>
+        <h2 className="text-[14px] font-semibold text-slate-900 dark:text-white">AI coach</h2>
+        <span className="ml-auto text-[11px] font-medium text-slate-400 dark:text-slate-500">
+          {weakSections.length > 0 ? 'From your weak areas' : `For ${selectedExam}`}
+        </span>
       </div>
 
-      <div className="space-y-3">
+      <div className="divide-y divide-slate-100 dark:divide-white/[0.06]">
         {recommendations.map((rec, i) => (
-          <div 
-            key={i}
-            className={cn(
-              "p-4 rounded-2xl border transition-all group",
-              isDarkMode 
-                ? "bg-white/[0.04] border-white/[0.07] shadow-xs hover:border-white/[0.14] hover:bg-white/[0.06]" 
-                : "bg-white border-slate-200/90 shadow-xs hover:border-slate-300"
-            )}
-          >
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-[#8ba32b] dark:text-[#c8e558] shrink-0 mt-0.5">
-                <Lightbulb className="w-4 h-4" />
-              </div>
+          <div key={i} className="px-4 py-3.5 group">
+            <div className="flex items-start gap-2.5">
+              <Lightbulb className="w-3.5 h-3.5 mt-0.5 text-[#8ba32b] dark:text-[#c8e558] shrink-0" />
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-[14px] text-slate-900 dark:text-white mb-1 group-hover:text-[#8ba32b] dark:group-hover:text-[#c8e558] transition-colors truncate">
-                  {rec.title}
-                </h3>
-                <p className="text-[12px] text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
-                  {rec.reason}
-                </p>
-                <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/5">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-white/10">
+                <h3 className="text-[13px] font-semibold text-slate-900 dark:text-white truncate">{rec.title}</h3>
+                <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{rec.reason}</p>
+                <div className="flex items-center justify-between mt-2.5">
+                  <span className="text-[10.5px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300">
                     {rec.type}
                   </span>
                   <button
@@ -77,9 +67,9 @@ export function AIRecommendedTests({ selectedExam }: AIRecommendedTestsProps) {
                       syllabusNodeId: rec.syllabusNodeId, examId: rec.examId,
                       isWeakAreaDrill: weakSections.length > 0,
                     })}
-                    className="text-[12px] font-semibold text-slate-900 dark:text-[#c8e558] flex items-center gap-1 hover:gap-1.5 transition-all cursor-pointer"
+                    className="h-7 px-2.5 rounded-md text-[12px] font-semibold flex items-center gap-1 text-slate-900 dark:text-[#c8e558] hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
                   >
-                    Start Test <ArrowRight className="w-3.5 h-3.5" />
+                    Start <ArrowRight className="w-3 h-3" />
                   </button>
                 </div>
               </div>
