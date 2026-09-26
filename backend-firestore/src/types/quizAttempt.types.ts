@@ -6,7 +6,7 @@
  */
 
 export type QuizAttemptStatus = 'in-progress' | 'completed';
-export type QuizSource = 'weak-areas' | 'topic' | 'notebook';
+export type QuizSource = 'weak-areas' | 'topic' | 'notebook' | 'mock-test';
 export type QuizMode = 'exam' | 'study';
 
 /** A stored question — includes the answer key (server-side scoring only; masked before it reaches the client mid-test). */

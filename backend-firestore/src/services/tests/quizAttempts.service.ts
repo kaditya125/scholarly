@@ -38,6 +38,9 @@ export interface CreateAttemptMeta {
   notebookTitle?: string;
   mode?: QuizMode;
   durationMinutes?: number;
+  /** Per-attempt marking, e.g. a stored mock test's real +2 / −0.5. Defaults to +1 / −0.25. */
+  positiveMark?: number;
+  negativeMark?: number;
 }
 
 /**
@@ -85,8 +88,8 @@ export class QuizAttemptsService {
       })),
       totalQuestions: questions.length,
       durationMinutes: meta.durationMinutes || DEFAULT_DURATION_MIN,
-      positiveMark: POSITIVE_MARK,
-      negativeMark: NEGATIVE_MARK,
+      positiveMark: meta.positiveMark ?? POSITIVE_MARK,
+      negativeMark: meta.negativeMark ?? NEGATIVE_MARK,
       status: 'in-progress',
       createdAt: now,
     };
