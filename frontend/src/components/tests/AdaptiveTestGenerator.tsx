@@ -1,24 +1,36 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, Loader2, Crosshair, BookOpen, GraduationCap, Timer } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useTheme } from '../../lib/ThemeContext';
 import { useLaunchTest } from '../../hooks/ai/useLaunchTest';
+import { getExamConfig } from '../../lib/examPersonalization';
 import type { QuizMode } from '../../lib/api/quiz';
 
 const COUNTS = [5, 10, 15, 20];
 
-export function AdaptiveTestGenerator() {
+interface AdaptiveTestGeneratorProps {
+  selectedExam: string;
+}
+
+export function AdaptiveTestGenerator({ selectedExam }: AdaptiveTestGeneratorProps) {
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
   const launch = useLaunchTest();
-  
+  const { examId, subjectOptions } = getExamConfig(selectedExam);
+
   const [isGenerating, setIsGenerating] = useState(false);
-  const [subject, setSubject] = useState('Mathematics');
+  const [subject, setSubject] = useState(subjectOptions[0]?.value || 'Mathematics');
   const [customTopic, setCustomTopic] = useState('');
   const [difficulty, setDifficulty] = useState('Medium');
   const [count, setCount] = useState(10);
   const [mode, setMode] = useState<QuizMode>('exam');
+
+  // Re-anchor the subject dropdown when the exam changes so it never shows a stale, off-exam
+  // subject (e.g. "Biology" left selected after switching from NEET to SSC CGL).
+  useEffect(() => {
+    setSubject(subjectOptions[0]?.value || 'Mathematics');
+  }, [selectedExam]);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -28,6 +40,7 @@ export function AdaptiveTestGenerator() {
         topic: targetTopic,
         count,
         mode,
+        examId,
       });
     } finally {
       setIsGenerating(false);
@@ -68,11 +81,9 @@ export function AdaptiveTestGenerator() {
                   : "bg-slate-50 border-slate-200 text-slate-900 focus:border-slate-400"
               )}
             >
-              <option value="Mathematics" className="dark:bg-[#1a1a1b]">Mathematics & Quantitative</option>
-              <option value="General Studies" className="dark:bg-[#1a1a1b]">General Studies & Current Affairs</option>
-              <option value="English Comprehension" className="dark:bg-[#1a1a1b]">English Comprehension & Verbal</option>
-              <option value="Reasoning & Logic" className="dark:bg-[#1a1a1b]">Reasoning & Logical Ability</option>
-              <option value="Science & Tech" className="dark:bg-[#1a1a1b]">Science & Technology</option>
+              {subjectOptions.map((opt) => (
+                <option key={opt.value} value={opt.value} className="dark:bg-[#1a1a1b]">{opt.label}</option>
+              ))}
             </select>
           </div>
 
