@@ -39,7 +39,7 @@ export const GreetingRobot: React.FC<GreetingRobotProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative shrink-0 select-none aspect-[494/613] w-[110px] sm:w-[126px] md:w-[140px] pointer-events-none ${className}`}
+      className={`relative shrink-0 select-none aspect-[494/613] w-[76px] sm:w-[126px] md:w-[140px] pointer-events-none ${className}`}
       aria-label="Sadhya AI mascot greeting"
     >
       <motion.div
