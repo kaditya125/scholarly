@@ -119,19 +119,82 @@ export function warmExamIndex(): void {
 }
 
 /**
- * Longest-match exam detection over the raw query.
+ * Exam families: the issuing body a student names on its own ("GATE", "UPSC"). An examId's family
+ * is its first segment (UPSC_CSE -> upsc). When a query names a family, only exams of that family
+ * may match — "GATE CSE" shares the token "cse" with UPSC CSE, and a GATE Computer Science student
+ * must not be served UPSC content.
  *
- * Longest first so "ssc chsl" is not swallowed by the "ssc cgl" alias sharing a prefix, and so
- * "jee advanced" wins over "jee".
+ * Only true issuing bodies belong here. "bihar" is not one (BIHAR_STET and BPSC_TRE are both
+ * Bihar exams), nor are "nda"/"cds" (they are UPSC_NDA and UPSC_CDS).
  */
+const EXAM_FAMILIES = new Set(['upsc', 'ssc', 'gate', 'cuet', 'jee', 'neet', 'bpsc', 'rrb', 'ibps', 'ugc', 'sbi', 'rbi', 'ctet']);
+
+/**
+ * What a bare family goal (onboarding offers "SSC", "UPSC", "GATE", "CUET") resolves to: the
+ * family's flagship exam, and only if that exam is in the index — a family whose corpus Sadhya
+ * does not hold (GATE and CUET, as of 2026-09-27: no examId in `exams`, the registry or
+ * `pyq_questions`) resolves to nothing rather than to a neighbour. UPSC needs no entry; its
+ * "upsc" alias already names UPSC_CSE.
+ */
+const FAMILY_DEFAULT: Record<string, string> = {
+  ssc: 'SSC_CGL',
+};
+
+/** Longest alias is three words ("combined higher secondary", "nta ugc net"); leave headroom. */
+const MAX_ALIAS_TOKENS = 5;
+
+/**
+ * Word tokens of a query, also split between letters and digits so "tre1" and "cgl2023" behave
+ * like "tre 1" and "cgl 2023".
+ */
+function queryTokens(query: string): string[] {
+  return String(query)
+    .toLowerCase()
+    .replace(/([a-z])([0-9])/g, '$1 $2')
+    .replace(/([0-9])([a-z])/g, '$1 $2')
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+}
+
+const familyOf = (examId: string) => examId.split(/[_\s-]/)[0].toLowerCase();
+
+/**
+ * Pure matcher behind {@link detectExamId}, exported for tests.
+ *
+ * An alias matches a run of whole words, joined ("ssc cgl", "ssc-cgl" and "SSCCGL" all give
+ * "ssccgl") — never a fragment of a word, so "internet" does not name UGC NET. The longest match
+ * wins, so "ssc chsl" is not swallowed by an alias sharing a prefix and "jee advanced" wins over
+ * "jee".
+ */
+export function matchExamId(query: string, aliases: Record<string, string>): string | null {
+  const tokens = queryTokens(query);
+  const named = new Set(tokens.filter((t) => EXAM_FAMILIES.has(t)));
+
+  let best: { alias: string; examId: string } | null = null;
+  for (let i = 0; i < tokens.length; i++) {
+    let alias = '';
+    for (let j = i; j < Math.min(tokens.length, i + MAX_ALIAS_TOKENS); j++) {
+      alias += tokens[j];
+      if (alias.length < 3) continue; // "net" is the shortest alias strong enough to claim an exam
+      const examId = aliases[alias];
+      if (!examId) continue;
+      // Never cross families: the query named one, and this exam belongs to another.
+      if (named.size && !named.has(familyOf(examId))) continue;
+      if (!best || alias.length > best.alias.length) best = { alias, examId };
+    }
+  }
+  if (best) return best.examId;
+
+  // A bare family goal ("SSC"), nothing else.
+  if (tokens.length === 1) {
+    const flagship = FAMILY_DEFAULT[tokens[0]];
+    if (flagship && Object.values(aliases).includes(flagship)) return flagship;
+  }
+  return null;
+}
+
+/** Resolve the exam a query names, against the live index. See {@link matchExamId}. */
 export async function detectExamId(query: string): Promise<string | null> {
   const index = await getExamIndex();
-  const flat = normaliseExamToken(query);
-  let best: { alias: string; examId: string } | null = null;
-  for (const [alias, examId] of Object.entries(index.aliases)) {
-    if (alias.length < 3) continue; // "net" alone is too weak to claim an exam
-    if (!flat.includes(alias)) continue;
-    if (!best || alias.length > best.alias.length) best = { alias, examId };
-  }
-  return best?.examId ?? null;
+  return matchExamId(query, index.aliases);
 }
