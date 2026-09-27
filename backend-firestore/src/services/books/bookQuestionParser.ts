@@ -1,0 +1,266 @@
+/**
+ * Book question parser — turns a reference book's OCR'd pages into its exercise MCQs, each paired
+ * with the book's own answer key (and worked solution when the book prints one).
+ *
+ * Pure functions over OCR markdown: no I/O, no model calls, so it is unit-testable on fixtures and
+ * deterministic across re-runs (the ingestion job relies on that for idempotent ids).
+ *
+ * Layouts handled (measured on S. Chand Quantitative Aptitude and Verbal & Non-Verbal Reasoning):
+ *   - one EXERCISE numbered 1..N, then an ANSWERS table ("1. (c) | 2. (d) | …"), then SOLUTIONS;
+ *   - several EXERCISE sets (3A, 3B, …), each followed by ANSWERS written inline as
+ *     "n. (x): explanation" (optionally bold "**n.** (x):").
+ * Questions are anchored on SEQUENTIAL numbering within a set, so a stray "12." inside a stem or an
+ * explanation can never start a question. Anything that can't be parsed cleanly is returned with a
+ * quarantine reason rather than dropped — the ingestion job stores it as QUARANTINED.
+ */
+import { createHash } from 'crypto';
+
+export const EXTRACTION_VERSION = 'bookextract-v1.0';
+
+export interface OcrPage {
+  pdfPageStart: number;
+  pdfPageEnd: number;
+  markdown: string;
+}
+
+export type QuarantineReason =
+  | 'needs_figure'
+  | 'options_incomplete'
+  | 'empty_stem'
+  | 'no_answer_key'
+  | 'answer_not_in_options'
+  | 'empty_option';
+
+export interface ParsedBookQuestion {
+  chapterName: string;
+  /** 1-based order of the chapter in the book — disambiguates repeated names (a Verbal and a
+   *  Non-Verbal "Analogy"). */
+  chapterOrdinal: number;
+  sourceSection: string;
+  /** 1-based position of this exercise set within the chapter — two sets can share a label
+   *  ("EXERCISE" twice, each restarting at 1), so the label alone isn't an identity. */
+  sourceSectionIndex: number;
+  questionNumber: number;
+  /** Printed book page the question starts on, when the OCR carries it. */
+  sourcePage?: number;
+  stem: string;
+  options: string[];
+  answerKey?: string;
+  answerIndex?: number;
+  solution?: string;
+  sharedDirections?: string;
+  /** True when the options came from the set's directions (fixed-choice formats), not the question. */
+  optionsFromDirections?: boolean;
+  examTag?: string;
+  quarantineReason?: QuarantineReason;
+  /** sha256 of the normalised stem + options — stable identity for dedupe and takedown. */
+  originalQuestionHash: string;
+}
+
+export interface ParseOptions {
+  /** Whitelist of this book's chapter names (contract.ts `chapterHeading`). */
+  chapterHeading: RegExp;
+  /** Running page headers to drop, e.g. /^(QUANTITATIVE APTITUDE|Reasoning)$/i. */
+  runningHeader?: RegExp;
+}
+
+const PAGE = (n: number) => `\u0001P${n}\u0001`;
+const PAGE_RE = /\u0001P(\d+)\u0001/g;
+const stripPages = (s: string) => s.replace(PAGE_RE, ' ');
+const squash = (s: string) => stripPages(s).replace(/\s+/g, ' ').trim();
+
+/** OCR clean-up shared by every layout. */
+export function cleanMarkdown(md: string, runningHeader?: RegExp): string {
+  let t = md
+    .replace(/<!--\s*book-page:\s*(\d+)\s*-->/g, (_, n) => `\n${PAGE(Number(n))}\n`)
+    .replace(/<!--.*?-->/gs, '\n')
+    .replace(/\*\*/g, '')
+    // OCR reads option "(a)" as Greek alpha / accented a on some pages.
+    .replace(/\((?:α|à|á|ạ)\)/g, '(a)');
+  return t
+    .split('\n')
+    .filter((ln) => {
+      const s = ln.trim();
+      if (/^\d{1,4}$/.test(s)) return false; // bare printed page number
+      if (runningHeader && runningHeader.test(s.replace(/^#+\s*/, ''))) return false;
+      return true;
+    })
+    .join('\n');
+}
+
+const headingText = (line: string) => line.replace(/^[#>\s]*/, '').replace(/\s+$/, '');
+
+/** Title-case display name from a matched heading ("3. SERIES COMPLETION" → "Series Completion"). */
+function displayName(heading: string): string {
+  return heading
+    .replace(/^\d{1,2}[.)]?\s*/, '')
+    .toLowerCase()
+    .replace(/\b([a-z])/g, (c) => c.toUpperCase())
+    .trim();
+}
+
+/**
+ * Split the book into chapters on whitelisted chapter headings. A heading only switches chapter
+ * when it's formatted like one (markdown heading, numbered, or ALL CAPS) — a chapter name that
+ * merely appears as a sentence elsewhere doesn't. Running headers repeating the current chapter
+ * are no-ops.
+ */
+export function segmentChapters(pages: OcrPage[], opts: ParseOptions): { name: string; ordinal: number; text: string }[] {
+  const chapters: { name: string; ordinal: number; lines: string[] }[] = [];
+  let current: { name: string; ordinal: number; lines: string[] } | null = null;
+
+  for (const page of pages) {
+    for (const raw of cleanMarkdown(page.markdown, opts.runningHeader).split('\n')) {
+      const h = headingText(raw);
+      const looksLikeHeading = /^#/.test(raw.trim()) || /^\d{1,2}[.)]?\s+\S/.test(h) || (h.length > 3 && h === h.toUpperCase() && /[A-Z]/.test(h));
+      if (h && h.length <= 70 && looksLikeHeading && opts.chapterHeading.test(h)) {
+        const name = displayName(h);
+        if (!current || current.name.toLowerCase() !== name.toLowerCase()) {
+          current = { name, ordinal: chapters.length + 1, lines: [] };
+          chapters.push(current);
+        }
+        continue;
+      }
+      if (current) current.lines.push(raw);
+    }
+  }
+  return chapters.map((c) => ({ name: c.name, ordinal: c.ordinal, text: c.lines.join('\n') }));
+}
+
+const MARK = /^[ \t]*(?:#+[ \t]*)?(EXERCISE\b[^\n]*|ANSWERS[ \t]*|(?:HINTS[ \t]*(?:&|AND)[ \t]*)?SOLUTIONS[ \t]*|TYPE[ \t]*\d+[ \t]*:[^\n]*)[ \t]*$/gm;
+const TAG = /\[([^\]]{3,120})\]|\(((?:[A-Z][A-Za-z.&]*\s*){1,6}(?:\([^)]*\))?[^()]{0,40}?(?:19|20)\d{2})\)/;
+const TAG_G = new RegExp(TAG.source, 'g');
+const DIRECTIONS = /\n\s*Directions?\b[\s\S]*$/i;
+const FIGURE = /!\[|\bfollowing (?:figure|diagram)\b|\bgiven (?:figure|diagram)\b|\bas shown\b/i;
+
+/** Sequentially-numbered blocks: 1., 2., 3., … (a "7." that isn't the next expected number is text). */
+export function splitSequential(body: string): Map<number, { text: string; offset: number }> {
+  const re = /^[ \t>*-]*(\d{1,3})\.\s/gm;
+  const picked: { pos: number; n: number }[] = [];
+  let expect = 1;
+  for (let m = re.exec(body); m; m = re.exec(body)) {
+    if (Number(m[1]) === expect) { picked.push({ pos: m.index, n: expect }); expect++; }
+  }
+  const out = new Map<number, { text: string; offset: number }>();
+  picked.forEach((p, i) => {
+    const end = i + 1 < picked.length ? picked[i + 1].pos : body.length;
+    out.set(p.n, { text: body.slice(p.pos, end).replace(/^[ \t>*-]*\d{1,3}\.\s/, '').trim(), offset: p.pos });
+  });
+  return out;
+}
+
+function lastPageBefore(text: string, offset: number): number | undefined {
+  let page: number | undefined;
+  PAGE_RE.lastIndex = 0;
+  for (let m = PAGE_RE.exec(text); m && m.index <= offset; m = PAGE_RE.exec(text)) page = Number(m[1]);
+  return page;
+}
+
+export function hashQuestion(stem: string, options: string[]): string {
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  return createHash('sha256').update([norm(stem), ...options.map(norm)].join('|')).digest('hex');
+}
+
+/** Parse one chapter's text into its exercise questions. */
+export function parseChapter(chapter: { name: string; ordinal: number; text: string }): ParsedBookQuestion[] {
+  const text = chapter.text;
+  const marks: { start: number; end: number; label: string }[] = [];
+  MARK.lastIndex = 0;
+  for (let m = MARK.exec(text); m; m = MARK.exec(text)) marks.push({ start: m.index, end: m.index + m[0].length, label: m[1].trim() });
+  const section = (i: number) => ({ body: text.slice(marks[i].end, i + 1 < marks.length ? marks[i + 1].start : text.length), base: marks[i].end });
+  const isAnswers = (l: string) => /^(ANSWERS|(?:HINTS.*)?SOLUTIONS)/i.test(l);
+
+  const out: ParsedBookQuestion[] = [];
+  let setIndex = 0;
+  marks.forEach((mark, si) => {
+    if (!/^EXERCISE/i.test(mark.label)) return;
+    setIndex++;
+    const { body, base } = section(si);
+    const questions = splitSequential(body);
+
+    // This set's answers: the first ANSWERS/SOLUTIONS mark after it.
+    const key = new Map<number, string>();
+    const expl = new Map<number, string>();
+    const ai = marks.findIndex((m, k) => k > si && isAnswers(m.label));
+    if (ai >= 0 && !marks.slice(si + 1, ai).some((m) => /^EXERCISE/i.test(m.label))) {
+      const a = section(ai).body;
+      for (const m of a.matchAll(/(\d{1,3})\.\s*\(([a-e])\)/g)) if (!key.has(Number(m[1]))) key.set(Number(m[1]), m[2]);
+      for (const [n, blk] of splitSequential(a)) {
+        const m = blk.text.match(/^\(([a-e])\)\s*:?\s*([\s\S]*)$/);
+        // In the table layout ("1. (c) | 2. (d) | …") the text after a key is more keys, not an
+        // explanation — taking it would also block the real SOLUTIONS entry for that number.
+        if (m && m[2].trim().length > 3 && !/\d{1,3}\.\s*\([a-e]\)/.test(m[2])) expl.set(n, squash(m[2]));
+      }
+      // Separate SOLUTIONS section after an ANSWERS table (Quant layout).
+      if (ai + 1 < marks.length && /SOLUTIONS/i.test(marks[ai + 1].label)) {
+        for (const [n, blk] of splitSequential(section(ai + 1).body)) if (!expl.has(n)) expl.set(n, squash(blk.text));
+      }
+    }
+
+    // Directions carry FORWARD: a block printed before question 1 (the set's preamble) or cut from
+    // the end of a question applies to every following question until the next one. Formats like
+    // syllogisms and assertion–reason print their fixed answer choices only there, so questions
+    // with no options of their own inherit that choice list.
+    const firstOffset = questions.size ? [...questions.values()][0].offset : body.length;
+    const preamble = body.slice(0, firstOffset).match(/Directions?\b[\s\S]*/i);
+    let carry: string | undefined = preamble ? squash(preamble[0]) : undefined;
+
+    for (const [n, q] of questions) {
+      let block = q.text;
+      const directions = carry;
+      const d = block.match(DIRECTIONS);
+      if (d && d.index !== undefined) { carry = squash(d[0]); block = block.slice(0, d.index); }
+      const tagM = block.match(TAG);
+      const parts = block.replace(TAG_G, ' ').split(/\(([a-e])\)/);
+      const stem = squash(parts[0]);
+      const opts = new Map<string, string>();
+      for (let k = 1; k < parts.length - 1; k += 2) if (!opts.has(parts[k])) opts.set(parts[k], squash(parts[k + 1]).replace(/^[|*\-\s]+|[|*\-\s]+$/g, ''));
+      const inherit = opts.size === 0 && !!directions;
+      if (inherit && directions) {
+        const dp = directions.split(/\(([a-e])\)/);
+        for (let k = 1; k < dp.length - 1; k += 2) if (!opts.has(dp[k])) opts.set(dp[k], squash(dp[k + 1]).replace(/^[|*\-\s:;,.]+|[|*\-\s;,]+$/g, ''));
+      }
+      const letters = [...opts.keys()].sort().join('');
+      const options = [...opts.keys()].sort().map((l) => opts.get(l)!);
+      const answerKey = key.get(n);
+      const answerIndex = answerKey ? [...opts.keys()].sort().indexOf(answerKey) : -1;
+
+      let quarantineReason: QuarantineReason | undefined;
+      if (FIGURE.test(block)) quarantineReason = 'needs_figure';
+      else if (letters !== 'abcd' && letters !== 'abcde') quarantineReason = 'options_incomplete';
+      else if (stem.length < 4 && !options.some((o) => o.length > 1)) quarantineReason = 'empty_stem';
+      else if (!answerKey) quarantineReason = 'no_answer_key';
+      else if (answerIndex < 0) quarantineReason = 'answer_not_in_options';
+      else if (options.some((o) => !o)) quarantineReason = 'empty_option';
+
+      out.push({
+        chapterName: chapter.name,
+        chapterOrdinal: chapter.ordinal,
+        sourceSection: mark.label,
+        sourceSectionIndex: setIndex,
+        questionNumber: n,
+        sourcePage: lastPageBefore(text, base + q.offset),
+        stem,
+        options,
+        answerKey,
+        answerIndex: answerIndex >= 0 ? answerIndex : undefined,
+        solution: expl.get(n),
+        sharedDirections: directions,
+        optionsFromDirections: inherit && options.length > 0 ? true : undefined,
+        examTag: tagM ? (tagM[1] || tagM[2]).replace(/\s+/g, ' ').trim() : undefined,
+        quarantineReason,
+        originalQuestionHash: hashQuestion(stem, options),
+      });
+    }
+  });
+  return out;
+}
+
+/** Whole book → every exercise question, in book order. */
+export function parseBook(pages: OcrPage[], opts: ParseOptions): { chapters: { name: string; ordinal: number }[]; questions: ParsedBookQuestion[] } {
+  const chapters = segmentChapters(pages, opts);
+  return {
+    chapters: chapters.map(({ name, ordinal }) => ({ name, ordinal })),
+    questions: chapters.flatMap((c) => parseChapter(c)),
+  };
+}
