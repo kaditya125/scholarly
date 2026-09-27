@@ -55,6 +55,8 @@ export interface StudentProfile {
   onboardedAt?: string;
   /** Whether the onboarding is complete */
   isComplete?: boolean;
+  /** Set once the student has dismissed the dashboard's first-login welcome. */
+  hasCelebratedOnboarding?: boolean;
   /** ISO timestamp of last profile update */
   updatedAt?: string;
   /** ISO timestamp of profile creation */

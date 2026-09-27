@@ -4,6 +4,11 @@ import { quizAttemptsService, QuizAttemptError } from '../services/tests/quizAtt
 import { QuizMode, QuizSource, PedagogicalDiagnostic, StoredQuizQuestion } from '../types/quizAttempt.types';
 import { remediationDrillService } from '../services/pedagogy/remediationDrill.service';
 import { testsRepository } from '../repositories/tests.repository';
+import { UserStatsService } from '../services/userStats.service';
+import { detectExamId } from '../services/pyq/examIndex';
+import { drillTopicsService } from '../services/tests/drillTopics.service';
+
+const statsService = new UserStatsService();
 
 export class QuizController {
   /**
@@ -17,12 +22,25 @@ export class QuizController {
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
       const topic = (req.query.topic as string) || (req.body?.topic as string) || undefined;
+      const subject = (req.query.subject as string) || (req.body?.subject as string) || undefined;
       const notebookId = (req.query.notebookId as string) || (req.body?.notebookId as string) || undefined;
       const notebookTitle = (req.query.notebookTitle as string) || (req.body?.notebookTitle as string) || undefined;
       const mode = ((req.query.mode as string) || (req.body?.mode as string) || 'exam') as QuizMode;
       const count = req.query.count ? parseInt(String(req.query.count), 10) : (req.body?.count as number | undefined);
+      // Previously never read here, so a caller with a real syllabusNodeId (e.g. from a weak-area
+      // recommendation carrying one) had no way to reach it — the service supported this all along,
+      // the request just never carried it through.
+      const syllabusNodeId = (req.query.syllabusNodeId as string) || (req.body?.syllabusNodeId as string) || undefined;
+      const examId = (req.query.examId as string) || (req.body?.examId as string) || undefined;
+      const isWeakAreaDrill = (req.query.isWeakAreaDrill ?? req.body?.isWeakAreaDrill) === true
+        || (req.query.isWeakAreaDrill ?? req.body?.isWeakAreaDrill) === 'true';
 
-      const { focus, questions } = await quizGeneratorService.generateWeakAreaQuiz(userId, { topic, count, notebookId });
+      const ALLOWED_TEST_MODES = ['PRACTICE', 'SMART_MIXED', 'PYQ_PRACTICE', 'WEAK_AREA_DRILL', 'FULL_MOCK'];
+      const requestedMode = ALLOWED_TEST_MODES.includes(req.body?.testMode) ? req.body.testMode : undefined;
+      const mixerMode = requestedMode || (topic && /mock|full-length|tier\s*1|test\s*series/i.test(topic) ? 'FULL_MOCK' : undefined);
+      const { focus, questions } = await quizGeneratorService.generateWeakAreaQuiz(userId, {
+        topic, subject, count, notebookId, syllabusNodeId, examId, isWeakAreaDrill, mode: mixerMode,
+      });
       if (!questions.length) {
         return res.status(502).json({ error: 'Could not generate quiz questions. Please try again.' });
       }
@@ -47,6 +65,117 @@ export class QuizController {
         topic: attempt.topic || focus,
         totalQuestions: attempt.totalQuestions,
       });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * GET /quiz/canonical-paper?exam=<text>&year=&shift=&paper=
+   * "Practice a real paper" — retrieves actual historical questions verbatim from the verified
+   * corpus (canonicalPyqRetrievalService, via quizGeneratorService.getCanonicalPaperQuiz). No LLM
+   * call, no generation: every question is AUTHENTIC_PYQ with real provenance. A genuinely
+   * different endpoint from getQuiz rather than a mode flag on it, because the two have almost
+   * nothing in common — one generates, this one only retrieves and never invents a substitute.
+   */
+  public getCanonicalPaperQuiz = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as any).user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const examQuery = (req.query.exam as string) || '';
+      if (!examQuery) return res.status(400).json({ error: 'exam is required' });
+      const year = req.query.year ? parseInt(String(req.query.year), 10) : undefined;
+      const shift = req.query.shift ? parseInt(String(req.query.shift), 10) : undefined;
+      const paper = (req.query.paper as string) || undefined;
+
+      const result = await quizGeneratorService.getCanonicalPaperQuiz({ examQuery, year, shift, paper });
+
+      if (result.status === 'NOT_AVAILABLE') {
+        return res.status(404).json({ error: 'NOT_AVAILABLE_IN_VERIFIED_CORPUS', diagnostics: result.diagnostics });
+      }
+      if (result.status === 'AMBIGUOUS_PAPER') {
+        return res.status(409).json({ error: 'AMBIGUOUS_PAPER', papers: result.papers, diagnostics: result.diagnostics });
+      }
+      if (!result.questions.length) {
+        return res.status(502).json({ error: 'A matching paper was found but had no usable MCQ-shaped questions.' });
+      }
+
+      const attempt = await quizAttemptsService.createFromQuestions(userId, result.questions, {
+        title: result.focus || 'Real Previous Year Paper',
+        source: 'pyq-paper',
+        mode: 'exam',
+      });
+
+      res.json({
+        attemptId: attempt.id,
+        questions: quizAttemptsService.publicQuestions(attempt),
+        durationMinutes: attempt.durationMinutes,
+        title: attempt.title,
+        totalQuestions: attempt.totalQuestions,
+        isRealPaper: true,
+        status: result.status, // CANONICAL_RETRIEVED | PARTIAL_CANONICAL_PAPER
+        diagnostics: result.diagnostics,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * GET /quiz/weak-areas?exam=<free text>
+   * The structured counterpart to the dashboard's ad-hoc weak-topic guessing — real
+   * examId/syllabusNodeId-scoped rows from UserStatsService.getWeakTopicsForExam, resolved
+   * through the same canonical exam registry retrieval uses. A UI that wants a genuinely
+   * exam-scoped weak-area drill (not a topic-string search) should call this, then pass the
+   * chosen row's syllabusNodeId/examId straight into GET /quiz with mode=weak-area — no client-
+   * side matching against a static catalog required.
+   */
+  public getWeakAreas = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as any).user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const examQuery = (req.query.exam as string) || '';
+      const examId = examQuery ? await detectExamId(examQuery).catch(() => null) : null;
+
+      const weakAreas = await statsService.getWeakTopicsForExam(userId, examId);
+      res.json({ examId, examResolved: Boolean(examId), weakAreas });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * GET /quiz/drill-topics?exam=<free text or examId>
+   * The exam's real drillable topics, ranked by how many genuine previous-year questions carry
+   * them (template "Practice Set" rows excluded), with how many indexed reference-book questions
+   * cover each. This is what the dashboard's drill cards are built from — nothing hand-typed.
+   */
+  public getDrillTopics = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const examQuery = String(req.query.exam || '').trim();
+      // detectExamId also resolves a bare family goal ("SSC") to its flagship exam.
+      const examId = examQuery ? await detectExamId(examQuery).catch(() => null) : null;
+      if (!examId) return res.json({ examId: null, examResolved: false, totalPyqs: 0, subjects: [] });
+
+      const perSubject = Math.min(Math.max(parseInt(String(req.query.limit || '8'), 10) || 8, 1), 20);
+      const index = await drillTopicsService.getIndex(examId);
+      const subjects = [...index.subjects.values()]
+        .sort((a, b) => b.pyqCount - a.pyqCount)
+        .map((s) => ({
+          subject: s.display,
+          pyqCount: s.pyqCount,
+          // A topic needs a real footprint in past papers to be called out; below that it's noise
+          // from one-off tags.
+          topics: index.topics
+            .filter((t) => t.subject === s.display && t.pyqCount >= 10)
+            .slice(0, perSubject)
+            .map((t) => ({ topic: t.topic, pyqCount: t.pyqCount, referenceCount: t.referenceCount })),
+        }))
+        .filter((s) => s.topics.length > 0 || s.pyqCount > 0);
+
+      res.json({ examId, examResolved: true, totalPyqs: index.totalPyqs, subjects });
     } catch (error) {
       next(error);
     }

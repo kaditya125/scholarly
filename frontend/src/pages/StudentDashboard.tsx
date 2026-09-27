@@ -48,7 +48,7 @@ import { useAdaptiveAssessment } from "../hooks/api/useAdaptiveAssessment";
 import { OnboardingChecklist } from "../components/dashboard/OnboardingChecklist";
 import { LearningVelocityWidget } from "../components/dashboard/LearningVelocityWidget";
 import { FocusAreasWidget } from "../components/dashboard/FocusAreasWidget";
-import { GreetingRobot, RobotState } from "../components/dashboard/GreetingRobot";
+import { GreetingRobot } from "../components/dashboard/GreetingRobot";
 import { getExamAvatar } from "../lib/examAvatars";
 import { getExamDoubts } from "../lib/examDoubts";
 import { AvatarThoughtBubble } from "../components/dashboard/AvatarThoughtBubble";
@@ -113,13 +113,9 @@ export default function StudentDashboard() {
   const { stats } = useUserStats();
   const launch = useLaunchTest();
 
-  // Reference to greeting robot DOM container to compute destination for flight
-  const greetingTargetRef = useRef<HTMLDivElement | null>(null);
 
   // First-time onboarding celebration state
   const [showCelebration, setShowCelebration] = useState(false);
-  const [robotState, setRobotState] = useState<RobotState>('greeting');
-  const [flightStartRect, setFlightStartRect] = useState<DOMRect | null>(null);
 
   // Check if first-time onboarding celebration should appear
   useEffect(() => {
@@ -128,7 +124,6 @@ export default function StudentDashboard() {
     // Manual test override via query param ?celebrate=1
     if (searchParams.get('celebrate') === '1') {
       setShowCelebration(true);
-      setRobotState('celebrating');
       return;
     }
 
@@ -141,42 +136,16 @@ export default function StudentDashboard() {
 
     if (!hasCelebratedLocal && !hasCelebratedProfile && (justOnboarded || profile?.isComplete)) {
       setShowCelebration(true);
-      setRobotState('celebrating');
     }
   }, [user?.uid, profile?.isComplete, profile?.hasCelebratedOnboarding, searchParams]);
 
-  const handleStartFlight = (destRect: DOMRect | null) => {
+  const handleCelebrationClose = () => {
+    setShowCelebration(false);
     if (!user?.uid) return;
-
-    // Compute center-top of viewport as the celebration robot starting position
-    const startRect = {
-      left: window.innerWidth / 2 - 85,
-      top: window.innerHeight * 0.32 - 100,
-      width: 170,
-      height: 195,
-      right: window.innerWidth / 2 + 85,
-      bottom: window.innerHeight * 0.32 + 95,
-      x: window.innerWidth / 2 - 85,
-      y: window.innerHeight * 0.32 - 100,
-      toJSON: () => {},
-    } as DOMRect;
-
-    setFlightStartRect(startRect);
-    setRobotState('flying');
-
-    // Persist completion
+    // Persist so the welcome shows once per student, across devices (profile) and reloads (local).
     localStorage.setItem(`sadhya_celebrated_${user.uid}`, 'true');
     sessionStorage.removeItem('onboarding_completed');
     updateProfile({ hasCelebratedOnboarding: true }).catch(() => {});
-
-    // Close modal after transition initiates
-    setTimeout(() => {
-      setShowCelebration(false);
-    }, 450);
-  };
-
-  const handleFlightComplete = () => {
-    setRobotState('greeting');
   };
 
   const firstName = useMemo(() => {
@@ -251,19 +220,14 @@ export default function StudentDashboard() {
           className="flex items-center gap-0 sm:gap-1 relative pt-[78px] sm:pt-[84px]"
         >
           {/* Exam-specific avatar on the left (was a generic robot mascot) */}
-          <div ref={greetingTargetRef} className="shrink-0 relative z-10 mr-1 sm:mr-2 self-start sm:self-center">
-            {robotState === 'greeting' && (
-              <AvatarThoughtBubble
-                doubts={examDoubts}
-                isDarkMode={isDarkMode}
-                onAsk={(q) => navigate(`/chat?prompt=${encodeURIComponent(q)}&model=${selectedModel.id}`)}
-                className="absolute bottom-full left-[38%] mb-3 z-20"
-              />
-            )}
+          <div className="shrink-0 relative z-10 mr-1 sm:mr-2 self-start sm:self-center">
+            <AvatarThoughtBubble
+              doubts={examDoubts}
+              isDarkMode={isDarkMode}
+              onAsk={(q) => navigate(`/chat?prompt=${encodeURIComponent(q)}&model=${selectedModel.id}`)}
+              className="absolute bottom-full left-[38%] mb-3 z-20"
+            />
             <GreetingRobot
-              state={robotState}
-              flightStartRect={flightStartRect}
-              onFlightComplete={handleFlightComplete}
               avatarSrc={examAvatar.src}
               avatarAlt={examAvatar.alt}
               avatarRatio={examAvatar.ratio}
@@ -624,8 +588,8 @@ export default function StudentDashboard() {
       <OnboardingCelebrationModal
         isOpen={showCelebration}
         userName={firstName}
-        onStartFlight={handleStartFlight}
-        greetingTargetRef={greetingTargetRef}
+        examName={profile?.targetExam || profile?.goal || undefined}
+        onClose={handleCelebrationClose}
       />
     </div>
   );
