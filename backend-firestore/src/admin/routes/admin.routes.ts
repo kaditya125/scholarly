@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAdmin, requireSuperAdmin, requireFinanceAdmin, requireElevatedAdmin } from '../middleware/rbac.middleware';
+import { requireAdmin, requireSuperAdmin, requireFinanceAdmin, requireElevatedAdmin, requireRoles } from '../middleware/rbac.middleware';
 import { auditLogMiddleware } from '../middleware/auditLog.middleware';
 import { AIMonitoringController } from '../controllers/ai-monitoring.controller';
 import { SystemHealthController } from '../controllers/system-health.controller';
@@ -29,6 +29,7 @@ import { SettingsController } from '../controllers/settings.controller';
 import { FeatureFlagsController } from '../controllers/feature-flags.controller';
 import { teacherVerificationController as teacherVerificationCtrl } from '../controllers/teacher-verification.controller';
 import { payoutController } from '../controllers/payout.controller';
+import { BookBankController } from '../controllers/bookBank.controller';
 
 const router = Router();
 const aiMonitoringCtrl = new AIMonitoringController();
@@ -75,6 +76,14 @@ router.get('/evaluation', continuousEvalCtrl.getEvaluationMetrics);
 
 // Curriculum Ingestion
 router.get('/curriculum/jobs', curriculumCtrl.getJobs);
+
+// Private reference-book question bank. Returns licensed source text, so it's narrower than the
+// router-wide requireAdmin (which also admits moderators): super_admin and admin only.
+const bookBankCtrl = new BookBankController();
+const requireBookBankAccess = requireRoles(['super_admin', 'admin']);
+router.get('/books', requireBookBankAccess, bookBankCtrl.listBooks);
+router.get('/books/:bookId/status', requireBookBankAccess, bookBankCtrl.getStatus);
+router.get('/book-questions', requireBookBankAccess, bookBankCtrl.listQuestions);
 
 // Knowledge Graph
 router.get('/knowledge-graph/nodes', knowledgeGraphCtrl.getNodes);
