@@ -11,6 +11,10 @@ export const quizApi = {
   /** Generates a fresh, personalized weak-area (or topic/notebook) quiz and starts an attempt. */
   async generate(opts: {
     topic?: string; notebookId?: string; notebookTitle?: string; mode?: QuizMode; count?: number;
+    /** The topic's subject, sent separately so the backend resolves the topic within it. */
+    subject?: string;
+    /** Backend source mix — see testBlueprint.service.ts (quiz.controller reads body.testMode). */
+    testMode?: 'PRACTICE' | 'SMART_MIXED' | 'PYQ_PRACTICE' | 'WEAK_AREA_DRILL';
     /** A real canonical syllabus node — from a weak-area recommendation or an explicit topic
      *  pick, never guessed client-side. Pins WHERE the questions come from. */
     syllabusNodeId?: string;
@@ -27,6 +31,13 @@ export const quizApi = {
   /** Real, examId/syllabusNodeId-scoped weak areas — see quiz.controller.ts's getWeakAreas. */
   async getWeakAreas(examQuery: string): Promise<{ examId: string | null; examResolved: boolean; weakAreas: WeakTopic[] }> {
     const { data } = await api.get('/quiz/weak-areas', { params: { exam: examQuery } });
+    return data;
+  },
+
+  /** The exam's drillable topics ranked by genuine PYQ frequency — see quiz.controller.ts's
+   *  getDrillTopics. Accepts free text ("SSC CGL") or an examId. */
+  async getDrillTopics(examQuery: string): Promise<DrillTopicsResponse> {
+    const { data } = await api.get('/quiz/drill-topics', { params: { exam: examQuery } });
     return data;
   },
 
@@ -142,6 +153,18 @@ export interface ProgressTopicMastery {
   examId?: string;
   syllabusNodeId?: string;
   lastAttemptAt?: string;
+}
+
+export interface DrillTopicsResponse {
+  examId: string | null;
+  examResolved: boolean;
+  totalPyqs: number;
+  subjects: {
+    subject: string;
+    pyqCount: number;
+    /** Sorted by pyqCount desc. */
+    topics: { topic: string; pyqCount: number; referenceCount: number }[];
+  }[];
 }
 
 /** The structured, exam-scoped weak-area shape — see WeakTopic in the backend's

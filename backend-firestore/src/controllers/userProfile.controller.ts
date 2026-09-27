@@ -73,5 +73,9 @@ function sanitizeProfilePatch(body: any): Partial<StudentProfile> {
   const hrs = Number(body.dailyStudyHours);
   if (Number.isFinite(hrs) && hrs > 0) patch.dailyStudyHours = Math.min(hrs, 24);
 
+  // Set once by the dashboard's first-login welcome. It used to be dropped here, so the "shown
+  // once" rule only held per browser (localStorage) and the welcome reappeared on a new device.
+  if (body.hasCelebratedOnboarding === true) patch.hasCelebratedOnboarding = true;
+
   return patch;
 }
