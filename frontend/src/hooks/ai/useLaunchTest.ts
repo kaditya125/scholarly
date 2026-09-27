@@ -4,6 +4,10 @@ import { QuizMode } from '../../lib/api/quiz';
 interface LaunchOpts {
   mode?: QuizMode;
   topic?: string;
+  /** The topic's subject, when known — lets the backend resolve the topic within it. */
+  subject?: string;
+  /** Backend source mix (testBlueprint.service.ts), e.g. 'SMART_MIXED' = PYQ-heavy, 10% generated. */
+  testMode?: 'PRACTICE' | 'SMART_MIXED' | 'PYQ_PRACTICE' | 'WEAK_AREA_DRILL';
   notebookId?: string;
   notebookTitle?: string;
   count?: number;
@@ -37,6 +41,8 @@ export function useLaunchTest() {
         mode,
         resumeAttemptId: opts.resumeAttemptId,
         topic: opts.topic,
+        subject: opts.subject,
+        testMode: opts.testMode,
         notebookId: opts.notebookId,
         notebookTitle: opts.notebookTitle,
         count: opts.count,

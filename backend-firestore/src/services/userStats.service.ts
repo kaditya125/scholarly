@@ -1,7 +1,27 @@
 import { UserStatsRepository } from '../repositories/userStats.repository';
+import type { WeakTopic } from '../types/quizAttempt.types';
 
 export class UserStatsService {
   private repository = new UserStatsRepository();
+
+  /**
+   * Exam-scoped weak areas with real syllabus identity — what QuestionMixer / the recommendation
+   * engine calls, never stats.weakTopics (the bare string list, kept only for display consumers
+   * that predate this). Falls back to rows with no recorded examId only when examId itself is
+   * unresolved (never mixes a DIFFERENT exam's rows in), so a JEE weakness can never surface as an
+   * SSC CGL recommendation. Lives here rather than on quizAttemptsService purely to avoid a
+   * circular import: quizAttemptsService already imports QuizQuestion from quizGenerator.service,
+   * and quizGenerator needs this lookup — this method only ever reads UserStats, so it belongs
+   * here regardless of that constraint.
+   */
+  async getWeakTopicsForExam(userId: string, examId: string | null): Promise<WeakTopic[]> {
+    const stats: any = await this.getUserStats(userId);
+    const details: WeakTopic[] = Array.isArray(stats?.weakTopicDetails) ? stats.weakTopicDetails : [];
+    if (!examId) return details.filter((d) => !d.examId);
+    return details
+      .filter((d) => d.examId === examId)
+      .sort((a, b) => (b.confidence * (100 - b.accuracy)) - (a.confidence * (100 - a.accuracy)));
+  }
 
   async getUserStats(userId: string) {
     let stats = await this.repository.findByUserId(userId);
