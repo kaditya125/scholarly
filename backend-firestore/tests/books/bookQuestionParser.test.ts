@@ -181,3 +181,55 @@ describe('bookQuestionId', () => {
     expect(a).toBe(bookQuestionId('b', { chapterOrdinal: 1, sourceSection: 'EXERCISE', sourceSectionIndex: 1, questionNumber: 1 }));
   });
 });
+
+describe('answer-blocks layout (Lucent General Science)', () => {
+  const opts = { chapterHeading: /^$/, layout: 'answer-blocks' as const, partHeading: /^(Physics|Biology)$/ };
+  const run = (n: number, from = 1) => Array.from({ length: n }, (_, k) => `${k + from}. Question number ${k + from} is here?\n(a) w (b) x (c) y (d) z`).join('\n');
+  const key = (n: number) => Array.from({ length: n }, (_, k) => `${k + 1}. (b)`).join(' ');
+
+  it('takes the run before each Answers block, names it by part, skips prose lists and headings inside', () => {
+    const md = ['# Physics', 'Facts:', '1. Light is fast', '2. Sound is slower', run(3), '## General Science', run(2, 4), '### Answers', key(5)].join('\n');
+    const { chapters, questions } = parseBook([page(md)], opts);
+    expect(chapters).toEqual([{ name: 'Physics', ordinal: 1 }]);
+    expect(questions.map((q) => q.questionNumber)).toEqual([1, 2, 3, 4, 5]);
+    expect(questions.every((q) => q.answerKey === 'b' && !q.quarantineReason)).toBe(true);
+    expect(questions[2].options[3]).toBe('z'); // the "## General Science" header didn't glue onto an option
+  });
+
+  it('never treats the previous key table as a question run', () => {
+    const md = ['# Physics', run(5), '## Answers', key(5), '# Biology', run(5), '## Answers', key(5)].join('\n');
+    const { chapters, questions } = parseBook([page(md)], opts);
+    expect(chapters.map((c) => c.name)).toEqual(['Physics', 'Biology']);
+    expect(questions).toHaveLength(10);
+  });
+
+  it('quarantines a run that belongs to a different part than the key, instead of pairing wrong answers', () => {
+    const md = ['# Physics', run(4), '# Biology', 'Cells are the unit of life.', '## Answers', key(40)].join('\n');
+    const { questions } = parseBook([page(md)], opts);
+    expect(questions.length).toBeGreaterThan(0);
+    expect(questions.every((q) => q.quarantineReason === 'answer_key_mismatch')).toBe(true);
+  });
+
+  it('accepts a shorter run in the same part as the start of the keyed set (numbers align)', () => {
+    const md = ['# Biology', run(4), '## Biology', '## Answers', key(40)].join('\n');
+    const { questions } = parseBook([page(md)], opts);
+    expect(questions.map((q) => q.quarantineReason)).toEqual([undefined, undefined, undefined, undefined]);
+  });
+});
+
+describe('bleed guards', () => {
+  it('does not treat "Direction of ..." question text as a directions block', () => {
+    const md = ['10. PERCENTAGE', 'EXERCISE', '1. Which way does it flow?', 'Direction of current is from positive to negative', '(a) true (b) false (c) both (d) none', '2. Next (a) 1 (b) 2 (c) 3 (d) 4', 'ANSWERS', '1. (a) 2. (b)'].join('\n');
+    const { questions } = parseBook([page(md)], { chapterHeading: CHAPTERS });
+    expect(questions[0].stem).toContain('Direction of current');
+    expect(questions[1].sharedDirections).toBeUndefined();
+  });
+  it('quarantines an implausibly long stem and truncates a runaway solution', () => {
+    const long = 'x '.repeat(1000);
+    const md = ['10. PERCENTAGE', 'EXERCISE', `1. ${long}`, '(a) 1 (b) 2 (c) 3 (d) 4', '2. Fine (a) 1 (b) 2 (c) 3 (d) 4', 'ANSWERS', '1. (a) 2. (b)', 'SOLUTIONS', '1. ok', `2. ${'y '.repeat(2000)}`].join('\n');
+    const { questions } = parseBook([page(md)], { chapterHeading: CHAPTERS });
+    expect(questions[0].quarantineReason).toBe('oversize_text');
+    expect(questions[1].solution!.length).toBeLessThanOrEqual(3000);
+    expect(questions[1].solutionTruncated).toBe(true);
+  });
+});

@@ -12,6 +12,7 @@
 import { randomUUID } from 'crypto';
 import { logger } from '../../utils/logger';
 import { parseBook, EXTRACTION_VERSION, OcrPage, ParseOptions } from './bookQuestionParser';
+import { parseEnglishBook } from './englishExerciseParser';
 import {
   bookQuestionsRepository, bookQuestionId, BookRecord, BookQuestionDoc, IngestionJob,
 } from '../../repositories/bookQuestions.repository';
@@ -50,7 +51,7 @@ export const bookIngestionService = {
 
     try {
       if (!dryRun) await bookQuestionsRepository.updateJob(jobId, { status: 'EXTRACTING' });
-      const { chapters, questions } = parseBook(pages, parse);
+      const { chapters, questions } = parse.layout === 'english-exercises' ? parseEnglishBook(pages, parse) : parseBook(pages, parse);
 
       const now = new Date().toISOString();
       const existing = dryRun ? new Map() : await bookQuestionsRepository.existingIds(book.bookId);
@@ -63,7 +64,11 @@ export const bookIngestionService = {
           bookId: book.bookId,
           subject: book.subject,
           chapterId: `${book.bookId}:ch${q.chapterOrdinal}`,
-          status: q.quarantineReason ? 'QUARANTINED' : 'EXTRACTED',
+          // A re-run must not discard classification: an unchanged question keeps CLASSIFIED; one
+          // whose text changed drops back to EXTRACTED so it gets reclassified.
+          status: q.quarantineReason
+            ? 'QUARANTINED'
+            : existing.get(id)?.status === 'CLASSIFIED' && existing.get(id)?.originalQuestionHash === q.originalQuestionHash ? 'CLASSIFIED' : 'EXTRACTED',
           extractionVersion: EXTRACTION_VERSION,
           jobId,
           createdAt: existing.get(id)?.createdAt || now,
@@ -79,11 +84,11 @@ export const bookIngestionService = {
       for (const d of docs) if (d.quarantineReason) reasons[d.quarantineReason] = (reasons[d.quarantineReason] || 0) + 1;
       const perChapter = chapters.map((c) => {
         const inCh = docs.filter((d) => d.chapterOrdinal === c.ordinal);
-        return { ordinal: c.ordinal, name: c.name, questions: inCh.length, extracted: inCh.filter((d) => d.status === 'EXTRACTED').length };
+        return { ordinal: c.ordinal, name: c.name, questions: inCh.length, extracted: inCh.filter((d) => d.status !== 'QUARANTINED').length };
       });
       const producedIds = new Set(docs.map((d) => d.id));
       const superseded = [...existing.keys()].filter((id) => !producedIds.has(id) && existing.get(id)?.status !== 'QUARANTINED');
-      const extracted = docs.filter((d) => d.status === 'EXTRACTED').length;
+      const extracted = docs.filter((d) => d.status !== 'QUARANTINED').length;
       const counts = { chapters: chapters.length, questions: docs.length, extracted, quarantined: docs.length - extracted, superseded: superseded.length };
       const status: IngestionJob['status'] = docs.length === 0 ? 'FAILED' : extracted / docs.length < PARTIAL_BELOW ? 'PARTIAL' : 'COMPLETED';
 
