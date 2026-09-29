@@ -9,6 +9,8 @@ module.exports = {
   // comparison meaningless.
   testPathIgnorePatterns: ['/node_modules/', 'worktrees'],
   moduleFileExtensions: ['ts', 'js', 'json'],
+  // uuid v14 is ESM-only and Jest's CommonJS runtime can't load it. See tests/shims/uuid.ts.
+  moduleNameMapper: { '^uuid$': '<rootDir>/tests/shims/uuid.ts' },
   setupFiles: ['<rootDir>/tests/setup.ts'],
   collectCoverageFrom: [
     'src/**/*.ts',
