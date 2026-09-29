@@ -83,7 +83,14 @@ import { traceIdMiddleware } from './middlewares/traceId.middleware';
 app.set('trust proxy', 1);
 
 // Parse JSON bodies with a larger limit to support base64 file attachments
-app.use(express.json({ limit: '50mb' }));
+// Webhook signatures (Razorpay, Meta WhatsApp) are HMACs over the exact bytes received, so keep
+// the raw body for those routes — re-serialising the parsed JSON isn't guaranteed to match.
+app.use(express.json({
+  limit: '50mb',
+  verify: (req, _res, buf) => {
+    if (/^\/api\/(webhooks\/|payments\/webhook)/.test((req as any).originalUrl || '')) (req as any).rawBody = buf;
+  },
+}));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Add trace ID tracking to every incoming request

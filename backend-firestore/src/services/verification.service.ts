@@ -227,22 +227,13 @@ class VerificationService {
     }
   }
 
-  // ── Targeted repair (reuses the ingestion pipeline; never reruns successful stages) ──
-
-  private async repairArtifact(source: DocumentSource, artifact: ArtifactName): Promise<boolean> {
-    const { sourceService } = await import('./source.service');
-    switch (artifact) {
-      case 'metadata':
-      case 'graph':
-        return sourceService.repairMetadataAndGraph(source);
-      case 'assets':
-        return sourceService.repairAssets(source);
-      case 'vectors':
-        if (!featureFlags.vectorRepair) return false;
-        return sourceService.repairVectors(source);
-      default:
-        return false; // storage/firestore are not auto-repairable
-    }
+  // ── Targeted repair ──
+  // The per-artifact repair routines this was written against (SourceService.repairMetadataAndGraph
+  // / repairAssets / repairVectors) were never implemented, so every call threw and was logged as
+  // "repair failed". Until they exist, report "not repaired" plainly; the artifact stays in
+  // missingArtifacts and the source is marked READY_DEGRADED, exactly as before.
+  private async repairArtifact(_source: DocumentSource, _artifact: ArtifactName): Promise<boolean> {
+    return false;
   }
 
   /** Persist the verification summary + resolved status onto the source document. */

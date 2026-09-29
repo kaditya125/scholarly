@@ -207,6 +207,14 @@ export class QdrantService implements VectorStore {
     });
   }
 
+  /** Delete the points in ONE namespace that match a Pinecone-style metadata filter. */
+  async deleteByFilter(filter: Record<string, any>, namespace?: string): Promise<void> {
+    const ns = namespace || env.PINECONE_NAMESPACE;
+    if (!ns) throw new Error('[qdrant] deleteByFilter requires a namespace');
+    if (!filter || Object.keys(filter).length === 0) throw new Error('[qdrant] deleteByFilter requires a non-empty filter');
+    await this.client().delete(this.collection, { wait: true, filter: toQdrantFilter(filter, ns) as any });
+  }
+
   // ── reads ─────────────────────────────────────────────────────────────────────────────────
 
   async queryVectors(

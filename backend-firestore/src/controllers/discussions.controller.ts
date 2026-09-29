@@ -15,7 +15,7 @@ export class DiscussionsController {
         topics = rawTopics.map((t) => String(t).trim()).filter(Boolean);
       }
 
-      const mine = req.query.mine === 'true' || req.query.mine === true;
+      const mine = req.query.mine === 'true';
       const status = typeof req.query.status === 'string' ? req.query.status : undefined;
       const q = typeof req.query.q === 'string' ? req.query.q : undefined;
       const sort = typeof req.query.sort === 'string' ? req.query.sort : undefined;

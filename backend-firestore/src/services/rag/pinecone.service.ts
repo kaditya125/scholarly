@@ -86,6 +86,21 @@ export class PineconeService {
   }
 
   /**
+   * Delete vectors matching a metadata filter. An empty filter is refused (it would mean
+   * "everything"). Pinecone serverless indexes reject filter deletes — callers must be ready
+   * for this to throw and fall back to deleting by ID.
+   */
+  async deleteByFilter(filter: Record<string, any>, namespace?: string) {
+    if (!filter || Object.keys(filter).length === 0) throw new Error('deleteByFilter requires a non-empty filter');
+    if (env.VECTOR_STORE === 'qdrant') {
+      return qdrantService.deleteByFilter(filter, namespace);
+    }
+    const index = this.getIndex();
+    const target = namespace ? index.namespace(namespace) : index;
+    await (target as any).deleteMany(filter);
+  }
+
+  /**
    * Delete all vectors in a namespace
    */
   async deleteAllVectors(namespace?: string) {

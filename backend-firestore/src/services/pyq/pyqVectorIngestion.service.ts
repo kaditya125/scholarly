@@ -15,7 +15,7 @@ import { CanonicalPYQQuestion } from '../../types/pyq.types';
 import { classifyProvenance, isAuthenticPyq } from './paperIdentity';
 import { env } from '../../config/env';
 import { logger } from '../../utils/logger';
-import { requireNoIndexer } from '../../../scripts/phase4a/_embedding-guard';
+import { requireNoIndexer } from './embeddingGuard';
 
 export class PYQVectorIngestionService {
   private embeddingProvider: GoogleEmbeddingProvider;
