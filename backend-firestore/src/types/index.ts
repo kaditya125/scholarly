@@ -296,6 +296,13 @@ export interface PodcastMetadata {
   estimatedListeningTime?: number;
   totalWords?: number;
   totalCharacters?: number;
+  // Written by PodcastEngine from the plan and the composed audio.
+  difficulty?: string;
+  teachingStrategy?: string;
+  learningObjectives?: string[];
+  personalizationSummary?: string;
+  durationMs?: number;
+  chapters?: { index?: number; title?: string }[];
 }
 export * from "./notebook";
 export * from "./observability";
@@ -305,34 +312,40 @@ export * from "./pyq.types";
 export const isReadyStatus = (status: string) => status === 'READY' || status === 'READY_DEGRADED';
 export type KGRelationshipType = string;
 
+// Study Circle documents, as StudyCircleService writes them to
+// studyCircles/{groupId}/{knowledge|chat|concepts}/{id}.
+
 export interface CircleChatTurn {
-  id?: string;
-  role?: string;
-  question?: string;
-  answer?: string;
-  content?: string;
-  createdAt?: number;
+  id: string;
+  groupId: string;
+  askedBy: string;
+  askedByName: string;
+  question: string;
+  answer: string;
+  createdAt: number;
 }
 
 export interface CircleConcept {
   id: string;
-  label?: string;
-  name?: string;
-  definition?: string;
-  importance?: number;
-  mentions?: number;
-  groupId?: string;
-  relatedConceptIds?: string[];
-  updatedAt?: number;
+  groupId: string;
+  label: string;
+  definition: string;
+  importance: number;
+  mentions: number;
+  relatedConceptIds: string[];
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface CircleKnowledgeItem {
   id: string;
+  groupId: string;
   title?: string;
-  text?: string;
-  content?: string;
-  groupId?: string;
-  addedBy?: string;
+  text: string;
+  source: CircleKnowledgeSource;
+  addedBy: string;
+  addedByName: string;
+  createdAt: number;
 }
 
 export type CircleKnowledgeSource = string | {

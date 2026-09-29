@@ -49,7 +49,9 @@ export type ProcessingStatus =
   | 'READY'
   | 'READY_DEGRADED'
   | 'FAILED_RETRYABLE'
-  | 'FAILED_NONRETRYABLE';
+  | 'FAILED_NONRETRYABLE'
+  // Written by SourceService when processing throws (and counted by the admin dashboard).
+  | 'FAILED';
 
 export interface ExtractionMetadata {
   chapters: string[];
@@ -103,6 +105,20 @@ export interface DocumentSource {
   createdAt: number;
   uploadedAt?: number;
   metadata?: ExtractionMetadata;
+  /** Post-ingestion verification summary, written by VerificationService.persistResult. */
+  verification?: {
+    passed: boolean;
+    status: ProcessingStatus;
+    missingArtifacts: string[];
+    repairedArtifacts: string[];
+    warnings: string[];
+    failures: string[];
+    verifiedAt: number;
+    verificationTimeMs?: number;
+    verificationVersion?: number;
+  };
+  /** Mirrors verification.verificationVersion at the top level for querying. */
+  verificationVersion?: number;
 }
 
 export type TimelineEventType = 

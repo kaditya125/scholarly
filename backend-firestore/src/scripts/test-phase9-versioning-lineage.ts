@@ -174,6 +174,7 @@ async function runPhase9Verification() {
       chapter: 'Thermodynamics',
       section: 'First Law',
       contentType: 'text',
+      sourceLocation: { blockIds: [] },
       boundaryStrategy: 'paragraph_boundary',
     },
     {
@@ -190,6 +191,7 @@ async function runPhase9Verification() {
       chapter: 'Thermodynamics',
       section: 'Processes',
       contentType: 'text',
+      sourceLocation: { blockIds: [] },
       boundaryStrategy: 'paragraph_boundary',
     },
   ];
@@ -209,6 +211,7 @@ async function runPhase9Verification() {
       chapter: 'Thermodynamics',
       section: 'First Law (Revised)',
       contentType: 'text',
+      sourceLocation: { blockIds: [] },
       boundaryStrategy: 'paragraph_boundary',
     },
     {
@@ -225,6 +228,7 @@ async function runPhase9Verification() {
       chapter: 'Thermodynamics',
       section: 'Processes',
       contentType: 'text',
+      sourceLocation: { blockIds: [] },
       boundaryStrategy: 'paragraph_boundary',
     },
     {
@@ -241,6 +245,7 @@ async function runPhase9Verification() {
       chapter: 'Thermodynamics',
       section: 'Carnot Cycle',
       contentType: 'text',
+      sourceLocation: { blockIds: [] },
       boundaryStrategy: 'paragraph_boundary',
     },
   ];

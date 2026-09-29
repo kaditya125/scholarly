@@ -117,23 +117,7 @@ export interface ContentCollection {
   viewers?: string[];
 }
 
-/**
- * Document Version Entity (tracks content lineage and version snapshots)
- * Stored at notebooks/{notebookId}/sources/{sourceId}/versions/{versionId}
- */
-export interface DocumentVersion {
-  id: string;
-  sourceId: string;
-  collectionId: string;
-  userId: string;
-  version: number;
-  hash: string;
-  sizeBytes: number;
-  storagePath: string;
-  metadata: Record<string, any>;
-  changeSummary?: string;
-  createdAt: number;
-}
+// DocumentVersion is declared once, with the Phase 9 contracts below.
 
 /**
  * Granular Processing Stage execution record
@@ -623,8 +607,7 @@ export interface VectorMetadata {
   sourceBlockIds: string[];
   sourceLocationJson: string;
 
-  // System & Version Tracking
-  documentVersionId: string;
+  // System & Version Tracking (documentVersionId is declared under Scoping above)
   processingVersion: number;
   embeddingModel: string;
   embeddingVersion: number | string;
@@ -1010,26 +993,32 @@ export interface ContentQualityReport {
  * Phase 9: Document Versioning & Content Lineage Contracts
  */
 
+/**
+ * Document Version entity — notebooks/{notebookId}/sources/{sourceId}/versions/{versionId}.
+ * The upload path (ContentSourceService) writes the snapshot fields; the Phase 9 lineage fields
+ * are filled in once a version has been processed, so they are optional.
+ */
 export interface DocumentVersion {
   id: string; // e.g. "v1_doc123" or "v1"
   sourceId: string;
   collectionId: string;
   userId: string;
   version: number; // 1, 2, 3...
-  documentVersionId: string; // "v1", "v2", "v3"
-  processingVersion: number; // pipeline execution run index
-  embeddingModel: string; // e.g. "text-embedding-004", "text-embedding-3-small"
-  embeddingVersion: string | number; // e.g. "1.0.0" or 1
-  chunkCount: number;
-  tokenCount: number;
   sizeBytes: number;
   hash: string;
   storagePath: string;
-  changeSummary: string;
-  isActiveVersion: boolean;
   metadata?: Record<string, any>;
+  changeSummary?: string;
   createdAt: number;
   updatedAt?: number;
+  // Phase 9 lineage
+  documentVersionId?: string; // "v1", "v2", "v3"
+  processingVersion?: number; // pipeline execution run index
+  embeddingModel?: string; // e.g. "text-embedding-004", "text-embedding-3-small"
+  embeddingVersion?: string | number; // e.g. "1.0.0" or 1
+  chunkCount?: number;
+  tokenCount?: number;
+  isActiveVersion?: boolean;
 }
 
 export interface DocumentVersionDiff {

@@ -81,7 +81,6 @@ async function run() {
     : expandedVectorCtx;
 
   console.log(`\nGraph anchors     : ${graphRes.matched.map((m) => m.label.slice(0, 40)).join(' | ')}`);
-  console.log(`Prereq chains     : ${graphRes.chains.map((c) => c.slice(0, 60)).join(' || ') || '(none)'}`);
   console.log(`Expansion terms   : ${graphRes.expansionTerms.join(', ')}`);
   console.log(`Vector ctx chars  : A=${vectorCtx.length}  B=${expandedVectorCtx.length}`);
   console.log(`Graph ctx chars   : ${graphRes.contextString.length}`);

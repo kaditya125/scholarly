@@ -266,7 +266,8 @@ export class GoogleCloudTTSProvider implements TTSProvider {
         language: voice.languageCode,
         chars,
       });
-      Telemetry.logCost('gcp-tts', chars, 'characters', {
+      // Characters are TTS's billed input unit; telemetry has no gcp-tts rate yet, so this records nothing.
+      Telemetry.logCost('gcp-tts', chars, 'input', {
         model: voice.name,
         userId: request.userId,
         cost: estCostUsd,

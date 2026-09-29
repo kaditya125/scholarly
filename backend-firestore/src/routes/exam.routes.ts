@@ -16,7 +16,7 @@ const requireAdminRole = (req: Request, res: Response, next: Function) => {
   if (!user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  const role = user.role || (user as any).customClaims?.role;
+  const role = (user as any).role || (user as any).customClaims?.role;
   const adminRoles = ['admin', 'super_admin', 'moderator', 'content_manager'];
   if (!role || !adminRoles.includes(role)) {
     return res.status(403).json({ error: 'Forbidden: requires admin privileges' });

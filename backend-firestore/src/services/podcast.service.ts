@@ -99,6 +99,7 @@ export class PodcastService {
       const storageBasePath = `public/podcasts/${userId}/${notebookId}/${podcastId}`;
       
       const audioDestination = `${storageBasePath}/audio.mp3`;
+      const transcriptDestination = `${storageBasePath}/transcript.json`;
       const audioToken = uuidv4();
       const transcriptToken = uuidv4();
 

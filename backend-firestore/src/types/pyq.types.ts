@@ -13,7 +13,9 @@ export type PYQSourceStatus =
   | 'VERIFIED'
   | 'FAILED'
   | 'UNAVAILABLE'
-  | 'BLOCKED_ROBOTS';
+  | 'BLOCKED_ROBOTS'
+  // Written by PYQSourceArtifactService when the whole paper was retrieved.
+  | 'RETRIEVED_FULL';
 
 export type PYQDocumentType =
   | 'QUESTION_PAPER'
@@ -72,7 +74,9 @@ export type PYQIngestionState =
   | 'INDEXED'
   | 'RETRIEVAL_VERIFIED'
   | 'QUARANTINED'
-  | 'ARCHIVED_DUPLICATE';
+  | 'ARCHIVED_DUPLICATE'
+  // Extracted but waiting on answer-key verification; accepted for indexing by the audit tools.
+  | 'VERIFICATION_PENDING';
 
 export type PYQQuestionType =
   | 'MCQ_SINGLE'
