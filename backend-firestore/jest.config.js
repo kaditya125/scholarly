@@ -11,6 +11,13 @@ module.exports = {
   moduleFileExtensions: ['ts', 'js', 'json'],
   // uuid v14 is ESM-only and Jest's CommonJS runtime can't load it. See tests/shims/uuid.ts.
   moduleNameMapper: { '^uuid$': '<rootDir>/tests/shims/uuid.ts' },
+  // cockatiel v4 is ESM-only too (Node 22 require()s it in production; Jest can't). Transpile just
+  // that package to CommonJS; everything else in node_modules stays untransformed.
+  transform: {
+    '^.+\\.tsx?$': 'ts-jest',
+    'node_modules[\\\\/]cockatiel[\\\\/].+\\.js$': ['ts-jest', { tsconfig: { allowJs: true, module: 'commonjs' } }],
+  },
+  transformIgnorePatterns: ['node_modules[\\\\/](?!cockatiel[\\\\/])'],
   setupFiles: ['<rootDir>/tests/setup.ts'],
   collectCoverageFrom: [
     'src/**/*.ts',
