@@ -15,7 +15,7 @@
  */
 import { createHash } from 'crypto';
 
-export const EXTRACTION_VERSION = 'bookextract-v1.0';
+export const EXTRACTION_VERSION = 'bookextract-v1.1'; // v1.1: two-column recovery (recoverByNumber), duplicate_options quarantine, single-page re-OCR of truncated slices
 
 export interface OcrPage {
   pdfPageStart: number;
@@ -32,7 +32,9 @@ export type QuarantineReason =
   | 'empty_option'
   | 'answer_key_mismatch'
   | 'oversize_text'
-  | 'answer_mismatch';
+  | 'answer_mismatch'
+  | 'duplicate_options'
+  | 'references_other_question';
 
 export interface ParsedBookQuestion {
   chapterName: string;
@@ -81,6 +83,15 @@ export interface ParseOptions {
   layout?: 'exercise' | 'answer-blocks' | 'english-exercises';
   /** For 'answer-blocks': the book's top-level parts, e.g. /^(Physics|Chemistry|Biology)$/. */
   partHeading?: RegExp;
+  /**
+   * The chapters of the previous ingestion, in order. A chapter found again keeps its ordinal (which
+   * question ids, taxonomies and syllabus mappings are keyed on); a newly detected chapter gets the
+   * next free ordinal instead of shifting every chapter after it.
+   */
+  previousChapters?: { name: string; ordinal: number }[];
+  /** A heading repeating one of the previous two chapters continues it (S. Chand Quant's stray
+   *  "Volume" sub-heading inside Volume And Surface Areas). Off by default. */
+  mergeRecentRepeats?: boolean;
 }
 
 const PAGE = (n: number) => `\u0001P${n}\u0001`;
@@ -113,6 +124,8 @@ const headingText = (line: string) => line.replace(/^[#>\s]*/, '').replace(/\s+$
 function displayName(heading: string): string {
   return heading
     .replace(/^\d{1,2}[.)]?\s*/, '')
+    // "Statement — Arguments" / "Statement - Arguments" / "STATEMENT – ARGUMENTS" are one chapter.
+    .replace(/\s+[-–—]\s+/g, ' - ')
     .toLowerCase()
     .replace(/\b([a-z])/g, (c) => c.toUpperCase())
     .trim();
@@ -134,16 +147,35 @@ export function segmentChapters(pages: OcrPage[], opts: ParseOptions): { name: s
       const looksLikeHeading = /^#/.test(raw.trim()) || /^\d{1,2}[.)]?\s+\S/.test(h) || (h.length > 3 && h === h.toUpperCase() && /[A-Z]/.test(h));
       if (h && h.length <= 70 && looksLikeHeading && opts.chapterHeading.test(h)) {
         const name = displayName(h);
-        if (!current || current.name.toLowerCase() !== name.toLowerCase()) {
-          current = { name, ordinal: chapters.length + 1, lines: [] };
-          chapters.push(current);
-        }
+        if (current && sameChapter(current.name, name)) continue;
+        // A heading repeating one of the last two chapters ("Volume And Surface Areas" after a stray
+        // "Volume" sub-heading, "Bar Graphs" / "Bar Graph") continues that chapter.
+        // Opt-in: books like Lucent English legitimately repeat a heading two chapters apart.
+        const back = opts.mergeRecentRepeats ? chapters.slice(-3, -1).reverse().find((c) => sameChapter(c.name, name)) : undefined;
+        if (back) { current = back; continue; }
+        current = { name, ordinal: chapters.length + 1, lines: [] };
+        chapters.push(current);
         continue;
       }
       if (current) current.lines.push(raw);
     }
   }
+  assignStableOrdinals(chapters, opts.previousChapters);
   return chapters.map((c) => ({ name: c.name, ordinal: c.ordinal, text: c.lines.join('\n') }));
+}
+
+const chapterKey = (name: string) => name.toLowerCase().replace(/&/g, ' and ').replace(/s\b/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+const sameChapter = (a: string, b: string) => chapterKey(a) === chapterKey(b);
+
+/** See ParseOptions.previousChapters. Repeated names (a verbal and a non-verbal "Analogy") pair up in order. */
+function assignStableOrdinals(chapters: { name: string; ordinal: number }[], previous?: { name: string; ordinal: number }[]): void {
+  if (!previous?.length) return;
+  const pool = [...previous].sort((a, b) => a.ordinal - b.ordinal);
+  let next = Math.max(...pool.map((p) => p.ordinal)) + 1;
+  for (const c of chapters) {
+    const i = pool.findIndex((p) => sameChapter(p.name, c.name));
+    c.ordinal = i >= 0 ? pool.splice(i, 1)[0].ordinal : next++;
+  }
 }
 
 const MARK = /^[ \t]*(?:#+[ \t]*)?(EXERCISE\b[^\n]*|ANSWERS[ \t]*|(?:HINTS[ \t]*(?:&|AND)[ \t]*)?SOLUTIONS[ \t]*|TYPE[ \t]*\d+[ \t]*:[^\n]*)[ \t]*$/gm;
@@ -152,6 +184,11 @@ const TAG_G = new RegExp(TAG.source, 'g');
 // A real directions block: "Directions:" / "Directions (Questions 5 to 9):" / "Direction —". A line
 // merely starting with the word ("Direction of current is …") is question text, not directions.
 const DIRECTIONS = /\n\s*Directions?\s*(?:\([^)\n]{0,60}\))?\s*[:—–-][\s\S]*$/i;
+
+/** "(Questions 54–57)", "(Q. 1 to 5)", "(Qs. 6-10)", "(Question Nos. 11–15)" at the head of a directions block. */
+const DIRECTIONS_RANGE = /\bQ(?:uestions?|s)?\.?\s*(?:Nos?\.?\s*)?(\d{1,3})\s*(?:[-–—]|to)\s*(\d{1,3})\b/i;
+/** A stem that depends on another question: "For Q. 92, …", "shown in Q. 162", "the above question". */
+const CROSS_REFERENCE = /\b(?:for|in|from|of|see|refer(?:ring)? to)\s+(?:the\s+)?(?:Q\.?|Qs\.?|question)\s*(?:no\.?\s*)?\d{1,3}\b|\b(?:previous|preceding|above|last)\s+question\b|\bQ\.\s*\d{1,3}\b/i;
 
 /** Past these, a field means the parser bled into surrounding text — not a real question. */
 export const FIELD_LIMITS = { stem: 1500, option: 300, solution: 3000, directions: 2000 };
@@ -175,6 +212,32 @@ export function splitSequential(body: string, maxGap = 0): Map<number, { text: s
     out.set(p.n, { text: body.slice(p.pos, end).replace(/^[ \t>*-]*\d{1,3}\.\s/, '').trim(), offset: p.pos });
   });
   return out;
+}
+
+/**
+ * Two-column pages are OCR'd with their columns interleaved, so question numbers don't run in
+ * order in the text ("20. … except" is followed by 9. and 10. from the other column). The
+ * sequential pass stops there. This adds, for every number it missed, the block that starts with
+ * that number — anywhere in the text — provided it has a real stem and all four options (a)–(d);
+ * among several candidates for one number, the most complete wins. Never replaces a number the
+ * sequential pass found, so its guarantees stand.
+ */
+export function recoverByNumber(body: string, found: Map<number, { text: string; offset: number }>, maxNumber: number): Map<number, { text: string; offset: number }> {
+  const starts = [...body.matchAll(/^[ \t>*-]*(\d{1,3})\.\s/gm)].map((m) => ({ pos: m.index!, n: Number(m[1]) }));
+  const out = new Map(found);
+  const best = new Map<number, { text: string; offset: number; score: number }>();
+  starts.forEach((s, k) => {
+    if (s.n < 1 || s.n > maxNumber || found.has(s.n)) return;
+    const text = body.slice(s.pos, starts[k + 1]?.pos ?? body.length).replace(/^[ \t>*-]*\d{1,3}\.\s/, '').trim();
+    const stem = text.split(/\(a\)/)[0];
+    const hasAll = ['a', 'b', 'c', 'd'].every((l) => new RegExp(`\\(${l}\\)`).test(text));
+    if (!hasAll || stem.replace(/\s+/g, ' ').trim().length < 8) return;
+    const score = stem.length + (/\(e\)/.test(text) ? 1 : 0);
+    const prev = best.get(s.n);
+    if (!prev || score > prev.score) best.set(s.n, { text, offset: s.pos, score });
+  });
+  for (const [n, b] of best) out.set(n, { text: b.text, offset: b.offset });
+  return new Map([...out.entries()].sort((a, b) => a[0] - b[0]));
 }
 
 function lastPageBefore(text: string, offset: number): number | undefined {
@@ -204,7 +267,9 @@ export function parseChapter(chapter: { name: string; ordinal: number; text: str
     if (!/^EXERCISE/i.test(mark.label)) return;
     setIndex++;
     const { body, base } = section(si);
-    const questions = splitSequential(body, chapter.maxGap ?? 0);
+    let questions = splitSequential(body, chapter.maxGap ?? 0);
+    // The set's preamble ends where the in-order run starts (a recovered Q1 could sit anywhere).
+    const firstOffset = questions.size ? [...questions.values()][0].offset : body.length;
 
     // This set's answers: the first ANSWERS/SOLUTIONS mark after it.
     const key = new Map<number, string>();
@@ -224,23 +289,36 @@ export function parseChapter(chapter: { name: string; ordinal: number; text: str
         for (const [n, blk] of splitSequential(section(ai + 1).body)) if (!expl.has(n)) expl.set(n, squash(blk.text));
       }
     }
+    // Two-column pages: recover questions the in-order pass lost, up to the key's last number.
+    if (key.size) questions = recoverByNumber(body, questions, Math.max(...key.keys()));
 
     // Directions carry FORWARD: a block printed before question 1 (the set's preamble) or cut from
     // the end of a question applies to every following question until the next one. Formats like
     // syllogisms and assertion–reason print their fixed answer choices only there, so questions
     // with no options of their own inherit that choice list.
-    const firstOffset = questions.size ? [...questions.values()][0].offset : body.length;
     const preamble = body.slice(0, firstOffset).match(/Directions?\s*(?:\([^)\n]{0,60}\))?\s*[:—–-][\s\S]*/i);
     // An implausibly long "directions" block is surrounding text the parser swallowed — drop it
     // rather than carry it onto every following question.
     const sane = (d: string | undefined) => (d && d.length <= FIELD_LIMITS.directions ? d : undefined);
-    let carry: string | undefined = sane(preamble ? squash(preamble[0]) : undefined);
+    // Directions that name their questions ("Directions (Questions 54–57):") cover only that range;
+    // after it, questions fall back to the set's general directions instead of inheriting a puzzle
+    // or chart that isn't theirs.
+    let general: string | undefined;
+    let ranged: { text: string; from: number; to: number } | undefined;
+    const setDirections = (d: string | undefined) => {
+      if (!d) return;
+      const r = d.slice(0, 120).match(DIRECTIONS_RANGE);
+      if (r && Number(r[1]) <= Number(r[2])) ranged = { text: d, from: Number(r[1]), to: Number(r[2]) };
+      else { general = d; ranged = undefined; }
+    };
+    setDirections(sane(preamble ? squash(preamble[0]) : undefined));
 
     for (const [n, q] of questions) {
       let block = q.text;
-      const directions = carry;
+      if (ranged && n > ranged.to) ranged = undefined;
+      const directions = ranged && n >= ranged.from ? ranged.text : general;
       const d = block.match(DIRECTIONS);
-      if (d && d.index !== undefined) { carry = sane(squash(d[0])); block = block.slice(0, d.index); }
+      if (d && d.index !== undefined) { setDirections(sane(squash(d[0]))); block = block.slice(0, d.index); }
       const tagM = block.match(TAG);
       const parts = block.replace(TAG_G, ' ').split(/\(([a-e])\)/);
       const stem = squash(parts[0]);
@@ -265,6 +343,10 @@ export function parseChapter(chapter: { name: string; ordinal: number; text: str
       else if (!answerKey) quarantineReason = 'no_answer_key';
       else if (answerIndex < 0) quarantineReason = 'answer_not_in_options';
       else if (options.some((o) => !o)) quarantineReason = 'empty_option';
+      // OCR dropping signs turns "−3, −1, 1, 3" into "3, 1, 1, 3": an ambiguous item, not a seed.
+      else if (new Set(options.map((o) => o.toLowerCase().replace(/\s+/g, ''))).size < options.length) quarantineReason = 'duplicate_options';
+      // "For Q. 92, …" / "the above question" can't stand alone as a seed.
+      else if (CROSS_REFERENCE.test(stem)) quarantineReason = 'references_other_question';
 
       out.push({
         chapterName: chapter.name,
