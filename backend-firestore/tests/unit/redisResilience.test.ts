@@ -97,23 +97,29 @@ describe('B. the handler keeps the process alive only for transient faults', () 
  * the contract the durable-evidence reconciliation depends on: if publish() ever claimed success
  * on failure, a submission would be marked PROJECTED for an event that reached nobody.
  */
-describe('D. EventBus failure semantics are unchanged by the resilience fix', () => {
+describe('D. EventBus delivery when the Redis publish fails', () => {
   const { EventBus } = require('../../src/core/events/EventBus');
 
-  it('a failed publish still reports non-success', async () => {
+  it('a failed Redis publish is delivered to local subscribers instead of being lost', async () => {
+    // Single-process deployment: local subscribers are the complete consumer set, so local
+    // delivery IS delivery (see EventBus.publish). Dropping it lost fire-and-forget events for good.
     const bus = new EventBus();
+    let calls = 0;
+    bus.subscribe('user.registered', async () => { calls++; });
     const b = bus as any;
     b.isRedisConnected = true;
     b.pubClient = { publish: async () => { throw new SocketClosedUnexpectedlyError(); } };
 
-    await expect(bus.publish('user.registered', { userId: 'u1', email: 'a@b.c' })).resolves.toBe(false);
+    await expect(bus.publish('user.registered', { userId: 'u1', email: 'a@b.c' })).resolves.toBe(true);
+    expect(calls).toBe(1);
     await bus.close().catch(() => {});
   });
 
-  it('a transient Redis error does NOT get upgraded to a successful publish', async () => {
-    // The specific hazard: "transient" must mean "the process survives", never "the publish
-    // worked". Recovery stays the reconciliation layer's job.
+  it('a transient Redis error still delivers learning evidence locally, with its identity intact', async () => {
+    // Ordinary quiz/test completions have no reconciliation job, so a lost publish was permanent.
     const bus = new EventBus();
+    const seen: any[] = [];
+    bus.subscribe('learning.test_completed', async (_p: any, meta: any) => { seen.push(meta); });
     const b = bus as any;
     b.isRedisConnected = true;
     b.pubClient = { publish: async () => { throw new SocketClosedUnexpectedlyError(); } };
@@ -123,7 +129,9 @@ describe('D. EventBus failure semantics are unchanged by the resilience fix', ()
       correctCount: 1, skippedCount: 0, accuracy: 25, occurredAt: Date.now(),
     } as any, { eventId: 'learning.test_completed:a1' });
 
-    expect(delivered).toBe(false);
+    expect(delivered).toBe(true);
+    expect(seen).toHaveLength(1);
+    expect(seen[0].eventId).toBe('learning.test_completed:a1'); // dedupe key survives the fallback
     expect(isTransientRedisDisconnect(new SocketClosedUnexpectedlyError())).toBe(true);
     await bus.close().catch(() => {});
   });

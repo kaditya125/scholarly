@@ -143,9 +143,10 @@ export class KnowledgeService {
         {
           mode: options?.mode || 'hybrid',
           topK: options?.topK || 5,
-          minScore: options?.minScore || 0.4,
-          semanticWeight: options?.semanticWeight || 0.7,
-          keywordWeight: options?.keywordWeight || 0.3,
+          // `??`, not `||`: an explicit 0 is meaningful (semanticSearch sets keywordWeight 0).
+          minScore: options?.minScore ?? 0.4,
+          semanticWeight: options?.semanticWeight ?? 0.7,
+          keywordWeight: options?.keywordWeight ?? 0.3,
           highlightSnippetLength: options?.highlightSnippetLength || 250,
           tenantId: options?.tenantId,
         }

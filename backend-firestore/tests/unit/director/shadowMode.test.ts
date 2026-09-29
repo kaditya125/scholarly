@@ -22,6 +22,23 @@ import type { ResolvedAsset } from '../../../src/core/director/interfaces';
 import type { MusicEvent } from '../../../src/core/director/schema/audio.schema';
 import { makeCatalogue, makeTimeline } from './fixtures';
 
+// Keep every test off Firestore/Storage: without credentials those calls hang rather than fail.
+// The runner persists to the timeline/character repositories, reads the asset catalogue from
+// config, and AssetLibrary falls back to the asset registry for ids outside the catalogue.
+jest.mock('../../../src/repositories/timeline.repository', () => ({
+  timelineRepository: { saveTimeline: jest.fn().mockResolvedValue(undefined), saveProducerPlan: jest.fn().mockResolvedValue(undefined) },
+}));
+jest.mock('../../../src/repositories/character.repository', () => ({
+  ...jest.requireActual('../../../src/repositories/character.repository'),
+  characterRepository: { listByUser: jest.fn().mockResolvedValue([]), saveMany: jest.fn().mockResolvedValue(undefined) },
+}));
+jest.mock('../../../src/config/firebase', () => ({
+  db: { collection: () => ({ doc: () => ({ get: async () => ({ exists: false, data: () => undefined }) }) }) },
+}));
+jest.mock('../../../src/core/assets/AssetRegistry', () => ({
+  assetRegistry: { get: jest.fn().mockResolvedValue(null) },
+}));
+
 // ---------------------------------------------------------------------------
 // ShadowModeRunner — the only pipeline hook
 // ---------------------------------------------------------------------------
@@ -83,8 +100,8 @@ describe('ShadowModeRunner gating', () => {
       produce: jest.fn().mockRejectedValue(new Error('producer exploded')),
     } as unknown as AIProducer);
 
-    // A planning failure must not surface to the pipeline.
-    await expect(runner.run(INPUT)).resolves.toBeUndefined();
+    // A planning failure must not surface to the pipeline: the Director directs without a plan.
+    await expect(runner.run(INPUT)).resolves.toEqual({ ok: true });
   });
 
   it('never throws on a malformed script', async () => {
@@ -92,9 +109,10 @@ describe('ShadowModeRunner gating', () => {
     process.env.AI_DIRECTOR_SHADOW_MODE = 'false';
 
     const runner = new ShadowModeRunner();
+    // Resolves with an outcome either way; it must never reject into the pipeline.
     await expect(
       runner.run({ ...INPUT, script: null, plan: null, brief: null })
-    ).resolves.toBeUndefined();
+    ).resolves.toHaveProperty('ok');
   });
 
   it('returns immediately in shadow mode (fire-and-forget)', async () => {
@@ -116,8 +134,8 @@ describe('ShadowModeRunner gating', () => {
       produce: jest.fn().mockRejectedValue(new Error('boom')),
     } as unknown as AIProducer);
 
-    // No unhandled rejection escapes.
-    await expect(runner.run(INPUT)).resolves.toBeUndefined();
+    // No unhandled rejection escapes, and the caller is told no timeline is ready yet.
+    await expect(runner.run(INPUT)).resolves.toEqual({ ok: false, reason: 'shadow_mode' });
     await new Promise((r) => setTimeout(r, 50));
   });
 });
@@ -215,6 +233,7 @@ function event(over: Partial<MusicEvent> = {}): MusicEvent {
     durationMs: 60_000,
     sceneId: 'scene_0',
     priority: 20,
+    requirement: { kind: 'music', category: 'educational', durationMs: 60_000, loopable: true, tags: [] },
     assetId: 'bed',
     category: 'educational',
     role: 'bed',

@@ -4,7 +4,7 @@ const mockLlm = { generateResponse: jest.fn() };
 const mockReranker = { rerank: jest.fn() };
 const mockCache = { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue(undefined) };
 const mockPinecone = { queryVectors: jest.fn() };
-const mockSearch = { search: jest.fn() };
+const mockSearch = { search: jest.fn(), searchOfficialFirst: jest.fn() };
 
 jest.mock('../../src/services/ai/providers/google-embedding.provider', () => ({ GoogleEmbeddingProvider: jest.fn(() => mockEmbed) }));
 jest.mock('../../src/services/ai/gemini.provider', () => ({ GeminiProvider: jest.fn(() => mockLlm) }));
@@ -114,30 +114,43 @@ describe('retrieveContext (core pipeline)', () => {
   it('applies graph expansion terms into the embedded query', async () => {
     mockPinecone.queryVectors.mockResolvedValueOnce([]);
     await svc.retrieveContext('mitosis', 'nb1', undefined, 5, ['cell cycle', 'chromosome']);
+    // Expansion terms are appended to the query that gets embedded.
     const embeddedArg = mockEmbed.generateEmbedding.mock.calls[0][0] as string;
-    expect(embeddedArg).toContain('Related concepts');
-    expect(embeddedArg).toContain('cell cycle');
+    expect(embeddedArg).toBe('mitosis cell cycle chromosome');
   });
 });
 
 describe('retrieveCurriculumContext', () => {
-  it('keeps only ncert-* notebooks from an unfiltered query', async () => {
-    mockPinecone.queryVectors.mockResolvedValueOnce([
+  it('queries the curriculum-owned corpus first', async () => {
+    mockPinecone.queryVectors.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+    await svc.retrieveCurriculumContext('q', 5);
+    expect(mockPinecone.queryVectors.mock.calls[0][2]).toEqual({ userId: 'ncert-curriculum' });
+  });
+
+  it('never returns a private notebook, even from the unfiltered last-resort query', async () => {
+    // The three curriculum-owned filters find nothing, so the fourth query searches the whole index.
+    mockPinecone.queryVectors
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
       { score: 0.9, metadata: { text: 'ncert chapter', notebookId: 'ncert-c10-bio', sourceTitle: 'NCERT' } },
       { score: 0.9, metadata: { text: 'private', notebookId: 'user-private-nb', sourceTitle: 'Private' } },
     ]);
     mockReranker.rerank.mockResolvedValueOnce([{ index: 0, relevanceScore: 0.9 }]);
     const out = await svc.retrieveCurriculumContext('q', 5);
+    expect(mockPinecone.queryVectors.mock.calls[3][2]).toEqual({});
     expect(out).toHaveLength(1);
     expect(out[0].source).toBe('NCERT');
-    // Pinecone was called without a metadata filter (undefined).
-    expect(mockPinecone.queryVectors.mock.calls[0][2]).toBeUndefined();
+    expect(out.some((r) => r.text.includes('private'))).toBe(false);
+    // The private passage was screened out before reranking, so it was never even scored.
+    expect(mockReranker.rerank.mock.calls[0][1]).toEqual(['ncert chapter']);
   });
 });
 
 describe('retrieveWebContext', () => {
   it('maps web search results into RetrievalResult shape', async () => {
-    mockSearch.search.mockResolvedValueOnce([{ content: 'web', url: 'http://x', title: 'T', score: 0.7 }]);
+    mockSearch.searchOfficialFirst.mockResolvedValueOnce([{ content: 'web', url: 'http://x', title: 'T', score: 0.7 }]);
     const out = await svc.retrieveWebContext('news');
     expect(out[0]).toMatchObject({ text: 'web', source: 'http://x', score: 0.7 });
   });

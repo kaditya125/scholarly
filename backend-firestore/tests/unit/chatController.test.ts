@@ -1,13 +1,20 @@
 // Mock the heavy service + file parser so the controller is tested in isolation.
 jest.mock('../../src/services/chat.service', () => ({
   ChatService: jest.fn().mockImplementation(() => ({
-    recordFeedback: jest.fn().mockResolvedValue(undefined),
     processChat: jest.fn().mockResolvedValue({ reply: 'hi' }),
     processChatStream: jest.fn().mockResolvedValue(undefined),
     getUserSessions: jest.fn().mockResolvedValue([{ id: 's1' }]),
     getSessionHistory: jest.fn().mockResolvedValue([{ role: 'user', content: 'q' }]),
     deleteSession: jest.fn().mockResolvedValue(true),
   })),
+}));
+// Quota metering reads Firestore; default to a Pro user with allowance left.
+jest.mock('../../src/services/usage.service', () => ({
+  usageService: { consumeQuota: jest.fn().mockResolvedValue(undefined) },
+}));
+jest.mock('../../src/services/entitlement.service', () => ({
+  ...jest.requireActual('../../src/services/entitlement.service'),
+  entitlementService: { getUserPlan: jest.fn().mockResolvedValue({ plan: 'pro' }) },
 }));
 jest.mock('../../src/services/fileParser.service', () => ({
   FileParserService: { extractText: jest.fn().mockResolvedValue([{ text: 'parsed doc text' }]) },
@@ -16,6 +23,7 @@ jest.mock('../../src/services/fileParser.service', () => ({
 import { ChatController } from '../../src/controllers/chat.controller';
 import { ChatService } from '../../src/services/chat.service';
 import { FileParserService } from '../../src/services/fileParser.service';
+import { usageService } from '../../src/services/usage.service';
 
 function mockRes() {
   const res: any = {};
@@ -54,8 +62,28 @@ describe('ChatController.handleChat', () => {
   it('delegates to the service with the token uid and returns the reply', async () => {
     const res = mockRes();
     await controller.handleChat({ user: { uid: 'u1' }, body: { sessionId: 's1', message: 'q', model: 'm', topicType: 't' } } as any, res, jest.fn());
-    expect(svc.processChat).toHaveBeenCalledWith('u1', 's1', 'q', 'm', 't');
+    // No productRole claim on the token → undefined role.
+    expect(svc.processChat).toHaveBeenCalledWith('u1', 's1', 'q', 'm', 't', undefined);
     expect(res.json).toHaveBeenCalledWith({ reply: 'hi' });
+  });
+
+  it('passes a valid productRole claim through, and drops an invalid one', async () => {
+    const body = { sessionId: 's1', message: 'q', model: 'm', topicType: 't' };
+    await controller.handleChat({ user: { uid: 'u1', productRole: 'teacher' }, body } as any, mockRes(), jest.fn());
+    expect(svc.processChat).toHaveBeenLastCalledWith('u1', 's1', 'q', 'm', 't', 'teacher');
+    await controller.handleChat({ user: { uid: 'u1', productRole: 'admin' }, body } as any, mockRes(), jest.fn());
+    expect(svc.processChat).toHaveBeenLastCalledWith('u1', 's1', 'q', 'm', 't', undefined);
+  });
+
+  it('403 QUOTA_EXHAUSTED, without calling the model, when the chat allowance is spent', async () => {
+    const res = mockRes();
+    (usageService.consumeQuota as jest.Mock).mockRejectedValueOnce(
+      Object.assign(new Error('limit reached'), { code: 'QUOTA_EXHAUSTED', used: 50, limit: 50, remaining: 0, plan: 'free' }),
+    );
+    await controller.handleChat({ user: { uid: 'u1' }, body: { sessionId: 's1', message: 'q', model: 'm', topicType: 't' } } as any, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'QUOTA_EXHAUSTED', feature: 'chat' }));
+    expect(svc.processChat).not.toHaveBeenCalled();
   });
 
   it('forwards errors to next()', async () => {
@@ -67,26 +95,7 @@ describe('ChatController.handleChat', () => {
   });
 });
 
-describe('ChatController.handleFeedback', () => {
-  it('401 unauthenticated', async () => {
-    const res = mockRes();
-    await controller.handleFeedback({ user: undefined, body: {} } as any, res, jest.fn());
-    expect(res.status).toHaveBeenCalledWith(401);
-  });
-
-  it('400 when signal is missing', async () => {
-    const res = mockRes();
-    await controller.handleFeedback({ user: { uid: 'u1' }, body: {} } as any, res, jest.fn());
-    expect(res.status).toHaveBeenCalledWith(400);
-  });
-
-  it('records the feedback and returns ok', async () => {
-    const res = mockRes();
-    await controller.handleFeedback({ user: { uid: 'u1' }, body: { signal: 'thumbs_up', sessionId: 's1' } } as any, res, jest.fn());
-    expect(svc.recordFeedback).toHaveBeenCalledWith('u1', expect.objectContaining({ signal: 'thumbs_up', sessionId: 's1' }));
-    expect(res.json).toHaveBeenCalledWith({ ok: true });
-  });
-});
+// Message feedback moved to FeedbackController (POST /chat/:messageId/feedback).
 
 describe('ChatController.handleChatStream', () => {
   it('401 unauthenticated', async () => {
@@ -106,9 +115,8 @@ describe('ChatController.handleChatStream', () => {
     await controller.handleChatStream({ user: { uid: 'u1' }, body: { sessionId: 's1', message: 'q', model: 'm', topicType: 't', notebookId: 'nb1' }, headers: { 'x-trace-id': 'tr1' } } as any, res, jest.fn());
     expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/event-stream');
     expect(res.flushHeaders).toHaveBeenCalled();
-    // learningContext + scopeSourceIds are absent from this request body, so the controller
-    // delegates them as undefined (hard-scope/learning-context are opt-in).
-    expect(svc.processChatStream).toHaveBeenCalledWith('u1', 's1', 'q', 'm', 't', res, 'nb1', 'tr1', undefined, undefined);
+    // No productRole claim → undefined role; Deep search (agenticRetrieval) is opt-in → false.
+    expect(svc.processChatStream).toHaveBeenCalledWith('u1', 's1', 'q', 'm', 't', res, 'nb1', 'tr1', undefined, false);
   });
 
   it('parses attachments and prepends the extracted text', async () => {

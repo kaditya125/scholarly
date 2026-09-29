@@ -390,7 +390,17 @@ Output ONLY a JSON array in EXACTLY this shape (no other keys):
     let canonicalPath: string[] = [];
     if (opts.syllabusNodeId) {
       const examIdForNode = resolvedExamId || opts.examId || exam;
-      const check = await validateSyllabusNodeId({ examId: examIdForNode, syllabusNodeId: opts.syllabusNodeId });
+      let check = await validateSyllabusNodeId({ examId: examIdForNode, syllabusNodeId: opts.syllabusNodeId });
+      // The id carries its own cycle and syllabus version. A caller that also names one is making
+      // a claim about which version it means, and a contradiction is a rejection — never a silent
+      // switch to whichever version the id happens to point at.
+      if (check.valid && check.parsed) {
+        if (opts.syllabusId && opts.syllabusId !== check.parsed.syllabusId) {
+          check = { ...check, valid: false, code: 'NODE_NOT_FOUND', detail: `id is in ${check.parsed.syllabusId}, caller asked for ${opts.syllabusId}` };
+        } else if (opts.cycleId && opts.cycleId !== check.parsed.cycleId) {
+          check = { ...check, valid: false, code: 'NODE_NOT_FOUND', detail: `id is in cycle ${check.parsed.cycleId}, caller asked for ${opts.cycleId}` };
+        }
+      }
       if (!check.valid) {
         logger.error('[QuizGenerator] canonical node rejected; refusing to generate', {
           userId, examId: examIdForNode, syllabusNodeId: opts.syllabusNodeId, code: check.code, reason: check.detail,

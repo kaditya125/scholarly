@@ -76,6 +76,11 @@ export interface VoiceSynthesisOptions {
   onProgress?: (done: number, total: number) => void;
   /** Batch size for parallel synthesis. Default 10. */
   batchSize?: number;
+  /**
+   * Build cues from the timeline's own timing without calling TTS. Lines the resolver already
+   * synthesized still use their real clip; nothing new is synthesized or billed.
+   */
+  dryRun?: boolean;
 }
 
 export class VoiceEngine {
@@ -98,7 +103,7 @@ export class VoiceEngine {
     }
 
     const startTime = Date.now();
-    const { tempDir, batchSize = 10 } = options;
+    const { tempDir, batchSize = 10, dryRun = false } = options;
 
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir, { recursive: true });
@@ -111,7 +116,7 @@ export class VoiceEngine {
     for (let i = 0; i < events.length; i += batchSize) {
       const batch = events.slice(i, i + batchSize);
       const settled = await Promise.allSettled(
-        batch.map((event) => this.synthesizeOne(event, tempDir, timeline))
+        batch.map((event) => this.synthesizeOne(event, tempDir, timeline, dryRun))
       );
 
       for (let j = 0; j < settled.length; j++) {
@@ -177,7 +182,8 @@ export class VoiceEngine {
   private async synthesizeOne(
     event: VoiceEvent,
     tempDir: string,
-    timeline: MasterTimeline
+    timeline: MasterTimeline,
+    dryRun = false
   ): Promise<VoiceCue | null> {
     // Resolve character to speaker role via the cast.
     const character = timeline.cast.characters.find((c) => c.id === event.characterId);
@@ -204,6 +210,20 @@ export class VoiceEngine {
         text: event.text,
         localPath: preSynthesized,
         durationMs,
+        startMs: event.startMs,
+        emotion: event.emotion,
+        intensity: event.delivery.intensity,
+      };
+    }
+
+    if (dryRun) {
+      return {
+        eventId: event.id,
+        lineIndex: event.lineIndex,
+        characterId: event.characterId,
+        text: event.text,
+        localPath: '',
+        durationMs: event.durationMs,
         startMs: event.startMs,
         emotion: event.emotion,
         intensity: event.delivery.intensity,

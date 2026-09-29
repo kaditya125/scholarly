@@ -24,6 +24,13 @@ import { validateInvariants, validateLineCoverage } from '../../../src/core/dire
 import { MasterTimelineSchema } from '../../../src/core/director/schema/timeline.schema';
 import type { NarrativeAnalysis } from '../../../src/core/director/planners/NarrativeAnalyzer';
 
+// direct() reads the user's recurring cast from Firestore. Without credentials that read hangs
+// rather than failing, so every test timed out; a first-time user (no saved characters) is the case.
+jest.mock('../../../src/repositories/character.repository', () => ({
+  ...jest.requireActual('../../../src/repositories/character.repository'),
+  characterRepository: { listByUser: jest.fn().mockResolvedValue([]), saveMany: jest.fn().mockResolvedValue(undefined) },
+}));
+
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
@@ -184,17 +191,20 @@ describe('AIDirector.direct', () => {
     }
   });
 
-  it('allows intro/outro themes at the floor, since nobody speaks over them', async () => {
+  it('lets intro/outro themes sit above the beds, and still under the floor once ducked', async () => {
     const timeline = await makeDirector().direct(INPUT);
-    const floor = timeline.mastering.voiceBusGainDb + timeline.mastering.duckingDb;
-    const themes = timeline.tracks.music.events.filter(
-      (x) => x.role === 'intro' || x.role === 'outro'
-    );
+    const { duckingDb } = timeline.mastering;
+    const floor = timeline.mastering.voiceBusGainDb + duckingDb;
+    const music = timeline.tracks.music.events;
+    const themes = music.filter((x) => x.role === 'intro' || x.role === 'outro');
+    const beds = music.filter((x) => x.role === 'bed');
     expect(themes.length).toBeGreaterThan(0);
     for (const e of themes) {
-      // Louder than a bed, but never ABOVE the floor — which is what the
-      // MUSIC_DUCK_HEADROOM invariant checks.
-      expect(e.volumeDb).toBeLessThanOrEqual(floor);
+      // Nobody speaks over a theme, so it may be louder than any bed (themes pinned under the static
+      // floor were the inaudible music, see musicMap.ts) — but even a theme is under the floor once
+      // ducked, which is what MUSIC_DUCK_HEADROOM checks.
+      for (const b of beds) expect(e.volumeDb).toBeGreaterThan(b.volumeDb);
+      expect(e.volumeDb + duckingDb).toBeLessThanOrEqual(floor);
     }
     // And no headroom warning is produced.
     expect(validateInvariants(timeline).warnings.map((w) => w.code)).not.toContain(
@@ -215,11 +225,19 @@ describe('AIDirector resilience', () => {
     expect(timeline.warnings.some((w) => /degraded/i.test(w))).toBe(true);
   });
 
-  it('handles an empty asset catalogue by omitting audio layers', async () => {
+  it('plans audio from requirements when the asset catalogue is empty', async () => {
+    // The Director states what it needs; the AssetResolver obtains it (generated or licensed), so an
+    // empty catalogue no longer means a voice-only episode — it means no catalogue hints.
     const timeline = await makeDirector(ANALYSIS, { version: 1, root: 'audio-assets', assets: [] }).direct(INPUT);
     expect(validateInvariants(timeline).valid).toBe(true);
-    expect(timeline.tracks.music.events).toHaveLength(0);
-    expect(timeline.tracks.ambience.events).toHaveLength(0);
+    const music = timeline.tracks.music.events;
+    const layers = timeline.tracks.ambience.events.flatMap((e) => e.layers);
+    expect(music.length).toBeGreaterThan(0);
+    expect(layers.length).toBeGreaterThan(0);
+    for (const x of [...music, ...layers]) {
+      expect(x.assetId).toBeUndefined();
+      expect(x.requirement.category.length).toBeGreaterThan(0);
+    }
     // Voice still present — the episode is intact.
     expect(timeline.tracks.voice.events).toHaveLength(LINES.length);
   });
@@ -250,12 +268,21 @@ describe('AIDirector resilience', () => {
     expect(timeline.tracks.visual.events).toHaveLength(0);
   });
 
-  it('suppresses ambience when accessibility asks for reduced background', async () => {
-    const timeline = await makeDirector().direct({
+  it('attenuates ambience to one quiet base layer when accessibility asks for reduced background', async () => {
+    // Attenuated, not deleted: the flag is set for every beginner episode, and zero ambience there was
+    // indistinguishable from the feature being broken (see AmbiencePlanner.fallback).
+    const normal = await makeDirector().direct(INPUT);
+    const reduced = await makeDirector().direct({
       ...INPUT,
       producerPlan: { ...PRODUCER, accessibility: { ...PRODUCER.accessibility, reduceBackgroundAudio: true } },
     });
-    expect(timeline.tracks.ambience.events).toHaveLength(0);
+    const loudest = (t: typeof normal) => Math.max(...t.tracks.ambience.events.flatMap((e) => e.layers.map((l) => l.volumeDb)));
+    expect(reduced.tracks.ambience.events.length).toBeGreaterThan(0);
+    for (const e of reduced.tracks.ambience.events) {
+      expect(e.layers).toHaveLength(1);
+      expect(e.layers[0].layerRole).toBe('base');
+    }
+    expect(loudest(reduced)).toBeLessThan(loudest(normal));
   });
 });
 
@@ -431,7 +458,7 @@ describe('ScenePlanner', () => {
     expect(environmentFor('classroom')).toBe('indoor');
   });
 
-  it('forces atmospheric locations to neutral when reducing background', async () => {
+  it('keeps an atmospheric location when reducing background (accessibility is a level, not a relabel)', async () => {
     const scenes = await new ScenePlanner().plan({
       skeletons: [{ ...ANALYSIS.scenes[0], location: 'battlefield' }],
       lines: LINES,
@@ -441,7 +468,9 @@ describe('ScenePlanner', () => {
       reduceBackground: true,
       cinematicIntensity: 'subtle',
     });
-    expect(scenes[0].setting.location).toBe('neutral');
+    // Relabelling to 'neutral' (which has no ambience stack) erased the sense of place for whole
+    // episodes; AmbiencePlanner now trims the level instead.
+    expect(scenes[0].setting.location).toBe('battlefield');
   });
 });
 
@@ -700,8 +729,9 @@ describe('MusicPlanner continuity', () => {
 });
 
 describe('AmbiencePlanner', () => {
-  it('drops layers whose assets are missing rather than substituting', async () => {
-    // Catalogue has only the base layer for classroom, not paper_rustle... it has both.
+  it('never substitutes a different catalogue asset for a layer the catalogue lacks', async () => {
+    // The catalogue holds only the classroom base layer. Layers it lacks are still planned (the
+    // resolver obtains them from their requirement) but carry no asset hint — never someone else's.
     const partial = { version: 1 as const, root: 'a', assets: [CATALOGUE.assets[2]] };
     const { manifest } = AssetManifest.from(partial);
     const scenes = await new ScenePlanner().plan({
@@ -710,7 +740,10 @@ describe('AmbiencePlanner', () => {
     const events = await new AmbiencePlanner().plan({
       scenes, manifest, duckFloorDb: -12, cinematicIntensity: 'balanced',
     });
-    expect(events[0].layers.every((l) => l.assetId === 'amb_room_tone_small')).toBe(true);
+    const layers = events[0].layers;
+    expect(layers.some((l) => l.assetId === 'amb_room_tone_small')).toBe(true);
+    expect(layers.some((l) => l.assetId === undefined)).toBe(true);
+    expect(layers.every((l) => l.assetId === undefined || l.assetId === 'amb_room_tone_small')).toBe(true);
   });
 
   it('keeps every layer below the duck floor', async () => {

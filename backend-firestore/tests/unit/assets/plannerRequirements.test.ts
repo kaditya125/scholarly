@@ -14,14 +14,16 @@ import { SFXPlanner, sfxRequirement } from '../../../src/core/director/planners/
 import { stingerRequirement } from '../../../src/core/director/planners/ScenePlanner';
 import { emptyAssetManifest, AssetManifest } from '../../../src/services/media/assets/AssetManifest';
 import { SceneSchema, type Scene } from '../../../src/core/director/schema/scene.schema';
+import { makeScene } from '../director/fixtures';
 import { AssetRequirementSchema } from '../../../src/core/director/schema/requirement.schema';
 
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
 
+// Built on the shared director fixture so it can't drift from SceneSchema; parsed to apply defaults.
 function scene(over: Partial<Scene> = {}, index = 0): Scene {
-  return SceneSchema.parse({
+  return SceneSchema.parse(makeScene({
     id: `scene_${index}`,
     index,
     title: `Scene ${index}`,
@@ -30,19 +32,8 @@ function scene(over: Partial<Scene> = {}, index = 0): Scene {
     dominantEmotion: 'curious',
     tensionLevel: 0.4,
     energyLevel: 0.5,
-    setting: { location: 'classroom', timeOfDay: 'day', interior: true },
-    transitionIn: { style: 'crossfade', durationMs: 1500 },
-    transitionOut: { style: 'crossfade', durationMs: 1500 },
-    visual: {
-      cameraAngle: 'medium',
-      cameraMovement: 'static',
-      lighting: 'natural',
-      visualStyle: 'realistic',
-      imagePrompt: 'a classroom',
-      animationPrompt: 'a classroom, slow push in',
-    },
     ...over,
-  });
+  }));
 }
 
 const musicInput = (manifest = emptyAssetManifest) => ({
@@ -241,9 +232,17 @@ describe('AmbiencePlanner emits requirements with an EMPTY catalogue', () => {
     }
   });
 
-  it('STILL suppresses ambience entirely for reduceBackground', () => {
-    // Accessibility must win over the new always-emit behaviour.
-    expect(planner.fallback({ ...input, reduceBackground: true })).toEqual([]);
+  it('attenuates ambience for reduceBackground: one base layer, quieter', () => {
+    // Attenuated, not deleted — the flag is set for every beginner episode (see AmbiencePlanner).
+    const normal = planner.fallback(input);
+    const reduced = planner.fallback({ ...input, reduceBackground: true });
+    expect(reduced.length).toBeGreaterThan(0);
+    for (const e of reduced) {
+      expect(e.layers).toHaveLength(1);
+      expect(e.layers[0].layerRole).toBe('base');
+    }
+    const loudest = (evs: typeof normal) => Math.max(...evs.flatMap((e) => e.layers.map((l) => l.volumeDb)));
+    expect(loudest(reduced)).toBeLessThan(loudest(normal));
   });
 
   it('carries the layer role into the requirement', () => {
@@ -275,8 +274,8 @@ describe('ambienceRequirement', () => {
 describe('SFXPlanner emits requirements with an EMPTY catalogue', () => {
   const planner = new SFXPlanner();
   const lines = [
-    { speaker: 'Narrator', text: 'The door creaked open slowly.' },
-    { speaker: 'Narrator', text: 'Thunder rolled across the valley.' },
+    { speaker: 'Narrator', text: 'The door creaked open slowly.', chapterIndex: 0 },
+    { speaker: 'Narrator', text: 'Thunder rolled across the valley.', chapterIndex: 0 },
   ];
   const input = {
     scenes: [scene({ lineRange: { startLine: 0, endLine: 1 } }, 0)],
@@ -308,8 +307,13 @@ describe('SFXPlanner emits requirements with an EMPTY catalogue', () => {
     expect(planner.fallback({ ...input, cinematicIntensity: 'subtle' })).toEqual([]);
   });
 
-  it('STILL respects reduceBackground', () => {
-    expect(planner.fallback({ ...input, reduceBackground: true })).toEqual([]);
+  it('respects reduceBackground by attenuating, not deleting, effects', () => {
+    // Deleting them silently disabled SFX for most study podcasts (see SFXPlanner.fallback).
+    const normal = planner.fallback(input);
+    const reduced = planner.fallback({ ...input, reduceBackground: true });
+    expect(reduced.length).toBeGreaterThan(0);
+    expect(reduced.length).toBeLessThanOrEqual(normal.length);
+    expect(Math.max(...reduced.map((e) => e.volumeDb))).toBeLessThan(Math.max(...normal.map((e) => e.volumeDb)));
   });
 
   it('STILL drops startle categories when asked', () => {

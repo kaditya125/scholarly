@@ -2,40 +2,31 @@
  * Voice quota limits.
  *
  * These assert on REFUSALS and on what gets written to usage, because both are what stand between
- * VOICE_ACCESS_MODE=all and an unmetered bill. The Firestore layer is faked with an in-memory
- * store so the day-rollover and transaction paths are exercised rather than stubbed away.
+ * VOICE_ACCESS_MODE=all and an unmetered bill. The allowance is monthly and plan-based, metered by
+ * usageService (Free 900 s, Pro 18,000 s); that service is faked with an in-memory ledger so the
+ * limit and accrual paths are exercised rather than stubbed away.
  */
 
-interface Row { day: string; seconds: number; sessions: number; updatedAt: number }
+const FREE_LIMIT = 900;
+const mockUsed = new Map<string, number>();
+/** Set to make the next usage lookup/write throw, for the degraded-metering case. */
+let mockFailNext = false;
 
-const store = new Map<string, Row>();
-/** Set to make the next read/write throw, for the degraded-Firestore case. */
-let failNext = false;
-
-const mockDoc = (id: string) => ({
-  get: async () => {
-    if (failNext) throw new Error('firestore unavailable');
-    return { data: () => store.get(id) };
+jest.mock('../../src/config/firebase', () => ({ db: {} }));
+jest.mock('../../src/services/entitlement.service', () => ({ entitlementService: {} }));
+jest.mock('../../src/services/usage.service', () => ({
+  usageService: {
+    checkQuota: jest.fn(async (userId: string, _feature: string, requested = 1) => {
+      if (mockFailNext) throw new Error('firestore unavailable');
+      const used = mockUsed.get(userId) ?? 0;
+      return { allowed: used + requested <= 900, remaining: Math.max(0, 900 - used), limit: 900, used, plan: 'free' };
+    }),
+    consumeQuota: jest.fn(async (userId: string, _feature: string, amount: number) => {
+      if (mockFailNext) throw new Error('firestore unavailable');
+      mockUsed.set(userId, (mockUsed.get(userId) ?? 0) + amount);
+    }),
   },
-  set: async (data: Row, _opts?: unknown) => {
-    if (failNext) throw new Error('firestore unavailable');
-    store.set(id, { ...store.get(id), ...data } as Row);
-  },
-});
-
-const mockDb = {
-  collection: (_name: string) => ({ doc: (id: string) => mockDoc(id) }),
-  // Mirrors the real transaction contract closely enough for the accrue path: read-then-write.
-  runTransaction: async (fn: (tx: any) => Promise<void>) => {
-    const tx = {
-      get: async (ref: any) => ref.get(),
-      set: (ref: any, data: Row) => { void ref.set(data); },
-    };
-    return fn(tx);
-  },
-};
-
-jest.mock('../../src/config/firebase', () => ({ db: mockDb }));
+}));
 
 import {
   beginSession, accrue, endSession, hasActiveSession,
@@ -43,48 +34,41 @@ import {
 } from '../../src/services/voice/voiceQuota';
 
 const USER = 'student-1';
-const today = () => new Date().toISOString().slice(0, 10);
 const limits = voiceQuotaLimits();
 
 beforeEach(() => {
-  store.clear();
-  failNext = false;
+  mockUsed.clear();
+  mockFailNext = false;
   __resetVoiceQuotaState();
 });
 
-describe('daily budget', () => {
-  it('allows a user with no history', async () => {
+describe('monthly allowance', () => {
+  it('allows a user with no usage this month', async () => {
     const d = await beginSession(USER);
     expect(d.ok).toBe(true);
-    expect(d.remaining).toBe(limits.dailySeconds);
+    expect(d.remaining).toBe(FREE_LIMIT);
   });
 
-  it('refuses once the seconds budget is spent', async () => {
-    store.set(USER, { day: today(), seconds: limits.dailySeconds, sessions: 1, updatedAt: Date.now() });
+  it('refuses once the allowance is spent', async () => {
+    mockUsed.set(USER, FREE_LIMIT);
     const d = await beginSession(USER);
     expect(d.ok).toBe(false);
-    expect(d.code).toBe('VOICE_DAILY_LIMIT');
+    expect(d.code).toBe('VOICE_MONTHLY_LIMIT');
     expect(d.remaining).toBe(0);
+    expect(hasActiveSession(USER)).toBe(false); // a refused session holds no slot
   });
 
-  it('refuses once the session count is spent, even with seconds left', async () => {
-    // The case the seconds budget alone would miss: many short connections, little talk time.
-    store.set(USER, { day: today(), seconds: 5, sessions: limits.dailySessions, updatedAt: Date.now() });
-    const d = await beginSession(USER);
-    expect(d.ok).toBe(false);
-    expect(d.code).toBe('VOICE_DAILY_LIMIT');
+  it('refuses when fewer seconds remain than a session needs to start', async () => {
+    mockUsed.set(USER, FREE_LIMIT - 5);
+    expect((await beginSession(USER)).code).toBe('VOICE_MONTHLY_LIMIT');
   });
 
-  it("ignores yesterday's usage", async () => {
-    store.set(USER, { day: '2020-01-01', seconds: 99_999, sessions: 999, updatedAt: 0 });
-    const d = await beginSession(USER);
-    expect(d.ok).toBe(true);
-    expect(d.remaining).toBe(limits.dailySeconds);
-  });
-
-  it('counts the session at start, so an abandoned session still costs one', async () => {
+  it('checks the allowance before the start-rate throttle', async () => {
+    // An out-of-allowance user must hear "limit reached", not "too fast", on a quick re-click.
     await beginSession(USER);
-    expect(store.get(USER)!.sessions).toBe(1);
+    endSession(USER);
+    mockUsed.set(USER, FREE_LIMIT);
+    expect((await beginSession(USER)).code).toBe('VOICE_MONTHLY_LIMIT');
   });
 });
 
@@ -131,37 +115,29 @@ describe('start rate', () => {
 });
 
 describe('accrual', () => {
-  it('adds seconds to today', async () => {
+  it('adds whole seconds to the monthly total', async () => {
     await accrue(USER, 30);
-    await accrue(USER, 45);
-    expect(store.get(USER)!.seconds).toBe(75);
-  });
-
-  it('starts a fresh total when the day has rolled over', async () => {
-    store.set(USER, { day: '2020-01-01', seconds: 500, sessions: 9, updatedAt: 0 });
-    await accrue(USER, 10);
-    const row = store.get(USER)!;
-    expect(row.seconds).toBe(10);
-    expect(row.day).toBe(today());
+    await accrue(USER, 44.6);
+    expect(mockUsed.get(USER)).toBe(75);
   });
 
   it('ignores non-positive and anonymous accruals', async () => {
     await accrue(USER, 0);
     await accrue('', 60);
-    expect(store.has(USER)).toBe(false);
+    expect(mockUsed.has(USER)).toBe(false);
   });
 
-  it('accumulated usage eventually closes the budget', async () => {
-    await accrue(USER, limits.dailySeconds);
+  it('accumulated usage eventually closes the allowance', async () => {
+    await accrue(USER, FREE_LIMIT);
     const d = await beginSession(USER);
     expect(d.ok).toBe(false);
-    expect(d.code).toBe('VOICE_DAILY_LIMIT');
+    expect(d.code).toBe('VOICE_MONTHLY_LIMIT');
   });
 });
 
-describe('when Firestore is down', () => {
+describe('when metering is down', () => {
   it('allows the session but still holds the concurrency slot', async () => {
-    failNext = true;
+    mockFailNext = true;
     const first = await beginSession(USER);
     expect(first.ok).toBe(true);              // metering outage must not become a product outage
     expect(hasActiveSession(USER)).toBe(true);
@@ -172,7 +148,7 @@ describe('when Firestore is down', () => {
   });
 
   it('does not throw out of accrue', async () => {
-    failNext = true;
+    mockFailNext = true;
     await expect(accrue(USER, 60)).resolves.toBeUndefined();
   });
 });

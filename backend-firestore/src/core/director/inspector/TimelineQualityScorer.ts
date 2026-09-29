@@ -344,7 +344,7 @@ export class TimelineQualityScorer {
 
   /**
    * Music is correct when each bed's category is what the knowledge map would
-   * choose for that scene's emotion, beds sit under the duck floor, and no bed
+   * choose for that scene's emotion, beds sit under the duck floor once ducked, and no bed
    * stops abruptly.
    */
   private scoreMusic(t: MasterTimeline): DimensionScore {
@@ -362,7 +362,8 @@ export class TimelineQualityScorer {
     }
 
     const sceneById = new Map(t.scenes.map((s) => [s.id, s]));
-    const duckFloor = t.mastering.voiceBusGainDb + t.mastering.duckingDb;
+    const { duckingDb } = t.mastering;
+    const duckFloor = t.mastering.voiceBusGainDb + duckingDb;
 
     let mismatched = 0;
     for (const e of events) {
@@ -380,11 +381,13 @@ export class TimelineQualityScorer {
     }
     if (mismatched > 0) score -= Math.min(35, mismatched * 12);
 
-    // Loud beds fight narration.
-    const tooLoud = events.filter((e) => e.role === 'bed' && e.volumeDb > duckFloor);
+    // Loud beds fight narration. Post-duck level, the same rule as validation's MUSIC_DUCK_HEADROOM:
+    // the sidechain pulls a bed down by duckingDb under speech, so only a bed still above the floor
+    // AFTER that masks it. (Beds sit above the static floor on purpose — under it they were inaudible.)
+    const tooLoud = events.filter((e) => e.role === 'bed' && e.volumeDb + duckingDb > duckFloor);
     if (tooLoud.length > 0) {
       findings.push(
-        `${tooLoud.length} bed(s) above the duck floor (${duckFloor}dB) — will mask speech`
+        `${tooLoud.length} bed(s) above the duck floor (${duckFloor}dB) even after ducking — will mask speech`
       );
       score -= Math.min(30, tooLoud.length * 10);
     }

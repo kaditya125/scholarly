@@ -1,6 +1,10 @@
 import request from 'supertest';
 import express from 'express';
 import { requireAuth } from '../../src/middlewares/auth';
+import { MockFirebaseAdmin } from '../mocks/MockFirebaseAdmin';
+
+// requireAuth verifies through the app's firebase config module; stand the mock in for it.
+jest.mock('../../src/config/firebase', () => ({ auth: { verifyIdToken: (t: string) => MockFirebaseAdmin.verifyIdToken(t) } }));
 
 const app = express();
 app.use(express.json());

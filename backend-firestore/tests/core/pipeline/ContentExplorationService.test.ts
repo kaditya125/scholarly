@@ -54,6 +54,10 @@ class MockEmbeddingProvider implements EmbeddingProvider {
 // In-Memory mock for Firestore
 const mockFirestoreData: Record<string, any> = {};
 
+// Like Firestore, a collection read returns its DIRECT documents only — not docs in nested
+// subcollections (listing `sources` must not also return every `sources/x/chunks/y`).
+const isDirectChild = (key: string, prefix: string) => key.startsWith(prefix) && !key.slice(prefix.length).includes('/');
+
 jest.mock('../../../src/config/firebase', () => {
   return {
     db: {
@@ -72,7 +76,7 @@ jest.mock('../../../src/config/firebase', () => {
             get: async () => {
               const prefix = `${colName}/${docId}/${subColName}/`;
               const docs = Object.keys(mockFirestoreData)
-                .filter((k) => k.startsWith(prefix))
+                .filter((k) => isDirectChild(k, prefix))
                 .map((k) => {
                   const subId = k.replace(prefix, '');
                   return {
@@ -97,7 +101,7 @@ jest.mock('../../../src/config/firebase', () => {
                   get: async () => {
                     const prefix = `${colName}/${docId}/${subColName}/${subDocId}/${deepSubCol}/`;
                     const docs = Object.keys(mockFirestoreData)
-                      .filter((k) => k.startsWith(prefix))
+                      .filter((k) => isDirectChild(k, prefix))
                       .map((k) => {
                         const dId = k.replace(prefix, '');
                         return {
@@ -111,7 +115,7 @@ jest.mock('../../../src/config/firebase', () => {
                 get: async () => {
                   const prefix = `${colName}/${docId}/${subColName}/${subDocId}/${deepSubCol}/`;
                   const docs = Object.keys(mockFirestoreData)
-                    .filter((k) => k.startsWith(prefix))
+                    .filter((k) => isDirectChild(k, prefix))
                     .map((k) => {
                       const dId = k.replace(prefix, '');
                       return {
@@ -127,7 +131,7 @@ jest.mock('../../../src/config/firebase', () => {
               get: async () => {
                 const prefix = `${colName}/${docId}/${subColName}/`;
                 const docs = Object.keys(mockFirestoreData)
-                  .filter((k) => k.startsWith(prefix))
+                  .filter((k) => isDirectChild(k, prefix))
                   .map((k) => ({
                     id: k.replace(prefix, ''),
                     data: () => mockFirestoreData[k],

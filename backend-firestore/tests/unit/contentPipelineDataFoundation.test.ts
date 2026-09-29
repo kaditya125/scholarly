@@ -82,6 +82,7 @@ describe('Content Pipeline Phase 1A: Data Foundation', () => {
                     }),
                     orderBy: jest.fn().mockReturnThis(),
                     get: jest.fn().mockResolvedValue({ docs: [], empty: true }),
+                    add: jest.fn().mockResolvedValue({ id: 'err_1' }),
                   }),
                 }),
                 where: jest.fn().mockReturnThis(),
@@ -299,14 +300,13 @@ describe('Content Pipeline Phase 1A: Data Foundation', () => {
       jest.spyOn(sourceRepository, 'getSource').mockResolvedValue(mockDoc as any);
       const updateSpy = jest.spyOn(sourceRepository, 'updateSource').mockResolvedValue(undefined);
 
-      const failed = await service.transitionState(mockOwnerId, mockCollectionId, 'src_doc_1', 'FAILED', {
-        error: {
-          code: 'EXTRACTION_TIMEOUT',
-          message: 'PDF parser timed out after 60s',
-          recoverable: true,
-          timestamp: Date.now(),
-        },
-        currentStage: 'EXTRACT',
+      // Failure diagnostics are written by recordProcessingError (transitionState takes only a stage).
+      const failed = await service.recordProcessingError(mockOwnerId, mockCollectionId, 'src_doc_1', {
+        code: 'EXTRACTION_TIMEOUT',
+        message: 'PDF parser timed out after 60s',
+        stage: 'EXTRACT',
+        recoverable: true,
+        timestamp: Date.now(),
       });
 
       expect(failed.status).toBe('FAILED');
@@ -315,7 +315,7 @@ describe('Content Pipeline Phase 1A: Data Foundation', () => {
       expect(updateSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('archives and restores a source', async () => {
+    it('archives a source', async () => {
       const mockDoc = {
         id: 'src_doc_1',
         userId: mockOwnerId,
@@ -330,13 +330,7 @@ describe('Content Pipeline Phase 1A: Data Foundation', () => {
       const archived = await service.archiveSource(mockOwnerId, mockCollectionId, 'src_doc_1');
       expect(archived.status).toBe('ARCHIVED');
       expect(archived.archivedAt).toBeDefined();
-
-      // Mock getSource returning archived doc
-      jest.spyOn(sourceRepository, 'getSource').mockResolvedValue(archived as any);
-
-      const restored = await service.restoreSource(mockOwnerId, mockCollectionId, 'src_doc_1');
-      expect(restored.status).toBe('QUEUED');
-      expect(restored.archivedAt).toBeUndefined();
+      // (restoreSource was removed; there is no un-archive path to test.)
     });
   });
 

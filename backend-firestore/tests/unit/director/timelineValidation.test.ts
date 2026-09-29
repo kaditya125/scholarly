@@ -126,12 +126,20 @@ describe('MUSIC_NO_HARD_STOP — "never stop abruptly"', () => {
 });
 
 describe('MUSIC_DUCK_HEADROOM — narrator must stay intelligible', () => {
-  it('warns when a bed can exceed the duck floor', () => {
+  it('warns when a bed stays above the duck floor even after a full duck', () => {
     const t = makeTimeline();
-    // duck floor = voiceBusGainDb(0) + duckingDb(-12) = -12dB
-    t.tracks.music.events[0].volumeDb = -4;
+    // duck floor = voiceBusGainDb(0) + duckingDb(-12) = -12dB; +2dB ducked is -10dB, still above it.
+    t.tracks.music.events[0].volumeDb = 2;
     const result = validateInvariants(t);
     expect(result.warnings.map((w) => w.code)).toContain('MUSIC_DUCK_HEADROOM');
+  });
+
+  it('does not warn for a bed above the static floor that the duck brings under it', () => {
+    // -4dB is above -12dB, but ducks to -16dB. Warning here fired on audible, correct beds.
+    const t = makeTimeline();
+    t.tracks.music.events[0].volumeDb = -4;
+    const result = validateInvariants(t);
+    expect(result.warnings.map((w) => w.code)).not.toContain('MUSIC_DUCK_HEADROOM');
   });
 
   it('does not warn at a safe bed level', () => {

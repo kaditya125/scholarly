@@ -79,17 +79,22 @@ jest.mock('../../src/services/userStats.service', () => ({
 jest.mock('../../src/core/knowledge', () => ({ knowledgeService: { getSourceContext: async () => null } }));
 
 import { quizGeneratorService } from '../../src/services/tests/quizGenerator.service';
+import { canonicalNodeId } from '../../src/services/exam/syllabusCanonicalGraph';
 
+// Real canonical ids (type:examId:cycleId:syllabusId:slug:fingerprint) — the validator rejects
+// anything else as MALFORMED_NODE_ID before looking the node up.
+// Stored nodes carry the canonical upper-case exam id; callers may pass any case.
+const SCOPE = { examId: 'SSC_CGL', cycleId: '2026', syllabusId: 'syl_2026_v1' };
+const PARENT_ID = canonicalNodeId({ ...SCOPE, type: 'SUBJECT', parentPath: [], officialName: 'Quantitative Aptitude' });
 const NODE = {
-  id: 'topic:ssc_cgl_quant_algebra', label: 'Algebra', type: 'TOPIC',
-  examId: 'ssc_cgl', cycleId: '2026', syllabusId: 'syl_2026_v1',
-  parentEntityId: 'subject:ssc_cgl_quant', order: 2,
+  id: canonicalNodeId({ ...SCOPE, type: 'TOPIC', parentPath: ['Quantitative Aptitude'], officialName: 'Algebra' }),
+  label: 'Algebra', type: 'TOPIC', ...SCOPE, parentEntityId: PARENT_ID, order: 2,
 };
-const PARENT = {
-  id: 'subject:ssc_cgl_quant', label: 'Quantitative Aptitude', type: 'SUBJECT',
-  examId: 'ssc_cgl', cycleId: '2026', syllabusId: 'syl_2026_v1', order: 1,
+const PARENT = { id: PARENT_ID, label: 'Quantitative Aptitude', type: 'SUBJECT', ...SCOPE, order: 1 };
+const STAGE = {
+  ...NODE, id: canonicalNodeId({ ...SCOPE, type: 'STAGE', parentPath: [], officialName: 'Tier 1' }),
+  label: 'Tier 1', type: 'STAGE',
 };
-const STAGE = { ...NODE, id: 'stage:tier_1', label: 'Tier 1', type: 'STAGE' };
 
 beforeEach(() => { nodes.length = 0; nodes.push(PARENT, NODE, STAGE); });
 
@@ -101,7 +106,7 @@ describe('canonical mode', () => {
     expect(questions.length).toBeGreaterThan(0);
     for (const q of questions) {
       expect(q.identityStatus).toBe('CANONICAL');
-      expect(q.syllabusNodeId).toBe('topic:ssc_cgl_quant_algebra');
+      expect(q.syllabusNodeId).toBe(NODE.id);
       expect(q.syllabusId).toBe('syl_2026_v1');
       expect(q.cycleId).toBe('2026');
     }
@@ -111,11 +116,12 @@ describe('canonical mode', () => {
     const { questions } = await quizGeneratorService.generateWeakAreaQuiz('u1', {
       syllabusNodeId: NODE.id, examId: 'ssc_cgl', count: 3,
     });
-    // The model wrote "Quadratic Equations" / "Totally Unrelated Topic"...
-    expect(questions[0].topic).toBe('Quadratic Equations');
-    // ...but identity is still the node the application selected and validated.
-    expect(questions[0].syllabusNodeId).toBe('topic:ssc_cgl_quant_algebra');
-    expect(questions[1].syllabusNodeId).toBe('topic:ssc_cgl_quant_algebra');
+    // The model wrote "Quadratic Equations" / "Totally Unrelated Topic"... and neither leaks: the
+    // question mixer labels the question with the validated node, not the model's free text.
+    expect(questions[0].topic).toBe(NODE.label);
+    // ...and identity is the node the application selected and validated.
+    expect(questions[0].syllabusNodeId).toBe(NODE.id);
+    expect(questions[1].syllabusNodeId).toBe(NODE.id);
   });
 });
 
