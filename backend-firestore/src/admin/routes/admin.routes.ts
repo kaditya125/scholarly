@@ -83,6 +83,7 @@ const bookBankCtrl = new BookBankController();
 const requireBookBankAccess = requireRoles(['super_admin', 'admin']);
 router.get('/books', requireBookBankAccess, bookBankCtrl.listBooks);
 router.get('/books/:bookId/status', requireBookBankAccess, bookBankCtrl.getStatus);
+router.get('/books/:bookId/chapters', requireBookBankAccess, bookBankCtrl.listChapters);
 router.get('/book-questions', requireBookBankAccess, bookBankCtrl.listQuestions);
 
 // Knowledge Graph

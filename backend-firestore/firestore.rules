@@ -377,6 +377,7 @@ service cloud.firestore {
     match /books/{doc}               { allow read, write: if false; }
     match /book_ingestion_jobs/{doc} { allow read, write: if false; }
     match /book_questions/{doc}      { allow read, write: if false; }
+    match /book_chapters/{doc}       { allow read, write: if false; }
 
     // ---- Default deny for anything not explicitly matched above ----
     match /{document=**} {

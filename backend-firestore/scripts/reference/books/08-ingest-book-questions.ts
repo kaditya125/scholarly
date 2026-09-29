@@ -25,8 +25,13 @@ const key = args[0];
 const dryRun = args.includes('--dry-run');
 const attestedBy = args.includes('--attested-by') ? args[args.indexOf('--attested-by') + 1] : undefined;
 
-const SUBJECT_BY_DOMAIN: Record<string, BookSubject> = { aptitude: 'QUANT', reasoning: 'REASONING', english: 'ENGLISH', general_knowledge: 'GK', general_studies: 'GS' };
+const SUBJECT_BY_DOMAIN: Record<string, BookSubject> = { aptitude: 'QUANT', reasoning: 'REASONING', english: 'ENGLISH', gk: 'GK', general_knowledge: 'GK', science: 'GS', general_studies: 'GS' };
 const RUNNING_HEADERS = /^(QUANTITATIVE APTITUDE|Reasoning|REASONING)$/;
+/** Books whose questions aren't under EXERCISE headings (see ParseOptions.layout). */
+const LAYOUT: Record<string, { layout: 'answer-blocks' | 'english-exercises'; partHeading?: RegExp }> = {
+  lucent_science: { layout: 'answer-blocks', partHeading: /^(Physics|Chemistry|Biology|Botany|Zoology|Computer|Astronomy|Environment|Ecology)$/i },
+  lucent_english: { layout: 'english-exercises' },
+};
 
 (async () => {
   const book = BOOKS[key];
@@ -42,7 +47,7 @@ const RUNNING_HEADERS = /^(QUANTITATIVE APTITUDE|Reasoning|REASONING)$/;
   const result = await bookIngestionService.ingest({
     dryRun,
     pages,
-    parse: { chapterHeading: book.chapterHeading, runningHeader: RUNNING_HEADERS },
+    parse: { chapterHeading: book.chapterHeading, runningHeader: RUNNING_HEADERS, ...LAYOUT[key] },
     book: {
       bookId: book.key,
       title: book.title,

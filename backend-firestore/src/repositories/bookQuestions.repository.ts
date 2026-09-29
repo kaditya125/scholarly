@@ -11,7 +11,7 @@ import { createHash } from 'crypto';
 import { db } from '../config/firebase';
 import type { ParsedBookQuestion } from '../services/books/bookQuestionParser';
 
-export type BookQuestionStatus = 'EXTRACTED' | 'QUARANTINED';
+export type BookQuestionStatus = 'EXTRACTED' | 'CLASSIFIED' | 'QUARANTINED';
 export type IngestionJobStatus = 'QUEUED' | 'PROCESSING' | 'EXTRACTING' | 'INDEXING' | 'COMPLETED' | 'PARTIAL' | 'FAILED';
 export type BookSubject = 'QUANT' | 'REASONING' | 'ENGLISH' | 'GK' | 'GS';
 
@@ -106,8 +106,8 @@ export const bookQuestionsRepository = {
     return s.exists ? (s.data() as IngestionJob) : null;
   },
 
-  async existingIds(bookId: string): Promise<Map<string, { createdAt?: string; status?: string }>> {
-    const s = await questions().where('bookId', '==', bookId).select('createdAt', 'status').get();
+  async existingIds(bookId: string): Promise<Map<string, { createdAt?: string; status?: string; originalQuestionHash?: string }>> {
+    const s = await questions().where('bookId', '==', bookId).select('createdAt', 'status', 'originalQuestionHash').get();
     return new Map(s.docs.map((d) => [d.id, d.data() as any]));
   },
 

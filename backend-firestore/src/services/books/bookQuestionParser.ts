@@ -29,7 +29,10 @@ export type QuarantineReason =
   | 'empty_stem'
   | 'no_answer_key'
   | 'answer_not_in_options'
-  | 'empty_option';
+  | 'empty_option'
+  | 'answer_key_mismatch'
+  | 'oversize_text'
+  | 'answer_mismatch';
 
 export interface ParsedBookQuestion {
   chapterName: string;
@@ -48,10 +51,17 @@ export interface ParsedBookQuestion {
   answerKey?: string;
   answerIndex?: number;
   solution?: string;
+  /** The book's solution ran past FIELD_LIMITS.solution and was cut (a parse bleed at a section end). */
+  solutionTruncated?: boolean;
   sharedDirections?: string;
   /** True when the options came from the set's directions (fixed-choice formats), not the question. */
   optionsFromDirections?: boolean;
   examTag?: string;
+  /** English exercises: the exercise type, its instruction, and the book's answer when it is text
+   *  rather than an option (fill-in word, corrected sentence). Absent for option-based MCQs. */
+  format?: 'ERROR_SPOTTING' | 'FILL_BLANK' | 'SENTENCE_CORRECTION' | 'TRANSFORMATION';
+  instruction?: string;
+  answerText?: string;
   quarantineReason?: QuarantineReason;
   /** sha256 of the normalised stem + options — stable identity for dedupe and takedown. */
   originalQuestionHash: string;
@@ -62,6 +72,15 @@ export interface ParseOptions {
   chapterHeading: RegExp;
   /** Running page headers to drop, e.g. /^(QUANTITATIVE APTITUDE|Reasoning)$/i. */
   runningHeader?: RegExp;
+  /**
+   * 'exercise' (default): questions live under EXERCISE headings inside chapters.
+   * 'answer-blocks': a run of questions 1..N is followed by an "Answers" block, with no EXERCISE
+   * heading and section headings scattered through the run (Lucent's General Science). Each block
+   * becomes one set, named after the nearest `partHeading` above it.
+   */
+  layout?: 'exercise' | 'answer-blocks' | 'english-exercises';
+  /** For 'answer-blocks': the book's top-level parts, e.g. /^(Physics|Chemistry|Biology)$/. */
+  partHeading?: RegExp;
 }
 
 const PAGE = (n: number) => `\u0001P${n}\u0001`;
@@ -130,16 +149,25 @@ export function segmentChapters(pages: OcrPage[], opts: ParseOptions): { name: s
 const MARK = /^[ \t]*(?:#+[ \t]*)?(EXERCISE\b[^\n]*|ANSWERS[ \t]*|(?:HINTS[ \t]*(?:&|AND)[ \t]*)?SOLUTIONS[ \t]*|TYPE[ \t]*\d+[ \t]*:[^\n]*)[ \t]*$/gm;
 const TAG = /\[([^\]]{3,120})\]|\(((?:[A-Z][A-Za-z.&]*\s*){1,6}(?:\([^)]*\))?[^()]{0,40}?(?:19|20)\d{2})\)/;
 const TAG_G = new RegExp(TAG.source, 'g');
-const DIRECTIONS = /\n\s*Directions?\b[\s\S]*$/i;
+// A real directions block: "Directions:" / "Directions (Questions 5 to 9):" / "Direction —". A line
+// merely starting with the word ("Direction of current is …") is question text, not directions.
+const DIRECTIONS = /\n\s*Directions?\s*(?:\([^)\n]{0,60}\))?\s*[:—–-][\s\S]*$/i;
+
+/** Past these, a field means the parser bled into surrounding text — not a real question. */
+export const FIELD_LIMITS = { stem: 1500, option: 300, solution: 3000, directions: 2000 };
 const FIGURE = /!\[|\bfollowing (?:figure|diagram)\b|\bgiven (?:figure|diagram)\b|\bas shown\b/i;
 
-/** Sequentially-numbered blocks: 1., 2., 3., … (a "7." that isn't the next expected number is text). */
-export function splitSequential(body: string): Map<number, { text: string; offset: number }> {
+/**
+ * Sequentially-numbered blocks: 1., 2., 3., … (a "7." that isn't the next expected number is text).
+ * `maxGap` tolerates OCR losing a few question numbers (e.g. 99 → 101); 0 = strict.
+ */
+export function splitSequential(body: string, maxGap = 0): Map<number, { text: string; offset: number }> {
   const re = /^[ \t>*-]*(\d{1,3})\.\s/gm;
   const picked: { pos: number; n: number }[] = [];
   let expect = 1;
   for (let m = re.exec(body); m; m = re.exec(body)) {
-    if (Number(m[1]) === expect) { picked.push({ pos: m.index, n: expect }); expect++; }
+    const n = Number(m[1]);
+    if (n === expect || (maxGap > 0 && picked.length > 0 && n > expect && n <= expect + maxGap)) { picked.push({ pos: m.index, n }); expect = n + 1; }
   }
   const out = new Map<number, { text: string; offset: number }>();
   picked.forEach((p, i) => {
@@ -162,7 +190,7 @@ export function hashQuestion(stem: string, options: string[]): string {
 }
 
 /** Parse one chapter's text into its exercise questions. */
-export function parseChapter(chapter: { name: string; ordinal: number; text: string }): ParsedBookQuestion[] {
+export function parseChapter(chapter: { name: string; ordinal: number; text: string; maxGap?: number; keyMismatch?: boolean }): ParsedBookQuestion[] {
   const text = chapter.text;
   const marks: { start: number; end: number; label: string }[] = [];
   MARK.lastIndex = 0;
@@ -176,7 +204,7 @@ export function parseChapter(chapter: { name: string; ordinal: number; text: str
     if (!/^EXERCISE/i.test(mark.label)) return;
     setIndex++;
     const { body, base } = section(si);
-    const questions = splitSequential(body);
+    const questions = splitSequential(body, chapter.maxGap ?? 0);
 
     // This set's answers: the first ANSWERS/SOLUTIONS mark after it.
     const key = new Map<number, string>();
@@ -185,7 +213,7 @@ export function parseChapter(chapter: { name: string; ordinal: number; text: str
     if (ai >= 0 && !marks.slice(si + 1, ai).some((m) => /^EXERCISE/i.test(m.label))) {
       const a = section(ai).body;
       for (const m of a.matchAll(/(\d{1,3})\.\s*\(([a-e])\)/g)) if (!key.has(Number(m[1]))) key.set(Number(m[1]), m[2]);
-      for (const [n, blk] of splitSequential(a)) {
+      for (const [n, blk] of splitSequential(a, chapter.maxGap ?? 0)) {
         const m = blk.text.match(/^\(([a-e])\)\s*:?\s*([\s\S]*)$/);
         // In the table layout ("1. (c) | 2. (d) | …") the text after a key is more keys, not an
         // explanation — taking it would also block the real SOLUTIONS entry for that number.
@@ -202,14 +230,17 @@ export function parseChapter(chapter: { name: string; ordinal: number; text: str
     // syllogisms and assertion–reason print their fixed answer choices only there, so questions
     // with no options of their own inherit that choice list.
     const firstOffset = questions.size ? [...questions.values()][0].offset : body.length;
-    const preamble = body.slice(0, firstOffset).match(/Directions?\b[\s\S]*/i);
-    let carry: string | undefined = preamble ? squash(preamble[0]) : undefined;
+    const preamble = body.slice(0, firstOffset).match(/Directions?\s*(?:\([^)\n]{0,60}\))?\s*[:—–-][\s\S]*/i);
+    // An implausibly long "directions" block is surrounding text the parser swallowed — drop it
+    // rather than carry it onto every following question.
+    const sane = (d: string | undefined) => (d && d.length <= FIELD_LIMITS.directions ? d : undefined);
+    let carry: string | undefined = sane(preamble ? squash(preamble[0]) : undefined);
 
     for (const [n, q] of questions) {
       let block = q.text;
       const directions = carry;
       const d = block.match(DIRECTIONS);
-      if (d && d.index !== undefined) { carry = squash(d[0]); block = block.slice(0, d.index); }
+      if (d && d.index !== undefined) { carry = sane(squash(d[0])); block = block.slice(0, d.index); }
       const tagM = block.match(TAG);
       const parts = block.replace(TAG_G, ' ').split(/\(([a-e])\)/);
       const stem = squash(parts[0]);
@@ -226,7 +257,9 @@ export function parseChapter(chapter: { name: string; ordinal: number; text: str
       const answerIndex = answerKey ? [...opts.keys()].sort().indexOf(answerKey) : -1;
 
       let quarantineReason: QuarantineReason | undefined;
-      if (FIGURE.test(block)) quarantineReason = 'needs_figure';
+      if (chapter.keyMismatch) quarantineReason = 'answer_key_mismatch';
+      else if (stem.length > FIELD_LIMITS.stem || options.some((o) => o.length > FIELD_LIMITS.option)) quarantineReason = 'oversize_text';
+      else if (FIGURE.test(block)) quarantineReason = 'needs_figure';
       else if (letters !== 'abcd' && letters !== 'abcde') quarantineReason = 'options_incomplete';
       else if (stem.length < 4 && !options.some((o) => o.length > 1)) quarantineReason = 'empty_stem';
       else if (!answerKey) quarantineReason = 'no_answer_key';
@@ -240,11 +273,14 @@ export function parseChapter(chapter: { name: string; ordinal: number; text: str
         sourceSectionIndex: setIndex,
         questionNumber: n,
         sourcePage: lastPageBefore(text, base + q.offset),
-        stem,
-        options,
+        // A bled record is kept (for audit) but not with pages of runaway text in it.
+        stem: quarantineReason === 'oversize_text' ? stem.slice(0, FIELD_LIMITS.stem) : stem,
+        options: quarantineReason === 'oversize_text' ? options.map((o) => o.slice(0, FIELD_LIMITS.option)) : options,
         answerKey,
         answerIndex: answerIndex >= 0 ? answerIndex : undefined,
-        solution: expl.get(n),
+        // The last solution in a chapter can run on into whatever follows; keep the useful start.
+        solution: expl.get(n)?.slice(0, FIELD_LIMITS.solution),
+        solutionTruncated: (expl.get(n)?.length ?? 0) > FIELD_LIMITS.solution ? true : undefined,
         sharedDirections: directions,
         optionsFromDirections: inherit && options.length > 0 ? true : undefined,
         examTag: tagM ? (tagM[1] || tagM[2]).replace(/\s+/g, ' ').trim() : undefined,
@@ -256,9 +292,62 @@ export function parseChapter(chapter: { name: string; ordinal: number; text: str
   return out;
 }
 
+/**
+ * 'answer-blocks' layout → synthetic chapters, one per Answers block, each shaped as
+ * "EXERCISE / questions / ANSWERS / key" so parseChapter handles it unchanged.
+ */
+/** Answer-block books are long unbroken runs where OCR sometimes drops a question number. */
+const ANSWER_BLOCK_GAP = 3;
+
+export function segmentAnswerBlocks(pages: OcrPage[], opts: ParseOptions): { name: string; ordinal: number; text: string; maxGap?: number; keyMismatch?: boolean }[] {
+  const text = pages.map((p) => cleanMarkdown(p.markdown, opts.runningHeader)).join('\n');
+  const answers = [...text.matchAll(/^[ \t]*#*[ \t]*Answers?\b[^\n]*$/gim)].map((m) => ({ start: m.index!, end: m.index! + m[0].length }));
+  const out: { name: string; ordinal: number; text: string; maxGap?: number; keyMismatch?: boolean }[] = [];
+  let from = 0;
+  answers.forEach((a, k) => {
+    const region = text.slice(from, a.start);
+    // The run is the LAST line-start "1." whose first item carries options — earlier "1."s in the
+    // region are prose lists from the reading sections.
+    // The question run is the LONGEST sequential run starting at a "1." whose first item has
+    // options — the other "1."s are numbered statements inside individual questions.
+    // A key table ("1. (c) 2. (c) …") also has "(a)"-style text; a real question has a stem first.
+    // Its FIRST item must itself carry options, so a prose list ("1. Light is fast 2. …") can't
+    // chain into the questions that follow it.
+    const ones = [...region.matchAll(/^[ \t>*-]*1\.\s/gm)].map((m) => m.index!)
+      .filter((i) => /^[ \t>*-]*1\.\s+[^(\n]{10,}/.test(region.slice(i, i + 200)) && /\(a\)/.test(splitSequential(region.slice(i), ANSWER_BLOCK_GAP).get(1)?.text || ''));
+    const start = ones.map((i) => ({ i, len: splitSequential(region.slice(i), ANSWER_BLOCK_GAP).size })).sort((x, y) => y.len - x.len)[0]?.i;
+    // The key: pairs right after the heading, up to the next markdown heading (or a sane cap).
+    const after = text.slice(a.end, answers[k + 1]?.start ?? text.length);
+    const keyEnd = after.search(/^[ \t]*#/m);
+    const keyText = after.slice(0, keyEnd > 0 ? Math.min(keyEnd, 8000) : 8000);
+    if (start !== undefined) {
+      const before = text.slice(0, from + start);
+      const parts = opts.partHeading ? [...before.split('\n')].map(headingText).filter((l) => opts.partHeading!.test(l)) : [];
+      const name = parts.length ? displayName(parts[parts.length - 1]) : `Question set ${out.length + 1}`;
+      // Headings inside the run are page/section headers, not question text — drop them so they
+      // don't get glued onto the previous question's last option.
+      const run = region.slice(start).replace(/^[ \t]*#.*$/gm, '');
+      // A key is only trusted for the run it was printed for: if the key's highest number is far
+      // from the run's length, the run we found isn't the keyed one (OCR broke its numbering), and
+      // pairing by number would store wrong answers. Quarantine the set instead.
+      const runSize = splitSequential(region.slice(start), ANSWER_BLOCK_GAP).size;
+      const keyMax = Math.max(0, ...[...keyText.matchAll(/(\d{1,3})\.\s*\(?[a-e]\)/g)].map((m) => Number(m[1])));
+      // A SHORTER run is still the keyed set's own start (1..n align with key 1..n) when no part
+      // heading separates it from the Answers block; one that sits in a different part isn't.
+      // (Pages repeat their own part as a running heading — only a DIFFERENT part counts.)
+      const partBetween = !!opts.partHeading && region.slice(start).split('\n').map(headingText)
+        .some((l) => opts.partHeading!.test(l) && displayName(l).toLowerCase() !== name.toLowerCase());
+      const keyMismatch = keyMax === 0 || runSize > keyMax * 1.2 || (runSize < keyMax * 0.8 && partBetween);
+      out.push({ name, ordinal: out.length + 1, maxGap: ANSWER_BLOCK_GAP, keyMismatch, text: `EXERCISE\n${run}\nANSWERS\n${keyText}` });
+    }
+    from = a.end + (keyEnd > 0 ? keyEnd : 0);
+  });
+  return out;
+}
+
 /** Whole book → every exercise question, in book order. */
 export function parseBook(pages: OcrPage[], opts: ParseOptions): { chapters: { name: string; ordinal: number }[]; questions: ParsedBookQuestion[] } {
-  const chapters = segmentChapters(pages, opts);
+  const chapters = opts.layout === 'answer-blocks' ? segmentAnswerBlocks(pages, opts) : segmentChapters(pages, opts);
   return {
     chapters: chapters.map(({ name, ordinal }) => ({ name, ordinal })),
     questions: chapters.flatMap((c) => parseChapter(c)),

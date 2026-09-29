@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { db } from '../../config/firebase';
 import { bookQuestionsRepository, BookQuestionStatus } from '../../repositories/bookQuestions.repository';
 
 /**
@@ -23,12 +24,21 @@ export class BookBankController {
     } catch (e) { next(e); }
   };
 
+  /** GET /admin/books/:bookId/chapters — per chapter: syllabus mapping per exam, taxonomy, coverage. */
+  listChapters = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const snap = await db.collection('book_chapters').where('bookId', '==', req.params.bookId).get();
+      const chapters = snap.docs.map((d) => d.data()).sort((a: any, b: any) => a.chapterOrdinal - b.chapterOrdinal);
+      res.json({ chapters });
+    } catch (e) { next(e); }
+  };
+
   /** GET /admin/book-questions?bookId=&chapter=&status=&limit=&after= — paged private questions. */
   listQuestions = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const bookId = String(req.query.bookId || '');
       if (!bookId) return res.status(400).json({ error: 'bookId is required' });
-      const status = req.query.status === 'EXTRACTED' || req.query.status === 'QUARANTINED' ? (req.query.status as BookQuestionStatus) : undefined;
+      const status = ['EXTRACTED', 'CLASSIFIED', 'QUARANTINED'].includes(String(req.query.status)) ? (req.query.status as BookQuestionStatus) : undefined;
       const chapter = req.query.chapter !== undefined ? Number(req.query.chapter) : undefined;
       const questions = await bookQuestionsRepository.listQuestions({
         bookId,
