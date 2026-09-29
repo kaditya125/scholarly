@@ -17,7 +17,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { BOOKS } from './contract';
 import { bookIngestionService } from '../../../src/services/books/bookIngestion.service';
-import type { OcrPage } from '../../../src/services/books/bookQuestionParser';
+import { bookQuestionsRepository } from '../../../src/repositories/bookQuestions.repository';
+import type { OcrPage, ParseOptions } from '../../../src/services/books/bookQuestionParser';
 import type { BookSubject } from '../../../src/repositories/bookQuestions.repository';
 
 const args = process.argv.slice(2);
@@ -28,9 +29,11 @@ const attestedBy = args.includes('--attested-by') ? args[args.indexOf('--atteste
 const SUBJECT_BY_DOMAIN: Record<string, BookSubject> = { aptitude: 'QUANT', reasoning: 'REASONING', english: 'ENGLISH', gk: 'GK', general_knowledge: 'GK', science: 'GS', general_studies: 'GS' };
 const RUNNING_HEADERS = /^(QUANTITATIVE APTITUDE|Reasoning|REASONING)$/;
 /** Books whose questions aren't under EXERCISE headings (see ParseOptions.layout). */
-const LAYOUT: Record<string, { layout: 'answer-blocks' | 'english-exercises'; partHeading?: RegExp }> = {
+/** Per-book parse options (see ParseOptions). */
+const LAYOUT: Record<string, Partial<ParseOptions>> = {
   lucent_science: { layout: 'answer-blocks', partHeading: /^(Physics|Chemistry|Biology|Botany|Zoology|Computer|Astronomy|Environment|Ecology)$/i },
   lucent_english: { layout: 'english-exercises' },
+  schand_quant: { mergeRecentRepeats: true },
 };
 
 (async () => {
@@ -44,10 +47,15 @@ const LAYOUT: Record<string, { layout: 'answer-blocks' | 'english-exercises'; pa
   const pages: OcrPage[] = fs.readdirSync(dir).filter((f) => f.endsWith('.json')).sort()
     .map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')));
 
+  // Keep chapter ordinals stable across re-ingests (question ids and chapter docs are keyed on them).
+  const prevBook = await bookQuestionsRepository.getBook(book.key);
+  const prevJob = prevBook?.lastIngestionJobId ? await bookQuestionsRepository.getJob(prevBook.lastIngestionJobId) : null;
+  const previousChapters = prevJob?.perChapter?.map((c) => ({ name: c.name, ordinal: c.ordinal }));
+
   const result = await bookIngestionService.ingest({
     dryRun,
     pages,
-    parse: { chapterHeading: book.chapterHeading, runningHeader: RUNNING_HEADERS, ...LAYOUT[key] },
+    parse: { chapterHeading: book.chapterHeading, runningHeader: RUNNING_HEADERS, ...LAYOUT[key], previousChapters },
     book: {
       bookId: book.key,
       title: book.title,
