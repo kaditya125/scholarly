@@ -154,7 +154,8 @@ Return JSON: {"mappings":[{"chapter":<ordinal>,"inSyllabus":true|false,"node":<i
     if (!force && existing?.taxonomy && existing?.taxonomyVersion === CLASSIFICATION_VERSION) return existing.taxonomy;
 
     const qs = (await questionsCol().where('bookId', '==', bookId).where('chapterOrdinal', '==', chapter.ordinal).where('status', 'in', ['EXTRACTED', 'CLASSIFIED']).get())
-      .docs.map((d) => d.data() as BookQuestionDoc).sort((a, b) => a.sourceSectionIndex - b.sourceSectionIndex || a.questionNumber - b.questionNumber);
+      .docs.map((d) => d.data() as BookQuestionDoc).filter((q) => q.extractionSource !== 'figure')
+      .sort((a, b) => a.sourceSectionIndex - b.sourceSectionIndex || a.questionNumber - b.questionNumber);
     const step = Math.max(1, qs.length / 40);
     const sample = Array.from({ length: Math.min(40, qs.length) }, (_, k) => qs[Math.floor(k * step)]);
 
@@ -184,7 +185,9 @@ Return JSON:
   async classifyChapter(bookId: string, chapter: ChapterInfo, opts: { force?: boolean; batchSize?: number } = {}): Promise<{ classified: number; failed: number; skipped: number }> {
     let taxonomy = await this.deriveTaxonomy(bookId, chapter);
     const all = (await questionsCol().where('bookId', '==', bookId).where('chapterOrdinal', '==', chapter.ordinal).where('status', 'in', ['EXTRACTED', 'CLASSIFIED']).get())
-      .docs.map((d) => d.data() as BookQuestionDoc & { classificationVersion?: string });
+      .docs.map((d) => d.data() as BookQuestionDoc & { classificationVersion?: string })
+      // Figure questions are typed from their chapter; a text prompt can't see the figure.
+      .filter((q) => q.extractionSource !== 'figure');
     const todo = all.filter((q) => opts.force || q.status !== 'CLASSIFIED' || q.classificationVersion !== CLASSIFICATION_VERSION);
     const total = all.length;
     const positionOf = (q: BookQuestionDoc) => all.filter((x) => x.sourceSectionIndex === q.sourceSectionIndex).length || 1;

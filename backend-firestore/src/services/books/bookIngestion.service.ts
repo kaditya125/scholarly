@@ -87,7 +87,8 @@ export const bookIngestionService = {
         return { ordinal: c.ordinal, name: c.name, questions: inCh.length, extracted: inCh.filter((d) => d.status !== 'QUARANTINED').length };
       });
       const producedIds = new Set(docs.map((d) => d.id));
-      const superseded = [...existing.keys()].filter((id) => !producedIds.has(id) && existing.get(id)?.status !== 'QUARANTINED');
+      // Only text-parsed rows are this run's to supersede; figure rows come from a different extractor.
+      const superseded = [...existing.keys()].filter((id) => !producedIds.has(id) && existing.get(id)?.status !== 'QUARANTINED' && existing.get(id)?.extractionSource !== 'figure');
       const extracted = docs.filter((d) => d.status !== 'QUARANTINED').length;
       const counts = { chapters: chapters.length, questions: docs.length, extracted, quarantined: docs.length - extracted, superseded: superseded.length };
       const status: IngestionJob['status'] = docs.length === 0 ? 'FAILED' : extracted / docs.length < PARTIAL_BELOW ? 'PARTIAL' : 'COMPLETED';
