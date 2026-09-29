@@ -137,10 +137,10 @@ describe('defect detection', () => {
     expect(dimScore(broken, 'genderAge')).toBeLessThan(100);
   });
 
-  it('detects a music bed above the duck floor', () => {
+  it('detects a music bed that stays above the duck floor even after ducking', () => {
     const broken: MasterTimeline = JSON.parse(JSON.stringify(clean));
     for (const e of broken.tracks.music.events) {
-      if (e.role === 'bed') e.volumeDb = 0;
+      if (e.role === 'bed') e.volumeDb = 6; // ducked by 12dB it is still -6dB, above the -12dB floor
     }
     expect(dimScore(broken, 'music')).toBeLessThan(dimScore(clean, 'music'));
   });

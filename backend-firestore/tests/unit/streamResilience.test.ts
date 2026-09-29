@@ -35,12 +35,14 @@ describe('GeminiProvider.generateStreamResponse — mid-stream resilience', () =
   beforeEach(() => {
     jest.resetModules();
     generateContentStream = jest.fn();
-    jest.doMock('../../src/services/ai/googleGenAIClient', () => ({
-      getResilientClients: () => ({ primary: { models: { generateContentStream } }, fallback: null, primaryLabel: 'vertex' }),
-      runResilient: async (clients: any, op: any) => op(clients.primary),
+    // GeminiProvider builds its own SDK client (buildClient), so the SDK is the seam to mock;
+    // without this the tests made real calls with whatever key the environment had.
+    jest.doMock('@google/genai', () => ({
+      ...jest.requireActual('@google/genai'),
+      GoogleGenAI: jest.fn().mockImplementation(() => ({ models: { generateContentStream } })),
     }));
   });
-  afterEach(() => jest.dontMock('../../src/services/ai/googleGenAIClient'));
+  afterEach(() => jest.dontMock('@google/genai'));
 
   async function drain(gen: AsyncGenerator<string>): Promise<string[]> {
     const out: string[] = [];
