@@ -188,6 +188,15 @@ export function makeTimeline(over: Partial<MasterTimeline> = {}): MasterTimeline
             durationMs: 20_000,
             sceneId: scene.id,
             priority: 20,
+            // The requirement the resolver matched this asset against — mirrors the event's own
+            // category/duration, and loopable because a bed has to tile across the scene.
+            requirement: {
+              kind: 'music',
+              category: 'educational',
+              durationMs: 20_000,
+              loopable: true,
+              tags: [],
+            },
             assetId: 'edu_soft_bed_01',
             category: 'educational',
             role: 'bed',

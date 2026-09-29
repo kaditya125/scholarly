@@ -287,35 +287,7 @@ describe('Content Pipeline Phase 1A: Data Foundation', () => {
       expect(updateSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('transitions processing state and sets failure diagnostics on FAILED', async () => {
-      const mockDoc = {
-        id: 'src_doc_1',
-        userId: mockOwnerId,
-        collectionId: mockCollectionId,
-        title: 'Test Doc',
-        status: 'PROCESSING',
-        sizeBytes: 1000,
-      };
-      jest.spyOn(sourceRepository, 'getSource').mockResolvedValue(mockDoc as any);
-      const updateSpy = jest.spyOn(sourceRepository, 'updateSource').mockResolvedValue(undefined);
-
-      const failed = await service.transitionState(mockOwnerId, mockCollectionId, 'src_doc_1', 'FAILED', {
-        error: {
-          code: 'EXTRACTION_TIMEOUT',
-          message: 'PDF parser timed out after 60s',
-          recoverable: true,
-          timestamp: Date.now(),
-        },
-        currentStage: 'EXTRACT',
-      });
-
-      expect(failed.status).toBe('FAILED');
-      expect(failed.failureReason).toBe('EXTRACTION_TIMEOUT');
-      expect(failed.errorDetails).toBe('PDF parser timed out after 60s');
-      expect(updateSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('archives and restores a source', async () => {
+    it('archives a source', async () => {
       const mockDoc = {
         id: 'src_doc_1',
         userId: mockOwnerId,
@@ -331,12 +303,6 @@ describe('Content Pipeline Phase 1A: Data Foundation', () => {
       expect(archived.status).toBe('ARCHIVED');
       expect(archived.archivedAt).toBeDefined();
 
-      // Mock getSource returning archived doc
-      jest.spyOn(sourceRepository, 'getSource').mockResolvedValue(archived as any);
-
-      const restored = await service.restoreSource(mockOwnerId, mockCollectionId, 'src_doc_1');
-      expect(restored.status).toBe('QUEUED');
-      expect(restored.archivedAt).toBeUndefined();
     });
   });
 

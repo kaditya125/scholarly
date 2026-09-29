@@ -1,4 +1,4 @@
-import { WorkflowEngine } from '../../src/services/rag/WorkflowEngine';
+import { WorkflowEngine } from '../../src/core/workflow/WorkflowEngine';
 
 describe('Long Conversation Memory Load Test', () => {
   it('should maintain stable retrieval and token limits with 100+ messages', async () => {

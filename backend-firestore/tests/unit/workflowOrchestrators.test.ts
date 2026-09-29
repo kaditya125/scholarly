@@ -70,7 +70,7 @@ describe('RetrievalOrchestrator', () => {
     // Simulate the graph stage having already run in the parallel batch.
     await orch.runGraphRetrieval(ctx as any);
     const { events, outcome } = await drain(
-      orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false }),
+      orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false, isConversational: false }),
     );
 
     // Vector-only event sequence: RAG progress, citation, RAG detail (no graph events).
@@ -94,7 +94,7 @@ describe('RetrievalOrchestrator', () => {
     };
     const orch = new RetrievalOrchestrator(retrieval as any);
     const { events, outcome } = await drain(
-      orch.stream(makeReq() as any, agentCtx() as any, { needsWebSearch: false, hasAttachment: false }),
+      orch.stream(makeReq() as any, agentCtx() as any, { needsWebSearch: false, hasAttachment: false, isConversational: false }),
     );
     expect(retrieval.retrieveCurriculumContext).toHaveBeenCalledWith('explain gauss law', 5);
     expect(outcome.citationsList).toHaveLength(1);
@@ -109,7 +109,7 @@ describe('RetrievalOrchestrator', () => {
     };
     const orch = new RetrievalOrchestrator(retrieval as any);
     const { events, outcome } = await drain(
-      orch.stream(makeReq({ query: '[File Attached: a.pdf] summarize' }) as any, agentCtx() as any, { needsWebSearch: false, hasAttachment: true }),
+      orch.stream(makeReq({ query: '[File Attached: a.pdf] summarize' }) as any, agentCtx() as any, { needsWebSearch: false, hasAttachment: true, isConversational: false }),
     );
     expect(retrieval.retrieveCurriculumContext).not.toHaveBeenCalled();
     expect(outcome.citationsList).toHaveLength(0);
@@ -132,7 +132,7 @@ describe('RetrievalOrchestrator', () => {
       const ctx = agentCtx();
       await orch.runGraphRetrieval(ctx as any); // graph ran (parallel batch), but 'vector' must not fuse it
       const { outcome } = await drain(
-        orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false }, { retrievalStrategy: 'vector' } as any),
+        orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false, isConversational: false }, { retrievalStrategy: 'vector' } as any),
       );
       expect(retrieval.retrieveContext).toHaveBeenCalled();
       expect(outcome.citationsList).toHaveLength(1);
@@ -148,7 +148,7 @@ describe('RetrievalOrchestrator', () => {
       const ctx = agentCtx();
       await orch.runGraphRetrieval(ctx as any);
       const { outcome } = await drain(
-        orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false }, { retrievalStrategy: 'none' } as any),
+        orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false, isConversational: false }, { retrievalStrategy: 'none' } as any),
       );
       expect(retrieval.retrieveContext).not.toHaveBeenCalled();
       expect(retrieval.retrieveCurriculumContext).not.toHaveBeenCalled();
