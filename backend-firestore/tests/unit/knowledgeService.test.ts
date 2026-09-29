@@ -10,7 +10,7 @@
  * 6. getSourceContext() multi-modal GraphRAG context fusion & citations
  * 7. getSourceCitation() 4-level lineage resolution
  * 8. getKnowledgeGraph() graph traversal & prerequisites
- * 9. getDocumentStructure() AST block inspection
+ * 9. getDocumentStructure() chapter/section tree
  * 10. Consumer decoupling invariant (consumers use KnowledgeService abstraction)
  */
 
@@ -20,7 +20,7 @@ import {
   KnowledgeContextOptions,
   KnowledgeGraphOptions,
 } from '../../src/core/knowledge/types';
-import { Complete4LevelLineage, DocumentStructureBlock } from '../../src/core/pipeline/types';
+import { Complete4LevelLineage } from '../../src/core/pipeline/types';
 
 // Mock dependencies
 jest.mock('../../src/config/firebase', () => {
@@ -122,74 +122,38 @@ describe('Phase 10: Shared Knowledge Service', () => {
       getGraphContext: jest.fn().mockResolvedValue({
         contextString:
           'Concept: Carnot Engine (Type: CONCEPT)\n  - PREREQUISITE_OF -> Second Law of Thermodynamics\n  - RELIES_ON -> Ideal Gas Law',
-        meta: {
-          matched: 1,
-          nodeCount: 3,
-          edgeCount: 2,
-          traversalMs: 14,
-          expansionTerms: ['Ideal Gas Law', 'Second Law of Thermodynamics'],
-        },
+        // GraphContextResult is flat now (no `meta` wrapper).
+        matched: [{ id: 'carnot', label: 'Carnot Engine' }],
+        nodeCount: 3,
+        edgeCount: 2,
+        traversalMs: 14,
+        expansionTerms: ['Ideal Gas Law', 'Second Law of Thermodynamics'],
       }),
     };
 
     mockExplorationService = {
-      search: jest.fn().mockResolvedValue({
-        query: 'Carnot cycle efficiency',
-        totalMatches: 1,
-        results: [
-          {
-            chunkId: 'chk_thermo_101',
-            documentId: 'doc_thermo_01',
-            documentVersionId: 'v1',
-            collectionId: 'coll_physics',
-            text: 'The Carnot cycle is an idealized thermodynamic cycle...',
-            score: 0.92,
-            semanticScore: 0.95,
-            keywordScore: 0.85,
-            contentType: 'DEFINITION',
-            sequence: 1,
-            pageNumber: 42,
-            chapter: 'Heat & Work',
-            section: 'Carnot Engine',
-            highlightSnippet: 'The <mark>Carnot cycle</mark> is an idealized thermodynamic cycle...',
-          },
-        ],
-      }),
-      getCachedDocument: jest.fn().mockReturnValue({
-        id: 'doc_thermo_01',
-        title: 'Thermodynamics Fundamentals',
-        mimeType: 'application/pdf',
-        status: 'READY',
-      }),
-      getDocumentStructure: jest.fn().mockResolvedValue({
-        documentId: 'doc_thermo_01',
-        structuredBlocks: [
-          {
-            blockId: 'block_01',
-            structureType: 'heading',
-            content: 'Chapter 12: Thermodynamics',
-            pageNumber: 1,
-            sequence: 1,
-            confidence: 1.0,
-          },
-          {
-            blockId: 'block_02',
-            structureType: 'definition',
-            content: 'Carnot engine is a theoretical thermodynamic cycle.',
-            pageNumber: 42,
-            sequence: 2,
-            confidence: 0.95,
-          },
-          {
-            blockId: 'block_03',
-            structureType: 'theorem',
-            content: 'Carnot Theorem: No engine operating between two heat reservoirs is more efficient than a Carnot engine.',
-            pageNumber: 43,
-            sequence: 3,
-            confidence: 0.98,
-          },
-        ] as DocumentStructureBlock[],
-      }),
+      // search() resolves to ExplorationSearchResultItem[] (no {query, totalMatches, results} envelope).
+      search: jest.fn().mockResolvedValue([
+        {
+          chunkId: 'chk_thermo_101',
+          documentId: 'doc_thermo_01',
+          documentVersionId: 'v1',
+          collectionId: 'coll_physics',
+          text: 'The Carnot cycle is an idealized thermodynamic cycle...',
+          score: 0.92,
+          pageNumber: 42,
+          chapter: 'Heat & Work',
+          section: 'Carnot Engine',
+          snippet: 'The <mark>Carnot cycle</mark> is an idealized thermodynamic cycle...',
+          metadata: { contentType: 'DEFINITION', subject: 'Physics' },
+          lineage: { chunkSequence: 1 },
+        },
+      ]),
+      getDocumentStructure: jest.fn().mockResolvedValue([
+        { id: 'n1', type: 'chapter', title: 'Chapter 12: Thermodynamics', level: 1, pageNumber: 1, children: [] },
+        { id: 'n2', type: 'section', title: 'Heat Engines', level: 2, pageNumber: 42, children: [] },
+        { id: 'n3', type: 'section', title: 'Carnot Theorem', level: 2, pageNumber: 43, children: [] },
+      ]),
     };
 
     const mock4LevelLineage: Complete4LevelLineage = {
@@ -248,6 +212,8 @@ describe('Phase 10: Shared Knowledge Service', () => {
 
     service = new KnowledgeService(
       mockRetrievalService,
+      // Reference books (added after this suite was written) — only used with includeReferenceBooks.
+      { retrieveReferenceContext: jest.fn().mockResolvedValue([]) } as any,
       mockGraphRetrievalService,
       mockExplorationService,
       mockLineageService,
@@ -259,11 +225,10 @@ describe('Phase 10: Shared Knowledge Service', () => {
   // 1. getDocument
   // ─────────────────────────────────────────────────────────────────────────
   describe('1. getDocument()', () => {
-    it('returns document metadata from cached exploration if Firestore doc is unavailable', async () => {
+    it('returns null when the Firestore source doc is unavailable', async () => {
+      // ContentExplorationService keeps no document cache, so Firestore is the only place to look.
       const doc = await service.getDocument('coll_physics', 'doc_thermo_01');
-      expect(doc).toBeDefined();
-      expect(doc?.id).toBe('doc_thermo_01');
-      expect(doc?.title).toBe('Thermodynamics Fundamentals');
+      expect(doc).toBeNull();
     });
   });
 
@@ -392,7 +357,7 @@ describe('Phase 10: Shared Knowledge Service', () => {
       });
 
       expect(bundle.passages.length).toBe(2);
-      expect(bundle.contextString).toContain('=== RELEVANT SOURCE PASSAGES ===');
+      expect(bundle.contextString).toContain('=== PRIMARY CURRICULUM & SOURCE PASSAGES ===');
       expect(bundle.contextString).toContain('=== KNOWLEDGE GRAPH PREREQUISITES & RELATIONSHIPS ===');
       expect(bundle.contextString).toContain('=== LATEST WEB SEARCH RESULTS ===');
 
@@ -479,10 +444,9 @@ describe('Phase 10: Shared Knowledge Service', () => {
 
       expect(blocks).toBeDefined();
       expect(blocks?.length).toBe(3);
-      expect(blocks?.[0].structureType).toBe('heading');
-      expect(blocks?.[1].structureType).toBe('definition');
-      expect(blocks?.[2].structureType).toBe('theorem');
-      expect(blocks?.[2].content).toContain('Carnot Theorem');
+      expect(blocks?.[0].type).toBe('chapter');
+      expect(blocks?.[1].type).toBe('section');
+      expect(blocks?.[2].title).toContain('Carnot Theorem');
     });
   });
 

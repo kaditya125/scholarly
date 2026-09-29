@@ -14,7 +14,21 @@ jest.mock('../../src/core/agents/KnowledgeGraphAgent', () => ({
   },
 }));
 
+// stream() parses every query for PYQ intent first; the exam lookup behind that reads the exam
+// registry from Firestore, which hangs without credentials. None of these queries name an exam.
+jest.mock('../../src/services/pyq/examIndex', () => ({
+  ...jest.requireActual('../../src/services/pyq/examIndex'),
+  detectExamId: jest.fn().mockResolvedValue(null),
+}));
+
 import { RetrievalOrchestrator } from '../../src/core/workflow/services/RetrievalOrchestrator';
+import { contentExplorationService } from '../../src/core/pipeline/exploration/ContentExplorationService';
+
+// The notebook path checks the caller owns the notebook (a Firestore read). Default: they do.
+beforeEach(() => {
+  jest.spyOn(contentExplorationService, 'ensureCollectionAccess').mockResolvedValue(undefined as any);
+});
+afterEach(() => jest.restoreAllMocks());
 import { WorkflowEvent } from '../../src/core/workflow/types';
 
 async function drain<TReturn>(gen: AsyncGenerator<WorkflowEvent, TReturn>) {
@@ -70,7 +84,7 @@ describe('RetrievalOrchestrator', () => {
     // Simulate the graph stage having already run in the parallel batch.
     await orch.runGraphRetrieval(ctx as any);
     const { events, outcome } = await drain(
-      orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false }),
+      orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false, isConversational: false }),
     );
 
     // Vector-only event sequence: RAG progress, citation, RAG detail (no graph events).
@@ -84,6 +98,22 @@ describe('RetrievalOrchestrator', () => {
     expect(ctx.retrievedContext).toContain('NOTEBOOK CONTEXT');
   });
 
+  it('never searches a notebook the caller does not own', async () => {
+    // notebookId arrives in the request body; without the ownership gate it went straight into the
+    // vector filter (an IDOR). A denied notebook falls back to the shared corpora instead.
+    (contentExplorationService.ensureCollectionAccess as jest.Mock).mockRejectedValue(new Error('forbidden'));
+    const retrieval = {
+      retrieveContext: jest.fn(),
+      retrieveCurriculumContext: jest.fn().mockResolvedValue([]),
+      retrieveWebContext: jest.fn(),
+    };
+    const orch = new RetrievalOrchestrator(retrieval as any);
+    await drain(
+      orch.stream(makeReq({ notebookId: 'someone_elses_nb' }) as any, agentCtx() as any, { needsWebSearch: false, hasAttachment: false, isConversational: false }),
+    );
+    expect(retrieval.retrieveContext).not.toHaveBeenCalled();
+  });
+
   it('no-notebook path: grounds in curriculum and emits a citation', async () => {
     const retrieval = {
       retrieveContext: jest.fn(),
@@ -94,7 +124,7 @@ describe('RetrievalOrchestrator', () => {
     };
     const orch = new RetrievalOrchestrator(retrieval as any);
     const { events, outcome } = await drain(
-      orch.stream(makeReq() as any, agentCtx() as any, { needsWebSearch: false, hasAttachment: false }),
+      orch.stream(makeReq() as any, agentCtx() as any, { needsWebSearch: false, hasAttachment: false, isConversational: false }),
     );
     expect(retrieval.retrieveCurriculumContext).toHaveBeenCalledWith('explain gauss law', 5);
     expect(outcome.citationsList).toHaveLength(1);
@@ -109,7 +139,7 @@ describe('RetrievalOrchestrator', () => {
     };
     const orch = new RetrievalOrchestrator(retrieval as any);
     const { events, outcome } = await drain(
-      orch.stream(makeReq({ query: '[File Attached: a.pdf] summarize' }) as any, agentCtx() as any, { needsWebSearch: false, hasAttachment: true }),
+      orch.stream(makeReq({ query: '[File Attached: a.pdf] summarize' }) as any, agentCtx() as any, { needsWebSearch: false, hasAttachment: true, isConversational: false }),
     );
     expect(retrieval.retrieveCurriculumContext).not.toHaveBeenCalled();
     expect(outcome.citationsList).toHaveLength(0);
@@ -132,7 +162,7 @@ describe('RetrievalOrchestrator', () => {
       const ctx = agentCtx();
       await orch.runGraphRetrieval(ctx as any); // graph ran (parallel batch), but 'vector' must not fuse it
       const { outcome } = await drain(
-        orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false }, { retrievalStrategy: 'vector' } as any),
+        orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false, isConversational: false }, { retrievalStrategy: 'vector' } as any),
       );
       expect(retrieval.retrieveContext).toHaveBeenCalled();
       expect(outcome.citationsList).toHaveLength(1);
@@ -148,7 +178,7 @@ describe('RetrievalOrchestrator', () => {
       const ctx = agentCtx();
       await orch.runGraphRetrieval(ctx as any);
       const { outcome } = await drain(
-        orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false }, { retrievalStrategy: 'none' } as any),
+        orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false, isConversational: false }, { retrievalStrategy: 'none' } as any),
       );
       expect(retrieval.retrieveContext).not.toHaveBeenCalled();
       expect(retrieval.retrieveCurriculumContext).not.toHaveBeenCalled();

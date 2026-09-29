@@ -309,7 +309,10 @@ export * from "./observability";
 export * from "./exam.types";
 export * from "./pyq.types";
 
-export const isReadyStatus = (status: string) => status === 'READY' || status === 'READY_DEGRADED';
+/** Statuses whose content is usable. READY_DEGRADED = verified with non-critical gaps. */
+export const READY_STATUSES = ['READY', 'READY_DEGRADED'] as const;
+export const isReadyStatus = (status: string | null | undefined) =>
+  (READY_STATUSES as readonly string[]).includes(status ?? '');
 export type KGRelationshipType = string;
 
 // Study Circle documents, as StudyCircleService writes them to
