@@ -335,10 +335,10 @@ describe('AssetResolver.resolveMany', () => {
 
     const result = await resolver.resolveMany(
       ['documentary', 'epic', 'sad', 'mystery'].map((c) => musicReq({ category: c })),
-      { budgetUsd: 0.1 }
+      { budgetUsd: 0.15 }
     );
 
-    // 0.1 budget / 0.06 each → two succeed, the rest are skipped on budget.
+    // $0.15 budget at $0.06 each → two succeed ($0.12), a third would need $0.18: skipped on budget.
     expect(provider.calls).toBe(2);
     expect(result.unresolved).toBe(2);
     const skipped = [...result.outcomes.values()].filter((o) =>

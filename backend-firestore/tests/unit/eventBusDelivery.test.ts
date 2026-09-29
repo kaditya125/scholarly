@@ -115,14 +115,19 @@ describe('EventBus publish outcome', () => {
     await expect(bus.publish('user.registered', { userId: 'u1', email: 'a@b.c' })).resolves.toBe(true);
   });
 
-  it('THE REGRESSION: returns false when publication itself fails', async () => {
-    // Reproduces the measured production shape: the connected flag is true but the publisher
-    // socket is gone, so there is no in-process fallback and the send throws.
+  it('a failed Redis publish falls back to local delivery, exactly once', async () => {
+    // The measured production shape: the connected flag is true but the publisher socket is gone
+    // (or the quota is spent), so the send throws. sadhya-api is a single process, so its own
+    // subscribers ARE every consumer Redis would have reached; dropping the event here is what
+    // silently lost mastery evidence from fire-and-forget quiz publishes (see EventBus.publish).
+    let calls = 0;
+    bus.subscribe('user.registered', async () => { calls++; });
     const b = bus as any;
     b.isRedisConnected = true;
     b.pubClient = { publish: async () => { throw new Error('The client is closed'); } };
 
-    await expect(bus.publish('user.registered', { userId: 'u1', email: 'a@b.c' })).resolves.toBe(false);
+    await expect(bus.publish('user.registered', { userId: 'u1', email: 'a@b.c' })).resolves.toBe(true);
+    expect(calls).toBe(1);
   });
 
   it('still does not throw on failure, so fire-and-forget callers are unaffected', async () => {

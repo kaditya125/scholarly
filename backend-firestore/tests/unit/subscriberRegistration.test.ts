@@ -11,16 +11,31 @@
  * These run with NODE_ENV=test, so publish() dispatches in-process through the same
  * executeHandlers() the Redis path uses.
  */
+// Bootstrap also starts the automation trigger dispatcher — a separate, legitimate consumer of
+// several of these events. Its workflow lookup reads Firestore (which hangs without credentials);
+// no workflows are configured here, so it evaluates nothing.
+jest.mock('../../src/core/automation/engine/AutomationExecutionRepository', () => ({
+  automationExecutionRepository: { listWorkflows: jest.fn().mockResolvedValue([]) },
+}));
+
 import { eventBus } from '../../src/core/events/EventBus';
 import { registerEventSubscribers } from '../../src/core/events/subscribers';
 
 const handlerCount = (event: string): number =>
   ((eventBus as any).handlers.get(event) as Set<unknown> | undefined)?.size ?? 0;
 
+const EVENTS = ['learning.test_completed', 'podcast.completed', 'podcast.failed', 'user.registered', 'notebook.ingested'];
+let afterFirst: Record<string, number>;
+
 describe('registerEventSubscribers: exactly-once registration', () => {
   it('registers on the first call and reports it', () => {
     expect(registerEventSubscribers()).toEqual({ registered: true });
-    expect(handlerCount('learning.test_completed')).toBe(1);
+    afterFirst = Object.fromEntries(EVENTS.map((e) => [e, handlerCount(e)]));
+    // One app subscriber per event, plus the automation dispatcher on the events it triggers on
+    // (learning.test_completed, user.registered) — distinct consumers, not duplicates.
+    expect(afterFirst).toEqual({
+      'learning.test_completed': 2, 'podcast.completed': 1, 'podcast.failed': 1, 'user.registered': 2, 'notebook.ingested': 1,
+    });
   });
 
   it('THE REGRESSION: repeated bootstrap does not add a second handler', () => {
@@ -28,11 +43,7 @@ describe('registerEventSubscribers: exactly-once registration', () => {
     expect(registerEventSubscribers()).toEqual({ registered: false });
     expect(registerEventSubscribers()).toEqual({ registered: false });
 
-    expect(handlerCount('learning.test_completed')).toBe(1);
-    expect(handlerCount('podcast.completed')).toBe(1);
-    expect(handlerCount('podcast.failed')).toBe(1);
-    expect(handlerCount('user.registered')).toBe(1);
-    expect(handlerCount('notebook.ingested')).toBe(1);
+    for (const e of EVENTS) expect(handlerCount(e)).toBe(afterFirst[e]);
   });
 });
 
