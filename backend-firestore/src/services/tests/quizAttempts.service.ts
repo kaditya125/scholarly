@@ -116,6 +116,8 @@ export class QuizAttemptsService {
         sourceShift: q.sourceShift,
         sourcePaper: q.sourcePaper,
         canonicalPaperId: q.canonicalPaperId,
+        // A figure question is unanswerable without its figures — keep them with the attempt.
+        figure: q.figure,
       })),
       totalQuestions: questions.length,
       durationMinutes: meta.durationMinutes || DEFAULT_DURATION_MIN,

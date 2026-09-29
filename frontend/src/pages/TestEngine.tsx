@@ -1,3 +1,4 @@
+import { QuestionFigures, OptionFigure } from '../components/tests/QuestionFigure';
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Clock, Info, CheckSquare, List, BookmarkPlus, Bookmark, ChevronRight, ChevronLeft, Target, Moon, Sun, Bot, X, Send, Loader2, Play } from "lucide-react";
@@ -42,7 +43,7 @@ export default function TestEngine() {
   // started at most once per navigation (+ explicit retry). Effect re-runs — StrictMode's double
   // mount, a user/auth object refresh — re-attach to the in-flight promise instead of firing a
   // second one. Without this, one visit could leave several orphaned attempts behind.
-  const inflightRef = useRef<{ key: string; promise: Promise<{ attemptId: string; questions: Pick<StoredQuizQuestion, 'id' | 'text' | 'topic' | 'options'>[]; durationMinutes?: number }> } | null>(null);
+  const inflightRef = useRef<{ key: string; promise: Promise<{ attemptId: string; questions: Pick<StoredQuizQuestion, 'id' | 'text' | 'topic' | 'options' | 'figure'>[]; durationMinutes?: number }> } | null>(null);
   // Timer is anchored to the attempt, not the page: its end time is stored per attempt id so a
   // refresh resumes the same clock, and it only starts once the questions are actually shown.
   // Previously one global sessionStorage key held a single 30-minute end time shared by every
@@ -64,7 +65,7 @@ export default function TestEngine() {
 
     let cancelled = false;
 
-    const showQuestions = (attemptId: string, questions: Pick<StoredQuizQuestion, 'id' | 'text' | 'topic' | 'options'>[], durationMinutes?: number) => {
+    const showQuestions = (attemptId: string, questions: Pick<StoredQuizQuestion, 'id' | 'text' | 'topic' | 'options' | 'figure'>[], durationMinutes?: number) => {
       attemptIdRef.current = attemptId;
       const durationSec = Math.max(1, Math.round((durationMinutes || 30) * 60));
       const timerKey = `testEngine_endAt::${attemptId}`;
@@ -532,6 +533,7 @@ export default function TestEngine() {
               <h2 className="text-[16px] sm:text-[17px] font-medium leading-relaxed text-slate-900 dark:text-slate-100 mb-6">
                 {currentQ.text}
               </h2>
+              <QuestionFigures figure={currentQ.figure} />
               
               <div className="space-y-3">
                 {currentQ.options.map((opt, i) => {
@@ -555,7 +557,7 @@ export default function TestEngine() {
                       )}>
                         {String.fromCharCode(65 + i)}
                       </div>
-                      <span className="leading-relaxed">{opt}</span>
+                      <span className="leading-relaxed inline-flex items-center gap-3">{opt}<OptionFigure figure={currentQ.figure} index={i} /></span>
                     </button>
                   );
                 })}

@@ -57,3 +57,58 @@ export function generateFigureQuestion(archetype: FigureArchetype, seed: number)
     }
   }
 }
+
+// ── serving: topic → archetype, and mixer candidates ─────────────────────────────────────────
+
+const TOPIC_ARCHETYPES: [RegExp, FigureArchetype[]][] = [
+  [/water[\s-]*image/i, ['WATER_IMAGE']],
+  [/mirror/i, ['MIRROR_IMAGE']],
+  [/paper\s*(cutting|folding)|punch(ed)?\s*hole/i, ['PAPER_CUTTING']],
+  // Not bare "cube": Quant's "Square Roots And Cube Roots" must never become a dice drill.
+  [/\bdice\b/i, ['CUBES_AND_DICE']],
+  // Not "analytical reasoning": in SSC usage that is also a verbal-puzzle topic.
+  [/counting\s*(of\s*)?(figures?|triangles|squares|rectangles)|figure\s*counting/i, ['FIGURE_COUNTING']],
+  [/(figure|figural|non[\s-]*verbal)\s*series|series\s*\(?\s*(figure|non[\s-]*verbal)/i, ['FIGURE_SERIES']],
+  [/non[\s-]*verbal/i, FIGURE_ARCHETYPES],
+];
+
+/** The generator(s) that can serve a drill topic, or null when the topic isn't a figure topic. */
+export function figureArchetypesForTopic(topic: string): FigureArchetype[] | null {
+  for (const [re, archetypes] of TOPIC_ARCHETYPES) if (re.test(topic || '')) return archetypes;
+  return null;
+}
+
+const CHAPTER: Record<FigureArchetype, string> = {
+  MIRROR_IMAGE: 'Mirror-Images', WATER_IMAGE: 'Water-Images', FIGURE_SERIES: 'Series',
+  PAPER_CUTTING: 'Paper Cutting', CUBES_AND_DICE: 'Cubes And Dice', FIGURE_COUNTING: 'Analytical Reasoning',
+};
+
+/**
+ * `count` generated figure questions as question-mixer candidates. Labelled as book-grounded
+ * practice (the S. Chand non-verbal patterns) with the archetype and seed recorded, so any
+ * question can be regenerated exactly for audit.
+ */
+export function figureCandidates(archetypes: FigureArchetype[], count: number, examId: string, subject: string, topic: string, seedSource: () => number) {
+  return Array.from({ length: count }, (_, i) => {
+    const archetype = archetypes[i % archetypes.length];
+    const seed = seedSource();
+    const q = generateFigureQuestion(archetype, seed);
+    return {
+      id: `fig_${archetype.toLowerCase()}_${seed}`,
+      text: q.prompt,
+      options: q.optionTexts ?? ['A', 'B', 'C', 'D'],
+      correctAnswerIndex: q.answerIndex,
+      explanation: q.explanation,
+      topic,
+      subject,
+      examId,
+      sourceType: 'REFERENCE_BOOK' as const,
+      referenceBookId: 'schand_reasoning',
+      referenceBookTitle: 'Book-grounded practice (generated)',
+      referenceChapter: CHAPTER[archetype],
+      referenceChunkId: `figure:${archetype}:${seed}`,
+      figure: { archetype, seed, questionSvgs: q.questionSvgs, optionSvgs: q.optionSvgs, answerSource: 'computed' as const },
+      dedupeKey: `figure:${archetype}:${seed}`,
+    };
+  });
+}

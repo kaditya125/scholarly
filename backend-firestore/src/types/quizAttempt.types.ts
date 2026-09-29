@@ -11,6 +11,8 @@ export type QuizMode = 'exam' | 'study';
 
 /** A stored question — includes the answer key (server-side scoring only; masked before it reaches the client mid-test). */
 export interface StoredQuizQuestion {
+  /** Non-verbal questions: the figures, frozen into the attempt like the text is. */
+  figure?: import('./questionMixer.types').QuestionFigure;
   id: string;
   text: string;
   /** Display label only — non-authoritative. Never derive syllabus identity from it. */

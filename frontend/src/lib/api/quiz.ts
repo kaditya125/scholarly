@@ -73,6 +73,16 @@ export type QuizAttemptStatus = 'in-progress' | 'completed';
 export type QuizSource = 'weak-areas' | 'topic' | 'notebook' | 'mock-test';
 export type QuizMode = 'exam' | 'study';
 
+/** Code-generated non-verbal question figures (server-generated SVG; render as <img>). */
+export interface QuestionFigure {
+  archetype: string;
+  seed: number;
+  questionSvgs: string[];
+  /** Present when the options are figures; `options` then hold their labels (A–D). */
+  optionSvgs?: string[];
+  answerSource: 'computed';
+}
+
 export interface StoredQuizQuestion {
   id: string;
   text: string;
@@ -80,6 +90,7 @@ export interface StoredQuizQuestion {
   options: string[];
   correctAnswerIndex: number;
   explanation: string;
+  figure?: QuestionFigure;
 }
 
 export interface TopicBreakdown {
