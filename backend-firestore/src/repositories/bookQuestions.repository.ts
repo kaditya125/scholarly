@@ -52,6 +52,11 @@ export interface BookQuestionDoc extends Omit<ParsedBookQuestion, 'quarantineRea
   chapterId: string;
   status: BookQuestionStatus;
   quarantineReason?: string;
+  /** 'figure' rows come from the non-verbal figure extractor (12-ingest-figure-questions), not the
+   *  text parser: the text ingest must never supersede them and the text classifier must skip them. */
+  extractionSource?: 'text' | 'figure';
+  /** Private storage paths of a figure question's crops (never served to students). */
+  figure?: { problem: string[]; options: Record<string, string> };
   extractionVersion: string;
   jobId: string;
   createdAt: string;
@@ -106,8 +111,8 @@ export const bookQuestionsRepository = {
     return s.exists ? (s.data() as IngestionJob) : null;
   },
 
-  async existingIds(bookId: string): Promise<Map<string, { createdAt?: string; status?: string; originalQuestionHash?: string }>> {
-    const s = await questions().where('bookId', '==', bookId).select('createdAt', 'status', 'originalQuestionHash').get();
+  async existingIds(bookId: string): Promise<Map<string, { createdAt?: string; status?: string; originalQuestionHash?: string; extractionSource?: string }>> {
+    const s = await questions().where('bookId', '==', bookId).select('createdAt', 'status', 'originalQuestionHash', 'extractionSource').get();
     return new Map(s.docs.map((d) => [d.id, d.data() as any]));
   },
 
