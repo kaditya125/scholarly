@@ -19,6 +19,10 @@ module.exports = {
   },
   transformIgnorePatterns: ['node_modules[\\\\/](?!cockatiel[\\\\/])'],
   setupFiles: ['<rootDir>/tests/setup.ts'],
+  // Several suites import most of the service graph (ts-jest compiles it on first use); under a
+  // full parallel run their FIRST test can pass 5s on compile time alone. Hangs are mocked out,
+  // so this only absorbs load, it doesn't hide a stuck network call for long.
+  testTimeout: 20_000,
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',

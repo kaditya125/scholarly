@@ -11,12 +11,23 @@ import { pyqRightsGovernanceService } from '../../src/services/pyq/pyqRightsGove
 import { pyqVectorIngestionService } from '../../src/services/pyq/pyqVectorIngestion.service';
 import { pyqAnalyticsService } from '../../src/services/pyq/pyqAnalytics.service';
 import { CanonicalPYQQuestion } from '../../src/types/pyq.types';
+import { examRepository } from '../../src/repositories/exam.repository';
+import { pyqRepository } from '../../src/repositories/pyq.repository';
 
 describe('Sadhya PYQ Intelligence Subsystem', () => {
   jest.setTimeout(30000);
 
   // ─── 1. Source Discovery Tests ─────────────────────────────────────────────
   describe('1. Source Discovery & Multi-Tier Hierarchy', () => {
+    // Discovery persists every source plus an audit row; keep it off Firestore. With no exam-master
+    // record, it falls back to the built-in discovery registry — the path under test.
+    beforeEach(() => {
+      jest.spyOn(examRepository, 'getExamById').mockResolvedValue(null as any);
+      jest.spyOn(pyqRepository, 'registerSource').mockResolvedValue(undefined as any);
+      jest.spyOn(pyqRepository, 'logAudit').mockResolvedValue(undefined as any);
+    });
+    afterEach(() => jest.restoreAllMocks());
+
     it('should discover Tier A official sources and Tier B fallbacks for JEE_MAIN', async () => {
       const result = await pyqSourceDiscoveryService.discoverExamPYQSources('JEE_MAIN');
       expect(result.discoveredSources.length).toBeGreaterThan(0);

@@ -51,6 +51,9 @@ describe('Content Pipeline Phase 5: Pipeline Orchestrator & Recovery', () => {
   let chunkingService: ChunkingService;
   let indexingService: VectorIndexingService;
   let graphService: KnowledgeGraphService;
+  // The pre-READY quality gate reads the source record and storage directly; stand it in here and
+  // test the gate itself below.
+  let qualityValidation: { evaluateDocumentQuality: jest.Mock };
 
   const samplePdfText = 'Chapter 1: Quantum Mechanics\nDefinition: Wave Particle Duality: matter exhibits wave-like and particle-like properties.\nFormula: E = h f.';
   const sampleBuffer = Buffer.from(samplePdfText);
@@ -221,6 +224,12 @@ describe('Content Pipeline Phase 5: Pipeline Orchestrator & Recovery', () => {
       durationMs: 30,
     });
 
+    qualityValidation = {
+      evaluateDocumentQuality: jest.fn().mockResolvedValue({
+        isReadyValid: true, healthStatus: 'Healthy', overallScore: 95, failures: [], warnings: [],
+      }),
+    };
+
     orchestrator = new ContentPipelineOrchestrator(
       checkpointManager,
       extractionService,
@@ -228,7 +237,9 @@ describe('Content Pipeline Phase 5: Pipeline Orchestrator & Recovery', () => {
       understandingService,
       chunkingService,
       indexingService,
-      graphService
+      graphService,
+      undefined,
+      qualityValidation as any
     );
   });
 
@@ -270,6 +281,22 @@ describe('Content Pipeline Phase 5: Pipeline Orchestrator & Recovery', () => {
   // ----------------------------------------------------------------
   // 2. Asynchronous Job Model & State Polling
   // ----------------------------------------------------------------
+  describe('1b. Pre-READY quality gate', () => {
+    it('fails the job instead of marking READY when critical invariants fail', async () => {
+      qualityValidation.evaluateDocumentQuality.mockResolvedValueOnce({
+        isReadyValid: false, healthStatus: 'Failed', overallScore: 10,
+        failures: ['[Critical] Semantic Chunks Generated: 0 semantic chunks'], warnings: [],
+      });
+      const job = await orchestrator.enqueuePipeline({
+        documentId: 'doc_gate', documentVersionId: 'v1', collectionId: 'col_physics', userId: 'user_1',
+        fileBuffer: sampleBuffer, fileName: 'q.pdf', contentType: 'application/pdf',
+      });
+      const result = await orchestrator.executePipeline(job.jobId);
+      expect(result.status).toBe('FAILED');
+      expect(result.error?.message).toContain('Semantic Chunks Generated');
+    });
+  });
+
   describe('2. Asynchronous Job Model & State Polling', () => {
     it('should allow polling job state and tracking progress', async () => {
       const input: IngestionInput = {

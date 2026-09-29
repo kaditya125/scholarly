@@ -14,6 +14,12 @@ import {
 } from '../../../src/core/director/inspector/TimelineQualityScorer';
 import { VALIDATION_TOPICS, VALIDATION_TOPIC_COUNT } from '../../../src/core/director/inspector/timelineTopics';
 import { syntheticDirect } from '../../../src/core/director/inspector/syntheticDirect';
+
+// direct() reads the user's recurring cast from Firestore, which hangs without credentials.
+jest.mock('../../../src/repositories/character.repository', () => ({
+  ...jest.requireActual('../../../src/repositories/character.repository'),
+  characterRepository: { listByUser: jest.fn().mockResolvedValue([]), saveMany: jest.fn().mockResolvedValue(undefined) },
+}));
 import type { MasterTimeline } from '../../../src/core/director/schema/timeline.schema';
 
 const scorer = new TimelineQualityScorer();

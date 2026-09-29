@@ -3,7 +3,8 @@
  * @description Unit tests for WorkflowNodeRegistry, Zod schema validation, and DAG validation.
  */
 
-jest.mock('uuid', () => ({ v4: () => '00000000-0000-4000-8000-000000000000' }));
+// Deterministic v4 only; keep the rest of uuid (qdrantFilter derives its v5 namespace at import).
+jest.mock('uuid', () => ({ ...jest.requireActual('uuid'), v4: () => '00000000-0000-4000-8000-000000000000' }));
 jest.mock('../../src/core/knowledge', () => ({ knowledgeService: { getSourceContext: async () => null } }));
 jest.mock('../../src/core/notifications/EmailNotificationService', () => ({
   emailNotificationService: {

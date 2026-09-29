@@ -23,11 +23,14 @@ function isRetryable(err: any): boolean {
   if (typeof status === 'number' && status >= 500 && status < 600) return true;
   const code = err?.code;
   if (typeof code === 'number' && (code === 429 || (code >= 500 && code < 600))) return true;
-  if (['ECONNRESET', 'ETIMEDOUT', 'ECONNREFUSED', 'EAI_AGAIN', 'ENOTFOUND'].includes(code)) return true;
+  // ECONNABORTED/EPIPE and undici's "terminated" are a connection dropped mid-response. Callers only
+  // retry before any output has reached the user (see GeminiProvider.generateStreamResponse), so a
+  // drop there is as safe to retry as a refused connection.
+  if (['ECONNRESET', 'ETIMEDOUT', 'ECONNREFUSED', 'ECONNABORTED', 'EPIPE', 'EAI_AGAIN', 'ENOTFOUND'].includes(code)) return true;
   // Provider messages: Google/others often surface transient 5xx as text (e.g. 503 UNAVAILABLE
   // "experiencing high demand", "overloaded", "try again later") rather than a numeric status.
   if (typeof err?.message === 'string' &&
-      /timed out|network|fetch failed|socket hang up|unavailable|overloaded|high demand|try again later|"code"\s*:\s*(?:429|5\d\d)/i.test(err.message)) return true;
+      /timed out|network|fetch failed|socket hang up|terminated|unavailable|overloaded|high demand|try again later|"code"\s*:\s*(?:429|5\d\d)/i.test(err.message)) return true;
   return false;
 }
 
