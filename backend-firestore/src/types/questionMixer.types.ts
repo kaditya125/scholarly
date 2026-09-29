@@ -79,6 +79,21 @@ export interface TestBlueprint {
 
 /** A question candidate moving through the mixer — the internal working shape, richer than the
  *  final StoredQuizQuestion it gets narrowed into once accepted. */
+/**
+ * A code-generated non-verbal (figure) question's pictures. SVG strings are generated on the
+ * server from figure data (services/books/figures) — no user input reaches them — and clients
+ * render them as <img src="data:image/svg+xml,…">, which cannot execute anything.
+ */
+export interface QuestionFigure {
+  archetype: string;
+  seed: number;
+  questionSvgs: string[];
+  /** Set when the options are figures; the question's `options` then hold their labels. */
+  optionSvgs?: string[];
+  /** The answer was computed from the figure data, never judged by a model. */
+  answerSource: 'computed';
+}
+
 export interface QuestionCandidate {
   id: string;
   text: string;
@@ -106,6 +121,9 @@ export interface QuestionCandidate {
   referenceBookTitle?: string;
   referenceChapter?: string;
   referenceChunkId?: string;
+
+  /** Non-verbal questions only: the figures (see QuestionFigure). */
+  figure?: QuestionFigure;
 
   /** A stable string used for exact/near-duplicate detection — normalized question text, or the
    *  corpus's own contentHash when the candidate is a CANONICAL_PYQ. */

@@ -1,3 +1,4 @@
+import { QuestionFigures, OptionFigure } from '../components/tests/QuestionFigure';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -152,6 +153,7 @@ export default function QuizAttemptPage() {
                     )}
                     <p className="text-[14px] font-medium leading-relaxed">{i + 1}. {q.text}</p>
                   </div>
+                  <div className="mt-3 pl-[26px]"><QuestionFigures figure={q.figure} size={84} /></div>
                   <div className="mt-3 pl-[26px] space-y-1.5">
                     {q.options.map((opt, oi) => (
                       <div
@@ -165,7 +167,7 @@ export default function QuizAttemptPage() {
                               : 'border-slate-100 dark:border-white/[0.06] text-slate-500 dark:text-gray-400',
                         )}
                       >
-                        {opt}
+                        <span className="inline-flex items-center gap-2">{opt}<OptionFigure figure={q.figure} index={oi} size={64} /></span>
                       </div>
                     ))}
                   </div>
@@ -213,6 +215,7 @@ export default function QuizAttemptPage() {
         <div className="max-w-[720px] mx-auto px-5 sm:px-6 py-8">
           {error && <p className="mb-4 text-[13px] text-red-700 dark:text-red-400">{error}</p>}
           <h2 className="text-[16px] font-medium leading-relaxed mb-6">{currentQ.text}</h2>
+          <QuestionFigures figure={currentQ.figure} />
           <div className="space-y-3" role="radiogroup" aria-label="Question options">
             {currentQ.options.map((opt, i) => {
               const isSelected = answers[currentQ.id] === i;
@@ -235,7 +238,7 @@ export default function QuizAttemptPage() {
                   )}>
                     {isSelected && <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />}
                   </div>
-                  <span className="text-[14px]">{opt}</span>
+                  <span className="text-[14px] inline-flex items-center gap-3">{opt}<OptionFigure figure={currentQ.figure} index={i} /></span>
                 </button>
               );
             })}

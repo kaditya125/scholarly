@@ -53,6 +53,8 @@ export interface QuizQuestion {
   sourceShift?: string;
   sourcePaper?: string;
   canonicalPaperId?: string;
+  /** Non-verbal questions: the figures to show. */
+  figure?: import('../../types/questionMixer.types').QuestionFigure;
 }
 
 /** Map a model's "correctAnswer" (index, letter "A", or the option text) to an index. */
@@ -476,6 +478,7 @@ Output ONLY a JSON array in EXACTLY this shape (no other keys):
       sourceShift: c.sourceShift,
       sourcePaper: c.sourcePaper,
       canonicalPaperId: c.canonicalPaperId,
+      figure: c.figure,
     }));
 
     logger.info('[QuizGenerator] questions generated via mixer', {

@@ -27,6 +27,8 @@ import { drillTopicsService, topicTokens, tokensOverlap, displayTopic } from './
 import { RetrievalResult } from '../rag/retrieval.service';
 import { GeminiProvider } from '../ai/gemini.provider';
 import { logger } from '../../utils/logger';
+import { randomInt } from 'crypto';
+import { figureArchetypesForTopic, figureCandidates } from '../books/figures';
 import { CanonicalPYQQuestion } from '../../types/pyq.types';
 import {
   QuestionMixRequest, QuestionCandidate, QuestionSourceType, TestBlueprint, SectionBlueprint, MixerTrace,
@@ -208,6 +210,18 @@ export class QuestionMixerService {
       const wantGenerated = Math.max(0, section.questionCount - wantCanonical - wantPattern - wantReference);
 
       const sectionAccepted: QuestionCandidate[] = [];
+
+      // Non-verbal (figure) topics: text PYQs and LLM questions can't carry the figure, so the
+      // whole section comes from the code generators, each with a computed answer.
+      const figureArchetypes = figureArchetypesForTopic(`${topic} ${section.name}`);
+      if (figureArchetypes) {
+        const figs = figureCandidates(figureArchetypes, section.questionCount, examId, subject, topic, () => randomInt(1, 2 ** 31 - 1));
+        sectionAccepted.push(...this.pickAndDedupe(figs, section.questionCount, excludeIds, seenDedupeKeys));
+        for (const c of sectionAccepted) (c as any)._section = section.sectionId;
+        bySection[section.sectionId] = sectionAccepted.length;
+        accepted.push(...sectionAccepted);
+        continue;
+      }
 
       // CANONICAL_PYQ — real retrieval, never generated. One pool serves both the real PYQs and the
       // pattern exemplars, so the exemplars are the same topic and the query runs once.
