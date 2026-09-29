@@ -7,11 +7,11 @@
  * Two anti-repetition mechanisms:
  *   - `random_offset` + per-layer `jitterMs` so layers restart at different
  *     points and the composite never repeats audibly
- *   - unresolvable layers are dropped rather than substituted, so a thin
- *     catalogue produces a sparse-but-clean bed instead of a wrong one
+ *   - a layer the catalogue lacks is never substituted with another asset: it
+ *     keeps only its requirement, and the AssetResolver obtains the real thing
  *
- * Accessibility: when the Producer asks to reduce background, ambience is
- * suppressed entirely. Atmosphere is the first thing to sacrifice for clarity.
+ * Accessibility: when the Producer asks to reduce background, ambience drops to
+ * a single base layer, 6dB quieter. Attenuated, not deleted (see fallback()).
  */
 
 import type { IPlanner } from '../interfaces';

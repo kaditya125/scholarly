@@ -179,14 +179,19 @@ describe('music map', () => {
     expect(tempoForIntensity(0.95)).toBe('driving');
   });
 
-  it('ALWAYS keeps a bed below the duck floor', () => {
-    // This is the narrator-intelligibility guarantee.
-    const duckFloor = -12;
+  it('ALWAYS keeps a bed under the duck floor once ducked, and within its audible band', () => {
+    // The narrator-intelligibility guarantee. The bed may sit ABOVE the static duck floor (holding it
+    // under made music inaudible — see musicMap.ts); the sidechain duck is what protects the voice, so
+    // the invariant is on the post-duck level, the same one validation's MUSIC_DUCK_HEADROOM checks.
+    const duckingDb = -12;
+    const duckFloor = 0 + duckingDb; // voiceBusGainDb + duckingDb
     for (const intensity of [0, 0.25, 0.5, 0.75, 1]) {
       for (const ci of ['subtle', 'balanced', 'dramatic'] as const) {
         for (const reduce of [true, false]) {
           const db = bedVolumeDb({ intensity, duckFloorDb: duckFloor, reduceBackground: reduce, cinematicIntensity: ci });
-          expect(db).toBeLessThan(duckFloor);
+          expect(db + duckingDb).toBeLessThan(duckFloor);
+          expect(db).toBeGreaterThanOrEqual(-22);
+          expect(db).toBeLessThanOrEqual(-8);
         }
       }
     }
