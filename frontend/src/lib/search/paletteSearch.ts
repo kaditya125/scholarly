@@ -149,8 +149,10 @@ export function highlight(text: string, tokens: string[]): HighlightPart[] {
   if (!text || !tokens.length) return [{ text, match: false }];
   const lower = text.toLowerCase();
   const ranges: [number, number][] = [];
-  for (const t of tokens) {
-    if (!t) continue;
+  for (const tok of tokens) {
+    if (!tok) continue;
+    // "kinetics" should still mark "Kinetic": fall back to the singular when the plural isn't there.
+    const t = !lower.includes(tok) && tok.length > 4 && tok.endsWith('s') ? tok.slice(0, -1) : tok;
     let from = 0;
     let at: number;
     while ((at = lower.indexOf(t, from)) !== -1) {
