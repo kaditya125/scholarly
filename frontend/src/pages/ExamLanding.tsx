@@ -1,5 +1,5 @@
 import React, { useState, useEffect, type ReactNode } from 'react';
-import { useParams, Link, Navigate } from 'react-router-dom';
+import { useParams, useSearchParams, Link, Navigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import { ArrowRight, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import SiteHeader from '../components/landing/SiteHeader';
@@ -41,7 +41,12 @@ function Eyebrow({ children }: { children: ReactNode }) {
 export default function ExamLanding() {
   const { slug } = useParams<{ slug: string }>();
   const exam = slug ? getExamBySlug(slug) : undefined;
-  const [activeTab, setActiveTab] = useState<'pattern' | 'syllabus' | 'eligibility' | 'ai-prep'>('pattern');
+  // ?tab=syllabus deep-links a tab (the palette opens cited syllabi this way).
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const requestedTab: 'pattern' | 'syllabus' | 'eligibility' | 'ai-prep' =
+    tabParam === 'syllabus' || tabParam === 'eligibility' || tabParam === 'ai-prep' ? tabParam : 'pattern';
+  const [activeTab, setActiveTab] = useState<'pattern' | 'syllabus' | 'eligibility' | 'ai-prep'>(requestedTab);
   const [expandedUnits, setExpandedUnits] = useState<Record<string, boolean>>({});
 
   const toggleUnit = (key: string) => {
@@ -50,7 +55,7 @@ export default function ExamLanding() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    setActiveTab('pattern');
+    setActiveTab(requestedTab);
     setExpandedUnits({});
   }, [slug]);
 

@@ -23,6 +23,7 @@ import {
   loadRecentItems, pushRecentItem, loadRecentQueries, pushRecentQuery, clearRecentQueries,
   type IndexedField, type RecentItem,
 } from '../lib/search/paletteSearch';
+import { getExamBySlug } from '../lib/examCatalog';
 import MarkdownMessage from './chat/MarkdownMessage';
 import type { Rating } from './chat/AssistantReply';
 
@@ -151,6 +152,22 @@ function useDebounced<T>(value: T, ms: number): T {
 /** Semantic search costs an embedding + rerank, so only phrase-like or long queries use it. */
 function wantsSemantic(q: string): boolean {
   return q.length >= 10 || (q.length >= 8 && tokenize(q).length >= 2);
+}
+
+/**
+ * Where a cited source opens, or null when it has no page of its own.
+ *
+ * Official-syllabus citations carry a synthetic `exam-<examId>` notebook id and a syllabus-version
+ * id as `sourceId` (RetrievalOrchestrator). They are not chapters: sending them to /read made the
+ * reader report "This chapter has been removed". They open the exam's syllabus page instead.
+ */
+function citationTarget(c: any): { kind: 'chapter' } | { kind: 'exam'; slug: string } | null {
+  const notebookId = typeof c?.notebookId === 'string' ? c.notebookId : '';
+  if (notebookId.startsWith('exam-')) {
+    const slug = notebookId.slice('exam-'.length).toLowerCase().replace(/_/g, '-');
+    return getExamBySlug(slug) ? { kind: 'exam', slug } : null;
+  }
+  return notebookId && c?.sourceId ? { kind: 'chapter' } : null;
 }
 
 /** Top `n` of `items` by score, dropping non-matches. */
@@ -542,7 +559,13 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   };
 
   const openSource = (c: any) => {
-    if (!c?.notebookId || !c?.sourceId) return;
+    const target = citationTarget(c);
+    if (!target) return;
+    if (target.kind === 'exam') {
+      onClose();
+      navigate(`/exams/${target.slug}?tab=syllabus`);
+      return;
+    }
     const params = new URLSearchParams({
       notebookId: c.notebookId,
       sourceId: c.sourceId,
@@ -1036,7 +1059,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                           <div className="mt-4 -mx-3.5">
                             <div className="px-4 pb-1 text-[11px] font-medium text-slate-400 dark:text-gray-500">Sources</div>
                             {sources.map((c, i) => {
-                              const clickable = !!(c.notebookId && c.sourceId);
+                              const clickable = !!citationTarget(c);
                               const excerpt = typeof c.text === 'string' ? c.text.replace(/\s+/g, ' ').trim() : '';
                               return (
                                 <PlainRow
