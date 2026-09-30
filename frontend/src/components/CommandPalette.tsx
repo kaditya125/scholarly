@@ -19,7 +19,7 @@ import { api } from '../lib/api/client';
 import { searchApi, type SearchHit, type SemanticHit } from '../lib/api/search';
 import { documentsApi, chapterLabel, type BookSummary, type BookChapter, type BookDetail } from '../lib/api/documents';
 import {
-  tokenize, indexFields, scoreItem, highlight, classNumber,
+  tokenize, indexFields, scoreItem, chapterMatches, namesBook, highlight, classNumber,
   loadRecentItems, pushRecentItem, loadRecentQueries, pushRecentQuery, clearRecentQueries,
   type IndexedField, type RecentItem,
 } from '../lib/search/paletteSearch';
@@ -395,10 +395,11 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
         // Local hits (cached book details) show instantly; server hits cover the whole catalog.
         // Both use the same scorer, so the higher score wins for a chapter found by both.
         const merged = new Map<string, { item: PaletteItem; score: number }>();
+        const queryNamesABook = bookIndex.some((e) => namesBook(tokens, e.fields));
         for (const { item: e, score } of topScored(chapterIndex, (e) => {
           if (!passesFilters(e.book)) return null;
           const m = scoreItem(tokens, e.fields);
-          return m && (m.hitFields.has(0) || m.hitFields.has(1)) ? m.score : null;
+          return m && chapterMatches(tokens, e.fields, queryNamesABook) ? m.score : null;
         }, 30)) {
           const key = `c:${e.book.notebookId}:${e.chapter.sourceId}`;
           merged.set(key, { item: { kind: 'chapter', key, book: e.book, chapter: e.chapter }, score });
@@ -410,7 +411,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
           if ((merged.get(key)?.score ?? -1) >= h.score) continue;
           const book: BookRef = bookById.get(h.notebookId)
             || { notebookId: h.notebookId, title: h.bookName || '', bookName: h.bookName, subject: h.subject || '', className: h.className };
-          merged.set(key, { item: { kind: 'chapter', key, book, chapter: { sourceId: h.sourceId, chapterName: h.chapterName, title: h.title } }, score: h.score });
+          merged.set(key, { item: { kind: 'chapter', key, book, chapter: { sourceId: h.sourceId, chapterName: h.chapterName, title: h.sourceTitle || h.title } }, score: h.score });
         }
         const list = [...merged.values()].sort((a, b) => b.score - a.score).slice(0, focused ? 30 : 6);
         if (list.length) scored.push({ label: 'Chapters', items: list.map((x) => x.item), top: list[0].score });
@@ -632,7 +633,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       case 'book': openBook(item.book); break;
       case 'chapter': goToChapter(item.book, item.chapter, 'chapter'); break;
       case 'passage':
-        goToChapter(item.book, { sourceId: item.hit.sourceId, chapterName: item.hit.chapterName, title: item.hit.title }, 'chapter');
+        goToChapter(item.book, { sourceId: item.hit.sourceId, chapterName: item.hit.chapterName, title: item.hit.sourceTitle || item.hit.title }, 'chapter');
         break;
       case 'content': openContent(item.hit); break;
       case 'recent': openRecent(item.entry); break;
@@ -1135,7 +1136,7 @@ function ResultRow({
     case 'passage':
       icon = TextSearch;
       tint = tintFor(item.hit.subject || '');
-      title = chapterLabel({ chapterName: item.hit.chapterName, title: item.hit.title });
+      title = chapterLabel({ chapterName: item.hit.chapterName, title: item.hit.sourceTitle || item.hit.title });
       subtitle = [item.hit.pageNumber != null ? `p. ${item.hit.pageNumber}` : '', item.hit.snippet].filter(Boolean).join(' · ');
       badge = item.hit.subject;
       multilineSubtitle = true;

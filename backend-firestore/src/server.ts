@@ -356,6 +356,9 @@ const server = app.listen(env.PORT, () => {
     void warmupRag();
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     require('./services/pyq/examIndex').warmExamIndex();
+    // Palette search's chapter index (~24s cold on production) — built now, not on a student's search.
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    require('./services/search/search.service').searchService.warmUp();
   } catch (err: any) {
     console.warn('[rag] warm-up could not be scheduled:', err?.message || err);
   }

@@ -3,7 +3,8 @@ import { cacheService } from '../cache.service';
 import { bookLibraryService, type BookSummary, type BookDetail } from '../bookLibrary.service';
 import { notebookRepository } from '../../repositories/notebook.repository';
 import { logger } from '../../utils/logger';
-import { indexFields, scoreItem, tokenize, type IndexedField } from './textMatch';
+import { chapterMatches, indexFields, namesBook, normalize, scoreItem, tokenize, type IndexedField } from './textMatch';
+import { chapterLabel } from './chapterLabel';
 
 /**
  * Global search behind the command palette.
@@ -28,6 +29,8 @@ export interface SearchHit {
   updatedAt?: number;
   status?: string;
   // Chapter hits only — enough for the client to label the chapter and open it in the reader.
+  // `title` is the cleaned label; `sourceTitle` is the raw source title the reader expects.
+  sourceTitle?: string;
   notebookId?: string;
   sourceId?: string;
   chapterName?: string;
@@ -40,6 +43,7 @@ export interface SemanticHit {
   notebookId: string;
   sourceId: string;
   title: string;
+  sourceTitle?: string;
   chapterName?: string;
   bookName?: string;
   subject?: string;
@@ -53,6 +57,8 @@ interface ChapterEntry {
   notebookId: string;
   sourceId: string;
   title: string;
+  /** Cleaned display label — what search matches and shows. */
+  label: string;
   chapterName?: string;
   bookName: string;
   subject: string;
@@ -72,12 +78,23 @@ interface UserDoc {
 const CHAPTER_INDEX_TTL_MS = 60 * 60 * 1000;
 const USER_CONTENT_TTL_S = 20;
 const DETAIL_CONCURRENCY = 6;
+/**
+ * Longest a request waits for a cold chapter index (measured ~24s on production for 67 books).
+ * Past this it answers without chapters — the palette still has its local results — and the
+ * build carries on in the background. warmUp() at boot means this is rarely hit.
+ */
+const CHAPTER_INDEX_WAIT_MS = 1500;
 const MAX_QUERY_LENGTH = 200;
 const USER_DOC_LIMIT = 300;
 
 export class SearchService {
   private chapterIndex: { entries: ChapterEntry[]; bySource: Map<string, ChapterEntry>; builtAt: number } | null = null;
   private chapterIndexBuild: Promise<ChapterEntry[]> | null = null;
+
+  /** Starts building the chapter index so no request pays for it. Safe to call at boot. */
+  warmUp(): void {
+    this.getChapterIndex().catch(() => { /* logged by getChapterIndex */ });
+  }
 
   /** Lexical search across the chapter catalog and the caller's own content. */
   async search(
@@ -91,7 +108,7 @@ export class SearchService {
     const limit = Math.min(Math.max(opts.limit ?? 6, 1), 20);
 
     const [chapters, userDocs] = await Promise.all([
-      types.has('chapter') ? this.getChapterIndex().catch((err) => {
+      types.has('chapter') ? this.getChapterIndex(CHAPTER_INDEX_WAIT_MS).catch((err) => {
         logger.warn('search: chapter index unavailable', { error: String(err) });
         return [] as ChapterEntry[];
       }) : Promise.resolve([] as ChapterEntry[]),
@@ -100,16 +117,21 @@ export class SearchService {
 
     const hits: SearchHit[] = [];
 
-    const chapterHits: SearchHit[] = [];
+    // Keyed by book + label: some books carry the same chapter twice (re-ingested sources).
+    const chapterHits = new Map<string, SearchHit>();
+    const queryNamesABook = chapters.some((c) => namesBook(tokens, c.fields.slice(2)));
     for (const c of chapters) {
       const m = scoreItem(tokens, c.fields);
-      // Only chapters whose own name/concepts matched: "physics" should list physics books
-      // (the client has those), not every physics chapter.
-      if (!m || !(m.hitFields.has(0) || m.hitFields.has(1))) continue;
-      chapterHits.push({
+      // Only chapters the query is actually about: "physics" should list physics books (the
+      // client has those), not every physics chapter.
+      if (!m || !chapterMatches(tokens, c.fields, queryNamesABook)) continue;
+      const key = `${c.notebookId}|${normalize(c.label)}`;
+      if ((chapterHits.get(key)?.score ?? -1) >= m.score) continue;
+      chapterHits.set(key, {
         type: 'chapter',
         id: `${c.notebookId}:${c.sourceId}`,
-        title: c.chapterName || c.title,
+        title: c.label,
+        sourceTitle: c.title,
         subtitle: [c.bookName, c.className].filter(Boolean).join(' · '),
         score: m.score,
         notebookId: c.notebookId,
@@ -120,7 +142,7 @@ export class SearchService {
         className: c.className,
       });
     }
-    hits.push(...top(chapterHits, limit));
+    hits.push(...top([...chapterHits.values()], limit));
 
     for (const type of SEARCH_HIT_TYPES) {
       if (type === 'chapter' || !types.has(type)) continue;
@@ -149,7 +171,7 @@ export class SearchService {
 
     let bySource = new Map<string, ChapterEntry>();
     try {
-      await this.getChapterIndex();
+      await this.getChapterIndex(CHAPTER_INDEX_WAIT_MS);
       bySource = this.chapterIndex?.bySource || bySource;
     } catch {
       /* labels fall back to the passage's source title */
@@ -164,10 +186,12 @@ export class SearchService {
       if (!notebookId || !sourceId || seen.has(sourceId)) continue;
       seen.add(sourceId);
       const chapter = bySource.get(sourceId);
+      const sourceTitle = chapter?.title || String(meta.sourceTitle || r.source || 'Chapter').replace(/\.pdf$/i, '');
       hits.push({
         notebookId,
         sourceId,
-        title: chapter?.chapterName || chapter?.title || String(meta.sourceTitle || r.source || 'Chapter').replace(/\.pdf$/i, ''),
+        title: chapter?.label || chapterLabel(undefined, sourceTitle),
+        sourceTitle,
         chapterName: chapter?.chapterName,
         bookName: chapter?.bookName,
         subject: chapter?.subject,
@@ -183,7 +207,8 @@ export class SearchService {
 
   // ── corpora ──
 
-  private async getChapterIndex(): Promise<ChapterEntry[]> {
+  /** `waitMs` bounds how long a caller waits for a cold build; it then gets [] while the build continues. */
+  private async getChapterIndex(waitMs = Infinity): Promise<ChapterEntry[]> {
     if (this.chapterIndex && Date.now() - this.chapterIndex.builtAt < CHAPTER_INDEX_TTL_MS) {
       return this.chapterIndex.entries;
     }
@@ -200,7 +225,17 @@ export class SearchService {
     }
     // A stale index is better than blocking on a rebuild.
     if (this.chapterIndex) return this.chapterIndex.entries;
-    return this.chapterIndexBuild;
+    if (!Number.isFinite(waitMs)) return this.chapterIndexBuild!;
+    let timer: NodeJS.Timeout | undefined;
+    const timeout = new Promise<ChapterEntry[]>((resolve) => {
+      timer = setTimeout(() => resolve([]), waitMs);
+      timer.unref?.();
+    });
+    try {
+      return await Promise.race([this.chapterIndexBuild!, timeout]);
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   private async buildChapterIndex(): Promise<ChapterEntry[]> {
@@ -225,12 +260,14 @@ export class SearchService {
           notebookId: detail.notebookId,
           sourceId: ch.sourceId,
           title: ch.title,
+          label: chapterLabel(ch.chapterName, ch.title),
           chapterName: ch.chapterName,
           bookName,
           subject: detail.subject,
           className: detail.className,
           fields: indexFields([
-            { text: ch.chapterName || ch.title, weight: 3 },
+            // The label, not the raw title: raw titles embed the book's subject and class.
+            { text: chapterLabel(ch.chapterName, ch.title), weight: 3 },
             { text: [...concepts, ...(ch.keywords || []), ...(ch.headings || [])].join(' · '), weight: 1.2 },
             { text: bookName, weight: 1 },
             { text: detail.subject, weight: 1 },
