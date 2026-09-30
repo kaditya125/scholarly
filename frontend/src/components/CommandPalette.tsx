@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   Search, Sparkles, CornerDownLeft, ArrowUp, ArrowDown, Loader2, RotateCcw,
@@ -8,7 +8,7 @@ import {
   GraduationCap, Tag, X, History, Clock, Home, BotMessageSquare, FolderOpen, Award, Calendar,
   HelpCircle, Compass, Headphones, Users, Settings, LifeBuoy, Gift, Layers, BrainCircuit,
   BarChart2, Workflow, Plus, SunMoon, CheckSquare, ArrowRight, ThumbsUp, ThumbsDown, MessageSquare,
-  CornerDownRight, type LucideIcon,
+  CornerDownRight, NotebookPen, TextSearch, type LucideIcon,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../lib/AuthContext';
@@ -16,6 +16,7 @@ import { useTheme } from '../lib/ThemeContext';
 import { useBookLibrary } from '../hooks/ai/useDocuments';
 import { useWorkflowStream } from '../hooks/ai/useWorkflowStream';
 import { api } from '../lib/api/client';
+import { searchApi, type SearchHit, type SemanticHit } from '../lib/api/search';
 import { documentsApi, chapterLabel, type BookSummary, type BookChapter, type BookDetail } from '../lib/api/documents';
 import {
   tokenize, indexFields, scoreItem, highlight, classNumber,
@@ -26,7 +27,7 @@ import MarkdownMessage from './chat/MarkdownMessage';
 import type { Rating } from './chat/AssistantReply';
 
 type Mode = 'search' | 'ask';
-type TypeFilter = 'all' | 'books' | 'chapters' | 'pages';
+type TypeFilter = 'all' | 'books' | 'chapters' | 'mine' | 'pages';
 
 // Subject → tinted pill (matches the app's tint conventions). Falls back to slate.
 const SUBJECT_TINT: Record<string, string> = {
@@ -79,9 +80,24 @@ const ACTIONS: { id: ActionId; label: string; icon: LucideIcon; keywords: string
 ];
 const ACTION_INDEX = ACTIONS.map((a) => indexFields([{ text: a.label, weight: 3 }, { text: a.keywords, weight: 1.5 }]));
 
+type BookRef = Pick<BookSummary, 'notebookId' | 'title' | 'bookName' | 'subject' | 'className'>;
+type ChapterRef = Pick<BookChapter, 'sourceId' | 'chapterName' | 'title'>;
+type ContentType = Exclude<SearchHit['type'], 'chapter'>;
+
+// The caller's own content, returned by GET /api/search. Group order is by best score.
+const CONTENT_GROUPS: { type: ContentType; label: string; icon: LucideIcon }[] = [
+  { type: 'chat', label: 'Chats', icon: MessageSquare },
+  { type: 'notebook', label: 'Notebooks', icon: NotebookPen },
+  { type: 'quiz', label: 'Quizzes', icon: CheckSquare },
+  { type: 'podcast', label: 'Podcasts', icon: Headphones },
+];
+const CONTENT_ICON = Object.fromEntries(CONTENT_GROUPS.map((g) => [g.type, g.icon])) as Record<ContentType, LucideIcon>;
+
 type PaletteItem =
   | { kind: 'book'; key: string; book: BookSummary }
-  | { kind: 'chapter'; key: string; book: BookSummary; chapter: BookChapter }
+  | { kind: 'chapter'; key: string; book: BookRef; chapter: ChapterRef }
+  | { kind: 'content'; key: string; hit: SearchHit }
+  | { kind: 'passage'; key: string; hit: SemanticHit; book: BookRef }
   | { kind: 'recent'; key: string; entry: RecentItem }
   | { kind: 'query'; key: string; query: string }
   | { kind: 'page'; key: string; label: string; path: string; icon: LucideIcon }
@@ -113,6 +129,20 @@ function dedupeSources(cits: any[]): any[] {
     out.push(c);
   }
   return out.slice(0, 6);
+}
+
+function useDebounced<T>(value: T, ms: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), ms);
+    return () => clearTimeout(t);
+  }, [value, ms]);
+  return debounced;
+}
+
+/** Semantic search costs an embedding + rerank, so only phrase-like or long queries use it. */
+function wantsSemantic(q: string): boolean {
+  return q.length >= 10 || (q.length >= 8 && tokenize(q).length >= 2);
 }
 
 /** Top `n` of `items` by score, dropping non-matches. */
@@ -280,6 +310,34 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   const tokens = useMemo(() => tokenize(query), [query]);
   const trimmedQuery = query.trim();
 
+  // ── Server search (whole chapter catalog + the student's own content, and textbook passages) ──
+  // Results only count while they belong to the current query, so a stale response never
+  // shows rows that don't match what's typed.
+  const debouncedQuery = useDebounced(trimmedQuery, 180);
+  const semanticQuery = useDebounced(trimmedQuery, 450);
+  const searchActive = open && mode === 'search';
+  const serverEnabled = searchActive && debouncedQuery.length >= 2;
+  const serverSearch = useQuery({
+    queryKey: ['palette_search', debouncedQuery],
+    queryFn: ({ signal }) => searchApi.search(debouncedQuery, { limit: 8, signal }),
+    enabled: serverEnabled,
+    staleTime: 30_000,
+    retry: false,
+  });
+  const semanticEnabled = searchActive && (typeFilter === 'all' || typeFilter === 'chapters') && wantsSemantic(semanticQuery);
+  const semanticSearch = useQuery({
+    queryKey: ['palette_semantic', semanticQuery],
+    queryFn: ({ signal }) => searchApi.semantic(semanticQuery, { limit: 4, signal }),
+    enabled: semanticEnabled,
+    staleTime: 10 * 60_000,
+    retry: false,
+  });
+  const serverHits = serverEnabled && debouncedQuery === trimmedQuery ? serverSearch.data : undefined;
+  const semanticHits = semanticEnabled && semanticQuery === trimmedQuery ? semanticSearch.data : undefined;
+  const serverPending = serverEnabled && (debouncedQuery !== trimmedQuery || serverSearch.isFetching);
+  const semanticPending = searchActive && (typeFilter === 'all' || typeFilter === 'chapters') && wantsSemantic(trimmedQuery)
+    && (semanticQuery !== trimmedQuery || semanticSearch.isFetching);
+
   // ── Result groups ──
   const groups: Group[] = useMemo(() => {
     const showBooks = typeFilter === 'all' || typeFilter === 'books';
@@ -334,12 +392,36 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
           (e) => ({ kind: 'book', key: `b:${e.book.notebookId}`, book: e.book }));
       }
       if (showChapters) {
-        push('Chapters', topScored(chapterIndex, (e) => {
+        // Local hits (cached book details) show instantly; server hits cover the whole catalog.
+        // Both use the same scorer, so the higher score wins for a chapter found by both.
+        const merged = new Map<string, { item: PaletteItem; score: number }>();
+        for (const { item: e, score } of topScored(chapterIndex, (e) => {
           if (!passesFilters(e.book)) return null;
           const m = scoreItem(tokens, e.fields);
           return m && (m.hitFields.has(0) || m.hitFields.has(1)) ? m.score : null;
-        }, focused ? 30 : 6),
-          (e) => ({ kind: 'chapter', key: `c:${e.book.notebookId}:${e.chapter.sourceId}`, book: e.book, chapter: e.chapter }));
+        }, 30)) {
+          const key = `c:${e.book.notebookId}:${e.chapter.sourceId}`;
+          merged.set(key, { item: { kind: 'chapter', key, book: e.book, chapter: e.chapter }, score });
+        }
+        for (const h of serverHits || []) {
+          if (h.type !== 'chapter' || !h.notebookId || !h.sourceId) continue;
+          if (!passesFilters({ subject: h.subject || '', className: h.className })) continue;
+          const key = `c:${h.notebookId}:${h.sourceId}`;
+          if ((merged.get(key)?.score ?? -1) >= h.score) continue;
+          const book: BookRef = bookById.get(h.notebookId)
+            || { notebookId: h.notebookId, title: h.bookName || '', bookName: h.bookName, subject: h.subject || '', className: h.className };
+          merged.set(key, { item: { kind: 'chapter', key, book, chapter: { sourceId: h.sourceId, chapterName: h.chapterName, title: h.title } }, score: h.score });
+        }
+        const list = [...merged.values()].sort((a, b) => b.score - a.score).slice(0, focused ? 30 : 6);
+        if (list.length) scored.push({ label: 'Chapters', items: list.map((x) => x.item), top: list[0].score });
+      }
+      if ((typeFilter === 'all' || typeFilter === 'mine') && !contentFilterActive) {
+        for (const g of CONTENT_GROUPS) {
+          const hits = (serverHits || []).filter((h) => h.type === g.type).slice(0, focused ? 20 : 4);
+          if (hits.length) {
+            scored.push({ label: g.label, items: hits.map((hit) => ({ kind: 'content', key: `u:${hit.type}:${hit.id}`, hit })), top: hits[0].score });
+          }
+        }
       }
       if (showPages) {
         push('Pages', topScored(PAGES.map((p, i) => ({ p, i })), ({ i }) => scoreItem(tokens, PAGE_INDEX[i])?.score ?? null, focused ? 20 : 4),
@@ -350,6 +432,20 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       // Best-matching group first, so "settings" leads with the page and "physics" with books.
       scored.sort((a, b) => b.top - a.top);
       raw.push(...scored);
+      // Semantic scores aren't on the lexical scale, so passages keep a fixed slot after them.
+      const passages = (semanticHits || []).filter((h) => passesFilters({ subject: h.subject || '', className: h.className }));
+      if (showChapters && passages.length) {
+        raw.push({
+          label: 'Inside your textbooks',
+          items: passages.map((hit) => ({
+            kind: 'passage',
+            key: `s:${hit.notebookId}:${hit.sourceId}`,
+            hit,
+            book: bookById.get(hit.notebookId)
+              || { notebookId: hit.notebookId, title: hit.bookName || '', bookName: hit.bookName, subject: hit.subject || '', className: hit.className },
+          })),
+        });
+      }
       raw.push({ label: 'Ask AI', items: [{ kind: 'ask', key: 'ask', query: trimmedQuery }] });
     }
 
@@ -359,7 +455,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       offset += g.items.length;
       return withOffset;
     });
-  }, [tokens, trimmedQuery, typeFilter, contentFilterActive, passesFilters, recentQueries, recentItems, books, bookIndex, chapterIndex]);
+  }, [tokens, trimmedQuery, typeFilter, contentFilterActive, passesFilters, recentQueries, recentItems, books, bookById, bookIndex, chapterIndex, serverHits, semanticHits]);
 
   const flat = useMemo(() => groups.flatMap((g) => g.items), [groups]);
   const active = flat.length ? Math.min(selected, flat.length - 1) : -1;
@@ -445,6 +541,14 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
     navigate(`/read?${params.toString()}`);
   };
 
+  const openContent = (hit: SearchHit) => {
+    onClose();
+    if (hit.type === 'chat') navigate(`/chat?session=${encodeURIComponent(hit.id)}`);
+    else if (hit.type === 'notebook') navigate(`/notebooks?open=${encodeURIComponent(hit.id)}`);
+    else if (hit.type === 'quiz') navigate(`/quiz/attempts/${encodeURIComponent(hit.id)}`);
+    else navigate('/podcasts'); // the podcasts page has no per-episode deep link
+  };
+
   const runAction = (id: ActionId) => {
     onClose();
     if (id === 'new-chat') {
@@ -527,6 +631,10 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
     switch (item.kind) {
       case 'book': openBook(item.book); break;
       case 'chapter': goToChapter(item.book, item.chapter, 'chapter'); break;
+      case 'passage':
+        goToChapter(item.book, { sourceId: item.hit.sourceId, chapterName: item.hit.chapterName, title: item.hit.title }, 'chapter');
+        break;
+      case 'content': openContent(item.hit); break;
       case 'recent': openRecent(item.entry); break;
       case 'query': setQuery(item.query); setSelected(0); inputRef.current?.focus(); break;
       case 'page': onClose(); navigate(item.path); break;
@@ -632,13 +740,15 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                   ? <Loader2 className="w-5 h-5 text-indigo-500 animate-spin shrink-0" />
                   : mode === 'ask'
                     ? <Sparkles className="w-5 h-5 text-indigo-500 shrink-0" />
+                    : serverPending && tokens.length
+                    ? <Loader2 className="w-5 h-5 text-indigo-500 animate-spin shrink-0" />
                     : <Search className="w-5 h-5 text-indigo-500 shrink-0" />}
                 <input
                   ref={inputRef}
                   value={query}
                   onChange={(e) => { setQuery(e.target.value); setSelected(0); setOpenError(null); }}
                   onKeyDown={onInputKeyDown}
-                  placeholder={mode === 'ask' ? 'Ask a question about your study material…' : 'Search books, chapters, pages or ask AI…'}
+                  placeholder={mode === 'ask' ? 'Ask a question about your study material…' : 'Search books, chapters, your notes or ask AI…'}
                   role="combobox"
                   aria-expanded={mode === 'search'}
                   aria-controls="cmdk-listbox"
@@ -695,7 +805,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                 <div className="flex items-center gap-2 px-4 pb-3 flex-wrap">
                   <FilterMenu
                     icon={ListFilter}
-                    label={{ all: 'All contents', books: 'Books', chapters: 'Chapters', pages: 'Pages & actions' }[typeFilter]}
+                    label={{ all: 'All contents', books: 'Books', chapters: 'Chapters', mine: 'Your content', pages: 'Pages & actions' }[typeFilter]}
                     active={typeFilter !== 'all'}
                     open={openMenu === 'type'}
                     onToggle={() => setOpenMenu(openMenu === 'type' ? null : 'type')}
@@ -704,6 +814,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                       { value: 'all', label: 'All contents' },
                       { value: 'books', label: 'Books' },
                       { value: 'chapters', label: 'Chapters' },
+                      { value: 'mine', label: 'Your content' },
                       { value: 'pages', label: 'Pages & actions' },
                     ]}
                     value={typeFilter}
@@ -775,7 +886,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                   </div>
                 )}
 
-                {tokens.length > 0 && !hasResults && !booksLoading && (
+                {tokens.length > 0 && !hasResults && !booksLoading && !serverPending && !semanticPending && (
                   <div className="px-4 pt-6 pb-4 text-center text-[13px] text-slate-400 dark:text-gray-500">
                     No matches for <span className="font-semibold text-slate-600 dark:text-gray-300">“{trimmedQuery}”</span>
                     {anyFilter ? ' with these filters.' : '.'} Ask AI instead:
@@ -783,7 +894,9 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                 )}
                 {!tokens.length && !booksLoading && !booksError && flat.length === 0 && (
                   <div className="px-4 py-10 text-center text-[13px] text-slate-400 dark:text-gray-500">
-                    {anyFilter ? 'Nothing matches these filters.' : 'No content in your library yet.'}
+                    {typeFilter === 'mine'
+                      ? 'Type to search your chats, notebooks, quizzes and podcasts.'
+                      : anyFilter ? 'Nothing matches these filters.' : 'No content in your library yet.'}
                   </div>
                 )}
 
@@ -812,6 +925,12 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                     })}
                   </div>
                 ))}
+
+                {tokens.length > 0 && semanticPending && !semanticHits?.length && (
+                  <div className="flex items-center gap-2 px-4 pt-2 pb-1 text-[12px] text-slate-400 dark:text-gray-500" aria-live="polite">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Searching inside your textbooks…
+                  </div>
+                )}
               </div>
             ) : !hasAsked ? (
               <div className="mt-4">
@@ -997,6 +1116,7 @@ function ResultRow({
   let subtitle: string | undefined;
   let badge: string | undefined;
   let highlightTitle = true;
+  let multilineSubtitle = false;
 
   switch (item.kind) {
     case 'book':
@@ -1011,6 +1131,19 @@ function ResultRow({
       title = chapterLabel(item.chapter);
       subtitle = [bookName(item.book), item.book.className].filter(Boolean).join(' · ');
       badge = item.book.subject;
+      break;
+    case 'passage':
+      icon = TextSearch;
+      tint = tintFor(item.hit.subject || '');
+      title = chapterLabel({ chapterName: item.hit.chapterName, title: item.hit.title });
+      subtitle = [item.hit.pageNumber != null ? `p. ${item.hit.pageNumber}` : '', item.hit.snippet].filter(Boolean).join(' · ');
+      badge = item.hit.subject;
+      multilineSubtitle = true;
+      break;
+    case 'content':
+      icon = CONTENT_ICON[item.hit.type as ContentType] || FileText;
+      title = item.hit.title;
+      subtitle = item.hit.subtitle;
       break;
     case 'recent':
       icon = item.entry.kind === 'chapter' ? FileText : BookOpen;
@@ -1070,7 +1203,7 @@ function ResultRow({
           ) : title}
         </span>
         {subtitle && (
-          <span className="block text-[11.5px] text-slate-400 dark:text-gray-500 truncate">
+          <span className={cn('text-[11.5px] text-slate-400 dark:text-gray-500', multilineSubtitle ? 'line-clamp-2' : 'block truncate')}>
             <Highlighted text={subtitle} tokens={tokens} />
           </span>
         )}
