@@ -19,6 +19,7 @@ import briefingRoutes from './briefing.routes';
 import graphRoutes from './graph.routes';
 import assetsRoutes from './assets.routes';
 import feedbackRoutes from './feedback.routes';
+import searchRoutes from './search.routes';
 import enterpriseAdminRoutes from '../admin/routes/admin.routes';
 import analyticsRoutes from './analytics.routes';
 
@@ -76,6 +77,7 @@ router.use('/enrollments', enrollmentsRoutes);
 router.use('/invitations', invitationsRouter);
 router.use('/chat', chatRoutes);
 router.use('/chat', feedbackRoutes);
+router.use('/search', searchRoutes);
 router.use('/companion', companionRoutes);
 router.use('/notebooks', notebooksRoutes);
 router.use('/notebooks', graphRoutes);

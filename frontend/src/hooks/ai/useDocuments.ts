@@ -17,6 +17,7 @@ export function useBookLibrary() {
     books: query.data || [],
     isLoading: query.isLoading,
     isError: query.isError,
+    refetch: query.refetch,
   };
 }
 
