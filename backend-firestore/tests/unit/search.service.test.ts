@@ -156,6 +156,25 @@ describe('SearchService.search', () => {
     expect((await svc.search('u1', 'physics vectors', { types: ['chapter'] })).map((h) => h.sourceId)).toEqual(['m1']);
   });
 
+  it("when the query names a book, lists only other books' chapters whose own name contains it", async () => {
+    (bookLibraryService.listBooks as jest.Mock).mockResolvedValue([
+      { notebookId: 'nb-sci6', title: 'NCERT Class 6 Science', subject: 'Science' },
+      { notebookId: 'nb-eng8', title: 'NCERT Class 8 English', subject: 'English' },
+    ]);
+    (bookLibraryService.getBookDetail as jest.Mock).mockImplementation(async (id: string) => (id === 'nb-sci6'
+      ? { notebookId: id, title: 'NCERT Class 6 Science', subject: 'Science', className: 'Class 6', chapters: [chapter('w1', 'Diversity in the Living World')] }
+      : {
+        notebookId: id, title: 'NCERT Class 8 English', subject: 'English', className: 'Class 8',
+        chapters: [
+          chapter('e1', 'The Making of a Scientist'),
+          chapter('e2', 'The Book That Saved the Earth', ['science fiction']),
+          chapter('e3', 'The Ever-Evolving World of Science'),
+        ],
+      }));
+    const hits = await new SearchService().search('u1', 'science', { types: ['chapter'] });
+    expect(hits.map((h) => h.sourceId)).toEqual(['e3']);
+  });
+
   it('collapses the same chapter ingested twice in one book', async () => {
     (bookLibraryService.listBooks as jest.Mock).mockResolvedValue([{ notebookId: 'nb-sci10', title: 'NCERT Class 10 Science', subject: 'Science' }]);
     (bookLibraryService.getBookDetail as jest.Mock).mockResolvedValue({

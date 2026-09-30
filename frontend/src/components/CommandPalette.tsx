@@ -19,7 +19,7 @@ import { api } from '../lib/api/client';
 import { searchApi, type SearchHit, type SemanticHit } from '../lib/api/search';
 import { documentsApi, chapterLabel, type BookSummary, type BookChapter, type BookDetail } from '../lib/api/documents';
 import {
-  tokenize, indexFields, scoreItem, chapterMatches, highlight, classNumber,
+  tokenize, indexFields, scoreItem, chapterMatches, namesBook, highlight, classNumber,
   loadRecentItems, pushRecentItem, loadRecentQueries, pushRecentQuery, clearRecentQueries,
   type IndexedField, type RecentItem,
 } from '../lib/search/paletteSearch';
@@ -395,10 +395,11 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
         // Local hits (cached book details) show instantly; server hits cover the whole catalog.
         // Both use the same scorer, so the higher score wins for a chapter found by both.
         const merged = new Map<string, { item: PaletteItem; score: number }>();
+        const queryNamesABook = bookIndex.some((e) => namesBook(tokens, e.fields));
         for (const { item: e, score } of topScored(chapterIndex, (e) => {
           if (!passesFilters(e.book)) return null;
           const m = scoreItem(tokens, e.fields);
-          return m && chapterMatches(tokens, e.fields) ? m.score : null;
+          return m && chapterMatches(tokens, e.fields, queryNamesABook) ? m.score : null;
         }, 30)) {
           const key = `c:${e.book.notebookId}:${e.chapter.sourceId}`;
           merged.set(key, { item: { kind: 'chapter', key, book: e.book, chapter: e.chapter }, score });

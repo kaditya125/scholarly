@@ -3,7 +3,7 @@ import { cacheService } from '../cache.service';
 import { bookLibraryService, type BookSummary, type BookDetail } from '../bookLibrary.service';
 import { notebookRepository } from '../../repositories/notebook.repository';
 import { logger } from '../../utils/logger';
-import { chapterMatches, indexFields, normalize, scoreItem, tokenize, type IndexedField } from './textMatch';
+import { chapterMatches, indexFields, namesBook, normalize, scoreItem, tokenize, type IndexedField } from './textMatch';
 import { chapterLabel } from './chapterLabel';
 
 /**
@@ -119,11 +119,12 @@ export class SearchService {
 
     // Keyed by book + label: some books carry the same chapter twice (re-ingested sources).
     const chapterHits = new Map<string, SearchHit>();
+    const queryNamesABook = chapters.some((c) => namesBook(tokens, c.fields.slice(2)));
     for (const c of chapters) {
       const m = scoreItem(tokens, c.fields);
       // Only chapters the query is actually about: "physics" should list physics books (the
       // client has those), not every physics chapter.
-      if (!m || !chapterMatches(tokens, c.fields)) continue;
+      if (!m || !chapterMatches(tokens, c.fields, queryNamesABook)) continue;
       const key = `${c.notebookId}|${normalize(c.label)}`;
       if ((chapterHits.get(key)?.score ?? -1) >= m.score) continue;
       chapterHits.set(key, {
