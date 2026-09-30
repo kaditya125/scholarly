@@ -410,7 +410,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
           if ((merged.get(key)?.score ?? -1) >= h.score) continue;
           const book: BookRef = bookById.get(h.notebookId)
             || { notebookId: h.notebookId, title: h.bookName || '', bookName: h.bookName, subject: h.subject || '', className: h.className };
-          merged.set(key, { item: { kind: 'chapter', key, book, chapter: { sourceId: h.sourceId, chapterName: h.chapterName, title: h.title } }, score: h.score });
+          merged.set(key, { item: { kind: 'chapter', key, book, chapter: { sourceId: h.sourceId, chapterName: h.chapterName, title: h.sourceTitle || h.title } }, score: h.score });
         }
         const list = [...merged.values()].sort((a, b) => b.score - a.score).slice(0, focused ? 30 : 6);
         if (list.length) scored.push({ label: 'Chapters', items: list.map((x) => x.item), top: list[0].score });
@@ -632,7 +632,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       case 'book': openBook(item.book); break;
       case 'chapter': goToChapter(item.book, item.chapter, 'chapter'); break;
       case 'passage':
-        goToChapter(item.book, { sourceId: item.hit.sourceId, chapterName: item.hit.chapterName, title: item.hit.title }, 'chapter');
+        goToChapter(item.book, { sourceId: item.hit.sourceId, chapterName: item.hit.chapterName, title: item.hit.sourceTitle || item.hit.title }, 'chapter');
         break;
       case 'content': openContent(item.hit); break;
       case 'recent': openRecent(item.entry); break;
@@ -1135,7 +1135,7 @@ function ResultRow({
     case 'passage':
       icon = TextSearch;
       tint = tintFor(item.hit.subject || '');
-      title = chapterLabel({ chapterName: item.hit.chapterName, title: item.hit.title });
+      title = chapterLabel({ chapterName: item.hit.chapterName, title: item.hit.sourceTitle || item.hit.title });
       subtitle = [item.hit.pageNumber != null ? `p. ${item.hit.pageNumber}` : '', item.hit.snippet].filter(Boolean).join(' · ');
       badge = item.hit.subject;
       multilineSubtitle = true;

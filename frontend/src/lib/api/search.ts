@@ -11,6 +11,8 @@ export interface SearchHit {
   score: number;
   updatedAt?: number;
   status?: string;
+  /** Chapter hits: `title` is the cleaned label, `sourceTitle` the raw source title. */
+  sourceTitle?: string;
   notebookId?: string;
   sourceId?: string;
   chapterName?: string;
@@ -23,6 +25,7 @@ export interface SemanticHit {
   notebookId: string;
   sourceId: string;
   title: string;
+  sourceTitle?: string;
   chapterName?: string;
   bookName?: string;
   subject?: string;

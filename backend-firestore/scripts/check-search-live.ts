@@ -52,19 +52,24 @@ async function main() {
   let t = performance.now();
   const books = await bookLibraryService.listBooks();
   console.log(`book library: ${books.length} books (${ms(t)})`);
+  // A request only waits ~1.5s for a cold index (then answers without chapters), so check that
+  // first, then wait for the full build to time it.
   t = performance.now();
-  await svc.search(probeUid, 'photosynthesis', { types: ['chapter'] });
+  const coldHits = await svc.search(probeUid, 'photosynthesis', { types: ['chapter'] });
+  console.log(`first search during cold build: ${ms(t)} (${coldHits.length} chapter hits — 0 is expected while building)`);
+  const entries: any[] = await (svc as any).getChapterIndex();
   const coldMs = ms(t);
-  const entries: any[] = (svc as any).chapterIndex?.entries || [];
   const indexedBooks = new Set(entries.map((e) => e.notebookId));
-  console.log(`cold index build + first query: ${coldMs}; ${entries.length} chapters from ${indexedBooks.size} books`);
+  console.log(`cold index build: ${coldMs}; ${entries.length} chapters from ${indexedBooks.size} books`);
   const missing = books.filter((b) => !indexedBooks.has(b.notebookId));
   if (missing.length) {
     problems.push(`${missing.length} books have no indexed chapters`);
     console.log(`books with no indexed chapters (${missing.length}): ${missing.slice(0, 10).map((b) => b.title).join(' | ')}`);
   }
   const unnamed = entries.filter((e) => !e.chapterName).length;
-  console.log(`chapters without chapterName (label falls back to source title): ${unnamed}`);
+  console.log(`chapters without chapterName (labelled "Chapter N" from the source title): ${unnamed}`);
+  const relabelled = entries.filter((e) => e.chapterName && e.label !== e.chapterName.trim());
+  console.log(`chapter names cleaned for display: ${relabelled.length}${relabelled.length ? ` — e.g. ${relabelled.slice(0, 5).map((e) => `"${e.chapterName}" → "${e.label}"`).join(', ')}` : ''}`);
   if (entries.length === 0) problems.push('chapter index is empty');
 
   // ── 2. Real queries (warm) ──
@@ -82,7 +87,7 @@ async function main() {
   }
 
   section('Subject-only queries should not list chapters');
-  for (const q of ['science', 'physics', 'hindi', 'class 10']) {
+  for (const q of ['science', 'physics', 'hindi', 'class 10', 'matematics']) {
     const hits = await svc.search(probeUid, q, { types: ['chapter'], limit: 20 });
     const flag = hits.length > 5 ? '  ← many' : '';
     console.log(`"${q}" → ${hits.length} chapters${flag}${hits.length ? `: ${hits.slice(0, 3).map((h) => h.title).join(' | ')}` : ''}`);

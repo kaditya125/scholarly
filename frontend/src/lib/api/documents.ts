@@ -44,19 +44,24 @@ export interface BookDetail extends BookSummary {
  */
 export function chapterLabel(chapter: Pick<BookChapter, 'chapterName' | 'title'>): string {
   const raw = (chapter.chapterName || '').trim();
-  if (raw) return cleanChapterName(raw) || raw;
+  const cleaned = raw ? cleanChapterName(raw) : '';
+  if (cleaned) return cleaned;
   return titleFallbackLabel(chapter.title || '');
 }
 
+// Keep in step with backend-firestore/src/services/search/chapterLabel.ts (search indexes the same label).
+const NUMBER_WORDS = 'one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty';
+// "Unit 7", "Chapter 3:", "CHAPTER TWELVE:", "Unit III -" …
+const UNIT_PREFIX = new RegExp(`^\\s*(?:unit|chapter)\\s*[-.]?\\s*(?:\\d+|[ivxlc]+|${NUMBER_WORDS})\\b\\s*[:.\\-\\u2013\\u2014\\u2015]?\\s*`, 'i');
+// "11 ― Grassroots…", "6 Control and Coordination", "3. Motion"
+const NUMBER_PREFIX = /^\s*\d{1,2}\s*[.)\-\u2013\u2014\u2015:]?\s+/;
+// "I. AMINES", "II) …"
+const ROMAN_PREFIX = /^\s*[IVXLC]+\s*[.)\-]\s+/;
+
 function cleanChapterName(name: string): string {
-  let s = name
-    // Drop a leading "Unit 7" / "Chapter 3" / "Unit-7:" numbering prefix, keeping the real name.
-    .replace(/^\s*(?:unit|chapter)\s*[-.]?\s*\d+\s*[:.\-\u2013]?\s*/i, '')
-    // Drop a leading roman-numeral list marker like "I. " or "II) ".
-    .replace(/^\s*[IVXLC]+\s*[.)\-]\s+/, '')
-    .trim();
-  // Nothing meaningful left (e.g. the name was literally "Unit 10") — signal empty to keep original.
-  if (!s) return '';
+  let s = name.replace(UNIT_PREFIX, '').replace(NUMBER_PREFIX, '').replace(ROMAN_PREFIX, '').trim();
+  // Nothing name-like left (e.g. the name was literally "Unit 10" or "9") — signal empty to fall back.
+  if ((s.match(/\p{L}/gu) || []).length < 2) return '';
   // De-SHOUT all-caps names ("AMINES" -> "Amines"); leave mixed-case names and acronyms untouched.
   if (s === s.toUpperCase() && /[A-Z]{2,}/.test(s)) {
     s = s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
