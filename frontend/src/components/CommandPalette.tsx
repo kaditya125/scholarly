@@ -4,11 +4,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   Search, Sparkles, CornerDownLeft, ArrowUp, ArrowDown, Loader2, RotateCcw,
-  Copy, Check, BookOpen, FileText, ChevronDown, ListFilter, Info, ShieldAlert, PenLine, Square,
-  GraduationCap, Tag, X, History, Clock, Home, BotMessageSquare, FolderOpen, Award, Calendar,
+  Copy, Check, BookOpen, FileText, ChevronDown, Info, ShieldAlert, Square,
+  GraduationCap, X, History, Home, BotMessageSquare, FolderOpen, Award, Calendar,
   HelpCircle, Compass, Headphones, Users, Settings, LifeBuoy, Gift, Layers, BrainCircuit,
   BarChart2, Workflow, Plus, SunMoon, CheckSquare, ArrowRight, ThumbsUp, ThumbsDown, MessageSquare,
-  CornerDownRight, NotebookPen, TextSearch, type LucideIcon,
+  CornerDownRight, NotebookPen, TextSearch, SlidersHorizontal, type LucideIcon,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../lib/AuthContext';
@@ -28,23 +28,26 @@ import type { Rating } from './chat/AssistantReply';
 
 type Mode = 'search' | 'ask';
 type TypeFilter = 'all' | 'books' | 'chapters' | 'mine' | 'pages';
-
-// Subject → tinted pill (matches the app's tint conventions). Falls back to slate.
-const SUBJECT_TINT: Record<string, string> = {
-  Physics: 'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400',
-  Chemistry: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400',
-  Biology: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400',
-  Mathematics: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400',
-  English: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400',
-  Hindi: 'bg-orange-50 text-orange-600 dark:bg-orange-500/15 dark:text-orange-400',
-  Science: 'bg-teal-50 text-teal-600 dark:bg-teal-500/15 dark:text-teal-400',
-  'Social Science': 'bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-500/15 dark:text-fuchsia-400',
-  History: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-500/15 dark:text-yellow-400',
-  Geography: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-500/15 dark:text-cyan-400',
-  Economics: 'bg-lime-50 text-lime-700 dark:bg-lime-500/15 dark:text-lime-400',
+const TYPE_LABEL: Record<TypeFilter, string> = {
+  all: 'All', books: 'Books', chapters: 'Chapters', mine: 'Your content', pages: 'Pages & actions',
 };
-const tintFor = (subject: string) => SUBJECT_TINT[subject] || 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-300';
-const NEUTRAL_TINT = 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-gray-300';
+
+// Subject → accent colour, used on the result icon only (no tinted tiles or badges).
+const SUBJECT_ACCENT: Record<string, string> = {
+  Physics: 'text-blue-500 dark:text-blue-400',
+  Chemistry: 'text-rose-500 dark:text-rose-400',
+  Biology: 'text-emerald-500 dark:text-emerald-400',
+  Mathematics: 'text-indigo-500 dark:text-indigo-400',
+  English: 'text-amber-500 dark:text-amber-400',
+  Hindi: 'text-orange-500 dark:text-orange-400',
+  Science: 'text-teal-500 dark:text-teal-400',
+  'Social Science': 'text-fuchsia-500 dark:text-fuchsia-400',
+  History: 'text-yellow-600 dark:text-yellow-400',
+  Geography: 'text-cyan-500 dark:text-cyan-400',
+  Economics: 'text-lime-600 dark:text-lime-400',
+};
+const MUTED_ICON = 'text-slate-400 dark:text-gray-500';
+const accentFor = (subject?: string) => (subject && SUBJECT_ACCENT[subject]) || MUTED_ICON;
 
 // Static destinations. Keywords make "exam", "schedule", "profile" etc. find the right page.
 const PAGES: { label: string; path: string; icon: LucideIcon; keywords: string }[] = [
@@ -118,6 +121,11 @@ const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(naviga
 const MOD_KEY = IS_MAC ? '⌘' : 'Ctrl';
 
 const bookName = (b: Pick<BookSummary, 'bookName' | 'title'>) => b.bookName || b.title;
+/** "NCERT Class 11 Physics" → "Class 11 Physics"; named books ("Footprints Without Feet") unchanged. */
+const bookDisplayName = (b: Pick<BookSummary, 'bookName' | 'title'>) => b.bookName || b.title.replace(/^NCERT\s+/i, '');
+/** Secondary line for a chapter: which book it's in, without repeating the class twice. */
+const bookContext = (b: Pick<BookSummary, 'bookName' | 'title' | 'className'>) =>
+  b.bookName ? [b.bookName, b.className].filter(Boolean).join(' · ') : bookDisplayName(b);
 
 function dedupeSources(cits: any[]): any[] {
   const seen = new Set<string>();
@@ -185,6 +193,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
   const [classFilter, setClassFilter] = useState<string | null>(null);
   const [openMenu, setOpenMenu] = useState<'type' | 'subject' | 'class' | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
   const [recentItems, setRecentItems] = useState<RecentItem[]>([]);
   const [recentQueries, setRecentQueries] = useState<string[]>([]);
   const [detailTick, setDetailTick] = useState(0);
@@ -210,6 +219,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
     setOpenError(null);
     setOpeningId(null);
     setOpenMenu(null);
+    setShowFilters(false);
     setAskSessionId(null);
     setRating(null);
     setRatingError(false);
@@ -704,17 +714,27 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
 
   const clearFilters = () => { setTypeFilter('all'); setSubjectFilter(null); setClassFilter(null); setSelected(0); inputRef.current?.focus(); };
   const anyFilter = typeFilter !== 'all' || contentFilterActive;
-  const askRecents = recentItems.slice(0, 2);
+  const askRecents = recentItems.slice(0, 3);
+  const refocus = () => inputRef.current?.focus();
+
+  // Active filters render as removable pills inside the search bar, so the filter row can stay collapsed.
+  const filterPills: { key: string; label: string; clear: () => void }[] = [];
+  if (typeFilter !== 'all') filterPills.push({ key: 'type', label: TYPE_LABEL[typeFilter], clear: () => setTypeFilter('all') });
+  if (subjectFilter) filterPills.push({ key: 'subject', label: subjectFilter, clear: () => setSubjectFilter(null) });
+  if (classFilter) filterPills.push({ key: 'class', label: classFilter, clear: () => setClassFilter(null) });
+
+  const busy = (mode === 'ask' && stream.isStreaming) || (mode === 'search' && serverPending && tokens.length > 0);
+  const streaming = mode === 'ask' && stream.isStreaming;
 
   return (
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[100] flex items-start justify-center px-4 pt-[12vh] bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-start justify-center px-3 sm:px-4 pt-[8vh] sm:pt-[14vh] bg-slate-950/20 dark:bg-black/50 backdrop-blur-[2px]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
+          transition={{ duration: 0.12 }}
           onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
           <motion.div
@@ -723,190 +743,181 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
             aria-modal="true"
             aria-label="Search or ask AI"
             onKeyDown={onDialogKeyDown}
-            className="w-full max-w-2xl"
-            initial={{ opacity: 0, y: -12, scale: 0.98 }}
+            className="w-full max-w-[640px] flex flex-col rounded-2xl bg-white dark:bg-[#18181b] border border-slate-200/80 dark:border-white/[0.08] shadow-[0_24px_60px_-12px_rgba(15,23,42,0.28)] dark:shadow-[0_24px_60px_-12px_rgba(0,0,0,0.7)]"
+            initial={{ opacity: 0, y: -6, scale: 0.985 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.98 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
+            exit={{ opacity: 0, y: -4, scale: 0.985 }}
+            transition={{ duration: 0.14, ease: 'easeOut' }}
           >
-            {/* ── Input card ── */}
-            <div
-              className={cn(
-                'rounded-2xl bg-white dark:bg-[#1a1a1b] border shadow-2xl',
-                mode === 'ask' ? 'border-indigo-300 dark:border-indigo-500/40' : 'border-slate-200 dark:border-white/10'
-              )}
-            >
-              <div className="flex items-center gap-3 px-4 pt-3.5">
-                {stream.isStreaming && mode === 'ask'
-                  ? <Loader2 className="w-5 h-5 text-indigo-500 animate-spin shrink-0" />
+            {/* ── Search bar ── */}
+            <div className="flex items-center gap-2 h-[52px] pl-4 pr-2.5">
+              <span className={cn('shrink-0 flex w-[18px] justify-center', mode === 'ask' ? 'text-indigo-500' : MUTED_ICON)}>
+                {busy
+                  ? <Loader2 className="w-[17px] h-[17px] animate-spin" />
                   : mode === 'ask'
-                    ? <Sparkles className="w-5 h-5 text-indigo-500 shrink-0" />
-                    : serverPending && tokens.length
-                    ? <Loader2 className="w-5 h-5 text-indigo-500 animate-spin shrink-0" />
-                    : <Search className="w-5 h-5 text-indigo-500 shrink-0" />}
-                <input
-                  ref={inputRef}
-                  value={query}
-                  onChange={(e) => { setQuery(e.target.value); setSelected(0); setOpenError(null); }}
-                  onKeyDown={onInputKeyDown}
-                  placeholder={mode === 'ask' ? 'Ask a question about your study material…' : 'Search books, chapters, your notes or ask AI…'}
-                  role="combobox"
-                  aria-expanded={mode === 'search'}
-                  aria-controls="cmdk-listbox"
-                  aria-autocomplete="list"
-                  aria-activedescendant={mode === 'search' && active >= 0 ? `cmdk-opt-${active}` : undefined}
-                  className="flex-1 bg-transparent outline-none text-[15px] text-slate-800 dark:text-gray-100 placeholder:text-slate-400 dark:placeholder:text-gray-500 min-w-0"
-                />
-                {query && (
-                  <button
-                    onClick={() => { setQuery(''); setSelected(0); inputRef.current?.focus(); }}
-                    aria-label="Clear search"
-                    className="shrink-0 p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-gray-300 transition-colors"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
+                    ? <Sparkles className="w-[17px] h-[17px]" />
+                    : <Search className="w-[17px] h-[17px]" />}
+              </span>
+              {mode === 'search' && filterPills.map((f) => (
                 <button
-                  onClick={() => {
-                    if (mode === 'ask') { cancelStream(); setMode('search'); setHasAsked(false); }
-                    else { setMode('ask'); if (query.trim()) runAsk(query); }
-                    inputRef.current?.focus();
-                  }}
-                  aria-pressed={mode === 'ask'}
-                  title={mode === 'ask' ? 'Back to search' : `Ask AI (${MOD_KEY}+Enter)`}
-                  className={cn(
-                    'shrink-0 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] font-semibold border transition-colors',
-                    mode === 'ask'
-                      ? 'bg-indigo-600 border-indigo-600 text-white'
-                      : 'border-slate-200 dark:border-white/15 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/10'
-                  )}
+                  key={f.key}
+                  onClick={() => { f.clear(); setSelected(0); refocus(); }}
+                  aria-label={`Remove filter: ${f.label}`}
+                  className="shrink-0 inline-flex items-center gap-1 h-6 max-w-[140px] rounded-md bg-slate-100 dark:bg-white/[0.08] pl-2 pr-1 text-[12px] font-medium text-slate-600 dark:text-gray-300 hover:bg-slate-200/70 dark:hover:bg-white/[0.12] transition-colors"
                 >
-                  <Sparkles className="w-3.5 h-3.5" /> Ask AI
+                  <span className="truncate">{f.label}</span>
+                  <X className="w-3 h-3 shrink-0 opacity-60" />
                 </button>
-              </div>
-
-              {/* keyboard hints — only the ones that apply to the current mode */}
-              <div className="flex items-center gap-3 px-4 py-2 text-[11px] text-slate-400 dark:text-gray-500 flex-wrap">
-                {mode === 'search' ? (
-                  <>
-                    <span className="inline-flex items-center gap-1">
-                      <Kbd><ArrowUp className="w-2.5 h-2.5" /></Kbd><Kbd><ArrowDown className="w-2.5 h-2.5" /></Kbd> to navigate
-                    </span>
-                    <span className="inline-flex items-center gap-1"><Kbd><CornerDownLeft className="w-2.5 h-2.5" /></Kbd> to open</span>
-                    <span className="inline-flex items-center gap-1"><Kbd>{MOD_KEY}</Kbd><Kbd><CornerDownLeft className="w-2.5 h-2.5" /></Kbd> to ask AI</span>
-                  </>
-                ) : (
-                  <span className="inline-flex items-center gap-1"><Kbd><CornerDownLeft className="w-2.5 h-2.5" /></Kbd> to ask</span>
-                )}
-                <span className="inline-flex items-center gap-1"><Kbd>esc</Kbd> to close</span>
-              </div>
-
-              {/* filters (search mode only — the AI answers over all accessible content) */}
-              {mode === 'search' && (
-                <div className="flex items-center gap-2 px-4 pb-3 flex-wrap">
-                  <FilterMenu
-                    icon={ListFilter}
-                    label={{ all: 'All contents', books: 'Books', chapters: 'Chapters', mine: 'Your content', pages: 'Pages & actions' }[typeFilter]}
-                    active={typeFilter !== 'all'}
-                    open={openMenu === 'type'}
-                    onToggle={() => setOpenMenu(openMenu === 'type' ? null : 'type')}
-                    onClose={() => setOpenMenu(null)}
-                    options={[
-                      { value: 'all', label: 'All contents' },
-                      { value: 'books', label: 'Books' },
-                      { value: 'chapters', label: 'Chapters' },
-                      { value: 'mine', label: 'Your content' },
-                      { value: 'pages', label: 'Pages & actions' },
-                    ]}
-                    value={typeFilter}
-                    onSelect={(v) => { setTypeFilter(v as TypeFilter); setSelected(0); inputRef.current?.focus(); }}
-                  />
-                  <FilterMenu
-                    icon={Tag}
-                    label={subjectFilter || 'Subject'}
-                    active={!!subjectFilter}
-                    open={openMenu === 'subject'}
-                    onToggle={() => setOpenMenu(openMenu === 'subject' ? null : 'subject')}
-                    onClose={() => setOpenMenu(null)}
-                    options={[{ value: '', label: 'All subjects' }, ...subjects.map((s) => ({ value: s, label: s }))]}
-                    value={subjectFilter || ''}
-                    onSelect={(v) => { setSubjectFilter(v || null); setSelected(0); inputRef.current?.focus(); }}
-                  />
-                  <FilterMenu
-                    icon={GraduationCap}
-                    label={classFilter || 'Class'}
-                    active={!!classFilter}
-                    open={openMenu === 'class'}
-                    onToggle={() => setOpenMenu(openMenu === 'class' ? null : 'class')}
-                    onClose={() => setOpenMenu(null)}
-                    options={[{ value: '', label: 'All classes' }, ...classes.map((c) => ({ value: c, label: c }))]}
-                    value={classFilter || ''}
-                    onSelect={(v) => { setClassFilter(v || null); setSelected(0); inputRef.current?.focus(); }}
-                  />
-                  {anyFilter && (
-                    <button
-                      onClick={clearFilters}
-                      className="text-[12px] font-medium text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-300 px-1"
-                    >
-                      Clear filters
-                    </button>
-                  )}
-                </div>
+              ))}
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={(e) => { setQuery(e.target.value); setSelected(0); setOpenError(null); }}
+                onKeyDown={onInputKeyDown}
+                placeholder={mode === 'ask' ? 'Ask about your textbooks…' : 'Search or ask anything…'}
+                role="combobox"
+                aria-expanded={mode === 'search'}
+                aria-controls="cmdk-listbox"
+                aria-autocomplete="list"
+                aria-activedescendant={mode === 'search' && active >= 0 ? `cmdk-opt-${active}` : undefined}
+                className="flex-1 min-w-0 h-full bg-transparent outline-none text-[15px] text-slate-900 dark:text-gray-100 placeholder:text-slate-400 dark:placeholder:text-gray-500"
+              />
+              {query && (
+                <IconButton label="Clear" onClick={() => { setQuery(''); setSelected(0); refocus(); }}>
+                  <X className="w-3.5 h-3.5" />
+                </IconButton>
               )}
+              {mode === 'search' && (
+                <IconButton
+                  label="Filters"
+                  pressed={showFilters}
+                  dot={anyFilter && !showFilters}
+                  onClick={() => { setShowFilters((v) => !v); setOpenMenu(null); refocus(); }}
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                </IconButton>
+              )}
+              <button
+                onClick={() => {
+                  if (mode === 'ask') { cancelStream(); setMode('search'); setHasAsked(false); }
+                  else { setMode('ask'); if (query.trim()) runAsk(query); }
+                  refocus();
+                }}
+                aria-pressed={mode === 'ask'}
+                title={mode === 'ask' ? 'Back to search' : `Ask AI (${MOD_KEY}+Enter)`}
+                className={cn(
+                  'shrink-0 inline-flex items-center gap-1.5 h-7 rounded-md px-2 text-[12.5px] font-medium transition-colors',
+                  mode === 'ask'
+                    ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-white/[0.06]'
+                )}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Ask AI</span>
+              </button>
             </div>
 
-            {/* ── Panel below ── */}
+            {/* ── Filters (collapsed by default; active ones show as pills above) ── */}
+            {mode === 'search' && showFilters && (
+              <div className="flex items-center gap-1 px-3 pb-2 -mt-1 flex-wrap">
+                <FilterMenu
+                  label={typeFilter === 'all' ? 'Type' : TYPE_LABEL[typeFilter]}
+                  active={typeFilter !== 'all'}
+                  open={openMenu === 'type'}
+                  onToggle={() => setOpenMenu(openMenu === 'type' ? null : 'type')}
+                  onClose={() => setOpenMenu(null)}
+                  options={(['all', 'books', 'chapters', 'mine', 'pages'] as TypeFilter[]).map((v) => ({ value: v, label: v === 'all' ? 'All types' : TYPE_LABEL[v] }))}
+                  value={typeFilter}
+                  onSelect={(v) => { setTypeFilter(v as TypeFilter); setSelected(0); refocus(); }}
+                />
+                <FilterMenu
+                  label={subjectFilter || 'Subject'}
+                  active={!!subjectFilter}
+                  open={openMenu === 'subject'}
+                  onToggle={() => setOpenMenu(openMenu === 'subject' ? null : 'subject')}
+                  onClose={() => setOpenMenu(null)}
+                  options={[{ value: '', label: 'All subjects' }, ...subjects.map((v) => ({ value: v, label: v }))]}
+                  value={subjectFilter || ''}
+                  onSelect={(v) => { setSubjectFilter(v || null); setSelected(0); refocus(); }}
+                />
+                <FilterMenu
+                  label={classFilter || 'Class'}
+                  active={!!classFilter}
+                  open={openMenu === 'class'}
+                  onToggle={() => setOpenMenu(openMenu === 'class' ? null : 'class')}
+                  onClose={() => setOpenMenu(null)}
+                  options={[{ value: '', label: 'All classes' }, ...classes.map((v) => ({ value: v, label: v }))]}
+                  value={classFilter || ''}
+                  onSelect={(v) => { setClassFilter(v || null); setSelected(0); refocus(); }}
+                />
+                {anyFilter && (
+                  <button onClick={clearFilters} className="h-7 px-2 rounded-md text-[12.5px] text-slate-400 hover:text-slate-700 dark:text-gray-500 dark:hover:text-gray-200 transition-colors">
+                    Reset
+                  </button>
+                )}
+              </div>
+            )}
+
+            <div className="h-px bg-slate-100 dark:bg-white/[0.06]" />
+
+            {/* ── Body ── */}
             {mode === 'search' ? (
               <div
                 ref={listRef}
                 id="cmdk-listbox"
                 role="listbox"
                 aria-label="Search results"
-                className="mt-3 rounded-2xl bg-white dark:bg-[#1a1a1b] border border-slate-200 dark:border-white/10 shadow-xl max-h-[52vh] overflow-y-auto custom-scrollbar py-2"
+                className="max-h-[min(440px,56vh)] overflow-y-auto overscroll-contain custom-scrollbar py-1.5"
               >
                 {openError && (
-                  <div role="alert" className="mx-3 mb-2 rounded-lg bg-rose-50 dark:bg-rose-500/10 px-3 py-2 text-[12.5px] text-rose-600 dark:text-rose-400">
+                  <div role="alert" className="mx-3 my-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 px-3 py-2 text-[12.5px] text-rose-600 dark:text-rose-400">
                     {openError}
                   </div>
                 )}
 
                 {booksLoading && !tokens.length && (
-                  <div className="px-4 py-2 space-y-2" aria-busy="true">
-                    {[0, 1, 2].map((i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <span className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/5 animate-pulse" />
-                        <span className="flex-1 h-3 rounded bg-slate-100 dark:bg-white/5 animate-pulse" />
+                  <div className="py-1" aria-busy="true" aria-label="Loading">
+                    {[72, 56, 64].map((w) => (
+                      <div key={w} className="flex items-center gap-3 mx-1.5 px-2.5 h-9">
+                        <span className="w-4 h-4 rounded bg-slate-100 dark:bg-white/[0.06] animate-pulse" />
+                        <span className="h-2.5 rounded bg-slate-100 dark:bg-white/[0.06] animate-pulse" style={{ width: `${w}%` }} />
                       </div>
                     ))}
                   </div>
                 )}
                 {booksError && (
                   <div className="px-4 py-2 text-[12.5px] text-slate-500 dark:text-gray-400">
-                    Couldn't load your library.
-                    <button onClick={() => refetchBooks()} className="ml-2 font-semibold text-indigo-600 dark:text-indigo-400 underline">Retry</button>
+                    Couldn't load your library.{' '}
+                    <button onClick={() => refetchBooks()} className="font-medium text-slate-700 dark:text-gray-200 underline underline-offset-2">Retry</button>
                   </div>
                 )}
 
                 {tokens.length > 0 && !hasResults && !booksLoading && !serverPending && !semanticPending && (
-                  <div className="px-4 pt-6 pb-4 text-center text-[13px] text-slate-400 dark:text-gray-500">
-                    No matches for <span className="font-semibold text-slate-600 dark:text-gray-300">“{trimmedQuery}”</span>
-                    {anyFilter ? ' with these filters.' : '.'} Ask AI instead:
+                  <div className="px-4 pt-5 pb-3 text-center">
+                    <p className="text-[13px] text-slate-600 dark:text-gray-300">
+                      No results for <span className="font-medium text-slate-900 dark:text-white">“{trimmedQuery}”</span>{anyFilter ? ' with these filters' : ''}
+                    </p>
+                    <p className="mt-1 text-[12px] text-slate-400 dark:text-gray-500">
+                      {anyFilter ? 'Try removing a filter, or ask AI below.' : 'Try another word, or ask AI below.'}
+                    </p>
                   </div>
                 )}
                 {!tokens.length && !booksLoading && !booksError && flat.length === 0 && (
                   <div className="px-4 py-10 text-center text-[13px] text-slate-400 dark:text-gray-500">
                     {typeFilter === 'mine'
                       ? 'Type to search your chats, notebooks, quizzes and podcasts.'
-                      : anyFilter ? 'Nothing matches these filters.' : 'No content in your library yet.'}
+                      : anyFilter ? 'Nothing matches these filters.' : 'Your library is empty.'}
                   </div>
                 )}
 
-                {groups.map((g) => (
+                {groups.map((g, gi) => (
                   <div key={g.label} role="group" aria-label={g.label}>
-                    <div className="flex items-center justify-between px-4 pt-2 pb-1">
-                      <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500">{g.label}</span>
+                    <div className={cn('flex items-center justify-between px-4 pb-1', gi === 0 ? 'pt-1.5' : 'pt-3')}>
+                      <span className="text-[11px] font-medium text-slate-400 dark:text-gray-500">{g.label}</span>
                       {g.onClear && (
-                        <button tabIndex={-1} onClick={g.onClear} className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-gray-300">Clear</button>
+                        <button tabIndex={-1} onClick={g.onClear} className="text-[11px] text-slate-400 hover:text-slate-700 dark:text-gray-500 dark:hover:text-gray-200 transition-colors">
+                          Clear
+                        </button>
                       )}
                     </div>
                     {g.items.map((item, i) => {
@@ -928,163 +939,117 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                 ))}
 
                 {tokens.length > 0 && semanticPending && !semanticHits?.length && (
-                  <div className="flex items-center gap-2 px-4 pt-2 pb-1 text-[12px] text-slate-400 dark:text-gray-500" aria-live="polite">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Searching inside your textbooks…
+                  <div className="flex items-center gap-3 mx-1.5 px-2.5 h-9 text-[12.5px] text-slate-400 dark:text-gray-500" aria-live="polite">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Searching inside your textbooks…
                   </div>
                 )}
               </div>
             ) : !hasAsked ? (
-              <div className="mt-4">
-                {/* idle info hints */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 px-3">
-                  <Hint icon={Info}>Answers are grounded in the learning content you have access to.</Hint>
-                  <Hint icon={ShieldAlert}>If an answer looks off, double-check it against the cited source.</Hint>
-                  <Hint icon={PenLine}>Cited sources open the exact chapter in the reader.</Hint>
-                </div>
+              <div className="px-5 pt-5 pb-4">
+                <p className="text-[13.5px] text-slate-700 dark:text-gray-200">Ask anything about your textbooks.</p>
+                <ul className="mt-2.5 space-y-1.5">
+                  {[
+                    { icon: Info, text: 'Answers are grounded in the content you have access to.' },
+                    { icon: FileText, text: 'Every source links to the exact chapter.' },
+                    { icon: ShieldAlert, text: 'Double-check anything that looks off against its source.' },
+                  ].map(({ icon: Icon, text }) => (
+                    <li key={text} className="flex items-center gap-2.5 text-[12.5px] text-slate-400 dark:text-gray-500">
+                      <Icon className="w-3.5 h-3.5 shrink-0" /> {text}
+                    </li>
+                  ))}
+                </ul>
                 {askRecents.length > 0 && (
-                  <div className="mt-5 rounded-2xl bg-white dark:bg-[#1a1a1b] border border-slate-200 dark:border-white/10 shadow-xl p-4">
-                    <div className="flex items-center gap-2 text-[12.5px] text-slate-500 dark:text-gray-400 mb-3">
-                      <span className="w-6 h-6 rounded-lg bg-slate-900 dark:bg-white/10 flex items-center justify-center shrink-0">
-                        <Sparkles className="w-3.5 h-3.5 text-white" />
-                      </span>
-                      Pick up where you left off
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {askRecents.map((r) => (
-                        <button
-                          key={`${r.notebookId}:${r.sourceId || ''}`}
-                          onClick={() => openRecent(r)}
-                          className="text-left rounded-xl border border-slate-200 dark:border-white/10 p-3 hover:border-indigo-300 dark:hover:border-indigo-500/40 transition-colors"
-                        >
-                          <span className={cn('inline-flex items-center gap-1 text-[10.5px] font-semibold px-1.5 py-0.5 rounded mb-1.5', tintFor(r.subject))}>
-                            {r.kind === 'chapter' ? <FileText className="w-3 h-3" /> : <BookOpen className="w-3 h-3" />} {r.subject}
-                          </span>
-                          <div className="text-[13px] font-semibold text-slate-800 dark:text-gray-100 leading-snug line-clamp-2">{r.title}</div>
-                          {r.kind === 'chapter' && <div className="text-[11.5px] text-slate-400 dark:text-gray-500 truncate mt-0.5">{r.bookName}</div>}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="mt-5 -mx-3.5">
+                    <div className="px-4 pb-1 text-[11px] font-medium text-slate-400 dark:text-gray-500">Continue reading</div>
+                    {askRecents.map((r) => (
+                      <PlainRow
+                        key={`${r.notebookId}:${r.sourceId || ''}`}
+                        icon={r.kind === 'chapter' ? FileText : BookOpen}
+                        iconClass={accentFor(r.subject)}
+                        title={r.title}
+                        secondary={r.kind === 'chapter' ? r.bookName.replace(/^NCERT\s+/i, '') : r.className}
+                        onClick={() => openRecent(r)}
+                      />
+                    ))}
                   </div>
                 )}
               </div>
             ) : (
-              <div className="mt-3 rounded-2xl bg-white dark:bg-[#1a1a1b] border border-slate-200 dark:border-white/10 shadow-xl p-4" aria-live="polite">
+              <div className="max-h-[min(520px,62vh)] overflow-y-auto overscroll-contain custom-scrollbar px-5 py-4" aria-live="polite">
                 {stream.isStreaming && !stream.content ? (
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="inline-flex items-center gap-2 text-[13.5px] font-medium text-slate-600 dark:text-gray-300 min-w-0">
-                      <Loader2 className="w-4 h-4 animate-spin text-indigo-500 shrink-0" />
-                      <span className="truncate">AI is looking for the information you requested…</span>
-                    </span>
-                    <button
-                      onClick={() => cancelStream()}
-                      className="shrink-0 inline-flex items-center gap-1.5 text-[12.5px] font-medium text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-gray-200 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1 transition-colors"
-                    >
-                      <Square className="w-3 h-3" /> Stop
-                    </button>
+                  <div aria-busy="true">
+                    <p className="text-[12.5px] text-slate-400 dark:text-gray-500">Looking through your textbooks…</p>
+                    <div className="mt-3 space-y-2">
+                      {[92, 84, 60].map((w) => (
+                        <div key={w} className="h-2.5 rounded bg-slate-100 dark:bg-white/[0.06] animate-pulse" style={{ width: `${w}%` }} />
+                      ))}
+                    </div>
                   </div>
                 ) : stream.error ? (
-                  <div className="text-[13px] text-rose-600 dark:text-rose-400">
-                    Something went wrong.
-                    <button onClick={() => runAsk(askedQuestion)} className="ml-2 font-semibold underline">Try again</button>
-                  </div>
+                  <p className="text-[13px] text-slate-600 dark:text-gray-300">
+                    Something went wrong.{' '}
+                    <button onClick={() => runAsk(askedQuestion)} className="font-medium text-slate-900 dark:text-white underline underline-offset-2">Try again</button>
+                  </p>
                 ) : (
                   <>
                     <div className="font-answer text-[14px] leading-[1.7] text-slate-800 dark:text-gray-100 prose prose-slate dark:prose-invert max-w-none prose-p:my-2 prose-ul:my-2 prose-li:my-0 prose-pre:bg-[#1e1e1e] prose-pre:p-0">
                       <MarkdownMessage content={stream.content} />
-                      {stream.isStreaming && <span className="inline-block w-2 h-4 ml-1 bg-indigo-500 animate-pulse align-middle" />}
+                      {stream.isStreaming && <span className="inline-block w-1.5 h-4 ml-0.5 bg-indigo-500/80 animate-pulse align-middle rounded-sm" />}
                     </div>
 
                     {!stream.isStreaming && (
                       <>
-                        <div className="flex items-center gap-4 mt-3 text-slate-400 dark:text-gray-500">
-                          <button
-                            title="Helpful"
-                            aria-label="Helpful"
-                            aria-pressed={rating === 'thumbs_up'}
-                            onClick={() => rate('thumbs_up')}
-                            className={cn('transition-colors', rating === 'thumbs_up' ? 'text-emerald-500' : 'hover:text-slate-600 dark:hover:text-gray-300')}
-                          >
-                            <ThumbsUp className={cn('w-4 h-4', rating === 'thumbs_up' && 'fill-current')} />
-                          </button>
-                          <button
-                            title="Not helpful"
-                            aria-label="Not helpful"
-                            aria-pressed={rating === 'thumbs_down'}
-                            onClick={() => rate('thumbs_down')}
-                            className={cn('transition-colors', rating === 'thumbs_down' ? 'text-rose-500' : 'hover:text-slate-600 dark:hover:text-gray-300')}
-                          >
-                            <ThumbsDown className={cn('w-4 h-4', rating === 'thumbs_down' && 'fill-current')} />
-                          </button>
-                          <button title="Copy" aria-label="Copy answer" onClick={copyAnswer} className="hover:text-slate-600 dark:hover:text-gray-300 transition-colors">
-                            {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                          </button>
-                          <button title="Regenerate" aria-label="Regenerate answer" onClick={() => runAsk(askedQuestion)} className="hover:text-slate-600 dark:hover:text-gray-300 transition-colors"><RotateCcw className="w-4 h-4" /></button>
-                          {ratingError && <span role="status" className="text-[11.5px] text-rose-500">Couldn't send feedback</span>}
+                        <div className="mt-3 -ml-1.5 flex items-center gap-0.5">
+                          <IconButton label="Helpful" pressed={rating === 'thumbs_up'} onClick={() => rate('thumbs_up')}>
+                            <ThumbsUp className={cn('w-3.5 h-3.5', rating === 'thumbs_up' && 'fill-current text-emerald-500')} />
+                          </IconButton>
+                          <IconButton label="Not helpful" pressed={rating === 'thumbs_down'} onClick={() => rate('thumbs_down')}>
+                            <ThumbsDown className={cn('w-3.5 h-3.5', rating === 'thumbs_down' && 'fill-current text-rose-500')} />
+                          </IconButton>
+                          <IconButton label={copied ? 'Copied' : 'Copy answer'} onClick={copyAnswer}>
+                            {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                          </IconButton>
+                          <IconButton label="Regenerate" onClick={() => runAsk(askedQuestion)}>
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </IconButton>
+                          {ratingError && <span role="status" className="ml-1.5 text-[11.5px] text-rose-500">Couldn't send feedback</span>}
                           {askSessionId && (
                             <button
                               onClick={continueInChat}
-                              className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 px-2.5 py-1 text-[12.5px] font-medium text-slate-600 dark:text-gray-300 hover:border-indigo-300 hover:text-indigo-600 dark:hover:border-indigo-500/40 dark:hover:text-indigo-300 transition-colors"
+                              className="ml-auto inline-flex items-center gap-1.5 h-7 rounded-md px-2 text-[12.5px] font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-white/[0.06] transition-colors"
                             >
-                              <MessageSquare className="w-3.5 h-3.5" /> Continue in chat
+                              Continue in chat <ArrowRight className="w-3.5 h-3.5" />
                             </button>
                           )}
                         </div>
 
                         {followUps.length > 0 && (
-                          <div className="mt-4">
-                            <div className="text-[12px] text-slate-400 dark:text-gray-500 mb-2">Follow up</div>
-                            <div className="flex flex-col gap-1">
-                              {followUps.map((f) => (
-                                <button
-                                  key={f}
-                                  onClick={() => runAsk(f, { followUp: true })}
-                                  className="flex items-center gap-2 text-left rounded-lg px-2 py-1.5 text-[13px] text-slate-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors"
-                                >
-                                  <CornerDownRight className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                                  <span className="line-clamp-2">{f}</span>
-                                </button>
-                              ))}
-                            </div>
+                          <div className="mt-4 -mx-3.5">
+                            <div className="px-4 pb-1 text-[11px] font-medium text-slate-400 dark:text-gray-500">Follow up</div>
+                            {followUps.map((f) => (
+                              <PlainRow key={f} icon={CornerDownRight} title={f} onClick={() => runAsk(f, { followUp: true })} />
+                            ))}
                           </div>
                         )}
 
                         {sources.length > 0 && (
-                          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5">
-                            <div className="text-[12px] text-slate-400 dark:text-gray-500 mb-2">Based on source</div>
-                            <div className="flex flex-col gap-1">
-                              {sources.map((c, i) => {
-                                const clickable = !!(c.notebookId && c.sourceId);
-                                const excerpt = typeof c.text === 'string' ? c.text.replace(/\s+/g, ' ').trim() : '';
-                                return (
-                                  <button
-                                    key={i}
-                                    disabled={!clickable}
-                                    onClick={() => openSource(c)}
-                                    title={clickable ? 'Open source in reader' : undefined}
-                                    className={cn(
-                                      'group flex items-start gap-2.5 text-left rounded-lg px-2 py-1.5 transition-colors',
-                                      clickable ? 'hover:bg-slate-50 dark:hover:bg-white/5 focus-visible:bg-slate-50 dark:focus-visible:bg-white/5 cursor-pointer' : 'cursor-default'
-                                    )}
-                                  >
-                                    <span className="w-6 h-6 rounded-md bg-rose-50 text-rose-500 dark:bg-rose-500/15 dark:text-rose-400 flex items-center justify-center shrink-0">
-                                      <FileText className="w-3.5 h-3.5" />
-                                    </span>
-                                    <span className="flex-1 min-w-0 pt-0.5">
-                                      <span className="flex items-baseline gap-2">
-                                        <span className="text-[13px] font-medium text-slate-700 dark:text-gray-200 truncate">{c.title || c.source}</span>
-                                        {c.pageNumber != null && <span className="shrink-0 text-[11px] text-slate-400 dark:text-gray-500">p. {c.pageNumber}</span>}
-                                      </span>
-                                      {/* Cited passage — revealed on hover / keyboard focus. */}
-                                      {excerpt && (
-                                        <span className="hidden group-hover:block group-focus-visible:block mt-1">
-                                          <span className="text-[12px] leading-snug text-slate-500 dark:text-gray-400 line-clamp-3">“{excerpt}”</span>
-                                        </span>
-                                      )}
-                                    </span>
-                                  </button>
-                                );
-                              })}
-                            </div>
+                          <div className="mt-4 -mx-3.5">
+                            <div className="px-4 pb-1 text-[11px] font-medium text-slate-400 dark:text-gray-500">Sources</div>
+                            {sources.map((c, i) => {
+                              const clickable = !!(c.notebookId && c.sourceId);
+                              const excerpt = typeof c.text === 'string' ? c.text.replace(/\s+/g, ' ').trim() : '';
+                              return (
+                                <PlainRow
+                                  key={i}
+                                  icon={FileText}
+                                  title={c.title || c.source}
+                                  meta={c.pageNumber != null ? `p. ${c.pageNumber}` : undefined}
+                                  reveal={excerpt ? `“${excerpt}”` : undefined}
+                                  disabled={!clickable}
+                                  onClick={() => openSource(c)}
+                                />
+                              );
+                            })}
                           </div>
                         )}
                       </>
@@ -1093,6 +1058,34 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                 )}
               </div>
             )}
+
+            {/* ── Footer: key hints; Stop while an answer streams ── */}
+            <div className={cn(
+              'items-center justify-between h-9 px-4 border-t border-slate-100 dark:border-white/[0.06] text-[11px] text-slate-400 dark:text-gray-500',
+              streaming ? 'flex' : 'hidden sm:flex'
+            )}>
+              <div className="hidden sm:flex items-center gap-3.5">
+                {mode === 'search' ? (
+                  <>
+                    <KeyHint keys={[<ArrowUp key="u" className="w-2.5 h-2.5" />, <ArrowDown key="d" className="w-2.5 h-2.5" />]}>Navigate</KeyHint>
+                    <KeyHint keys={[<CornerDownLeft key="e" className="w-2.5 h-2.5" />]}>Open</KeyHint>
+                    <KeyHint keys={[MOD_KEY, <CornerDownLeft key="e" className="w-2.5 h-2.5" />]}>Ask AI</KeyHint>
+                  </>
+                ) : (
+                  <KeyHint keys={[<CornerDownLeft key="e" className="w-2.5 h-2.5" />]}>{hasAsked ? 'Ask again' : 'Ask'}</KeyHint>
+                )}
+              </div>
+              {streaming ? (
+                <button
+                  onClick={() => cancelStream()}
+                  className="ml-auto inline-flex items-center gap-1.5 h-6 rounded-md px-2 text-[12px] font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-white/[0.06] transition-colors"
+                >
+                  <Square className="w-2.5 h-2.5 fill-current" /> Stop
+                </button>
+              ) : (
+                <KeyHint keys={['esc']}>Close</KeyHint>
+              )}
+            </div>
           </motion.div>
         </motion.div>
       )}
@@ -1112,68 +1105,66 @@ function ResultRow({
   onSelect: () => void;
 }) {
   let icon: LucideIcon = BookOpen;
-  let tint = NEUTRAL_TINT;
-  let title = '';
-  let subtitle: string | undefined;
-  let badge: string | undefined;
+  let iconClass = MUTED_ICON;
+  let title: React.ReactNode = null;
+  let titleText = '';
+  let secondary: string | undefined;
+  let snippet: string | undefined;
+  let meta: string | undefined;
   let highlightTitle = true;
-  let multilineSubtitle = false;
 
   switch (item.kind) {
     case 'book':
-      tint = tintFor(item.book.subject);
-      title = bookName(item.book);
-      subtitle = item.book.className;
-      badge = item.book.subject;
+      iconClass = accentFor(item.book.subject);
+      titleText = bookDisplayName(item.book);
+      // Named books get class · subject; "Class 11 Physics" already says both.
+      secondary = item.book.bookName ? [item.book.className, item.book.subject].filter(Boolean).join(' · ') : undefined;
       break;
     case 'chapter':
       icon = FileText;
-      tint = tintFor(item.book.subject);
-      title = chapterLabel(item.chapter);
-      subtitle = [bookName(item.book), item.book.className].filter(Boolean).join(' · ');
-      badge = item.book.subject;
+      iconClass = accentFor(item.book.subject);
+      titleText = chapterLabel(item.chapter);
+      secondary = bookContext(item.book);
       break;
     case 'passage':
       icon = TextSearch;
-      tint = tintFor(item.hit.subject || '');
-      title = chapterLabel({ chapterName: item.hit.chapterName, title: item.hit.sourceTitle || item.hit.title });
-      subtitle = [item.hit.pageNumber != null ? `p. ${item.hit.pageNumber}` : '', item.hit.snippet].filter(Boolean).join(' · ');
-      badge = item.hit.subject;
-      multilineSubtitle = true;
+      iconClass = accentFor(item.hit.subject);
+      titleText = chapterLabel({ chapterName: item.hit.chapterName, title: item.hit.sourceTitle || item.hit.title });
+      secondary = bookContext(item.book);
+      snippet = item.hit.snippet;
+      meta = item.hit.pageNumber != null ? `p. ${item.hit.pageNumber}` : undefined;
       break;
     case 'content':
       icon = CONTENT_ICON[item.hit.type as ContentType] || FileText;
-      title = item.hit.title;
-      subtitle = item.hit.subtitle;
+      titleText = item.hit.title;
+      secondary = item.hit.subtitle;
       break;
     case 'recent':
       icon = item.entry.kind === 'chapter' ? FileText : BookOpen;
-      tint = tintFor(item.entry.subject);
-      title = item.entry.title;
-      subtitle = item.entry.kind === 'chapter'
-        ? [item.entry.bookName, item.entry.className].filter(Boolean).join(' · ')
-        : item.entry.className;
-      badge = item.entry.subject;
+      iconClass = accentFor(item.entry.subject);
+      titleText = item.entry.kind === 'chapter' ? item.entry.title : item.entry.title.replace(/^NCERT\s+/i, '');
+      secondary = item.entry.kind === 'chapter' ? item.entry.bookName.replace(/^NCERT\s+/i, '') : undefined;
       highlightTitle = false;
       break;
     case 'query':
       icon = History;
-      title = item.query;
+      titleText = item.query;
       highlightTitle = false;
       break;
     case 'page':
-      icon = item.icon;
-      title = item.label;
-      break;
     case 'action':
       icon = item.icon;
-      title = item.label;
+      titleText = item.label;
       break;
     case 'ask':
       icon = Sparkles;
-      tint = 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400';
-      title = item.query;
-      highlightTitle = false;
+      iconClass = 'text-indigo-500';
+      title = (
+        <>
+          <span className="text-slate-500 dark:text-gray-400">Ask AI</span>{' '}
+          <span className="font-medium text-slate-900 dark:text-white">{item.query}</span>
+        </>
+      );
       break;
   }
   const Icon = icon;
@@ -1188,52 +1179,131 @@ function ResultRow({
       onMouseMove={onHover}
       onClick={onSelect}
       className={cn(
-        'w-full flex items-center gap-3 px-4 py-2 text-left transition-colors',
-        isActive ? 'bg-slate-100 dark:bg-white/5' : 'hover:bg-slate-50 dark:hover:bg-white/5'
+        'flex mx-1.5 gap-3 px-2.5 rounded-lg text-left transition-colors duration-75',
+        snippet ? 'items-start py-2' : 'items-center h-9',
+        isActive ? 'bg-slate-100 dark:bg-white/[0.07]' : ''
       )}
+      style={{ width: 'calc(100% - 12px)' }}
     >
-      <span className={cn('w-7 h-7 rounded-lg flex items-center justify-center shrink-0', tint)}>
-        <Icon className="w-4 h-4" />
-      </span>
+      <Icon className={cn('w-4 h-4 shrink-0', snippet && 'mt-0.5', iconClass)} strokeWidth={1.75} />
       <span className="flex-1 min-w-0">
-        <span className="block text-[13.5px] font-medium text-slate-800 dark:text-gray-100 truncate">
-          {item.kind === 'ask' ? (
-            <>Ask AI <span className="font-semibold">“{title}”</span></>
-          ) : highlightTitle ? (
-            <Highlighted text={title} tokens={tokens} />
-          ) : title}
+        <span className="flex items-baseline gap-2 min-w-0">
+          <span className="truncate text-[13.5px] text-slate-700 dark:text-gray-200">
+            {title ?? (highlightTitle ? <Highlighted text={titleText} tokens={tokens} /> : titleText)}
+          </span>
+          {secondary && (
+            <span className="truncate shrink-[3] text-[12px] text-slate-400 dark:text-gray-500">
+              <Highlighted text={secondary} tokens={tokens} subtle />
+            </span>
+          )}
         </span>
-        {subtitle && (
-          <span className={cn('text-[11.5px] text-slate-400 dark:text-gray-500', multilineSubtitle ? 'line-clamp-2' : 'block truncate')}>
-            <Highlighted text={subtitle} tokens={tokens} />
+        {snippet && (
+          <span className="block mt-0.5">
+            <span className="line-clamp-2 text-[12px] leading-snug text-slate-500 dark:text-gray-400">
+              <Highlighted text={snippet} tokens={tokens} subtle />
+            </span>
           </span>
         )}
       </span>
-      {badge && <span className={cn('shrink-0 text-[10.5px] font-semibold px-1.5 py-0.5 rounded', tintFor(badge))}>{badge}</span>}
+      {meta && <span className="shrink-0 text-[11.5px] tabular-nums text-slate-400 dark:text-gray-500">{meta}</span>}
       {loading
-        ? <Loader2 className="w-3.5 h-3.5 text-slate-400 animate-spin shrink-0" />
-        : item.kind === 'recent'
-          ? <Clock className="w-3.5 h-3.5 text-slate-300 dark:text-gray-600 shrink-0" />
-          : isActive && <CornerDownLeft className="w-3.5 h-3.5 text-slate-400 dark:text-gray-500 shrink-0" />}
+        ? <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin text-slate-400" />
+        : <CornerDownLeft className={cn('w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-gray-500', isActive ? 'opacity-100' : 'opacity-0')} />}
     </button>
   );
 }
 
-function Highlighted({ text, tokens }: { text: string; tokens: string[] }) {
+/** A row outside the search listbox (Ask AI follow-ups, sources, recents) with the same look. */
+function PlainRow({
+  icon: Icon, iconClass = MUTED_ICON, title, secondary, meta, reveal, disabled, onClick,
+}: {
+  icon: LucideIcon;
+  iconClass?: string;
+  title: string;
+  secondary?: string;
+  meta?: string;
+  /** Extra text shown on hover / keyboard focus (e.g. the cited passage). */
+  reveal?: string;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        'group flex w-full gap-3 px-4 py-2 text-left rounded-lg transition-colors',
+        reveal ? 'items-start' : 'items-center',
+        disabled ? 'cursor-default' : 'hover:bg-slate-100 dark:hover:bg-white/[0.07] focus-visible:bg-slate-100 dark:focus-visible:bg-white/[0.07] outline-none'
+      )}
+    >
+      <Icon className={cn('w-4 h-4 shrink-0', reveal && 'mt-0.5', iconClass)} strokeWidth={1.75} />
+      <span className="flex-1 min-w-0">
+        <span className="flex items-baseline gap-2 min-w-0">
+          <span className="truncate text-[13.5px] text-slate-700 dark:text-gray-200">{title}</span>
+          {secondary && <span className="truncate shrink-[3] text-[12px] text-slate-400 dark:text-gray-500">{secondary}</span>}
+        </span>
+        {reveal && (
+          <span className="hidden group-hover:block group-focus-visible:block mt-1">
+            <span className="line-clamp-3 text-[12px] leading-snug text-slate-500 dark:text-gray-400">{reveal}</span>
+          </span>
+        )}
+      </span>
+      {meta && <span className="shrink-0 text-[11.5px] tabular-nums text-slate-400 dark:text-gray-500">{meta}</span>}
+    </button>
+  );
+}
+
+function Highlighted({ text, tokens, subtle }: { text: string; tokens: string[]; subtle?: boolean }) {
   const parts = useMemo(() => highlight(text, tokens), [text, tokens]);
   return (
     <>
       {parts.map((p, i) => p.match
-        ? <mark key={i} className="bg-transparent text-indigo-600 dark:text-indigo-300 font-semibold">{p.text}</mark>
+        ? (
+          <mark
+            key={i}
+            className={cn('bg-transparent', subtle ? 'text-slate-600 dark:text-gray-300' : 'font-semibold text-slate-950 dark:text-white')}
+          >
+            {p.text}
+          </mark>
+        )
         : <React.Fragment key={i}>{p.text}</React.Fragment>)}
     </>
   );
 }
 
-function FilterMenu({
-  icon: Icon, label, active, open, onToggle, onClose, options, value, onSelect,
+function IconButton({
+  label, onClick, pressed, dot, children,
 }: {
-  icon: LucideIcon;
+  label: string;
+  onClick: () => void;
+  pressed?: boolean;
+  /** Small indicator, e.g. filters are active while the filter row is collapsed. */
+  dot?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      aria-pressed={pressed}
+      className={cn(
+        'relative shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-md transition-colors',
+        pressed
+          ? 'bg-slate-100 text-slate-900 dark:bg-white/[0.08] dark:text-white'
+          : 'text-slate-400 hover:text-slate-800 hover:bg-slate-100 dark:text-gray-500 dark:hover:text-gray-100 dark:hover:bg-white/[0.06]'
+      )}
+    >
+      {children}
+      {dot && <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-indigo-500" />}
+    </button>
+  );
+}
+
+function FilterMenu({
+  label, active, open, onToggle, onClose, options, value, onSelect,
+}: {
   label: string;
   active: boolean;
   open: boolean;
@@ -1258,18 +1328,20 @@ function FilterMenu({
         aria-haspopup="listbox"
         aria-expanded={open}
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium transition-colors',
+          'inline-flex items-center gap-1 h-7 rounded-md px-2 text-[12.5px] transition-colors',
           active
-            ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300'
-            : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-gray-400 hover:bg-slate-200/70 dark:hover:bg-white/10'
+            ? 'font-medium text-slate-900 bg-slate-100 dark:text-white dark:bg-white/[0.08]'
+            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-white/[0.06]',
+          open && !active && 'bg-slate-100 dark:bg-white/[0.06]'
         )}
       >
-        <Icon className="w-3.5 h-3.5" /> <span className="max-w-[140px] truncate">{label}</span> <ChevronDown className="w-3 h-3 opacity-60" />
+        <span className="max-w-[140px] truncate">{label}</span>
+        <ChevronDown className={cn('w-3 h-3 opacity-50 transition-transform', open && 'rotate-180')} />
       </button>
       {open && (
         <div
           role="listbox"
-          className="absolute left-0 top-full mt-1.5 z-20 min-w-[180px] max-h-64 overflow-y-auto custom-scrollbar rounded-xl bg-white dark:bg-[#232325] border border-slate-200 dark:border-white/10 shadow-xl py-1"
+          className="absolute left-0 top-full mt-1 z-30 min-w-[180px] max-h-64 overflow-y-auto custom-scrollbar rounded-lg bg-white dark:bg-[#222225] border border-slate-200/80 dark:border-white/[0.08] shadow-lg p-1"
         >
           {options.map((o) => (
             <button
@@ -1278,10 +1350,10 @@ function FilterMenu({
               aria-selected={o.value === value}
               onClick={() => { onSelect(o.value); onClose(); }}
               className={cn(
-                'w-full flex items-center justify-between gap-3 px-3 py-1.5 text-left text-[12.5px] transition-colors',
+                'w-full flex items-center justify-between gap-3 h-8 px-2 rounded-md text-left text-[12.5px] transition-colors',
                 o.value === value
-                  ? 'text-indigo-600 dark:text-indigo-300 font-semibold'
-                  : 'text-slate-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-white/5'
+                  ? 'text-slate-900 dark:text-white font-medium'
+                  : 'text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
               )}
             >
               {o.label}
@@ -1294,19 +1366,21 @@ function FilterMenu({
   );
 }
 
-function Kbd({ children }: { children: React.ReactNode }) {
+function KeyHint({ keys, children }: { keys: React.ReactNode[]; children: React.ReactNode }) {
   return (
-    <kbd className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded bg-slate-100 dark:bg-white/10 text-[10px] font-medium text-slate-500 dark:text-gray-400">
+    <span className="inline-flex items-center gap-1.5">
+      <span className="inline-flex items-center gap-0.5">
+        {keys.map((k, i) => <Kbd key={i}>{k}</Kbd>)}
+      </span>
       {children}
-    </kbd>
+    </span>
   );
 }
 
-function Hint({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
+function Kbd({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-1.5 text-center text-[11.5px] text-slate-500 dark:text-gray-400 leading-snug">
-      <Icon className="w-4 h-4 text-slate-400 dark:text-gray-500" />
+    <kbd className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] font-sans text-[10px] font-medium text-slate-500 dark:text-gray-400">
       {children}
-    </div>
+    </kbd>
   );
 }
