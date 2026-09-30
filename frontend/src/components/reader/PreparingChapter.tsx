@@ -28,6 +28,8 @@ interface PreparingChapterProps {
    *  genuinely stuck — the original PDF is fetched from a different path that doesn't
    *  depend on the article-generation job. */
   onOpenPdf?: () => void;
+  /** Leaves the reader for the library. Offered when the chapter can't be found at all. */
+  onBrowseLibrary?: () => void;
 }
 
 // STEPS rows are ordered so each index matches the natural ingestion pipeline
@@ -115,7 +117,7 @@ const FAILED_COPY: Record<string, { title: string; description: string }> = {
 };
 const NON_RETRYABLE_REASONS = ['MISSING_SOURCE_FILE', 'PERMISSION_DENIED', 'SOURCE_NOT_FOUND', 'SNAPSHOT_FAILED'];
 
-export function PreparingChapter({ status, stuckSinceMs, failureReason, errorDetails, onRetry, onOpenPdf }: PreparingChapterProps) {
+export function PreparingChapter({ status, stuckSinceMs, failureReason, errorDetails, onRetry, onOpenPdf, onBrowseLibrary }: PreparingChapterProps) {
   // ── HOOKS FIRST — must be called in the same order on every render, regardless of
   // whether `status` is still '' (unknown) or has populated to a real ProcessingStatus.
   // React Rules of Hooks: putting `if (!status) return ...` BEFORE these would mean
@@ -202,6 +204,34 @@ export function PreparingChapter({ status, stuckSinceMs, failureReason, errorDet
           <p className="text-center text-sm text-[#555] dark:text-gray-400">
             Locating this chapter on the server and checking its preparation status.
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── NOT FOUND ──
+  // The chapter id doesn't exist (a stale link, a removed chapter, or a citation that was never a
+  // chapter). None of the pipeline steps apply and there is no PDF to fall back to, so show one
+  // plain message and a way out instead of a failed progress checklist.
+  if (isFailed && failureReason === 'SOURCE_NOT_FOUND') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] py-12 px-6">
+        <div className="max-w-sm w-full text-center">
+          <div className="mx-auto mb-5 w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-slate-400 dark:text-gray-500">
+            <BookOpen className="w-6 h-6" />
+          </div>
+          <h2 className="text-[19px] font-semibold text-[#1A1A1A] dark:text-white">This chapter isn't available</h2>
+          <p className="mt-2 text-[14px] leading-relaxed text-[#555] dark:text-gray-400">
+            We couldn't find it. The link may be out of date, or the chapter may have been removed. Open it again from your library.
+          </p>
+          {onBrowseLibrary && (
+            <button
+              onClick={onBrowseLibrary}
+              className="mt-6 inline-flex items-center justify-center h-10 px-5 rounded-xl bg-[#1A1A1A] dark:bg-white text-white dark:text-[#1A1A1A] text-[14px] font-semibold hover:opacity-90 transition-opacity"
+            >
+              Browse library
+            </button>
+          )}
         </div>
       </div>
     );
