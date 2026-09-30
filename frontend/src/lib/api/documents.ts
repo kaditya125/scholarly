@@ -58,13 +58,17 @@ const NUMBER_PREFIX = /^\s*\d{1,2}\s*[.)\-\u2013\u2014\u2015:]?\s+/;
 // "I. AMINES", "II) …"
 const ROMAN_PREFIX = /^\s*[IVXLC]+\s*[.)\-]\s+/;
 
+const SMALL_WORDS = new Set(['a', 'an', 'and', 'as', 'at', 'by', 'for', 'from', 'in', 'into', 'its', 'of', 'on', 'or', 'the', 'to', 'with']);
+
 function cleanChapterName(name: string): string {
   let s = name.replace(UNIT_PREFIX, '').replace(NUMBER_PREFIX, '').replace(ROMAN_PREFIX, '').trim();
   // Nothing name-like left (e.g. the name was literally "Unit 10" or "9") — signal empty to fall back.
   if ((s.match(/\p{L}/gu) || []).length < 2) return '';
   // De-SHOUT all-caps names ("AMINES" -> "Amines"); leave mixed-case names and acronyms untouched.
   if (s === s.toUpperCase() && /[A-Z]{2,}/.test(s)) {
-    s = s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+    s = s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
+      // "Motion In A Straight Line" -> "Motion in a Straight Line"
+      .split(' ').map((w, i) => (i > 0 && SMALL_WORDS.has(w.toLowerCase()) ? w.toLowerCase() : w)).join(' ');
   }
   return s;
 }

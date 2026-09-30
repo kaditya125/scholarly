@@ -98,6 +98,7 @@ describe('chapterLabel', () => {
   it.each([
     ['Unit 7 Alcohols, Phenols and Ethers', 'x', 'Alcohols, Phenols and Ethers'],
     ['CHAPTER TWELVE: KINETIC THEORY', 'x', 'Kinetic Theory'],
+    ['MOTION IN A STRAIGHT LINE', 'x', 'Motion in a Straight Line'],
     ['11 \u2015 Grassroots Democracy \u2013 Part 2', 'x', 'Grassroots Democracy \u2013 Part 2'],
     ['I. AMINES', 'x', 'Amines'],
     ['Light \u2013 Reflection and Refraction', 'x', 'Light \u2013 Reflection and Refraction'],
@@ -133,6 +134,26 @@ describe('SearchService.search', () => {
     const svc = new SearchService();
     expect(await svc.search('u1', 'physics', { types: ['chapter'] })).toEqual([]);
     expect(await svc.search('u1', 'class 11', { types: ['chapter'] })).toEqual([]);
+  });
+
+  it('lists books, not chapters, when the query only names the book (keywords repeating the subject)', async () => {
+    (bookLibraryService.listBooks as jest.Mock).mockResolvedValue([{ notebookId: 'nb-phy11', title: 'NCERT Class 11 Physics', subject: 'Physics' }]);
+    (bookLibraryService.getBookDetail as jest.Mock).mockResolvedValue({
+      notebookId: 'nb-phy11', title: 'NCERT Class 11 Physics', subject: 'Physics', className: 'Class 11',
+      chapters: [
+        { ...chapter('m1', 'Motion in a Plane'), keywords: ['physics', 'vectors', 'mathematical tools'] },
+        { ...chapter('m2', 'Chapter 10'), chapterName: undefined, title: 'NCERT Class 11 Physics - Chapter 10' },
+      ],
+    });
+    const svc = new SearchService();
+    for (const q of ['physics', 'class 11', 'class 11 physics']) {
+      expect(await svc.search('u1', q, { types: ['chapter'] })).toEqual([]);
+    }
+    // A typo only near a keyword is not enough; one near the chapter name is.
+    expect(await svc.search('u1', 'mathematcal', { types: ['chapter'] })).toEqual([]);
+    expect((await svc.search('u1', 'moton plane', { types: ['chapter'] })).map((h) => h.sourceId)).toEqual(['m1']);
+    // A subject word plus a real chapter word still finds the chapter.
+    expect((await svc.search('u1', 'physics vectors', { types: ['chapter'] })).map((h) => h.sourceId)).toEqual(['m1']);
   });
 
   it('collapses the same chapter ingested twice in one book', async () => {

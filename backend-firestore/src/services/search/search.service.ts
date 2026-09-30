@@ -3,7 +3,7 @@ import { cacheService } from '../cache.service';
 import { bookLibraryService, type BookSummary, type BookDetail } from '../bookLibrary.service';
 import { notebookRepository } from '../../repositories/notebook.repository';
 import { logger } from '../../utils/logger';
-import { indexFields, normalize, scoreItem, tokenize, type IndexedField } from './textMatch';
+import { chapterMatches, indexFields, normalize, scoreItem, tokenize, type IndexedField } from './textMatch';
 import { chapterLabel } from './chapterLabel';
 
 /**
@@ -121,9 +121,9 @@ export class SearchService {
     const chapterHits = new Map<string, SearchHit>();
     for (const c of chapters) {
       const m = scoreItem(tokens, c.fields);
-      // Only chapters whose own name/concepts matched: "physics" should list physics books
-      // (the client has those), not every physics chapter.
-      if (!m || !(m.hitFields.has(0) || m.hitFields.has(1))) continue;
+      // Only chapters the query is actually about: "physics" should list physics books (the
+      // client has those), not every physics chapter.
+      if (!m || !chapterMatches(tokens, c.fields)) continue;
       const key = `${c.notebookId}|${normalize(c.label)}`;
       if ((chapterHits.get(key)?.score ?? -1) >= m.score) continue;
       chapterHits.set(key, {

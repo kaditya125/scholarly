@@ -89,6 +89,22 @@ function tokenQuality(token: string, field: IndexedField): number {
 }
 
 /**
+ * Whether a chapter is what the query is about, rather than only its book. Chapter fields are
+ * [label, concepts/keywords/headings, book name, subject, class]. Without this, "physics",
+ * "class 10" or "science" listed dozens of chapters whose keywords merely repeat their subject,
+ * and typo matches against keyword lists flooded results (measured on production data).
+ */
+export function chapterMatches(tokens: string[], fields: IndexedField[]): boolean {
+  const [label, concepts, ...book] = fields;
+  const whole = tokens.join(' ');
+  if (label.norm && (label.norm === whole || label.norm.startsWith(whole))) return true;
+  // Every token names the book (subject, class, title): the book result already covers it.
+  if (tokens.every((t) => book.some((f) => tokenQuality(t, f) >= 0.8))) return false;
+  // A word (not just a number) must hit the chapter's own name, or its concepts without a typo.
+  return tokens.some((t) => !NUMERIC.test(t) && (tokenQuality(t, label) > 0 || tokenQuality(t, concepts) >= 0.5));
+}
+
+/**
  * Scores `tokens` against an indexed item. Returns null unless every token matches some field.
  * `primary` (default 0) is the field compared against the whole query for exact/prefix bonuses.
  */

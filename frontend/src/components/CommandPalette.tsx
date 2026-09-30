@@ -19,7 +19,7 @@ import { api } from '../lib/api/client';
 import { searchApi, type SearchHit, type SemanticHit } from '../lib/api/search';
 import { documentsApi, chapterLabel, type BookSummary, type BookChapter, type BookDetail } from '../lib/api/documents';
 import {
-  tokenize, indexFields, scoreItem, highlight, classNumber,
+  tokenize, indexFields, scoreItem, chapterMatches, highlight, classNumber,
   loadRecentItems, pushRecentItem, loadRecentQueries, pushRecentQuery, clearRecentQueries,
   type IndexedField, type RecentItem,
 } from '../lib/search/paletteSearch';
@@ -398,7 +398,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
         for (const { item: e, score } of topScored(chapterIndex, (e) => {
           if (!passesFilters(e.book)) return null;
           const m = scoreItem(tokens, e.fields);
-          return m && (m.hitFields.has(0) || m.hitFields.has(1)) ? m.score : null;
+          return m && chapterMatches(tokens, e.fields) ? m.score : null;
         }, 30)) {
           const key = `c:${e.book.notebookId}:${e.chapter.sourceId}`;
           merged.set(key, { item: { kind: 'chapter', key, book: e.book, chapter: e.chapter }, score });
