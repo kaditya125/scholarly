@@ -4,15 +4,24 @@
  *
  *   cd backend-firestore && npx tsx scripts/check-search-live.ts
  *
- * Needs FIREBASE_PROJECT_ID / FIREBASE_CLIENT_EMAIL / FIREBASE_PRIVATE_KEY (a read-only service
- * account is enough — this script never writes to Firestore). Optional:
+ * Reads .env. Needs FIREBASE_PROJECT_ID / FIREBASE_CLIENT_EMAIL / FIREBASE_PRIVATE_KEY or
+ * GOOGLE_APPLICATION_CREDENTIALS (a read-only service account is enough — this script never
+ * writes to Firestore). Optional:
  *   SEARCH_TEST_UID   a Firebase uid whose own chats/notebooks/quizzes/podcasts to search
  *   GEMINI_API_KEY + vector store vars (QDRANT_* or PINECONE_*) [+ COHERE_API_KEY]  → semantic checks
  * Calls the service directly: no server, no sign-in, no HTTP. Caches are in-process only unless
  * REDIS_URL is set, in which case it only writes the same short-lived cache keys the API does.
  */
 
-const hasFirebase = !!(process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY);
+import dotenv from 'dotenv';
+import fs from 'fs';
+
+// Load .env before reading any variable (config/env would load it too, but only on import).
+dotenv.config();
+
+const hasFirebaseVars = !!(process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY);
+const credentialsFile = process.env.GOOGLE_APPLICATION_CREDENTIALS || '';
+const hasFirebase = hasFirebaseVars || !!credentialsFile;
 const hasGemini = !!process.env.GEMINI_API_KEY;
 const hasVectors = !!(process.env.QDRANT_URL || process.env.PINECONE_API_KEY);
 const uid = process.env.SEARCH_TEST_UID || '';
@@ -26,7 +35,11 @@ const section = (title: string) => console.log(`\n=== ${title} ===`);
 
 async function main() {
   if (!hasFirebase) {
-    console.error('FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY must be set.');
+    console.error('Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY, or GOOGLE_APPLICATION_CREDENTIALS (in the environment or .env).');
+    process.exit(2);
+  }
+  if (!hasFirebaseVars && !fs.existsSync(credentialsFile)) {
+    console.error(`GOOGLE_APPLICATION_CREDENTIALS points to ${credentialsFile}, which doesn't exist from ${process.cwd()}. Copy that file here or set the variable to its absolute path.`);
     process.exit(2);
   }
   const { SearchService } = await import('../src/services/search/search.service');
