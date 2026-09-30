@@ -7,13 +7,15 @@ import {
   Copy, Check, BookOpen, FileText, ChevronDown, ListFilter, Info, ShieldAlert, PenLine, Square,
   GraduationCap, Tag, X, History, Clock, Home, BotMessageSquare, FolderOpen, Award, Calendar,
   HelpCircle, Compass, Headphones, Users, Settings, LifeBuoy, Gift, Layers, BrainCircuit,
-  BarChart2, Workflow, Plus, SunMoon, CheckSquare, ArrowRight, type LucideIcon,
+  BarChart2, Workflow, Plus, SunMoon, CheckSquare, ArrowRight, ThumbsUp, ThumbsDown, MessageSquare,
+  CornerDownRight, type LucideIcon,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../lib/AuthContext';
 import { useTheme } from '../lib/ThemeContext';
 import { useBookLibrary } from '../hooks/ai/useDocuments';
 import { useWorkflowStream } from '../hooks/ai/useWorkflowStream';
+import { api } from '../lib/api/client';
 import { documentsApi, chapterLabel, type BookSummary, type BookChapter, type BookDetail } from '../lib/api/documents';
 import {
   tokenize, indexFields, scoreItem, highlight, classNumber,
@@ -21,6 +23,7 @@ import {
   type IndexedField, type RecentItem,
 } from '../lib/search/paletteSearch';
 import MarkdownMessage from './chat/MarkdownMessage';
+import type { Rating } from './chat/AssistantReply';
 
 type Mode = 'search' | 'ask';
 type TypeFilter = 'all' | 'books' | 'chapters' | 'pages';
@@ -155,6 +158,12 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   const [recentItems, setRecentItems] = useState<RecentItem[]>([]);
   const [recentQueries, setRecentQueries] = useState<string[]>([]);
   const [detailTick, setDetailTick] = useState(0);
+  // Ask AI: each question runs in a real chat session, so it can be continued in /chat,
+  // followed up in place, and rated like any chat reply.
+  const [askSessionId, setAskSessionId] = useState<string | null>(null);
+  const [rating, setRating] = useState<Rating | null>(null);
+  const [ratingError, setRatingError] = useState(false);
+  const answerMessageIdRef = useRef<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -171,6 +180,9 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
     setOpenError(null);
     setOpeningId(null);
     setOpenMenu(null);
+    setAskSessionId(null);
+    setRating(null);
+    setRatingError(false);
     setRecentItems(loadRecentItems());
     setRecentQueries(loadRecentQueries());
     const t = setTimeout(() => inputRef.current?.focus(), 40);
@@ -444,7 +456,8 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   };
 
   // ── Ask AI (one-shot RAG) ──
-  const runAsk = (q: string) => {
+  /** `followUp` keeps the current session so the model sees the previous turn. */
+  const runAsk = (q: string, { followUp = false }: { followUp?: boolean } = {}) => {
     const question = q.trim();
     if (!question || !user?.uid) return;
     setMode('ask');
@@ -452,11 +465,59 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
     setAskedQuestion(question);
     setQuery(question);
     setRecentQueries(pushRecentQuery(question));
-    const sessionId =
-      typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+    setRating(null);
+    setRatingError(false);
+    answerMessageIdRef.current = null;
+    const sessionId = followUp && askSessionId
+      ? askSessionId
+      : typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+    setAskSessionId(sessionId);
     const model = localStorage.getItem('selectedModel') || 'gemini';
     // Errors surface via stream.error; swallow the rejection so it isn't unhandled.
     stream.startStream({ userId: user.uid, sessionId, message: question, model, topicType: 'chat' }).catch(() => {});
+  };
+
+  /**
+   * The stream never carries the persisted message id (the server saves the reply after the
+   * stream closes), so read it back from the session history — the same approach Chat uses.
+   * Looked up lazily on first rating, with one retry in case the save hasn't landed yet.
+   */
+  const resolveAnswerMessageId = async (sessionId: string): Promise<string | null> => {
+    if (answerMessageIdRef.current) return answerMessageIdRef.current;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (attempt) await new Promise((r) => setTimeout(r, 800));
+      const res = await api.get(`/chat/sessions/${sessionId}`);
+      const rows = Array.isArray(res.data) ? res.data : [];
+      const id = [...rows].reverse().find((m: any) => m.role === 'ai')?.id;
+      if (id) return (answerMessageIdRef.current = id);
+    }
+    return null;
+  };
+
+  const rate = async (next: Rating) => {
+    if (!askSessionId || rating === next) return;
+    const previous = rating;
+    setRating(next); // optimistic; rolled back if the POST fails
+    setRatingError(false);
+    try {
+      const messageId = await resolveAnswerMessageId(askSessionId);
+      if (!messageId) throw new Error('answer not saved yet');
+      await api.post(`/chat/${messageId}/feedback`, {
+        sessionId: askSessionId,
+        rating: next,
+        modelUsed: localStorage.getItem('selectedModel') || 'gemini',
+        learningMode: 'chat',
+      });
+    } catch {
+      setRating(previous);
+      setRatingError(true);
+    }
+  };
+
+  const continueInChat = () => {
+    if (!askSessionId) return;
+    onClose();
+    navigate(`/chat?session=${encodeURIComponent(askSessionId)}`);
   };
 
   const activate = (item: PaletteItem | undefined) => {
@@ -523,6 +584,13 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   const sources = useMemo(
     () => dedupeSources(stream.data?.citations?.length ? stream.data.citations : stream.citations),
     [stream.data, stream.citations]
+  );
+
+  const followUps: string[] = useMemo(
+    () => (Array.isArray(stream.suggestions) ? stream.suggestions : [])
+      .filter((x): x is string => typeof x === 'string' && !!x.trim())
+      .slice(0, 3),
+    [stream.suggestions]
   );
 
   const clearFilters = () => { setTypeFilter('all'); setSubjectFilter(null); setClassFilter(null); setSelected(0); inputRef.current?.focus(); };
@@ -809,11 +877,56 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                     {!stream.isStreaming && (
                       <>
                         <div className="flex items-center gap-4 mt-3 text-slate-400 dark:text-gray-500">
+                          <button
+                            title="Helpful"
+                            aria-label="Helpful"
+                            aria-pressed={rating === 'thumbs_up'}
+                            onClick={() => rate('thumbs_up')}
+                            className={cn('transition-colors', rating === 'thumbs_up' ? 'text-emerald-500' : 'hover:text-slate-600 dark:hover:text-gray-300')}
+                          >
+                            <ThumbsUp className={cn('w-4 h-4', rating === 'thumbs_up' && 'fill-current')} />
+                          </button>
+                          <button
+                            title="Not helpful"
+                            aria-label="Not helpful"
+                            aria-pressed={rating === 'thumbs_down'}
+                            onClick={() => rate('thumbs_down')}
+                            className={cn('transition-colors', rating === 'thumbs_down' ? 'text-rose-500' : 'hover:text-slate-600 dark:hover:text-gray-300')}
+                          >
+                            <ThumbsDown className={cn('w-4 h-4', rating === 'thumbs_down' && 'fill-current')} />
+                          </button>
                           <button title="Copy" aria-label="Copy answer" onClick={copyAnswer} className="hover:text-slate-600 dark:hover:text-gray-300 transition-colors">
                             {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                           </button>
                           <button title="Regenerate" aria-label="Regenerate answer" onClick={() => runAsk(askedQuestion)} className="hover:text-slate-600 dark:hover:text-gray-300 transition-colors"><RotateCcw className="w-4 h-4" /></button>
+                          {ratingError && <span role="status" className="text-[11.5px] text-rose-500">Couldn't send feedback</span>}
+                          {askSessionId && (
+                            <button
+                              onClick={continueInChat}
+                              className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 px-2.5 py-1 text-[12.5px] font-medium text-slate-600 dark:text-gray-300 hover:border-indigo-300 hover:text-indigo-600 dark:hover:border-indigo-500/40 dark:hover:text-indigo-300 transition-colors"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" /> Continue in chat
+                            </button>
+                          )}
                         </div>
+
+                        {followUps.length > 0 && (
+                          <div className="mt-4">
+                            <div className="text-[12px] text-slate-400 dark:text-gray-500 mb-2">Follow up</div>
+                            <div className="flex flex-col gap-1">
+                              {followUps.map((f) => (
+                                <button
+                                  key={f}
+                                  onClick={() => runAsk(f, { followUp: true })}
+                                  className="flex items-center gap-2 text-left rounded-lg px-2 py-1.5 text-[13px] text-slate-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors"
+                                >
+                                  <CornerDownRight className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                                  <span className="line-clamp-2">{f}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         {sources.length > 0 && (
                           <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5">
@@ -821,6 +934,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                             <div className="flex flex-col gap-1">
                               {sources.map((c, i) => {
                                 const clickable = !!(c.notebookId && c.sourceId);
+                                const excerpt = typeof c.text === 'string' ? c.text.replace(/\s+/g, ' ').trim() : '';
                                 return (
                                   <button
                                     key={i}
@@ -828,14 +942,25 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                                     onClick={() => openSource(c)}
                                     title={clickable ? 'Open source in reader' : undefined}
                                     className={cn(
-                                      'flex items-center gap-2.5 text-left rounded-lg px-2 py-1.5 transition-colors',
-                                      clickable ? 'hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer' : 'cursor-default'
+                                      'group flex items-start gap-2.5 text-left rounded-lg px-2 py-1.5 transition-colors',
+                                      clickable ? 'hover:bg-slate-50 dark:hover:bg-white/5 focus-visible:bg-slate-50 dark:focus-visible:bg-white/5 cursor-pointer' : 'cursor-default'
                                     )}
                                   >
                                     <span className="w-6 h-6 rounded-md bg-rose-50 text-rose-500 dark:bg-rose-500/15 dark:text-rose-400 flex items-center justify-center shrink-0">
                                       <FileText className="w-3.5 h-3.5" />
                                     </span>
-                                    <span className="text-[13px] font-medium text-slate-700 dark:text-gray-200 truncate">{c.title || c.source}</span>
+                                    <span className="flex-1 min-w-0 pt-0.5">
+                                      <span className="flex items-baseline gap-2">
+                                        <span className="text-[13px] font-medium text-slate-700 dark:text-gray-200 truncate">{c.title || c.source}</span>
+                                        {c.pageNumber != null && <span className="shrink-0 text-[11px] text-slate-400 dark:text-gray-500">p. {c.pageNumber}</span>}
+                                      </span>
+                                      {/* Cited passage — revealed on hover / keyboard focus. */}
+                                      {excerpt && (
+                                        <span className="hidden group-hover:block group-focus-visible:block mt-1">
+                                          <span className="text-[12px] leading-snug text-slate-500 dark:text-gray-400 line-clamp-3">“{excerpt}”</span>
+                                        </span>
+                                      )}
+                                    </span>
                                   </button>
                                 );
                               })}
