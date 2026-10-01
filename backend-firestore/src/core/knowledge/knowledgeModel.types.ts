@@ -139,21 +139,3 @@ export interface EvidencePack {
   }>;
   retrievalLatencyMs: number;
 }
-
-export interface KnowledgeIntegrityReport {
-  timestamp: string;
-  status: 'PASS' | 'WARN' | 'FAIL';
-  corpora: {
-    ncert: { totalVectors: number; distinctCurriculumVectors: number; reachable: boolean };
-    officialSyllabus: { totalVersions: number; totalVectors: number; reachable: boolean };
-    pyqs: { totalQuestions: number; totalVectors: number; indexedPercentage: number; reachable: boolean };
-    referenceBooks: { totalVectors: number; lucentGk: number; schandReasoning: number; schandQuant: number; reachable: boolean };
-    userNotebooks: { totalNotebooks: number; totalVectors: number; reachable: boolean };
-  };
-  orphanedResources: string[];
-  unreachableResources: string[];
-  missingProvenance: string[];
-  duplicateResources: string[];
-  brokenMappings: string[];
-  unusedRetrievalPaths: string[];
-}
