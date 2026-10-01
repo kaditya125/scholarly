@@ -233,3 +233,27 @@ describe('bleed guards', () => {
     expect(questions[1].solutionTruncated).toBe(true);
   });
 });
+
+describe('two-column recovery', () => {
+  it('recovers questions whose numbers arrive out of order, without touching the in-order run', () => {
+    const md = [
+      '10. PERCENTAGE', 'EXERCISE',
+      '1. First question here? (a) 1 (b) 2 (c) 3 (d) 4',
+      '2. Second question here, which continues',
+      '5. Column-two question five? (a) 5 (b) 6 (c) 7 (d) 8',
+      '(a) 9 (b) 10 (c) 11 (d) 12',
+      '3. Third question here? (a) 1 (b) 2 (c) 3 (d) 4',
+      '4. Fourth question here? (a) 1 (b) 2 (c) 3 (d) 4',
+      'ANSWERS', '1. (a) 2. (b) 3. (c) 4. (d) 5. (a)',
+    ].join('\n');
+    const { questions } = parseBook([page(md)], { chapterHeading: CHAPTERS });
+    const byN = new Map(questions.map((q) => [q.questionNumber, q]));
+    expect([...byN.keys()].sort()).toEqual([1, 2, 3, 4, 5]);
+    expect(byN.get(5)!.options).toEqual(['5', '6', '7', '8']);
+    expect(byN.get(5)!.answerKey).toBe('a');
+  });
+  it('quarantines items whose options collapsed into duplicates', () => {
+    const md = ['10. PERCENTAGE', 'EXERCISE', '1. If a − b = 1, find a³ − b³ − 3ab (a) 3 (b) 1 (c) 1 (d) 3', 'ANSWERS', '1. (c)'].join('\n');
+    expect(parseBook([page(md)], { chapterHeading: CHAPTERS }).questions[0].quarantineReason).toBe('duplicate_options');
+  });
+});

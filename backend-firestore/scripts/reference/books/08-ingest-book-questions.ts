@@ -34,6 +34,16 @@ const LAYOUT: Record<string, Partial<ParseOptions>> = {
   lucent_science: { layout: 'answer-blocks', partHeading: /^(Physics|Chemistry|Biology|Botany|Zoology|Computer|Astronomy|Environment|Ecology)$/i },
   lucent_english: { layout: 'english-exercises' },
   schand_quant: { mergeRecentRepeats: true },
+  // Type-I/II sections with chapter-end key grids and solutions; OCR page markers are unreliable,
+  // printed page = PDF page − 3 (contents: chapter 1 on printed 1 = PDF 4; checked at PDF 46 = 43).
+  ry_ssc_reasoning: {
+    layout: 'typed-sections', bookPageOffset: 3,
+    // Inserted pages (adverts) shift the printed numbering; measured from the printed page numbers
+    // in the PDF's own text layer (dataset_staging/…/printed_pages.json).
+    bookPageOffsets: [[4, 3], [67, 6], [125, 7], [185, 8], [305, 9], [405, 10]],
+    // Page footer and the coaching/PDF-site adverts printed on this copy — overlays, not question text.
+    runningHeader: /^(?:Rakesh Yadav Readers Publication.*|.*Best PDF.*|.*Nitin Gupta PDF.*|PRUDENCE COACHING CENTRE|By The Team of The Best Faculties.*|\.{2,}\s*the dais.*|641, Ground Floor.*|Join Prudence.*|Upcoming Batches.*|FOR ENQUIRY.*|[\d,\s-]{20,}|Telegram|Whats\s*app|Instagram|Apps|You\s*tube)$/i,
+  },
 };
 
 (async () => {

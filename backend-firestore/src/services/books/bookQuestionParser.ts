@@ -34,7 +34,15 @@ export type QuarantineReason =
   | 'oversize_text'
   | 'answer_mismatch'
   | 'duplicate_options'
-  | 'references_other_question';
+  | 'references_other_question'
+  /** The question's whole set parsed badly (typed-sections: >30% run-on) — its survivors are suspect. */
+  | 'unreliable_section'
+  /** A damaged second read of a question that is usable elsewhere in the bank (see duplicateOf). */
+  | 'duplicate_of_usable'
+  /** A text row whose picture question lives on as a figure row (see figureRowId). */
+  | 'replaced_by_figure'
+  /** Two models, solving blind, agree on an answer other than the book's printed key (see keyAudit). */
+  | 'key_disputed';
 
 export interface ParsedBookQuestion {
   chapterName: string;
@@ -80,7 +88,12 @@ export interface ParseOptions {
    * heading and section headings scattered through the run (Lucent's General Science). Each block
    * becomes one set, named after the nearest `partHeading` above it.
    */
-  layout?: 'exercise' | 'answer-blocks' | 'english-exercises';
+  layout?: 'exercise' | 'answer-blocks' | 'english-exercises' | 'typed-sections';
+  /** 'typed-sections': printed page = PDF page − this, when the OCR's own page markers are unreliable. */
+  bookPageOffset?: number;
+  /** Piecewise offsets [fromPdfPage, offset][] (ascending) when inserted pages shift the numbering;
+   *  overrides bookPageOffset from each fromPdfPage on. */
+  bookPageOffsets?: [number, number][];
   /** For 'answer-blocks': the book's top-level parts, e.g. /^(Physics|Chemistry|Biology)$/. */
   partHeading?: RegExp;
   /**
@@ -222,7 +235,7 @@ export function splitSequential(body: string, maxGap = 0): Map<number, { text: s
  * among several candidates for one number, the most complete wins. Never replaces a number the
  * sequential pass found, so its guarantees stand.
  */
-export function recoverByNumber(body: string, found: Map<number, { text: string; offset: number }>, maxNumber: number): Map<number, { text: string; offset: number }> {
+export function recoverByNumber(body: string, found: Map<number, { text: string; offset: number }>, maxNumber: number, allowStemless = false): Map<number, { text: string; offset: number }> {
   const starts = [...body.matchAll(/^[ \t>*-]*(\d{1,3})\.\s/gm)].map((m) => ({ pos: m.index!, n: Number(m[1]) }));
   const out = new Map(found);
   const best = new Map<number, { text: string; offset: number; score: number }>();
@@ -231,8 +244,17 @@ export function recoverByNumber(body: string, found: Map<number, { text: string;
     const text = body.slice(s.pos, starts[k + 1]?.pos ?? body.length).replace(/^[ \t>*-]*\d{1,3}\.\s/, '').trim();
     const stem = text.split(/\(a\)/)[0];
     const hasAll = ['a', 'b', 'c', 'd'].every((l) => new RegExp(`\\(${l}\\)`).test(text));
-    if (!hasAll || stem.replace(/\s+/g, ' ').trim().length < 8) return;
-    const score = stem.length + (/\(e\)/.test(text) ? 1 : 0);
+    // Odd-one-out questions have no stem — the block IS the four options ("185. (a) Chop | (b) …").
+    // Accepted only where the caller allows it (typed-sections layout) and only in that exact shape.
+    const stemless = allowStemless && /^\(a\)/.test(text);
+    const stemLen = stem.replace(/\s+/g, ' ').trim().length;
+    // Statement–argument questions print no options of their own — they take the fixed choices
+    // from their directions. Accepted (same opt-in) with a substantial stem and NO option letters at
+    // all; options are then inherited in parseChapter, or the question is quarantined there.
+    const inherits = allowStemless && !/\([a-e]\)/.test(text) && stemLen >= 20;
+    if (!inherits && (!hasAll || (stemLen < 8 && !stemless))) return;
+    // A complete block (own options) always beats an option-less one for the same number.
+    const score = (inherits ? -10000 : 0) + stem.length + (/\(e\)/.test(text) ? 1 : 0);
     const prev = best.get(s.n);
     if (!prev || score > prev.score) best.set(s.n, { text, offset: s.pos, score });
   });
@@ -253,7 +275,7 @@ export function hashQuestion(stem: string, options: string[]): string {
 }
 
 /** Parse one chapter's text into its exercise questions. */
-export function parseChapter(chapter: { name: string; ordinal: number; text: string; maxGap?: number; keyMismatch?: boolean }): ParsedBookQuestion[] {
+export function parseChapter(chapter: { name: string; ordinal: number; text: string; maxGap?: number; keyMismatch?: boolean; allowStemless?: boolean }): ParsedBookQuestion[] {
   const text = chapter.text;
   const marks: { start: number; end: number; label: string }[] = [];
   MARK.lastIndex = 0;
@@ -290,7 +312,7 @@ export function parseChapter(chapter: { name: string; ordinal: number; text: str
       }
     }
     // Two-column pages: recover questions the in-order pass lost, up to the key's last number.
-    if (key.size) questions = recoverByNumber(body, questions, Math.max(...key.keys()));
+    if (key.size) questions = recoverByNumber(body, questions, Math.max(...key.keys()), chapter.allowStemless);
 
     // Directions carry FORWARD: a block printed before question 1 (the set's preamble) or cut from
     // the end of a question applies to every following question until the next one. Formats like
@@ -400,12 +422,21 @@ export function segmentAnswerBlocks(pages: OcrPage[], opts: ParseOptions): { nam
     const start = ones.map((i) => ({ i, len: splitSequential(region.slice(i), ANSWER_BLOCK_GAP).size })).sort((x, y) => y.len - x.len)[0]?.i;
     // The key: pairs right after the heading, up to the next markdown heading (or a sane cap).
     const after = text.slice(a.end, answers[k + 1]?.start ?? text.length);
-    const keyEnd = after.search(/^[ \t]*#/m);
-    const keyText = after.slice(0, keyEnd > 0 ? Math.min(keyEnd, 8000) : 8000);
+    // A key can run onto the next page, whose running heading ("# General Science") is not the
+    // key's end: a heading ends it only when no answer pairs follow it.
+    const keyEnd = [...after.matchAll(/^[ \t]*#.*$/gm)]
+      .find((h) => !/\d{1,3}\.\s*\(?[a-e]\)/.test(after.slice(h.index! + h[0].length, h.index! + h[0].length + 400)))?.index ?? -1;
+    const keyText = after.slice(0, keyEnd > 0 ? Math.min(keyEnd, 20000) : 20000);
     if (start !== undefined) {
       const before = text.slice(0, from + start);
       const parts = opts.partHeading ? [...before.split('\n')].map(headingText).filter((l) => opts.partHeading!.test(l)) : [];
-      const name = parts.length ? displayName(parts[parts.length - 1]) : `Question set ${out.length + 1}`;
+      // The run's own pages carry its part as their running heading; when one part dominates
+      // inside the run, that is the run's part (Biology's questions began right after a page of
+      // Chemistry-era prose, so "the last heading before" named them Chemistry).
+      const counts = new Map<string, number>();
+      if (opts.partHeading) for (const l of region.slice(start).split('\n').map(headingText)) if (opts.partHeading.test(l)) counts.set(displayName(l), (counts.get(displayName(l)) || 0) + 1);
+      const dominant = [...counts.entries()].sort((x, y) => y[1] - x[1])[0];
+      const name = dominant && dominant[1] >= 2 ? dominant[0] : parts.length ? displayName(parts[parts.length - 1]) : `Question set ${out.length + 1}`;
       // Headings inside the run are page/section headers, not question text — drop them so they
       // don't get glued onto the previous question's last option.
       const run = region.slice(start).replace(/^[ \t]*#.*$/gm, '');

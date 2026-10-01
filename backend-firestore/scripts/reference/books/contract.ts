@@ -384,12 +384,44 @@ const LUCENT_ENGLISH: ReferenceBook = {
   ],
 };
 
+const RY_SSC_REASONING: ReferenceBook = {
+  key: 'ry_ssc_reasoning',
+  title: 'SSC Reasoning 7000+ Objective Questions (Bilingual)',
+  publisher: 'Rakesh Yadav Readers Publication',
+  author: 'Rakesh Yadav',
+  language: 'English', // bilingual: Hindi printed alongside
+  domain: 'reasoning',
+  stagingDir: 'rakesh_yadav/ssc_reasoning',
+  categories: ['Verbal Reasoning', 'Logical Deduction', 'Non-Verbal Reasoning', 'Miscellaneous'],
+  // The 27 chapters of this copy's own contents page. Within a chapter, questions are grouped by
+  // "Type-I / Type-II ..." (numbering restarts per type) and the answer keys for every type sit
+  // together at the chapter's end.
+  chapterHeading:
+    /^(?:\d{1,2}[.)]?\s*)?(analogy (?:&|and) similarity|symbols? (?:&|and) notations?|number series|missing numbers?|classification(?: (?:&|and) deviation of figures?)?|coding[- ]?decoding|logical venn diagrams?|dice|direction(?: sense test)?|ranking (?:&|and) sitting arrangement|clock|calend[ae]r|cube (?:&|and) cuboid|syllogism|statements?,? arguments? (?:&|and) assumptions?|blood relations?|arithmetical problems?|arrangement of words in logical order|word formation|counting (?:of )?figures?|mirror (?:&|and) water images?|completion of (?:incomplete )?figures?|embedded figures?|paper cutting (?:&|and) folding|series)\s*$/i,
+  chapterCategory: [
+    [/\b(counting figure|mirror|water image|completion of figure|embedded figure|paper cutting|paper folding|deviation of figure|cube (&|and) cuboid|\bdice\b)/i, 'Non-Verbal Reasoning'],
+    [/\b(syllogism|statement|venn)/i, 'Logical Deduction'],
+    [/\b(analogy|symbol|notation|series|missing number|classification|coding|decoding|direction|ranking|sitting|clock|calendar|blood relation|arithmetical|logical order|word formation)/i, 'Verbal Reasoning'],
+  ],
+  subjectFor: () => 'reasoning',
+  examRelevance: ['SSC_CGL', 'SSC_CHSL', 'SSC_MTS', 'RAILWAY', 'GENERAL'],
+  probeQueries: [
+    'How do you solve analogy questions?',
+    'Method for coding-decoding questions.',
+    'How to solve a blood relation problem.',
+    'Rules for syllogism questions.',
+    'How to count triangles in a figure.',
+    'How to find the mirror image of a figure.',
+  ],
+};
+
 export const BOOKS: Record<string, ReferenceBook> = {
   [GK.key]: GK,
   [SCIENCE.key]: SCIENCE,
   [SCHAND_QUANT.key]: SCHAND_QUANT,
   [SCHAND_REASONING.key]: SCHAND_REASONING,
   [LUCENT_ENGLISH.key]: LUCENT_ENGLISH,
+  [RY_SSC_REASONING.key]: RY_SSC_REASONING,
   // aliases so the earlier `--book=gk|science` invocations still resolve
   gk: GK,
   science: SCIENCE,

@@ -63,7 +63,12 @@ interface Row {
 const norm = (s: string) => s.toLowerCase().replace(/&/g, ' and ').replace(/s\b/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 
 (async () => {
-  const rows: Row[] = JSON.parse(fs.readFileSync(path.join(FIGURE_DIR, 'manifest.json'), 'utf8'));
+  // keyed_manifest.json (figures/build_keys.py — answer pages read and joined with the precision
+  // checks) supersedes manifest.json's raw keys: a key counts only where that join said OK.
+  const keyed = path.join(FIGURE_DIR, 'keyed_manifest.json');
+  const rows: Row[] = fs.existsSync(keyed)
+    ? (JSON.parse(fs.readFileSync(keyed, 'utf8')) as (Row & { keyStatus?: string })[]).map((r) => ({ ...r, key: r.keyStatus === 'OK' ? r.key : null }))
+    : JSON.parse(fs.readFileSync(path.join(FIGURE_DIR, 'manifest.json'), 'utf8'));
 
   // Existing chapter ordinals from the last text ingestion; prefer the NON-VERBAL occurrence when a
   // name appears twice (the verbal and non-verbal parts both have Analogy and Classification).
@@ -82,9 +87,16 @@ const norm = (s: string) => s.toLowerCase().replace(/&/g, ' and ').replace(/s\b/
   const docs: any[] = [];
 
   for (const r of rows) {
-    const exNum = parseInt((r.exercise || '').match(/^\d+/)?.[0] || '', 10);
+    // No exercise number printed near the question (the answer pass left it blank): its chapter heading decides.
+    const byName = (name: string) => Number(Object.entries(NONVERBAL).find(([, c]) => {
+      const a = norm(c.name), b = norm(name || '');
+      return !!b && (a === b || a.includes(b) || b.includes(a) || (/embedded/.test(a) && /embedded/.test(b)));
+    })?.[0]);
+    const exNum = parseInt((r.exercise || '').match(/^\d+/)?.[0] || '', 10) || byName((r as any).chapter);
     const ch = NONVERBAL[exNum];
-    const id = createHash('sha256').update(`${key}|figure|${r.exercise}|${r.number}`).digest('hex').slice(0, 24);
+    // The page is part of the identity: unlabelled exercises (Embedded Figures has several, each from
+    // Q1) and re-printed sets reuse numbers, and without it 77 questions overwrote others (1 Oct 2026).
+    const id = createHash('sha256').update(`${key}|figure|${r.exercise || `ch:${(r as any).chapter}`}|${r.number}|p${(r as any).page}`).digest('hex').slice(0, 24);
     const labels = (r.optionLabels || []).map(String);
     const answerIndex = r.key ? labels.indexOf(String(r.key).trim()) : -1;
 
@@ -144,6 +156,17 @@ const norm = (s: string) => s.toLowerCase().replace(/&/g, ' and ').replace(/s\b/
   if (!dryRun) {
     await bookQuestionsRepository.writeQuestions(docs as any);
     console.log(`  wrote ${docs.length} rows; crops uploaded to private/book_figures/${key}/`);
+    // Figure rows from an earlier run that this run no longer produces (an id scheme change) are
+    // superseded, not left as duplicates.
+    const produced = new Set(docs.map((d) => d.id));
+    const stale = (await db.collection('book_questions').where('bookId', '==', key).where('extractionSource', '==', 'figure').get()).docs
+      .filter((d) => !produced.has(d.id) && d.get('quarantineReason') !== 'not_in_latest_extraction');
+    for (let i = 0; i < stale.length; i += 400) {
+      const b = db.batch();
+      for (const d of stale.slice(i, i + 400)) b.update(d.ref, { status: 'QUARANTINED', quarantineReason: 'not_in_latest_extraction', updatedAt: now });
+      await b.commit();
+    }
+    console.log(`  superseded ${stale.length} figure rows from earlier runs`);
   }
   process.exit(0);
 })().catch((e) => { console.error(e?.message || e); process.exit(1); });

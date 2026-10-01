@@ -13,6 +13,7 @@ import { randomUUID } from 'crypto';
 import { logger } from '../../utils/logger';
 import { parseBook, EXTRACTION_VERSION, OcrPage, ParseOptions } from './bookQuestionParser';
 import { parseEnglishBook } from './englishExerciseParser';
+import { parseTypedBook } from './typedSectionsLayout';
 import {
   bookQuestionsRepository, bookQuestionId, BookRecord, BookQuestionDoc, IngestionJob,
 } from '../../repositories/bookQuestions.repository';
@@ -51,7 +52,9 @@ export const bookIngestionService = {
 
     try {
       if (!dryRun) await bookQuestionsRepository.updateJob(jobId, { status: 'EXTRACTING' });
-      const { chapters, questions } = parse.layout === 'english-exercises' ? parseEnglishBook(pages, parse) : parseBook(pages, parse);
+      const { chapters, questions } = parse.layout === 'english-exercises' ? parseEnglishBook(pages, parse)
+        : parse.layout === 'typed-sections' ? parseTypedBook(pages, parse)
+        : parseBook(pages, parse);
 
       const now = new Date().toISOString();
       const existing = dryRun ? new Map() : await bookQuestionsRepository.existingIds(book.bookId);
