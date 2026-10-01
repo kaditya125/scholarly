@@ -34,3 +34,6 @@ backend-firestore/scripts/pyq/corpus/authentic/
 backend-firestore/scripts/pyq/tools/backup_before_quarantine.json
 backend-firestore/scripts/pyq/tools/quarantined_vector_ids.json
 backend-firestore/scripts/practice/data/
+
+# licensed book PDFs: never committed (public repo)
+social-kit/*.pdf

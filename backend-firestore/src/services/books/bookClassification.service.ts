@@ -80,7 +80,17 @@ export const bookClassificationService = {
   async chapters(bookId: string): Promise<ChapterInfo[]> {
     const book = await bookQuestionsRepository.getBook(bookId);
     const job = book?.lastIngestionJobId ? await bookQuestionsRepository.getJob(book.lastIngestionJobId) : null;
-    return (job?.perChapter || []).filter((c) => c.extracted > 0).map((c) => ({ ordinal: c.ordinal, name: c.name, extracted: c.extracted }));
+    const out = new Map((job?.perChapter || []).filter((c) => c.extracted > 0).map((c) => [c.ordinal, { ordinal: c.ordinal, name: c.name, extracted: c.extracted }]));
+    // Rows can become usable after the ingestion job (a re-read, an AI-verified key, an AI-built MCQ
+    // in a chapter the parser found no MCQs in): their chapters count too.
+    const ready = (await questionsCol().where('bookId', '==', bookId).where('status', '==', 'EXTRACTED').select('chapterOrdinal', 'chapterName', 'extractionSource').get())
+      .docs.map((d) => d.data() as BookQuestionDoc).filter((q) => q.extractionSource !== 'figure');
+    for (const q of ready) {
+      const c = out.get(q.chapterOrdinal) ?? { ordinal: q.chapterOrdinal, name: q.chapterName, extracted: 0 };
+      if (!out.has(q.chapterOrdinal)) out.set(q.chapterOrdinal, c);
+      c.extracted++;
+    }
+    return [...out.values()].sort((a, b) => a.ordinal - b.ordinal);
   },
 
   /** Step 1 — chapter → canonical syllabus node, per exam, verified against the node's own text. */
