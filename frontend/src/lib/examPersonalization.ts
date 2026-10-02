@@ -128,90 +128,249 @@ export const EXAM_CATALOG: Record<string, ExamPersonalization> = {
     "subjectOptions": [
       {
         "value": "Computer Science and Information Technology",
-        "label": "Computer Science & IT (Part-D Technical)"
+        "label": "All Part-D: Computer Science & IT (Full Section)"
+      },
+      {
+        "value": "Operating System",
+        "label": "Operating System (System Calls, Scheduling, Memory, Concurrency, Deadlocks)"
+      },
+      {
+        "value": "Computer Networks",
+        "label": "Computer Networks (OSI/TCP-IP, Routing, IP/CIDR, Sockets, Protocols)"
+      },
+      {
+        "value": "Databases",
+        "label": "Databases (ER-Model, Relational Algebra, SQL, Normal Forms, Transactions)"
+      },
+      {
+        "value": "Programming and Data Structures",
+        "label": "Programming & Data Structures (C Language, Trees, Heaps, Graphs, Recursion)"
+      },
+      {
+        "value": "Algorithms",
+        "label": "Algorithms (Searching, Sorting, Complexity, Greedy, Dynamic Programming, Graphs)"
+      },
+      {
+        "value": "Computer Organization and Architecture",
+        "label": "Computer Organization & Architecture (ALU, Pipelining, Hazards, Cache, Memory)"
+      },
+      {
+        "value": "Digital Logic",
+        "label": "Digital Logic (Boolean Algebra, Combinational/Sequential Circuits, Minimization)"
+      },
+      {
+        "value": "Theory of Computation",
+        "label": "Theory of Computation (Automata, Regular Languages, CFG, Pumping Lemma, Turing)"
+      },
+      {
+        "value": "Compiler Design",
+        "label": "Compiler Design (Lexical Analysis, Parsing, SDT, Intermediate Code, Optimization)"
+      },
+      {
+        "value": "Engineering Mathematics",
+        "label": "Engineering Mathematics (Discrete Math, Linear Algebra, Calculus, Probability)"
       },
       {
         "value": "General Intelligence & Reasoning",
-        "label": "General Intelligence & Reasoning (Paper-I)"
+        "label": "Paper-I: General Intelligence & Reasoning (50 Marks · Verbal/Non-Verbal)"
       },
       {
         "value": "General Awareness",
-        "label": "General Awareness & Science (Paper-I)"
+        "label": "Paper-I: General Awareness & Scientific Aspects (50 Marks · Science & Polity)"
       }
     ],
     "categories": [
       {
-        "label": "200-Q Full-Length Mock",
+        "label": "Full 200-Q CBT Paper",
         "count": "120 Min · 200 Marks",
         "countNum": 200,
-        "topic": "SSC Scientific Assistant (IMD) 2026: 200-Question Full-Length CBT Mock",
+        "topic": "SSC IMD 2022 Official CBT Paper (200 Questions)",
         "icon": "mocks"
       },
       {
         "label": "Part-D Technical CS (100 Qs)",
         "count": "60 Min · 100 Marks",
         "countNum": 100,
-        "topic": "SSC IMD Part-D CS Full Mock",
+        "topic": "SSC Scientific Assistant Part-D: 100-Question CS & IT CBT Paper",
         "icon": "mocks"
       },
       {
         "label": "Paper-I Non-Tech (100 Qs)",
         "count": "60 Min · 100 Marks",
         "countNum": 100,
-        "topic": "SSC IMD Paper-I Full Mock",
+        "topic": "SSC Scientific Assistant Paper-I: 100-Question Non-Tech CBT Paper",
         "icon": "mocks"
       },
       {
-        "label": "General Intelligence (50 Qs)",
-        "count": "50 Qs · 50 Marks",
+        "label": "Operating Systems Drill",
+        "count": "25 Qs · Concurrency & Deadlocks",
+        "countNum": 25,
+        "topic": "Operating System",
+        "icon": "subject"
+      },
+      {
+        "label": "Computer Networks Drill",
+        "count": "25 Qs · TCP/IP & Protocols",
+        "countNum": 25,
+        "topic": "Computer Networks",
+        "icon": "subject"
+      },
+      {
+        "label": "Databases & SQL Drill",
+        "count": "25 Qs · Queries & Normal Forms",
+        "countNum": 25,
+        "topic": "Databases",
+        "icon": "subject"
+      },
+      {
+        "label": "Data Structures & C",
+        "count": "25 Qs · Trees, Graphs & Heaps",
+        "countNum": 25,
+        "topic": "Programming and Data Structures",
+        "icon": "subject"
+      },
+      {
+        "label": "Algorithms & Complexity",
+        "count": "25 Qs · Sorting, DP & Graphs",
+        "countNum": 25,
+        "topic": "Algorithms",
+        "icon": "subject"
+      },
+      {
+        "label": "COA & Digital Logic",
+        "count": "25 Qs · Pipelining & Circuits",
+        "countNum": 25,
+        "topic": "Computer Organization and Architecture",
+        "icon": "subject"
+      },
+      {
+        "label": "TOC & Compiler Design",
+        "count": "25 Qs · Automata & Parsing",
+        "countNum": 25,
+        "topic": "Theory of Computation",
+        "icon": "subject"
+      },
+      {
+        "label": "Engineering Mathematics",
+        "count": "25 Qs · Discrete Math & Linear Algebra",
+        "countNum": 25,
+        "topic": "Engineering Mathematics",
+        "icon": "subject"
+      },
+      {
+        "label": "General Intelligence",
+        "count": "50 Qs · 50 Marks Speed Sprint",
         "countNum": 50,
         "topic": "General Intelligence & Reasoning",
         "icon": "speed"
       },
       {
-        "label": "General Awareness (50 Qs)",
-        "count": "50 Qs · 50 Marks",
+        "label": "General Awareness & Science",
+        "count": "50 Qs · 50 Marks Everyday Science",
         "countNum": 50,
         "topic": "General Awareness",
         "icon": "subject"
       },
       {
-        "label": "Full 200-Q PYQ Paper",
-        "count": "Official 200-Q CBT Pattern",
+        "label": "2017 Official CBT Paper",
+        "count": "Official 200-Q CBT Shift",
         "countNum": 200,
-        "topic": "SSC Scientific Assistant (IMD) 2026: 200-Question Full-Length CBT Mock",
+        "topic": "SSC IMD 2017 Official CBT Paper (200 Questions)",
         "icon": "pyq"
       }
     ],
     "fallbackRecommendations": [
       {
-        "title": "Operating Systems & Concurrency Mock",
+        "title": "Operating Systems: Concurrency, Deadlocks & Virtual Memory",
         "topic": "Operating System",
-        "reason": "Operating Systems carries 15% weightage in Syllabus 14.3.4 Part-D.",
+        "reason": "14.3.4 Part-D: System calls, processes, threads, IPC, semaphore/mutex, deadlocks and paging.",
         "type": "High Yield Drill",
         "count": 25
       },
       {
-        "title": "Computer Networks & Layering Practice",
+        "title": "Computer Networks: IP Addressing, TCP/UDP & Routing Protocols",
         "topic": "Computer Networks",
-        "reason": "Layering, TCP/IP, and IP addressing are high-frequency in IMD CS.",
+        "reason": "14.3.4 Part-D: CIDR, IPv4 fragmentation, distance vector, link state and sockets.",
         "type": "Concept Mastery",
+        "count": 25
+      },
+      {
+        "title": "Databases: SQL Queries, Normal Forms & Concurrency Control",
+        "topic": "Databases",
+        "reason": "14.3.4 Part-D: Relational algebra, B/B+ trees, 1NF to BCNF, ACID transactions.",
+        "type": "High Yield Drill",
+        "count": 25
+      },
+      {
+        "title": "Programming & Data Structures: Trees, Heaps & Recursion in C",
+        "topic": "Programming and Data Structures",
+        "reason": "14.3.4 Part-D: C pointers, recursion, BST, binary heaps and graph representations.",
+        "type": "Speed Sprint",
+        "count": 25
+      },
+      {
+        "title": "Algorithms: Greedy, Dynamic Programming & Graph Traversals",
+        "topic": "Algorithms",
+        "reason": "14.3.4 Part-D: Asymptotic complexity, shortest paths, MST, divide-and-conquer.",
+        "type": "Concept Mastery",
+        "count": 25
+      },
+      {
+        "title": "Computer Architecture: Cache, Pipelining & Hazards",
+        "topic": "Computer Organization and Architecture",
+        "reason": "14.3.4 Part-D: Structural/data/control hazards, cache mapping and DMA I/O.",
+        "type": "Core Architecture",
         "count": 20
       },
       {
-        "title": "Paper-I Reasoning Speed Sprint",
-        "topic": "General Intelligence & Reasoning",
-        "reason": "Scoring 45+/50 in Paper-I Reasoning is crucial for qualifying the technical cut-off.",
-        "type": "Speed Sprint",
+        "title": "Theory of Computation: Automata, Grammars & Decidability",
+        "topic": "Theory of Computation",
+        "reason": "14.3.4 Part-D: DFA/NFA minimization, regular expressions, CFG, PDA and Turing machines.",
+        "type": "Theory Mastery",
+        "count": 20
+      },
+      {
+        "title": "Compiler Design: Lexical Analysis, Parsing & Optimization",
+        "topic": "Compiler Design",
+        "reason": "14.3.4 Part-D: Top-down/bottom-up parsing, SDT, liveness analysis, dead code elimination.",
+        "type": "High Yield Drill",
+        "count": 20
+      },
+      {
+        "title": "Digital Logic: Boolean Minimization & Sequential Circuits",
+        "topic": "Digital Logic",
+        "reason": "14.3.4 Part-D: K-maps, flip-flops, counters, multiplexers and number representation.",
+        "type": "Logic Sprint",
+        "count": 20
+      },
+      {
+        "title": "Engineering Mathematics: Discrete Math, Linear Algebra & Probability",
+        "topic": "Engineering Mathematics",
+        "reason": "14.3.4 Part-D: Propositional logic, recurrence relations, eigenvalues and Bayes theorem.",
+        "type": "Math Benchmark",
         "count": 25
+      },
+      {
+        "title": "Paper-I Reasoning: Syllogisms, Series & Spatial Patterns",
+        "topic": "General Intelligence & Reasoning",
+        "reason": "14.2.1 Paper-I: 50 Marks verbal/non-verbal reasoning speed drill.",
+        "type": "Speed Sprint",
+        "count": 50
+      },
+      {
+        "title": "Paper-I General Awareness: Scientific Aspects & Current Affairs",
+        "topic": "General Awareness",
+        "reason": "14.2.2 Paper-I: 50 Marks everyday observations, science research and general polity.",
+        "type": "High Yield Drill",
+        "count": 50
       }
     ]
   },
   "SSC JE": {
-    "displayName": "SSC JE",
-    "examId": "SSC_JE_PAPER1",
+    "displayName": "SSC JE (Junior Engineer)",
+    "examId": "SSC_IMD_CS",
     "group": "ssc",
-    "tagline": "SSC Junior Engineer — Paper-I & Technical",
+    "tagline": "SSC Junior Engineer & IMD Scientific Assistant — CS & IT / Paper-I",
     "siblings": [
       "SSC CGL",
       "SSC IMD",
@@ -224,24 +383,70 @@ export const EXAM_CATALOG: Record<string, ExamPersonalization> = {
     ],
     "subjectOptions": [
       {
+        "value": "Computer Science and Information Technology",
+        "label": "Part-D: Computer Science & IT (100 Marks)"
+      },
+      {
         "value": "General Intelligence & Reasoning",
         "label": "General Intelligence & Reasoning (50 Marks)"
       },
       {
         "value": "General Awareness",
-        "label": "General Awareness (50 Marks)"
+        "label": "General Awareness & Science (50 Marks)"
       },
       {
-        "value": "Technical Engineering",
-        "label": "Technical Engineering (100 Marks)"
+        "value": "Operating System",
+        "label": "Operating System (System Calls, Scheduling, Memory, Deadlocks)"
+      },
+      {
+        "value": "Computer Networks",
+        "label": "Computer Networks (OSI/TCP-IP, Routing, Sockets, Protocols)"
+      },
+      {
+        "value": "Databases",
+        "label": "Databases (ER-Model, Relational Algebra, SQL, Normal Forms)"
+      },
+      {
+        "value": "Programming and Data Structures",
+        "label": "Programming & Data Structures (C Language, Trees, Heaps, Graphs)"
+      },
+      {
+        "value": "Algorithms",
+        "label": "Algorithms (Searching, Sorting, Complexity, Greedy, DP)"
+      },
+      {
+        "value": "Computer Organization and Architecture",
+        "label": "Computer Organization & Architecture (ALU, Pipelining, Cache)"
+      },
+      {
+        "value": "Digital Logic",
+        "label": "Digital Logic (Boolean Algebra, Circuits, Minimization)"
+      },
+      {
+        "value": "Engineering Mathematics",
+        "label": "Engineering Mathematics (Discrete Math, Linear Algebra, Probability)"
       }
     ],
     "categories": [
       {
-        "label": "Paper-I Non-Tech (100 Qs)",
-        "count": "120 Min · 100 Marks",
+        "label": "Full 200-Q CBT Paper",
+        "count": "120 Min · 200 Marks",
+        "countNum": 200,
+        "topic": "SSC IMD 2022 Official CBT Paper (200 Questions)",
+        "icon": "mocks"
+      },
+      {
+        "label": "Part-D Technical CS (100 Qs)",
+        "count": "60 Min · 100 Marks",
         "countNum": 100,
-        "topic": "SSC JE Paper-I Full Mock",
+        "topic": "SSC Scientific Assistant Part-D: 100-Question CS & IT CBT Paper",
+        "icon": "mocks"
+      },
+      {
+        "label": "Paper-I Non-Tech (100 Qs)",
+        "count": "60 Min · 100 Marks",
+        "countNum": 100,
+        "topic": "SSC Scientific Assistant Paper-I: 100-Question Non-Tech CBT Paper",
         "icon": "mocks"
       },
       {
@@ -260,9 +465,9 @@ export const EXAM_CATALOG: Record<string, ExamPersonalization> = {
       },
       {
         "label": "Previous Year Papers",
-        "count": "2020–2024 PYQs",
-        "countNum": 100,
-        "topic": "SSC JE Previous Year Questions",
+        "count": "Official 200-Q CBT Pattern",
+        "countNum": 200,
+        "topic": "SSC IMD 2017 Official CBT Paper (200 Questions)",
         "icon": "pyq"
       }
     ],
@@ -273,6 +478,13 @@ export const EXAM_CATALOG: Record<string, ExamPersonalization> = {
         "reason": "50 marks in Paper-I determines qualification threshold.",
         "type": "Speed Drill",
         "count": 50
+      },
+      {
+        "title": "Part-D Computer Science & IT Full Technical Drill",
+        "topic": "Computer Science and Information Technology",
+        "reason": "100 marks technical section under Syllabus 14.3.4 Part-D.",
+        "type": "Technical Core",
+        "count": 25
       }
     ]
   },
@@ -1465,7 +1677,8 @@ export const ALL_EXAMS = Object.keys(EXAM_CATALOG);
 export const EXAMS = ALL_EXAMS;
 export const GOAL_TO_EXAM: Record<string, string> = {
   SSC: 'SSC CGL', 'SSC IMD': 'SSC IMD', 'SSC Scientific Assistant': 'SSC IMD',
-  'SSC JE': 'SSC JE', 'GATE CS': 'SSC IMD', 'ISRO CS': 'SSC IMD', UPSC: 'UPSC',
+  'SSC JE': 'SSC JE', 'SSC JE CS': 'SSC IMD', 'SSC JEE CS': 'SSC IMD', 'SSC JE (CS)': 'SSC IMD',
+  'SSC JE IT': 'SSC IMD', 'GATE CS': 'SSC IMD', 'ISRO CS': 'SSC IMD', UPSC: 'UPSC',
   NEET: 'NEET', 'JEE Main': 'JEE Main', 'JEE Advanced': 'JEE Main', GATE: 'JEE Main',
   Banking: 'Banking PO', Railway: 'Railway NTPC', BPSC: 'BPSC', 'State PSC': 'State PSC',
   College: 'UPSC',

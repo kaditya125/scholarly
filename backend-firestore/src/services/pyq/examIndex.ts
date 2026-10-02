@@ -50,7 +50,7 @@ const EXTRA_ALIASES: Record<string, string[]> = {
   IBPS_PO: ['ibps', 'ibpspo'],
   BPSC_TRE: ['tre', 'bpsctre', 'bpsc teacher', 'bihar teacher', 'bihar tre', 'bpsc tre 1', 'bpsc tre 2', 'bpsc tre 3', 'tre 1', 'tre 2', 'tre 3', 'tre1', 'tre2', 'tre3'],
   BIHAR_STET: ['stet', 'bihar stet', 'bseb stet', 'stet paper 1', 'stet paper 2', 'stet 1', 'stet 2', 'stet1', 'stet2'],
-  SSC_IMD_CS: ['ssc imd', 'ssc imd cs', 'scientific assistant', 'imd scientific assistant', 'imd cs', 'ssc scientific assistant'],
+  SSC_IMD_CS: ['ssc imd', 'ssc imd cs', 'scientific assistant', 'imd scientific assistant', 'imd cs', 'ssc scientific assistant', 'ssc je cs', 'ssc jee cs', 'ssc je computer science', 'ssc je it'],
   SSC_IMD_PAPER1: ['ssc imd paper 1', 'ssc imd paper1', 'imd paper 1', 'imd non tech'],
   SSC_JE: ['ssc je', 'je', 'junior engineer'],
   GATE_CS: ['gate cs', 'gate cse', 'gate computer science'],
