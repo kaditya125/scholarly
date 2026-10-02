@@ -55,8 +55,8 @@ async function main() {
         id: data.questionId || doc.id,
         examId: data.examId || examId,
         subject: data.subject || (examId === 'SSC_IMD_PAPER1' ? 'General Intelligence & Awareness' : 'Computer Science and Information Technology'),
-        chapter: data.chapter || data.topic || 'Core Syllabus',
         topic: data.topic || data.chapter || 'Core Syllabus',
+        section: data.chapter || data.topic || 'Core Syllabus',
         difficulty: mapDifficulty(data.difficulty),
         text: data.questionText || '',
         options,
@@ -64,8 +64,6 @@ async function main() {
         explanation: data.solution || data.explanation || `Correct answer is option: ${data.correctAnswer}`,
         marks: data.marks ?? 1,
         negativeMarks: data.negativeMarks ?? 0.25,
-        isReferenceGrounded: true,
-        provenance: data.examName || `${examId} Official Paper`,
         sourcePyqId: data.questionId || doc.id,
         sourceYear: data.year,
         sourceShift: data.shift,
@@ -127,7 +125,7 @@ async function main() {
 
   // Mock 2: SSC Scientific Assistant Paper-I Non-Tech CBT Paper
   const paper1Questions = questionsByExam['SSC_IMD_PAPER1'] || [];
-  const reasoningQs = paper1Questions.filter((q) => q.topic?.toLowerCase().includes('reasoning') || q.chapter?.toLowerCase().includes('reasoning'));
+  const reasoningQs = paper1Questions.filter((q) => q.topic?.toLowerCase().includes('reasoning') || q.section?.toLowerCase().includes('reasoning'));
   const gaQs = paper1Questions.filter((q) => !reasoningQs.includes(q));
 
   testsToSave.push({
