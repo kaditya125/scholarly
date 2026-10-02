@@ -10,120 +10,163 @@ const COUNTS = [5, 10, 15, 20];
 
 const SUBJECT_TOPIC_SUGGESTIONS: Record<string, string[]> = {
   'General Intelligence & Reasoning': [
-    'Analogies & Similarities',
-    'Syllogisms & Deductive Logic',
-    'Number & Alphabet Series',
-    'Coding-Decoding',
-    'Blood Relations',
-    'Direction Sense',
-    'Arithmetical Reasoning',
+    'Analogies & Similarities (Semantic, Symbolic & Number)',
     'Classification & Odd-One-Out',
-    'Puzzles & Seating Arrangements',
+    'Number & Alphabet Series',
+    'Coding & Decoding (Letter, Number & Substitution)',
+    'Blood Relations & Family Tree',
+    'Syllogisms & Deductive Logic (Statements & Conclusions)',
+    'Direction Sense & Spatial Orientation',
+    'Arithmetical Reasoning & Mathematical Operations',
+    'Puzzles & Seating Arrangements (Linear, Circular, Floor)',
     'Venn Diagrams & Set Relations',
-    'Word Formation & Dictionary Order',
+    'Alphabet & Word Formation (Matrix & Dictionary Order)',
+    'Paper Folding, Cutting & Embedded Figures',
   ],
   'General Intelligence and Reasoning': [
-    'Analogies & Similarities',
-    'Syllogisms & Deductive Logic',
-    'Number & Alphabet Series',
-    'Coding-Decoding',
-    'Blood Relations',
-    'Direction Sense',
-    'Arithmetical Reasoning',
+    'Analogies & Similarities (Semantic, Symbolic & Number)',
     'Classification & Odd-One-Out',
-    'Puzzles & Seating Arrangements',
+    'Number & Alphabet Series',
+    'Coding & Decoding (Letter, Number & Substitution)',
+    'Blood Relations & Family Tree',
+    'Syllogisms & Deductive Logic (Statements & Conclusions)',
+    'Direction Sense & Spatial Orientation',
+    'Arithmetical Reasoning & Mathematical Operations',
+    'Puzzles & Seating Arrangements (Linear, Circular, Floor)',
     'Venn Diagrams & Set Relations',
-    'Word Formation & Dictionary Order',
+    'Alphabet & Word Formation (Matrix & Dictionary Order)',
+    'Paper Folding, Cutting & Embedded Figures',
+  ],
+  'General Awareness': [
+    'Everyday Science & Scientific Aspects (Physics, Chemistry, Biology)',
+    'General Polity & Constitution of India (Articles, Amendments, Rights)',
+    'Indian History & National Movement (Ancient, Medieval, Modern)',
+    'Geography & Environment of India (Rivers, Climate, Ecology)',
+    'Economic Scene, Financial Policy & Budget',
+    'Current Events (National & International Affairs, Summits)',
+    'Scientific Research & Space Technology (ISRO, DRDO, IMD)',
+    'Static GK, Indian Heritage, Books & Authors',
+  ],
+  'General Awareness & Science': [
+    'Everyday Science & Scientific Aspects (Physics, Chemistry, Biology)',
+    'General Polity & Constitution of India (Articles, Amendments, Rights)',
+    'Indian History & National Movement (Ancient, Medieval, Modern)',
+    'Geography & Environment of India (Rivers, Climate, Ecology)',
+    'Economic Scene, Financial Policy & Budget',
+    'Current Events (National & International Affairs, Summits)',
+    'Scientific Research & Space Technology (ISRO, DRDO, IMD)',
+    'Static GK, Indian Heritage, Books & Authors',
+  ],
+  'Computer Science and Information Technology': [
+    'Operating Systems',
+    'Computer Networks',
+    'Databases & SQL',
+    'Programming & Data Structures (C Language)',
+    'Algorithms & Complexity',
+    'Computer Organization & Architecture',
+    'Digital Logic',
+    'Theory of Computation',
+    'Compiler Design',
+    'Engineering Mathematics',
   ],
   'Operating System': [
-    'CPU Scheduling',
-    'Deadlocks & Synchronization',
-    'Virtual Memory & Paging',
-    'System Calls & Processes',
-    'File Systems & Disk Scheduling',
+    'CPU Scheduling (FCFS, SJF, Round Robin, Priority)',
+    'Process Synchronization, Semaphores & Mutex',
+    'Deadlocks (Detection, Prevention, Avoidance, Banker Algorithm)',
+    'Memory Management & Paging (Page Tables, TLB)',
+    'Virtual Memory & Page Replacement (FIFO, LRU, Optimal)',
+    'System Calls, Process States & Fork/Exec',
+    'File Systems & Disk Scheduling (SCAN, C-SCAN, SSTF)',
+    'Threads, Concurrency & Inter-Process Communication',
   ],
   'Computer Networks': [
-    'OSI & TCP/IP Protocol Suite',
-    'Subnetting & CIDR Addressing',
-    'Routing Protocols (OSPF, BGP, RIP)',
-    'TCP Flow & Congestion Control',
-    'Sockets, DNS, HTTP & Application Layer',
+    'OSI Reference Model & TCP/IP Architecture',
+    'IP Addressing, Subnetting & CIDR Calculation',
+    'Routing Protocols (OSPF, BGP, RIP, Distance Vector & Link State)',
+    'TCP Flow Control, Congestion Control & 3-Way Handshake',
+    'Transport Layer & UDP Ports',
+    'Network Layer Protocols (ARP, RARP, ICMP, DHCP)',
+    'Application Layer Protocols (DNS, HTTP, HTTPS, FTP, SMTP, Sockets)',
+    'Data Link Layer Framing, CRC Error Detection & CSMA/CD',
+    'Network Security, Firewalls & Cryptography Basics',
   ],
   'Databases': [
-    'SQL Queries & Joins',
-    'Normalization (1NF, 2NF, 3NF, BCNF)',
+    'SQL Queries, Joins, Aggregations & Subqueries',
+    'Database Normalization (1NF, 2NF, 3NF, BCNF & Functional Dependencies)',
     'Transactions & ACID Properties',
-    'Concurrency Control & Serializability',
-    'ER Modeling & Relational Algebra',
+    'Concurrency Control, Serializability & 2-Phase Locking',
+    'ER Modeling, Entities, Attributes & Cardinality',
+    'Relational Algebra & Tuple Relational Calculus',
+    'Indexing, B-Trees & B+ Trees',
+    'Database Recovery Techniques & WAL',
   ],
   'Programming and Data Structures': [
-    'C Pointers & Dynamic Memory',
-    'Binary Search Trees & Heaps',
-    'Graphs (BFS, DFS, Shortest Paths)',
-    'Stacks, Queues & Linked Lists',
-    'Recursion & Complexity',
+    'C Pointers, Pointer Arithmetic & Dynamic Memory (malloc, free)',
+    'Recursion, Stack Frames & Storage Classes',
+    'Linear Data Structures (Arrays, Linked Lists, Stacks, Queues)',
+    'Binary Trees, Binary Search Trees (BST) & Tree Traversals',
+    'Heaps, Priority Queues & Heap Sort',
+    'Graph Representation & Traversals (BFS, DFS)',
+    'Hashing, Hash Functions & Collision Resolution',
   ],
   'Algorithms': [
-    'Asymptotic Analysis (Big-O)',
-    'Dynamic Programming',
-    'Greedy Algorithms',
-    'Divide and Conquer & Sorting',
-    'Graph Algorithms (Dijkstra, Kruskal)',
+    'Asymptotic Analysis (Big-O, Omega, Theta & Master Theorem)',
+    'Sorting Algorithms (Quick Sort, Merge Sort, Heap Sort) & Lower Bounds',
+    'Searching Algorithms (Binary Search, Divide and Conquer)',
+    'Greedy Algorithms (Huffman Coding, Knapsack, Activity Selection)',
+    'Dynamic Programming (0/1 Knapsack, LCS, Matrix Chain)',
+    'Graph Algorithms (Dijkstra, Bellman-Ford, Kruskal, Prim)',
+    'NP-Completeness & Complexity Classes',
   ],
   'Computer Organization and Architecture': [
-    'Pipelining & Branch Hazards',
-    'Cache Memory & Cache Mapping',
+    'CPU Pipelining, Pipeline Depth & Hazards (Data, Control, Structural)',
+    'Cache Memory Organization (Direct, Associative, Set-Associative)',
     'Instruction Formats & Addressing Modes',
-    'ALU & Number Representation',
+    'ALU, Computer Arithmetic, 2s Complement & Booth Algorithm',
+    'Memory Hierarchy & Main Memory Interfacing',
+    'Input/Output Organization, Interrupts & DMA Transfer',
   ],
   'Digital Logic': [
-    'Boolean Algebra & K-Maps',
-    'Combinational Circuits (Mux, Decoder)',
-    'Sequential Circuits & Flip-Flops',
-    'Counters & Shift Registers',
+    'Boolean Algebra, Logic Gates & De Morgan Laws',
+    'K-Maps & Boolean Expression Minimization',
+    'Combinational Circuits (Multiplexers, Decoders, Adders, Subtractors)',
+    'Sequential Circuits & Flip-Flops (SR, JK, D, T)',
+    'Synchronous & Asynchronous Counters, Shift Registers',
+    'Number Systems, Conversions & Floating Point Representation',
   ],
   'Theory of Computation': [
-    'Finite Automata (DFA, NFA)',
-    'Regular Expressions & Languages',
-    'Context-Free Grammars & PDA',
-    'Turing Machines & Decidability',
+    'Finite Automata (DFA, NFA & Equivalence)',
+    'Regular Expressions, Regular Languages & Pumping Lemma',
+    'Context-Free Grammars (CFG), Ambiguity & PDA',
+    'Turing Machines & Chomsky Hierarchy',
+    'Decidability, Undecidability & Halting Problem',
   ],
   'Compiler Design': [
     'Lexical Analysis & Tokenization',
-    'Syntax Analysis (LL & LR Parsers)',
-    'Intermediate Code Generation',
-    'Code Optimization & Data Flow',
+    'Top-Down Parsing & LL(1) Grammars',
+    'Bottom-Up Parsing (LR(0), SLR, LALR, CLR)',
+    'Syntax-Directed Translation (SDT) & Attribute Grammars',
+    'Intermediate Code Generation (Three-Address Code)',
+    'Code Optimization & Data Flow Analysis',
   ],
   'Engineering Mathematics': [
-    'Discrete Mathematics & Graph Theory',
-    'Linear Algebra (Matrices, Eigenvalues)',
-    'Probability & Random Variables',
-    'Calculus & Numerical Methods',
-  ],
-  'General Awareness': [
-    'Everyday Science & Scientific Aspects',
-    'General Polity & Indian Constitution',
-    'Indian History & National Movement',
-    'Geography & Environment of India',
-    'Economic Scene & Financial Policy',
-    'Current Events (National & International)',
-    'Static GK, Awards & Culture',
-  ],
-  'General Awareness & Science': [
-    'Everyday Science & Scientific Aspects',
-    'General Polity & Indian Constitution',
-    'Indian History & National Movement',
-    'Geography & Environment of India',
-    'Economic Scene & Financial Policy',
-    'Current Events (National & International)',
-    'Static GK, Awards & Culture',
+    'Discrete Mathematics (Sets, Relations, Functions, Lattices, Groups)',
+    'Mathematical Logic (Propositional & Predicate Logic)',
+    'Linear Algebra (Matrices, Determinants, Systems of Equations, Eigenvalues)',
+    'Combinatorics & Counting Principles',
+    'Probability, Random Variables, Distributions & Bayes Theorem',
+    'Calculus (Limits, Continuity, Derivatives, Maxima/Minima, Integrals)',
+    'Graph Theory (Trees, Cycles, Planarity, Coloring)',
   ],
   'Quantitative Aptitude': [
-    'Percentage, Profit & Loss',
-    'Ratio, Proportion & Mixture',
-    'Time, Speed, Distance & Work',
+    'Percentage, Profit & Loss, Discount',
+    'Ratio, Proportion, Partnership & Mixtures',
+    'Time, Speed, Distance & Trains',
+    'Time and Work & Pipes-Cisterns',
     'Simple & Compound Interest',
-    'Algebra & Geometry',
+    'Basic Algebra, Surds & Indices',
+    'Geometry, Mensuration (2D & 3D) & Trigonometry',
+    'Data Interpretation (Bar, Pie, Table Charts)',
   ],
 };
 
@@ -140,6 +183,7 @@ export function AdaptiveTestGenerator({ selectedExam }: AdaptiveTestGeneratorPro
   const [isGenerating, setIsGenerating] = useState(false);
   const [subject, setSubject] = useState(subjectOptions[0]?.value || 'Mathematics');
   const [customTopic, setCustomTopic] = useState('');
+  const [isCustomMode, setIsCustomMode] = useState(false);
   const [count, setCount] = useState(10);
   const [mode, setMode] = useState<QuizMode>('exam');
 
@@ -148,11 +192,13 @@ export function AdaptiveTestGenerator({ selectedExam }: AdaptiveTestGeneratorPro
   useEffect(() => {
     setSubject(subjectOptions[0]?.value || 'Mathematics');
     setCustomTopic('');
+    setIsCustomMode(false);
   }, [selectedExam]);
 
   const handleSubjectChange = (newSubject: string) => {
     setSubject(newSubject);
     setCustomTopic('');
+    setIsCustomMode(false);
   };
 
   const topicSuggestions = SUBJECT_TOPIC_SUGGESTIONS[subject] || [];
@@ -209,42 +255,83 @@ export function AdaptiveTestGenerator({ selectedExam }: AdaptiveTestGeneratorPro
         <div>
           <div className="flex items-center justify-between mb-1">
             <label className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-              Topic or chapter <span className="text-slate-400 dark:text-slate-500 font-normal">· optional</span>
+              Topic or subtopic <span className="text-slate-400 dark:text-slate-500 font-normal">· syllabus-aligned</span>
             </label>
-            {customTopic && (
+            {(customTopic || isCustomMode) && (
               <button
                 type="button"
-                onClick={() => setCustomTopic('')}
-                className="text-[10.5px] text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                onClick={() => { setCustomTopic(''); setIsCustomMode(false); }}
+                className="text-[10.5px] text-[#8ba32b] dark:text-[#c8e558] hover:underline transition-colors cursor-pointer"
               >
-                Clear
+                Reset to All
               </button>
             )}
           </div>
-          <input
-            type="text"
-            value={customTopic}
-            onChange={(e) => setCustomTopic(e.target.value)}
-            placeholder={
-              subject.includes('Reasoning')
-                ? 'e.g. Syllogisms, Analogies, Blood Relations'
-                : 'e.g. Paging, Normalization, Routing'
-            }
-            className={field}
-          />
+
+          {topicSuggestions.length > 0 ? (
+            <select
+              value={isCustomMode ? '__custom__' : customTopic}
+              onChange={(e) => {
+                if (e.target.value === '__custom__') {
+                  setIsCustomMode(true);
+                  setCustomTopic('');
+                } else {
+                  setIsCustomMode(false);
+                  setCustomTopic(e.target.value);
+                }
+              }}
+              className={field}
+            >
+              <option value="" className="dark:bg-[#1a1a1b]">All Topics (Full Subject / Mixed Syllabus)</option>
+              <optgroup label="Official Syllabus Topics" className="dark:bg-[#1a1a1b]">
+                {topicSuggestions.map((t) => (
+                  <option key={t} value={t} className="dark:bg-[#1a1a1b]">{t}</option>
+                ))}
+              </optgroup>
+              <option value="__custom__" className="dark:bg-[#1a1a1b]">Custom subtopic (type your own)…</option>
+            </select>
+          ) : (
+            <input
+              type="text"
+              value={customTopic}
+              onChange={(e) => setCustomTopic(e.target.value)}
+              placeholder="e.g. Percentage, Optics, Constitution"
+              className={field}
+            />
+          )}
+
+          {isCustomMode && (
+            <input
+              type="text"
+              autoFocus
+              value={customTopic}
+              onChange={(e) => setCustomTopic(e.target.value)}
+              placeholder="Type specific subtopic or chapter…"
+              className={cn(field, "mt-1.5")}
+            />
+          )}
+
           {topicSuggestions.length > 0 && (
             <div className="mt-2">
               <span className="block text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
-                Popular topic drills:
+                Quick topic selection:
               </span>
               <div className="flex flex-wrap gap-1 max-h-36 overflow-y-auto pr-0.5">
                 {topicSuggestions.map((suggestion) => {
-                  const isSelected = customTopic.trim().toLowerCase() === suggestion.toLowerCase();
+                  const isSelected = !isCustomMode && customTopic.trim().toLowerCase() === suggestion.toLowerCase();
                   return (
                     <button
                       key={suggestion}
                       type="button"
-                      onClick={() => setCustomTopic(isSelected ? '' : suggestion)}
+                      onClick={() => {
+                        if (isSelected) {
+                          setCustomTopic('');
+                          setIsCustomMode(false);
+                        } else {
+                          setCustomTopic(suggestion);
+                          setIsCustomMode(false);
+                        }
+                      }}
                       className={cn(
                         "px-2 py-0.5 rounded-md text-[11px] font-medium transition-colors cursor-pointer border text-left",
                         isSelected

@@ -127,56 +127,56 @@ export const EXAM_CATALOG: Record<string, ExamPersonalization> = {
     ],
     "subjectOptions": [
       {
-        "value": "Computer Science and Information Technology",
-        "label": "All Part-D: Computer Science & IT (Full Section)"
-      },
-      {
-        "value": "Operating System",
-        "label": "Operating System (System Calls, Scheduling, Memory, Concurrency, Deadlocks)"
-      },
-      {
-        "value": "Computer Networks",
-        "label": "Computer Networks (OSI/TCP-IP, Routing, IP/CIDR, Sockets, Protocols)"
-      },
-      {
-        "value": "Databases",
-        "label": "Databases (ER-Model, Relational Algebra, SQL, Normal Forms, Transactions)"
-      },
-      {
-        "value": "Programming and Data Structures",
-        "label": "Programming & Data Structures (C Language, Trees, Heaps, Graphs, Recursion)"
-      },
-      {
-        "value": "Algorithms",
-        "label": "Algorithms (Searching, Sorting, Complexity, Greedy, Dynamic Programming, Graphs)"
-      },
-      {
-        "value": "Computer Organization and Architecture",
-        "label": "Computer Organization & Architecture (ALU, Pipelining, Hazards, Cache, Memory)"
-      },
-      {
-        "value": "Digital Logic",
-        "label": "Digital Logic (Boolean Algebra, Combinational/Sequential Circuits, Minimization)"
-      },
-      {
-        "value": "Theory of Computation",
-        "label": "Theory of Computation (Automata, Regular Languages, CFG, Pumping Lemma, Turing)"
-      },
-      {
-        "value": "Compiler Design",
-        "label": "Compiler Design (Lexical Analysis, Parsing, SDT, Intermediate Code, Optimization)"
-      },
-      {
-        "value": "Engineering Mathematics",
-        "label": "Engineering Mathematics (Discrete Math, Linear Algebra, Calculus, Probability)"
-      },
-      {
         "value": "General Intelligence & Reasoning",
         "label": "Paper-I: General Intelligence & Reasoning (50 Marks · Verbal/Non-Verbal)"
       },
       {
         "value": "General Awareness",
         "label": "Paper-I: General Awareness & Scientific Aspects (50 Marks · Science & Polity)"
+      },
+      {
+        "value": "Computer Science and Information Technology",
+        "label": "Part-D: Computer Science & IT (All 10 Subjects · Full 100 Marks Technical)"
+      },
+      {
+        "value": "Operating System",
+        "label": "Part-D: Operating Systems (System Calls, Scheduling, Memory, Deadlocks)"
+      },
+      {
+        "value": "Computer Networks",
+        "label": "Part-D: Computer Networks (OSI/TCP-IP, Routing, Sockets, Protocols)"
+      },
+      {
+        "value": "Databases",
+        "label": "Part-D: Databases & SQL (ER-Model, Relational Algebra, SQL, Normal Forms)"
+      },
+      {
+        "value": "Programming and Data Structures",
+        "label": "Part-D: Programming & Data Structures (C Language, Trees, Heaps, Graphs)"
+      },
+      {
+        "value": "Algorithms",
+        "label": "Part-D: Algorithms & Complexity (Searching, Sorting, Greedy, DP)"
+      },
+      {
+        "value": "Computer Organization and Architecture",
+        "label": "Part-D: Computer Organization & Architecture (ALU, Pipelining, Cache)"
+      },
+      {
+        "value": "Digital Logic",
+        "label": "Part-D: Digital Logic (Boolean Algebra, Circuits, Minimization)"
+      },
+      {
+        "value": "Theory of Computation",
+        "label": "Part-D: Theory of Computation (Automata, CFG, Pumping Lemma, Turing)"
+      },
+      {
+        "value": "Compiler Design",
+        "label": "Part-D: Compiler Design (Lexical Analysis, Parsing, SDT, Optimization)"
+      },
+      {
+        "value": "Engineering Mathematics",
+        "label": "Part-D: Engineering Mathematics (Discrete Math, Linear Algebra, Probability)"
       }
     ],
     "categories": [
@@ -439,16 +439,16 @@ export const EXAM_CATALOG: Record<string, ExamPersonalization> = {
     ],
     "subjectOptions": [
       {
-        "value": "Computer Science and Information Technology",
-        "label": "Part-D: Computer Science & IT (100 Marks)"
-      },
-      {
         "value": "General Intelligence & Reasoning",
-        "label": "General Intelligence & Reasoning (50 Marks)"
+        "label": "Paper-I: General Intelligence & Reasoning (50 Marks · Verbal/Non-Verbal)"
       },
       {
         "value": "General Awareness",
-        "label": "General Awareness & Science (50 Marks)"
+        "label": "Paper-I: General Awareness & Scientific Aspects (50 Marks · Science & Polity)"
+      },
+      {
+        "value": "Computer Science and Information Technology",
+        "label": "Part-D: Computer Science & IT (All 10 Subjects · Full 100 Marks Technical)"
       },
       {
         "value": "Operating System",
