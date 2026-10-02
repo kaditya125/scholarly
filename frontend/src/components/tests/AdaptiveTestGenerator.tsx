@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Sparkles, Loader2, Crosshair, GraduationCap, Timer } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Sparkles, Loader2, Crosshair, GraduationCap, Timer, BookOpen } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useTheme } from '../../lib/ThemeContext';
 import { useLaunchTest } from '../../hooks/ai/useLaunchTest';
@@ -177,6 +178,7 @@ interface AdaptiveTestGeneratorProps {
 export function AdaptiveTestGenerator({ selectedExam }: AdaptiveTestGeneratorProps) {
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
+  const navigate = useNavigate();
   const launch = useLaunchTest();
   const { examId, subjectOptions } = getExamConfig(selectedExam);
 
@@ -211,6 +213,44 @@ export function AdaptiveTestGenerator({ selectedExam }: AdaptiveTestGeneratorPro
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleReviseWithTutor = () => {
+    const focusTopic = customTopic.trim() || subject;
+    const promptText = `Target Exam: SSC Scientific Assistant in IMD / SSC JE CS & IT (CBT Exam Window: Nov 2 - Nov 6).
+Subject: ${subject}
+Topic: ${focusTopic}
+
+Role: Act as my Senior Subject Expert & 1-on-1 Exam Revision Tutor for this examination.
+
+Please structure our fast, high-yield revision in conversational, relatable language:
+1. EXAM WEIGHTAGE & HISTORICAL PYQ PATTERN:
+   - What is the exact marks weightage and frequency for "${focusTopic}" in SSC IMD (2022/2017), ISRO/NIELIT CS, and SSC JE?
+   - What recurring question styles appear (e.g. numerical calculation, definition trap, formula substitution)?
+
+2. CORE CONCEPTS & INTUITIVE EXPLANATION:
+   - Ground your explanations strictly in authoritative reference texts (e.g. Silberschatz/Galvin for OS, Kurose-Ross for Networks, Navathe for DBMS, Cormen for Algorithms, Lucent for GA, Rakesh Yadav for Reasoning). Do NOT hallucinate concepts.
+   - Explain the core mechanism in clear, friendly, and relatable terms with intuitive real-world analogies so I can quickly master it for the upcoming Nov 2–6 exam.
+   - Summarize key formulas, state transitions, algorithms, or truth tables in clean markdown.
+
+3. COMMON SSC EXAM TRAPS & PITFALLS:
+   - What are the top 2-3 specific confusions or trick options examiners use to cause negative marking (-0.25)?
+
+4. AUTHENTIC PYQ WALKTHROUGH:
+   - Provide 1 authentic previous year question on this exact topic and walk me through the step-by-step solution showing how to solve it in under 45 seconds.
+
+5. RAPID-FIRE CONCEPT CHECK:
+   - End with 1 high-yield practice question for me to answer right now in our chat to confirm my understanding.
+
+Let's begin!`;
+
+    const params = new URLSearchParams({
+      exam: 'SSC IMD',
+      topic: `${subject} - ${focusTopic}`,
+      prompt: promptText,
+    });
+
+    navigate(`/chat?${params.toString()}`);
   };
 
   const field = cn(
@@ -389,17 +429,28 @@ export function AdaptiveTestGenerator({ selectedExam }: AdaptiveTestGeneratorPro
           </div>
         </div>
 
-        <button
-          onClick={handleGenerate}
-          disabled={isGenerating}
-          className="w-full h-9 mt-1 bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 rounded-lg text-[13px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-60"
-        >
-          {isGenerating ? (
-            <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating…</>
-          ) : (
-            <><Crosshair className="w-3.5 h-3.5" /> Generate practice test</>
-          )}
-        </button>
+        <div className="flex gap-2 mt-1">
+          <button
+            onClick={handleGenerate}
+            disabled={isGenerating}
+            className="flex-1 h-9 bg-slate-900 hover:bg-slate-800 text-white dark:bg-[#c8e558] dark:hover:bg-[#bcd94c] dark:text-slate-900 rounded-lg text-[13px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-60"
+          >
+            {isGenerating ? (
+              <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating…</>
+            ) : (
+              <><Crosshair className="w-3.5 h-3.5" /> Practice test</>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={handleReviseWithTutor}
+            className="px-3 h-9 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/50 dark:text-indigo-300 rounded-lg text-[12px] font-semibold flex items-center justify-center gap-1.5 border border-indigo-200/80 dark:border-indigo-800/50 transition-colors cursor-pointer"
+            title="Launch 1-on-1 AI Tutor revision for this topic"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-indigo-500" />
+            <span>AI Tutor</span>
+          </button>
+        </div>
       </div>
     </div>
   );

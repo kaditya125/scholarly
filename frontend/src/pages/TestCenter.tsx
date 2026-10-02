@@ -14,6 +14,7 @@ import { AdaptiveTestGenerator } from '../components/tests/AdaptiveTestGenerator
 import { ContinueLearning } from '../components/tests/ContinueLearning';
 import { CategoryGrid } from '../components/tests/CategoryGrid';
 import { AIRecommendedTests } from '../components/tests/AIRecommendedTests';
+import { SyllabusRevisionHub } from '../components/tests/SyllabusRevisionHub';
 import { TestProgressOverview } from '../components/tests/TestProgressOverview';
 import { WeakSectionsPanel } from '../components/tests/WeakSectionsPanel';
 import { AttemptHistoryList } from '../components/tests/AttemptHistoryList';
@@ -156,6 +157,7 @@ export default function TestCenter() {
               <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-5 items-start">
                 <div className="space-y-6 min-w-0">
                   <ContinueLearning />
+                  <SyllabusRevisionHub selectedExam={selectedExam} />
                   <FeaturedTestSeries selectedExam={selectedExam} />
                   <CategoryGrid selectedExam={selectedExam} />
                 </div>
