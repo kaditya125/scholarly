@@ -185,14 +185,16 @@ export const RETRIEVAL_TOOL_SPECS = [
   {
     name: 'search_reference_books',
     description:
-      "Semantic search over Sadhya's ingested reference books (Lucent / S. Chand — GK, Quant, Reasoning, " +
-      'English, Science) for a definition, formula, worked example, or fact.',
+      "Search Sadhya's ingested reference books (Lucent, S. Chand, H.C. Verma, Irodov and other standard " +
+      'references) for a definition, formula, worked example, or fact. Always searches the isolated ' +
+      'reference-book corpus only; pass examCode to keep results to books tagged for that exam.',
     parameters: {
       type: 'OBJECT',
       properties: {
         query: { type: 'STRING', description: 'What to look up.' },
         book: { type: 'STRING', description: "Restrict to one book, e.g. 'lucent_gk', 'lucent_science'." },
         examCode: { type: 'STRING', description: 'Restrict to content tagged relevant to this exam id.' },
+        subject: { type: 'STRING', description: "Subject of the question, e.g. 'physics', 'polity' — tunes query rewriting for informal questions." },
       },
       required: ['query'],
     },
@@ -200,6 +202,7 @@ export const RETRIEVAL_TOOL_SPECS = [
       query: z.string().describe('What to look up.'),
       book: z.string().optional().describe("Restrict to one book, e.g. 'lucent_gk', 'lucent_science'."),
       examCode: z.string().optional().describe('Restrict to content tagged relevant to this exam id.'),
+      subject: z.string().optional().describe("Subject of the question, e.g. 'physics', 'polity'."),
     },
   },
   {
@@ -279,7 +282,7 @@ const SEARCH_SOURCES_DECLARATION = {
     'Search several sources at once with ONE query (they are searched in parallel). Sources: ' +
     'ncert = NCERT textbooks (concepts, explanations, worked examples); ' +
     'pyq = verified previous-year questions for a topic (needs examId); ' +
-    'reference_books = Lucent / S. Chand books (GK, Quant, Reasoning, English, Science facts and formulas); ' +
+    'reference_books = standard reference books (Lucent, S. Chand, H.C. Verma, Irodov, …) — scoped to examId when given; ' +
     'syllabus = the official exam syllabus (needs examId); ' +
     "my_notebooks = the student's own uploaded notes and documents; " +
     'web = live web search for anything recent or time-sensitive (notifications, dates, cut-offs, news) ' +
@@ -327,7 +330,10 @@ async function searchOneSource(
     }
     case 'reference_books': {
       const referenceBooksService = await getReferenceBooksService();
-      return toCompactResults(await referenceBooksService.retrieveReferenceContext(query, { topK: DEEP_SEARCH_TOP_K }));
+      // examId scopes reference books exactly as it scopes PYQs: a JEE question gets JEE-tagged books.
+      return toCompactResults(await referenceBooksService.retrieveReferenceContext(query, {
+        topK: DEEP_SEARCH_TOP_K, examCode: examId, useHyde: 'auto',
+      }));
     }
     case 'syllabus': {
       if (!examId) throw new Error('syllabus needs examId — call resolve_exam_id first');
@@ -456,6 +462,8 @@ export async function executeRetrievalTool(
           topK: MAX_LIST_ITEMS,
           book: typeof args?.book === 'string' ? args.book : undefined,
           examCode: typeof args?.examCode === 'string' ? args.examCode : undefined,
+          domain: typeof args?.subject === 'string' ? args.subject : undefined,
+          useHyde: 'auto',
         });
         return { ok: true, data: { results: toCompactResults(results) } };
       }

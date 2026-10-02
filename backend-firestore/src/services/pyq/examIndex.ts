@@ -70,7 +70,11 @@ async function build(): Promise<ExamIndex> {
     }
   };
 
-  await Promise.all([collect('exams', null), collect('pyq_source_registry', 'examId')]);
+  await Promise.all([
+    collect('exams', null),
+    collect('pyq_source_registry', 'examId'),
+    collect('pyq_questions', 'examId'),
+  ]);
 
   const aliases: Record<string, string> = {};
   for (const id of ids) {

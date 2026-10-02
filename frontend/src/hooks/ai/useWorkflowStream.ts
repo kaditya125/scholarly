@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { useAuth } from '../../lib/AuthContext';
+import { API_BASE_URL } from '../../lib/api/client';
 
 export type WorkflowStage = 'INTENT_DETECTION' | 'MEMORY_RETRIEVAL' | 'GRAPH_RETRIEVAL' | 'RAG_RETRIEVAL' | 'VERIFICATION' | 'AGENT_EXECUTION' | 'FORMATTING' | 'ANALYTICS' | 'MEMORY_UPDATE';
 
@@ -95,10 +96,8 @@ export function useWorkflowStream() {
     try {
       const token = await user?.getIdToken();
       
-      const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-      
       // We use native fetch to handle the stream
-      const response = await fetch(`${baseURL}/chat/stream`, {
+      const response = await fetch(`${API_BASE_URL}/chat/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

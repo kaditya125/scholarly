@@ -1,364 +1,1307 @@
 /**
- * Central lookup driving Test Center personalization: which exams are shown to which student,
- * what subjects/categories apply, and what a student's onboarding `goal` resolves to here.
- *
- * examId values match the canonical ids the backend's exam alias index resolves to
- * (backend-firestore/src/services/pyq/examIndex.ts EXTRA_ALIASES) — passing one of these lets
- * generation and PYQ retrieval stay exam-scoped instead of falling back to free-text topic match.
+ * examPersonalization.ts - Single source of truth for per-exam UI personalisation.
+ * Consumed by: ExamSelector, CategoryGrid, AdaptiveTestGenerator, AIRecommendedTests.
  */
-
-export interface SubjectOption {
-  value: string;
-  label: string;
-}
-
+export type ExamGroup = 'ssc'|'upsc'|'banking'|'railway'|'medical'|'engineering'|'state-psc'|'teaching'|'school'|'other';
 export interface CategoryConfig {
-  /** Key into the icon map CategoryGrid renders with — kept out of this data module on purpose. */
-  icon: 'mocks' | 'subject' | 'chapter' | 'pyq' | 'daily' | 'speed';
-  label: string;
-  count: string;
-  countNum: number;
-  topic: string;
+  label: string; count: string; countNum: number; topic: string;
+  icon: 'mocks'|'subject'|'chapter'|'pyq'|'daily'|'speed';
+}
+export interface SubjectOption { value: string; label: string; }
+export interface FallbackRecommendation { title: string; topic: string; reason: string; type: string; count: number; }
+export interface ExamPersonalization {
+  displayName: string; examId: string; group: ExamGroup; siblings: string[];
+  subjectOptions: SubjectOption[]; categories: CategoryConfig[];
+  fallbackRecommendations: FallbackRecommendation[]; tagline: string;
 }
 
-export interface FallbackRecommendation {
-  title: string;
-  topic: string;
-  reason: string;
-  type: string;
-  count: number;
-}
-
-export interface ExamConfig {
-  examId: string;
-  subjectOptions: SubjectOption[];
-  categories: CategoryConfig[];
-  fallbackRecommendations: FallbackRecommendation[];
-}
-
-/** Canonical group -> sibling exam names, in display order. The default export order too. */
-export const EXAM_GROUPS: Record<string, string[]> = {
-  ssc: ['SSC CGL', 'SSC CHSL'],
-  upsc: ['UPSC'],
-  'state-psc': ['BPSC', 'TRE Bihar'],
-  railway: ['Railway NTPC'],
-  engineering: ['JEE Main', 'JEE Advanced'],
-  medical: ['NEET'],
-  banking: ['Banking PO'],
-};
-
-/** Every exam the selector can show, group order then within-group order. */
-export const EXAMS: string[] = Object.values(EXAM_GROUPS).flat();
-
-function ssc(examId: string, label: string): ExamConfig {
-  return {
-    examId,
-    subjectOptions: [
-      { value: 'Quantitative Aptitude', label: 'Quantitative Aptitude' },
-      { value: 'General Intelligence & Reasoning', label: 'General Intelligence & Reasoning' },
-      { value: 'English Comprehension', label: 'English Comprehension' },
-      { value: 'General Awareness', label: 'General Awareness' },
+export const EXAM_CATALOG: Record<string, ExamPersonalization> = {
+  "SSC CGL": {
+    "displayName": "SSC CGL",
+    "examId": "SSC_CGL",
+    "group": "ssc",
+    "tagline": "SSC CGL Tier 1",
+    "siblings": [
+      "SSC CGL",
+      "SSC CHSL",
+      "SSC MTS",
+      "SSC GD",
+      "SSC CPO",
+      "SSC Steno"
     ],
-    categories: [
-      { icon: 'mocks', label: `${label} Full Mocks (100 Qs)`, count: '20 Sets', countNum: 100, topic: `${label} Full Mock` },
-      { icon: 'subject', label: 'Quant Speed Drills', count: '15 Min Sprints', countNum: 15, topic: 'Quantitative Aptitude' },
-      { icon: 'chapter', label: 'Reasoning Pattern Sets', count: '100+ Topics', countNum: 15, topic: 'General Intelligence & Reasoning' },
-      { icon: 'subject', label: 'English Comprehension', count: '100+ Topics', countNum: 15, topic: 'English Comprehension' },
-      { icon: 'daily', label: 'GK & Current Affairs', count: 'Fresh Daily', countNum: 10, topic: 'General Awareness' },
-      { icon: 'pyq', label: 'Previous Year Papers', count: '2018-2025', countNum: 25, topic: `${label} Previous Year Papers` },
-    ],
-    fallbackRecommendations: [
+    "subjectOptions": [
       {
-        title: 'Speed & Quantitative Diagnostic',
-        topic: 'Quantitative Aptitude',
-        reason: 'Calibrated to test your mental math calculation speed and time management.',
-        type: 'Speed Drill',
-        count: 10,
+        "value": "Quantitative Aptitude",
+        "label": "Quantitative Aptitude"
       },
       {
-        title: 'High-Yield Reasoning Patterns',
-        topic: 'General Intelligence & Reasoning',
-        reason: 'Targeting high-frequency syllogisms, series, and puzzle arrangements.',
-        type: 'Concept Focus',
-        count: 10,
-      },
-    ],
-  };
-}
-
-function statePsc(examId: string, label: string): ExamConfig {
-  return {
-    examId,
-    subjectOptions: [
-      { value: 'General Studies I', label: 'General Studies I' },
-      { value: 'General Studies II', label: 'General Studies II' },
-      { value: 'Current Affairs', label: 'Current Affairs' },
-      { value: 'Essay', label: 'Essay' },
-    ],
-    categories: [
-      { icon: 'mocks', label: `${label} Full Mocks`, count: '15+ Sets', countNum: 100, topic: `${label} Full Mock` },
-      { icon: 'subject', label: 'GS Paper I Sets', count: '100+ Topics', countNum: 15, topic: 'General Studies I' },
-      { icon: 'chapter', label: 'GS Paper II Sets', count: '100+ Topics', countNum: 15, topic: 'General Studies II' },
-      { icon: 'daily', label: 'State Current Affairs', count: 'Fresh Daily', countNum: 10, topic: 'Current Affairs' },
-      { icon: 'speed', label: 'Essay Practice', count: '5 Min Sprints', countNum: 5, topic: 'Essay' },
-      { icon: 'pyq', label: 'Previous Year Papers', count: '2018-2025', countNum: 20, topic: `${label} Previous Year Papers` },
-    ],
-    fallbackRecommendations: [
-      {
-        title: 'General Studies I Diagnostic',
-        topic: 'General Studies I',
-        reason: 'History, geography and society questions calibrated to recent paper patterns.',
-        type: 'Concept Focus',
-        count: 10,
+        "value": "General Intelligence & Reasoning",
+        "label": "General Intelligence & Reasoning"
       },
       {
-        title: 'Current Affairs Weekly Booster',
-        topic: 'Current Affairs',
-        reason: 'Stay sharp on the last 4 weeks of state and national developments.',
-        type: 'Speed Drill',
-        count: 10,
-      },
-    ],
-  };
-}
-
-export const EXAM_CONFIG: Record<string, ExamConfig> = {
-  'SSC CGL': ssc('SSC_CGL', 'SSC CGL'),
-  'SSC CHSL': ssc('SSC_CHSL', 'SSC CHSL'),
-  'UPSC': {
-    examId: 'UPSC_CSE',
-    subjectOptions: [
-      { value: 'GS Paper I', label: 'GS Paper I' },
-      { value: 'GS Paper II', label: 'GS Paper II' },
-      { value: 'GS Paper III', label: 'GS Paper III' },
-      { value: 'CSAT', label: 'CSAT' },
-      { value: 'Essay', label: 'Essay' },
-    ],
-    categories: [
-      { icon: 'mocks', label: 'UPSC Prelims Full Mocks', count: '10+ Sets', countNum: 100, topic: 'UPSC Prelims Full Mock' },
-      { icon: 'subject', label: 'GS Paper I Sets', count: '100+ Topics', countNum: 15, topic: 'GS Paper I' },
-      { icon: 'chapter', label: 'GS Paper II (Polity)', count: '100+ Topics', countNum: 15, topic: 'GS Paper II' },
-      { icon: 'daily', label: 'Current Affairs Weekly', count: 'Fresh Weekly', countNum: 15, topic: 'Current Affairs' },
-      { icon: 'speed', label: 'CSAT Practice', count: '5 Min Sprints', countNum: 10, topic: 'CSAT' },
-      { icon: 'pyq', label: 'Previous Year Papers', count: '2018-2025', countNum: 20, topic: 'UPSC Previous Year Papers' },
-    ],
-    fallbackRecommendations: [
-      {
-        title: 'GS Paper II Polity Diagnostic',
-        topic: 'GS Paper II',
-        reason: 'Constitution, governance and polity questions calibrated to Prelims difficulty.',
-        type: 'Concept Focus',
-        count: 10,
+        "value": "English Comprehension",
+        "label": "English Comprehension"
       },
       {
-        title: 'CSAT Comprehension Booster',
-        topic: 'CSAT',
-        reason: 'Reading comprehension and logical reasoning under Prelims time pressure.',
-        type: 'Speed Drill',
-        count: 10,
-      },
+        "value": "General Awareness",
+        "label": "General Awareness"
+      }
     ],
+    "categories": [
+      {
+        "label": "Full Mocks (100 Qs)",
+        "count": "60 Min · 200 Marks",
+        "countNum": 100,
+        "topic": "SSC CGL Tier 1 Full Mock",
+        "icon": "mocks"
+      },
+      {
+        "label": "Quantitative Aptitude",
+        "count": "25 Qs · Speed Drill",
+        "countNum": 25,
+        "topic": "Quantitative Aptitude",
+        "icon": "subject"
+      },
+      {
+        "label": "Reasoning & Logic",
+        "count": "Patterns & Puzzles",
+        "countNum": 25,
+        "topic": "General Intelligence & Reasoning",
+        "icon": "subject"
+      },
+      {
+        "label": "English Comprehension",
+        "count": "Vocab & Grammar",
+        "countNum": 25,
+        "topic": "English Comprehension",
+        "icon": "subject"
+      },
+      {
+        "label": "General Awareness",
+        "count": "GK & Current Affairs",
+        "countNum": 25,
+        "topic": "General Awareness",
+        "icon": "subject"
+      },
+      {
+        "label": "Previous Year Papers",
+        "count": "2020–2024 PYQs",
+        "countNum": 100,
+        "topic": "SSC CGL Previous Year Questions",
+        "icon": "pyq"
+      }
+    ],
+    "fallbackRecommendations": [
+      {
+        "title": "Quantitative Aptitude Speed Drill",
+        "topic": "Quantitative Aptitude",
+        "reason": "High-frequency Percentage, Profit & Loss, and Time-Work questions calibrated to SSC CGL Tier 1 pattern.",
+        "type": "Speed Drill",
+        "count": 25
+      },
+      {
+        "title": "Reasoning Patterns Booster",
+        "topic": "General Intelligence & Reasoning",
+        "reason": "Syllogisms, Number Series, and Odd One Out — the highest-scoring section in SSC CGL.",
+        "type": "Concept Focus",
+        "count": 25
+      }
+    ]
   },
-  'BPSC': statePsc('BPSC_CCE', 'BPSC'),
-  'TRE Bihar': statePsc('BPSC_TRE', 'TRE Bihar'),
-  'Railway NTPC': {
-    examId: 'RRB_NTPC',
-    subjectOptions: [
-      { value: 'Mathematics', label: 'Mathematics' },
-      { value: 'General Intelligence & Reasoning', label: 'General Intelligence & Reasoning' },
-      { value: 'General Awareness', label: 'General Awareness' },
-      { value: 'General Science', label: 'General Science' },
+  "SSC CHSL": {
+    "displayName": "SSC CHSL",
+    "examId": "SSC_CHSL",
+    "group": "ssc",
+    "tagline": "SSC CHSL Tier 1",
+    "siblings": [
+      "SSC CGL",
+      "SSC CHSL",
+      "SSC MTS",
+      "SSC GD",
+      "SSC CPO",
+      "SSC Steno"
     ],
-    categories: [
-      { icon: 'mocks', label: 'RRB NTPC Full Mocks', count: '15+ Sets', countNum: 100, topic: 'RRB NTPC Full Mock' },
-      { icon: 'subject', label: 'Math Speed Drills', count: '15 Min Sprints', countNum: 15, topic: 'Mathematics' },
-      { icon: 'chapter', label: 'Reasoning Pattern Sets', count: '100+ Topics', countNum: 15, topic: 'General Intelligence & Reasoning' },
-      { icon: 'daily', label: 'GK & Current Affairs', count: 'Fresh Daily', countNum: 10, topic: 'General Awareness' },
-      { icon: 'speed', label: 'General Science Sprints', count: '5 Min Sprints', countNum: 10, topic: 'General Science' },
-      { icon: 'pyq', label: 'Previous Year Papers', count: '2018-2025', countNum: 20, topic: 'RRB NTPC Previous Year Papers' },
-    ],
-    fallbackRecommendations: [
+    "subjectOptions": [
       {
-        title: 'Math Speed Diagnostic',
-        topic: 'Mathematics',
-        reason: 'Calibrated to test your mental math calculation speed and time management.',
-        type: 'Speed Drill',
-        count: 10,
+        "value": "Quantitative Aptitude",
+        "label": "Quantitative Aptitude"
       },
       {
-        title: 'High-Yield Reasoning Patterns',
-        topic: 'General Intelligence & Reasoning',
-        reason: 'Targeting high-frequency syllogisms, series, and puzzle arrangements.',
-        type: 'Concept Focus',
-        count: 10,
+        "value": "General Intelligence & Reasoning",
+        "label": "General Intelligence & Reasoning"
       },
+      {
+        "value": "English Language",
+        "label": "English Language"
+      },
+      {
+        "value": "General Awareness",
+        "label": "General Awareness"
+      }
     ],
+    "categories": [
+      {
+        "label": "Full Mocks (100 Qs)",
+        "count": "60 Min · 200 Marks",
+        "countNum": 100,
+        "topic": "SSC CHSL Tier 1 Full Mock",
+        "icon": "mocks"
+      },
+      {
+        "label": "Quantitative Aptitude",
+        "count": "25 Qs · Speed Drill",
+        "countNum": 25,
+        "topic": "Quantitative Aptitude",
+        "icon": "subject"
+      },
+      {
+        "label": "Reasoning & Logic",
+        "count": "Patterns & Puzzles",
+        "countNum": 25,
+        "topic": "General Intelligence & Reasoning",
+        "icon": "subject"
+      },
+      {
+        "label": "English Language",
+        "count": "Grammar & Comprehension",
+        "countNum": 25,
+        "topic": "English Language",
+        "icon": "subject"
+      },
+      {
+        "label": "General Awareness",
+        "count": "GK & Current Affairs",
+        "countNum": 25,
+        "topic": "General Awareness",
+        "icon": "subject"
+      },
+      {
+        "label": "Previous Year Papers",
+        "count": "2020–2024 PYQs",
+        "countNum": 100,
+        "topic": "SSC CHSL Previous Year Questions",
+        "icon": "pyq"
+      }
+    ],
+    "fallbackRecommendations": [
+      {
+        "title": "CHSL Quant Rapid Fire",
+        "topic": "Quantitative Aptitude",
+        "reason": "SSC CHSL Tier 1 Quant focuses on basic arithmetic — build speed and accuracy.",
+        "type": "Speed Drill",
+        "count": 25
+      },
+      {
+        "title": "English Language Fundamentals",
+        "topic": "English Language",
+        "reason": "Spot the Error, Fill in the Blanks, and One Word Substitution — CHSL staples.",
+        "type": "Concept Focus",
+        "count": 25
+      }
+    ]
   },
-  'JEE Main': {
-    examId: 'JEE_MAIN',
-    subjectOptions: [
-      { value: 'Physics', label: 'Physics' },
-      { value: 'Chemistry', label: 'Chemistry' },
-      { value: 'Mathematics', label: 'Mathematics' },
+  "SSC MTS": {
+    "displayName": "SSC MTS",
+    "examId": "SSC_MTS",
+    "group": "ssc",
+    "tagline": "SSC MTS",
+    "siblings": [
+      "SSC CGL",
+      "SSC CHSL",
+      "SSC MTS",
+      "SSC GD",
+      "SSC CPO",
+      "SSC Steno"
     ],
-    categories: [
-      { icon: 'mocks', label: 'JEE Main Full Mocks', count: '15+ Sets', countNum: 75, topic: 'JEE Main Full Mock' },
-      { icon: 'subject', label: 'Physics Numericals', count: '100+ Topics', countNum: 15, topic: 'Physics' },
-      { icon: 'chapter', label: 'Chemistry Reaction Drills', count: '100+ Topics', countNum: 15, topic: 'Chemistry' },
-      { icon: 'subject', label: 'Mathematics Problem Sets', count: '100+ Topics', countNum: 15, topic: 'Mathematics' },
-      { icon: 'daily', label: 'Daily AI Quiz', count: 'Fresh Daily', countNum: 10, topic: 'JEE Main' },
-      { icon: 'pyq', label: 'Previous Year Papers', count: '2018-2025', countNum: 25, topic: 'JEE Main Previous Year Papers' },
-    ],
-    fallbackRecommendations: [
+    "subjectOptions": [
       {
-        title: 'Physics Numericals Diagnostic',
-        topic: 'Physics',
-        reason: 'Mechanics and electrodynamics numericals calibrated to JEE Main difficulty.',
-        type: 'Concept Focus',
-        count: 10,
+        "value": "Numerical Aptitude",
+        "label": "Numerical Aptitude"
       },
       {
-        title: 'Mathematics Speed Booster',
-        topic: 'Mathematics',
-        reason: 'Calculus and coordinate geometry problems under exam time pressure.',
-        type: 'Speed Drill',
-        count: 10,
+        "value": "General Intelligence & Reasoning",
+        "label": "General Intelligence & Reasoning"
       },
+      {
+        "value": "English Language",
+        "label": "English Language"
+      },
+      {
+        "value": "General Awareness",
+        "label": "General Awareness"
+      }
     ],
+    "categories": [
+      {
+        "label": "Full Mocks (90 Qs)",
+        "count": "90 Min · 150 Marks",
+        "countNum": 90,
+        "topic": "SSC MTS Full Mock",
+        "icon": "mocks"
+      },
+      {
+        "label": "Numerical Aptitude",
+        "count": "Basic Arithmetic",
+        "countNum": 20,
+        "topic": "Numerical Aptitude",
+        "icon": "subject"
+      },
+      {
+        "label": "Reasoning Practice",
+        "count": "Non-Verbal & Verbal",
+        "countNum": 20,
+        "topic": "General Intelligence & Reasoning",
+        "icon": "subject"
+      },
+      {
+        "label": "English Language",
+        "count": "Grammar & Reading",
+        "countNum": 20,
+        "topic": "English Language",
+        "icon": "subject"
+      },
+      {
+        "label": "General Awareness",
+        "count": "GK & Static GK",
+        "countNum": 20,
+        "topic": "General Awareness",
+        "icon": "subject"
+      },
+      {
+        "label": "Previous Year Papers",
+        "count": "2020–2024 PYQs",
+        "countNum": 90,
+        "topic": "SSC MTS Previous Year Questions",
+        "icon": "pyq"
+      }
+    ],
+    "fallbackRecommendations": [
+      {
+        "title": "MTS Reasoning Drill",
+        "topic": "General Intelligence & Reasoning",
+        "reason": "Non-verbal reasoning dominates MTS Reasoning section.",
+        "type": "Concept Focus",
+        "count": 20
+      },
+      {
+        "title": "GK & Current Affairs Quiz",
+        "topic": "General Awareness",
+        "reason": "Static GK on Indian History, Polity, and Science are high frequency in MTS.",
+        "type": "Speed Drill",
+        "count": 20
+      }
+    ]
   },
-  'JEE Advanced': {
-    examId: 'JEE_ADVANCED',
-    subjectOptions: [
-      { value: 'Physics', label: 'Advanced Physics' },
-      { value: 'Chemistry', label: 'Advanced Chemistry' },
-      { value: 'Mathematics', label: 'Advanced Mathematics' },
+  "SSC GD": {
+    "displayName": "SSC GD",
+    "examId": "SSC_GD",
+    "group": "ssc",
+    "tagline": "SSC GD Constable",
+    "siblings": [
+      "SSC CGL",
+      "SSC CHSL",
+      "SSC MTS",
+      "SSC GD",
+      "SSC CPO",
+      "SSC Steno"
     ],
-    categories: [
-      { icon: 'mocks', label: 'JEE Advanced Full Mocks', count: '10+ Sets', countNum: 54, topic: 'JEE Advanced Full Mock' },
-      { icon: 'subject', label: 'Physics Numericals', count: '100+ Topics', countNum: 15, topic: 'Physics' },
-      { icon: 'chapter', label: 'Chemistry Reaction Drills', count: '100+ Topics', countNum: 15, topic: 'Chemistry' },
-      { icon: 'subject', label: 'Mathematics Problem Sets', count: '100+ Topics', countNum: 15, topic: 'Mathematics' },
-      { icon: 'daily', label: 'Daily AI Quiz', count: 'Fresh Daily', countNum: 10, topic: 'JEE Advanced' },
-      { icon: 'pyq', label: 'Previous Year Papers', count: '2018-2025', countNum: 20, topic: 'JEE Advanced Previous Year Papers' },
-    ],
-    fallbackRecommendations: [
+    "subjectOptions": [
       {
-        title: 'Multi-Concept Physics Diagnostic',
-        topic: 'Physics',
-        reason: 'Problems that merge multiple chapters, the way JEE Advanced actually tests.',
-        type: 'Concept Focus',
-        count: 10,
+        "value": "Elementary Mathematics",
+        "label": "Elementary Mathematics"
       },
       {
-        title: 'Organic Chemistry Mechanism Booster',
-        topic: 'Chemistry',
-        reason: 'Multi-step syntheses and named reactions at Advanced difficulty.',
-        type: 'Speed Drill',
-        count: 10,
+        "value": "General Intelligence & Reasoning",
+        "label": "General Intelligence & Reasoning"
       },
+      {
+        "value": "English / Hindi",
+        "label": "English / Hindi"
+      },
+      {
+        "value": "General Awareness",
+        "label": "General Awareness"
+      }
     ],
+    "categories": [
+      {
+        "label": "Full Mocks (80 Qs)",
+        "count": "60 Min · 160 Marks",
+        "countNum": 80,
+        "topic": "SSC GD Full Mock",
+        "icon": "mocks"
+      },
+      {
+        "label": "Elementary Maths",
+        "count": "20 Qs · Basic Level",
+        "countNum": 20,
+        "topic": "Elementary Mathematics",
+        "icon": "subject"
+      },
+      {
+        "label": "Reasoning Practice",
+        "count": "Series, Analogy",
+        "countNum": 20,
+        "topic": "General Intelligence & Reasoning",
+        "icon": "subject"
+      },
+      {
+        "label": "English / Hindi",
+        "count": "Grammar & Vocab",
+        "countNum": 20,
+        "topic": "English / Hindi",
+        "icon": "subject"
+      },
+      {
+        "label": "General Awareness",
+        "count": "GK & Current Affairs",
+        "countNum": 20,
+        "topic": "General Awareness",
+        "icon": "subject"
+      },
+      {
+        "label": "Previous Year Papers",
+        "count": "GD PYQ Sets",
+        "countNum": 80,
+        "topic": "SSC GD Previous Year Questions",
+        "icon": "pyq"
+      }
+    ],
+    "fallbackRecommendations": [
+      {
+        "title": "GD Reasoning Drill",
+        "topic": "General Intelligence & Reasoning",
+        "reason": "Analogy, Series, and Non-Verbal Reasoning dominate SSC GD.",
+        "type": "Speed Drill",
+        "count": 20
+      },
+      {
+        "title": "GD General Awareness",
+        "topic": "General Awareness",
+        "reason": "Current Affairs and Basic GK carry high marks in SSC GD.",
+        "type": "Concept Focus",
+        "count": 20
+      }
+    ]
   },
-  'NEET': {
-    examId: 'NEET_UG',
-    subjectOptions: [
-      { value: 'Biology', label: 'Biology' },
-      { value: 'Physics', label: 'Physics' },
-      { value: 'Chemistry', label: 'Chemistry' },
+  "SSC CPO": {
+    "displayName": "SSC CPO",
+    "examId": "SSC_CPO",
+    "group": "ssc",
+    "tagline": "SSC CPO SI",
+    "siblings": [
+      "SSC CGL",
+      "SSC CHSL",
+      "SSC MTS",
+      "SSC GD",
+      "SSC CPO",
+      "SSC Steno"
     ],
-    categories: [
-      { icon: 'mocks', label: 'NEET Full Mocks (180 Qs)', count: '15+ Sets', countNum: 180, topic: 'NEET Full Mock' },
-      { icon: 'subject', label: 'Biology MCQ Sets', count: '100+ Topics', countNum: 15, topic: 'Biology' },
-      { icon: 'chapter', label: 'Physics Numericals', count: '100+ Topics', countNum: 15, topic: 'Physics' },
-      { icon: 'subject', label: 'Chemistry Reaction Drills', count: '100+ Topics', countNum: 15, topic: 'Chemistry' },
-      { icon: 'daily', label: 'Daily AI Quiz', count: 'Fresh Daily', countNum: 10, topic: 'NEET' },
-      { icon: 'pyq', label: 'NEET PYQ Papers', count: '2018-2025', countNum: 25, topic: 'NEET Previous Year Papers' },
-    ],
-    fallbackRecommendations: [
+    "subjectOptions": [
       {
-        title: 'NCERT Biology Diagnostic',
-        topic: 'Biology',
-        reason: 'Line-by-line NCERT-grounded questions — where 85%+ of NEET Biology comes from.',
-        type: 'Concept Focus',
-        count: 10,
+        "value": "Quantitative Aptitude",
+        "label": "Quantitative Aptitude"
       },
       {
-        title: 'Physics Numericals Speed Booster',
-        topic: 'Physics',
-        reason: 'Mechanics and electrodynamics numericals under exam time pressure.',
-        type: 'Speed Drill',
-        count: 10,
+        "value": "General Intelligence & Reasoning",
+        "label": "General Intelligence & Reasoning"
       },
+      {
+        "value": "English Language",
+        "label": "English Language"
+      },
+      {
+        "value": "General Awareness",
+        "label": "General Awareness"
+      }
     ],
+    "categories": [
+      {
+        "label": "Full Mocks (200 Qs)",
+        "count": "2 Hours · 200 Marks",
+        "countNum": 200,
+        "topic": "SSC CPO Full Mock",
+        "icon": "mocks"
+      },
+      {
+        "label": "Quantitative Aptitude",
+        "count": "50 Qs · Speed Drill",
+        "countNum": 50,
+        "topic": "Quantitative Aptitude",
+        "icon": "subject"
+      },
+      {
+        "label": "Reasoning",
+        "count": "50 Qs · Puzzles & Series",
+        "countNum": 50,
+        "topic": "General Intelligence & Reasoning",
+        "icon": "subject"
+      },
+      {
+        "label": "English Language",
+        "count": "50 Qs · Comprehension",
+        "countNum": 50,
+        "topic": "English Language",
+        "icon": "subject"
+      },
+      {
+        "label": "General Knowledge",
+        "count": "50 Qs · GK & Current",
+        "countNum": 50,
+        "topic": "General Awareness",
+        "icon": "subject"
+      },
+      {
+        "label": "Previous Year Papers",
+        "count": "CPO PYQ Sets",
+        "countNum": 200,
+        "topic": "SSC CPO Previous Year Questions",
+        "icon": "pyq"
+      }
+    ],
+    "fallbackRecommendations": [
+      {
+        "title": "CPO Quantitative Drill",
+        "topic": "Quantitative Aptitude",
+        "reason": "DI and Arithmetic dominate SSC CPO Quant.",
+        "type": "Speed Drill",
+        "count": 50
+      },
+      {
+        "title": "English Comprehension",
+        "topic": "English Language",
+        "reason": "Reading Comprehension and Error Detection are key CPO English topics.",
+        "type": "Concept Focus",
+        "count": 30
+      }
+    ]
   },
-  'Banking PO': {
-    examId: 'IBPS_PO',
-    subjectOptions: [
-      { value: 'Quantitative Aptitude', label: 'Quantitative Aptitude' },
-      { value: 'Reasoning', label: 'Reasoning' },
-      { value: 'English', label: 'English' },
-      { value: 'General Awareness', label: 'General Awareness' },
-      { value: 'Computer', label: 'Computer Knowledge' },
+  "SSC Steno": {
+    "displayName": "SSC Steno",
+    "examId": "SSC_STENO",
+    "group": "ssc",
+    "tagline": "SSC Stenographer",
+    "siblings": [
+      "SSC CGL",
+      "SSC CHSL",
+      "SSC MTS",
+      "SSC GD",
+      "SSC CPO",
+      "SSC Steno"
     ],
-    categories: [
-      { icon: 'mocks', label: 'Banking PO Full Mocks', count: '15+ Sets', countNum: 100, topic: 'Banking PO Full Mock' },
-      { icon: 'subject', label: 'Quant Speed Drills', count: '15 Min Sprints', countNum: 15, topic: 'Quantitative Aptitude' },
-      { icon: 'chapter', label: 'Reasoning Pattern Sets', count: '100+ Topics', countNum: 15, topic: 'Reasoning' },
-      { icon: 'subject', label: 'English Comprehension', count: '100+ Topics', countNum: 15, topic: 'English' },
-      { icon: 'daily', label: 'Banking & Current Affairs', count: 'Fresh Daily', countNum: 10, topic: 'General Awareness' },
-      { icon: 'pyq', label: 'Previous Year Papers', count: '2018-2025', countNum: 20, topic: 'Banking PO Previous Year Papers' },
-    ],
-    fallbackRecommendations: [
+    "subjectOptions": [
       {
-        title: 'Speed & Quantitative Diagnostic',
-        topic: 'Quantitative Aptitude',
-        reason: 'Calibrated to test your mental math calculation speed and time management.',
-        type: 'Speed Drill',
-        count: 10,
+        "value": "General Intelligence & Reasoning",
+        "label": "General Intelligence & Reasoning"
       },
       {
-        title: 'High-Yield Reasoning Patterns',
-        topic: 'Reasoning',
-        reason: 'Targeting high-frequency puzzles, seating arrangements, and syllogisms.',
-        type: 'Concept Focus',
-        count: 10,
+        "value": "English Language",
+        "label": "English Language & Literary"
       },
+      {
+        "value": "General Awareness",
+        "label": "General Awareness"
+      }
     ],
+    "categories": [
+      {
+        "label": "Full Mocks (200 Qs)",
+        "count": "2 Hours · 200 Marks",
+        "countNum": 200,
+        "topic": "SSC Steno Full Mock",
+        "icon": "mocks"
+      },
+      {
+        "label": "Reasoning",
+        "count": "50 Qs · Series & Analogy",
+        "countNum": 50,
+        "topic": "General Intelligence & Reasoning",
+        "icon": "subject"
+      },
+      {
+        "label": "English Language",
+        "count": "100 Qs · Vocab & Grammar",
+        "countNum": 100,
+        "topic": "English Language",
+        "icon": "subject"
+      },
+      {
+        "label": "General Awareness",
+        "count": "50 Qs · GK",
+        "countNum": 50,
+        "topic": "General Awareness",
+        "icon": "subject"
+      },
+      {
+        "label": "Speed Vocabulary",
+        "count": "20 Qs · 5 Min Sprint",
+        "countNum": 20,
+        "topic": "English Vocabulary",
+        "icon": "speed"
+      },
+      {
+        "label": "Previous Year Papers",
+        "count": "Steno PYQ Sets",
+        "countNum": 200,
+        "topic": "SSC Steno Previous Year Questions",
+        "icon": "pyq"
+      }
+    ],
+    "fallbackRecommendations": [
+      {
+        "title": "English Vocabulary Drill",
+        "topic": "English Language",
+        "reason": "English carries 100 marks in Steno — vocabulary and one-word substitution are key.",
+        "type": "Concept Focus",
+        "count": 50
+      },
+      {
+        "title": "General Awareness Quiz",
+        "topic": "General Awareness",
+        "reason": "Current affairs and static GK make up the GK section of SSC Steno.",
+        "type": "Speed Drill",
+        "count": 30
+      }
+    ]
   },
-};
-
-/** Fallback used for any exam name not in EXAM_CONFIG (should not normally happen — EXAMS is closed). */
-const DEFAULT_EXAM: ExamConfig = EXAM_CONFIG['SSC CGL'];
-
-export function getExamConfig(exam: string): ExamConfig {
-  return EXAM_CONFIG[exam] || DEFAULT_EXAM;
-}
-
-export function groupOf(exam: string): string | undefined {
-  return Object.entries(EXAM_GROUPS).find(([, exams]) => exams.includes(exam))?.[0];
-}
-
-/** Sibling exams in the same group, with `exam` itself first. Falls back to just `[exam]`. */
-export function getSiblingExams(exam: string): string[] {
-  const group = groupOf(exam);
-  if (!group) return [exam];
-  const siblings = EXAM_GROUPS[group];
-  return [exam, ...siblings.filter((e) => e !== exam)];
-}
-
-/**
- * Maps a student's onboarding `goal` (broad — "SSC", "NEET") to the specific exam name the
- * selector and config use ("SSC CGL", "NEET"). Returns null for goals with no exam-scoped
- * personalization (school classes, CUET, Olympiads, Foundation, GATE, College, State Board,
- * Other) — callers keep their own generic default in that case.
- */
-export function resolveExamFromGoal(goal?: string | null): string | null {
-  if (!goal) return null;
-  switch (goal) {
-    case 'SSC': return 'SSC CGL';
-    case 'NEET': return 'NEET';
-    case 'JEE Main': return 'JEE Main';
-    case 'JEE Advanced': return 'JEE Advanced';
-    case 'UPSC': return 'UPSC';
-    default: return null;
+  "UPSC": {
+    "displayName": "UPSC",
+    "examId": "UPSC_CSE",
+    "group": "upsc",
+    "tagline": "UPSC CSE Prelims",
+    "siblings": [
+      "UPSC",
+      "BPSC",
+      "State PSC"
+    ],
+    "subjectOptions": [
+      {
+        "value": "GS Paper I - History & Geography",
+        "label": "GS Paper I — History & Geography"
+      },
+      {
+        "value": "GS Paper II - Polity & Governance",
+        "label": "GS Paper II — Polity & Governance"
+      },
+      {
+        "value": "GS Paper III - Economy & Environment",
+        "label": "GS Paper III — Economy & Environment"
+      },
+      {
+        "value": "Current Affairs",
+        "label": "Current Affairs"
+      },
+      {
+        "value": "CSAT - Reasoning",
+        "label": "CSAT — Reasoning & Math"
+      }
+    ],
+    "categories": [
+      {
+        "label": "GS Prelims Full Mocks",
+        "count": "100 Qs · 2 Hours",
+        "countNum": 100,
+        "topic": "UPSC Prelims GS Paper I",
+        "icon": "mocks"
+      },
+      {
+        "label": "History & Geography",
+        "count": "Art, Culture & Maps",
+        "countNum": 30,
+        "topic": "GS Paper I - History & Geography",
+        "icon": "subject"
+      },
+      {
+        "label": "Polity & Governance",
+        "count": "Constitution & IR",
+        "countNum": 30,
+        "topic": "GS Paper II - Polity & Governance",
+        "icon": "subject"
+      },
+      {
+        "label": "Economy & Environment",
+        "count": "Budget, Ecology & Sci",
+        "countNum": 30,
+        "topic": "GS Paper III - Economy & Environment",
+        "icon": "subject"
+      },
+      {
+        "label": "Current Affairs",
+        "count": "Last 6 Months",
+        "countNum": 20,
+        "topic": "Current Affairs",
+        "icon": "daily"
+      },
+      {
+        "label": "CSAT Practice",
+        "count": "80 Qs · 2 Hours",
+        "countNum": 80,
+        "topic": "CSAT - Reasoning",
+        "icon": "subject"
+      }
+    ],
+    "fallbackRecommendations": [
+      {
+        "title": "UPSC Polity & Constitution",
+        "topic": "GS Paper II - Polity & Governance",
+        "reason": "Constitutional articles and landmark SC judgments are consistent prelims features.",
+        "type": "Concept Focus",
+        "count": 30
+      },
+      {
+        "title": "CSAT Reasoning Speed Test",
+        "topic": "CSAT - Reasoning",
+        "reason": "Reading comprehension and logical reasoning are make-or-break for UPSC Prelims Paper II.",
+        "type": "Speed Drill",
+        "count": 20
+      }
+    ]
+  },
+  "BPSC": {
+    "displayName": "BPSC",
+    "examId": "BPSC",
+    "group": "state-psc",
+    "tagline": "BPSC Prelims",
+    "siblings": [
+      "BPSC",
+      "UPSC",
+      "TRE Bihar",
+      "State PSC"
+    ],
+    "subjectOptions": [
+      {
+        "value": "General Studies - Bihar",
+        "label": "General Studies (Bihar Special)"
+      },
+      {
+        "value": "General Studies - India",
+        "label": "General Studies (National)"
+      },
+      {
+        "value": "History & Culture",
+        "label": "History & Culture"
+      },
+      {
+        "value": "Current Affairs",
+        "label": "Current Affairs"
+      }
+    ],
+    "categories": [
+      {
+        "label": "BPSC Full Mocks",
+        "count": "150 Qs · 2 Hours",
+        "countNum": 150,
+        "topic": "BPSC Prelims Full Mock",
+        "icon": "mocks"
+      },
+      {
+        "label": "Bihar Special GK",
+        "count": "Bihar History & Culture",
+        "countNum": 30,
+        "topic": "General Studies - Bihar",
+        "icon": "subject"
+      },
+      {
+        "label": "National GS Practice",
+        "count": "Polity, Economy, Science",
+        "countNum": 30,
+        "topic": "General Studies - India",
+        "icon": "subject"
+      },
+      {
+        "label": "History & Culture",
+        "count": "Ancient to Modern",
+        "countNum": 25,
+        "topic": "History & Culture",
+        "icon": "subject"
+      },
+      {
+        "label": "Current Affairs",
+        "count": "Last 6 Months",
+        "countNum": 20,
+        "topic": "Current Affairs",
+        "icon": "daily"
+      },
+      {
+        "label": "Previous Year Papers",
+        "count": "BPSC PYQ Sets",
+        "countNum": 150,
+        "topic": "BPSC Previous Year Questions",
+        "icon": "pyq"
+      }
+    ],
+    "fallbackRecommendations": [
+      {
+        "title": "Bihar GK Special",
+        "topic": "General Studies - Bihar",
+        "reason": "BPSC puts heavy weight on Bihar History, Art, Culture, and Economy.",
+        "type": "Concept Focus",
+        "count": 30
+      },
+      {
+        "title": "National GS Mixed Quiz",
+        "topic": "General Studies - India",
+        "reason": "Polity, economy, and science make up the national GS section of BPSC Prelims.",
+        "type": "Speed Drill",
+        "count": 30
+      }
+    ]
+  },
+  "TRE Bihar": {
+    "displayName": "TRE Bihar",
+    "examId": "BPSC_TRE",
+    "group": "teaching",
+    "tagline": "BPSC TRE",
+    "siblings": [
+      "TRE Bihar",
+      "BPSC"
+    ],
+    "subjectOptions": [
+      {
+        "value": "Child Development & Pedagogy",
+        "label": "Child Development & Pedagogy"
+      },
+      {
+        "value": "Language - Hindi",
+        "label": "Hindi Language"
+      },
+      {
+        "value": "Language - English",
+        "label": "English Language"
+      },
+      {
+        "value": "Environmental Studies",
+        "label": "Environmental Studies"
+      },
+      {
+        "value": "Mathematics",
+        "label": "Mathematics"
+      }
+    ],
+    "categories": [
+      {
+        "label": "TRE Full Mocks",
+        "count": "150 Qs · 2.5 Hours",
+        "countNum": 150,
+        "topic": "BPSC TRE Full Mock",
+        "icon": "mocks"
+      },
+      {
+        "label": "Child Development",
+        "count": "CDP & Psychology",
+        "countNum": 30,
+        "topic": "Child Development & Pedagogy",
+        "icon": "subject"
+      },
+      {
+        "label": "Hindi Language",
+        "count": "Grammar & Comprehension",
+        "countNum": 30,
+        "topic": "Language - Hindi",
+        "icon": "subject"
+      },
+      {
+        "label": "English Language",
+        "count": "Grammar & Reading",
+        "countNum": 30,
+        "topic": "Language - English",
+        "icon": "subject"
+      },
+      {
+        "label": "Environmental Studies",
+        "count": "EVS Practice",
+        "countNum": 30,
+        "topic": "Environmental Studies",
+        "icon": "subject"
+      },
+      {
+        "label": "Mathematics",
+        "count": "Primary Math",
+        "countNum": 30,
+        "topic": "Mathematics",
+        "icon": "subject"
+      }
+    ],
+    "fallbackRecommendations": [
+      {
+        "title": "Child Development & Pedagogy",
+        "topic": "Child Development & Pedagogy",
+        "reason": "CDP carries the highest weightage in TRE Bihar and is often the differentiator.",
+        "type": "Concept Focus",
+        "count": 30
+      },
+      {
+        "title": "Hindi Grammar Drill",
+        "topic": "Language - Hindi",
+        "reason": "Hindi Vyakaran and comprehension passages are key scoring areas in TRE.",
+        "type": "Speed Drill",
+        "count": 30
+      }
+    ]
+  },
+  "Railway NTPC": {
+    "displayName": "Railway NTPC",
+    "examId": "RRB_NTPC",
+    "group": "railway",
+    "tagline": "RRB NTPC CBT 1",
+    "siblings": [
+      "Railway NTPC",
+      "Railway Group D"
+    ],
+    "subjectOptions": [
+      {
+        "value": "Mathematics",
+        "label": "Mathematics"
+      },
+      {
+        "value": "General Intelligence & Reasoning",
+        "label": "General Intelligence & Reasoning"
+      },
+      {
+        "value": "General Awareness",
+        "label": "General Awareness"
+      }
+    ],
+    "categories": [
+      {
+        "label": "NTPC Full Mocks (100 Qs)",
+        "count": "90 Min · 100 Marks",
+        "countNum": 100,
+        "topic": "Railway NTPC CBT 1 Full Mock",
+        "icon": "mocks"
+      },
+      {
+        "label": "Mathematics Practice",
+        "count": "Arithmetic & Algebra",
+        "countNum": 30,
+        "topic": "Mathematics",
+        "icon": "subject"
+      },
+      {
+        "label": "Reasoning Practice",
+        "count": "Coding, Analogy, Series",
+        "countNum": 30,
+        "topic": "General Intelligence & Reasoning",
+        "icon": "subject"
+      },
+      {
+        "label": "General Awareness",
+        "count": "GK, Science & Railway",
+        "countNum": 40,
+        "topic": "General Awareness",
+        "icon": "subject"
+      },
+      {
+        "label": "Railway GK Special",
+        "count": "Railway History & Facts",
+        "countNum": 20,
+        "topic": "Railway General Knowledge",
+        "icon": "daily"
+      },
+      {
+        "label": "Previous Year Papers",
+        "count": "CBT 1 PYQ Sets",
+        "countNum": 100,
+        "topic": "Railway NTPC Previous Year Questions",
+        "icon": "pyq"
+      }
+    ],
+    "fallbackRecommendations": [
+      {
+        "title": "NTPC Mathematics Drill",
+        "topic": "Mathematics",
+        "reason": "Percentage, Ratio & Proportion, and Time & Work are highest-frequency NTPC math topics.",
+        "type": "Speed Drill",
+        "count": 30
+      },
+      {
+        "title": "Railway GK & Awareness",
+        "topic": "General Awareness",
+        "reason": "Current affairs and Railway-specific GK regularly appear in NTPC CBT 1.",
+        "type": "Concept Focus",
+        "count": 30
+      }
+    ]
+  },
+  "JEE Main": {
+    "displayName": "JEE Main",
+    "examId": "JEE_MAIN",
+    "group": "engineering",
+    "tagline": "JEE Main",
+    "siblings": [
+      "JEE Main",
+      "JEE Advanced",
+      "GATE"
+    ],
+    "subjectOptions": [
+      {
+        "value": "Physics",
+        "label": "Physics"
+      },
+      {
+        "value": "Chemistry",
+        "label": "Chemistry"
+      },
+      {
+        "value": "Mathematics",
+        "label": "Mathematics"
+      }
+    ],
+    "categories": [
+      {
+        "label": "JEE Main Full Mocks",
+        "count": "90 Qs · 3 Hours",
+        "countNum": 90,
+        "topic": "JEE Main Full Mock",
+        "icon": "mocks"
+      },
+      {
+        "label": "Physics Practice",
+        "count": "Mechanics, Optics, Modern",
+        "countNum": 30,
+        "topic": "Physics",
+        "icon": "subject"
+      },
+      {
+        "label": "Chemistry Practice",
+        "count": "Organic, Inorganic, Physical",
+        "countNum": 30,
+        "topic": "Chemistry",
+        "icon": "subject"
+      },
+      {
+        "label": "Mathematics Practice",
+        "count": "Calculus, Algebra, Coord Geo",
+        "countNum": 30,
+        "topic": "Mathematics",
+        "icon": "subject"
+      },
+      {
+        "label": "Chapter-wise Drills",
+        "count": "Topic Deep Dives",
+        "countNum": 20,
+        "topic": "JEE Main Chapter Practice",
+        "icon": "chapter"
+      },
+      {
+        "label": "Previous Year Papers",
+        "count": "2020–2024 PYQs",
+        "countNum": 90,
+        "topic": "JEE Main Previous Year Questions",
+        "icon": "pyq"
+      }
+    ],
+    "fallbackRecommendations": [
+      {
+        "title": "Physics — Mechanics & Electrostatics",
+        "topic": "Physics",
+        "reason": "Mechanics and Electrostatics have the highest weightage in JEE Main Physics.",
+        "type": "Concept Focus",
+        "count": 30
+      },
+      {
+        "title": "Mathematics — Calculus Speed Test",
+        "topic": "Mathematics",
+        "reason": "Calculus is the backbone of JEE Math.",
+        "type": "Speed Drill",
+        "count": 30
+      }
+    ]
+  },
+  "NEET": {
+    "displayName": "NEET",
+    "examId": "NEET_UG",
+    "group": "medical",
+    "tagline": "NEET UG",
+    "siblings": [
+      "NEET"
+    ],
+    "subjectOptions": [
+      {
+        "value": "Biology - Botany",
+        "label": "Biology — Botany"
+      },
+      {
+        "value": "Biology - Zoology",
+        "label": "Biology — Zoology"
+      },
+      {
+        "value": "Physics",
+        "label": "Physics"
+      },
+      {
+        "value": "Chemistry",
+        "label": "Chemistry"
+      }
+    ],
+    "categories": [
+      {
+        "label": "NEET Full Mocks (200 Qs)",
+        "count": "200 Qs · 3h 20m",
+        "countNum": 200,
+        "topic": "NEET Full Mock",
+        "icon": "mocks"
+      },
+      {
+        "label": "Biology — Botany",
+        "count": "Plant Kingdom, Genetics",
+        "countNum": 50,
+        "topic": "Biology - Botany",
+        "icon": "subject"
+      },
+      {
+        "label": "Biology — Zoology",
+        "count": "Animal Kingdom, Physiology",
+        "countNum": 50,
+        "topic": "Biology - Zoology",
+        "icon": "subject"
+      },
+      {
+        "label": "Physics Numericals",
+        "count": "Mechanics, Optics, Modern",
+        "countNum": 45,
+        "topic": "Physics",
+        "icon": "subject"
+      },
+      {
+        "label": "Chemistry MCQs",
+        "count": "Organic, Inorganic, Physical",
+        "countNum": 45,
+        "topic": "Chemistry",
+        "icon": "subject"
+      },
+      {
+        "label": "Previous Year Papers",
+        "count": "2018–2024 PYQs",
+        "countNum": 200,
+        "topic": "NEET Previous Year Questions",
+        "icon": "pyq"
+      }
+    ],
+    "fallbackRecommendations": [
+      {
+        "title": "Biology — Human Physiology Drill",
+        "topic": "Biology - Zoology",
+        "reason": "Human Physiology is the highest-scoring NEET topic.",
+        "type": "Concept Focus",
+        "count": 50
+      },
+      {
+        "title": "Organic Chemistry Reactions",
+        "topic": "Chemistry",
+        "reason": "Organic chemistry makes up ~40% of NEET Chemistry.",
+        "type": "Speed Drill",
+        "count": 30
+      }
+    ]
+  },
+  "Banking PO": {
+    "displayName": "Banking PO",
+    "examId": "IBPS_PO",
+    "group": "banking",
+    "tagline": "IBPS PO",
+    "siblings": [
+      "Banking PO",
+      "Banking Clerk",
+      "SBI PO",
+      "SBI Clerk",
+      "RBI Grade B"
+    ],
+    "subjectOptions": [
+      {
+        "value": "Quantitative Aptitude",
+        "label": "Quantitative Aptitude"
+      },
+      {
+        "value": "Reasoning Ability",
+        "label": "Reasoning Ability"
+      },
+      {
+        "value": "English Language",
+        "label": "English Language"
+      },
+      {
+        "value": "General & Financial Awareness",
+        "label": "General & Financial Awareness"
+      },
+      {
+        "value": "Computer Aptitude",
+        "label": "Computer Aptitude"
+      }
+    ],
+    "categories": [
+      {
+        "label": "Prelims Full Mocks",
+        "count": "60 Min · 100 Marks",
+        "countNum": 100,
+        "topic": "Banking PO Prelims Full Mock",
+        "icon": "mocks"
+      },
+      {
+        "label": "Quantitative Aptitude",
+        "count": "DI, Arithmetic, Algebra",
+        "countNum": 35,
+        "topic": "Quantitative Aptitude",
+        "icon": "subject"
+      },
+      {
+        "label": "Reasoning Ability",
+        "count": "Puzzles, Seating, Coding",
+        "countNum": 35,
+        "topic": "Reasoning Ability",
+        "icon": "subject"
+      },
+      {
+        "label": "English Language",
+        "count": "RC, Error Detection",
+        "countNum": 30,
+        "topic": "English Language",
+        "icon": "subject"
+      },
+      {
+        "label": "Financial Awareness",
+        "count": "Banking & Economy GK",
+        "countNum": 40,
+        "topic": "General & Financial Awareness",
+        "icon": "daily"
+      },
+      {
+        "label": "Previous Year Papers",
+        "count": "IBPS PO PYQ Sets",
+        "countNum": 100,
+        "topic": "Banking PO Previous Year Questions",
+        "icon": "pyq"
+      }
+    ],
+    "fallbackRecommendations": [
+      {
+        "title": "Banking Reasoning Puzzles",
+        "topic": "Reasoning Ability",
+        "reason": "Seating arrangements and puzzles are highest-scoring in Banking Prelims.",
+        "type": "Concept Focus",
+        "count": 35
+      },
+      {
+        "title": "Data Interpretation Sprint",
+        "topic": "Quantitative Aptitude",
+        "reason": "DI sets appear in every Banking PO Prelims exam.",
+        "type": "Speed Drill",
+        "count": 20
+      }
+    ]
+  },
+  "State PSC": {
+    "displayName": "State PSC",
+    "examId": "STATE_PSC",
+    "group": "state-psc",
+    "tagline": "State PSC",
+    "siblings": [
+      "BPSC",
+      "UPSC",
+      "TRE Bihar",
+      "State PSC"
+    ],
+    "subjectOptions": [
+      {
+        "value": "General Studies",
+        "label": "General Studies"
+      },
+      {
+        "value": "Current Affairs",
+        "label": "Current Affairs"
+      },
+      {
+        "value": "Reasoning",
+        "label": "Reasoning"
+      },
+      {
+        "value": "Mathematics",
+        "label": "Mathematics"
+      }
+    ],
+    "categories": [
+      {
+        "label": "State PSC Full Mocks",
+        "count": "150 Qs · 2 Hours",
+        "countNum": 150,
+        "topic": "State PSC Full Mock",
+        "icon": "mocks"
+      },
+      {
+        "label": "General Studies",
+        "count": "History, Polity, Economy",
+        "countNum": 60,
+        "topic": "General Studies",
+        "icon": "subject"
+      },
+      {
+        "label": "Current Affairs",
+        "count": "Last 6 Months",
+        "countNum": 30,
+        "topic": "Current Affairs",
+        "icon": "daily"
+      },
+      {
+        "label": "Reasoning",
+        "count": "Series, Analogy, Coding",
+        "countNum": 30,
+        "topic": "Reasoning",
+        "icon": "subject"
+      },
+      {
+        "label": "Mathematics",
+        "count": "Basic Arithmetic & Data",
+        "countNum": 30,
+        "topic": "Mathematics",
+        "icon": "subject"
+      },
+      {
+        "label": "Previous Year Papers",
+        "count": "State PSC PYQs",
+        "countNum": 150,
+        "topic": "State PSC Previous Year Questions",
+        "icon": "pyq"
+      }
+    ],
+    "fallbackRecommendations": [
+      {
+        "title": "State GS Practice",
+        "topic": "General Studies",
+        "reason": "History, Polity, and Economy form the backbone of most State PSC general studies sections.",
+        "type": "Concept Focus",
+        "count": 40
+      },
+      {
+        "title": "Current Affairs Weekly Quiz",
+        "topic": "Current Affairs",
+        "reason": "State PSC exams frequently test last 6 months national and state current affairs.",
+        "type": "Speed Drill",
+        "count": 20
+      }
+    ]
   }
+};
+
+
+export const ALL_EXAMS = Object.keys(EXAM_CATALOG);
+export const EXAMS = ALL_EXAMS;
+export const GOAL_TO_EXAM: Record<string, string> = {
+  SSC: 'SSC CGL', UPSC: 'UPSC', NEET: 'NEET', 'JEE Main': 'JEE Main',
+  'JEE Advanced': 'JEE Main', GATE: 'JEE Main', Banking: 'Banking PO',
+  Railway: 'Railway NTPC', BPSC: 'BPSC', 'State PSC': 'State PSC', College: 'UPSC',
+};
+export function resolveExamFromGoal(goal?: string): string {
+  if (!goal) return 'SSC CGL';
+  if (EXAM_CATALOG[goal]) return goal;
+  if (GOAL_TO_EXAM[goal]) return GOAL_TO_EXAM[goal];
+  const upper = goal.toUpperCase();
+  for (const key of Object.keys(EXAM_CATALOG)) {
+    if (upper.includes(key.toUpperCase()) || key.toUpperCase().includes(upper)) return key;
+  }
+  return 'SSC CGL';
 }
+export function getExamConfig(exam: string): ExamPersonalization {
+  return EXAM_CATALOG[exam] ?? EXAM_CATALOG['SSC CGL'];
+}
+export function getExamSiblings(exam: string): string[] { return getExamConfig(exam).siblings; }
+export function getSiblingExams(exam: string): string[] { return getExamSiblings(exam); }

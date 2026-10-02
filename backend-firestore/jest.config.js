@@ -9,6 +9,8 @@ module.exports = {
   // comparison meaningless.
   testPathIgnorePatterns: ['/node_modules/', 'worktrees'],
   moduleFileExtensions: ['ts', 'js', 'json'],
+  // uuid v14 is ESM-only; tests load a CommonJS implementation of the same algorithms.
+  moduleNameMapper: { '^uuid$': '<rootDir>/tests/mocks/uuidCjs.ts' },
   setupFiles: ['<rootDir>/tests/setup.ts'],
   collectCoverageFrom: [
     'src/**/*.ts',

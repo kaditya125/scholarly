@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { cn } from "../lib/utils";
 import { useTheme } from "../lib/ThemeContext";
 import { quizApi, StoredQuizQuestion } from "../lib/api/quiz";
+import { API_BASE_URL } from "../lib/api/client";
 import { useAuth } from "../lib/AuthContext";
 
 export default function TestEngine() {
@@ -17,6 +18,8 @@ export default function TestEngine() {
   const searchParams = new URLSearchParams(location.search);
   const mockTestId = (location.state?.mockTestId as string | undefined) || searchParams.get('mockTestId') || undefined;
   const topicParam = (location.state?.topic as string | undefined) || searchParams.get('topic') || (searchParams.get('slug') ? `${searchParams.get('slug')?.replace(/-/g, ' ').toUpperCase()} Practice Exam` : undefined);
+  const subjectParam = (location.state?.subject as string | undefined) || searchParams.get('subject') || undefined;
+  const testMode = (location.state?.testMode as string | undefined) || undefined;
   const notebookId = (location.state?.notebookId as string | undefined) || searchParams.get('notebookId') || undefined;
   const notebookTitle = (location.state?.notebookTitle as string | undefined) || searchParams.get('notebookTitle') || undefined;
   const count = (location.state?.count as number | undefined) || (searchParams.get('count') ? parseInt(searchParams.get('count')!, 10) : 10);
@@ -94,7 +97,7 @@ export default function TestEngine() {
       setGenerateError(null);
       const promise = mockTestId
         // ── Branch A: a seeded Firestore mock test by ID (free SSC CGL mocks, PYQ papers) ──
-        ? fetch(`/api/tests/${mockTestId}`, { headers: { 'Content-Type': 'application/json' }, credentials: 'include' })
+        ? fetch(`${API_BASE_URL}/tests/${mockTestId}`, { headers: { 'Content-Type': 'application/json' }, credentials: 'include' })
             .then((res) => {
               if (!res.ok) throw new Error(`Failed to load mock test: ${res.status}`);
               return res.json();
@@ -112,6 +115,8 @@ export default function TestEngine() {
             // No hardcoded fallback topic: the backend's weak-areas default only triggers when
             // topic is genuinely absent.
             topic: topicParam,
+            subject: subjectParam,
+            testMode: testMode as any,
             notebookId,
             notebookTitle,
             count,

@@ -21,6 +21,7 @@
 import { db } from '../../config/firebase';
 import { logger } from '../../utils/logger';
 import { CanonicalPYQQuestion } from '../../types/pyq.types';
+import { matchesPaper, normalizeShift, canonicalPaperIdFor, looksLikePractice, normalizeSession } from './paperIdentity';
 
 export type CanonicalRetrievalStatus =
   | 'CANONICAL_RETRIEVED'
@@ -36,6 +37,7 @@ export interface CanonicalPaperSummary {
   shift: string | null;
   paper: string | null;
   questionCount: number;
+  questions?: CanonicalPYQQuestion[];
 }
 
 export interface CanonicalPyqResult {
@@ -102,10 +104,11 @@ export class CanonicalPyqRetrievalService {
   async resolvePapers(params: {
     examId: string;
     year?: number | null;
+    session?: string | null;
     shift?: number | null;
     paper?: string | null;
   }): Promise<CanonicalPaperSummary[]> {
-    const { examId, year, shift, paper } = params;
+    const { examId, year, session, shift, paper } = params;
     const filters: Array<[string, FirebaseFirestore.WhereFilterOp, any]> = [['examId', '==', examId]];
     if (year) filters.push(['year', '==', year]);
 
@@ -114,25 +117,70 @@ export class CanonicalPyqRetrievalService {
 
     const groups = new Map<string, CanonicalPaperSummary>();
     for (const r of rows as any[]) {
-      // Narrow by the question's own normalized shift/paper, which the identity backfill wrote.
-      if (shift !== null && shift !== undefined && r.normalizedShift !== shift) continue;
-      if (paper && r.normalizedPaper && r.normalizedPaper !== paper) continue;
+      if (looksLikePractice(r)) continue;
 
-      const key = r.canonicalPaperId ?? `unresolved:${examId}:${r.year}:${r.normalizedShift ?? 'na'}`;
-      const existing = groups.get(key);
-      if (existing) existing.questionCount++;
-      else groups.set(key, {
-        canonicalPaperId: r.canonicalPaperId ?? null,
-        examId: r.examId, year: r.year ?? null, session: r.session ?? null,
-        shift: r.shift ?? null, paper: r.paper ?? null, questionCount: 1,
+      if (session) {
+        const qSess = normalizeSession(r.session);
+        if (qSess && qSess !== session && !qSess.includes(session)) continue;
+      }
+
+      // Narrow by the question's own normalized shift/paper, falling back gracefully
+      const questionShift = r.normalizedShift ?? (r.shift ? normalizeShift(r.shift).shift : null);
+      if (shift !== null && shift !== undefined && questionShift !== shift) continue;
+      if (paper && !matchesPaper(paper, r)) continue;
+
+      const derivedId = r.canonicalPaperId || canonicalPaperIdFor({
+        examId: r.examId || examId,
+        year: r.year || year || 0,
+        session: r.session,
+        shift: r.shift,
+        paper: r.paper,
+        subject: r.subject,
       });
+
+      const key = derivedId;
+      const existing = groups.get(key);
+      if (existing) {
+        existing.questionCount++;
+        existing.questions?.push(r);
+      } else {
+        groups.set(key, {
+          canonicalPaperId: derivedId,
+          examId: r.examId,
+          year: r.year ?? null,
+          session: r.session ?? null,
+          shift: r.shift ?? null,
+          paper: r.paper ?? null,
+          questionCount: 1,
+          questions: [r],
+        });
+      }
     }
     return [...groups.values()].sort((a, b) => b.questionCount - a.questionCount);
   }
 
   /** Every question on one canonical paper, in exam order. */
   async fetchPaper(canonicalPaperId: string): Promise<CanonicalPYQQuestion[]> {
-    const rows = await queryQuestions([['canonicalPaperId', '==', canonicalPaperId]], MAX_PAPER_QUESTIONS);
+    let rows = await queryQuestions([['canonicalPaperId', '==', canonicalPaperId]], MAX_PAPER_QUESTIONS);
+    if (rows.length === 0) {
+      // Fallback if canonicalPaperId was not written to Firestore docs
+      const parts = canonicalPaperId.split(':');
+      if (parts.length >= 6) {
+        const [, examId, yearStr, , sh, pap] = parts;
+        const year = yearStr !== 'na' && !isNaN(Number(yearStr)) ? Number(yearStr) : undefined;
+        const shiftNum = sh.startsWith('sh') ? Number(sh.slice(2)) : null;
+        const candidateRows = await queryQuestions(
+          [['examId', '==', examId], ...(year ? [['year', '==', year] as [string, FirebaseFirestore.WhereFilterOp, any]] : [])],
+          MAX_PAPER_QUESTIONS
+        );
+        rows = candidateRows.filter((r: any) => {
+          const qShift = r.normalizedShift ?? (r.shift ? normalizeShift(r.shift).shift : null);
+          if (shiftNum !== null && qShift !== shiftNum) return false;
+          if (pap !== 'na' && !matchesPaper(pap, r)) return false;
+          return true;
+        });
+      }
+    }
     return rows.sort(byQuestionNumber);
   }
 
@@ -178,7 +226,10 @@ export class CanonicalPyqRetrievalService {
       return { paper: null, totalQuestions: 0, page, pageSize, totalPages: 0, incompleteCount: 0, distinctSittings: [], questions: [] };
     }
 
-    const all = (await queryQuestions([[field, '==', value]], MAX_PAPER_QUESTIONS)).sort(byQuestionNumber);
+    let all = (await queryQuestions([[field, '==', value]], MAX_PAPER_QUESTIONS)).sort(byQuestionNumber);
+    if (all.length === 0 && params.canonicalPaperId) {
+      all = await this.fetchPaper(params.canonicalPaperId);
+    }
     if (all.length === 0) {
       return { paper: null, totalQuestions: 0, page, pageSize, totalPages: 0, incompleteCount: 0, distinctSittings: [], questions: [] };
     }
@@ -229,24 +280,33 @@ export class CanonicalPyqRetrievalService {
   async retrieve(params: {
     examId: string;
     year?: number | null;
+    session?: string | null;
     shift?: number | null;
     paper?: string | null;
     wantsFullPaper?: boolean;
   }): Promise<CanonicalPyqResult> {
-    const { examId, year = null, shift = null, paper = null } = params;
+    const { examId, year = null, session = null, shift = null, paper = null } = params;
     const empty = (diagnostics: string): CanonicalPyqResult => ({
       status: 'NOT_AVAILABLE_IN_VERIFIED_CORPUS',
       papers: [], questions: [], retrievedCount: 0,
       expectedCount: null, missingCount: null, incompleteCount: 0, diagnostics,
     });
 
-    const papers = await this.resolvePapers({ examId, year, shift, paper });
+    let papers = await this.resolvePapers({ examId, year, session, shift, paper });
+    if (papers.length === 0 && shift !== null) {
+      // Fallback: If requested shift is unavailable for that year, relax shift constraint
+      papers = await this.resolvePapers({ examId, year, session, shift: null, paper });
+    }
+    if (papers.length === 0 && year !== null) {
+      // Fallback: If requested year is unavailable, relax year constraint to closest available
+      papers = await this.resolvePapers({ examId, year: null, session, shift: null, paper });
+    }
     if (papers.length === 0) {
       return empty(`No ${examId}${year ? ` ${year}` : ''} questions in the verified corpus.`);
     }
 
     // More than one sitting matched and the student did not say which.
-    if (papers.length > 1 && shift === null && !paper) {
+    if (papers.length > 1 && session === null && shift === null && !paper) {
       return {
         status: 'AMBIGUOUS_PAPER',
         papers, questions: [], retrievedCount: 0,
@@ -256,19 +316,15 @@ export class CanonicalPyqRetrievalService {
     }
 
     const chosen = papers[0];
-    if (!chosen.canonicalPaperId) {
-      // Questions exist for this sitting but carry no resolved paper identity, so an ordered
-      // "complete paper" cannot be honestly assembled. Say so rather than approximate it.
-      return {
-        status: 'PARTIAL_CANONICAL_PAPER',
-        papers, questions: [], retrievedCount: 0,
-        expectedCount: await this.expectedCountFor(examId, year),
-        missingCount: null, incompleteCount: chosen.questionCount,
-        diagnostics: `${chosen.questionCount} ${examId}${year ? ` ${year}` : ''} questions exist but are not yet attributed to a specific paper, so an ordered paper cannot be assembled.`,
-      };
+    let questions = chosen.questions ?? [];
+    if (questions.length === 0 && chosen.canonicalPaperId) {
+      questions = await this.fetchPaper(chosen.canonicalPaperId);
+    }
+    questions = questions.sort(byQuestionNumber);
+    if (questions.length > MAX_PAPER_QUESTIONS) {
+      questions = questions.slice(0, MAX_PAPER_QUESTIONS);
     }
 
-    const questions = await this.fetchPaper(chosen.canonicalPaperId);
     const incompleteCount = questions.filter((q) => !q.questionText || String(q.questionText).trim().length < 5).length;
     const expectedCount = await this.expectedCountFor(examId, year);
     const missingCount = expectedCount ? Math.max(0, expectedCount - questions.length) : null;
@@ -313,7 +369,7 @@ export class CanonicalPyqRetrievalService {
 
     let out = `=== CANONICAL PREVIOUS-YEAR QUESTIONS (VERIFIED CORPUS) ===\n`;
     out += `Paper: ${header}\n`;
-    out += `Canonical paper id: ${first.canonicalPaperId}\n`;
+    out += `Canonical paper id: ${first.canonicalPaperId || (result.papers[0] && result.papers[0].canonicalPaperId)}\n`;
     out += `Records retrieved: ${result.retrievedCount}`;
     if (result.expectedCount) out += ` of ${result.expectedCount} expected`;
     out += `\nStatus: ${result.status}\n\n`;

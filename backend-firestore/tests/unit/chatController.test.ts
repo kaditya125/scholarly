@@ -1,7 +1,7 @@
 // Mock the heavy service + file parser so the controller is tested in isolation.
 jest.mock('../../src/services/chat.service', () => ({
   ChatService: jest.fn().mockImplementation(() => ({
-    recordFeedback: jest.fn().mockResolvedValue(undefined),
+    assertSessionAccess: jest.fn().mockResolvedValue(undefined),
     processChat: jest.fn().mockResolvedValue({ reply: 'hi' }),
     processChatStream: jest.fn().mockResolvedValue(undefined),
     getUserSessions: jest.fn().mockResolvedValue([{ id: 's1' }]),
@@ -11,6 +11,14 @@ jest.mock('../../src/services/chat.service', () => ({
 }));
 jest.mock('../../src/services/fileParser.service', () => ({
   FileParserService: { extractText: jest.fn().mockResolvedValue([{ text: 'parsed doc text' }]) },
+}));
+// Quota and plan checks are covered by their own suites; here they always allow.
+jest.mock('../../src/services/usage.service', () => ({
+  usageService: { consumeQuota: jest.fn().mockResolvedValue({ allowed: true }) },
+}));
+jest.mock('../../src/services/entitlement.service', () => ({
+  entitlementService: { getUserPlan: jest.fn().mockResolvedValue({ plan: 'free' }) },
+  PLAN_LIMITS: { free: { maxDocumentSizeMB: 10 } },
 }));
 
 import { ChatController } from '../../src/controllers/chat.controller';
@@ -54,7 +62,8 @@ describe('ChatController.handleChat', () => {
   it('delegates to the service with the token uid and returns the reply', async () => {
     const res = mockRes();
     await controller.handleChat({ user: { uid: 'u1' }, body: { sessionId: 's1', message: 'q', model: 'm', topicType: 't' } } as any, res, jest.fn());
-    expect(svc.processChat).toHaveBeenCalledWith('u1', 's1', 'q', 'm', 't');
+    // Sixth argument: the product role from the token claim — absent here.
+    expect(svc.processChat).toHaveBeenCalledWith('u1', 's1', 'q', 'm', 't', undefined);
     expect(res.json).toHaveBeenCalledWith({ reply: 'hi' });
   });
 
@@ -64,27 +73,6 @@ describe('ChatController.handleChat', () => {
     svc.processChat.mockRejectedValueOnce(new Error('boom'));
     await controller.handleChat({ user: { uid: 'u1' }, body: { sessionId: 's1', message: 'q', model: 'm', topicType: 't' } } as any, res, next);
     expect(next).toHaveBeenCalled();
-  });
-});
-
-describe('ChatController.handleFeedback', () => {
-  it('401 unauthenticated', async () => {
-    const res = mockRes();
-    await controller.handleFeedback({ user: undefined, body: {} } as any, res, jest.fn());
-    expect(res.status).toHaveBeenCalledWith(401);
-  });
-
-  it('400 when signal is missing', async () => {
-    const res = mockRes();
-    await controller.handleFeedback({ user: { uid: 'u1' }, body: {} } as any, res, jest.fn());
-    expect(res.status).toHaveBeenCalledWith(400);
-  });
-
-  it('records the feedback and returns ok', async () => {
-    const res = mockRes();
-    await controller.handleFeedback({ user: { uid: 'u1' }, body: { signal: 'thumbs_up', sessionId: 's1' } } as any, res, jest.fn());
-    expect(svc.recordFeedback).toHaveBeenCalledWith('u1', expect.objectContaining({ signal: 'thumbs_up', sessionId: 's1' }));
-    expect(res.json).toHaveBeenCalledWith({ ok: true });
   });
 });
 
@@ -106,9 +94,46 @@ describe('ChatController.handleChatStream', () => {
     await controller.handleChatStream({ user: { uid: 'u1' }, body: { sessionId: 's1', message: 'q', model: 'm', topicType: 't', notebookId: 'nb1' }, headers: { 'x-trace-id': 'tr1' } } as any, res, jest.fn());
     expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/event-stream');
     expect(res.flushHeaders).toHaveBeenCalled();
-    // learningContext + scopeSourceIds are absent from this request body, so the controller
-    // delegates them as undefined (hard-scope/learning-context are opt-in).
-    expect(svc.processChatStream).toHaveBeenCalledWith('u1', 's1', 'q', 'm', 't', res, 'nb1', 'tr1', undefined, undefined);
+    // No product-role claim and no agenticRetrieval flag on this request: role undefined, flag
+    // false; the options carry the disconnect signal and the default 'chat' execution mode.
+    expect(svc.processChatStream).toHaveBeenCalledWith('u1', 's1', 'q', 'm', 't', res, 'nb1', 'tr1', undefined, false, {
+      signal: expect.any(AbortSignal),
+      executionMode: 'chat',
+    });
+  });
+
+  it('passes the chosen execution mode through and treats anything unknown as chat', async () => {
+    const body = { sessionId: 's1', message: 'q', model: 'm', topicType: 't' };
+    await controller.handleChatStream({ user: { uid: 'u1' }, body: { ...body, executionMode: 'agent' }, headers: {} } as any, mockRes(), jest.fn());
+    await controller.handleChatStream({ user: { uid: 'u1' }, body: { ...body, executionMode: 'rm -rf' }, headers: {} } as any, mockRes(), jest.fn());
+    expect(svc.processChatStream.mock.calls[0][10].executionMode).toBe('agent');
+    expect(svc.processChatStream.mock.calls[1][10].executionMode).toBe('chat');
+  });
+
+  it('aborts generation when the client disconnects before the response finishes', async () => {
+    const res = mockRes();
+    const handlers: Record<string, () => void> = {};
+    res.on = jest.fn((event: string, fn: () => void) => {
+      handlers[event] = fn;
+    });
+    res.writableFinished = false;
+    await controller.handleChatStream({ user: { uid: 'u1' }, body: { sessionId: 's1', message: 'q', model: 'm', topicType: 't' }, headers: {} } as any, res, jest.fn());
+    const { signal } = svc.processChatStream.mock.calls[0][10];
+    expect(signal.aborted).toBe(false);
+    handlers.close();
+    expect(signal.aborted).toBe(true);
+  });
+
+  it('does not treat a normal finish as a disconnect', async () => {
+    const res = mockRes();
+    const handlers: Record<string, () => void> = {};
+    res.on = jest.fn((event: string, fn: () => void) => {
+      handlers[event] = fn;
+    });
+    await controller.handleChatStream({ user: { uid: 'u1' }, body: { sessionId: 's1', message: 'q', model: 'm', topicType: 't' }, headers: {} } as any, res, jest.fn());
+    res.writableFinished = true;
+    handlers.close();
+    expect(svc.processChatStream.mock.calls[0][10].signal.aborted).toBe(false);
   });
 
   it('parses attachments and prepends the extracted text', async () => {
@@ -123,6 +148,27 @@ describe('ChatController.handleChatStream', () => {
     expect(passedMessage).toContain('[File Attached: a.pdf]');
     expect(passedMessage).toContain('parsed doc text');
     expect(passedMessage).toContain('explain');
+    // Plain chat has no use for the documents as documents.
+    expect(svc.processChatStream.mock.calls[0][10].agentInput).toBeUndefined();
+  });
+
+  it('in Agent mode, also hands over the typed goal and the attachments as documents', async () => {
+    await controller.handleChatStream({
+      user: { uid: 'u1' },
+      body: {
+        sessionId: 's1',
+        message: 'Read this uploaded PDF and create revision notes + flashcards + quiz.',
+        model: 'm',
+        topicType: 't',
+        executionMode: 'agent',
+        attachments: [{ data: 'b64', mimeType: 'application/pdf', name: 'a.pdf' }],
+      },
+      headers: {},
+    } as any, mockRes(), jest.fn());
+    expect(svc.processChatStream.mock.calls[0][10].agentInput).toEqual({
+      goal: 'Read this uploaded PDF and create revision notes + flashcards + quiz.',
+      documents: [{ name: 'a.pdf', mimeType: 'application/pdf', pages: [{ text: 'parsed doc text' }] }],
+    });
   });
 
   it('writes an SSE error frame when the stream throws after headers are sent', async () => {

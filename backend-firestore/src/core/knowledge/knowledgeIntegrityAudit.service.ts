@@ -114,6 +114,14 @@ export class KnowledgeIntegrityAuditService {
       refReachable = false;
     }
     if (!refReachable) unreachableResources.push('Reference book retrieval probe returned 0 results.');
+    // Namespace isolation, both directions: nothing but REFERENCE_BOOK inside reference_books, and
+    // no REFERENCE_BOOK vector in the shared namespace. A leak here mixes corpora silently.
+    try {
+      const isolation = await referenceBooksService.verifyIsolation();
+      if (!isolation.ok) brokenMappings.push(...isolation.details.map((d) => `Reference isolation: ${d}`));
+    } catch (e: any) {
+      unreachableResources.push(`Reference isolation check failed: ${e?.message || e}`);
+    }
 
     // 5. Audit User Notebooks
     const totalNotebooks = await countFirestore('notebooks');

@@ -57,6 +57,8 @@ interface DocumentProcessingTrackerProps {
   canRetry?: boolean;
   canCancel?: boolean;
   isConnected?: boolean;
+  /** false when there is no live stage feed for this document (the status shown is the stored one). */
+  liveTrackingAvailable?: boolean;
   onCancel?: () => void;
   onRetry?: () => void;
   className?: string;
@@ -130,6 +132,7 @@ export const DocumentProcessingTracker: React.FC<DocumentProcessingTrackerProps>
   canRetry = false,
   canCancel = false,
   isConnected = true,
+  liveTrackingAvailable = true,
   onCancel,
   onRetry,
   className,
@@ -238,17 +241,27 @@ export const DocumentProcessingTracker: React.FC<DocumentProcessingTrackerProps>
             <span>{formatDuration(elapsedMs)}</span>
           </div>
 
-          <div
-            className={cn(
-              'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium',
-              isConnected
-                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400'
-                : 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400'
-            )}
-          >
-            <Radio className={cn('w-3.5 h-3.5', isConnected ? 'animate-pulse' : '')} />
-            <span>{isConnected ? 'Live Stream' : 'Reconnecting…'}</span>
-          </div>
+          {liveTrackingAvailable ? (
+            <div
+              className={cn(
+                'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium',
+                isConnected
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400'
+                  : 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400'
+              )}
+            >
+              <Radio className={cn('w-3.5 h-3.5', isConnected ? 'animate-pulse' : '')} />
+              <span>{isConnected ? 'Live Stream' : 'Reconnecting…'}</span>
+            </div>
+          ) : (
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+              title="Live stage-by-stage tracking isn't available; this is the document's last saved status."
+            >
+              <Radio className="w-3.5 h-3.5" />
+              <span>Saved status</span>
+            </div>
+          )}
 
           {/* Action Buttons */}
           {effectiveCanCancel && !isCompleted && !isFailed && onCancel && (

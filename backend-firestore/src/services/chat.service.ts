@@ -1,12 +1,32 @@
 import { randomUUID } from 'crypto';
-import { ChatRepository } from '../repositories/chat.repository';
+import { ChatRepository, SessionAccessError, isForeignSession } from '../repositories/chat.repository';
 import { WorkflowRequest, workflowEngine } from '../core/workflow/WorkflowEngine';
 import { ChatMessage, TopicType } from '../types';
 import { ProductRole } from '../types/roles';
 import { logger } from '../utils/logger';
 
+/** Options added after the positional parameters, so existing callers are unaffected. */
+export interface ChatStreamOptions {
+  /** Aborts when the client disconnects; generation stops instead of spending tokens for nobody. */
+  signal?: AbortSignal;
+  /** 'chat' (default), 'agent' (student chose Agent mode) or 'auto' (let the goal router decide). */
+  executionMode?: WorkflowRequest['executionMode'];
+  /** The typed goal and attached documents, for Agent mode (see WorkflowRequest.agentInput). */
+  agentInput?: WorkflowRequest['agentInput'];
+}
+
 export class ChatService {
   private repository = new ChatRepository();
+
+  /**
+   * Refuses a session id that belongs to another user. Called by the controller BEFORE any quota
+   * is charged or any SSE header is sent, so a refused request costs nothing and gets a plain 403.
+   * (getOrCreateSession enforces the same rule again — defence in depth.)
+   */
+  async assertSessionAccess(sessionId: string, userId: string): Promise<void> {
+    const session = await this.repository.getSession(sessionId);
+    if (isForeignSession(session, userId)) throw new SessionAccessError();
+  }
 
   // Removed getProvider because DI container handles it now.
 
@@ -72,8 +92,9 @@ export class ChatService {
     };
   }
 
-  async processChatStream(userId: string, sessionId: string, message: string, model: string, topicType: TopicType, res: any, notebookId?: string, traceId?: string, productRole?: ProductRole, agenticRetrieval?: boolean) {
+  async processChatStream(userId: string, sessionId: string, message: string, model: string, topicType: TopicType, res: any, notebookId?: string, traceId?: string, productRole?: ProductRole, agenticRetrieval?: boolean, options: ChatStreamOptions = {}) {
     logger.info(`Starting stream workflow for user ${userId}`, { traceId, sessionId });
+    const { signal, executionMode, agentInput } = options;
 
     // 1. Get or create session. Kept first and alone: the session must exist — and, where
     //    ownership is enforced, belong to this user — before any of its messages are touched.
@@ -107,16 +128,27 @@ export class ChatService {
       model,
       traceId,
       productRole,
-      agenticRetrieval
+      agenticRetrieval,
+      executionMode,
+      ...(agentInput ? { agentInput } : {}),
     };
 
     const stream = workflowEngine.executeStream(req);
 
     let fullReply = '';
     let suggestions: string[] = [];
+    let agentRunId: string | undefined;
+    let clientGone = false;
 
     try {
       for await (const event of stream) {
+        if (signal?.aborted) {
+          // The student closed the tab or pressed stop. Close the generator (so no further stage
+          // runs or bills) and keep whatever was already streamed as the saved reply.
+          clientGone = true;
+          await stream.return(undefined);
+          break;
+        }
         if (event.type === 'progress') {
           // Forward the `stage` too — the frontend's ReasoningTimeline
           // matches each step to a backend stage id to decide whether that
@@ -147,13 +179,22 @@ export class ChatService {
         } else if (event.type === 'suggestions') {
           suggestions = event.suggestions || [];
           res.write(`data: ${JSON.stringify({ type: 'suggestions', suggestions: event.suggestions })}\n\n`);
+        } else if (event.type === 'agent_run') {
+          // Agent mode: the goal became a background run. The client follows it on
+          // GET /api/agent/runs/:runId/events.
+          agentRunId = event.runId;
+          res.write(`data: ${JSON.stringify({ type: 'agent_run', runId: event.runId, workflowId: event.workflowId })}\n\n`);
         } else if (event.type === 'done') {
           res.write(`data: ${JSON.stringify({ type: 'done', data: event.data })}\n\n`);
         }
       }
 
-      res.write('data: [DONE]\n\n');
-      res.end();
+      if (clientGone) {
+        if (!res.writableEnded) res.end();
+      } else {
+        res.write('data: [DONE]\n\n');
+        res.end();
+      }
     } catch (error: any) {
       console.error("Stream generation error:", error);
       let errorMessage = error.message || 'Error generating AI response';
@@ -167,8 +208,9 @@ export class ChatService {
       
       if (!res.headersSent) {
         res.status(500).json({ error: errorMessage });
-      } else {
-        res.write(`data: ${JSON.stringify({ error: errorMessage })}\n\n`);
+      } else if (!res.writableEnded) {
+        // Typed so the client's `type === 'error'` handler sees it; `error` kept for older clients.
+        res.write(`data: ${JSON.stringify({ type: 'error', error: errorMessage, message: errorMessage })}\n\n`);
         res.end();
       }
       
@@ -183,6 +225,9 @@ export class ChatService {
       return; // Stop execution
     }
 
+    // A stopped reply with nothing streamed yet leaves no empty assistant bubble in history.
+    if (clientGone && !fullReply.trim()) return;
+
     // 7. Save to database after stream finishes
     const assistantMessage: ChatMessage = {
       role: 'ai',
@@ -190,6 +235,8 @@ export class ChatService {
       timestamp: Date.now(),
       // Saved so a reloaded conversation still offers the same next-message suggestion.
       ...(suggestions.length > 0 ? { suggestions } : {}),
+      // Saved so a reloaded conversation re-attaches the agent run's card to this reply.
+      ...(agentRunId ? { agentRunId } : {}),
     };
 
     // Only save the assistant message since user message was saved earlier

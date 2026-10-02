@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../lib/AuthContext';
+import { API_BASE_URL } from '../../lib/api/client';
 import {
   studyCircleApi,
   CircleKnowledgeItem,
@@ -101,8 +102,7 @@ export function useStudyCircle(groupId?: string) {
       let answer = '';
       try {
         const token = await user?.getIdToken();
-        const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-        const response = await fetch(`${baseURL}/study-groups/${groupId}/circle/ask`, {
+        const response = await fetch(`${API_BASE_URL}/study-groups/${groupId}/circle/ask`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

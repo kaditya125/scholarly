@@ -17,7 +17,6 @@
 import { db } from '../../config/firebase';
 import { notebookRepository } from '../../repositories/notebook.repository';
 import { retrievalService, RetrievalService, RetrievalResult } from '../../services/rag/retrieval.service';
-import { referenceBooksService, ReferenceBooksService } from '../../services/rag/referenceBooks.service';
 import { graphRetrievalService, GraphRetrievalService } from '../../services/rag/graphRetrieval.service';
 import { contentExplorationService, ContentExplorationService } from '../pipeline/exploration/ContentExplorationService';
 import { contentLineageService, ContentLineageService } from '../pipeline/lineage/ContentLineageService';
@@ -49,7 +48,6 @@ import { logger } from '../../utils/logger';
 export class KnowledgeService {
   constructor(
     private readonly retrieval: RetrievalService = retrievalService,
-    private readonly referenceBooks: ReferenceBooksService = referenceBooksService,
     private readonly graphRetrieval: GraphRetrievalService = graphRetrievalService,
     private readonly exploration: ContentExplorationService = contentExplorationService,
     private readonly lineage: ContentLineageService = contentLineageService,
@@ -323,41 +321,9 @@ export class KnowledgeService {
       }
     }
 
-    // 3. Fetch Reference Books context if requested
-    let referencePassages: SemanticChunkMatch[] = [];
-    if (options?.includeReferenceBooks) {
-      try {
-        const refResults = await this.referenceBooks.retrieveReferenceContext(query, {
-          topK: 3,
-          book: options.referenceBookFilters?.books,
-          publisher: options.referenceBookFilters?.publisher,
-          subject: options.referenceBookFilters?.subject,
-          category: options.referenceBookFilters?.category,
-        });
-
-        referencePassages = refResults.map((r, idx) => {
-          const meta = r.metadata || {};
-          return {
-            chunkId: meta.chunk_id || `ref_${idx}`,
-            documentId: meta.book || 'reference_book',
-            documentVersionId: 'v1',
-            collectionId: 'reference_books',
-            text: r.text,
-            score: r.score,
-            weightedScore: r.weightedScore ?? (r.score * 1.1),
-            tokenCount: Math.ceil(r.text.length / 4),
-            pageNumber: meta.page_number || meta.pageNumber,
-            chapter: meta.chapter,
-            section: meta.section,
-            sourceTitle: r.source,
-            sourceId: meta.parent_document_id || meta.book,
-            metadata: meta,
-          };
-        });
-      } catch (err) {
-        logger.warn(`[KnowledgeService.getSourceContext] Reference books retrieval failed:`, err);
-      }
-    }
+    // Reference books are NOT fetched here. RetrievalOrchestrator is the one routing layer that
+    // decides when reference books join the context (knowledgeRouter + cross-tier ranking); a
+    // second, opt-in path here had no caller and would have ranked them differently.
 
     // 4. Fetch Web Search context if requested
     let webContextData: { source: string; text: string }[] | undefined;
@@ -405,21 +371,6 @@ export class KnowledgeService {
       });
     }
 
-    // Add reference book citations
-    for (let i = 0; i < referencePassages.length; i++) {
-      const rp = referencePassages[i];
-      citations.push({
-        chunkId: rp.chunkId,
-        source: rp.sourceTitle || 'Reference Book',
-        sourceId: rp.sourceId,
-        score: rp.score,
-        pageNumber: rp.pageNumber,
-        snippet: rp.text.length > 200 ? `${rp.text.slice(0, 197)}...` : rp.text,
-        figureAssetUrl: rp.metadata?.figureAssetUrl || null,
-        authority: 'REFERENCE_BOOK',
-      });
-    }
-
     // 6. Build Unified Grounding String
     const contextSections: string[] = [];
 
@@ -428,15 +379,6 @@ export class KnowledgeService {
         `=== PRIMARY CURRICULUM & SOURCE PASSAGES ===\n` +
           passages
             .map((p, idx) => `[Source ${idx + 1}: ${p.sourceTitle || p.documentId}${p.pageNumber ? ` p.${p.pageNumber}` : ''}]\n${p.text}`)
-            .join('\n\n')
-      );
-    }
-
-    if (referencePassages.length > 0) {
-      contextSections.push(
-        `=== SUPPLEMENTARY REFERENCE MATERIAL (LUCENT / S. CHAND) ===\n` +
-          referencePassages
-            .map((r, idx) => `[Reference ${idx + 1}: ${r.sourceTitle}${r.pageNumber ? ` p.${r.pageNumber}` : ''}]\n${r.text}`)
             .join('\n\n')
       );
     }
@@ -460,7 +402,6 @@ export class KnowledgeService {
       query,
       contextString,
       passages,
-      referencePassages,
       citations,
       graphContext: graphContextData,
       webContext: webContextData,

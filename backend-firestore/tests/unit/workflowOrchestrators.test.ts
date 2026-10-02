@@ -14,6 +14,26 @@ jest.mock('../../src/core/agents/KnowledgeGraphAgent', () => ({
   },
 }));
 
+// Notebook access and canonical PYQ lookup are not what these tests exercise; mocked so their
+// module graphs (which carry unrelated type errors) are not compiled into the suite.
+jest.mock('../../src/core/pipeline/exploration/ContentExplorationService', () => ({
+  contentExplorationService: { ensureCollectionAccess: jest.fn().mockResolvedValue(undefined) },
+}));
+jest.mock('../../src/services/pyq/canonicalPyqRetrieval.service', () => ({ canonicalPyqRetrievalService: {} }));
+// The real parser resolves exams from a Firestore-backed index; these tests are not about PYQs.
+jest.mock('../../src/services/pyq/pyqQueryParser', () => ({
+  parsePyqQuery: jest.fn(async () => ({ intent: 'CONCEPT', examId: null, year: null, shift: null, paper: null, topic: null })),
+}));
+jest.mock('../../src/core/knowledge', () => ({
+  knowledgeService: {},
+  KnowledgeService: class {},
+  knowledgeRouter: jest.requireActual('../../src/core/knowledge/knowledgeRouter.service').knowledgeRouter,
+}));
+jest.mock('../../src/services/rag/referenceBooks.service', () => ({
+  referenceBooksService: { retrieveReferenceContext: jest.fn().mockResolvedValue([]) },
+  ReferenceBooksService: class {},
+}));
+
 import { RetrievalOrchestrator } from '../../src/core/workflow/services/RetrievalOrchestrator';
 import { WorkflowEvent } from '../../src/core/workflow/types';
 
@@ -70,7 +90,7 @@ describe('RetrievalOrchestrator', () => {
     // Simulate the graph stage having already run in the parallel batch.
     await orch.runGraphRetrieval(ctx as any);
     const { events, outcome } = await drain(
-      orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false }),
+      orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false } as any),
     );
 
     // Vector-only event sequence: RAG progress, citation, RAG detail (no graph events).
@@ -94,7 +114,7 @@ describe('RetrievalOrchestrator', () => {
     };
     const orch = new RetrievalOrchestrator(retrieval as any);
     const { events, outcome } = await drain(
-      orch.stream(makeReq() as any, agentCtx() as any, { needsWebSearch: false, hasAttachment: false }),
+      orch.stream(makeReq() as any, agentCtx() as any, { needsWebSearch: false, hasAttachment: false } as any),
     );
     expect(retrieval.retrieveCurriculumContext).toHaveBeenCalledWith('explain gauss law', 5);
     expect(outcome.citationsList).toHaveLength(1);
@@ -109,7 +129,7 @@ describe('RetrievalOrchestrator', () => {
     };
     const orch = new RetrievalOrchestrator(retrieval as any);
     const { events, outcome } = await drain(
-      orch.stream(makeReq({ query: '[File Attached: a.pdf] summarize' }) as any, agentCtx() as any, { needsWebSearch: false, hasAttachment: true }),
+      orch.stream(makeReq({ query: '[File Attached: a.pdf] summarize' }) as any, agentCtx() as any, { needsWebSearch: false, hasAttachment: true } as any),
     );
     expect(retrieval.retrieveCurriculumContext).not.toHaveBeenCalled();
     expect(outcome.citationsList).toHaveLength(0);
@@ -132,7 +152,7 @@ describe('RetrievalOrchestrator', () => {
       const ctx = agentCtx();
       await orch.runGraphRetrieval(ctx as any); // graph ran (parallel batch), but 'vector' must not fuse it
       const { outcome } = await drain(
-        orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false }, { retrievalStrategy: 'vector' } as any),
+        orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false } as any, { retrievalStrategy: 'vector' } as any),
       );
       expect(retrieval.retrieveContext).toHaveBeenCalled();
       expect(outcome.citationsList).toHaveLength(1);
@@ -148,7 +168,7 @@ describe('RetrievalOrchestrator', () => {
       const ctx = agentCtx();
       await orch.runGraphRetrieval(ctx as any);
       const { outcome } = await drain(
-        orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false }, { retrievalStrategy: 'none' } as any),
+        orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false } as any, { retrievalStrategy: 'none' } as any),
       );
       expect(retrieval.retrieveContext).not.toHaveBeenCalled();
       expect(retrieval.retrieveCurriculumContext).not.toHaveBeenCalled();

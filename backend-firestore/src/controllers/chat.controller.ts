@@ -12,6 +12,15 @@ function productRoleOf(req: Request): ProductRole | undefined {
   return isProductRole(raw) ? raw : undefined;
 }
 
+/** Only these values are honoured; anything else from the body means ordinary chat. */
+function executionModeOf(raw: unknown): 'chat' | 'agent' | 'auto' {
+  return raw === 'agent' || raw === 'auto' ? raw : 'chat';
+}
+
+function sessionForbidden(res: Response, err: SessionAccessError) {
+  return res.status(403).json({ code: err.code, error: err.message });
+}
+
 export class ChatController {
   private service = new ChatService();
 
@@ -26,6 +35,14 @@ export class ChatController {
       // Basic validation
       if (!sessionId || !message || !model || !topicType) {
         return res.status(400).json({ error: "Missing required fields: sessionId, message, model, topicType" });
+      }
+
+      // Session ownership before any quota is charged.
+      try {
+        await this.service.assertSessionAccess(sessionId, userId);
+      } catch (err: any) {
+        if (err instanceof SessionAccessError) return sessionForbidden(res, err);
+        throw err;
       }
 
       // ── Server-Side Quota Enforcement ──
@@ -51,7 +68,7 @@ export class ChatController {
 
       res.json(response);
     } catch (error) {
-      if (error instanceof SessionAccessError) return res.status(403).json({ code: error.code, error: error.message });
+      if (error instanceof SessionAccessError) return sessionForbidden(res, error);
       console.error("Chat Error:", error);
       next(error);
     }
@@ -62,12 +79,20 @@ export class ChatController {
       const userId = req.user?.uid;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-      const { sessionId, message, model, topicType, attachments, notebookId, agenticRetrieval } = req.body;
+      const { sessionId, message, model, topicType, attachments, notebookId, agenticRetrieval, executionMode } = req.body;
       // Never trust the raw body type — coerce like isWeakAreaDrill in quiz.controller.ts.
       const agenticRetrievalFlag = agenticRetrieval === true || agenticRetrieval === 'true';
 
       if (!sessionId || (!message && (!attachments || attachments.length === 0)) || !model || !topicType) {
         return res.status(400).json({ error: "Missing required fields: sessionId, message, model, topicType" });
+      }
+
+      // Session ownership before any quota is charged or any SSE header is sent.
+      try {
+        await this.service.assertSessionAccess(sessionId, userId);
+      } catch (err: any) {
+        if (err instanceof SessionAccessError) return sessionForbidden(res, err);
+        throw err;
       }
 
       // ── Server-Side Quota & Document Size Enforcement ──
@@ -107,6 +132,9 @@ export class ChatController {
       }
 
       let finalMessage = message || '';
+      // Agent mode needs the attachments as documents (pages it can quote), not as text flattened
+      // into a 2,000-character goal; ordinary chat keeps the flattened message as before.
+      const documents: Array<{ name: string; mimeType: string; pages: Array<{ pageNumber?: number; text: string }> }> = [];
 
       if (attachments && Array.isArray(attachments) && attachments.length > 0) {
         let attachmentsText = '';
@@ -114,9 +142,11 @@ export class ChatController {
           const parsedPages = await FileParserService.extractText(att.data, att.mimeType, att.name);
           const extractedText = parsedPages.map(p => p.text).join('\n');
           attachmentsText += `[File Attached: ${att.name}]\n${extractedText.trim()}\n\n`;
+          documents.push({ name: String(att.name || 'document'), mimeType: String(att.mimeType || ''), pages: parsedPages });
         }
         finalMessage = finalMessage ? `${attachmentsText.trim()}\n\n${finalMessage}` : attachmentsText.trim();
       }
+      const mode = executionModeOf(executionMode);
 
       // Setup Server-Sent Events headers
       res.setHeader('Content-Type', 'text/event-stream');
@@ -126,22 +156,29 @@ export class ChatController {
 
       const traceId = req.headers['x-trace-id'] as string;
 
-      await this.service.processChatStream(userId, sessionId, finalMessage, model, topicType, res, notebookId, traceId, productRoleOf(req), agenticRetrievalFlag);
+      // Stop generating when the client goes away. `res` 'close' fires on disconnect AND on a
+      // normal finish; only an unfinished response means the student left.
+      const disconnect = new AbortController();
+      if (typeof (res as any).on === 'function') {
+        res.on('close', () => {
+          if (!res.writableFinished) disconnect.abort();
+        });
+      }
+
+      await this.service.processChatStream(userId, sessionId, finalMessage, model, topicType, res, notebookId, traceId, productRoleOf(req), agenticRetrievalFlag, {
+        signal: disconnect.signal,
+        executionMode: mode,
+        ...(documents.length && mode !== 'chat' ? { agentInput: { goal: String(message || '').trim(), documents } } : {}),
+      });
 
     } catch (error) {
-      // Ownership is enforced when the session is loaded, after SSE headers are sent, so the
-      // refusal usually arrives as a stream event rather than a 403.
-      if (error instanceof SessionAccessError) {
-        if (!res.headersSent) return res.status(403).json({ code: error.code, error: error.message });
-        res.write(`data: ${JSON.stringify({ type: 'error', code: error.code, error: error.message, message: error.message })}\n\n`);
-        return res.end();
-      }
+      if (error instanceof SessionAccessError && !res.headersSent) return sessionForbidden(res, error);
       console.error("Chat Stream Error:", error);
       // Can't reliably send JSON if headers were already sent for SSE
       if (!res.headersSent) {
         next(error);
-      } else {
-        res.write(`data: ${JSON.stringify({ error: "Internal server error during stream" })}\n\n`);
+      } else if (!res.writableEnded) {
+        res.write(`data: ${JSON.stringify({ type: 'error', error: "Internal server error during stream", message: "Internal server error during stream" })}\n\n`);
         res.end();
       }
     }

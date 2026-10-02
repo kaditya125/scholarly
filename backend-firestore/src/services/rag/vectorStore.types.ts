@@ -32,8 +32,21 @@ export interface VectorDocument {
  */
 export interface VectorMatch {
   id: string;
+  /** Cosine similarity to the query vector — always, including for hits found by keyword only. */
   score?: number;
   metadata?: RecordMetadata;
+  /** Present on hybridQuery results: how the hit was found and ranked (see lexicalScore.ts). */
+  hybrid?: HybridRankInfo;
+}
+
+export interface HybridRankInfo {
+  /** 1-based rank in the dense (vector) list, if it was there. */
+  denseRank?: number;
+  /** 1-based rank in the BM25 list, if it was there. */
+  keywordRank?: number;
+  bm25?: number;
+  /** Fused reciprocal-rank score the results are ordered by. */
+  rrf: number;
 }
 
 /** Shape returned by fetchVectors, keyed by the original id. */
@@ -61,6 +74,16 @@ export interface VectorStoreStats {
  * another — a leak there would silently mix the reference-book corpus into curriculum answers,
  * and nothing downstream checks for it.
  */
+export interface HybridQueryOptions {
+  queryText: string;
+  queryVector: number[];
+  topK?: number;
+  filter?: Record<string, any>;
+  namespace?: string;
+  denseWeight?: number;
+  k?: number;
+}
+
 export interface VectorStore {
   readonly backend: 'pinecone' | 'qdrant';
 
@@ -72,6 +95,8 @@ export interface VectorStore {
     filter?: Record<string, any>,
     namespace?: string
   ): Promise<VectorMatch[]>;
+
+  hybridQuery?(options: HybridQueryOptions): Promise<VectorMatch[]>;
 
   fetchVectors(ids: string[], namespace?: string): Promise<Record<string, FetchedVector>>;
 

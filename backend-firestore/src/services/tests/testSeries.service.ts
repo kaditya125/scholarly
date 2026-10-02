@@ -17,6 +17,18 @@ export class TestSeriesService {
   async getIncompleteAttempts(userId: string): Promise<TestAttempt[]> {
     return testsRepository.getIncompleteAttempts(userId);
   }
+
+  async getTestById(testId: string): Promise<MockTest | null> {
+    return testsRepository.getTestById(testId);
+  }
+
+  async getTestWithQuestions(testId: string) {
+    return testsRepository.getTestWithQuestions(testId);
+  }
+
+  async getTestsBySeries(seriesId: string): Promise<MockTest[]> {
+    return testsRepository.getTestsBySeriesId(seriesId);
+  }
 }
 
 export const testSeriesService = new TestSeriesService();

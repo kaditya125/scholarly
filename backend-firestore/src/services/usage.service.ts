@@ -26,6 +26,7 @@ export interface UserUsageSummary {
     documents: { used: number; limit: number; remaining: number; percent: number };
     podcasts: { used: number; limit: number; remaining: number; percent: number };
     mockTests: { used: number; limit: number; remaining: number; percent: number };
+    agentRuns: { used: number; limit: number; remaining: number; percent: number };
   };
 }
 
@@ -37,6 +38,9 @@ export interface UsageDocData {
   documentsUploaded: number;
   podcastsGenerated: number;
   mockTestsGenerated: number;
+  /** Optional: usage docs written before Agent Mode do not carry these counters. */
+  agentRuns?: number;
+  artifactGenerations?: number;
   periodStart: number;
   periodEnd: number;
   updatedAt: number;
@@ -204,6 +208,7 @@ export class UsageService {
     const docsUsed = Number(usage.documentsUploaded || 0);
     const podcastsUsed = Number(usage.podcastsGenerated || 0);
     const mockTestsUsed = Number(usage.mockTestsGenerated || 0);
+    const agentRunsUsed = Number(usage.agentRuns || 0);
 
     const voiceMinutesUsed = Math.ceil(voiceSecondsUsed / 60);
     const voiceMinutesLimit = Math.round(limits.voiceSeconds / 60);
@@ -246,6 +251,12 @@ export class UsageService {
           limit: limits.mockTestsGenerated,
           remaining: Math.max(0, limits.mockTestsGenerated - mockTestsUsed),
           percent: Math.min(100, Math.round((mockTestsUsed / limits.mockTestsGenerated) * 100)),
+        },
+        agentRuns: {
+          used: agentRunsUsed,
+          limit: limits.agentRuns,
+          remaining: Math.max(0, limits.agentRuns - agentRunsUsed),
+          percent: Math.min(100, Math.round((agentRunsUsed / limits.agentRuns) * 100)),
         },
       },
     };

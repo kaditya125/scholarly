@@ -3,13 +3,12 @@ import { collection, onSnapshot, query as fsQuery, where } from 'firebase/firest
 import { db } from '../lib/firestore';
 import { useAuth } from '../lib/AuthContext';
 import { getAuth } from 'firebase/auth';
+import { API_BASE_URL as API_BASE } from '../lib/api/client';
 
 const HEARTBEAT_MS = 60_000;
 const ACTIVITY_THROTTLE_MS = 60_000;
 const FRESH_MS = 300_000; // 5 minutes
 
-// Resolve the backend base URL the same way the rest of the app does
-const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
 
 async function postPresence(state: 'online' | 'offline') {
   const auth = getAuth();

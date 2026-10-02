@@ -117,7 +117,7 @@ export function toQdrantFilter(
  * Payload keys worth indexing. Qdrant can filter without an index, but does so by scanning, and
  * these are the keys every retrieval path constrains on.
  */
-export const INDEXED_PAYLOAD_KEYS: { key: string; schema: 'keyword' | 'integer' | 'bool' }[] = [
+export const INDEXED_PAYLOAD_KEYS: { key: string; schema: 'keyword' | 'integer' | 'bool' | 'text' }[] = [
   { key: PINECONE_NAMESPACE_KEY, schema: 'keyword' },
   { key: PINECONE_ID_KEY, schema: 'keyword' },
   { key: 'notebookId', schema: 'keyword' },
@@ -134,4 +134,6 @@ export const INDEXED_PAYLOAD_KEYS: { key: string; schema: 'keyword' | 'integer' 
   { key: 'is_pyq', schema: 'bool' },
   { key: 'is_generated', schema: 'bool' },
   { key: 'is_mock', schema: 'bool' },
+  { key: 'parentDocId', schema: 'keyword' },
+  { key: 'text', schema: 'text' },
 ];

@@ -266,8 +266,19 @@ export class ExamMasterService {
       if (s.exam.aliases && s.exam.aliases.some((a) => a.toLowerCase() === normalized)) return true;
       return false;
     });
+    if (seedMatch) return seedMatch.exam;
 
-    return seedMatch ? seedMatch.exam : null;
+    /*
+     * Neither this collection's own aliases nor the static seed list caught it. Fall back to the
+     * live-data exam index (examIndex.ts) — built from `exams` + the PYQ source registry + the ids
+     * actually present on questions, so it knows exams like UGC NET that have real PYQ corpus data
+     * but no ExamMaster document. If the resolved id DOES have a master doc, return the genuine
+     * one rather than fabricate fields this service has no data for.
+     */
+    const { detectExamId } = await import('../pyq/examIndex');
+    const resolvedId = await detectExamId(query);
+    if (!resolvedId) return null;
+    return this.repository.getExamById(resolvedId);
   }
 
   // ─── 2. Exam Cycle Operations ──────────────────────────────────────────────

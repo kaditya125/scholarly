@@ -1,8 +1,8 @@
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+import { API_BASE_URL } from './client';
 
 /** URL that streams a curriculum chapter's PDF bytes (fetched with the auth token, then handed to pdf.js). */
 export function chapterPdfUrl(notebookId: string, sourceId: string): string {
-  return `${baseURL}/documents/books/${encodeURIComponent(notebookId)}/chapters/${encodeURIComponent(sourceId)}/pdf`;
+  return `${API_BASE_URL}/documents/books/${encodeURIComponent(notebookId)}/chapters/${encodeURIComponent(sourceId)}/pdf`;
 }
 
-export const scanBaseURL = baseURL;
+export const scanBaseURL = API_BASE_URL;

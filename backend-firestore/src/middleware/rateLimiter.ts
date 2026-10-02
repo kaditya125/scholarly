@@ -59,6 +59,9 @@ export const strictLimiter = rateLimit({
 // call site.
 export const podcastGenerateLimiter = strictLimiter;
 
+// "Fix this gap" drill generation: two Gemini calls per request.
+export const remediationDrillLimiter = strictLimiter;
+
 export const helpdeskLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 60,

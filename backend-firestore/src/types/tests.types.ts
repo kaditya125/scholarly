@@ -1,4 +1,5 @@
 import { Subject, Difficulty } from './index';
+export { Subject, Difficulty };
 
 export type ExamCategory = 'SSC' | 'UPSC' | 'Banking' | 'Teaching' | 'State PSC' | 'Railways' | 'Engineering' | 'Medical';
 export type TestType = 'full-length' | 'sectional' | 'chapter' | 'topic' | 'pyq' | 'adaptive';
@@ -23,11 +24,12 @@ export interface MockTest {
   title: string;
   type: TestType;
   category: ExamCategory;
-  subject?: Subject;
+  subject?: Subject | string;
   topic?: string;
-  difficulty: Difficulty;
+  difficulty: Difficulty | string;
   isLive: boolean;
   questionIds: string[]; // References to Question documents
+  sections?: { name: string; questionIds: string[]; totalQuestions: number; marks: number }[];
   totalQuestions: number;
   totalMarks: number;
   durationMinutes: number;
@@ -40,13 +42,22 @@ export interface MockTest {
 
 export interface Question {
   id: string;
-  subject: Subject;
+  subject: Subject | string;
   topic: string;
-  difficulty: Difficulty;
+  difficulty: Difficulty | string;
   text: string;
   options: string[];
   correctAnswerIndex: number;
   explanation: string; // Used for study mode / result analysis
+  marks?: number;
+  negativeMarks?: number;
+  examId?: string;
+  section?: string;
+  sourcePyqId?: string;
+  sourceYear?: number;
+  sourceShift?: string;
+  sourcePaper?: string;
+  questionOrigin?: 'AUTHENTIC_PYQ' | 'PYQ_INSPIRED' | 'REFERENCE_BOOK' | 'GENERATED';
 }
 
 export interface TestAttempt {

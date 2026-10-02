@@ -98,8 +98,8 @@ export const DocumentDetailWorkspace: React.FC<DocumentDetailWorkspaceProps> = (
   const [selectedKgNode, setSelectedKgNode] = useState<any | null>(null);
   const [kgTypeFilter, setKgTypeFilter] = useState<string>('ALL');
 
-  // Real-time SSE processing hook
-  const realtime = usePipelineRealtime(source.notebookId, source.id);
+  // Stored processing status (no live stage feed exists for real uploads — see usePipelineRealtime)
+  const realtime = usePipelineRealtime(source);
 
   // Phase 7 & 9 Exploration & Versioning Hook
   const {
@@ -935,6 +935,7 @@ export const DocumentDetailWorkspace: React.FC<DocumentDetailWorkspaceProps> = (
           report={quality.report}
           loading={quality.loading}
           revalidating={quality.revalidating}
+          error={quality.error}
           onRevalidate={quality.revalidate}
         />
       )}
@@ -954,11 +955,8 @@ export const DocumentDetailWorkspace: React.FC<DocumentDetailWorkspaceProps> = (
             canRetry={realtime.canRetry}
             canCancel={realtime.canCancel}
             isConnected={realtime.isConnected}
-            onCancel={realtime.cancel}
-            onRetry={() => {
-              if (onRetry) onRetry(source.notebookId, source.id);
-              realtime.retry();
-            }}
+            liveTrackingAvailable={realtime.liveTrackingAvailable}
+            onRetry={() => { if (onRetry) onRetry(source.notebookId, source.id); }}
           />
         </div>
       )}

@@ -25,6 +25,29 @@ export class TestsController {
     }
   };
 
+  public getTestById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { testId } = req.params;
+      const result = await testSeriesService.getTestWithQuestions(testId);
+      if (!result) {
+        return res.status(404).json({ error: 'Mock test not found' });
+      }
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getTestsBySeries = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { seriesId } = req.params;
+      const tests = await testSeriesService.getTestsBySeries(seriesId);
+      res.json(tests);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   public getIncompleteAttempts = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { userId } = req.params;

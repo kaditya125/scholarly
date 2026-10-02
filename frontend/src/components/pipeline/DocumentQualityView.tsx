@@ -33,6 +33,8 @@ interface DocumentQualityViewProps {
   report: ContentQualityReport | null;
   loading?: boolean;
   revalidating?: boolean;
+  /** Load/revalidate failure — shown instead of a report, never replaced by a made-up one. */
+  error?: string | null;
   onRevalidate?: (strictMode?: boolean) => void;
 }
 
@@ -40,6 +42,7 @@ export const DocumentQualityView: React.FC<DocumentQualityViewProps> = ({
   report,
   loading = false,
   revalidating = false,
+  error = null,
   onRevalidate,
 }) => {
   const [filterType, setFilterType] = useState<'all' | 'failed' | 'warnings'>('all');
@@ -58,7 +61,7 @@ export const DocumentQualityView: React.FC<DocumentQualityViewProps> = ({
     return (
       <div className="p-8 bg-slate-900/40 rounded-2xl border border-slate-800 text-center text-slate-400">
         <HelpCircle className="w-10 h-10 text-slate-500 mx-auto mb-2" />
-        <p>No quality evaluation report available for this document.</p>
+        <p>{error ? `Quality report unavailable: ${error}` : 'No quality evaluation report available for this document.'}</p>
       </div>
     );
   }

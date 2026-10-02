@@ -183,6 +183,24 @@ export const featureFlags = {
    * opt-in to work. Default OFF.
    */
   get agenticRetrieval(): boolean { return boolEnv('ENABLE_AGENTIC_RETRIEVAL', false); },
+
+  // ── Agent Mode (docs/agentic-ai/architecture.md) ────────────────────────────────────────────
+  /**
+   * Master switch for Agent Mode: goal routing in chat, the /api/agent endpoints and the agent
+   * runtime. Default OFF — with it off, chat behaves exactly as before and every agent endpoint
+   * answers 404. Everything below additionally requires this flag.
+   */
+  get agentMode(): boolean { return boolEnv('AGENT_MODE_ENABLED', false); },
+  /** Agent workflows that create stored artifacts (PDFs, decks, quizzes). Default OFF (Phase 3+). */
+  get agentArtifacts(): boolean { return this.agentMode && boolEnv('AGENT_ARTIFACTS_ENABLED', false); },
+  /** Agent web research with provenance. Default OFF. */
+  get agentWebSearch(): boolean { return this.agentMode && boolEnv('AGENT_WEB_SEARCH_ENABLED', false); },
+  /** Open-ended multi-step goals with model-proposed (validated) plans. Default OFF (Phase 7). */
+  get agentMultiStep(): boolean { return this.agentMode && boolEnv('AGENT_MULTI_STEP_ENABLED', false); },
+  /** Study-plan agent workflows. Default OFF (Phase 6). */
+  get agentStudyPlan(): boolean { return this.agentMode && boolEnv('AGENT_STUDY_PLAN_ENABLED', false); },
+  /** Test/quiz-generation agent workflows. Default OFF (Phase 6). */
+  get agentTestGeneration(): boolean { return this.agentMode && boolEnv('AGENT_TEST_GENERATION_ENABLED', false); },
 };
 
 /**

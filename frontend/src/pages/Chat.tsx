@@ -54,12 +54,16 @@ import {
   CircleGauge,
   CloudUpload,
   MoreHorizontal,
-  Folder
+  Folder,
+  ListChecks
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import AssistantReply, { Rating } from '../components/chat/AssistantReply';
+import AgentRunCard from '../components/chat/AgentRunCard';
+import AgentWorkspacePanel from '../components/chat/AgentWorkspacePanel';
+import { agentApi } from '../lib/api/agent';
 import { ShareModal } from '../components/ShareModal';
 import { VoiceMode } from "../components/chat/VoiceMode";
 import { api } from '../lib/api/client';
@@ -102,6 +106,10 @@ const MAX_CHARS = 4000;
  *  - 'deep'     → sends agenticRetrieval, so the AI decides what to search (NCERT, PYQs,
  *                 reference books, syllabus, the student's notebooks, the web) and shows each
  *                 search live (AgenticRetrievalOrchestrator). Needs ENABLE_AGENTIC_RETRIEVAL.
+ *  - 'agent'    → sends executionMode 'agent': a goal ("make a PDF on Laws of Motion, Class 11")
+ *                 becomes a background agent run whose steps show in an AgentRunCard under the
+ *                 reply. Offered only when the server's AGENT_MODE_ENABLED is on — the page asks
+ *                 GET /api/agent/workflows, which answers 404 while it is off.
  *
  * To make "Research" the default (matching the reference mock literally), change
  * DEFAULT_SCOPE to { kind: 'web' } — but note that makes every message a research-mode
@@ -111,12 +119,21 @@ type Scope =
   | { kind: 'auto' }
   | { kind: 'web' }
   | { kind: 'deep' }
+  | { kind: 'agent' }
   | { kind: 'notebook'; id: string; title: string };
 
 const DEFAULT_SCOPE: Scope = { kind: 'auto' };
 
 const scopeLabel = (s: Scope) =>
-  s.kind === 'web' ? 'Research' : s.kind === 'deep' ? 'Deep search' : s.kind === 'notebook' ? s.title : 'Cloud';
+  s.kind === 'web'
+    ? 'Research'
+    : s.kind === 'deep'
+      ? 'Deep search'
+      : s.kind === 'agent'
+        ? 'Agent'
+        : s.kind === 'notebook'
+          ? s.title
+          : 'Cloud';
 
 /**
  * Pool the four suggestion cards are drawn from. "Refresh Prompts" reshuffles and
@@ -247,6 +264,23 @@ export default function Chat() {
   
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<any[]>([]);
+
+  /**
+   * An agent run posts its summary as a chat message when it finishes, so the model sees it as
+   * history. On a reloaded chat that message follows the reply that started the run — whose card
+   * already shows the same summary — so it is hidden there. Shown only when nothing earlier in
+   * the thread carries the run (e.g. a retried run), in which case it renders as the run's card.
+   */
+  const hiddenAgentSummaries = useMemo(() => {
+    const seen = new Set<string>();
+    const hide = new Set<number>();
+    messages.forEach((m: any, i: number) => {
+      if (!m?.agentRunId) return;
+      if (m.agentRunSummary && seen.has(m.agentRunId)) hide.add(i);
+      seen.add(m.agentRunId);
+    });
+    return hide;
+  }, [messages]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   
   const stream = useWorkflowStream();
@@ -317,6 +351,43 @@ export default function Chat() {
   // ─── Retrieval scope (the "Research" pill) ──────────────────────────────────
   const [scope, setScope] = useState<Scope>(DEFAULT_SCOPE);
   const [isScopeOpen, setIsScopeOpen] = useState(false);
+  // Agent mode: offered only when the server has it switched on (see Scope above).
+  const [agentAvailable, setAgentAvailable] = useState(false);
+  // The document open in the right-hand workspace, if any.
+  const [openArtifact, setOpenArtifact] = useState<{ id: string; title?: string } | null>(null);
+  // "Try again" on a run card starts a new run; the card then follows the new id.
+  const [retriedRuns, setRetriedRuns] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let live = true;
+    agentApi.isAvailable().then((ok) => {
+      if (live) setAgentAvailable(ok);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  const scopeOptions: Array<{ key: 'auto' | 'deep' | 'web' | 'agent'; icon: any; label: string; hint: string }> = [
+    { key: 'auto', icon: Cloud, label: 'Cloud', hint: 'Sadhya picks the sources' },
+    { key: 'deep', icon: Telescope, label: 'Deep search', hint: 'Searches NCERT, PYQs, your notes and the web' },
+    { key: 'web', icon: Globe, label: 'Research', hint: 'In-depth answer with web sources' },
+    ...(agentAvailable
+      ? [{ key: 'agent' as const, icon: ListChecks, label: 'Agent', hint: 'Takes on a task and works through it step by step' }]
+      : []),
+  ];
+
+  const handleRetryRun = React.useCallback(
+    async (originalRunId: string, goal: string, workflowId?: string) => {
+      try {
+        const { runId } = await agentApi.start({ goal, workflowId, sessionId: currentSessionId || undefined });
+        setRetriedRuns((prev) => ({ ...prev, [originalRunId]: runId }));
+      } catch (e) {
+        console.error('Could not restart the agent task', e);
+      }
+    },
+    [currentSessionId],
+  );
   const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
   const [notebooks, setNotebooks] = useState<{ id: string; title: string }[]>([]);
 
@@ -825,7 +896,16 @@ export default function Chat() {
     await sendAIRequest(suggestionText.trim(), []);
   };
 
-  const sendAIRequest = async (userMessage: string, sentAttachments: any[] = []) => {
+  // A follow-up from the workspace ("Analyse my mistakes", "Plan my revision") is an agent task
+  // whatever the source menu currently says, so it is sent as one.
+  const handleAgentFollowUp = async (text: string) => {
+    // One turn at a time: a click while a reply is still arriving would interleave two streams.
+    if (!user?.uid || !text.trim() || stream.isStreaming || pendingFinal) return;
+    setMessages(prev => [...prev, { role: 'user', content: text.trim() }]);
+    await sendAIRequest(text.trim(), [], { forceAgent: true });
+  };
+
+  const sendAIRequest = async (userMessage: string, sentAttachments: any[] = [], opts: { forceAgent?: boolean } = {}) => {
     // Generate new session ID if it's the first message
     let sessionId = currentSessionId;
     if (!sessionId) {
@@ -847,7 +927,7 @@ export default function Chat() {
       //   'notebook' → notebookId scopes RetrievalService to that notebook's vectors
       //   'deep'     → agenticRetrieval hands the question to Deep search
       // 'auto' sends exactly what this page sent before, so default behaviour is unchanged.
-      const { content, data, progress, reasoning, suggestions } = await stream.startStream({
+      const { content, data, progress, reasoning, suggestions, agentRun } = await stream.startStream({
         userId: user.uid,
         sessionId,
         message: userMessage,
@@ -855,6 +935,8 @@ export default function Chat() {
         topicType: scope.kind === 'web' ? 'RESEARCH' : typeParam,
         ...(scope.kind === 'notebook' ? { notebookId: scope.id } : {}),
         ...(scope.kind === 'deep' ? { agenticRetrieval: true } : {}),
+        //   'agent'    → a goal becomes a background run; the reply carries its id (agentRun)
+        ...(scope.kind === 'agent' || opts.forceAgent ? { executionMode: 'agent' } : {}),
         attachments: sentAttachments
       });
 
@@ -876,7 +958,9 @@ export default function Chat() {
         confidence: data?.confidence,
         steps: progress || [],
         reasoning: reasoning || '',
-        suggestions: suggestions || []
+        suggestions: suggestions || [],
+        // The run this reply started, if the goal went to Agent mode; its card renders below.
+        ...(agentRun?.runId ? { agentRunId: agentRun.runId } : {})
       });
 
       // Attach the persisted message id so 👍/👎 can POST /chat/:messageId/feedback.
@@ -1283,7 +1367,7 @@ export default function Chat() {
             className="flex-1 min-h-0 h-full overflow-y-auto overflow-x-hidden overscroll-y-contain pb-36 px-3 sm:px-4 md:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] touch-pan-y w-full"
           >
             <div className="flex flex-col gap-[34px] py-6 border-none w-full max-w-[736px] mx-auto min-w-0">
-              {messages.map((msg, i) => (
+              {messages.map((msg, i) => hiddenAgentSummaries.has(i) ? null : (
                 <div key={i} className={cn("flex w-full", msg.role === 'user' ? "justify-end" : "justify-start")}>
                   {msg.role === 'user' ? (
                     editingIndex === i ? (
@@ -1397,23 +1481,34 @@ export default function Chat() {
                     </div>
                   ) : (
                     <div className="flex flex-col text-neutral-800 dark:text-neutral-100 w-full min-w-0">
-                      <AssistantReply
-                        content={msg.content}
-                        streaming={!!msg.isTyping}
-                        steps={msg.steps || []}
-                        reasoning={msg.reasoning}
-                        citations={msg.citations || []}
-                        suggestions={msg.suggestions || []}
-                        onSuggestionClick={handleSuggestionClick}
-                        onCopy={() => handleCopy(msg.content, i)}
-                        copied={copiedIndex === i}
-                        onSpeak={() => handleSpeak(msg.content, i)}
-                        speaking={speakingIndex === i}
-                        onRegenerate={() => handleRegenerate(i)}
-                        onRate={msg.id ? (r) => handleRate(msg.id, r) : undefined}
-                        rating={msg.id ? ratings[msg.id] ?? null : null}
-                        onQuote={setQuotedText}
-                      />
+                      {/* A run's own summary message shows as its card alone — the card already
+                          carries the summary text, so rendering both would say it twice. */}
+                      {!msg.agentRunSummary && (
+                        <AssistantReply
+                          content={msg.content}
+                          streaming={!!msg.isTyping}
+                          steps={msg.steps || []}
+                          reasoning={msg.reasoning}
+                          citations={msg.citations || []}
+                          suggestions={msg.suggestions || []}
+                          onSuggestionClick={handleSuggestionClick}
+                          onCopy={() => handleCopy(msg.content, i)}
+                          copied={copiedIndex === i}
+                          onSpeak={() => handleSpeak(msg.content, i)}
+                          speaking={speakingIndex === i}
+                          onRegenerate={() => handleRegenerate(i)}
+                          onRate={msg.id ? (r) => handleRate(msg.id, r) : undefined}
+                          rating={msg.id ? ratings[msg.id] ?? null : null}
+                          onQuote={setQuotedText}
+                        />
+                      )}
+                      {msg.agentRunId && (
+                        <AgentRunCard
+                          runId={retriedRuns[msg.agentRunId] ?? msg.agentRunId}
+                          onOpenArtifact={(id, title) => setOpenArtifact({ id, title })}
+                          onRetry={(goal, workflowId) => handleRetryRun(msg.agentRunId, goal, workflowId)}
+                        />
+                      )}
                     </div>
                   )}
                 </div>
@@ -1434,6 +1529,13 @@ export default function Chat() {
                       onSuggestionClick={handleSuggestionClick}
                       onRevealDone={commitPending}
                     />
+                    {/* The run starts the moment the goal is accepted — follow it right away. */}
+                    {(pendingFinal?.agentRunId || stream.agentRun?.runId) && (
+                      <AgentRunCard
+                        runId={pendingFinal?.agentRunId || stream.agentRun!.runId}
+                        onOpenArtifact={(id, title) => setOpenArtifact({ id, title })}
+                      />
+                    )}
                   </div>
                 </div>
               )}
@@ -1492,7 +1594,9 @@ export default function Chat() {
                 >
                   {scope.kind === 'deep'
                     ? <Telescope className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
-                    : <Cloud className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />}
+                    : scope.kind === 'agent'
+                      ? <ListChecks className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />
+                      : <Cloud className="w-3.5 h-3.5 shrink-0" strokeWidth={1.75} />}
                   <span className="truncate max-w-[220px]">{scopeLabel(scope) || 'Notebook'}</span>
                   <ChevronDown className="w-4 h-4 shrink-0" strokeWidth={2} />
                 </button>
@@ -1501,11 +1605,7 @@ export default function Chat() {
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsScopeOpen(false)} />
                     <div className="absolute left-0 bottom-full mb-2 w-64 max-h-[320px] overflow-y-auto custom-scrollbar bg-white dark:bg-[#1a1a1b] rounded-xl shadow-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden z-50 py-1">
-                      {([
-                        { key: 'auto', icon: Cloud, label: 'Cloud', hint: 'Sadhya picks the sources' },
-                        { key: 'deep', icon: Telescope, label: 'Deep search', hint: 'Searches NCERT, PYQs, your notes and the web' },
-                        { key: 'web', icon: Globe, label: 'Research', hint: 'In-depth answer with web sources' },
-                      ] as const).map((opt) => (
+                      {scopeOptions.map((opt) => (
                         <button
                           key={opt.key}
                           onClick={() => { setScope({ kind: opt.key } as Scope); setIsScopeOpen(false); }}
@@ -1749,6 +1849,14 @@ export default function Chat() {
 
       <ShareModal isOpen={isShareOpen} onClose={() => setIsShareOpen(false)} />
       <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} source={upgradeSource} />
+
+      {/* The workspace: documents an agent run produced open here, beside the thread. */}
+      <AgentWorkspacePanel
+        artifactId={openArtifact?.id ?? null}
+        title={openArtifact?.title}
+        onClose={() => setOpenArtifact(null)}
+        onAsk={agentAvailable ? (text) => void handleAgentFollowUp(text) : undefined}
+      />
     </div>
   );
 }

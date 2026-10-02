@@ -371,6 +371,14 @@ service cloud.firestore {
     match /system_config/{doc}      { allow read, write: if false; }
     match /feedback/{doc}           { allow read, write: if false; }
 
+    // ---- Private reference-book bank: licensed source text, backend only ----
+    // Stated explicitly (the default-deny below already covers them) so a future broad allow rule
+    // can't silently expose original book questions to clients.
+    match /books/{doc}               { allow read, write: if false; }
+    match /book_ingestion_jobs/{doc} { allow read, write: if false; }
+    match /book_questions/{doc}      { allow read, write: if false; }
+    match /book_chapters/{doc}       { allow read, write: if false; }
+
     // ---- Default deny for anything not explicitly matched above ----
     match /{document=**} {
       allow read, write: if false;

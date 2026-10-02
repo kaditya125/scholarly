@@ -1,4 +1,4 @@
-import { api } from './client';
+import { api, API_BASE_URL } from './client';
 
 export interface BookSummary {
   notebookId: string;
@@ -73,9 +73,6 @@ function titleFallbackLabel(title: string): string {
   const stripped = t.replace(/^NCERT\s+Class\s+\d+\s+[A-Za-z]+\s*/i, '').replace(/^[-\u2013\u2014\s(]+/, '').trim();
   return stripped || t;
 }
-
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-
 export const documentsApi = {
   async listBooks(): Promise<BookSummary[]> {
     const response = await api.get('/documents/books');
@@ -94,7 +91,7 @@ export const documentsApi = {
    * source changes; each version is still safely long-cached because covers are immutable.
    */
   coverUrl(notebookId: string): string {
-    return `${baseURL}/documents/books/${notebookId}/cover?v=2`;
+    return `${API_BASE_URL}/documents/books/${notebookId}/cover?v=2`;
   },
 
   /**
@@ -103,6 +100,6 @@ export const documentsApi = {
    * server-side extraction changes.
    */
   chapterCoverUrl(notebookId: string, sourceId: string): string {
-    return `${baseURL}/documents/books/${notebookId}/chapters/${sourceId}/cover?v=1`;
+    return `${API_BASE_URL}/documents/books/${notebookId}/chapters/${sourceId}/cover?v=1`;
   },
 };

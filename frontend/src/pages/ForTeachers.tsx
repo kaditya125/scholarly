@@ -18,6 +18,7 @@ import {
 } from '../components/landing/teacherPageData';
 import AvatarStack from '../components/landing/AvatarStack';
 import { useAuth } from '../lib/AuthContext';
+import { API_BASE_URL } from '../lib/api/client';
 
 /**
  * /for-teachers — the public teacher marketing page.
@@ -259,12 +260,7 @@ export default function ForTeachers() {
   useEffect(() => {
     let isMounted = true;
     const fetchStats = async () => {
-      const endpoints = [
-        `${(import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')}/public/stats`,
-        'http://localhost:8080/api/public/stats',
-        'http://127.0.0.1:8080/api/public/stats',
-        '/api/public/stats',
-      ].filter(Boolean);
+      const endpoints = [`${API_BASE_URL}/public/stats`];
 
       for (const endpoint of endpoints) {
         try {

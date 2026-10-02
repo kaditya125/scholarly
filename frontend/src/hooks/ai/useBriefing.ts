@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/AuthContext';
+import { API_BASE_URL } from '../../lib/api/client';
 import { BriefingResponse } from '../../../../backend-firestore/src/types/briefing.types';
 
 export function useBriefing() {
@@ -17,11 +18,10 @@ export function useBriefing() {
         setError(null);
         
         const token = await user.getIdToken();
-        const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
         
         // Include a slight intentional minimum delay so the "AI Thinking" animation has time to show
         const start = Date.now();
-        const res = await fetch(`${baseURL}/briefing/${user.uid}/today`, {
+        const res = await fetch(`${API_BASE_URL}/briefing/${user.uid}/today`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

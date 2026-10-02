@@ -58,6 +58,27 @@ router.get('/resolve/:query', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/exams/resolve-id/:query
+ * Resolves free text ("SSC CGL", "ugc net cs") to a canonical examId ONLY — no ExamMaster
+ * document required. Built from the same live-data index (exams + source registry + question
+ * ids) that PYQ retrieval uses, so it can answer for an exam that has real corpus data but no
+ * master record (e.g. UGC NET). This is the endpoint callers that just need an id for filtering
+ * PYQ/syllabus/analytics calls should use — /resolve/:query is for full exam metadata, which
+ * genuinely doesn't exist for every exam the corpus knows about, and this route never fabricates
+ * a substitute. Returns 200 with examId:null (not 404) when nothing resolves, since the caller's
+ * next step is normally "if null, don't apply an exam filter" rather than treating it as an error.
+ */
+router.get('/resolve-id/:query', async (req: Request, res: Response) => {
+  try {
+    const { detectExamId } = await import('../services/pyq/examIndex');
+    const examId = await detectExamId(req.params.query);
+    res.json({ examId });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to resolve exam id' });
+  }
+});
+
+/**
  * GET /api/exams/:examId
  * Retrieves full details for a specific examination.
  */

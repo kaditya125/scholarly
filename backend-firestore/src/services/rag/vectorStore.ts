@@ -43,6 +43,11 @@ class PineconeBackend implements VectorStore {
     return (matches ?? []) as VectorMatch[];
   }
 
+  async hybridQuery(options: any): Promise<VectorMatch[]> {
+    const matches = await pineconeService.hybridQuery(options);
+    return (matches ?? []) as VectorMatch[];
+  }
+
   fetchVectors(ids: string[], namespace?: string): Promise<Record<string, FetchedVector>> {
     return pineconeService.fetchVectors(ids, namespace);
   }

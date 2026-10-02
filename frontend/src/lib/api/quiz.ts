@@ -11,6 +11,10 @@ export const quizApi = {
   /** Generates a fresh, personalized weak-area (or topic/notebook) quiz and starts an attempt. */
   async generate(opts: {
     topic?: string; notebookId?: string; notebookTitle?: string; mode?: QuizMode; count?: number;
+    /** The topic's subject, sent separately so the backend resolves the topic within it. */
+    subject?: string;
+    /** Backend source mix — see testBlueprint.service.ts (quiz.controller reads body.testMode). */
+    testMode?: 'PRACTICE' | 'SMART_MIXED' | 'PYQ_PRACTICE' | 'WEAK_AREA_DRILL';
     /** A real canonical syllabus node — from a weak-area recommendation or an explicit topic
      *  pick, never guessed client-side. Pins WHERE the questions come from. */
     syllabusNodeId?: string;
@@ -27,6 +31,13 @@ export const quizApi = {
   /** Real, examId/syllabusNodeId-scoped weak areas — see quiz.controller.ts's getWeakAreas. */
   async getWeakAreas(examQuery: string): Promise<{ examId: string | null; examResolved: boolean; weakAreas: WeakTopic[] }> {
     const { data } = await api.get('/quiz/weak-areas', { params: { exam: examQuery } });
+    return data;
+  },
+
+  /** The exam's drillable topics ranked by genuine PYQ frequency — see quiz.controller.ts's
+   *  getDrillTopics. Accepts free text ("SSC CGL") or an examId. */
+  async getDrillTopics(examQuery: string): Promise<DrillTopicsResponse> {
+    const { data } = await api.get('/quiz/drill-topics', { params: { exam: examQuery } });
     return data;
   },
 
@@ -50,7 +61,68 @@ export const quizApi = {
     const { data } = await api.post(`/quiz/attempts/${attemptId}/submit`, payload);
     return data;
   },
+
+  /**
+   * "Fix this gap": generates (once) the 3-question drill for one diagnosis on a completed attempt.
+   * A repeat call returns the drill already generated (status EXISTS) instead of a new one.
+   */
+  async createRemediationDrill(attemptId: string, diagnosticId: string): Promise<RemediationOutcome> {
+    const { data } = await api.post(`/quiz/attempts/${attemptId}/remediation-drill`, { diagnosticId });
+    return data;
+  },
 };
+
+export type DiagnosticStatus = 'ROOT_CAUSE_IDENTIFIED' | 'TOPIC_LEVEL_GAP' | 'PREREQUISITES_UNASSESSED';
+
+export interface PrerequisiteChainItem {
+  conceptId: string;
+  title: string;
+  chapter: string;
+  accuracy?: number;
+  evidence: 'weak' | 'strong' | 'unassessed';
+}
+
+export interface RemediationDrillRef {
+  drillAttemptId: string;
+  title: string;
+  kind: 'ROOT_CAUSE' | 'PREREQUISITE_CHECK';
+  targetConceptIds: string[];
+  targetConcept: string;
+  questionCount: number;
+  createdAt: string;
+}
+
+/** Prerequisite-graph diagnosis of one weak topic (backend: conceptGraph.service). */
+export interface PedagogicalDiagnostic {
+  id: string;
+  status: DiagnosticStatus;
+  examId: string;
+  subject: string;
+  topic: string;
+  targetConceptId: string;
+  targetConcept: string;
+  accuracy: number;
+  rootCauseConceptId: string | null;
+  rootCauseTitle: string | null;
+  rootCauseChapter: string | null;
+  prerequisiteChain: PrerequisiteChainItem[];
+  unassessedPrerequisites: string[];
+  confidence: 'high' | 'medium' | 'low';
+  explanation: string;
+  diagnosticMessage: string;
+  recommendedAction: string;
+  remediationEligible: boolean;
+  remediationDrill?: RemediationDrillRef;
+}
+
+export interface RemediationOutcome {
+  status: 'CREATED' | 'EXISTS';
+  drill: RemediationDrillRef;
+}
+
+export type RemediationErrorCode =
+  | 'NOT_FOUND' | 'DIAGNOSTIC_NOT_FOUND' | 'DIAGNOSTIC_UNSUPPORTED'
+  | 'REMEDIATION_IN_PROGRESS' | 'QUOTA_EXCEEDED' | 'REMEDIATION_GENERATION_FAILED';
 
 export type QuizAttemptStatus = 'in-progress' | 'completed';
 export type QuizSource = 'weak-areas' | 'topic' | 'notebook';
@@ -103,6 +175,9 @@ export interface QuizAttempt {
   weakTopics?: string[];
   strongTopics?: string[];
   feedback?: string;
+  /** null: the attempt's exam is outside the prerequisite graph; undefined: not diagnosed. */
+  pedagogicalDiagnostics?: PedagogicalDiagnostic[] | null;
+  remediationSource?: { attemptId: string; diagnosticId: string; kind: 'ROOT_CAUSE' | 'PREREQUISITE_CHECK' };
 }
 
 export interface QuizAttemptSummary {
@@ -136,6 +211,18 @@ export interface ProgressTopicMastery {
   examId?: string;
   syllabusNodeId?: string;
   lastAttemptAt?: string;
+}
+
+export interface DrillTopicsResponse {
+  examId: string | null;
+  examResolved: boolean;
+  totalPyqs: number;
+  subjects: {
+    subject: string;
+    pyqCount: number;
+    /** Sorted by pyqCount desc. */
+    topics: { topic: string; pyqCount: number; referenceCount: number }[];
+  }[];
 }
 
 /** The structured, exam-scoped weak-area shape — see WeakTopic in the backend's

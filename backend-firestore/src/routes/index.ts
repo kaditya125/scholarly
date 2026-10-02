@@ -11,8 +11,10 @@ import teacherRoutes from './teacher.routes';
 import classesRoutes from './classes.routes';
 import enrollmentsRoutes, { invitationsRouter } from './enrollments.routes';
 import chatRoutes from './chat.routes';
+import agentRoutes from './agent.routes';
 import companionRoutes from './companion.routes';
 import notebooksRoutes from './notebooks.routes';
+import explorationRoutes from './exploration.routes';
 import studyGroupsRoutes from './studyGroups.routes';
 import publishedAssetsRoutes from './publishedAssets.routes';
 import briefingRoutes from './briefing.routes';
@@ -75,8 +77,12 @@ router.use('/classes', classesRoutes);
 router.use('/enrollments', enrollmentsRoutes);
 router.use('/invitations', invitationsRouter);
 router.use('/chat', chatRoutes);
+// Agent mode — every route 404s while AGENT_MODE_ENABLED is off.
+router.use('/agent', agentRoutes);
 router.use('/chat', feedbackRoutes);
 router.use('/companion', companionRoutes);
+// Before notebooksRoutes so '/exploration/search' is never read as a notebook id.
+router.use('/notebooks', explorationRoutes);
 router.use('/notebooks', notebooksRoutes);
 router.use('/notebooks', graphRoutes);
 router.use('/notebooks', assetsRoutes);

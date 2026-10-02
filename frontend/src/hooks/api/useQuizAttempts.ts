@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { quizApi, QuizAttempt, QuizAttemptSummary, ProgressReport } from '../../lib/api/quiz';
+import { quizApi, QuizAttempt, QuizAttemptSummary, ProgressReport, RemediationOutcome } from '../../lib/api/quiz';
 import { useAuth } from '../../lib/AuthContext';
 
 /** All tests the platform has generated for the user (newest first). */
@@ -63,6 +63,22 @@ export function useSubmitQuizAttempt(attemptId: string | undefined) {
       qc.setQueryData(['quizAttempt', user?.uid, attemptId], data);
       qc.invalidateQueries({ queryKey: ['quizAttempts', user?.uid] });
       qc.invalidateQueries({ queryKey: ['quizProgress', user?.uid] });
+    },
+  });
+}
+
+/**
+ * "Fix this gap" — generate (or fetch the already-generated) remediation drill for one diagnosis.
+ * On success the source attempt is refetched so its diagnostic shows the drill link.
+ */
+export function useCreateRemediationDrill(attemptId: string | undefined) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation<RemediationOutcome, any, string>({
+    mutationFn: (diagnosticId: string) => quizApi.createRemediationDrill(attemptId as string, diagnosticId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['quizAttempt', user?.uid, attemptId] });
+      qc.invalidateQueries({ queryKey: ['quizAttempts', user?.uid] });
     },
   });
 }

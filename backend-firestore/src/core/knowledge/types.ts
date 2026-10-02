@@ -113,13 +113,6 @@ export interface KnowledgeContextOptions {
   };
   artifactType?: DownstreamArtifactType;
   consumerContext?: string;
-  includeReferenceBooks?: boolean;
-  referenceBookFilters?: {
-    books?: string[];
-    publisher?: string;
-    subject?: string;
-    category?: string;
-  };
 }
 
 export interface KnowledgeContextCitation {
@@ -138,7 +131,6 @@ export interface KnowledgeContextBundle {
   query: string;
   contextString: string;
   passages: SemanticChunkMatch[];
-  referencePassages?: SemanticChunkMatch[];
   citations: KnowledgeContextCitation[];
   graphContext?: {
     nodesMatched: number;

@@ -321,6 +321,13 @@ app.post('/api/presence/offline', verifyToken, async (req: express.Request, res:
 });
 
 // ==========================================
+// 3c. Static Textbook Diagrams
+// ==========================================
+import * as path from 'path';
+const diagramsDir = path.resolve('/var/www/sadhya/public/diagrams');
+app.use('/api/diagrams', express.static(diagramsDir, { maxAge: '30d', immutable: true }));
+
+// ==========================================
 // 4. API Routes
 // ==========================================
 app.use('/api', routes);
@@ -347,6 +354,20 @@ const server = app.listen(env.PORT, () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { warmupRag } = require('./services/rag/warmup');
     void warmupRag();
+    // Verify the Qdrant collection (dimension, distance, HNSW, int8 quantization) and apply safe
+    // in-place migrations. Reference books always live in Qdrant, whatever VECTOR_STORE says, so
+    // this runs unconditionally. Not awaited: an incompatible collection latches an error inside
+    // qdrantService (every vector read then throws RETRIEVAL_CONFIGURATION_ERROR) rather than
+    // taking down HTTP for features that never touch vectors.
+    // Then confirm reference-book isolation in both directions (two sampled queries).
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    void require('./services/rag/qdrant.service').qdrantService.initialize()
+      .then(() => require('./services/rag/referenceBooks.service').referenceBooksService.verifyIsolation())
+      .then((r: { ok: boolean; details: string[] }) => {
+        if (r.ok) console.log('[rag] reference-book namespace isolation verified');
+        else console.error('[rag] REFERENCE-BOOK ISOLATION VIOLATED:', r.details.join('; '));
+      })
+      .catch((err: any) => console.error('[rag] reference-book isolation check could not run:', err?.message || err));
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     require('./services/pyq/examIndex').warmExamIndex();
   } catch (err: any) {

@@ -7,7 +7,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import axios from 'axios';
+import { api } from '../lib/api/client';
 import {
   ExplorationSearchMode,
   ExplorationSearchFilter,
@@ -20,7 +20,8 @@ import {
   DocumentVersionDiff,
 } from '../types/pipeline.types';
 
-const API_BASE = '/api/v1/notebooks';
+// Relative to the shared api client's base URL (lib/api/baseUrl.ts), which also attaches auth.
+const API_BASE = '/notebooks';
 
 export function useContentExploration(initialCollectionId?: string) {
   const [query, setQuery] = useState('');
@@ -84,7 +85,7 @@ export function useContentExploration(initialCollectionId?: string) {
           },
         };
 
-        const res = await axios.post(endpoint, payload);
+        const res = await api.post(endpoint, payload);
         const searchResults: ExplorationSearchResultItem[] = res.data?.results || [];
         setResults(searchResults);
       } catch (err: any) {
@@ -104,7 +105,7 @@ export function useContentExploration(initialCollectionId?: string) {
     if (!collectionId || !sourceId) return [];
     setIsLoadingChunks(true);
     try {
-      const res = await axios.get(`${API_BASE}/${collectionId}/sources/${sourceId}/chunks`);
+      const res = await api.get(`${API_BASE}/${collectionId}/sources/${sourceId}/chunks`);
       const chunks = res.data?.chunks || [];
       setDocumentChunks(chunks);
       return chunks;
@@ -123,7 +124,7 @@ export function useContentExploration(initialCollectionId?: string) {
     if (!collectionId || !sourceId) return [];
     setIsLoadingStructure(true);
     try {
-      const res = await axios.get(`${API_BASE}/${collectionId}/sources/${sourceId}/structure`);
+      const res = await api.get(`${API_BASE}/${collectionId}/sources/${sourceId}/structure`);
       const structure = res.data?.structure || [];
       setDocumentStructure(structure);
       return structure;
@@ -142,7 +143,7 @@ export function useContentExploration(initialCollectionId?: string) {
     if (!collectionId || !sourceId) return { nodes: [], edges: [] };
     setIsLoadingGraph(true);
     try {
-      const res = await axios.get(`${API_BASE}/${collectionId}/sources/${sourceId}/graph`);
+      const res = await api.get(`${API_BASE}/${collectionId}/sources/${sourceId}/graph`);
       const graph = {
         nodes: res.data?.nodes || [],
         edges: res.data?.edges || [],
@@ -167,7 +168,7 @@ export function useContentExploration(initialCollectionId?: string) {
     if (!collectionId || !sourceId) return [];
     setIsLoadingVersions(true);
     try {
-      const res = await axios.get(`${API_BASE}/${collectionId}/sources/${sourceId}/versions`);
+      const res = await api.get(`${API_BASE}/${collectionId}/sources/${sourceId}/versions`);
       const versions = res.data?.versions || [];
       setDocumentVersions(versions);
       return versions;
@@ -184,7 +185,7 @@ export function useContentExploration(initialCollectionId?: string) {
    */
   const diffDocumentVersions = useCallback(async (collectionId: string, sourceId: string, baseVersionId: string, targetVersionId: string): Promise<DocumentVersionDiff | null> => {
     try {
-      const res = await axios.post(`${API_BASE}/${collectionId}/sources/${sourceId}/versions/diff`, {
+      const res = await api.post(`${API_BASE}/${collectionId}/sources/${sourceId}/versions/diff`, {
         baseVersionId,
         targetVersionId,
       });
@@ -201,7 +202,7 @@ export function useContentExploration(initialCollectionId?: string) {
   const fetchDocumentLineage = useCallback(async (collectionId: string, sourceId: string, chunkId: string) => {
     if (!collectionId || !sourceId || !chunkId) return null;
     try {
-      const res = await axios.get(`${API_BASE}/${collectionId}/sources/${sourceId}/lineage/${chunkId}`);
+      const res = await api.get(`${API_BASE}/${collectionId}/sources/${sourceId}/lineage/${chunkId}`);
       return res.data;
     } catch (err) {
       console.warn('Failed to resolve lineage from API:', err);

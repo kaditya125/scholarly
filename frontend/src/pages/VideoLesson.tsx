@@ -68,7 +68,7 @@ export default function AIStudio() {
     if (!topic.trim() || submitting) return;
     setSubmitting(true); setError(null); setLesson(null); setVideoUrl(null);
     try {
-      const { data } = await api.post<Lesson>("/video-lessons", { topic: topic.trim() });
+      const { data } = await api.post<Lesson>("/video-lesson", { topic: topic.trim() });
       setLesson(data);
       if (!isTerminal(data.status)) startPolling(data.id);
     } catch (e: any) {
@@ -82,7 +82,7 @@ export default function AIStudio() {
     stopPolling();
     pollRef.current = setInterval(async () => {
       try {
-        const { data } = await api.get<Lesson>(`/video-lessons/${id}`);
+        const { data } = await api.get<Lesson>(`/video-lesson/${id}`);
         setLesson(data);
         if (isTerminal(data.status)) { stopPolling(); if (data.status === "READY") loadVideo(id); }
       } catch { /* transient */ }
@@ -91,7 +91,7 @@ export default function AIStudio() {
 
   const loadVideo = async (id: string) => {
     try {
-      const res = await api.get(`/video-lessons/${id}/video`, { responseType: "blob" });
+      const res = await api.get(`/video-lesson/${id}/video`, { responseType: "blob" });
       setVideoUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(res.data); });
     } catch {
       setError("The video is ready but couldn't be loaded. Try refreshing.");

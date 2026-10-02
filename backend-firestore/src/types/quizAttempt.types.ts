@@ -6,7 +6,7 @@
  */
 
 export type QuizAttemptStatus = 'in-progress' | 'completed';
-export type QuizSource = 'weak-areas' | 'topic' | 'notebook';
+export type QuizSource = 'weak-areas' | 'topic' | 'notebook' | 'pyq-paper';
 export type QuizMode = 'exam' | 'study';
 
 /** A stored question — includes the answer key (server-side scoring only; masked before it reaches the client mid-test). */
@@ -18,6 +18,8 @@ export interface StoredQuizQuestion {
   options: string[];
   correctAnswerIndex: number;
   explanation: string;
+  /** Set by generators that grade difficulty (remediation drills). */
+  difficulty?: 'easy' | 'medium' | 'hard';
   /**
    * Canonical syllabus identity, captured at generation and frozen into the attempt.
    *
@@ -42,6 +44,26 @@ export interface StoredQuizQuestion {
    */
   examId?: string;
   identityStatus?: 'CANONICAL' | 'UNANCHORED';
+  /**
+   * Where the question TEXT actually came from — orthogonal to identityStatus, which is about
+   * syllabus anchoring, not evidence. A question can be UNANCHORED (no syllabus node) and still
+   * be an AUTHENTIC_PYQ (a real historical question with no resolved syllabus location yet), and
+   * a CANONICAL-anchored question can still be entirely model-invented. Conflating the two is
+   * exactly how a generated question ends up presented as a past paper.
+   *   AUTHENTIC_PYQ         — real historical question, retrieved verbatim, never generated.
+   *   PYQ_INSPIRED          — newly generated, but genuinely informed by real PYQ pattern data
+   *                            (pyqAnalyticsService supplied a non-empty pattern for this exam).
+   *   CURRICULUM_SYNTHESIZED — grounded in retrieved source material (notebook/reference chunks).
+   *   GENERAL_KNOWLEDGE     — generated from the model's own knowledge; no PYQ or source evidence
+   *                            was available. Previously this case was mislabelled PYQ_INSPIRED.
+   */
+  questionOrigin?: 'AUTHENTIC_PYQ' | 'PYQ_INSPIRED' | 'CURRICULUM_SYNTHESIZED' | 'GENERAL_KNOWLEDGE';
+  /** Present only for AUTHENTIC_PYQ: the real question's canonical id, year/shift/paper. */
+  sourcePyqId?: string;
+  sourceYear?: number;
+  sourceShift?: string;
+  sourcePaper?: string;
+  canonicalPaperId?: string;
 }
 
 /**
@@ -62,6 +84,15 @@ export interface TopicBreakdown {
   /** Present when the questions in this row were generated against a validated syllabus node. */
   syllabusNodeId?: string;
   identityStatus?: 'CANONICAL' | 'UNANCHORED';
+  /**
+   * The exam this bucket's questions were authored for (from StoredQuizQuestion.examId).
+   *
+   * Added so mastery aggregation across attempts can scope by exam. Without it, getProgressReport
+   * grouped purely on the topic LABEL — "Algebra" from an SSC CGL attempt and "Algebra" from a JEE
+   * Main attempt landed in the same bucket, so a JEE weakness could surface as an SSC recommendation
+   * and vice versa. Optional because older attempts (pre-Phase-1) genuinely have no examId to report.
+   */
+  examId?: string;
 }
 
 export interface QuizAttempt {
@@ -97,6 +128,83 @@ export interface QuizAttempt {
   weakTopics?: string[];
   strongTopics?: string[];
   feedback?: string;   // data-driven "work on these sections" summary
+  /**
+   * Prerequisite-graph diagnosis of this attempt's weak rows (conceptGraph.service).
+   *   undefined — attempt predates the feature, or diagnosis failed (logged).
+   *   null      — no row belongs to an exam the concept graph covers; nothing was diagnosed.
+   *   []        — in scope, but no row was below ROOT_CAUSE_ACCURACY_THRESHOLD.
+   */
+  pedagogicalDiagnostics?: PedagogicalDiagnostic[] | null;
+  /** Set on a remediation drill attempt: which attempt + diagnostic it was generated for. */
+  remediationSource?: { attemptId: string; diagnosticId: string; kind: RemediationDrillKind };
+  /** diagnosticId → ISO time a drill generation was claimed (see quizAttemptsRepository.claimRemediation). */
+  remediationClaims?: Record<string, string>;
+}
+
+export type DiagnosticStatus =
+  /** A prerequisite the student is measured weak in explains the weak topic. */
+  | 'ROOT_CAUSE_IDENTIFIED'
+  /** Prerequisites were measured and are fine (or there are none): the gap is the topic itself. */
+  | 'TOPIC_LEVEL_GAP'
+  /** No evidence about the prerequisites yet — the honest answer is "check them first". */
+  | 'PREREQUISITES_UNASSESSED';
+
+export type DiagnosticConfidence = 'high' | 'medium' | 'low';
+
+/** ROOT_CAUSE drills drill one concept; PREREQUISITE_CHECK drills ask one question per unassessed prerequisite. */
+export type RemediationDrillKind = 'ROOT_CAUSE' | 'PREREQUISITE_CHECK';
+
+export interface PrerequisiteChainItem {
+  conceptId: string;
+  title: string;
+  chapter: string;
+  /** 0-100, when the student has evidence for this concept. */
+  accuracy?: number;
+  evidence: 'weak' | 'strong' | 'unassessed';
+}
+
+/** Root-cause diagnostic linking a weak quiz topic to the prerequisite gap behind it. */
+export interface PedagogicalDiagnostic {
+  /** Stable within an attempt: `diag_<examId>_<conceptId>`. The remediation endpoint addresses it by this. */
+  id: string;
+  status: DiagnosticStatus;
+  examId: string;
+  subject: string;
+  /** The weak row's display label, as the student saw it. */
+  topic: string;
+  syllabusNodeId?: string;
+  targetConceptId: string;
+  /** The concept the weak topic resolved to. */
+  targetConcept: string;
+  /** 0-100 on the target concept. */
+  accuracy: number;
+  rootCauseConceptId: string | null;
+  rootCauseTitle: string | null;
+  rootCauseChapter: string | null;
+  /** Path from the root cause (or the direct prerequisites) down to the target, with evidence. */
+  prerequisiteChain: PrerequisiteChainItem[];
+  /** Direct prerequisites with no evidence yet. */
+  unassessedPrerequisites: string[];
+  confidence: DiagnosticConfidence;
+  /** Why the diagnosis says what it says, in student-facing words. */
+  explanation: string;
+  diagnosticMessage: string;
+  recommendedAction: string;
+  remediationEligible: boolean;
+  /** Written once the student asks for a drill; its presence is what makes generation idempotent. */
+  remediationDrill?: RemediationDrillRef;
+}
+
+export interface RemediationDrillRef {
+  /** The drill is itself a quiz attempt: this is its id (remediationDrillId and drillAttemptId are the same thing). */
+  drillAttemptId: string;
+  title: string;
+  kind: RemediationDrillKind;
+  /** Concept ids the drill's questions target (the root cause, or the prerequisites being checked). */
+  targetConceptIds: string[];
+  targetConcept: string;
+  questionCount: number;
+  createdAt: string;
 }
 
 /** Card/list view: no questions (never leak the answer key) and no answer map. */
@@ -126,6 +234,42 @@ export interface ProgressTopicMastery {
   correct: number;
   total: number;
   accuracy: number; // 0-100
+  /** Present when at least one contributing attempt carried these — the compound key
+   *  (examId, syllabusNodeId ?? topic) is what this row is actually aggregated by now, not the
+   *  bare topic string, so this is the row's real identity, not decoration. */
+  examId?: string;
+  syllabusNodeId?: string;
+  lastAttemptAt?: string;
+}
+
+/**
+ * A student's weakness at ONE syllabus location within ONE exam — the structured replacement for
+ * a bare topic string. This is what survives from a question, through an attempt, through
+ * cross-attempt analytics, to a recommendation: examId and syllabusNodeId travel with the topic
+ * name the whole way, so "recommend a Percentage drill" can mean an actual retrieval constraint
+ * (syllabusNodeId = X) instead of a fuzzy label match that happens to collide across exams.
+ *
+ * Deliberately NOT a replacement for UserStats.weakTopics (kept as-is: many callers — podcast
+ * planning, voice assistant, WhatsApp scripts, dashboard suggestion chips — only ever need topic
+ * NAMES for display or prompt text, don't do retrieval, and would gain nothing from this shape
+ * while a blanket type change would touch a dozen unrelated files). This is additive: a second,
+ * more precise view for the callers that actually retrieve by syllabus location.
+ */
+export interface WeakTopic {
+  examId?: string;
+  subjectId?: string;
+  syllabusNodeId?: string;
+  topicId?: string;
+  topicName: string;
+  attempts: number;
+  correct: number;
+  incorrect: number;
+  total: number;
+  accuracy: number; // 0-100
+  /** 0-1: how much a small sample size should temper "weak"/"strong" — see WEAK_CONFIDENCE_FLOOR.
+   *  A 2/2 row and an 18/20 row can carry the same accuracy and very different confidence. */
+  confidence: number;
+  lastAttemptAt?: string;
 }
 
 /** One point on the accuracy-over-time trend. */
@@ -153,29 +297,4 @@ export interface ProgressReport {
   strongSections: ProgressTopicMastery[];
   recentAttempts: QuizAttemptSummary[];
   narrative: string;
-}
-
-/**
- * Root-cause diagnostic linking a failed quiz topic to its foundational prerequisite gap.
- *
- * Added alongside remediationDrill.service.ts's answer-key validation fix, which needs this
- * type to compile. Scoped to just this interface — not the rest of this file's local,
- * unrelated in-progress changes (PYQ provenance fields, exam-scoped mastery, etc.), which stay
- * out of this PR.
- */
-export interface PedagogicalDiagnostic {
-  topic: string;
-  accuracy: number;
-  rootCauseConceptId: string;
-  rootCauseTitle: string;
-  rootCauseChapter: string;
-  prerequisiteChain: Array<{
-    conceptId: string;
-    title: string;
-    chapter: string;
-  }>;
-  diagnosticMessage: string;
-  recommendedAction: string;
-  remediationDrillId?: string;
-  remediationDrillTitle?: string;
 }

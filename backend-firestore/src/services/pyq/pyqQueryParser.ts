@@ -36,6 +36,7 @@ export interface ParsedPyqQuery {
   intent: PyqRetrievalIntent;
   examId: string | null;
   year: number | null;
+  session: string | null;
   shift: number | null;
   paper: string | null;
   topic: string | null;
@@ -139,11 +140,28 @@ export async function parsePyqQuery(rawQuery: string): Promise<ParsedPyqQuery> {
   const year = extractYear(q);
   if (year) evidence.push(`year=${year}`);
 
+  const sessionMatch =
+    q.match(/\bsession\s*(\d+)\b/i) ??
+    q.match(/\b(january|jan|april|apr)\b/i) ??
+    q.match(/\b(\d{1,2}(?:st|nd|rd|th))\b/i);
+  let session: string | null = null;
+  if (sessionMatch) {
+    if (/jan/i.test(sessionMatch[0])) session = 's1';
+    else if (/apr/i.test(sessionMatch[0])) session = 's2';
+    else if (/^\d{1,2}(?:st|nd|rd|th)$/i.test(sessionMatch[0])) session = sessionMatch[0].toLowerCase();
+    else session = `s${sessionMatch[1]}`;
+    evidence.push(`session=${session}`);
+  }
+
   const shiftMatch = q.match(/\bshift\s*(\d+)\b/i) ?? q.match(/\b(\d+)(?:st|nd|rd|th)?\s+shift\b/i);
   const shift = shiftMatch ? Number(shiftMatch[1]) : normalizeShift(q).shift;
   if (shift !== null) evidence.push(`shift=${shift}`);
 
-  const paperMatch = q.match(/\btier\s*([\divx]+)\b/i) ?? q.match(/\bpaper\s*([\divx]+)\b/i);
+  const paperMatch =
+    q.match(/\b(?:tier|paper|stage|cbt|gs\s*paper|gs)\s*([\divx]+)\b/i) ??
+    q.match(/\b(tier\s*[-_]?\s*[\divx]+)\b/i) ??
+    q.match(/\b(csat)\b/i) ??
+    q.match(/\b(full\s*paper)\b/i);
   const paper = paperMatch ? normalizePaper(paperMatch[0]) : null;
   if (paper) evidence.push(`paper=${paper}`);
 
@@ -184,15 +202,15 @@ export async function parsePyqQuery(rawQuery: string): Promise<ParsedPyqQuery> {
     intent = 'GENERATED_PRACTICE';
   } else if (asksPyq || wantsFullPaper) {
     // Past questions wanted. A named sitting makes it exact; otherwise it is a topic search.
-    const namesSitting = Boolean(examId && (year || shift !== null || wantsFullPaper));
+    const namesSitting = Boolean(examId && (year || session || shift !== null || wantsFullPaper));
     if (namesSitting) intent = 'EXACT_PYQ';
     else if (examId) intent = 'PYQ_SEARCH';
     else if (unresolvedExamHint) intent = 'EXACT_PYQ'; // answered as "not in corpus", not invented
     else intent = 'NONE';
-  } else if (examId && year) {
-    // "SSC CGL 2022" with no verb still names a sitting.
+  } else if (examId && (year || session)) {
+    // "SSC CGL 2022" or "BPSC 67th" with no verb still names a sitting.
     intent = 'EXACT_PYQ';
-  } else if (unresolvedExamHint && year) {
+  } else if (unresolvedExamHint && (year || session)) {
     intent = 'EXACT_PYQ';
   }
 
@@ -200,5 +218,5 @@ export async function parsePyqQuery(rawQuery: string): Promise<ParsedPyqQuery> {
   if (topic) evidence.push(`topic=${topic}`);
   evidence.push(`intent=${intent}`);
 
-  return { intent, examId, year, shift, paper, topic, requestedCount, wantsFullPaper, unresolvedExamHint, evidence };
+  return { intent, examId, year, session, shift, paper, topic, requestedCount, wantsFullPaper, unresolvedExamHint, evidence };
 }

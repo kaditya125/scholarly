@@ -1,50 +1,65 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import {
-  Brain,
-  Zap,
-  Clock,
-  HelpCircle,
-  ChevronRight,
-  Sparkles,
-  RotateCw,
-  Target,
-  BookOpen,
-  Filter,
-} from 'lucide-react';
+import { Brain, Zap, Clock, HelpCircle, ChevronRight, RotateCw, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
-import { useAuth } from '../../lib/AuthContext';
 import { useProfile } from '../../hooks/api/useProfile';
 import { useUserStats } from '../../hooks/api/useUserStats';
 import { useAdaptiveAssessment } from '../../hooks/api/useAdaptiveAssessment';
 import { useLaunchTest } from '../../hooks/ai/useLaunchTest';
 import { useTheme } from '../../lib/ThemeContext';
-import { EXAM_CATALOG } from '../../lib/examCatalog';
-import { examApi } from '../../lib/api/exams';
-import { quizApi } from '../../lib/api/quiz';
+import { quizApi, DrillTopicsResponse } from '../../lib/api/quiz';
 
-/** "SSC_CGL" / "ssc-cgl" / "SSC CGL" all collapse to "ssccgl", matching the backend's own
- *  normaliseExamToken (examIndex.ts) so a catalog slug and a canonical examId can be compared. */
-function normaliseExamToken(s: string): string {
-  return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-}
+/**
+ * Dashboard drill cards, built ONLY from real data:
+ *   - "Weak Area Fix": the student's measured weak topics (quiz results / diagnostics), matched to a
+ *     topic or subject that actually exists in the exam's corpus. Free-text weak labels that match
+ *     nothing are dropped rather than turned into an ungrounded drill.
+ *   - "High Yield" / "PYQ Focus": the exam's topics ranked by how many genuine previous-year
+ *     questions carry them (GET /quiz/drill-topics) — not a hand-typed syllabus list.
+ * Each card launches with subject and topic sent separately, so the backend's QuestionMixer can
+ * retrieve real PYQs and indexed reference-book questions for exactly that topic.
+ */
 
 interface DrillCard {
   id: string;
   subject: string;
   topic: string;
-  badge: 'Weak Area Fix' | 'High Yield' | 'Speed Booster' | 'PYQ Focus' | 'Concept Revision';
+  badge: 'Weak Area Fix' | 'High Yield' | 'PYQ Focus';
   description: string;
   durationMins: number;
   questionCount: number;
   isWeakArea: boolean;
+  /** Subject-level drill (the weak area is a whole subject, not one topic). */
+  subjectLevel?: boolean;
   accuracyNote?: string;
-  /** Real canonical syllabus identity, when the weak area backing this card came from
-   *  GET /quiz/weak-areas rather than the client-side digitalTwin/stats/profile merge below. */
   syllabusNodeId?: string;
   examId?: string;
+}
+
+/** Loose comparison key for subject/topic names ("General Intelligence & Reasoning" ≈ "general intelligence and reasoning"). */
+const norm = (s: unknown) => String(s || '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim();
+const looselyEqual = (a: string, b: string) => {
+  const x = norm(a), y = norm(b);
+  return !!x && !!y && (x === y || x.includes(y) || y.includes(x));
+};
+
+type Subjects = DrillTopicsResponse['subjects'];
+
+/** Map a free-text weak label to something the corpus actually has: a whole subject, or a topic. */
+function groundWeakLabel(label: string, subjects: Subjects, subjectHint?: string):
+  | { kind: 'subject'; subject: string }
+  | { kind: 'topic'; subject: string; topic: string }
+  | null {
+  const subj = subjects.find((s) => looselyEqual(s.subject, label));
+  if (subj) return { kind: 'subject', subject: subj.subject };
+  const pool = subjectHint ? subjects.filter((s) => looselyEqual(s.subject, subjectHint)) : subjects;
+  for (const s of pool.length ? pool : subjects) {
+    const t = s.topics.find((t) => looselyEqual(t.topic, label));
+    if (t) return { kind: 'topic', subject: s.subject, topic: t.topic };
+  }
+  return null;
 }
 
 export function AiRecommendedDrills() {
@@ -59,257 +74,137 @@ export function AiRecommendedDrills() {
   const [selectedSubject, setSelectedSubject] = useState<string>('All');
   const [shuffleIndex, setShuffleIndex] = useState(0);
 
-  const targetExam = profile?.goal || profile?.targetExam || 'Competitive Exams';
+  const targetExam = profile?.targetExam || profile?.goal || '';
 
-  /*
-   * 1. Resolve the student's exam through the SAME canonical registry PYQ/syllabus retrieval
-   *    uses (examIndex.ts, via GET /exams/resolve-id) — not a frontend-only fuzzy match against
-   *    this file's static catalog. This used to fall back to EXAM_CATALOG[0] (NEET) whenever the
-   *    match failed, which is why an unresolved "SSC CGL" profile showed NEET/Physics/Chemistry
-   *    content: the fallback silently substituted a DIFFERENT exam rather than showing nothing.
-   */
-  const { data: resolvedExamId } = useQuery({
-    queryKey: ['examResolve', targetExam],
-    queryFn: () => examApi.resolveExamId(targetExam).then((r) => r.examId),
-    enabled: !!profile?.goal || !!profile?.targetExam,
-    staleTime: 1000 * 60 * 10,
+  // The exam's real topics, ranked by genuine PYQ frequency. The backend resolves the free-text
+  // goal through the same exam registry retrieval uses — no client-side catalog matching.
+  const { data: drillTopics, isLoading } = useQuery({
+    queryKey: ['drillTopics', targetExam],
+    queryFn: () => quizApi.getDrillTopics(targetExam),
+    enabled: !!targetExam,
+    staleTime: 1000 * 60 * 30,
   });
+  const subjects: Subjects = drillTopics?.subjects || [];
+  const examId = drillTopics?.examId || undefined;
+  // The exam the drills actually come from ("SSC_CGL" → "SSC CGL"), which can be more specific
+  // than the profile's goal (the "SSC" family option drills from SSC CGL).
+  const examLabel = examId ? examId.replace(/_/g, ' ') : targetExam;
 
-  // 2. Match the resolved canonical id to this file's descriptive catalog (topics, high-yield
-  //    lists) — NEVER falls back to an unrelated exam's entry. No match => matchedExam is null,
-  //    and the component shows a neutral empty state instead of guessing.
-  const matchedExam = useMemo(() => {
-    if (!resolvedExamId) return null;
-    const norm = normaliseExamToken(resolvedExamId);
-    return (
-      EXAM_CATALOG.find((e) => {
-        const slug = normaliseExamToken(e.slug);
-        return slug === norm || norm.includes(slug) || slug.includes(norm);
-      }) ?? null
-    );
-  }, [resolvedExamId]);
-
-  // 3. Identify student's active subjects. No hardcoded exam-shaped default (this used to default
-  //    to ['Physics','Chemistry','Mathematics','Biology'] — a NEET/JEE-shaped guess — whenever
-  //    neither profile.subjects nor a matched syllabus were available). Empty means the component
-  //    shows a "complete your profile" prompt rather than another exam's subjects.
-  const studentSubjects = useMemo(() => {
-    if (profile?.subjects && profile.subjects.length > 0) {
-      return profile.subjects;
-    }
-    if (matchedExam?.syllabus && matchedExam.syllabus.length > 0) {
-      return matchedExam.syllabus.map((s) => s.subject.split('(')[0].trim());
-    }
-    return [] as string[];
-  }, [profile?.subjects, matchedExam]);
-
-  // 3a. Real, exam-scoped weak areas with syllabus identity — GET /quiz/weak-areas, the same
-  // structured data QuestionMixer's WEAK_AREA_DRILL mode consumes server-side. Takes priority
-  // over the client-side signals below: those carry no syllabusNodeId, so a drill built from them
-  // alone can only ever be a fuzzy topic-string search, not a real scoped retrieval.
-  const { data: structuredWeakAreas } = useQuery({
-    queryKey: ['weakAreas', resolvedExamId],
-    queryFn: () => quizApi.getWeakAreas(resolvedExamId!).then((r) => r.weakAreas),
-    enabled: !!resolvedExamId,
+  // Measured, exam-scoped weak topics (carry syllabus identity when known).
+  const { data: structuredWeak } = useQuery({
+    queryKey: ['weakAreas', targetExam],
+    queryFn: () => quizApi.getWeakAreas(targetExam).then((r) => r.weakAreas),
+    enabled: !!targetExam,
     staleTime: 1000 * 30,
   });
 
-  // 3b. Extract real weak topics from telemetry & profile
-  const recordedWeakAreas = useMemo(() => {
-    const weakList: { subject?: string; topic: string; accuracy?: number; syllabusNodeId?: string; examId?: string }[] = [];
+  const subjectNames = useMemo(() => subjects.filter((s) => s.topics.length > 0).map((s) => s.subject), [subjects]);
 
-    // Structured, backend-scoped weak areas first — these carry real syllabus identity.
-    if (structuredWeakAreas && structuredWeakAreas.length > 0) {
-      structuredWeakAreas.forEach((w) => {
-        weakList.push({
-          subject: w.subjectId, topic: w.topicName, accuracy: w.accuracy,
-          syllabusNodeId: w.syllabusNodeId, examId: w.examId,
-        });
+  const weakCards = useMemo(() => {
+    if (subjects.length === 0) return [] as DrillCard[];
+    const cards: DrillCard[] = [];
+    const seen = new Set<string>();
+    const push = (c: DrillCard) => {
+      const k = `${norm(c.subject)}::${norm(c.topic)}`;
+      if (seen.has(k)) return;
+      seen.add(k);
+      cards.push(c);
+    };
+
+    // 1. Structured weak topics from real quiz results.
+    for (const w of structuredWeak || []) {
+      const grounded = groundWeakLabel(w.topicName, subjects, w.subjectId);
+      if (!grounded && !w.syllabusNodeId) continue;
+      const subject = grounded?.subject || subjects.find((s) => looselyEqual(s.subject, w.subjectId || ''))?.subject || 'Weak area';
+      const topic = grounded?.kind === 'topic' ? grounded.topic : w.topicName;
+      const acc = Math.round(w.accuracy);
+      push({
+        id: `weak-${subject}-${topic}`, subject, topic, badge: 'Weak Area Fix',
+        description: `You scored ${acc}% on ${topic} across ${w.total} attempted question${w.total === 1 ? '' : 's'}. This drill targets it with real previous-year questions.`,
+        durationMins: 15, questionCount: 10, isWeakArea: true, subjectLevel: grounded?.kind === 'subject',
+        accuracyNote: `${acc}% accuracy`, syllabusNodeId: w.syllabusNodeId, examId: w.examId || examId,
       });
     }
 
-    // From digital twin knowledge graph
-    if (digitalTwin?.knowledgeGraph) {
-      Object.values(digitalTwin.knowledgeGraph).forEach((concept) => {
-        if (
-          concept.status === 'weak' ||
-          (typeof concept.masteryScore === 'number' && concept.masteryScore < 60)
-        ) {
-          weakList.push({
-            subject: concept.subject,
-            topic: concept.conceptName || concept.topic,
-            accuracy: concept.masteryScore,
-          });
-        }
-      });
-    }
-
-    // From stats weakTopics
-    if (stats?.weakTopics && stats.weakTopics.length > 0) {
-      stats.weakTopics.forEach((t) => {
-        if (!weakList.some((w) => w.topic.toLowerCase() === t.toLowerCase())) {
-          weakList.push({ topic: t });
-        }
-      });
-    }
-
-    // From profile weakAreas
-    if (profile?.weakAreas && profile.weakAreas.length > 0) {
-      profile.weakAreas.forEach((t) => {
-        if (!weakList.some((w) => w.topic.toLowerCase() === t.toLowerCase())) {
-          weakList.push({ topic: t });
-        }
-      });
-    }
-
-    return weakList;
-  }, [structuredWeakAreas, digitalTwin?.knowledgeGraph, stats?.weakTopics, profile?.weakAreas]);
-
-  // 4. Generate AI Drills tailored to student course & subjects
-  const drills = useMemo(() => {
-    const list: DrillCard[] = [];
-    const subjectsToUse =
-      selectedSubject === 'All'
-        ? studentSubjects
-        : [selectedSubject];
-
-    // Badge rotation sequence
-    const badgeRotation: DrillCard['badge'][] = [
-      'High Yield',
-      'Speed Booster',
-      'PYQ Focus',
-      'Concept Revision',
-    ];
-
-    subjectsToUse.forEach((subj, sIdx) => {
-      // Check if subject matches a syllabus entry in the catalog
-      const syllabusEntry = matchedExam?.syllabus?.find(
-        (s) =>
-          s.subject.toLowerCase().includes(subj.toLowerCase()) ||
-          subj.toLowerCase().includes(s.subject.toLowerCase())
-      );
-
-      // A) Check for measured weak area GENUINELY tagged to this subject. Subject-less weak
-      // topics (stats.weakTopics / profile.weakAreas carry no subject) used to satisfy `!w.subject`
-      // here and so matched EVERY subject — a real English weakness like "Punctuation" was
-      // stamped onto Physics and Chemistry cards for an SSC CGL student. They're collected
-      // separately below into one honestly-labelled card instead of being dropped or contaminating
-      // every subject.
-      const weakMatch = recordedWeakAreas.find(
-        (w) =>
-          w.subject &&
-          (w.subject.toLowerCase().includes(subj.toLowerCase()) ||
-            subj.toLowerCase().includes(w.subject.toLowerCase()))
-      );
-
-      if (weakMatch) {
-        list.push({
-          id: `weak-${subj}-${weakMatch.topic}`,
-          subject: subj,
-          topic: weakMatch.topic,
-          badge: 'Weak Area Fix',
-          description: weakMatch.accuracy
-            ? `Calibrated to address your recent ${Math.round(weakMatch.accuracy)}% diagnostic accuracy in ${weakMatch.topic}.`
-            : `Targeted precision drill to reinforce weak fundamentals in ${subj}.`,
-          durationMins: 15,
-          questionCount: 10,
-          isWeakArea: true,
-          accuracyNote: weakMatch.accuracy ? `${Math.round(weakMatch.accuracy)}% Accuracy` : undefined,
-          syllabusNodeId: weakMatch.syllabusNodeId,
-          examId: weakMatch.examId,
-        });
-      }
-
-      // B) Pick high-yield topics from syllabus
-      const highYieldTopics = syllabusEntry?.highWeightageTopics || [];
-      const chapterTopics =
-        syllabusEntry?.chapters?.flatMap((c) => c.topics) || [];
-      const allSyllabusTopics = [
-        ...highYieldTopics,
-        ...chapterTopics,
-        `${subj} Core Fundamentals`,
-        `${subj} Practice Problems`,
-      ];
-
-      // Use shuffle offset to rotate topics
-      const offset = (sIdx * 2 + shuffleIndex) % allSyllabusTopics.length;
-      const primaryTopic = allSyllabusTopics[offset] || `${subj} High-Yield Units`;
-      const secondaryTopic =
-        allSyllabusTopics[(offset + 1) % allSyllabusTopics.length] || `${subj} Problem Solving`;
-
-      list.push({
-        id: `syl-${subj}-${primaryTopic}`,
-        subject: subj,
-        topic: primaryTopic,
-        badge: badgeRotation[(sIdx + shuffleIndex) % badgeRotation.length],
-        description: `High-yield ${targetExam} syllabus focus on ${primaryTopic} (${subj}) with standard exam pattern questions.`,
-        durationMins: 15,
-        questionCount: 10,
-        isWeakArea: false,
-      });
-
-      if (subjectsToUse.length === 1 || list.length < 2) {
-        list.push({
-          id: `syl-sec-${subj}-${secondaryTopic}`,
-          subject: subj,
-          topic: secondaryTopic,
-          badge: badgeRotation[(sIdx + shuffleIndex + 1) % badgeRotation.length],
-          description: `Reinforce speed, formula retention, and elimination shortcuts for ${secondaryTopic}.`,
-          durationMins: 15,
-          questionCount: 10,
-          isWeakArea: false,
-        });
+    // 2. Diagnostic / profile weak labels — kept only when they match the exam's real corpus.
+    const labels: { label: string; accuracy?: number; subjectHint?: string }[] = [];
+    Object.values(digitalTwin?.knowledgeGraph || {}).forEach((c: any) => {
+      if (c.status === 'weak' || (typeof c.masteryScore === 'number' && c.masteryScore < 60)) {
+        labels.push({ label: c.conceptName || c.topic, accuracy: c.masteryScore, subjectHint: c.subject });
       }
     });
+    (stats?.weakTopics || []).forEach((t: string) => labels.push({ label: t }));
+    (profile?.weakAreas || []).forEach((t: string) => labels.push({ label: t }));
 
-    // Subject-less weak topics (no subject match found above, in the "All" view) still get
-    // surfaced — real signal, just honestly labelled as unattributed rather than stamped onto a
-    // subject it may not belong to.
-    if (selectedSubject === 'All') {
-      const unattributed = recordedWeakAreas.filter((w) => !w.subject);
-      if (unattributed.length > 0) {
-        const top = unattributed[0];
+    for (const l of labels) {
+      const g = groundWeakLabel(l.label, subjects, l.subjectHint);
+      if (!g) continue;
+      const topic = g.kind === 'topic' ? g.topic : `Mixed ${g.subject}`;
+      const acc = typeof l.accuracy === 'number' ? Math.round(l.accuracy) : null;
+      push({
+        id: `weak-${g.subject}-${topic}`, subject: g.subject, topic, badge: 'Weak Area Fix',
+        description: g.kind === 'subject'
+          ? `Your diagnostics flagged ${g.subject} as weak. A mixed drill across its most-asked topics, from real previous-year questions.`
+          : `Flagged in your diagnostics${acc != null ? ` at ${acc}% mastery` : ''}. Practise ${topic} with real previous-year questions.`,
+        durationMins: 15, questionCount: 10, isWeakArea: true, subjectLevel: g.kind === 'subject',
+        accuracyNote: acc != null ? `${acc}% mastery` : undefined, examId,
+      });
+    }
+    return cards;
+  }, [subjects, structuredWeak, digitalTwin?.knowledgeGraph, stats?.weakTopics, profile?.weakAreas, examId]);
+
+  const drills = useMemo(() => {
+    const inScope = (c: DrillCard) => selectedSubject === 'All' || c.subject === selectedSubject;
+    const list: DrillCard[] = weakCards.filter(inScope).slice(0, 2);
+    const taken = new Set(list.map((c) => `${norm(c.subject)}::${norm(c.topic)}`));
+
+    // High-yield topics, round-robin across subjects so one subject doesn't fill every slot.
+    // "Refresh" advances each subject to its next most-asked topic.
+    const pool = subjects.filter((s) => s.topics.length > 0 && (selectedSubject === 'All' || s.subject === selectedSubject));
+    const perSubject = pool.map((s) => {
+      const n = s.topics.length;
+      return Array.from({ length: n }, (_, i) => ({ s, t: s.topics[(i + shuffleIndex) % n], rank: (i + shuffleIndex) % n }));
+    });
+    for (let round = 0; list.length < 4 && perSubject.some((q) => q.length > round); round++) {
+      for (const queue of perSubject) {
+        if (list.length >= 4) break;
+        const item = queue[round];
+        if (!item) continue;
+        const k = `${norm(item.s.subject)}::${norm(item.t.topic)}`;
+        if (taken.has(k)) continue;
+        taken.add(k);
         list.push({
-          id: `weak-unattributed-${top.topic}`,
-          subject: 'General',
-          topic: top.topic,
-          badge: 'Weak Area Fix',
-          description: top.accuracy
-            ? `Calibrated to address your recent ${Math.round(top.accuracy)}% diagnostic accuracy in ${top.topic}.`
-            : `Targeted precision drill for a recently flagged weak area.`,
-          durationMins: 15,
-          questionCount: 10,
-          isWeakArea: true,
-          accuracyNote: top.accuracy ? `${Math.round(top.accuracy)}% Accuracy` : undefined,
-          syllabusNodeId: top.syllabusNodeId,
-          examId: top.examId,
+          id: `hy-${item.s.subject}-${item.t.topic}`,
+          subject: item.s.subject,
+          topic: item.t.topic,
+          // Top 3 by real PYQ frequency within the subject earn "High Yield"; the rest are real
+          // but less frequent, so they say so.
+          badge: item.rank < 3 ? 'High Yield' : 'PYQ Focus',
+          description: `${item.t.pyqCount.toLocaleString()} previous-year ${examLabel} questions in our bank are on ${item.t.topic}. `
+            + (item.t.referenceCount > 0
+              ? 'This drill mixes real PYQs with reference-book practice.'
+              : 'This drill mixes real PYQs with questions in the same pattern.'),
+          durationMins: 15, questionCount: 10, isWeakArea: false, examId,
         });
       }
     }
-
-    // Ensure we always have at least 2 distinct drills
-    return list.slice(0, 4);
-  }, [
-    studentSubjects,
-    selectedSubject,
-    matchedExam,
-    recordedWeakAreas,
-    targetExam,
-    shuffleIndex,
-  ]);
+    return list;
+  }, [weakCards, subjects, selectedSubject, shuffleIndex, examLabel, examId]);
 
   const handleStartDrill = (drill: DrillCard) => {
     launch({
-      // A real syllabusNodeId already pins WHERE precisely — concatenating subject+topic into
-      // one search string on top of it would just add noise to the mixer's exact-node retrieval.
-      // Falls back to the combined string for syllabus-catalog-derived cards (High Yield / Speed
-      // Booster / etc.), which never had a real node to begin with.
-      topic: drill.syllabusNodeId ? drill.topic : `${drill.subject} - ${drill.topic}`,
+      // Subject-level weak drills send the subject as the topic: the backend treats a subject name
+      // as "mixed practice across this subject".
+      topic: drill.subjectLevel ? drill.subject : drill.topic,
+      subject: drill.subject,
       count: drill.questionCount,
       mode: 'exam',
       syllabusNodeId: drill.syllabusNodeId,
       examId: drill.examId,
       isWeakAreaDrill: drill.isWeakArea,
+      // PYQ-heavy mix for topic drills: 40% real PYQs, 30% PYQ-pattern, 20% reference book, 10%
+      // generated. Weak-area drills use WEAK_AREA_DRILL's own mix via isWeakAreaDrill.
+      testMode: drill.isWeakArea ? undefined : 'SMART_MIXED',
     });
   };
 
@@ -319,35 +214,34 @@ export function AiRecommendedDrills() {
         return 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20';
       case 'High Yield':
         return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
-      case 'Speed Booster':
-        return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
       case 'PYQ Focus':
-        return 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20';
-      case 'Concept Revision':
       default:
-        return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20';
+        return 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20';
     }
   };
+
+  const showEmpty = !isLoading && drills.length === 0;
 
   return (
     <div className="space-y-3.5">
       {/* Header bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <div>
-          <h2 className="text-[14px] font-semibold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+          <h2 className="text-[14px] font-semibold text-slate-900 dark:text-white tracking-tight flex flex-wrap items-center gap-x-2 gap-y-1">
             <Brain className="w-4 h-4 text-[#6ca855] dark:text-[#c8e558]" />
             <span>AI-Recommended Weak Area Drills</span>
-            <span className="text-[10.5px] font-semibold px-2.5 py-0.5 rounded-full bg-[#6ca855]/10 dark:bg-[#c8e558]/10 text-[#6ca855] dark:text-[#c8e558] border border-[#6ca855]/20 dark:border-[#c8e558]/20">
-              Personalized for {targetExam}
-            </span>
+            {examLabel && (
+              <span className="whitespace-nowrap text-[10.5px] font-semibold px-2.5 py-0.5 rounded-full bg-[#6ca855]/10 dark:bg-[#c8e558]/10 text-[#6ca855] dark:text-[#c8e558] border border-[#6ca855]/20 dark:border-[#c8e558]/20">
+                Personalized for {examLabel}
+              </span>
+            )}
           </h2>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Refresh AI recommendations button */}
           <button
             onClick={() => setShuffleIndex((prev) => prev + 1)}
-            title="Roll new syllabus topics"
+            title="Show the next most-asked topics"
             className="text-[12px] font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
           >
             <RotateCw className="w-3.5 h-3.5" />
@@ -363,45 +257,31 @@ export function AiRecommendedDrills() {
         </div>
       </div>
 
-      {/* Subject Filter Pills (if student has multiple subjects) */}
-      {studentSubjects.length > 1 && (
+      {/* Subject filter pills — the exam's real subjects from its PYQ corpus. */}
+      {subjectNames.length > 1 && (
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-          <button
-            onClick={() => setSelectedSubject('All')}
-            className={cn(
-              "text-[11px] font-semibold px-3 py-1 rounded-full border transition-all cursor-pointer whitespace-nowrap",
-              selectedSubject === 'All'
-                ? "bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-950 border-transparent shadow-2xs font-bold"
-                : isDarkMode
-                ? "bg-[#1a1a1e] text-slate-400 border-white/[0.08] hover:text-slate-200 hover:bg-[#222228]"
-                : "bg-white text-slate-600 border-slate-200/80 hover:text-slate-900 hover:bg-slate-50"
-            )}
-          >
-            All Subjects ({studentSubjects.length})
-          </button>
-
-          {studentSubjects.map((subj) => (
+          {['All', ...subjectNames].map((subj) => (
             <button
               key={subj}
               onClick={() => setSelectedSubject(subj)}
               className={cn(
-                "text-[11px] font-medium px-3 py-1 rounded-full border transition-all cursor-pointer whitespace-nowrap",
+                "text-[11px] px-3 py-1 rounded-full border transition-all cursor-pointer whitespace-nowrap",
                 selectedSubject === subj
                   ? "bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-950 border-transparent shadow-2xs font-bold"
                   : isDarkMode
-                  ? "bg-[#1a1a1e] text-slate-400 border-white/[0.08] hover:text-slate-200 hover:bg-[#222228]"
-                  : "bg-white text-slate-600 border-slate-200/80 hover:text-slate-900 hover:bg-slate-50"
+                  ? "font-medium bg-[#1a1a1e] text-slate-400 border-white/[0.08] hover:text-slate-200 hover:bg-[#222228]"
+                  : "font-medium bg-white text-slate-600 border-slate-200/80 hover:text-slate-900 hover:bg-slate-50"
               )}
             >
-              {subj}
+              {subj === 'All' ? `All Subjects (${subjectNames.length})` : subj}
             </button>
           ))}
         </div>
       )}
 
-      {/* Empty state: no exam resolved and no subjects on the profile — show a prompt instead of
-          silently falling back to another exam's content (the previous behavior). */}
-      {drills.length === 0 && (
+      {/* Empty state: no exam set, or an exam with no previous-year corpus yet — say so instead of
+          inventing topics. */}
+      {showEmpty && (
         <div
           className={cn(
             "rounded-2xl border p-6 text-center",
@@ -410,7 +290,9 @@ export function AiRecommendedDrills() {
         >
           <BookOpen className="w-5 h-5 mx-auto mb-2 text-slate-400" />
           <p className="text-[12.5px] font-medium text-slate-600 dark:text-slate-300">
-            Set your target exam and subjects in your profile to see personalized practice drills.
+            {targetExam
+              ? `Drills for ${targetExam} appear once its previous-year question bank is available.`
+              : 'Set your target exam in your profile to see drills built from its previous-year questions.'}
           </p>
         </div>
       )}

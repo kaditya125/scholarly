@@ -2,7 +2,11 @@ import { WorkflowEvent, WorkflowStage, WorkflowRequest } from '../types';
 import { AgentContext } from '../../agents/IAgent';
 import { KnowledgeGraphAgent } from '../../agents/KnowledgeGraphAgent';
 import { RetrievalService, RetrievalResult } from '../../../services/rag/retrieval.service';
-import { referenceBooksService } from '../../../services/rag/referenceBooks.service';
+import { referenceBooksService, ReferenceBooksService } from '../../../services/rag/referenceBooks.service';
+import { REFERENCE_BOOK_NAMESPACE } from '../../../services/rag/namespaces';
+import { CohereRerankerProvider } from '../../../services/ai/providers/cohere-reranker.provider';
+import { MIN_RERANK_RELEVANCE, type RerankerProvider } from '../../../services/ai/reranker.provider.interface';
+import { selectContext, tierWeight, TieredItem } from '../../knowledge/knowledgeAuthority';
 import { knowledgeService, KnowledgeService, knowledgeRouter } from '../../knowledge';
 import { Telemetry } from '../../../lib/telemetry';
 import { QueryPlan } from './QueryPlanningService';
@@ -21,6 +25,13 @@ import { contentExplorationService } from '../../pipeline/exploration/ContentExp
  */
 export const plainDiagnostics = (text: string | undefined): string | undefined =>
   text?.replace(/\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b/g, (id) => id.replace(/_/g, ' '));
+
+/**
+ * Passages from the shared corpora that make it into one turn's context, across every tier.
+ * Previously each tier had its own fixed slot count (5 + 2 + 2 + 3 = 12) regardless of quality;
+ * now the best CONTEXT_PASSAGE_BUDGET by weighted score win.
+ */
+export const CONTEXT_PASSAGE_BUDGET = 10;
 
 export interface RetrievalOutcome {
   citationsList: any[];
@@ -61,6 +72,17 @@ export interface RetrievalTrace {
   contextChars: number;
   groundingState: GroundingState;
   fallbackReason?: string;
+  /** Cross-tier retrieval: how many passages each tier returned and how many made the context. */
+  tiers?: {
+    retrieved: { official: number; pyq: number; reference: number };
+    selected: { official: number; pyq: number; reference: number };
+    /** 'reranked' = one reranker pass scored every tier on the same scale; 'native' = each tier's own score. */
+    relevanceScale: 'reranked' | 'native';
+    examId: string | null;
+    /** Why HyDE ran for the reference-book search ('colloquial' | 'vague' | 'weak_results'), or null. */
+    referenceHyde: string | null;
+    errors: string[];
+  };
   /**
    * Per-stage milliseconds.
    *
@@ -88,8 +110,37 @@ export interface RetrievalTrace {
 export class RetrievalOrchestrator {
   constructor(
     private readonly retrievalService: RetrievalService = new RetrievalService(),
-    private readonly knowledge: KnowledgeService = knowledgeService
+    private readonly knowledge: KnowledgeService = knowledgeService,
+    private readonly referenceBooks: Pick<ReferenceBooksService, 'retrieveReferenceContext'> = referenceBooksService,
+    private readonly reranker: RerankerProvider = new CohereRerankerProvider(),
   ) {}
+
+  /**
+   * Put every tier's passages on ONE relevance scale before weighting.
+   *
+   * Tiers score differently: curriculum and reference passages carry reranker relevance, PYQs a
+   * cosine similarity. Weighting incomparable numbers would make the authority multiplier
+   * meaningless, so when more than one tier contributed, one reranker pass scores the whole pool
+   * against the query and that score becomes each item's relevance. For reference books the
+   * matched child chunk is scored, not the expanded parent context. If the reranker is degraded,
+   * each tier keeps its own score and the trace says so.
+   */
+  private async putOnOneScale(query: string, pool: Array<TieredItem<{ r: RetrievalResult }>>): Promise<'reranked' | 'native'> {
+    if (new Set(pool.map((p) => p.tier)).size < 2) return 'native';
+    try {
+      const docs = pool.map((p) => String(p.item.r.metadata?.childText ?? p.item.r.text ?? '').slice(0, 2000));
+      const ranked = await this.reranker.rerank(query, docs, docs.length);
+      if (!ranked.length || ranked.some((x) => x.degraded)) {
+        logger.warn('[Retrieval] reranker degraded; cross-tier ranking uses each tier native score');
+        return 'native';
+      }
+      for (const x of ranked) if (pool[x.index]) pool[x.index].relevance = x.relevanceScore;
+      return 'reranked';
+    } catch (err: any) {
+      logger.warn('[Retrieval] cross-tier rerank failed; using native scores', { error: String(err?.message ?? err).slice(0, 200) });
+      return 'native';
+    }
+  }
 
   /**
    * Stage 4: knowledge-graph retrieval. Extracted from stream() so it can run CONCURRENTLY
@@ -232,7 +283,7 @@ export class RetrievalOrchestrator {
       yield { type: 'progress', stage: WorkflowStage.RAG_RETRIEVAL, message: 'Checking Sadhya\'s verified question corpus...' };
       try {
         const canonical = await canonicalPyqRetrievalService.retrieve({
-          examId: parsed.examId, year: parsed.year, shift: parsed.shift,
+          examId: parsed.examId, year: parsed.year, session: parsed.session, shift: parsed.shift,
           paper: parsed.paper, wantsFullPaper: parsed.wantsFullPaper,
         });
         trace.canonicalStatus = canonical.status;
@@ -377,145 +428,137 @@ export class RetrievalOrchestrator {
       // model's own knowledge. Skipped when a file is attached (that file is the context).
       try {
         const routePlan = knowledgeRouter.route({ query: req.query, notebookId: req.notebookId });
-        
-        // Parallel multi-corpus retrieval execution.
-        //
-        // PYQs were missing from this list: the router computed `usePYQs` and nothing ever read
-        // it, so 22,000 indexed past-paper vectors could not reach an answer no matter what the
-        // router decided. They are retrieved official-only here — a practice question is useful
-        // for drilling, but it should not be quoted back to a student as a past paper.
+
+        /*
+         * Exam identity comes from the parser, not the router.
+         *
+         * knowledgeRouter detects exams with a hardcoded regex list that has no UGC NET entry,
+         * so `targetExamId` was undefined for "UGC NET Computer Science PYQs on DBMS" — and an
+         * undefined examId means an UNFILTERED vector search. An isolation test caught the
+         * consequence: that query came back with three JEE Main citations. `parsedExamId` is
+         * resolved from live corpus data (examIndex), so it knows every exam actually ingested.
+         * With no exam named in the query, the student's own target exam is the filter — never
+         * when they named an exam we could not resolve (that must not be searched as their exam).
+         * The SAME exam scopes PYQs and reference books: a JEE student's reference passage must
+         * come from a book tagged for JEE, exactly as their PYQs must.
+         */
+        const examId = parsed.examId ?? routePlan.targetExamId
+          ?? (parsed.unresolvedExamHint ? undefined : agentContext.studentContext?.examContext?.examId ?? undefined);
+
+        // Every tier runs in parallel; a failing tier is logged with its name and contributes
+        // nothing — it never takes the other tiers down with it.
+        const tierErrors: string[] = [];
+        const runTier = (name: string, enabled: boolean, fn: () => Promise<RetrievalResult[]>): Promise<RetrievalResult[]> =>
+          enabled
+            ? fn().catch((err: any) => {
+                tierErrors.push(name);
+                logger.warn('[Retrieval] tier failed; continuing without it', { tier: name, error: String(err?.message ?? err).slice(0, 200) });
+                return [];
+              })
+            : Promise.resolve([]);
+
         const tVector = Date.now();
-        const [curriculumOutcome, refOutcome, syllabusOutcome, pyqOutcome] = await Promise.allSettled([
-          routePlan.useCurriculum
-            ? this.retrievalService.retrieveCurriculumContext(req.query, 5)
-            : Promise.resolve([]),
-          routePlan.useReferenceBooks
-            ? referenceBooksService.retrieveReferenceContext(req.query, {
-                topK: 2,
-                book: routePlan.referenceBookFilters?.books,
-                publisher: routePlan.referenceBookFilters?.publisher,
-              })
-            : Promise.resolve([]),
-          (routePlan.useOfficialSyllabus && routePlan.targetExamId)
-            ? this.retrievalService.retrieveOfficialSyllabusContext(routePlan.targetExamId, req.query, 2)
-            : Promise.resolve([]),
-          /*
-           * Exam identity comes from the parser, not the router.
-           *
-           * knowledgeRouter detects exams with a hardcoded regex list that has no UGC NET entry,
-           * so `targetExamId` was undefined for "UGC NET Computer Science PYQs on DBMS" — and an
-           * undefined examId means an UNFILTERED vector search. An isolation test caught the
-           * consequence: that query came back with three JEE Main citations. `parsedExamId` is
-           * resolved from live corpus data (examIndex), so it knows every exam actually ingested.
-           */
-          // With no exam named in the query, the student's own target exam is the filter — never
-          // when they named an exam we could not resolve (that must not be searched as their exam).
-          (routePlan.usePYQs || parsed.intent === 'PYQ_SEARCH')
-            ? this.retrievalService.retrievePyqContext(req.query, {
-                examId: parsed.examId ?? routePlan.targetExamId
-                  ?? (parsed.unresolvedExamHint ? undefined : agentContext.studentContext?.examContext?.examId ?? undefined),
-                subject: routePlan.targetSubject,
-                topic: parsed.topic ?? undefined,
-                officialOnly: true,
-                topK: 3,
-              })
-            : Promise.resolve([]),
+        const [curriculumResults, refResults, syllabusResults, pyqResults] = await Promise.all([
+          runTier('curriculum', routePlan.useCurriculum, () => this.retrievalService.retrieveCurriculumContext(req.query, 5)),
+          runTier('reference_books', routePlan.useReferenceBooks, () => this.referenceBooks.retrieveReferenceContext(req.query, {
+            topK: 3,
+            book: routePlan.referenceBookFilters?.books,
+            publisher: routePlan.referenceBookFilters?.publisher,
+            examCode: examId,
+            domain: routePlan.targetSubject,
+            useHyde: 'auto',
+          })),
+          runTier('official_syllabus', Boolean(routePlan.useOfficialSyllabus && routePlan.targetExamId),
+            () => this.retrievalService.retrieveOfficialSyllabusContext(routePlan.targetExamId!, req.query, 2)),
+          // PYQs were missing from this list once: the router computed `usePYQs` and nothing read
+          // it. Retrieved official-only — a practice question must not be quoted as a past paper.
+          runTier('verified_pyq', Boolean(routePlan.usePYQs || parsed.intent === 'PYQ_SEARCH'), () => this.retrievalService.retrievePyqContext(req.query, {
+            examId,
+            subject: routePlan.targetSubject,
+            topic: parsed.topic ?? undefined,
+            officialOnly: true,
+            topK: 3,
+          })),
         ]);
-
         trace.timings.vectorSearch = Date.now() - tVector;
-        const curriculumResults = curriculumOutcome.status === 'fulfilled' ? curriculumOutcome.value : [];
-        const refResults = refOutcome.status === 'fulfilled' ? refOutcome.value : [];
-        const syllabusResults = syllabusOutcome.status === 'fulfilled' ? syllabusOutcome.value : [];
-        const pyqResults = pyqOutcome.status === 'fulfilled' ? pyqOutcome.value : [];
 
-        // 1. NCERT Curriculum
-        if (curriculumResults.length > 0) {
-          contextStr += "=== NCERT CURRICULUM CONTEXT ===\n";
-          for (const r of curriculumResults) {
-            contextStr += `[Citation: ${r.source}]\n${r.text}\n\n`;
-            const citationData = {
-              source: r.source,
-              text: r.text,
-              score: r.score,
-              authorityScore: r.metadata?.authority || 1.5,
-              selectionReasoning: r.selectionReasoning || 'Relevant passage from the NCERT curriculum.',
-              pageNumber: r.metadata?.pageNumber,
-              paragraphIndex: r.metadata?.paragraphIndex,
-              sourceId: r.metadata?.sourceId,
-              notebookId: r.metadata?.notebookId,
-              title: r.metadata?.sourceTitle || r.source,
-            };
-            citationsList.push(citationData);
-            yield { type: 'citation', citation: citationData };
-          }
-        }
+        // ── Cross-tier ranking (core/knowledge/knowledgeAuthority.ts) ─────────────────────────
+        type Evidence = { kind: 'curriculum' | 'syllabus' | 'pyq' | 'reference'; r: RetrievalResult };
+        const pool: Array<TieredItem<Evidence>> = [
+          ...curriculumResults.map((r) => ({ tier: 'OFFICIAL_PRIMARY' as const, relevance: r.score, item: { kind: 'curriculum' as const, r } })),
+          ...syllabusResults.map((r) => ({ tier: 'OFFICIAL_PRIMARY' as const, relevance: r.score, item: { kind: 'syllabus' as const, r } })),
+          ...pyqResults.map((r) => ({ tier: 'VERIFIED_PYQ' as const, relevance: r.score, item: { kind: 'pyq' as const, r } })),
+          ...refResults.map((r) => ({ tier: 'REFERENCE_BOOK' as const, relevance: r.score, item: { kind: 'reference' as const, r } })),
+        ];
+        const relevanceScale = await this.putOnOneScale(req.query, pool);
+        // Each tier already applied its own floor; after a joint rerank the same floor applies on
+        // the shared scale, so a passage the reranker judges irrelevant cannot fill a spare slot.
+        const eligible = relevanceScale === 'reranked' ? pool.filter((p) => p.relevance >= MIN_RERANK_RELEVANCE) : pool;
+        const selected = selectContext(eligible, CONTEXT_PASSAGE_BUDGET);
+        trace.tiers = {
+          retrieved: { official: curriculumResults.length + syllabusResults.length, pyq: pyqResults.length, reference: refResults.length },
+          selected: {
+            official: selected.filter((s) => s.tier === 'OFFICIAL_PRIMARY').length,
+            pyq: selected.filter((s) => s.tier === 'VERIFIED_PYQ').length,
+            reference: selected.filter((s) => s.tier === 'REFERENCE_BOOK').length,
+          },
+          relevanceScale,
+          examId: examId ?? null,
+          referenceHyde: (refResults[0]?.metadata?.retrieval?.hyde as string | null | undefined) ?? null,
+          errors: tierErrors,
+        };
 
-        // 2. Reference Books (Augmentation)
-        if (refResults.length > 0) {
-          contextStr += "=== REFERENCE BOOK CONTEXT (LUCENT / S. CHAND) ===\n";
-          for (const r of refResults) {
-            contextStr += `[Citation: ${r.source}]\n${r.text}\n\n`;
-            const citationData = {
-              source: r.source,
-              text: r.text,
-              score: r.score,
-              authorityScore: 1.1,
-              selectionReasoning: r.selectionReasoning || 'Supplementary reference context.',
-              pageNumber: r.metadata?.pageNumber,
-              figureAssetUrl: r.metadata?.figureAssetUrl || null,
-              sourceId: r.metadata?.book || 'reference_book',
-              notebookId: 'reference_books',
-              title: r.source,
-            };
-            citationsList.push(citationData);
-            yield { type: 'citation', citation: citationData };
-          }
-        }
+        // Presented in authority order: official curriculum + syllabus, then verified PYQs, then
+        // reference books. selectContext already grouped the chosen passages that way.
+        let currentHeader = '';
+        for (const s of selected) {
+          const { kind, r } = s.item;
+          const header = kind === 'curriculum' ? '=== NCERT CURRICULUM CONTEXT (OFFICIAL) ==='
+            : kind === 'syllabus' ? `=== OFFICIAL SYLLABUS CONTEXT (${routePlan.targetExamId}) ===`
+            : kind === 'pyq' ? '=== PREVIOUS YEAR QUESTIONS (VERIFIED OFFICIAL) ==='
+            : '=== REFERENCE BOOK CONTEXT (SECONDARY — defer to the official sources above on any conflict) ===';
+          if (header !== currentHeader) { contextStr += `${header}\n`; currentHeader = header; }
 
-        // 2b. Authentic previous-year questions
-        if (pyqResults.length > 0) {
-          contextStr += '=== PREVIOUS YEAR QUESTIONS (VERIFIED OFFICIAL) ===\n';
-          for (const p of pyqResults) {
-            const m = p.metadata || {};
-            const sitting = [m.examId, m.year, m.session, m.shift].filter(Boolean).join(' ');
-            contextStr += `[Citation: ${sitting || p.source}]\n${p.text}\n\n`;
-            const citationData = {
-              source: sitting || p.source,
-              text: p.text,
-              score: p.score,
-              authorityScore: 1.4,
-              selectionReasoning:
-                p.selectionReasoning || `Verified official past-paper question (${sitting}).`,
-              sourceId: m.canonicalPaperId || m.sourceId,
-              notebookId: m.notebookId,
-              title: sitting || p.source,
-            };
-            citationsList.push(citationData);
-            yield { type: 'citation', citation: citationData };
-          }
-        }
+          const m = r.metadata || {};
+          const sitting = kind === 'pyq' ? [m.examId, m.year, m.session, m.shift].filter(Boolean).join(' ') : '';
+          const label = sitting || r.source;
+          contextStr += `[Citation: ${label}]\n${r.text}\n\n`;
 
-        // 3. Official Syllabus
-        if (syllabusResults.length > 0 && routePlan.targetExamId) {
-          contextStr += `=== OFFICIAL SYLLABUS CONTEXT (${routePlan.targetExamId}) ===\n`;
-          for (const s of syllabusResults) {
-            contextStr += `[Citation: ${s.source}]\n${s.text}\n\n`;
-            const citationData = {
-              source: s.source,
-              text: s.text,
-              score: s.score,
-              authorityScore: 1.5,
-              selectionReasoning: `Official Syllabus item for ${routePlan.targetExamId}`,
-              sourceId: s.metadata?.sourceId || s.metadata?.syllabusVersionId,
-              notebookId: `exam-${routePlan.targetExamId.toLowerCase()}`,
-              title: s.source,
-            };
-            citationsList.push(citationData);
-            yield { type: 'citation', citation: citationData };
-          }
+          const citationData: { source: string; text: string; score: number; authorityScore: number; selectionReasoning: string; [k: string]: any } = {
+            selectionReasoning: '',
+            source: label,
+            text: kind === 'reference' ? (m.childText ?? r.text) : r.text,
+            score: r.score,
+            authorityScore: tierWeight(s.tier),
+            authorityTier: s.tier,
+            weightedScore: Number(s.weightedScore.toFixed(4)),
+            title: kind === 'curriculum' ? (m.sourceTitle || r.source) : label,
+          };
+          if (kind === 'curriculum') Object.assign(citationData, {
+            selectionReasoning: r.selectionReasoning || 'Relevant passage from the NCERT curriculum.',
+            pageNumber: m.pageNumber, paragraphIndex: m.paragraphIndex, sourceId: m.sourceId, notebookId: m.notebookId,
+          });
+          if (kind === 'syllabus') Object.assign(citationData, {
+            selectionReasoning: `Official Syllabus item for ${routePlan.targetExamId}`,
+            sourceId: m.sourceId || m.syllabusVersionId,
+            notebookId: `exam-${String(routePlan.targetExamId).toLowerCase()}`,
+          });
+          if (kind === 'pyq') Object.assign(citationData, {
+            selectionReasoning: r.selectionReasoning || `Verified official past-paper question (${sitting}).`,
+            sourceId: m.canonicalPaperId || m.sourceId, notebookId: m.notebookId,
+          });
+          if (kind === 'reference') Object.assign(citationData, {
+            selectionReasoning: r.selectionReasoning || 'Supplementary reference context.',
+            pageNumber: m.pageNumber, figureAssetUrl: m.figureAssetUrl || null,
+            sourceId: m.book || 'reference_book', notebookId: REFERENCE_BOOK_NAMESPACE,
+            parentDocId: m.parentDocId, parentTitle: m.parentTitle,
+          });
+          citationsList.push(citationData);
+          yield { type: 'citation', citation: citationData };
         }
-      } catch (err) {
-        console.warn('Multi-corpus retrieval failed (non-fatal):', err);
+      } catch (err: any) {
+        trace.fallbackReason = `multi-corpus retrieval error: ${String(err?.message ?? err).slice(0, 120)}`;
+        logger.error('[Retrieval] multi-corpus retrieval failed', { error: String(err?.message ?? err) });
       }
     }
 

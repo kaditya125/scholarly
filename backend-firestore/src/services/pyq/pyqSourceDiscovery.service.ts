@@ -234,6 +234,97 @@ export const EXAM_DISCOVERY_REGISTRY: Record<string, ExamDiscoveryConfig> = {
       },
     ],
   },
+  SSC_IMD_CS: {
+    examId: 'SSC_IMD_CS',
+    officialAuthority: 'Staff Selection Commission / India Meteorological Department',
+    officialArchiveBaseUrl: 'https://ssc.gov.in',
+    officialDomains: ['ssc.gov.in', 'ssc.nic.in', 'imd.gov.in'],
+    supportedYears: [2022, 2017, 2011],
+    secondaryFallbacks: [
+      {
+        platformName: 'Testbook SSC IMD',
+        domain: 'testbook.com',
+        baseUrlTemplate: 'https://testbook.com/ssc-scientific-assistant/previous-year-papers',
+        sourceTier: 'TIER_B_REPUTABLE_PLATFORM',
+        reputationScore: 0.90,
+      },
+    ],
+  },
+  ISRO_CS: {
+    examId: 'ISRO_CS',
+    officialAuthority: 'Indian Space Research Organisation (ISRO) / ICRB',
+    officialArchiveBaseUrl: 'https://www.isro.gov.in/Careers.html',
+    officialDomains: ['isro.gov.in', 'www.isro.gov.in'],
+    supportedYears: [2024, 2023, 2022, 2020, 2018, 2017, 2016, 2015],
+    secondaryFallbacks: [
+      {
+        platformName: 'GeeksforGeeks ISRO CS',
+        domain: 'geeksforgeeks.org',
+        baseUrlTemplate: 'https://www.geeksforgeeks.org/isro-cs-previous-year-solved-papers',
+        sourceTier: 'TIER_B_REPUTABLE_PLATFORM',
+        reputationScore: 0.93,
+      },
+    ],
+  },
+  DRDO_CEPTAM_CS: {
+    examId: 'DRDO_CEPTAM_CS',
+    officialAuthority: 'Defence Research and Development Organisation (DRDO)',
+    officialArchiveBaseUrl: 'https://www.drdo.gov.in',
+    officialDomains: ['drdo.gov.in', 'www.drdo.gov.in'],
+    supportedYears: [2022, 2018],
+    secondaryFallbacks: [
+      {
+        platformName: 'Testbook DRDO CEPTAM',
+        domain: 'testbook.com',
+        baseUrlTemplate: 'https://testbook.com/drdo-ceptam/previous-year-papers',
+        sourceTier: 'TIER_B_REPUTABLE_PLATFORM',
+        reputationScore: 0.90,
+      },
+    ],
+  },
+  NIC_NIELIT_CS: {
+    examId: 'NIC_NIELIT_CS',
+    officialAuthority: 'National Informatics Centre / NIELIT',
+    officialArchiveBaseUrl: 'https://www.nielit.gov.in',
+    officialDomains: ['nielit.gov.in', 'www.nielit.gov.in', 'nic.in'],
+    supportedYears: [2023, 2022, 2020, 2017],
+    secondaryFallbacks: [
+      {
+        platformName: 'Testbook NIC Scientist B',
+        domain: 'testbook.com',
+        baseUrlTemplate: 'https://testbook.com/nielit-scientist-b/previous-year-papers',
+        sourceTier: 'TIER_B_REPUTABLE_PLATFORM',
+        reputationScore: 0.91,
+      },
+    ],
+  },
+  GATE_CS: {
+    examId: 'GATE_CS',
+    officialAuthority: 'Indian Institutes of Technology & IISc (GATE Committee)',
+    officialArchiveBaseUrl: 'https://gate2026.iitg.ac.in',
+    officialDomains: ['gate2026.iitg.ac.in', 'gate.iitk.ac.in', 'gate2024.iisc.ac.in', 'gate.iitb.ac.in', 'gate.iitd.ac.in'],
+    supportedYears: [
+      2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015,
+      2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005,
+      2004, 2003, 2002, 2001, 2000
+    ],
+    secondaryFallbacks: [
+      {
+        platformName: 'GateOverflow',
+        domain: 'gateoverflow.in',
+        baseUrlTemplate: 'https://gateoverflow.in/previous-years',
+        sourceTier: 'TIER_B_REPUTABLE_PLATFORM',
+        reputationScore: 0.98,
+      },
+      {
+        platformName: 'GeeksforGeeks GATE CS',
+        domain: 'geeksforgeeks.org',
+        baseUrlTemplate: 'https://www.geeksforgeeks.org/gate-cs-notes-gq',
+        sourceTier: 'TIER_B_REPUTABLE_PLATFORM',
+        reputationScore: 0.94,
+      },
+    ],
+  },
 };
 
 export class PYQSourceDiscoveryService {

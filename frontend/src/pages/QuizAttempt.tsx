@@ -7,6 +7,7 @@ import { useQuizAttempt, useSubmitQuizAttempt } from '../hooks/api/useQuizAttemp
 import { useAuth } from '../lib/AuthContext';
 import { sendRealNotification } from '../lib/api/realtimeNotifications';
 import { cn } from '../lib/utils';
+import PrerequisiteGapCard from '../components/tests/PrerequisiteGapCard';
 
 /**
  * /quiz/attempts/:attemptId — takes a single quiz attempt through to a scored result.
@@ -135,6 +136,8 @@ export default function QuizAttemptPage() {
               <span>Unattempted: {attempt.unattemptedCount}</span>
             </div>
           </div>
+
+          <PrerequisiteGapCard attemptId={attempt.id} diagnostics={attempt.pedagogicalDiagnostics} />
 
           <div className="space-y-3">
             {scoredQuestions.map((q, i) => {

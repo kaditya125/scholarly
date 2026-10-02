@@ -48,7 +48,10 @@ import { useAdaptiveAssessment } from "../hooks/api/useAdaptiveAssessment";
 import { OnboardingChecklist } from "../components/dashboard/OnboardingChecklist";
 import { LearningVelocityWidget } from "../components/dashboard/LearningVelocityWidget";
 import { FocusAreasWidget } from "../components/dashboard/FocusAreasWidget";
-import { GreetingRobot, RobotState } from "../components/dashboard/GreetingRobot";
+import { GreetingRobot } from "../components/dashboard/GreetingRobot";
+import { getExamAvatar } from "../lib/examAvatars";
+import { getExamDoubts } from "../lib/examDoubts";
+import { AvatarThoughtBubble } from "../components/dashboard/AvatarThoughtBubble";
 import { OnboardingCelebrationModal } from "../components/dashboard/OnboardingCelebrationModal";
 import { AiRecommendedDrills } from "../components/dashboard/AiRecommendedDrills";
 import { AchievementsMilestones } from "../components/dashboard/AchievementsMilestones";
@@ -110,13 +113,9 @@ export default function StudentDashboard() {
   const { stats } = useUserStats();
   const launch = useLaunchTest();
 
-  // Reference to greeting robot DOM container to compute destination for flight
-  const greetingTargetRef = useRef<HTMLDivElement | null>(null);
 
   // First-time onboarding celebration state
   const [showCelebration, setShowCelebration] = useState(false);
-  const [robotState, setRobotState] = useState<RobotState>('greeting');
-  const [flightStartRect, setFlightStartRect] = useState<DOMRect | null>(null);
 
   // Check if first-time onboarding celebration should appear
   useEffect(() => {
@@ -125,7 +124,6 @@ export default function StudentDashboard() {
     // Manual test override via query param ?celebrate=1
     if (searchParams.get('celebrate') === '1') {
       setShowCelebration(true);
-      setRobotState('celebrating');
       return;
     }
 
@@ -138,42 +136,16 @@ export default function StudentDashboard() {
 
     if (!hasCelebratedLocal && !hasCelebratedProfile && (justOnboarded || profile?.isComplete)) {
       setShowCelebration(true);
-      setRobotState('celebrating');
     }
   }, [user?.uid, profile?.isComplete, profile?.hasCelebratedOnboarding, searchParams]);
 
-  const handleStartFlight = (destRect: DOMRect | null) => {
+  const handleCelebrationClose = () => {
+    setShowCelebration(false);
     if (!user?.uid) return;
-
-    // Compute center-top of viewport as the celebration robot starting position
-    const startRect = {
-      left: window.innerWidth / 2 - 85,
-      top: window.innerHeight * 0.32 - 100,
-      width: 170,
-      height: 195,
-      right: window.innerWidth / 2 + 85,
-      bottom: window.innerHeight * 0.32 + 95,
-      x: window.innerWidth / 2 - 85,
-      y: window.innerHeight * 0.32 - 100,
-      toJSON: () => {},
-    } as DOMRect;
-
-    setFlightStartRect(startRect);
-    setRobotState('flying');
-
-    // Persist completion
+    // Persist so the welcome shows once per student, across devices (profile) and reloads (local).
     localStorage.setItem(`sadhya_celebrated_${user.uid}`, 'true');
     sessionStorage.removeItem('onboarding_completed');
     updateProfile({ hasCelebratedOnboarding: true }).catch(() => {});
-
-    // Close modal after transition initiates
-    setTimeout(() => {
-      setShowCelebration(false);
-    }, 450);
-  };
-
-  const handleFlightComplete = () => {
-    setRobotState('greeting');
   };
 
   const firstName = useMemo(() => {
@@ -181,6 +153,10 @@ export default function StudentDashboard() {
   }, [user?.displayName]);
 
   const targetExam = profile?.targetExam || 'Competitive Exams';
+  // Exam-specific professional avatar shown in the greeting; falls back to a generic student
+  // avatar when the goal has no dedicated one (College, Other, Olympiads, etc. — see examAvatars.ts).
+  const examAvatar = useMemo(() => getExamAvatar(profile?.targetExam || profile?.goal), [profile?.targetExam, profile?.goal]);
+  const examDoubts = useMemo(() => getExamDoubts(profile?.targetExam || profile?.goal), [profile?.targetExam, profile?.goal]);
 
   const { digitalTwin } = useAdaptiveAssessment();
 
@@ -240,14 +216,21 @@ export default function StudentDashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="flex items-center gap-0 sm:gap-1 relative"
+          // Top padding reserves room for the avatar's thought bubble so it never overlaps the header.
+          className="flex items-center gap-0 sm:gap-1 relative pt-[78px] sm:pt-[84px]"
         >
-          {/* Mascot Robot on Left (Continuous AI companion) */}
-          <div ref={greetingTargetRef} className="shrink-0 relative z-10 mr-1 sm:mr-2 self-center">
+          {/* Exam-specific avatar on the left (was a generic robot mascot) */}
+          <div className="shrink-0 relative z-10 mr-1 sm:mr-2 self-start sm:self-center">
+            <AvatarThoughtBubble
+              doubts={examDoubts}
+              isDarkMode={isDarkMode}
+              onAsk={(q) => navigate(`/chat?prompt=${encodeURIComponent(q)}&model=${selectedModel.id}`)}
+              className="absolute bottom-full left-[38%] mb-3 z-20"
+            />
             <GreetingRobot
-              state={robotState}
-              flightStartRect={flightStartRect}
-              onFlightComplete={handleFlightComplete}
+              avatarSrc={examAvatar.src}
+              avatarAlt={examAvatar.alt}
+              avatarRatio={examAvatar.ratio}
             />
           </div>
 
@@ -265,7 +248,7 @@ export default function StudentDashboard() {
               </div>
             </div>
 
-            <h1 className="text-[28px] sm:text-[34px] font-semibold tracking-[-0.035em] leading-[1.1] text-slate-900 dark:text-white">
+            <h1 className="text-[24px] sm:text-[34px] font-semibold tracking-[-0.035em] leading-[1.1] text-slate-900 dark:text-white">
               {getGreeting()},{' '}
               <span className="text-[#6ca855] dark:text-[#c8e558]">
                 {firstName}
@@ -277,16 +260,17 @@ export default function StudentDashboard() {
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05, duration: 0.25 }}
-            className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pt-0.5 text-[13.5px] text-slate-500 dark:text-gray-400 font-normal leading-relaxed antialiased"
+            // Phones: one item per line so nothing is squeezed beside the mascot; wraps inline from sm.
+            className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-3 gap-y-1 sm:gap-y-1.5 pt-0.5 text-[13px] sm:text-[13.5px] text-slate-500 dark:text-gray-400 font-normal leading-relaxed antialiased min-w-0"
           >
             {latestSession ? (
-              <div className="inline-flex items-center gap-1.5">
-                <span>Recently worked on</span>
+              <div className="flex items-center gap-1.5 min-w-0 max-w-full">
+                <span className="shrink-0">Recently worked on</span>
                 <Link
                   to={`/chat?session=${latestSession.sessionId}`}
-                  className="font-medium text-slate-900 dark:text-white hover:text-[#6ca855] dark:hover:text-[#c8e558] hover:underline inline-flex items-center gap-1 transition-colors"
+                  className="font-medium text-slate-900 dark:text-white hover:text-[#6ca855] dark:hover:text-[#c8e558] hover:underline inline-flex items-center gap-1 transition-colors min-w-0"
                 >
-                  <span className="truncate max-w-[240px] sm:max-w-[340px]">{latestSession.title || (latestSession.topicType ? `${latestSession.topicType} session` : 'Study Session')}</span>
+                  <span className="truncate sm:max-w-[340px]">{latestSession.title || (latestSession.topicType ? `${latestSession.topicType} session` : 'Study Session')}</span>
                   <ArrowRight className="w-3.5 h-3.5 text-[#6ca855] dark:text-[#c8e558] shrink-0 inline" />
                 </Link>
               </div>
@@ -296,7 +280,7 @@ export default function StudentDashboard() {
 
             <span className="text-slate-300 dark:text-gray-700 hidden sm:inline">•</span>
 
-            <div className="inline-flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-x-1.5 min-w-0">
               <span>Preparation:</span>
               {realReadiness != null ? (
                 <>
@@ -447,89 +431,89 @@ export default function StudentDashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.3 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5"
         >
           <div 
             onClick={() => navigate('/notebooks')} 
             className={cn(
-              "p-5 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
+              "p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
               isDarkMode 
                 ? "bg-[#161619] border-white/[0.08] hover:border-white/20 hover:bg-white/[0.03]" 
                 : "bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs"
             )}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
                 <UploadCloud className="w-4.5 h-4.5" />
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
             </div>
             <div>
               <h3 className="font-semibold text-[14px] text-slate-900 dark:text-white tracking-tight">Upload &amp; Analyze</h3>
-              <p className="text-[12.5px] text-slate-500 dark:text-gray-400 mt-1 leading-relaxed">PDF, notes, syllabus &amp; web</p>
+              <p className="text-[12px] sm:text-[12.5px] text-slate-500 dark:text-gray-400 mt-0.5 sm:mt-1 leading-snug sm:leading-relaxed">PDF, notes, syllabus &amp; web</p>
             </div>
           </div>
 
           <div 
             onClick={() => navigate('/podcasts')} 
             className={cn(
-              "p-5 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
+              "p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
               isDarkMode 
                 ? "bg-[#161619] border-white/[0.08] hover:border-white/20 hover:bg-white/[0.03]" 
                 : "bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs"
             )}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
                 <Headphones className="w-4.5 h-4.5" />
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
             </div>
             <div>
               <h3 className="font-semibold text-[14px] text-slate-900 dark:text-white tracking-tight">AI Podcasts</h3>
-              <p className="text-[12.5px] text-slate-500 dark:text-gray-400 mt-1 leading-relaxed">Audio overview &amp; discussions</p>
+              <p className="text-[12px] sm:text-[12.5px] text-slate-500 dark:text-gray-400 mt-0.5 sm:mt-1 leading-snug sm:leading-relaxed">Audio overview &amp; discussions</p>
             </div>
           </div>
 
           <div 
             onClick={() => navigate('/tests')} 
             className={cn(
-              "p-5 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
+              "p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
               isDarkMode 
                 ? "bg-[#161619] border-white/[0.08] hover:border-white/20 hover:bg-white/[0.03]" 
                 : "bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs"
             )}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
                 <Zap className="w-4.5 h-4.5" />
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
             </div>
             <div>
               <h3 className="font-semibold text-[14px] text-slate-900 dark:text-white tracking-tight">Adaptive Tests</h3>
-              <p className="text-[12.5px] text-slate-500 dark:text-gray-400 mt-1 leading-relaxed">Mock papers &amp; AI diagnostics</p>
+              <p className="text-[12px] sm:text-[12.5px] text-slate-500 dark:text-gray-400 mt-0.5 sm:mt-1 leading-snug sm:leading-relaxed">Mock papers &amp; AI diagnostics</p>
             </div>
           </div>
 
           <div 
             onClick={() => navigate('/my-classes')} 
             className={cn(
-              "p-5 rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
+              "p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border transition-all cursor-pointer group flex flex-col justify-between shadow-2xs",
               isDarkMode 
                 ? "bg-[#161619] border-white/[0.08] hover:border-white/20 hover:bg-white/[0.03]" 
                 : "bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs"
             )}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:text-[#6ca855] dark:group-hover:text-[#c8e558] group-hover:border-[#6ca855]/30 dark:group-hover:border-[#c8e558]/30 transition-colors">
                 <Radio className="w-4.5 h-4.5" />
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
             </div>
             <div>
               <h3 className="font-semibold text-[14px] text-slate-900 dark:text-white tracking-tight">Live Classes</h3>
-              <p className="text-[12.5px] text-slate-500 dark:text-gray-400 mt-1 leading-relaxed">Interactive &amp; recordings</p>
+              <p className="text-[12px] sm:text-[12.5px] text-slate-500 dark:text-gray-400 mt-0.5 sm:mt-1 leading-snug sm:leading-relaxed">Interactive &amp; recordings</p>
             </div>
           </div>
         </motion.div>
@@ -604,8 +588,8 @@ export default function StudentDashboard() {
       <OnboardingCelebrationModal
         isOpen={showCelebration}
         userName={firstName}
-        onStartFlight={handleStartFlight}
-        greetingTargetRef={greetingTargetRef}
+        examName={profile?.targetExam || profile?.goal || undefined}
+        onClose={handleCelebrationClose}
       />
     </div>
   );

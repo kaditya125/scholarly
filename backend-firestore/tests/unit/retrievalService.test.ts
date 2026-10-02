@@ -3,7 +3,10 @@ const mockEmbed = { generateEmbedding: jest.fn().mockResolvedValue([0.1, 0.2, 0.
 const mockLlm = { generateResponse: jest.fn() };
 const mockReranker = { rerank: jest.fn() };
 const mockCache = { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue(undefined) };
-const mockPinecone = { queryVectors: jest.fn() };
+const mockPinecone: any = { queryVectors: jest.fn() };
+// Retrieval now goes through hybridQuery (dense + BM25); for these tests it returns what the dense
+// query returns, so each test keeps scripting results through queryVectors.
+mockPinecone.hybridQuery = jest.fn((o: any) => mockPinecone.queryVectors(o.queryVector, o.topK, o.filter, o.namespace));
 const mockSearch = { search: jest.fn() };
 
 jest.mock('../../src/services/ai/providers/google-embedding.provider', () => ({ GoogleEmbeddingProvider: jest.fn(() => mockEmbed) }));

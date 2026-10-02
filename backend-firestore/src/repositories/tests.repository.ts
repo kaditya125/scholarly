@@ -44,6 +44,50 @@ export class TestsRepository {
     return { id: doc.id, ...doc.data() } as MockTest;
   }
 
+  async getTestsBySeriesId(seriesId: string): Promise<MockTest[]> {
+    const snapshot = await this.testsCollection
+      .where('seriesId', '==', seriesId)
+      .get();
+      
+    const tests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MockTest));
+    // Sort by participantsCount or created if available
+    return tests.sort((a, b) => (b.participantsCount || 0) - (a.participantsCount || 0));
+  }
+
+  async getTestWithQuestions(testId: string): Promise<{ test: MockTest; questions: Question[] } | null> {
+    const test = await this.getTestById(testId);
+    if (!test) return null;
+    const questions = await this.getQuestions(test.questionIds);
+    // Maintain the order of questionIds
+    const qMap = new Map(questions.map(q => [q.id, q]));
+    const orderedQuestions = test.questionIds.map(id => qMap.get(id)).filter(Boolean) as Question[];
+    return { test, questions: orderedQuestions };
+  }
+
+  async saveTestSeries(series: TestSeries): Promise<void> {
+    await this.seriesCollection.doc(series.id).set(series, { merge: true });
+  }
+
+  async saveMockTest(test: MockTest): Promise<void> {
+    await this.testsCollection.doc(test.id).set(test, { merge: true });
+  }
+
+  async saveQuestion(question: Question): Promise<void> {
+    await this.questionsCollection.doc(question.id).set(question, { merge: true });
+  }
+
+  async saveQuestionsBatch(questions: Question[]): Promise<void> {
+    const BATCH_SIZE = 400;
+    for (let i = 0; i < questions.length; i += BATCH_SIZE) {
+      const batch = db.batch();
+      const chunk = questions.slice(i, i + BATCH_SIZE);
+      for (const q of chunk) {
+        batch.set(this.questionsCollection.doc(q.id), q, { merge: true });
+      }
+      await batch.commit();
+    }
+  }
+
   async getQuestions(questionIds: string[]): Promise<Question[]> {
     if (!questionIds || questionIds.length === 0) return [];
     // Firestore `in` query is limited to 30 items. We batch if needed.
@@ -62,6 +106,16 @@ export class TestsRepository {
     return questions;
   }
   
+  async getReferenceBookQuestions(subject: string, limit = 20): Promise<Question[]> {
+    const snapshot = await this.questionsCollection
+      .where('examId', '==', 'SSC_CGL')
+      .where('questionOrigin', '==', 'REFERENCE_BOOK')
+      .where('subject', '==', subject)
+      .limit(limit)
+      .get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Question));
+  }
+
   async getQuestionsBySubjectAndTopic(subject: string, topic?: string, limit = 20): Promise<Question[]> {
     let query: FirebaseFirestore.Query = this.questionsCollection.where('subject', '==', subject);
     if (topic) {

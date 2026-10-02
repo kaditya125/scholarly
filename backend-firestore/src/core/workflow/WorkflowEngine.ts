@@ -11,6 +11,7 @@ import { agenticRetrievalOrchestrator } from './services/AgenticRetrievalOrchest
 import { QueryPlanningService } from './services/QueryPlanningService';
 import { featureFlags } from '../../config/featureFlags';
 import { RetrievalService } from '../../services/rag/retrieval.service';
+import { semanticCacheService } from '../../services/cache/semanticCache.service';
 import { StudentContextService } from '../../services/studentContext.service';
 import { TeacherContextService } from '../../services/teacherContext.service';
 import { UserProfileService } from '../../services/userProfile.service';
@@ -278,6 +279,63 @@ Return ONLY a JSON array of 3 strings — no markdown, no commentary, no numberi
       yield { type: 'progress', stage: WorkflowStage.INTENT_DETECTION, message: 'Understanding your question...' };
       const mode = req.mode || 'TEACHER';
 
+      // ── Semantic Response Cache Check (L1 Hash + L2 Qdrant Vector) ─────
+      const isEligibleForCache =
+        !req.notebookId &&
+        (!req.scopeSourceIds || req.scopeSourceIds.length === 0) &&
+        !req.agenticRetrieval &&
+        typeof mode === 'string' &&
+        mode.toUpperCase() !== 'PODCAST' &&
+        mode.toUpperCase() !== 'GREETING' &&
+        !isGreetingMessage(req.query) &&
+        req.query.trim().length >= 6;
+
+      if (isEligibleForCache) {
+        const cacheHit = await semanticCacheService.lookup(
+          req.query,
+          req.examContext?.exam || req.examContext?.examId
+        );
+
+        if (cacheHit) {
+          yield {
+            type: 'progress',
+            stage: WorkflowStage.AGENT_EXECUTION,
+            message: cacheHit.tier === 'L1_EXACT'
+              ? 'Retrieved instant verified answer from cache...'
+              : `Found verified explanation (${(cacheHit.similarity * 100).toFixed(0)}% match)...`,
+          };
+
+          const answerChunks = cacheHit.answer.match(/.{1,120}/g) || [cacheHit.answer];
+          for (const chunk of answerChunks) {
+            yield { type: 'chunk', chunk };
+          }
+
+          void this.persistTelemetry(req, {
+            provider: 'semantic_cache',
+            model: cacheHit.tier,
+            promptVersion: 'cached',
+            totalLatencyMs: Date.now() - workflowStartTime,
+            timeToFirstTokenMs: Date.now() - workflowStartTime,
+            promptTokens: 0,
+            completionTokens: 0,
+            estimatedCostUSD: 0,
+            verificationPassed: true,
+          });
+
+          yield {
+            type: 'done',
+            data: {
+              citations: cacheHit.citations || [],
+              assets: [],
+              confidenceScore: 1.0,
+              semanticCacheHit: true,
+              tier: cacheHit.tier,
+            },
+          };
+          return;
+        }
+      }
+
       // ── Podcast planner fast path ──────────────────────────────────────
       // The Podcast Studio sends `mode: 'podcast'` with a "Plan a podcast
       // about ..." user message. It expects a structured, streamed plan
@@ -394,6 +452,66 @@ Return ONLY a JSON array of 3 strings — no markdown, no commentary, no numberi
 
         yield { type: 'done', data: { citations: [], assets: [], confidenceScore: 1.0 } };
         return;
+      }
+
+      // ── AGENT strategy (Agent mode) ─────────────────────────────────────
+      // Only when the server flag is on AND the student chose Agent (or Auto) mode. A goal becomes
+      // a background agent run: this stream acknowledges it and returns at once, and the client
+      // follows the run on GET /api/agent/runs/:runId/events. The agent never executes inside this
+      // request. Anything that is not an agent goal falls through to ordinary chat, unchanged.
+      if (featureFlags.agentMode && (req.executionMode === 'agent' || req.executionMode === 'auto')) {
+        const { routeGoal } = await import('../../agents/runtime/GoalRouter');
+        // With attachments, `query` has their text flattened in for chat; the goal is what was typed.
+        const documents = req.agentInput?.documents ?? [];
+        const goal = req.agentInput?.goal?.trim() || (documents.length ? 'Make study material from this document' : req.query);
+        const decision = routeGoal(goal, { explicitAgent: req.executionMode === 'agent', hasDocument: documents.length > 0 });
+        if (decision.mode === 'agent' && decision.workflowId) {
+          const { getAgentRuntime } = await import('../../agents');
+          let run;
+          const uploadIds: string[] = [];
+          try {
+            // Attached documents are kept as the student's own uploads; the run carries their ids.
+            if (documents.length) {
+              const { getAgentUploadsService } = await import('../../agents/uploads/agentUploads.service');
+              for (const doc of documents.slice(0, 3)) uploadIds.push((await getAgentUploadsService().save(req.userId, doc)).uploadId);
+            }
+            run = await getAgentRuntime().startRun({
+              userId: req.userId,
+              goal,
+              workflowId: decision.workflowId,
+              sessionId: req.sessionId,
+              source: 'chat',
+              ...(uploadIds.length ? { context: { uploadIds } } : {}),
+            });
+          } catch (e: any) {
+            // A refusal the student can act on — already busy, queue full, out of agent runs, or an
+            // attachment with no readable text — is an answer, not a crash. Say it in the reply
+            // instead of surfacing a red error frame the client renders as "something went wrong".
+            const refusal = e?.name === 'AgentRunError' || e?.name === 'AgentUploadError' || e?.code === 'QUOTA_EXHAUSTED';
+            // No run will read what was just stored for it.
+            if (uploadIds.length) {
+              const { getAgentUploadsService } = await import('../../agents/uploads/agentUploads.service');
+              await Promise.all(uploadIds.map((id) => getAgentUploadsService().deleteForUser(req.userId, id).catch(() => undefined)));
+            }
+            if (!refusal) throw e;
+            yield { type: 'chunk', chunk: String(e.message) };
+            yield { type: 'done', data: { citations: [], assets: [] } };
+            return;
+          }
+          yield { type: 'progress', stage: WorkflowStage.AGENT_EXECUTION, message: 'Goal received. Planning…' };
+          yield { type: 'agent_run', runId: run.runId, workflowId: run.workflowId };
+          yield { type: 'chunk', chunk: "On it — I'm working on this as an agent task. You can follow each step as it happens." };
+          yield { type: 'done', data: { citations: [], assets: [], agentRunId: run.runId, workflowId: run.workflowId } };
+          return;
+        }
+        if (req.executionMode === 'agent') {
+          yield {
+            type: 'warning',
+            warning: decision.agentCandidate
+              ? "Agent mode can't do this kind of task yet, so I've answered it in chat mode."
+              : "This looks like a question rather than a task, so I've answered it in chat mode.",
+          };
+        }
       }
 
       // Session memory is needed only for the memory update after the answer, so it is fetched
@@ -861,6 +979,24 @@ Return ONLY a JSON array of 3 strings — no markdown, no commentary, no numberi
       const followUpSuggestions = await suggestionsPromise;
       if (followUpSuggestions.length > 0) {
         yield { type: 'suggestions', suggestions: followUpSuggestions };
+      }
+
+      // ── Asynchronous Cache Write-back for Verified Foundational Answers ──
+      if (
+        isEligibleForCache &&
+        fullReply &&
+        fullReply.length > 50 &&
+        measuredHallucinationRate === 0 &&
+        measuredConfidence >= 0.85
+      ) {
+        void semanticCacheService.store({
+          query: req.query,
+          answer: fullReply,
+          citations: citationsList,
+          examScope: req.examContext?.exam || req.examContext?.examId,
+          subject: req.examContext?.subject,
+          confidenceScore: measuredConfidence,
+        });
       }
 
       yield { type: 'done', data: { citations: citationsList, assets: [], confidenceScore: measuredConfidence } };

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { auth } from '../lib/firebase';
+import { getWebSocketUrl } from '../lib/api/baseUrl';
 
 /**
  * Realtime voice session against the Sadhya voice gateway.
@@ -75,9 +76,7 @@ const SPEECH_HOLD_MS = 400;
 const BACKGROUND_GRACE_MS = 20_000;
 
 function wsUrl(): string {
-  const api = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8080/api';
-  const base = api.replace(/\/api\/?$/, '');
-  return base.replace(/^http/, 'ws') + '/voice';
+  return getWebSocketUrl('/voice');
 }
 
 export function useVoiceSession() {

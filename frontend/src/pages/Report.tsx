@@ -4,6 +4,7 @@ import { CheckCircle2, ChevronRight, Check, Sparkles, Loader2, ArrowLeft, Rotate
 import { cn } from "../lib/utils";
 import { useQuizAttempt } from "../hooks/api/useQuizAttempts";
 import { useLaunchTest } from "../hooks/ai/useLaunchTest";
+import PrerequisiteGapCard from "../components/tests/PrerequisiteGapCard";
 
 interface ReportState {
   score?: number;
@@ -11,6 +12,7 @@ interface ReportState {
   answers?: Record<string, number>;
   timeSpentSeconds?: number;
   attemptId?: string;
+  feedback?: string;
   questions?: Array<{
     id: string;
     text: string;
@@ -41,54 +43,21 @@ export default function Report() {
 
   const isLoading = isAttemptLoading;
 
+  /*
+   * Coach insights = the feedback the backend computed when it scored the attempt (weak/strong
+   * sections, accuracy band, prerequisite check). This used to POST /api/analyze-test, which only
+   * the frontend's local dev server answered — in production nginx sends /api to the backend,
+   * which has no such route, so every student saw the same canned sentence.
+   */
   useEffect(() => {
     if (!state && !fetchedAttempt) return;
-    if (isLoading || questions.length === 0) return;
-
-    async function fetchAnalysis() {
-      setIsAnalyzing(true);
-      
-      const topics: Record<string, { correct: number, total: number }> = {};
-      questions.forEach(q => {
-        if (!topics[q.topic]) {
-          topics[q.topic] = { correct: 0, total: 0 };
-        }
-        topics[q.topic].total++;
-        if (answers[q.id] === q.correctAnswerIndex) {
-          topics[q.topic].correct++;
-        }
-      });
-      
-      const strongTopics = Object.keys(topics).filter(t => topics[t].correct / topics[t].total >= 0.7);
-      const weakTopics = Object.keys(topics).filter(t => topics[t].correct / topics[t].total < 0.5);
-
-      try {
-        const res = await fetch("/api/analyze-test", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            score,
-            total,
-            timeSpent: timeSpentSeconds,
-            strongTopics,
-            weakTopics
-          })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setAiAnalysis(data.analysis);
-        } else {
-          setAiAnalysis("Solid practice session. Review your incorrect answers below to master the underlying concepts.");
-        }
-      } catch (err) {
-        setAiAnalysis("Solid practice session. Review your incorrect answers below to master the underlying concepts.");
-      } finally {
-        setIsAnalyzing(false);
-      }
-    }
-    
-    fetchAnalysis();
-  }, [state, fetchedAttempt, isLoading, questions.length]);
+    if (isLoading) return;
+    const feedback = state?.feedback ?? fetchedAttempt?.feedback;
+    setAiAnalysis(feedback?.trim()
+      ? feedback.replace(/\*\*/g, '')
+      : 'Review your incorrect answers below to strengthen the underlying concepts.');
+    setIsAnalyzing(false);
+  }, [state, fetchedAttempt, isLoading]);
 
   if (!state && !fetchedAttempt && !isLoading) {
     return <Navigate to="/tests" replace />;
@@ -197,10 +166,16 @@ export default function Report() {
                 <Loader2 className="w-4 h-4 animate-spin text-[#8ba32b] dark:text-[#c8e558]" /> Generating detailed diagnostic insights...
               </div>
             ) : (
-              <p>{aiAnalysis}</p>
+              <p className="whitespace-pre-line">{aiAnalysis}</p>
             )}
           </div>
         </div>
+
+        {fetchedAttempt?.pedagogicalDiagnostics?.length ? (
+          <div className="mb-8">
+            <PrerequisiteGapCard attemptId={state?.attemptId} diagnostics={fetchedAttempt.pedagogicalDiagnostics} />
+          </div>
+        ) : null}
 
         {/* Question by Question Review */}
         <div className="space-y-4">

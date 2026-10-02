@@ -2,6 +2,17 @@ import { Pinecone, RecordMetadata } from '@pinecone-database/pinecone';
 import { env } from '../../config/env';
 import { getSecret } from '../runtimeSecrets.service';
 import { qdrantService } from './qdrant.service';
+import { HybridQueryOptions } from './vectorStore.types';
+import { REFERENCE_BOOK_NAMESPACE } from './namespaces';
+
+/**
+ * Reference books live ONLY in Qdrant, whatever VECTOR_STORE selects for everything else. Every
+ * namespace-taking operation routes through this, so reads and writes of a namespace can never
+ * land in different stores (a write to Pinecone that reads then look for in Qdrant).
+ */
+function routesToQdrant(namespace?: string): boolean {
+  return env.VECTOR_STORE === 'qdrant' || namespace === REFERENCE_BOOK_NAMESPACE;
+}
 
 export interface VectorDocument {
   id: string;
@@ -37,7 +48,7 @@ export class PineconeService {
    * Upsert vectors to Vector Store (delegates to Qdrant if configured)
    */
   async upsertVectors(vectors: VectorDocument[], namespace?: string) {
-    if (env.VECTOR_STORE === 'qdrant') {
+    if (routesToQdrant(namespace)) {
       return qdrantService.upsertVectors(vectors, namespace);
     }
     const index = this.getIndex();
@@ -55,21 +66,35 @@ export class PineconeService {
    * Query vectors in Vector Store with metadata filtering
    */
   async queryVectors(queryVector: number[], topK: number = 5, filter?: Record<string, any>, namespace?: string) {
-    if (env.VECTOR_STORE === 'qdrant') {
+    if (routesToQdrant(namespace)) {
       return qdrantService.queryVectors(queryVector, topK, filter, namespace) as any;
     }
     const index = this.getIndex();
     const target = namespace ? index.namespace(namespace) : index;
     
+    // Pinecone rejects empty filter objects ({}) with PineconeArgumentError
+    const hasFilters = filter && Object.keys(filter).length > 0;
+
     const results = await target.query({
       vector: queryVector,
       topK,
       includeMetadata: true,
       includeValues: false,
-      filter: filter
+      filter: hasFilters ? filter : undefined
     });
     
     return results.matches;
+  }
+
+  /**
+   * Hybrid Query: Dense Vector + BM25 Full-Text Keyword Search with RRF Fusion
+   */
+  async hybridQuery(options: HybridQueryOptions) {
+    if (routesToQdrant(options.namespace)) {
+      return qdrantService.hybridQuery(options) as any;
+    }
+    // Fallback to dense query on Pinecone
+    return this.queryVectors(options.queryVector, options.topK, options.filter, options.namespace);
   }
 
   /**
@@ -77,7 +102,7 @@ export class PineconeService {
    */
   async deleteVectors(ids: string[], namespace?: string) {
     if (!ids || ids.length === 0) return;
-    if (env.VECTOR_STORE === 'qdrant') {
+    if (routesToQdrant(namespace)) {
       return qdrantService.deleteVectors(ids, namespace);
     }
     const index = this.getIndex();
@@ -89,7 +114,7 @@ export class PineconeService {
    * Delete all vectors in a namespace
    */
   async deleteAllVectors(namespace?: string) {
-    if (env.VECTOR_STORE === 'qdrant') {
+    if (routesToQdrant(namespace)) {
       return qdrantService.deleteAllVectors(namespace);
     }
     const index = this.getIndex();
@@ -106,7 +131,7 @@ export class PineconeService {
     namespace?: string
   ): Promise<Record<string, { id: string; metadata?: RecordMetadata; values?: number[] }>> {
     if (ids.length === 0) return {};
-    if (env.VECTOR_STORE === 'qdrant') {
+    if (routesToQdrant(namespace)) {
       return qdrantService.fetchVectors(ids, namespace);
     }
     const index = this.getIndex();
@@ -137,7 +162,7 @@ export class PineconeService {
     namespace?: string
   ): Promise<{ id: string; metadata?: RecordMetadata }[]> {
     if (chunkCount <= 0) return [];
-    if (env.VECTOR_STORE === 'qdrant') {
+    if (routesToQdrant(namespace)) {
       return qdrantService.fetchChunkMetadata(sourceId, chunkCount, namespace);
     }
 

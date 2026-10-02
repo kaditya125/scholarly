@@ -1,12 +1,14 @@
 import axios from 'axios';
 import { auth } from '../firebase';
+import { getApiBaseUrl } from './baseUrl';
 
-// Replace with your production URL when deployed
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+// Base URL resolution lives in ./baseUrl.ts — the single source of truth for HTTP, SSE and WebSocket.
+export { getApiBaseUrl, getWebSocketUrl } from './baseUrl';
 
-// For raw fetch() calls. The frontend and API are on different hosts, so a relative '/api/...' path
-// hits the frontend server (which answers every GET with index.html), not the backend.
-export const API_BASE_URL = baseURL.replace(/\/+$/, '');
+const baseURL = getApiBaseUrl();
+
+// For raw fetch() calls and streaming SSE endpoints.
+export const API_BASE_URL = baseURL;
 
 export const api = axios.create({
   baseURL,

@@ -352,9 +352,18 @@ export default function LandingPage() {
     let isMounted = true;
     let timeoutId: number;
 
+    // /public/stats has no backend route yet (see lib/api/unsupportedEndpoints.ts). Every request
+    // still counts against the /api rate limiter, so a 404 ends the 10 s polling for this visit.
+    let endpointMissing = false;
     const fetchStats = async () => {
+      if (endpointMissing) return;
       try {
         const res = await fetch(`${API_BASE_URL}/public/stats`);
+        if (res.status === 404) {
+          endpointMissing = true;
+          clearInterval(interval);
+          return;
+        }
         if (res.ok) {
           const data = await res.json();
           if (isMounted) {
@@ -378,8 +387,6 @@ export default function LandingPage() {
       }
     };
 
-    fetchStats();
-
     // Refresh active student presence every 10s when tab is visible
     const interval = window.setInterval(() => {
       if (document.visibilityState === 'visible') {
@@ -393,6 +400,7 @@ export default function LandingPage() {
       }
     };
     document.addEventListener('visibilitychange', onVisibility);
+    fetchStats();
 
     return () => {
       isMounted = false;

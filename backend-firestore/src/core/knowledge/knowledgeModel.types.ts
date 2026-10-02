@@ -21,15 +21,7 @@ export type CorpusAuthority =
   | 'PRACTICE_BANK'
   | 'USER_UPLOAD';
 
-export const CORPUS_AUTHORITY_WEIGHTS: Record<CorpusAuthority, number> = {
-  OFFICIAL_SYLLABUS: 1.5,
-  NCERT: 1.5,
-  AUTHENTIC_PYQ: 1.4,
-  REFERENCE_BOOK: 1.1,
-  STUDY_MATERIAL: 1.0,
-  PRACTICE_BANK: 0.95,
-  USER_UPLOAD: 1.0,
-};
+// Authority weights live in ./knowledgeAuthority.ts — the single source for every retrieval path.
 
 export type EducationalIntent =
   | 'CONCEPT_EXPLANATION'

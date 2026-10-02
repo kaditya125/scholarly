@@ -7,7 +7,9 @@ export type MeteredFeature =
   | 'voiceSeconds'
   | 'documentsUploaded'
   | 'podcastsGenerated'
-  | 'mockTestsGenerated';
+  | 'mockTestsGenerated'
+  | 'agentRuns'
+  | 'artifactGenerations';
 
 export interface PlanLimits {
   chatMessages: number;
@@ -16,6 +18,10 @@ export interface PlanLimits {
   maxDocumentSizeMB: number;
   podcastsGenerated: number;
   mockTestsGenerated: number;
+  /** Agent Mode tasks started per period (each run executes several tool calls). */
+  agentRuns: number;
+  /** Stored artifacts (PDFs, decks, quizzes) an agent may create per period. */
+  artifactGenerations: number;
   communityStandard: boolean;
   peerChatStandard: boolean;
   pyqAccess: boolean;
@@ -30,6 +36,9 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     maxDocumentSizeMB: 10, // 10 MB per document
     podcastsGenerated: 1, // 1 episode/month
     mockTestsGenerated: 3, // 3 AI tests/month
+    // Agent Mode — provisional limits until the owner sets final numbers (architecture.md §6).
+    agentRuns: 20,
+    artifactGenerations: 10,
     communityStandard: true,
     peerChatStandard: true,
     pyqAccess: true,
@@ -42,6 +51,9 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     maxDocumentSizeMB: 50, // Up to 50 MB per document
     podcastsGenerated: 25, // Up to 25 episodes/month
     mockTestsGenerated: 1000, // Unlimited AI tests subject to fair use
+    // Agent Mode — provisional limits until the owner sets final numbers (architecture.md §6).
+    agentRuns: 500,
+    artifactGenerations: 300,
     communityStandard: true,
     peerChatStandard: true,
     pyqAccess: true,

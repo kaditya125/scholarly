@@ -18,21 +18,30 @@ const handlerCount = (event: string): number =>
   ((eventBus as any).handlers.get(event) as Set<unknown> | undefined)?.size ?? 0;
 
 describe('registerEventSubscribers: exactly-once registration', () => {
+  /*
+   * learning.test_completed legitimately has TWO distinct subscribers: the mastery/notification
+   * handler and the Automation Studio trigger dispatcher (initialised inside
+   * registerEventSubscribers). This suite used to assert 1 only because the dispatcher's require()
+   * failed under Jest (uuid is ESM-only) and the try/catch swallowed it — production always had 2.
+   * What must hold is that a repeated bootstrap adds NOTHING.
+   */
+  const EVENTS = ['learning.test_completed', 'learning.quiz_completed', 'podcast.completed', 'podcast.failed', 'user.registered', 'notebook.ingested'];
+  let afterFirst: Record<string, number>;
+
   it('registers on the first call and reports it', () => {
     expect(registerEventSubscribers()).toEqual({ registered: true });
-    expect(handlerCount('learning.test_completed')).toBe(1);
+    afterFirst = Object.fromEntries(EVENTS.map((e) => [e, handlerCount(e)]));
+    expect(afterFirst['learning.test_completed']).toBe(2); // mastery handler + automation dispatcher
+    expect(afterFirst['podcast.completed']).toBe(1);
+    expect(afterFirst['podcast.failed']).toBe(1);
+    expect(afterFirst['notebook.ingested']).toBe(1);
   });
 
   it('THE REGRESSION: repeated bootstrap does not add a second handler', () => {
     // Simulates the same startup path running twice (double import, re-entrant bootstrap).
     expect(registerEventSubscribers()).toEqual({ registered: false });
     expect(registerEventSubscribers()).toEqual({ registered: false });
-
-    expect(handlerCount('learning.test_completed')).toBe(1);
-    expect(handlerCount('podcast.completed')).toBe(1);
-    expect(handlerCount('podcast.failed')).toBe(1);
-    expect(handlerCount('user.registered')).toBe(1);
-    expect(handlerCount('notebook.ingested')).toBe(1);
+    for (const e of EVENTS) expect([e, handlerCount(e)]).toEqual([e, afterFirst[e]]);
   });
 });
 

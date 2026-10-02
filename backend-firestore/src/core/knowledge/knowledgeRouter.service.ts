@@ -223,7 +223,7 @@ export class KnowledgeRouterService {
       } else if (targetSubject === 'computer_science') {
         referenceBookFilters = { books: ['ncert_cs_11', 'ncert_cs_12', 'silberschatz_dbms', 'galvin_os', 'forouzan_networks', 'mano_architecture', 'lipschutz_dsa'] };
       } else if (targetSubject === 'Political Science' || targetSubject === 'polity' || /polity|constitution|fundamental rights|parliament|governor|supreme court|laxmikanth/i.test(qLower)) {
-        referenceBookFilters = { books: ['laxmikanth_polity'] };
+        referenceBookFilters = { books: ['laxmikanth_polity', 'm_laxmikanth_polity'] };
       } else if (targetSubject === 'bihar_special' || /bihar|bpsc|kunwar singh|champaran|sahajanand|magadha|nalanda|patliputra|sher shah suri/i.test(qLower)) {
         referenceBookFilters = { books: ['bihar_through_the_ages', 'bihar_special_crash_course', 'lucent_gk'] };
       } else if (targetSubject === 'art_and_culture' || /art and culture|classical dance|temple architecture|unesco heritage|sculpture|paintings|singhania/i.test(qLower)) {
@@ -257,9 +257,9 @@ export class KnowledgeRouterService {
       } else if (targetSubject === 'quantitative_aptitude' || /quant|math shortcut|speed math|trachtenberg|vedic math|cube root trick|rakesh yadav/i.test(qLower)) {
         referenceBookFilters = { books: ['arihant_csat_reasoning', 'rakesh_yadav_maths', 'schand_quant'] };
       } else if (targetSubject === 'Physics' || /physics|mechanics|kinematics|thermodynamics|electromagnetism|optics|hc verma|hcv|irodov/i.test(qLower)) {
-        referenceBookFilters = { books: ['hc_verma_physics_vol1', 'hc_verma_physics_vol2', 'irodov_physics'] };
+        referenceBookFilters = { books: ['hc_verma_physics_vol1', 'hc_verma_physics_vol2', 'irodov_physics', 'irodov_physics_problems'] };
       } else if (targetSubject === 'Chemistry' || /chemistry|inorganic|organic|periodic table|bonding|reaction mechanism|jd lee|ms chouhan/i.test(qLower)) {
-        referenceBookFilters = { books: ['jd_lee_inorganic', 'ms_chouhan_organic'] };
+        referenceBookFilters = { books: ['jd_lee_inorganic', 'jd_lee_inorganic_chemistry', 'ms_chouhan_organic'] };
       } else if (targetSubject === 'Biology' || /biology|botany|zoology|genetics|cell|evolution|ecology|trueman|campbell/i.test(qLower)) {
         referenceBookFilters = { books: ['trueman_biology_vol1', 'trueman_biology_vol2', 'campbell_biology'] };
       } else if (targetSubject === 'Mathematics' || /trigonometry|coordinate geometry|higher algebra|permutations|binomial|sl loney|hall and knight/i.test(qLower)) {

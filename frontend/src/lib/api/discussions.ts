@@ -1,51 +1,7 @@
 import { api } from './client';
 
-// ---------------------------------------------------------------------------
-// Legacy chat-room / message API (kept for backwards compat with Discussions.tsx)
-// ---------------------------------------------------------------------------
-
-export interface Room {
-  id: string | number;
-  name: string;
-  icon: string;
-}
-
-export interface DiscussionMessage {
-  id: string | number;
-  author?: string;
-  role?: string;
-  avatar?: string;
-  time?: string;
-  content?: string;
-  likes?: number;
-  chapter?: string;
-  topic?: string;
-  aiAssisted?: boolean;
-  title?: string;
-  description?: string;
-  participants?: string[];
-  replies?: number;
-  views?: number;
-  aiSummary?: string;
-  similarThreadIds?: string[];
-  createdAt?: number;
-}
-
-export const discussionsApi = {
-  async getRooms(): Promise<Room[]> {
-    const response = await api.get('/rooms');
-    return response.data;
-  },
-
-  async getDiscussions(): Promise<DiscussionMessage[]> {
-    const response = await api.get('/discussions');
-    return response.data;
-  },
-
-  async sendMessage(roomId: string | number, content: string): Promise<void> {
-    await api.post(`/discussions/${roomId}/messages`, { content });
-  },
-};
+// The legacy rooms/messages client (discussionsApi: /rooms, /discussions/:id/messages) was removed:
+// no screen used it and the backend never had those routes. Community discussions use communityApi below.
 
 // ---------------------------------------------------------------------------
 // Community discussion API (used by hooks/api/useCommunity.ts and pages/Community.tsx)

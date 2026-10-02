@@ -1,207 +1,97 @@
 /**
- * usePipelineRealtime Hook
- * Phase 6: Real-Time Document Processing SSE Consumer
- * 
- * Reuses existing SSE streaming infrastructure in Sadhya.
- * Provides live stage progression, instant snapshot hydration across page refreshes
- * and reconnects, cancellation, and retry capabilities.
+ * usePipelineRealtime — document processing status for the Content Pipeline "Processing" tab.
+ *
+ * This used to open an SSE stream at /notebooks/:id/sources/:sourceId/stream and offer cancel/
+ * retry at .../cancel and .../retry. None of those endpoints exist: real uploads are processed by
+ * sourceController.uploadSource, not by ContentPipelineOrchestrator (whose realtime events the
+ * stream was meant to relay), so there is no live stage feed to subscribe to and no job to cancel.
+ * The hook reconnected against a 404 forever and the tracker said "Reconnecting…".
+ *
+ * It now reports what IS known — the source document's stored processing status — without any
+ * network call, and says plainly that live stage tracking is not available. Retrying a failed
+ * document stays with the caller's own `onRetry` (the notebook re-upload path), which does exist.
  */
+import { useMemo } from 'react';
+import type { PipelineRealtimeSnapshot, PipelineRealtimeStage, VisualStageName } from '../types/pipeline.types';
+import type { ProcessingStatus } from '../types';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useAuth } from '../lib/AuthContext';
-import {
-  PipelineRealtimeSnapshot,
-  PipelineRealtimeEvent,
-  VisualStageName,
-  PipelineRealtimeStage,
-} from '../types/pipeline.types';
-import { api } from '../lib/api/client';
-
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5000/api';
-
-const DEFAULT_STAGES: PipelineRealtimeStage[] = [
-  { stage: 'Uploading', internalStage: 'QUEUE', status: 'pending', durationMs: 0 },
-  { stage: 'Extraction', internalStage: 'EXTRACT', status: 'pending', durationMs: 0 },
-  { stage: 'OCR', internalStage: 'OCR', status: 'pending', durationMs: 0 },
-  { stage: 'Understanding', internalStage: 'METADATA', status: 'pending', durationMs: 0 },
-  { stage: 'Chunking', internalStage: 'CHUNK', status: 'pending', durationMs: 0 },
-  { stage: 'Embedding', internalStage: 'EMBED', status: 'pending', durationMs: 0 },
-  { stage: 'Vector Index', internalStage: 'INDEX', status: 'pending', durationMs: 0 },
-  { stage: 'Knowledge Graph', internalStage: 'KNOWLEDGE_GRAPH', status: 'pending', durationMs: 0 },
-  { stage: 'Validation', internalStage: 'VALIDATE', status: 'pending', durationMs: 0 },
-  { stage: 'Ready', internalStage: 'READY', status: 'pending', durationMs: 0 },
+const STAGES: Array<{ stage: VisualStageName; internalStage: string }> = [
+  { stage: 'Uploading', internalStage: 'QUEUE' },
+  { stage: 'Extraction', internalStage: 'EXTRACT' },
+  { stage: 'OCR', internalStage: 'OCR' },
+  { stage: 'Understanding', internalStage: 'METADATA' },
+  { stage: 'Chunking', internalStage: 'CHUNK' },
+  { stage: 'Embedding', internalStage: 'EMBED' },
+  { stage: 'Vector Index', internalStage: 'INDEX' },
+  { stage: 'Knowledge Graph', internalStage: 'KNOWLEDGE_GRAPH' },
+  { stage: 'Validation', internalStage: 'VALIDATE' },
+  { stage: 'Ready', internalStage: 'READY' },
 ];
 
-export interface UsePipelineRealtimeOptions {
-  enabled?: boolean;
-  onComplete?: (snapshot: PipelineRealtimeSnapshot) => void;
-  onError?: (error: any) => void;
+/** Index of the stage a stored status says the document is in; -1 = not started. */
+const STAGE_OF: Partial<Record<ProcessingStatus, number>> = {
+  DRAFT: -1, QUEUED: 0, PENDING: 0, UPLOADING: 0, PROCESSING: 1, EXTRACTING: 1, OCR: 2,
+  CHUNKING: 4, EMBEDDING: 5, INDEXING: 6, GENERATING_GRAPH: 7,
+};
+
+export interface PipelineStatusSource {
+  id: string;
+  notebookId: string;
+  status: ProcessingStatus;
+  processingDurationMs?: number;
+  failureReason?: string;
+  errorDetails?: string;
 }
 
-export function usePipelineRealtime(
-  collectionId?: string,
-  documentId?: string,
-  options: UsePipelineRealtimeOptions = {}
-) {
-  const { enabled = true, onComplete, onError } = options;
-  const { user } = useAuth();
+export function deriveStatusSnapshot(source: PipelineStatusSource): PipelineRealtimeSnapshot {
+  const s = source.status;
+  const done = s === 'READY' || s === 'ARCHIVED';
+  const failed = s === 'FAILED' || s === 'FAILED_NONRETRYABLE';
+  const cancelled = s === 'CANCELLED';
+  const at = STAGE_OF[s] ?? -1;
 
-  const [snapshot, setSnapshot] = useState<PipelineRealtimeSnapshot | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isMountedRef = useRef(true);
-
-  const streamUrl = documentId && collectionId
-    ? `${API_BASE_URL}/notebooks/${collectionId}/sources/${documentId}/stream`
-    : collectionId
-    ? `${API_BASE_URL}/notebooks/${collectionId}/sources/stream`
-    : null;
-
-  const connect = useCallback(async () => {
-    if (!enabled || !streamUrl || !user) return;
-
-    // Clean up existing connection
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-    }
-
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
-
-    setIsConnecting(true);
-    setError(null);
-
-    try {
-      const token = await user.getIdToken();
-      const response = await fetch(streamUrl, {
-        headers: {
-          Accept: 'text/event-stream',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        signal: abortController.signal,
-      });
-
-      if (!response.ok || !response.body) {
-        throw new Error(`SSE stream connection failed with status ${response.status}`);
-      }
-
-      setIsConnecting(false);
-      setIsConnected(true);
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let buffer = '';
-
-      while (isMountedRef.current) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n\n');
-        buffer = lines.pop() || '';
-
-        for (const block of lines) {
-          const trimmed = block.trim();
-          if (!trimmed || trimmed.startsWith(':')) continue; // Ignore heartbeat pings / comments
-
-          const dataLine = trimmed.split('\n').find((l) => l.startsWith('data: '));
-          if (!dataLine) continue;
-
-          const jsonStr = dataLine.replace(/^data:\s*/, '').trim();
-          try {
-            const event: PipelineRealtimeEvent = JSON.parse(jsonStr);
-
-            if (isMountedRef.current) {
-              setSnapshot(event);
-
-              if (event.status === 'COMPLETED' && onComplete) {
-                onComplete(event);
-              }
-              if (event.status === 'FAILED' && onError) {
-                onError(event.error);
-              }
-            }
-          } catch {
-            // Non-JSON or malformed chunk
-          }
-        }
-      }
-    } catch (err: any) {
-      if (err.name === 'AbortError') return;
-
-      if (isMountedRef.current) {
-        setIsConnected(false);
-        setIsConnecting(false);
-        setError(err.message || 'Stream disconnected');
-
-        // Automatic exponential backoff reconnect if enabled
-        if (enabled) {
-          reconnectTimeoutRef.current = setTimeout(() => {
-            if (isMountedRef.current) {
-              connect();
-            }
-          }, 3000);
-        }
-      }
-    }
-  }, [enabled, streamUrl, user, onComplete, onError]);
-
-  useEffect(() => {
-    isMountedRef.current = true;
-    connect();
-
-    return () => {
-      isMountedRef.current = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-    };
-  }, [connect]);
-
-  // Cancel processing action
-  const cancel = useCallback(async () => {
-    if (!collectionId || !documentId) return;
-    try {
-      await api.post(`/notebooks/${collectionId}/sources/${documentId}/cancel`);
-    } catch (err: any) {
-      console.error('Failed to cancel processing:', err);
-    }
-  }, [collectionId, documentId]);
-
-  // Retry processing action
-  const retry = useCallback(async () => {
-    if (!collectionId || !documentId) return;
-    try {
-      await api.post(`/notebooks/${collectionId}/sources/${documentId}/retry`);
-    } catch (err: any) {
-      console.error('Failed to retry processing:', err);
-    }
-  }, [collectionId, documentId]);
+  const stages: PipelineRealtimeStage[] = STAGES.map((st, i) => ({
+    ...st,
+    durationMs: 0,
+    status: done ? 'completed' : at < 0 ? 'pending' : i < at ? 'completed' : i === at ? (failed ? 'failed' : 'running') : 'pending',
+  }));
 
   return {
+    jobId: source.id,
+    documentId: source.id,
+    documentVersionId: source.id,
+    collectionId: source.notebookId,
+    status: done ? 'COMPLETED' : failed ? 'FAILED' : cancelled ? 'CANCELLED' : at < 0 ? 'QUEUED' : 'ACTIVE',
+    currentStage: done ? 'Ready' : STAGES[Math.max(0, at)].stage,
+    internalStage: done ? 'READY' : STAGES[Math.max(0, at)].internalStage,
+    progress: done ? 1 : at < 0 ? 0 : at / STAGES.length,
+    durationMs: source.processingDurationMs ?? 0,
+    itemsProcessed: {},
+    error: failed
+      ? { code: s, message: source.failureReason || source.errorDetails || 'Processing failed.', recoverable: s === 'FAILED' }
+      : undefined,
+    canRetry: s === 'FAILED',
+    canCancel: false,
+  } as PipelineRealtimeSnapshot;
+}
+
+export function usePipelineRealtime(source: PipelineStatusSource) {
+  const snapshot = useMemo(() => deriveStatusSnapshot(source), [
+    source.id, source.notebookId, source.status, source.processingDurationMs, source.failureReason, source.errorDetails,
+  ]);
+  return {
     snapshot,
-    stages: snapshot?.stages || DEFAULT_STAGES,
-    currentStage: snapshot?.currentStage || ('Uploading' as VisualStageName),
-    progress: snapshot?.progress || 0.0,
-    status: snapshot?.status || 'QUEUED',
-    durationMs: snapshot?.durationMs || 0,
-    itemsProcessed: snapshot?.itemsProcessed || {},
-    error: snapshot?.error || (error ? { message: error, code: 'STREAM_ERROR' } : null),
-    canRetry: snapshot?.canRetry ?? false,
-    canCancel: snapshot?.canCancel ?? false,
-    isConnected,
-    isConnecting,
-    cancel,
-    retry,
+    stages: snapshot.stages,
+    currentStage: snapshot.currentStage,
+    progress: snapshot.progress,
+    status: snapshot.status,
+    durationMs: snapshot.durationMs,
+    itemsProcessed: snapshot.itemsProcessed,
+    error: snapshot.error ?? null,
+    canRetry: snapshot.canRetry,
+    canCancel: false,
+    /** There is no live stage feed for real uploads; the tracker labels the state accordingly. */
+    liveTrackingAvailable: false as const,
+    isConnected: false,
   };
 }

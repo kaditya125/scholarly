@@ -182,7 +182,7 @@ export class SyllabusGraphService {
    * Reading version metadata from manifest documents rather than scanning node subcollections
    * keeps an unfiltered read to one query plus one per version, and needs no composite index.
    */
-  private async listVersions(examId: string, cycleId?: string): Promise<Array<{ syllabusId: string; cycleId: string }>> {
+  async listVersions(examId: string, cycleId?: string): Promise<Array<{ syllabusId: string; cycleId: string }>> {
     const snap = await db.collection('exam_syllabi_graphs').doc(examId).collection('versions').get();
     return snap.docs
       .map((d) => d.data() as { syllabusId: string; cycleId: string; builtAt?: number })

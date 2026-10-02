@@ -214,6 +214,44 @@ export class NotebookRepository {
     const snapshot = await this.collection.doc(notebookId).collection('kg_edges').get();
     return snapshot.docs.map(doc => doc.data() as import('../types').KGEdge);
   }
+
+  /**
+   * Nodes extracted from ONE chapter. `getKGNodes` reads the whole graph (2,162 docs for Class 11
+   * Physics alone), which is far too expensive for a per-request lookup; `sourceDocIds` is an
+   * array field, so `array-contains` is served by the automatic single-field index.
+   */
+  async getKGNodesForSource(notebookId: string, sourceId: string, limit = 60): Promise<import('../types').KGNode[]> {
+    const snapshot = await this.collection
+      .doc(notebookId)
+      .collection('kg_nodes')
+      .where('sourceDocIds', 'array-contains', sourceId)
+      .limit(limit)
+      .get();
+    return snapshot.docs.map(doc => doc.data() as import('../types').KGNode);
+  }
+
+  /**
+   * Edges touching any of `nodeIds`, in either direction. Firestore allows at most 10 values per
+   * `in` filter, so this batches and caps the fan-out rather than reading every edge.
+   */
+  async getKGEdgesForNodes(notebookId: string, nodeIds: string[], maxBatches = 2): Promise<import('../types').KGEdge[]> {
+    const edgesRef = this.collection.doc(notebookId).collection('kg_edges');
+    const batches: string[][] = [];
+    for (let i = 0; i < nodeIds.length && batches.length < maxBatches; i += 10) {
+      batches.push(nodeIds.slice(i, i + 10));
+    }
+    const found = new Map<string, import('../types').KGEdge>();
+    for (const batch of batches) {
+      const [outgoing, incoming] = await Promise.all([
+        edgesRef.where('sourceNodeId', 'in', batch).limit(60).get(),
+        edgesRef.where('targetNodeId', 'in', batch).limit(60).get(),
+      ]);
+      for (const doc of [...outgoing.docs, ...incoming.docs]) {
+        found.set(doc.id, doc.data() as import('../types').KGEdge);
+      }
+    }
+    return [...found.values()];
+  }
 }
 
 export const notebookRepository = new NotebookRepository();

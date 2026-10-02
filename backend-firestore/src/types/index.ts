@@ -42,6 +42,14 @@ export interface UserStats {
   performanceHistory: { topic: string; score: number }[];
   weakTopics: string[];
   strongTopics: string[];
+  /**
+   * The structured, exam-scoped counterpart to weakTopics — see WeakTopic in quizAttempt.types.ts
+   * for why this exists alongside the string list rather than replacing it. Keyed internally by
+   * (examId, syllabusNodeId ?? topicName); QuestionMixer / recommendation code should read THIS,
+   * not weakTopics, whenever it needs to retrieve by syllabus location rather than just display a
+   * name. Optional and additive: absent on stats rolled up before this field existed.
+   */
+  weakTopicDetails?: import('./quizAttempt.types').WeakTopic[];
   activityHeatmap: { date: string; count: number; intensity: number }[];
   
   // Advanced Phase 2 Metrics
@@ -240,6 +248,10 @@ export interface ChatMessage {
   timestamp: number;
   /** AI replies only: the student's likely next messages, most likely first (composer ghost text). */
   suggestions?: string[];
+  /** AI replies only: the agent run this reply started or reports on (Agent mode). */
+  agentRunId?: string;
+  /** True on the message an agent run posts when it finishes — its card already shows it. */
+  agentRunSummary?: boolean;
 }
 
 export interface ChatSession {

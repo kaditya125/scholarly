@@ -10,6 +10,8 @@ router.use(requireAuth);
 // Test Series Endpoints
 router.get('/featured', controller.getFeaturedSeries);
 router.get('/categories', controller.getCategories);
+router.get('/series/:seriesId/tests', controller.getTestsBySeries);
+router.get('/:testId', controller.getTestById);
 
 // Adaptive Tests (scoped to the authenticated user)
 router.post('/adaptive/:userId/generate', enforceSelf('userId'), controller.generateAdaptiveTest);

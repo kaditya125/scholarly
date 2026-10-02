@@ -22,7 +22,7 @@ import { pyqRightsGovernanceService } from './pyqRightsGovernance.service';
 import { pyqVectorIngestionService } from './pyqVectorIngestion.service';
 import { pyqAnalyticsService } from './pyqAnalytics.service';
 import { CanonicalPYQQuestion } from '../../types/pyq.types';
-import { readLock } from '../../../scripts/phase4a/_embedding-guard';
+import { readLock } from './embeddingGuard';
 import { logger } from '../../utils/logger';
 
 export interface BatchIngestionResult {

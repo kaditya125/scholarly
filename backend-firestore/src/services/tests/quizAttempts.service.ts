@@ -9,19 +9,44 @@ import {
   ProgressReport,
   ProgressTopicMastery,
   ProgressTrendPoint,
+  WeakTopic,
+  PedagogicalDiagnostic,
 } from '../../types/quizAttempt.types';
+import { logger } from '../../utils/logger';
 import { QuizQuestion } from './quizGenerator.service';
 import type { StoredQuizQuestion } from '../../types/quizAttempt.types';
 import { UserStatsService } from '../userStats.service';
 import { UserStatsRepository } from '../../repositories/userStats.repository';
 import { PlannerService } from '../planner.service';
 import { eventBus } from '../../core/events/EventBus';
+import { conceptGraphService } from '../pedagogy/conceptGraph.service';
 
 const POSITIVE_MARK = 1;
 const NEGATIVE_MARK = 0.25;
 const DEFAULT_DURATION_MIN = 30;
 const WEAK_THRESHOLD = 60;   // section accuracy below this => "work on this"
 const STRONG_THRESHOLD = 80; // at/above this => strength
+/**
+ * Below this many attempted questions, "weak" is a guess, not a finding — a single wrong answer
+ * out of 2 is 0% accuracy but tells you almost nothing. Rows below this floor are still reported
+ * (never silently hidden — the student did answer them) but their `confidence` is scaled down
+ * rather than presented with the same certainty as an 18/20 row.
+ */
+const CONFIDENT_SAMPLE_SIZE = 8;
+
+/** 0-1, monotonic in sample size, saturating at CONFIDENT_SAMPLE_SIZE. Not a statistical interval
+ *  — a deliberately simple, explainable scalar the mixer/UI can use to temper "weak"/"strong". */
+function sampleConfidence(total: number): number {
+  return Math.max(0, Math.min(1, total / CONFIDENT_SAMPLE_SIZE));
+}
+
+/** Compound key so mastery never merges across exams or across two different syllabus nodes that
+ *  happen to share a display label ("Algebra" in SSC CGL vs JEE Main). Falls back to a namespaced
+ *  label only when neither examId nor syllabusNodeId is available — legacy/unanchored rows. */
+function masteryKey(examId: string | undefined, syllabusNodeId: string | undefined, topic: string): string {
+  const exam = examId || 'unknown-exam';
+  return syllabusNodeId ? `${exam}::node:${syllabusNodeId}` : `${exam}::label:${topic}`;
+}
 
 export class QuizAttemptError extends Error {
   constructor(public status: number, message: string) {
@@ -38,6 +63,7 @@ export interface CreateAttemptMeta {
   notebookTitle?: string;
   mode?: QuizMode;
   durationMinutes?: number;
+  remediationSource?: QuizAttempt['remediationSource'];
 }
 
 /**
@@ -75,6 +101,7 @@ export class QuizAttemptsService {
         options: q.options,
         correctAnswerIndex: q.correctAnswerIndex,
         explanation: q.explanation,
+        difficulty: q.difficulty,
         // Canonical identity must survive denormalisation — dropping it here would strip the
         // evidence of its syllabus location at the exact moment it becomes student history.
         syllabusNodeId: q.syllabusNodeId,
@@ -82,6 +109,15 @@ export class QuizAttemptsService {
         cycleId: q.cycleId,
         examId: q.examId,
         identityStatus: q.identityStatus,
+        // Provenance (questionOrigin etc.) was previously computed by the generator and then
+        // silently dropped here — an attempt's history could not answer "was this a real PYQ?"
+        // after the fact. Carried through for the same reason syllabusNodeId is.
+        questionOrigin: q.questionOrigin,
+        sourcePyqId: q.sourcePyqId,
+        sourceYear: q.sourceYear,
+        sourceShift: q.sourceShift,
+        sourcePaper: q.sourcePaper,
+        canonicalPaperId: q.canonicalPaperId,
       })),
       totalQuestions: questions.length,
       durationMinutes: meta.durationMinutes || DEFAULT_DURATION_MIN,
@@ -89,6 +125,7 @@ export class QuizAttemptsService {
       negativeMark: NEGATIVE_MARK,
       status: 'in-progress',
       createdAt: now,
+      remediationSource: meta.remediationSource,
     };
     await quizAttemptsRepository.create(attempt);
     return attempt;
@@ -131,15 +168,18 @@ export class QuizAttemptsService {
      * The loop was open here: a student could answer correctly and their coverage would not move.
      */
     const byTopic = new Map<string, {
-      topic: string; syllabusNodeId?: string; identityStatus?: 'CANONICAL' | 'UNANCHORED';
+      topic: string; syllabusNodeId?: string; identityStatus?: 'CANONICAL' | 'UNANCHORED'; examId?: string;
       correct: number; incorrect: number; unattempted: number; total: number;
     }>();
 
     for (const q of attempt.questions) {
       const topic = q.topic || 'General';
-      const key = q.syllabusNodeId || `label:${topic}`;
+      // examId is now part of the bucket key too: two questions on "Algebra" from different exams
+      // (should never happen within one attempt post-Phase-1, but a pre-Phase-1 attempt or a mixed
+      // notebook-sourced quiz could still have it) must not be averaged together.
+      const key = `${q.examId || 'x'}::${q.syllabusNodeId || `label:${topic}`}`;
       const bucket = byTopic.get(key) || {
-        topic, syllabusNodeId: q.syllabusNodeId, identityStatus: q.identityStatus,
+        topic, syllabusNodeId: q.syllabusNodeId, identityStatus: q.identityStatus, examId: q.examId,
         correct: 0, incorrect: 0, unattempted: 0, total: 0,
       };
       bucket.total++;
@@ -173,16 +213,41 @@ export class QuizAttemptsService {
         // Carried through to the mastery event. Absent is honest for unanchored questions.
         syllabusNodeId: b.syllabusNodeId,
         identityStatus: b.identityStatus,
+        examId: b.examId,
       }))
       .sort((a, b) => a.accuracy - b.accuracy);
 
     const weakTopics = topicBreakdown.filter(t => t.accuracy < WEAK_THRESHOLD).map(t => t.topic);
     const strongTopics = topicBreakdown.filter(t => t.accuracy >= STRONG_THRESHOLD).map(t => t.topic);
+    // Structured counterpart — same threshold, but keeps examId/syllabusNodeId so a recommendation
+    // built from this can retrieve by syllabus location instead of matching a display string.
+    const now = new Date().toISOString();
+    const weakTopicDetails: WeakTopic[] = topicBreakdown
+      .filter(t => t.accuracy < WEAK_THRESHOLD)
+      .map(t => ({
+        examId: t.examId,
+        syllabusNodeId: t.syllabusNodeId,
+        topicName: t.topic,
+        attempts: 1,
+        correct: t.correct,
+        incorrect: t.incorrect,
+        total: t.total,
+        accuracy: t.accuracy,
+        confidence: sampleConfidence(t.total),
+        lastAttemptAt: now,
+      }));
     const feedback = buildAttemptFeedback({ accuracy, score, maxMarks, correct, incorrect, unattempted, total, weakTopics, strongTopics });
+
+    const pedagogicalDiagnostics = await this.diagnose(userId, id, topicBreakdown);
+    let enrichedFeedback = feedback;
+    if (pedagogicalDiagnostics && pedagogicalDiagnostics.length > 0) {
+      enrichedFeedback += '\n\n**Prerequisite check:**\n' +
+        pedagogicalDiagnostics.map(d => `• ${d.diagnosticMessage}`).join('\n');
+    }
 
     const patch: Partial<QuizAttempt> = {
       status: 'completed',
-      completedAt: new Date().toISOString(),
+      completedAt: now,
       answers,
       score,
       maxMarks,
@@ -194,14 +259,15 @@ export class QuizAttemptsService {
       topicBreakdown,
       weakTopics,
       strongTopics,
-      feedback,
+      feedback: enrichedFeedback,
+      pedagogicalDiagnostics,
     };
 
     // Scoring + persistence is the source of truth and must always succeed.
     await quizAttemptsRepository.update(id, patch);
 
     // Everything below is best-effort enrichment — never let it fail the submission.
-    await this.rollIntoGlobalStats(userId, { accuracy, weakTopics, strongTopics, title: attempt.title })
+    await this.rollIntoGlobalStats(userId, { accuracy, weakTopics, strongTopics, weakTopicDetails, title: attempt.title })
       .catch(e => console.error('[QuizAttempts] stats roll-up failed', e));
 
     this.statsService.awardXP(userId, 'QUIZ_COMPLETE').catch(() => {});
@@ -257,33 +323,46 @@ export class QuizAttemptsService {
     return { ...attempt, ...patch };
   }
 
-  async getProgressReport(userId: string): Promise<ProgressReport> {
+  /**
+   * `examId` is optional and defaults to mixing every exam the student has ever attempted a test
+   * in — that stays the existing behavior for current callers (WeakSectionsPanel/AIRecommendedTests
+   * are UI, deliberately not touched in this pass). Pass it explicitly to get the exam-scoped view
+   * the mixer/recommendation engine needs: a student who switched from NEET prep to SSC CGL must
+   * never have NEET-era weak topics surface in an SSC CGL drill.
+   */
+  async getProgressReport(userId: string, examId?: string | null): Promise<ProgressReport> {
     const all = await quizAttemptsRepository.listByUser(userId); // newest first
     const completed = all.filter(a => a.status === 'completed');
 
-    const masteryMap = new Map<string, { correct: number; total: number; attempts: number }>();
+    const masteryMap = new Map<string, { topic: string; examId?: string; syllabusNodeId?: string; correct: number; total: number; attempts: number; lastAttemptAt?: string }>();
     let totalQuestionsAnswered = 0;
     let totalTimeSpentSeconds = 0;
 
     for (const a of completed) {
       totalTimeSpentSeconds += a.timeSpentSeconds || 0;
       for (const tb of a.topicBreakdown || []) {
-        const m = masteryMap.get(tb.topic) || { correct: 0, total: 0, attempts: 0 };
+        if (examId && tb.examId !== examId) continue; // exam-scoped view: skip rows from other exams
+        const key = masteryKey(tb.examId, tb.syllabusNodeId, tb.topic);
+        const m = masteryMap.get(key) || { topic: tb.topic, examId: tb.examId, syllabusNodeId: tb.syllabusNodeId, correct: 0, total: 0, attempts: 0 };
         m.correct += tb.correct;
         m.total += tb.total;
         m.attempts++;
-        masteryMap.set(tb.topic, m);
+        m.lastAttemptAt = a.completedAt || a.createdAt;
+        masteryMap.set(key, m);
         totalQuestionsAnswered += tb.correct + tb.incorrect;
       }
     }
 
-    const topicMastery: ProgressTopicMastery[] = Array.from(masteryMap.entries())
-      .map(([topic, m]) => ({
-        topic,
+    const topicMastery: ProgressTopicMastery[] = Array.from(masteryMap.values())
+      .map((m) => ({
+        topic: m.topic,
         attempts: m.attempts,
         correct: m.correct,
         total: m.total,
         accuracy: m.total > 0 ? Math.round((m.correct / m.total) * 100) : 0,
+        examId: m.examId,
+        syllabusNodeId: m.syllabusNodeId,
+        lastAttemptAt: m.lastAttemptAt,
       }))
       .sort((a, b) => a.accuracy - b.accuracy);
 
@@ -352,9 +431,32 @@ export class QuizAttemptsService {
 
   // ─── private helpers ────────────────────────────────────────────────────────
 
+  /**
+   * Prerequisite-graph diagnosis. Evidence is this attempt plus the student's stored weak-topic
+   * history (which is where a prerequisite measured in an EARLIER test shows up). A failure here
+   * must not fail the submission — scoring is the source of truth — so it is logged and the
+   * field is left unset, which the type documents as "not diagnosed", distinct from null.
+   */
+  private async diagnose(userId: string, attemptId: string, topicBreakdown: TopicBreakdown[]): Promise<PedagogicalDiagnostic[] | null | undefined> {
+    try {
+      const stats: any = await this.statsService.getUserStats(userId);
+      const history: WeakTopic[] = Array.isArray(stats?.weakTopicDetails) ? stats.weakTopicDetails : [];
+      const diagnostics = conceptGraphService.diagnoseAttempt(topicBreakdown, history);
+      logger.info('[QuizAttempts] pedagogical diagnosis', {
+        attemptId,
+        outcome: diagnostics === null ? 'not_supported' : diagnostics.length ? 'diagnosed' : 'nothing_weak',
+        statuses: diagnostics?.map(d => `${d.targetConceptId}:${d.status}`),
+      });
+      return diagnostics;
+    } catch (err: any) {
+      logger.error('[QuizAttempts] pedagogical diagnosis failed', { attemptId, error: err?.message || String(err) });
+      return undefined;
+    }
+  }
+
   private async rollIntoGlobalStats(
     userId: string,
-    r: { accuracy: number; weakTopics: string[]; strongTopics: string[]; title: string }
+    r: { accuracy: number; weakTopics: string[]; strongTopics: string[]; weakTopicDetails: WeakTopic[]; title: string }
   ): Promise<void> {
     const stats: any = await this.statsService.getUserStats(userId); // seeds if missing
     const prevCount = stats?.totalTestsAttempted || 0;
@@ -366,6 +468,42 @@ export class QuizAttemptsService {
     const weakSet = new Set<string>([...(Array.isArray(stats?.weakTopics) ? stats.weakTopics : []), ...r.weakTopics]);
     r.strongTopics.forEach(t => weakSet.delete(t));
     const strongSet = new Set<string>([...(Array.isArray(stats?.strongTopics) ? stats.strongTopics : []), ...r.strongTopics]);
+
+    /*
+     * Structured counterpart, merged by (examId, syllabusNodeId ?? topicName) rather than
+     * overwritten — a repeat weak performance on the same node should accumulate evidence
+     * (attempts/correct/incorrect/total), not just replace the last attempt's snapshot, so
+     * confidence actually grows across sessions the way real evidence should.
+     */
+    const existingDetails: WeakTopic[] = Array.isArray(stats?.weakTopicDetails) ? stats.weakTopicDetails : [];
+    const detailMap = new Map<string, WeakTopic>();
+    for (const d of existingDetails) detailMap.set(masteryKey(d.examId, d.syllabusNodeId, d.topicName), d);
+    for (const incoming of r.weakTopicDetails) {
+      const key = masteryKey(incoming.examId, incoming.syllabusNodeId, incoming.topicName);
+      const prior = detailMap.get(key);
+      const merged: WeakTopic = prior
+        ? {
+            ...prior,
+            attempts: prior.attempts + 1,
+            correct: prior.correct + incoming.correct,
+            incorrect: prior.incorrect + incoming.incorrect,
+            total: prior.total + incoming.total,
+            accuracy: Math.round(((prior.correct + incoming.correct) / Math.max(1, prior.total + incoming.total)) * 100),
+            confidence: sampleConfidence(prior.total + incoming.total),
+            lastAttemptAt: incoming.lastAttemptAt,
+          }
+        : incoming;
+      detailMap.set(key, merged);
+    }
+    // A topic that just graduated to strong (by name, within the SAME exam as the row being
+    // pruned — never cross-exam, that's the whole point of the compound key) is removed here too.
+    for (const [key, d] of detailMap) {
+      if (r.strongTopics.includes(d.topicName)) detailMap.delete(key);
+    }
+    // Bounded and worst-first, same spirit as the existing weakTopics slice(0, 12).
+    const weakTopicDetails = Array.from(detailMap.values())
+      .sort((a, b) => a.accuracy - b.accuracy)
+      .slice(0, 24);
 
     const performanceHistory = Array.isArray(stats?.performanceHistory) ? stats.performanceHistory.slice(-19) : [];
     performanceHistory.push({ topic: r.title, score: r.accuracy });
@@ -389,6 +527,7 @@ export class QuizAttemptsService {
       averageAccuracy: newAvg,
       weakTopics: Array.from(weakSet).slice(0, 12),
       strongTopics: Array.from(strongSet).slice(0, 12),
+      weakTopicDetails,
       performanceHistory,
       activityHeatmap,
       gamification: {

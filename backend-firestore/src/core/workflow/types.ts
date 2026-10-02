@@ -50,10 +50,28 @@ export interface WorkflowRequest {
    * enable it, since it comes straight from the request body and must not be trusted alone.
    */
   agenticRetrieval?: boolean;
+  /**
+   * Agent Mode: 'agent' when the student chose Agent mode, 'auto' to let the goal router decide,
+   * 'chat' (or absent) for ordinary chat. Only acted on when featureFlags.agentMode is ON; a goal
+   * becomes a background agent run and this stream only acknowledges it (see WorkflowEngine).
+   */
+  executionMode?: 'chat' | 'agent' | 'auto';
+  /**
+   * Agent Mode, when the turn carried attachments: the student's typed words (the goal — `query`
+   * has the attachments' text flattened in for ordinary chat) and the attached documents as pages,
+   * which the AGENT branch keeps as the student's uploads when a run starts.
+   */
+  agentInput?: {
+    goal: string;
+    documents: Array<{ name: string; mimeType: string; pages: Array<{ pageNumber?: number; text: string }> }>;
+  };
 }
 
 export interface WorkflowEvent {
-  type: 'progress' | 'reasoning' | 'chunk' | 'citation' | 'asset' | 'warning' | 'metrics' | 'error' | 'done' | 'suggestions';
+  type: 'progress' | 'reasoning' | 'chunk' | 'citation' | 'asset' | 'warning' | 'metrics' | 'error' | 'done' | 'suggestions' | 'agent_run';
+  /** For the 'agent_run' event: the background run the client should follow. */
+  runId?: string;
+  workflowId?: string;
   stage?: WorkflowStage;
   message?: string;
   /** When true on a 'progress' event, the message carries the REAL result/telemetry of a

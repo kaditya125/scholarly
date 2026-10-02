@@ -1,9 +1,12 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import {defineConfig, loadEnv} from 'vite';
+import {assertProductionApiUrl} from './src/lib/api/baseUrl';
 
-export default defineConfig(() => {
+export default defineConfig(({mode}) => {
+  const env = loadEnv(mode, process.cwd(), 'VITE_');
+  assertProductionApiUrl(mode, process.env.VITE_API_URL ?? env.VITE_API_URL);
   return {
     plugins: [react(), tailwindcss()],
     resolve: {

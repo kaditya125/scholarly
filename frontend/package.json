@@ -13,7 +13,8 @@
     "lint": "tsc --noEmit",
     "test:e2e": "playwright test",
     "test:our-team": "playwright test our-team",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test:unit": "node --import tsx --test tests/unit/*.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

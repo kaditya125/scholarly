@@ -9,6 +9,7 @@ import { ChatMessage } from '../../types';
 import { env } from '../../config/env';
 import { Telemetry } from '../../lib/telemetry';
 import { logger } from '../../utils/logger';
+import { authorityWeight } from '../../core/knowledge/knowledgeAuthority';
 
 export interface RetrievalResult {
   text: string;
@@ -44,19 +45,7 @@ export interface ExamContext {
   scopeOfficialSyllabusOnly?: boolean;
 }
 
-const AUTHORITY_WEIGHTS: Record<string, number> = {
-  'NCERT': 1.5,
-  'GOVERNMENT': 1.4,
-  'OFFICIAL_SYLLABUS': 1.5,
-  'AUTHENTIC_PYQ': 1.4,
-  'STANDARD_TEXTBOOK': 1.3,
-  'SECONDARY_PYQ': 1.2,
-  'TEACHER_NOTES': 1.2,
-  'REFERENCE_BOOK': 1.1,
-  'USER_UPLOAD': 1.0,
-  'PRACTICE_QUESTION': 1.0,
-  'WEB_SEARCH': 0.8
-};
+// Authority multipliers: core/knowledge/knowledgeAuthority.ts (authorityWeight) is the only source.
 
 /**
  * Authority earned from provenance, not from corpus membership.
@@ -210,8 +199,14 @@ Standalone Search Query:`;
     const namespace = env.PINECONE_NAMESPACE;
     
     const tPinecone = performance.now();
-    // Fetch topK * 4 to ensure a wide net for the Reranker
-    const matches = await pineconeService.queryVectors(queryEmbedding, topK * 4, filter, namespace);
+    // Fetch topK * 4 via Hybrid Search (Dense Vectors + BM25 Full-Text Keywords) to ensure a wide net for the Reranker
+    const matches = await pineconeService.hybridQuery({
+      queryText: expandedQuery,
+      queryVector: queryEmbedding,
+      topK: topK * 4,
+      filter,
+      namespace,
+    });
     Telemetry.logLatency('pinecone_search', performance.now() - tPinecone);
     
     // Filter out completely irrelevant vectors
@@ -249,7 +244,7 @@ Standalone Search Query:`;
         else if (meta.content_type === 'reference_book' || meta.corpusBucket === 'REFERENCE_BOOK') authorityLevel = 'REFERENCE_BOOK';
         else authorityLevel = 'USER_UPLOAD';
       }
-      const authorityMultiplier = AUTHORITY_WEIGHTS[authorityLevel] || 1.0;
+      const authorityMultiplier = authorityWeight(authorityLevel);
       weightedScore *= authorityMultiplier;
 
       // Exam Relevance & Official Syllabus Priority
@@ -417,19 +412,31 @@ Standalone Search Query:`;
           source: sitting || String(meta.sourceId || 'Previous year question'),
           score: m.score ?? 0,
           metadata: meta,
-          weightedScore: (m.score ?? 0) * (AUTHORITY_WEIGHTS[authority] || 1.0),
+          weightedScore: (m.score ?? 0) * (authorityWeight(authority)),
           selectionReasoning: meta.isAuthenticPyq
             ? `Verified official past-paper question (${sitting}).`
             : `Practice question from the PYQ corpus (${sitting}); not an authentic past paper.`,
         } as RetrievalResult;
       }).sort((a, b) => (b.weightedScore || 0) - (a.weightedScore || 0));
 
-    const matches = await pineconeService.queryVectors(queryEmbedding, topK, filter, namespace);
+    const matches = await pineconeService.hybridQuery({
+      queryText: query,
+      queryVector: queryEmbedding,
+      topK,
+      filter,
+      namespace,
+    });
     const results = toResults(matches);
 
     if (results.length === 0 && (canonicalPaperId || sittingId) && !strictPaper) {
       const { canonicalPaperId: _c, sittingId: _s, ...broader } = filter;
-      const wider = await pineconeService.queryVectors(queryEmbedding, topK, broader, namespace);
+      const wider = await pineconeService.hybridQuery({
+        queryText: query,
+        queryVector: queryEmbedding,
+        topK,
+        filter: broader,
+        namespace,
+      });
       return toResults(wider);
     }
     return results;
@@ -489,8 +496,14 @@ Standalone Search Query:`;
     const namespace = env.PINECONE_NAMESPACE;
     
     const tPinecone = performance.now();
-    // Fetch topK * 4 to ensure a wide net for the Reranker
-    const matches = await pineconeService.queryVectors(queryEmbedding, topK * 4, filter, namespace);
+    // Fetch topK * 4 via Hybrid Search (Dense Vectors + BM25 Full-Text Keywords) to ensure a wide net for the Reranker
+    const matches = await pineconeService.hybridQuery({
+      queryText: query,
+      queryVector: queryEmbedding,
+      topK: topK * 4,
+      filter,
+      namespace,
+    });
     Telemetry.logLatency('public_pinecone_search', performance.now() - tPinecone);
     
     // Filter out completely irrelevant vectors
@@ -605,15 +618,39 @@ Standalone Search Query:`;
     let filter: any = { userId: 'ncert-curriculum' };
 
     const tPinecone = performance.now();
-    let matches = await pineconeService.queryVectors(queryEmbedding, topK * 4, filter, namespace);
+    let matches = await pineconeService.hybridQuery({
+      queryText: expandedQuery,
+      queryVector: queryEmbedding,
+      topK: topK * 4,
+      filter,
+      namespace,
+    });
     if (!matches || matches.length === 0) {
-      matches = await pineconeService.queryVectors(queryEmbedding, topK * 4, { owner: 'ncert-curriculum' }, namespace);
+      matches = await pineconeService.hybridQuery({
+        queryText: expandedQuery,
+        queryVector: queryEmbedding,
+        topK: topK * 4,
+        filter: { owner: 'ncert-curriculum' },
+        namespace,
+      });
     }
     if (!matches || matches.length === 0) {
-      matches = await pineconeService.queryVectors(queryEmbedding, topK * 4, { board: 'NCERT' }, namespace);
+      matches = await pineconeService.hybridQuery({
+        queryText: expandedQuery,
+        queryVector: queryEmbedding,
+        topK: topK * 4,
+        filter: { board: 'NCERT' },
+        namespace,
+      });
     }
     if (!matches || matches.length === 0) {
-      matches = await pineconeService.queryVectors(queryEmbedding, topK * 4, {}, namespace);
+      matches = await pineconeService.hybridQuery({
+        queryText: expandedQuery,
+        queryVector: queryEmbedding,
+        topK: topK * 4,
+        filter: {},
+        namespace,
+      });
     }
     Telemetry.logLatency('pinecone_search', performance.now() - tPinecone, { kind: 'curriculum' });
 
@@ -640,7 +677,7 @@ Standalone Search Query:`;
         if (!match) return null;
         const meta = match.metadata || {};
         const authorityLevel = (meta.authority as string) || 'NCERT';
-        const authorityMultiplier = AUTHORITY_WEIGHTS[authorityLevel] || 1.4;
+        const authorityMultiplier = authorityWeight(authorityLevel);
         const weightedScore = reranked.relevanceScore * authorityMultiplier;
         return {
           text: this.sanitizeContext(String(meta.text || '')),
