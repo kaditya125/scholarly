@@ -81,6 +81,18 @@ const BPSC_FREE_MOCKS = [
 
 const SSC_IMD_FREE_MOCKS = [
   {
+    id: 'ssc_imd_cs_200q_grand_mock_1',
+    title: 'SSC Scientific Assistant (IMD) 2026: 200-Question Full-Length CBT Mock',
+    description: `Complete 200-Question Official Pattern Mock: 100 Qs Paper-I Non-Tech (50 Reasoning + 50 General Awareness) + 100 Qs Part-D Technical CS & IT. Exactly 120 Mins & 200 Marks. ${ANSWER_KEY_NOTE}`,
+    questions: 200,
+    marks: 200,
+    duration: 120,
+    difficulty: 'Medium',
+    badge: 'FULL 200-Q MOCK',
+    badgeColor: 'amber',
+    examId: 'SSC_IMD_CS',
+  },
+  {
     id: 'ssc_imd_2022_cs_it_official',
     title: 'SSC IMD 2022 Official CBT Paper: Part-D (CS & IT)',
     description: `Authentic TCS/IMD CBT questions from Syllabus 14.3.4 Part-D (Algorithms, OS, CN, DBMS, TOC, Compilers, COA, Digital Logic, Discrete Math). ${ANSWER_KEY_NOTE}`,
