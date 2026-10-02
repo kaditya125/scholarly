@@ -147,17 +147,17 @@ app.use('/api', limiter);
 // ==========================================
 // 2. Health Check Endpoint
 // ==========================================
-app.get('/health', (req, res) => {
+app.get(['/health', '/api/health'], (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
 // Liveness: is the process up? (used by container/orchestrator restarts)
-app.get('/health/live', (req, res) => {
+app.get(['/health/live', '/api/health/live'], (req, res) => {
   res.status(200).json({ status: 'alive', timestamp: new Date().toISOString() });
 });
 
 // Readiness: can we serve traffic? (checks critical dependencies)
-app.get('/health/ready', async (req, res) => {
+app.get(['/health/ready', '/api/health/ready'], async (req, res) => {
   try {
     const { ready, checks } = await checkReadiness();
     res.status(ready ? 200 : 503).json({
