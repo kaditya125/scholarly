@@ -300,6 +300,34 @@ export const EXAM_CATALOG: Record<string, ExamPersonalization> = {
         "icon": "subject"
       },
       {
+        "label": "Everyday Science & Research",
+        "count": "25 Qs · Physics, Chem, Bio, Space",
+        "countNum": 25,
+        "topic": "Everyday Science and Scientific Research",
+        "icon": "subject"
+      },
+      {
+        "label": "Polity & Constitution",
+        "count": "25 Qs · Articles, Rights, Parliament",
+        "countNum": 25,
+        "topic": "General Polity and Constitution of India",
+        "icon": "subject"
+      },
+      {
+        "label": "History & Culture Drill",
+        "count": "25 Qs · Freedom Struggle & Heritage",
+        "countNum": 25,
+        "topic": "Indian History and Culture",
+        "icon": "subject"
+      },
+      {
+        "label": "Geography of India Drill",
+        "count": "25 Qs · Climate, Rivers & Ecology",
+        "countNum": 25,
+        "topic": "Geography of India and Neighboring Countries",
+        "icon": "subject"
+      },
+      {
         "label": "2017 Official CBT Paper",
         "count": "Official 200-Q CBT Shift",
         "countNum": 200,

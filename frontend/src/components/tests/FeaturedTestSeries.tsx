@@ -188,6 +188,18 @@ const SSC_IMD_FREE_MOCKS = [
     badgeColor: 'green',
     examId: 'SSC_IMD_PAPER1',
   },
+  {
+    id: 'ssc_imd_ga_science_practice_50q',
+    title: 'General Awareness & Everyday Science Practice Drill (50 Qs)',
+    description: `Full 50-question Paper-I section (14.2.2): Everyday observations & scientific research, Indian Polity, History, Geography, and Economy. ${ANSWER_KEY_NOTE}`,
+    questions: 50,
+    marks: 50,
+    duration: 25,
+    difficulty: 'Medium',
+    badge: 'SCIENCE & GK',
+    badgeColor: 'amber',
+    examId: 'SSC_IMD_PAPER1',
+  },
 ];
 
 export function FeaturedTestSeries({ selectedExam }: FeaturedTestSeriesProps) {
