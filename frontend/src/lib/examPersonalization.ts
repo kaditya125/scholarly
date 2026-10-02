@@ -265,6 +265,34 @@ export const EXAM_CATALOG: Record<string, ExamPersonalization> = {
         "icon": "speed"
       },
       {
+        "label": "Analogies & Similarities",
+        "count": "30 Qs · S. Chand & Rakesh Yadav",
+        "countNum": 30,
+        "topic": "Analogy & Similarities",
+        "icon": "subject"
+      },
+      {
+        "label": "Syllogisms & Logic",
+        "count": "30 Qs · Deductive Reasoning",
+        "countNum": 30,
+        "topic": "Syllogism & Deductive Logic",
+        "icon": "subject"
+      },
+      {
+        "label": "Series & Number Patterns",
+        "count": "30 Qs · Progression & Logic",
+        "countNum": 30,
+        "topic": "Number & Alphabet Series",
+        "icon": "speed"
+      },
+      {
+        "label": "Coding-Decoding Drill",
+        "count": "30 Qs · Substitution & Shifting",
+        "countNum": 30,
+        "topic": "Coding-Decoding",
+        "icon": "subject"
+      },
+      {
         "label": "General Awareness & Science",
         "count": "50 Qs · 50 Marks Everyday Science",
         "countNum": 50,

@@ -164,6 +164,30 @@ const SSC_IMD_FREE_MOCKS = [
     badgeColor: 'amber',
     examId: 'GATE_CS',
   },
+  {
+    id: 'ssc_imd_reasoning_master_sprint_50q',
+    title: 'SSC Reasoning 50-Question Master Sprint (14.2.1)',
+    description: `Full 50-question Paper-I reasoning section: Analogies, Syllogisms, Series, Coding-Decoding, Blood Relations & Puzzles drawn from S. Chand and Rakesh Yadav corpus. ${ANSWER_KEY_NOTE}`,
+    questions: 50,
+    marks: 50,
+    duration: 35,
+    difficulty: 'Medium',
+    badge: 'REASONING SPRINT',
+    badgeColor: 'green',
+    examId: 'SSC_IMD_PAPER1',
+  },
+  {
+    id: 'ssc_imd_reasoning_syllogism_30q',
+    title: 'Syllogisms & Deductive Logic Drill (30 Qs)',
+    description: `30 high-yield questions on Venn diagram deductions, statements, assumptions and conclusions from S. Chand & Rakesh Yadav bank. ${ANSWER_KEY_NOTE}`,
+    questions: 30,
+    marks: 30,
+    duration: 20,
+    difficulty: 'Medium',
+    badge: 'SYLLOGISMS',
+    badgeColor: 'green',
+    examId: 'SSC_IMD_PAPER1',
+  },
 ];
 
 export function FeaturedTestSeries({ selectedExam }: FeaturedTestSeriesProps) {
