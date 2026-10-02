@@ -23,6 +23,8 @@ export const EXAM_CATALOG: Record<string, ExamPersonalization> = {
     "tagline": "SSC CGL Tier 1",
     "siblings": [
       "SSC CGL",
+      "SSC IMD",
+      "SSC JE",
       "SSC CHSL",
       "SSC MTS",
       "SSC GD",
@@ -108,6 +110,172 @@ export const EXAM_CATALOG: Record<string, ExamPersonalization> = {
       }
     ]
   },
+  "SSC IMD": {
+    "displayName": "SSC IMD (Scientific Assistant)",
+    "examId": "SSC_IMD_CS",
+    "group": "ssc",
+    "tagline": "SSC Scientific Assistant in IMD — CS & IT (Paper-I + Part-D)",
+    "siblings": [
+      "SSC CGL",
+      "SSC IMD",
+      "SSC JE",
+      "SSC CHSL",
+      "SSC MTS",
+      "SSC GD",
+      "SSC CPO",
+      "SSC Steno"
+    ],
+    "subjectOptions": [
+      {
+        "value": "Computer Science and Information Technology",
+        "label": "Computer Science & IT (Part-D Technical)"
+      },
+      {
+        "value": "General Intelligence & Reasoning",
+        "label": "General Intelligence & Reasoning (Paper-I)"
+      },
+      {
+        "value": "General Awareness",
+        "label": "General Awareness & Science (Paper-I)"
+      }
+    ],
+    "categories": [
+      {
+        "label": "Paper-I Full Mock (100 Qs)",
+        "count": "120 Min · 100 Marks",
+        "countNum": 100,
+        "topic": "SSC IMD Paper-I Full Mock",
+        "icon": "mocks"
+      },
+      {
+        "label": "Part-D Technical CS (100 Qs)",
+        "count": "120 Min · 100 Marks",
+        "countNum": 100,
+        "topic": "SSC IMD Part-D CS Full Mock",
+        "icon": "mocks"
+      },
+      {
+        "label": "CS & IT Technical Drill",
+        "count": "25 Qs · High Yield",
+        "countNum": 25,
+        "topic": "Computer Science and Information Technology",
+        "icon": "subject"
+      },
+      {
+        "label": "General Intelligence Drill",
+        "count": "25 Qs · Speed Test",
+        "countNum": 25,
+        "topic": "General Intelligence & Reasoning",
+        "icon": "speed"
+      },
+      {
+        "label": "General Science & Space",
+        "count": "25 Qs · Scientific Aspect",
+        "countNum": 25,
+        "topic": "General Awareness",
+        "icon": "subject"
+      },
+      {
+        "label": "Official PYQ Practice",
+        "count": "2022 & 2017 Shifts",
+        "countNum": 20,
+        "topic": "SSC IMD Previous Year Questions",
+        "icon": "pyq"
+      }
+    ],
+    "fallbackRecommendations": [
+      {
+        "title": "Operating Systems & Concurrency Mock",
+        "topic": "Operating System",
+        "reason": "Operating Systems carries 15% weightage in Syllabus 14.3.4 Part-D.",
+        "type": "High Yield Drill",
+        "count": 25
+      },
+      {
+        "title": "Computer Networks & Layering Practice",
+        "topic": "Computer Networks",
+        "reason": "Layering, TCP/IP, and IP addressing are high-frequency in IMD CS.",
+        "type": "Concept Mastery",
+        "count": 20
+      },
+      {
+        "title": "Paper-I Reasoning Speed Sprint",
+        "topic": "General Intelligence & Reasoning",
+        "reason": "Scoring 45+/50 in Paper-I Reasoning is crucial for qualifying the technical cut-off.",
+        "type": "Speed Sprint",
+        "count": 25
+      }
+    ]
+  },
+  "SSC JE": {
+    "displayName": "SSC JE",
+    "examId": "SSC_JE_PAPER1",
+    "group": "ssc",
+    "tagline": "SSC Junior Engineer — Paper-I & Technical",
+    "siblings": [
+      "SSC CGL",
+      "SSC IMD",
+      "SSC JE",
+      "SSC CHSL",
+      "SSC MTS",
+      "SSC GD",
+      "SSC CPO",
+      "SSC Steno"
+    ],
+    "subjectOptions": [
+      {
+        "value": "General Intelligence & Reasoning",
+        "label": "General Intelligence & Reasoning (50 Marks)"
+      },
+      {
+        "value": "General Awareness",
+        "label": "General Awareness (50 Marks)"
+      },
+      {
+        "value": "Technical Engineering",
+        "label": "Technical Engineering (100 Marks)"
+      }
+    ],
+    "categories": [
+      {
+        "label": "Paper-I Non-Tech (100 Qs)",
+        "count": "120 Min · 100 Marks",
+        "countNum": 100,
+        "topic": "SSC JE Paper-I Full Mock",
+        "icon": "mocks"
+      },
+      {
+        "label": "Reasoning Drill",
+        "count": "50 Qs · 50 Marks",
+        "countNum": 50,
+        "topic": "General Intelligence & Reasoning",
+        "icon": "subject"
+      },
+      {
+        "label": "General Awareness Drill",
+        "count": "50 Qs · 50 Marks",
+        "countNum": 50,
+        "topic": "General Awareness",
+        "icon": "subject"
+      },
+      {
+        "label": "Previous Year Papers",
+        "count": "2020–2024 PYQs",
+        "countNum": 100,
+        "topic": "SSC JE Previous Year Questions",
+        "icon": "pyq"
+      }
+    ],
+    "fallbackRecommendations": [
+      {
+        "title": "General Intelligence & Reasoning Master Drill",
+        "topic": "General Intelligence & Reasoning",
+        "reason": "50 marks in Paper-I determines qualification threshold.",
+        "type": "Speed Drill",
+        "count": 50
+      }
+    ]
+  },
   "SSC CHSL": {
     "displayName": "SSC CHSL",
     "examId": "SSC_CHSL",
@@ -115,6 +283,8 @@ export const EXAM_CATALOG: Record<string, ExamPersonalization> = {
     "tagline": "SSC CHSL Tier 1",
     "siblings": [
       "SSC CGL",
+      "SSC IMD",
+      "SSC JE",
       "SSC CHSL",
       "SSC MTS",
       "SSC GD",
@@ -207,6 +377,8 @@ export const EXAM_CATALOG: Record<string, ExamPersonalization> = {
     "tagline": "SSC MTS",
     "siblings": [
       "SSC CGL",
+      "SSC IMD",
+      "SSC JE",
       "SSC CHSL",
       "SSC MTS",
       "SSC GD",
@@ -299,6 +471,8 @@ export const EXAM_CATALOG: Record<string, ExamPersonalization> = {
     "tagline": "SSC GD Constable",
     "siblings": [
       "SSC CGL",
+      "SSC IMD",
+      "SSC JE",
       "SSC CHSL",
       "SSC MTS",
       "SSC GD",
@@ -391,6 +565,8 @@ export const EXAM_CATALOG: Record<string, ExamPersonalization> = {
     "tagline": "SSC CPO SI",
     "siblings": [
       "SSC CGL",
+      "SSC IMD",
+      "SSC JE",
       "SSC CHSL",
       "SSC MTS",
       "SSC GD",
@@ -483,6 +659,8 @@ export const EXAM_CATALOG: Record<string, ExamPersonalization> = {
     "tagline": "SSC Stenographer",
     "siblings": [
       "SSC CGL",
+      "SSC IMD",
+      "SSC JE",
       "SSC CHSL",
       "SSC MTS",
       "SSC GD",
@@ -1286,9 +1464,11 @@ export const EXAM_CATALOG: Record<string, ExamPersonalization> = {
 export const ALL_EXAMS = Object.keys(EXAM_CATALOG);
 export const EXAMS = ALL_EXAMS;
 export const GOAL_TO_EXAM: Record<string, string> = {
-  SSC: 'SSC CGL', UPSC: 'UPSC', NEET: 'NEET', 'JEE Main': 'JEE Main',
-  'JEE Advanced': 'JEE Main', GATE: 'JEE Main', Banking: 'Banking PO',
-  Railway: 'Railway NTPC', BPSC: 'BPSC', 'State PSC': 'State PSC', College: 'UPSC',
+  SSC: 'SSC CGL', 'SSC IMD': 'SSC IMD', 'SSC Scientific Assistant': 'SSC IMD',
+  'SSC JE': 'SSC JE', 'GATE CS': 'SSC IMD', 'ISRO CS': 'SSC IMD', UPSC: 'UPSC',
+  NEET: 'NEET', 'JEE Main': 'JEE Main', 'JEE Advanced': 'JEE Main', GATE: 'JEE Main',
+  Banking: 'Banking PO', Railway: 'Railway NTPC', BPSC: 'BPSC', 'State PSC': 'State PSC',
+  College: 'UPSC',
 };
 export function resolveExamFromGoal(goal?: string): string {
   if (!goal) return 'SSC CGL';
