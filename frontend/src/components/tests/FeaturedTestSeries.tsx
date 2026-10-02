@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Users, Clock, Award, Zap, Flame, Gift } from 'lucide-react';
+import { Users, Clock, Award, Zap, Flame, Gift, Target } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useTheme } from '../../lib/ThemeContext';
 import { useLaunchTest } from '../../hooks/ai/useLaunchTest';
@@ -8,12 +8,13 @@ interface FeaturedTestSeriesProps {
   selectedExam: string;
 }
 
-// The curated free promotional mock tests per exam
+const ANSWER_KEY_NOTE = "Answer keys verified against official key.";
+
 const SSC_FREE_MOCKS = [
   {
     id: 'ssc_cgl_2024_tier1_shift1',
     title: 'SSC CGL 2024 Tier 1 — Official Shift 1 Paper',
-    description: '100% authentic questions from the official September 2024 CGL Tier 1 Shift 1 exam. Real PYQ paper under official exam conditions.',
+    description: `100 authentic questions from the official September 2024 CGL Tier 1 Shift 1 exam. ${ANSWER_KEY_NOTE}`,
     questions: 100,
     marks: 200,
     duration: 60,
@@ -25,7 +26,7 @@ const SSC_FREE_MOCKS = [
   {
     id: 'ssc_cgl_2024_tier1_shift2',
     title: 'SSC CGL 2024 Tier 1 — Official Shift 2 Paper',
-    description: '100% authentic questions from the official September 2024 CGL Tier 1 Shift 2 exam. Attempt for a true exam simulation.',
+    description: `100 authentic questions from the official September 2024 CGL Tier 1 Shift 2 exam. ${ANSWER_KEY_NOTE}`,
     questions: 100,
     marks: 200,
     duration: 60,
@@ -35,14 +36,14 @@ const SSC_FREE_MOCKS = [
     examId: 'SSC_CGL',
   },
   {
-    id: 'ssc_cgl_polity_speed_sprint_1',
-    title: 'SSC CGL 2026: Indian Polity 50-Question Speed Sprint',
-    description: '50 rapid-fire constitutional article, amendment, and factual questions from Lucent GK & M. Laxmikanth. Matches official SSC CGL pattern.',
-    questions: 50,
-    marks: 100,
-    duration: 30,
+    id: 'ssc_cgl_tier1_all_india_mock_1',
+    title: 'SSC CGL Tier 1 — Mixed Mock 1',
+    description: `Previous-year questions from 2021–2025 sittings in the Tier 1 section pattern. ${ANSWER_KEY_NOTE}`,
+    questions: 100,
+    marks: 200,
+    duration: 60,
     difficulty: 'Medium',
-    badge: 'POLITY SPRINT',
+    badge: 'MIXED MOCK',
     badgeColor: 'green',
     examId: 'SSC_CGL',
   },
@@ -138,7 +139,7 @@ export function FeaturedTestSeries({ selectedExam }: FeaturedTestSeriesProps) {
                 ? '🔥 UPSC Prelims 2026: Indian Polity Master Mock Unlocked 100% FREE!' 
                 : isBpsc 
                 ? '🔥 BPSC 71st CCE: Indian Polity & Bihar Governance Mock Unlocked 100% FREE!' 
-                : '🔥 SSC CGL Sep 30 Exam Sprint — 3 Full Mocks Unlocked 100% FREE!'}
+                : '🔥 SSC CGL Free Mocks Unlocked 100% FREE!'}
             </p>
             <p className={cn(
               'text-[12px] mt-0.5 leading-relaxed',
@@ -209,7 +210,7 @@ export function FeaturedTestSeries({ selectedExam }: FeaturedTestSeriesProps) {
                     {mock.duration} Min
                   </span>
                   <span className="flex items-center gap-1">
-                    <Users className="w-3 h-3 text-slate-400" />
+                    <Target className="w-3 h-3 text-slate-400" />
                     {mock.marks} Marks
                   </span>
                 </div>
@@ -236,8 +237,8 @@ export function FeaturedTestSeries({ selectedExam }: FeaturedTestSeriesProps) {
         </div>
       )}
 
-      {/* ── Generic Series Cards (non-SSC CGL exams) ─────────────────── */}
-      {!isSscCgl && (
+      {/* ── Generic Series Cards (non-active mock exams) ─────────────── */}
+      {!activeMocks && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {genericSeries.map((series) => (
             <div

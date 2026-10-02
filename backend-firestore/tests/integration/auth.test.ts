@@ -8,12 +8,8 @@ import { MockFirebaseAdmin } from '../mocks/MockFirebaseAdmin';
 const app = express();
 app.use(express.json());
 
-// Replace the real firebase auth with our mock for testing
-jest.mock('firebase-admin', () => ({
-  auth: () => ({
-    verifyIdToken: MockFirebaseAdmin.verifyIdToken
-  })
-}));
+// requireAuth verifies through the app's firebase config module; stand the mock in for it.
+jest.mock('../../src/config/firebase', () => ({ auth: { verifyIdToken: (t: string) => MockFirebaseAdmin.verifyIdToken(t) } }));
 
 app.get('/api/protected', requireAuth, (req, res) => {
   res.status(200).json({ success: true, user: req.user });

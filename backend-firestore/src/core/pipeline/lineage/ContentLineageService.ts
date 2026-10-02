@@ -194,7 +194,7 @@ export class ContentLineageService {
         charEnd: chunkObj.sourceLocation?.charEnd,
       },
       documentVersion: {
-        documentVersionId: versionDoc.documentVersionId,
+        documentVersionId: versionDoc.documentVersionId || versionDoc.id,
         versionNumber: versionDoc.version,
         processingVersion: versionDoc.processingVersion || 1,
         embeddingModel: versionDoc.embeddingModel || 'text-embedding-004',
@@ -342,7 +342,7 @@ export class ContentLineageService {
         continue;
       }
 
-      const chunks = await documentVersioningService.getVersionChunks(collectionId, documentId, v.documentVersionId);
+      const chunks = await documentVersioningService.getVersionChunks(collectionId, documentId, v.documentVersionId || v.id);
       const chunkNodes: DownstreamProvenanceNode[] = chunks.slice(0, 10).map(c => ({
         id: c.chunkId,
         type: 'chunk',

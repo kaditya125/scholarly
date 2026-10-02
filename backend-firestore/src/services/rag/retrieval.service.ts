@@ -48,6 +48,21 @@ export interface ExamContext {
 // Authority multipliers: core/knowledge/knowledgeAuthority.ts (authorityWeight) is the only source.
 
 /**
+ * True for a vector that belongs to the shared curriculum corpus, by any of the ownership markers
+ * the curriculum ingests have used (the same three the curriculum query filters on, plus the
+ * legacy `ncert-*` notebook ids). Anything else — a user's notebook, an upload — is private.
+ */
+export function isCurriculumMatch(meta: Record<string, any> | undefined): boolean {
+  if (!meta) return false;
+  return (
+    meta.userId === 'ncert-curriculum' ||
+    meta.owner === 'ncert-curriculum' ||
+    meta.board === 'NCERT' ||
+    (typeof meta.notebookId === 'string' && meta.notebookId.startsWith('ncert-'))
+  );
+}
+
+/**
  * Authority earned from provenance, not from corpus membership.
  *
  * `AUTHENTIC_PYQ` used to be granted to anything carrying `content_type: 'pyq'`, which meant
@@ -654,7 +669,12 @@ Standalone Search Query:`;
     }
     Telemetry.logLatency('pinecone_search', performance.now() - tPinecone, { kind: 'curriculum' });
 
-    const validMatches = (matches || []).filter((m: any) => (m.score || 0) >= 0.45);
+    // The last fallback above is UNFILTERED, i.e. the whole index — every user's private notebook
+    // and upload included. Only curriculum-owned passages may leave this function, whichever
+    // query produced them; otherwise one student's notes get cited to another as "NCERT".
+    const validMatches = (matches || []).filter(
+      (m: any) => (m.score || 0) >= 0.45 && isCurriculumMatch(m.metadata)
+    );
     if (validMatches.length === 0) return [];
 
     // Deduplicate by text so a repeated chunk doesn't burn a reranker slot.

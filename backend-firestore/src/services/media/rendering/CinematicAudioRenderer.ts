@@ -158,6 +158,7 @@ export class CinematicAudioRenderer {
       onProgress?.('synthesizing_voice', 10);
       const voiceResult = await this.voiceEngine.synthesize(timeline, {
         tempDir,
+        dryRun,
         onProgress: (done, total) => {
           const pct = 10 + Math.round((done / total) * 30); // 10-40%
           onProgress?.('synthesizing_voice', pct);

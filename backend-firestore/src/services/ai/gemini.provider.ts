@@ -482,7 +482,92 @@ export class GeminiProvider implements AIProvider {
     }
   }
 
-  async extractQuestionFromImage(...args: any[]): Promise<any> { throw new Error('Not implemented'); }
-  async generateVisionStream(...args: any[]): Promise<any> { throw new Error('Not implemented'); }
-  async describeFigures(...args: any[]): Promise<any> { throw new Error('Not implemented'); }
+  // ── Vision ────────────────────────────────────────────────────────────────────────────────
+  // Used by Scan (scan.service), WhatsApp image questions (WhatsAppConversationRouter) and
+  // figure captioning. These were stubs that threw "Not implemented", so all three failed.
+
+  private static readonly VISION_MODEL = 'gemini-2.5-flash';
+
+  /** Transcribe the question in an image, verbatim. Returns '' when there is no legible question. */
+  async extractQuestionFromImage(base64: string, mimeType: string, opts?: { userId?: string }): Promise<string> {
+    assertAIEnabled('Gemini extractQuestionFromImage');
+    const res = await withRetry(
+      () => this.buildClient().models.generateContent({
+        model: GeminiProvider.VISION_MODEL,
+        contents: [{
+          role: 'user',
+          parts: [
+            { inlineData: { mimeType, data: base64 } },
+            { text: 'Transcribe the exam/textbook question in this image exactly as printed, including its options if any. Use LaTeX ($...$) for mathematics. Output only the transcription. If there is no legible question, output nothing.' },
+          ],
+        }],
+        config: { temperature: 0, thinkingConfig: { thinkingBudget: 0 } },
+      }),
+      { retries: 2, baseDelayMs: 800, label: 'gemini.extractQuestionFromImage' },
+    );
+    const usage: any = (res as any).usageMetadata;
+    Telemetry.logCost('gemini', usage?.promptTokenCount || 0, 'input', { model: GeminiProvider.VISION_MODEL, userId: opts?.userId });
+    Telemetry.logCost('gemini', usage?.candidatesTokenCount || 0, 'output', { model: GeminiProvider.VISION_MODEL, userId: opts?.userId });
+    return (res.text || '').trim();
+  }
+
+  /** Stream an answer to a prompt about an image. Retries only before the first chunk (see generateStreamResponse). */
+  async *generateVisionStream(
+    userText: string,
+    systemPrompt: string | undefined,
+    image: { data: string; mimeType: string },
+    opts?: { userId?: string; maxOutputTokens?: number },
+  ): AsyncGenerator<string, void, unknown> {
+    assertAIEnabled('Gemini generateVisionStream');
+    const config: any = { temperature: 0.4, thinkingConfig: { thinkingBudget: 0 } };
+    if (opts?.maxOutputTokens) config.maxOutputTokens = opts.maxOutputTokens;
+    if (systemPrompt?.trim()) config.systemInstruction = systemPrompt;
+    const contents = [{ role: 'user', parts: [{ inlineData: { mimeType: image.mimeType, data: image.data } }, { text: userText }] }];
+
+    const { iterator, first } = await withRetry(async () => {
+      const stream = await this.buildClient().models.generateContentStream({ model: GeminiProvider.VISION_MODEL, contents, config });
+      const it = stream[Symbol.asyncIterator]();
+      return { iterator: it, first: await it.next() };
+    }, { retries: 2, baseDelayMs: 800, label: 'gemini.generateVisionStream' });
+
+    let usage: any;
+    for (let r = first; !r.done; r = await iterator.next()) {
+      if (r.value.usageMetadata) usage = r.value.usageMetadata;
+      if (r.value.text) yield r.value.text;
+    }
+    Telemetry.logCost('gemini', usage?.promptTokenCount || 0, 'input', { model: GeminiProvider.VISION_MODEL, userId: opts?.userId });
+    Telemetry.logCost('gemini', usage?.candidatesTokenCount || 0, 'output', { model: GeminiProvider.VISION_MODEL, userId: opts?.userId });
+  }
+
+  /**
+   * Identify and caption the figures/diagrams in a document. Returns raw JSON text (an array
+   * matching utils/figureSchema) for the caller to parse and validate.
+   */
+  async describeFigures(
+    base64: string,
+    mimeType: string,
+    opts?: { userId?: string; notebookId?: string; operation?: string },
+  ): Promise<{ text: string; usage: { promptTokens: number; completionTokens: number } }> {
+    assertAIEnabled('Gemini describeFigures');
+    const res = await withRetry(
+      () => this.buildClient().models.generateContent({
+        model: GeminiProvider.VISION_MODEL,
+        contents: [{
+          role: 'user',
+          parts: [
+            { inlineData: { mimeType, data: base64 } },
+            { text: 'List every figure, diagram, chart or labelled illustration in this document. For each, give the page number, a one-to-two sentence caption describing what it shows and what it teaches, the text labels visible in it, and its type (e.g. "circuit", "graph", "flowchart", "biology-diagram", "map", "table-image", "other"). Describe only what is shown; do not invent labels. Return JSON: [{"page":1,"caption":"...","labels":["..."],"diagramType":"..."}]. Return [] if there are none.' },
+          ],
+        }],
+        config: { temperature: 0, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 0 } },
+      }),
+      { retries: 2, baseDelayMs: 800, label: 'gemini.describeFigures' },
+    );
+    const usage: any = (res as any).usageMetadata;
+    const promptTokens = usage?.promptTokenCount || 0;
+    const completionTokens = usage?.candidatesTokenCount || 0;
+    Telemetry.logCost('gemini', promptTokens, 'input', { model: GeminiProvider.VISION_MODEL, userId: opts?.userId });
+    Telemetry.logCost('gemini', completionTokens, 'output', { model: GeminiProvider.VISION_MODEL, userId: opts?.userId });
+    return { text: res.text || '[]', usage: { promptTokens, completionTokens } };
+  }
 }

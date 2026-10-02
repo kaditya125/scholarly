@@ -138,7 +138,7 @@ export class DocumentVersioningService {
               .collection('sources')
               .doc(sourceId)
               .collection('versions')
-              .doc(v.documentVersionId);
+              .doc(v.documentVersionId || v.id);
             batch.update(otherRef, { isActiveVersion: false, updatedAt: Date.now() });
           }
         }

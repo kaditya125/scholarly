@@ -250,6 +250,38 @@ export const EXAM_DISCOVERY_REGISTRY: Record<string, ExamDiscoveryConfig> = {
       },
     ],
   },
+  SSC_IMD_PAPER1: {
+    examId: 'SSC_IMD_PAPER1',
+    officialAuthority: 'Staff Selection Commission',
+    officialArchiveBaseUrl: 'https://ssc.gov.in/notices',
+    officialDomains: ['ssc.gov.in', 'ssc.nic.in', 'imd.gov.in'],
+    supportedYears: [2022, 2017],
+    secondaryFallbacks: [
+      {
+        platformName: 'Testbook SSC IMD Paper-I',
+        domain: 'testbook.com',
+        baseUrlTemplate: 'https://testbook.com/ssc-scientific-assistant/previous-year-papers',
+        sourceTier: 'TIER_B_REPUTABLE_PLATFORM',
+        reputationScore: 0.91,
+      },
+    ],
+  },
+  SSC_JE_PAPER1: {
+    examId: 'SSC_JE_PAPER1',
+    officialAuthority: 'Staff Selection Commission',
+    officialArchiveBaseUrl: 'https://ssc.gov.in/notices',
+    officialDomains: ['ssc.gov.in', 'ssc.nic.in'],
+    supportedYears: [2024, 2023, 2022],
+    secondaryFallbacks: [
+      {
+        platformName: 'Testbook SSC JE Paper-I',
+        domain: 'testbook.com',
+        baseUrlTemplate: 'https://testbook.com/ssc-je/previous-year-papers',
+        sourceTier: 'TIER_B_REPUTABLE_PLATFORM',
+        reputationScore: 0.92,
+      },
+    ],
+  },
   ISRO_CS: {
     examId: 'ISRO_CS',
     officialAuthority: 'Indian Space Research Organisation (ISRO) / ICRB',

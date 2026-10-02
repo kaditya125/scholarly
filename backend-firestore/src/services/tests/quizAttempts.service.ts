@@ -64,6 +64,9 @@ export interface CreateAttemptMeta {
   mode?: QuizMode;
   durationMinutes?: number;
   remediationSource?: QuizAttempt['remediationSource'];
+  /** Per-attempt marking, e.g. a stored mock test's real +2 / −0.5. Defaults to +1 / −0.25. */
+  positiveMark?: number;
+  negativeMark?: number;
 }
 
 /**
@@ -118,11 +121,13 @@ export class QuizAttemptsService {
         sourceShift: q.sourceShift,
         sourcePaper: q.sourcePaper,
         canonicalPaperId: q.canonicalPaperId,
+        // A figure question is unanswerable without its figures — keep them with the attempt.
+        figure: q.figure,
       })),
       totalQuestions: questions.length,
       durationMinutes: meta.durationMinutes || DEFAULT_DURATION_MIN,
-      positiveMark: POSITIVE_MARK,
-      negativeMark: NEGATIVE_MARK,
+      positiveMark: meta.positiveMark ?? POSITIVE_MARK,
+      negativeMark: meta.negativeMark ?? NEGATIVE_MARK,
       status: 'in-progress',
       createdAt: now,
       remediationSource: meta.remediationSource,

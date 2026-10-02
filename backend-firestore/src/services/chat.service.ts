@@ -248,7 +248,8 @@ export class ChatService {
     }
   }
 
-  private async generateAndSaveTitle(sessionId: string, messages: ChatMessage[]) {
+  /** Public: BackgroundWorker runs it for queued SESSION_GENERATE_TITLE jobs. */
+  async generateAndSaveTitle(sessionId: string, messages: ChatMessage[]) {
     try {
       const { GeminiProvider } = await import('./ai/gemini.provider');
       const llm = new GeminiProvider();
@@ -286,7 +287,11 @@ export class ChatService {
     return this.repository.deleteSession(sessionId, userId);
   }
 
-  async getDeletedSessions(userId: string): Promise<any[]> { return []; }
-  async restoreSession(sessionId: string, userId: string): Promise<void> {}
-  async permanentlyDeleteSession(sessionId: string, userId: string): Promise<void> {}
+  // Deleting a chat is a hard delete (repository.deleteSession), so nothing is ever in the trash:
+  // there is no soft-deleted session to list or restore. Purge still honours ownership.
+  async getDeletedSessions(_userId: string): Promise<any[]> { return []; }
+  async restoreSession(_sessionId: string, _userId: string): Promise<boolean> { return false; }
+  async permanentlyDeleteSession(sessionId: string, userId: string): Promise<boolean> {
+    return this.repository.deleteSession(sessionId, userId);
+  }
 }

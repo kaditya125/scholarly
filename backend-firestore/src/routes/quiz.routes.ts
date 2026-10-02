@@ -29,4 +29,7 @@ router.post('/attempts/:id/submit', controller.submitAttempt);
 // "Fix this gap": generate (once) the remediation drill for one diagnosis on the caller's own attempt.
 router.post('/attempts/:id/remediation-drill', remediationDrillLimiter, controller.createRemediationDrill);
 
+// Start an attempt from a stored mock test's own questions (no generation).
+router.post('/mock-tests/:testId/start', controller.startMockTest);
+
 export default router;

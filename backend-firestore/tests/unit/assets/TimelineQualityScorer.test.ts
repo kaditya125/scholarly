@@ -14,6 +14,12 @@ import {
 } from '../../../src/core/director/inspector/TimelineQualityScorer';
 import { VALIDATION_TOPICS, VALIDATION_TOPIC_COUNT } from '../../../src/core/director/inspector/timelineTopics';
 import { syntheticDirect } from '../../../src/core/director/inspector/syntheticDirect';
+
+// direct() reads the user's recurring cast from Firestore, which hangs without credentials.
+jest.mock('../../../src/repositories/character.repository', () => ({
+  ...jest.requireActual('../../../src/repositories/character.repository'),
+  characterRepository: { listByUser: jest.fn().mockResolvedValue([]), saveMany: jest.fn().mockResolvedValue(undefined) },
+}));
 import type { MasterTimeline } from '../../../src/core/director/schema/timeline.schema';
 
 const scorer = new TimelineQualityScorer();
@@ -137,10 +143,10 @@ describe('defect detection', () => {
     expect(dimScore(broken, 'genderAge')).toBeLessThan(100);
   });
 
-  it('detects a music bed above the duck floor', () => {
+  it('detects a music bed that stays above the duck floor even after ducking', () => {
     const broken: MasterTimeline = JSON.parse(JSON.stringify(clean));
     for (const e of broken.tracks.music.events) {
-      if (e.role === 'bed') e.volumeDb = 0;
+      if (e.role === 'bed') e.volumeDb = 6; // ducked by 12dB it is still -6dB, above the -12dB floor
     }
     expect(dimScore(broken, 'music')).toBeLessThan(dimScore(clean, 'music'));
   });

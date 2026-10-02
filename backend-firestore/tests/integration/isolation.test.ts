@@ -1,7 +1,10 @@
 import request from 'supertest';
 import express from 'express';
 import { requireAuth } from '../../src/middlewares/auth';
-import { NotebookController } from '../../src/controllers/notebook.controller';
+import { MockFirebaseAdmin } from '../mocks/MockFirebaseAdmin';
+
+// requireAuth verifies through the app's firebase config module; stand the mock in for it.
+jest.mock('../../src/config/firebase', () => ({ auth: { verifyIdToken: (t: string) => MockFirebaseAdmin.verifyIdToken(t) } }));
 // In a real integration test, we'd mock the repository to return a notebook owned by 'mock_user_1'
 // and test what happens when 'mock_user_2' tries to read it.
 

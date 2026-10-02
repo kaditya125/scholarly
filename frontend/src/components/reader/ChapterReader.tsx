@@ -612,6 +612,9 @@ export function ChapterReader({
   // two in sync; if a new failure reason joins the catalog it'll need to be
   // added to BOTH lists until they're centralized in types.ts (see TODO).
   const NON_RETRYABLE_REASONS = ['MISSING_SOURCE_FILE', 'PERMISSION_DENIED', 'SOURCE_NOT_FOUND', 'SNAPSHOT_FAILED'];
+  // The chapter doesn't exist: its PDF 404s too, so the PDF panel would only add a second
+  // "not available" message beside the main one. Hide it and let the message take the page.
+  const sourceMissing = sourceStatus === 'FAILED' && failureReason === 'SOURCE_NOT_FOUND';
 
   // Track "stuck in progress" so PreparingChapter can escalate the UI after ~60s of
   // no forward progress. Every status transition re-stamps the timer (useEffect dep),
@@ -1087,7 +1090,7 @@ export function ChapterReader({
                 youtubeVideos={youtubeVideos}
               />
             ) : (
-              <PreparingChapter status={sourceStatus} onRetry={handleForceRetry} />
+              <PreparingChapter status={sourceStatus} failureReason={failureReason} onRetry={handleForceRetry} onBrowseLibrary={() => navigate('/documents')} />
             )}
           </div>
         )}
@@ -1111,12 +1114,13 @@ export function ChapterReader({
                 errorDetails={errorDetails}
                 onRetry={handleForceRetry}
                 onOpenPdf={() => setMode('ncert')}
+                onBrowseLibrary={() => navigate('/documents')}
               />
             )}
           </main>
         )}
 
-        {(mode === 'split' || (!docChapter && mode === 'documentary')) && (
+        {(mode === 'split' || (!docChapter && mode === 'documentary') || (sourceMissing && mode === 'ncert')) && (
           <main className="flex-1 overflow-y-auto custom-scrollbar bg-[#F9F8F4] dark:bg-[#131315]">
             {docChapter ? (
               <ArticleContent
@@ -1134,6 +1138,7 @@ export function ChapterReader({
               errorDetails={errorDetails}
               onRetry={handleForceRetry}
               onOpenPdf={() => setMode('ncert')}
+                onBrowseLibrary={() => navigate('/documents')}
             />
           )}
         </main>
@@ -1143,7 +1148,7 @@ export function ChapterReader({
         {/* ═══════════════════════════════════════════════
             RIGHT — NCERT PDF Panel
             ═══════════════════════════════════════════════ */}
-        {(mode === 'split' || mode === 'ncert' || (!docChapter && mode === 'documentary')) && (
+        {!sourceMissing && (mode === 'split' || mode === 'ncert' || (!docChapter && mode === 'documentary')) && (
           <aside
             className={cn(
               'bg-[#151516] border-l border-slate-800 flex flex-col relative shrink-0 transition-all duration-300',

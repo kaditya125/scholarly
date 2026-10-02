@@ -141,6 +141,15 @@ const envSchema = z.object({
   // Meta WhatsApp Cloud API — falls back to Mock provider when empty.
   WHATSAPP_ACCESS_TOKEN: z.string().optional(),
   WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
+  // Webhook verification. Undeclared, zod stripped them: the controller always skipped the HMAC
+  // check and fell back to a hard-coded verify token.
+  APP_SECRET: z.string().optional(),
+  WHATSAPP_WEBHOOK_VERIFY_TOKEN: z.string().optional(),
+
+  // GCS bucket for the admin-triggered Firestore export (admin/backup.service).
+  FIRESTORE_BACKUP_BUCKET: z.string().optional(),
+  // Image model override for ImageGenerationService.
+  IMAGE_MODEL: z.string().optional(),
 
   // Chat fast-path toggle read by GenerationOrchestrator; keep declared so it
   // can be set from .env without a schema failure.

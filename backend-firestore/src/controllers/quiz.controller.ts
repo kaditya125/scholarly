@@ -4,8 +4,9 @@ import { quizAttemptsService, QuizAttemptError } from '../services/tests/quizAtt
 import { UserStatsService } from '../services/userStats.service';
 import { detectExamId } from '../services/pyq/examIndex';
 import { drillTopicsService } from '../services/tests/drillTopics.service';
-import { QuizMode, QuizSource } from '../types/quizAttempt.types';
+import { QuizMode, QuizSource, PedagogicalDiagnostic, StoredQuizQuestion } from '../types/quizAttempt.types';
 import { remediationDrillService, RemediationError } from '../services/pedagogy/remediationDrill.service';
+import { testsRepository } from '../repositories/tests.repository';
 
 const statsService = new UserStatsService();
 
@@ -154,9 +155,6 @@ export class QuizController {
   public getDrillTopics = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const examQuery = String(req.query.exam || '').trim();
-      // Onboarding offers exam FAMILIES as goals ("SSC"), which the exam registry can't resolve on
-      // their own. Drill them from the family's flagship exam — the same choice the dashboard
-      // avatar makes — rather than showing nothing.
       const FAMILY_DEFAULT: Record<string, string> = { ssc: 'SSC CGL' };
       const examId = examQuery
         ? (await detectExamId(examQuery).catch(() => null))
@@ -260,6 +258,63 @@ export class QuizController {
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
       const report = await quizAttemptsService.getProgressReport(userId);
       res.json(report);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+
+
+  /**
+   * POST /quiz/mock-tests/:testId/start
+   * Starts an attempt from a stored mock test's own question_bank questions — no generation — so
+   * what the student answers is exactly the stored set, scored with the test's real marking and
+   * timed with its real duration.
+   */
+  public startMockTest = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as any).user?.uid;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const found = await testsRepository.getTestWithQuestions(req.params.testId);
+      if (!found || !found.test.isLive) return res.status(404).json({ error: 'Mock test not found' });
+
+      const questions: StoredQuizQuestion[] = found.questions
+        .filter(q => Array.isArray(q.options) && q.options.length >= 2
+          && Number.isInteger(q.correctAnswerIndex) && q.correctAnswerIndex >= 0 && q.correctAnswerIndex < q.options.length)
+        .map(q => {
+          const extra = q as typeof q & { section?: string; examId?: string };
+          return {
+            id: q.id,
+            text: q.text,
+            // The SSC section is the clean grouping for the report's weak-section breakdown;
+            // question_bank topic labels are inconsistent (some carry reference-book names).
+            topic: extra.section || String(q.subject || '') || q.topic,
+            options: q.options,
+            correctAnswerIndex: q.correctAnswerIndex,
+            explanation: q.explanation || '',
+            examId: extra.examId,
+          };
+        });
+      if (!questions.length) return res.status(404).json({ error: 'Mock test has no usable questions' });
+
+      const mode: QuizMode = req.body?.mode === 'study' ? 'study' : 'exam';
+      const attempt = await quizAttemptsService.createFromQuestions(userId, questions, {
+        title: found.test.title,
+        source: 'mock-test',
+        mode,
+        durationMinutes: found.test.durationMinutes,
+        positiveMark: found.test.positiveMarks,
+        negativeMark: found.test.negativeMarks,
+      });
+
+      res.json({
+        attemptId: attempt.id,
+        questions: quizAttemptsService.publicQuestions(attempt),
+        durationMinutes: attempt.durationMinutes,
+        title: attempt.title,
+        totalQuestions: attempt.totalQuestions,
+      });
     } catch (error) {
       next(error);
     }

@@ -1,3 +1,4 @@
+import { QuestionFigures, OptionFigure } from '../components/tests/QuestionFigure';
 import { useState, useEffect } from "react";
 import { useLocation, Link, Navigate, useNavigate } from "react-router-dom";
 import { CheckCircle2, ChevronRight, Check, Sparkles, Loader2, ArrowLeft, RotateCcw, Clock, Award, Target, HelpCircle } from "lucide-react";
@@ -20,6 +21,7 @@ interface ReportState {
     options: string[];
     correctAnswerIndex: number;
     explanation: string;
+    figure?: import('../lib/api/quiz').QuestionFigure;
   }>;
 }
 
@@ -228,6 +230,7 @@ export default function Report() {
                 <p className="text-[14.5px] font-medium text-slate-900 dark:text-white mb-4 leading-relaxed">
                   {q.text}
                 </p>
+                <QuestionFigures figure={q.figure} size={92} />
 
                 {/* Options */}
                 <div className="space-y-2 mb-4">
@@ -251,7 +254,7 @@ export default function Report() {
                           <span className="w-5 h-5 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center text-[11px] font-bold shrink-0">
                             {String.fromCharCode(65 + optIdx)}
                           </span>
-                          <span>{opt}</span>
+                          <span className="inline-flex items-center gap-3">{opt}<OptionFigure figure={q.figure} index={optIdx} size={68} /></span>
                         </div>
                         {isThisCorrect && (
                           <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />

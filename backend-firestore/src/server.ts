@@ -83,7 +83,14 @@ import { traceIdMiddleware } from './middlewares/traceId.middleware';
 app.set('trust proxy', 1);
 
 // Parse JSON bodies with a larger limit to support base64 file attachments
-app.use(express.json({ limit: '50mb' }));
+// Webhook signatures (Razorpay, Meta WhatsApp) are HMACs over the exact bytes received, so keep
+// the raw body for those routes — re-serialising the parsed JSON isn't guaranteed to match.
+app.use(express.json({
+  limit: '50mb',
+  verify: (req, _res, buf) => {
+    if (/^\/api\/(webhooks\/|payments\/webhook)/.test((req as any).originalUrl || '')) (req as any).rawBody = buf;
+  },
+}));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Add trace ID tracking to every incoming request
@@ -370,6 +377,9 @@ const server = app.listen(env.PORT, () => {
       .catch((err: any) => console.error('[rag] reference-book isolation check could not run:', err?.message || err));
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     require('./services/pyq/examIndex').warmExamIndex();
+    // Palette search's chapter index (~24s cold on production) — built now, not on a student's search.
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    require('./services/search/search.service').searchService.warmUp();
   } catch (err: any) {
     console.warn('[rag] warm-up could not be scheduled:', err?.message || err);
   }

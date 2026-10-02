@@ -9,6 +9,14 @@ jest.mock('../../src/services/chat.service', () => ({
     deleteSession: jest.fn().mockResolvedValue(true),
   })),
 }));
+// Quota metering reads Firestore; default to a Pro user with allowance left.
+jest.mock('../../src/services/usage.service', () => ({
+  usageService: { consumeQuota: jest.fn().mockResolvedValue(undefined) },
+}));
+jest.mock('../../src/services/entitlement.service', () => ({
+  ...jest.requireActual('../../src/services/entitlement.service'),
+  entitlementService: { getUserPlan: jest.fn().mockResolvedValue({ plan: 'pro' }) },
+}));
 jest.mock('../../src/services/fileParser.service', () => ({
   FileParserService: { extractText: jest.fn().mockResolvedValue([{ text: 'parsed doc text' }]) },
 }));
@@ -24,6 +32,7 @@ jest.mock('../../src/services/entitlement.service', () => ({
 import { ChatController } from '../../src/controllers/chat.controller';
 import { ChatService } from '../../src/services/chat.service';
 import { FileParserService } from '../../src/services/fileParser.service';
+import { usageService } from '../../src/services/usage.service';
 
 function mockRes() {
   const res: any = {};
@@ -67,6 +76,25 @@ describe('ChatController.handleChat', () => {
     expect(res.json).toHaveBeenCalledWith({ reply: 'hi' });
   });
 
+  it('passes a valid productRole claim through, and drops an invalid one', async () => {
+    const body = { sessionId: 's1', message: 'q', model: 'm', topicType: 't' };
+    await controller.handleChat({ user: { uid: 'u1', productRole: 'teacher' }, body } as any, mockRes(), jest.fn());
+    expect(svc.processChat).toHaveBeenLastCalledWith('u1', 's1', 'q', 'm', 't', 'teacher');
+    await controller.handleChat({ user: { uid: 'u1', productRole: 'admin' }, body } as any, mockRes(), jest.fn());
+    expect(svc.processChat).toHaveBeenLastCalledWith('u1', 's1', 'q', 'm', 't', undefined);
+  });
+
+  it('403 QUOTA_EXHAUSTED, without calling the model, when the chat allowance is spent', async () => {
+    const res = mockRes();
+    (usageService.consumeQuota as jest.Mock).mockRejectedValueOnce(
+      Object.assign(new Error('limit reached'), { code: 'QUOTA_EXHAUSTED', used: 50, limit: 50, remaining: 0, plan: 'free' }),
+    );
+    await controller.handleChat({ user: { uid: 'u1' }, body: { sessionId: 's1', message: 'q', model: 'm', topicType: 't' } } as any, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'QUOTA_EXHAUSTED', feature: 'chat' }));
+    expect(svc.processChat).not.toHaveBeenCalled();
+  });
+
   it('forwards errors to next()', async () => {
     const res = mockRes();
     const next = jest.fn();
@@ -75,6 +103,8 @@ describe('ChatController.handleChat', () => {
     expect(next).toHaveBeenCalled();
   });
 });
+
+// Message feedback moved to FeedbackController (POST /chat/:messageId/feedback).
 
 describe('ChatController.handleChatStream', () => {
   it('401 unauthenticated', async () => {

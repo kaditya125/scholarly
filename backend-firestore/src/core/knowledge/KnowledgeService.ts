@@ -18,7 +18,7 @@ import { db } from '../../config/firebase';
 import { notebookRepository } from '../../repositories/notebook.repository';
 import { retrievalService, RetrievalService, RetrievalResult } from '../../services/rag/retrieval.service';
 import { graphRetrievalService, GraphRetrievalService } from '../../services/rag/graphRetrieval.service';
-import { contentExplorationService, ContentExplorationService } from '../pipeline/exploration/ContentExplorationService';
+import { contentExplorationService, ContentExplorationService, ExplorationStructureNode } from '../pipeline/exploration/ContentExplorationService';
 import { contentLineageService, ContentLineageService } from '../pipeline/lineage/ContentLineageService';
 import { documentVersioningService, DocumentVersioningService } from '../pipeline/versioning/DocumentVersioningService';
 import { DocumentSource, Notebook } from '../../types';
@@ -76,10 +76,7 @@ export class KnowledgeService {
       if (sourceDoc.exists) {
         return sourceDoc.data() as DocumentSource;
       }
-
-      // Memory cache fallback in exploration service
-      const cached = this.exploration.getCachedDocument(collectionId, documentId);
-      if (cached) return cached;
+      // (ContentExplorationService keeps no document cache, so there is no second place to look.)
     } catch (err) {
       logger.warn(`[KnowledgeService.getDocument] Firestore error:`, err);
     }
@@ -144,32 +141,32 @@ export class KnowledgeService {
         {
           mode: options?.mode || 'hybrid',
           topK: options?.topK || 5,
-          minScore: options?.minScore || 0.4,
-          semanticWeight: options?.semanticWeight || 0.7,
-          keywordWeight: options?.keywordWeight || 0.3,
+          // `??`, not `||`: an explicit 0 is meaningful (semanticSearch sets keywordWeight 0).
+          minScore: options?.minScore ?? 0.4,
+          semanticWeight: options?.semanticWeight ?? 0.7,
+          keywordWeight: options?.keywordWeight ?? 0.3,
           highlightSnippetLength: options?.highlightSnippetLength || 250,
           tenantId: options?.tenantId,
         }
       );
 
-      const items: KnowledgeSearchResultItem[] = explorationResult.results.map((r) => ({
+      const items: KnowledgeSearchResultItem[] = explorationResult.map((r) => ({
         chunkId: r.chunkId,
         documentId: r.documentId,
         documentVersionId: r.documentVersionId,
         collectionId: r.collectionId,
         text: r.text,
         score: r.score,
-        semanticScore: r.semanticScore,
-        keywordScore: r.keywordScore,
-        contentType: r.contentType,
-        sequence: r.sequence,
+        // Exploration returns only the fused score; the per-mode scores aren't exposed.
+        contentType: r.metadata?.contentType || 'text',
+        sequence: r.lineage?.chunkSequence ?? 0,
         pageNumber: r.pageNumber,
         pageEnd: r.pageEnd,
         chapter: r.chapter,
         section: r.section,
-        subject: r.subject,
-        classGrade: r.classGrade,
-        highlightSnippet: r.highlightSnippet,
+        subject: r.metadata?.subject,
+        classGrade: r.metadata?.classLevel,
+        highlightSnippet: r.snippet,
       }));
 
       return {
@@ -310,9 +307,9 @@ export class KnowledgeService {
         );
         if (graphResult && graphResult.contextString) {
           graphContextData = {
-            nodesMatched: graphResult.meta?.matched || 0,
-            traversedNodes: graphResult.meta?.nodeCount || 0,
-            expansionTerms: graphResult.meta?.expansionTerms || [],
+            nodesMatched: graphResult.matched?.length || 0,
+            traversedNodes: graphResult.nodeCount || 0,
+            expansionTerms: graphResult.expansionTerms || [],
             contextString: graphResult.contextString,
           };
         }
@@ -477,17 +474,17 @@ export class KnowledgeService {
       let edges = edgesSnap.docs.map((d) => d.data() as PipelineKGEdge);
 
       if (documentId) {
-        nodes = nodes.filter((n) => n.lineage?.documentId === documentId);
+        nodes = nodes.filter((n) => (n.lineage || []).some((l) => l.documentId === documentId) || (n.sourceDocIds || []).includes(documentId));
         edges = edges.filter(
           (e) =>
-            nodes.some((n) => n.nodeId === e.sourceNodeId) ||
-            nodes.some((n) => n.nodeId === e.targetNodeId)
+            nodes.some((n) => n.id === e.sourceNodeId) ||
+            nodes.some((n) => n.id === e.targetNodeId)
         );
       }
 
       if (options?.minConfidence) {
         const minConf = options.minConfidence;
-        nodes = nodes.filter((n) => (n.confidence || 1.0) >= minConf);
+        nodes = nodes.filter((n) => (n.confidenceScore ?? 1.0) >= minConf);
         edges = edges.filter((e) => (e.confidence || 1.0) >= minConf);
       }
 
@@ -524,16 +521,17 @@ export class KnowledgeService {
     collectionId: string,
     documentId: string,
     userId?: string
-  ): Promise<DocumentStructureBlock[] | null> {
+  ): Promise<ExplorationStructureNode[] | null> {
     try {
+      // The exploration service returns the chapter/section tree, not flat structure blocks.
       const structure = await this.exploration.getDocumentStructure(
         userId || 'default',
         collectionId,
         documentId
       );
 
-      if (structure && structure.structuredBlocks) {
-        return structure.structuredBlocks;
+      if (structure?.length) {
+        return structure;
       }
     } catch (err) {
       logger.warn(`[KnowledgeService.getDocumentStructure] Structure query error:`, err);

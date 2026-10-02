@@ -70,6 +70,12 @@ export const quizApi = {
     const { data } = await api.post(`/quiz/attempts/${attemptId}/remediation-drill`, { diagnosticId });
     return data;
   },
+
+  /** Starts an attempt from a stored mock test's own questions (no generation). */
+  async startMockTest(testId: string, opts: { mode?: QuizMode } = {}) {
+    const { data } = await api.post(`/quiz/mock-tests/${encodeURIComponent(testId)}/start`, opts);
+    return data as { attemptId: string; questions: Pick<StoredQuizQuestion, 'id' | 'text' | 'topic' | 'options'>[]; durationMinutes: number; title: string; totalQuestions: number };
+  },
 };
 
 export type DiagnosticStatus = 'ROOT_CAUSE_IDENTIFIED' | 'TOPIC_LEVEL_GAP' | 'PREREQUISITES_UNASSESSED';
@@ -125,8 +131,18 @@ export type RemediationErrorCode =
   | 'REMEDIATION_IN_PROGRESS' | 'QUOTA_EXCEEDED' | 'REMEDIATION_GENERATION_FAILED';
 
 export type QuizAttemptStatus = 'in-progress' | 'completed';
-export type QuizSource = 'weak-areas' | 'topic' | 'notebook';
+export type QuizSource = 'weak-areas' | 'topic' | 'notebook' | 'mock-test';
 export type QuizMode = 'exam' | 'study';
+
+/** Code-generated non-verbal question figures (server-generated SVG; render as <img>). */
+export interface QuestionFigure {
+  archetype: string;
+  seed: number;
+  questionSvgs: string[];
+  /** Present when the options are figures; `options` then hold their labels (A–D). */
+  optionSvgs?: string[];
+  answerSource: 'computed';
+}
 
 export interface StoredQuizQuestion {
   id: string;
@@ -135,6 +151,7 @@ export interface StoredQuizQuestion {
   options: string[];
   correctAnswerIndex: number;
   explanation: string;
+  figure?: QuestionFigure;
 }
 
 export interface TopicBreakdown {

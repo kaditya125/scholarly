@@ -57,7 +57,11 @@ const SSC_SUBJ = 'subject:SSC_CGL:2026:syl_s:quant:ssssss';
 const SSC_NODE = 'topic:SSC_CGL:2026:syl_s:current_electricity:bbbbbb';   // same label, other exam
 
 const USER = 'student-loop';
-const TODAY = new Date('2026-09-01T09:00:00Z');
+// Relative to the real clock: recorded evidence is stamped with Date.now(), so fixed calendar dates
+// here went stale — once the wall clock passed the 'review' date, practice looked like it happened
+// in the future and nothing was ever due.
+const TODAY = new Date();
+const DAY_MS = 86_400_000;
 
 beforeEach(() => {
   mockStore.clear();
@@ -109,7 +113,7 @@ describe('the loop closes — JEE Main', () => {
     // 6. NEXT PLAN sees the new evidence and moves up the activity ladder.
     const second = await generateDailyPlan({
       userId: USER, examId: 'JEE_MAIN', dailyMinutes: 120,
-      today: new Date('2026-09-10T09:00:00Z'),   // far enough on to be due for review
+      today: new Date(TODAY.getTime() + 9 * DAY_MS),   // far enough on to be due for review
     });
     const secondActs = second.tasks.filter((t) => t.syllabusNodeId === JEE_NODE).map((t) => t.activity);
     expect(secondActs).toEqual(['PRACTICE', 'QUIZ']);   // no longer teaching from scratch

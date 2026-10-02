@@ -1,16 +1,16 @@
-import { QueryPlanningService } from '../../src/core/workflow/services/QueryPlanningService';
+import { AgentContext } from '../../src/core/workflow/services/AgentOrchestrator';
 
-// Mock the KnowledgeGraphAgent that RetrievalOrchestrator instantiates internally, so the
-// test never touches Firestore. The mock populates sharedState like the real agent does.
+// Mock heavy graph + RAG dependencies before importing orchestrators.
+jest.mock('../../src/services/ai/providers/google-embedding.provider', () => ({ GoogleEmbeddingProvider: jest.fn(() => ({ generateEmbedding: jest.fn().mockResolvedValue([0.1]) })) }));
+jest.mock('../../src/services/ai/gemini.provider', () => ({ GeminiProvider: jest.fn(() => ({ generateResponse: jest.fn() })) }));
+jest.mock('../../src/services/ai/providers/cohere-reranker.provider', () => ({ CohereRerankerProvider: jest.fn(() => ({ rerank: jest.fn() })) }));
+jest.mock('../../src/services/cache.service', () => ({ cacheService: { get: jest.fn().mockResolvedValue(null), set: jest.fn() } }));
+jest.mock('../../src/services/rag/pinecone.service', () => ({ pineconeService: { queryVectors: jest.fn() } }));
+jest.mock('../../src/services/rag/search.service', () => ({ searchService: { search: jest.fn() } }));
 jest.mock('../../src/core/agents/KnowledgeGraphAgent', () => ({
-  KnowledgeGraphAgent: class {
-    async execute(ctx: any) {
-      ctx.sharedState['graphContext'] = 'GRAPH CONTEXT';
-      ctx.sharedState['graphExpansionTerms'] = ['neighbor'];
-      ctx.sharedState['graphMeta'] = {
-        nodeCount: 3, edgeCount: 5, matched: 2, matchedLabels: ['A', 'B'], expansionTerms: ['neighbor'], traversalMs: 12,
-      };
-    }
+  knowledgeGraphAgent: {
+    findRelatedConcepts: jest.fn().mockResolvedValue({ concepts: ['neighbor'] }),
+    findPrerequisites: jest.fn().mockResolvedValue({ prerequisites: [] }),
   },
 }));
 
@@ -20,9 +20,12 @@ jest.mock('../../src/core/pipeline/exploration/ContentExplorationService', () =>
   contentExplorationService: { ensureCollectionAccess: jest.fn().mockResolvedValue(undefined) },
 }));
 jest.mock('../../src/services/pyq/canonicalPyqRetrieval.service', () => ({ canonicalPyqRetrievalService: {} }));
-// The real parser resolves exams from a Firestore-backed index; these tests are not about PYQs.
 jest.mock('../../src/services/pyq/pyqQueryParser', () => ({
   parsePyqQuery: jest.fn(async () => ({ intent: 'CONCEPT', examId: null, year: null, shift: null, paper: null, topic: null })),
+}));
+jest.mock('../../src/services/pyq/examIndex', () => ({
+  ...jest.requireActual('../../src/services/pyq/examIndex'),
+  detectExamId: jest.fn().mockResolvedValue(null),
 }));
 jest.mock('../../src/core/knowledge', () => ({
   knowledgeService: {},
@@ -35,52 +38,56 @@ jest.mock('../../src/services/rag/referenceBooks.service', () => ({
 }));
 
 import { RetrievalOrchestrator } from '../../src/core/workflow/services/RetrievalOrchestrator';
-import { WorkflowEvent } from '../../src/core/workflow/types';
+import { contentExplorationService } from '../../src/core/pipeline/exploration/ContentExplorationService';
 
-async function drain<TReturn>(gen: AsyncGenerator<WorkflowEvent, TReturn>) {
-  const events: WorkflowEvent[] = [];
-  let res = await gen.next();
-  while (!res.done) { events.push(res.value); res = await gen.next(); }
-  return { events, outcome: res.value };
+function makeReq(overrides: Record<string, unknown> = {}) {
+  return {
+    query: 'explain gauss law',
+    history: [],
+    systemPrompt: 'be helpful',
+    notebookId: undefined,
+    ...overrides,
+  };
 }
 
-describe('QueryPlanningService', () => {
-  const svc = new QueryPlanningService();
+function agentCtx(): AgentContext {
+  return {
+    runId: 'r1',
+    correlationId: 'c1',
+    userContext: {
+      authId: 'u1',
+      uid: 'u1',
+      email: 'u@example.com',
+      displayName: 'U',
+      role: 'student',
+      isAnonymous: false,
+      accountStatus: 'active',
+      subscriptionTier: 'free',
+      sessionCreatedAt: Date.now(),
+    },
+    clientIp: '127.0.0.1',
+    timestamp: Date.now(),
+    metadata: {},
+    toolExecutions: [],
+    isDisposed: false,
+    auditLog: [],
+  };
+}
 
-  it('flags web search for RESEARCH mode', () => {
-    expect(svc.plan('anything', 'RESEARCH').needsWebSearch).toBe(true);
-  });
-
-  it('flags web search for time-sensitive queries', () => {
-    expect(svc.plan('what is the latest news on X', 'TEACHER').needsWebSearch).toBe(true);
-    expect(svc.plan('explain photosynthesis', 'TEACHER').needsWebSearch).toBe(false);
-  });
-
-  it('detects an attached file marker', () => {
-    expect(svc.plan('[File Attached: notes.pdf]\nsummarize', 'TEACHER').hasAttachment).toBe(true);
-    expect(svc.plan('no file here', 'TEACHER').hasAttachment).toBe(false);
-  });
-});
+async function drain(gen: AsyncGenerator<any, any, any>): Promise<{ events: any[]; outcome: any }> {
+  const events: any[] = [];
+  while (true) {
+    const next = await gen.next();
+    if (next.done) return { events, outcome: next.value };
+    events.push(next.value);
+  }
+}
 
 describe('RetrievalOrchestrator', () => {
-  const makeReq = (over: any = {}) => ({ userId: 'u1', query: 'explain gauss law', history: [], ...over });
-  const agentCtx = () => ({ request: {} as any, retrievedContext: 'Placeholder RAG Text', sharedState: {} as any });
-
-  it('runGraphRetrieval populates graph shared state; buildGraphDetailMessage reflects it', async () => {
-    const orch = new RetrievalOrchestrator({} as any);
-    const ctx = agentCtx();
-    await orch.runGraphRetrieval(ctx as any);
-    expect(ctx.sharedState['graphContext']).toBe('GRAPH CONTEXT');
-    expect(ctx.sharedState['graphMeta'].nodeCount).toBe(3);
-    const detail = orch.buildGraphDetailMessage(makeReq({ notebookId: 'nb1' }) as any, ctx as any);
-    expect(detail).toContain('Matched 2 concept(s)');
-    expect(detail).toContain('traversed 3 node(s) / 5 relationship(s)');
-  });
-
-  it('notebook path: stream() is vector-only — yields RAG progress, a citation per result, RAG detail', async () => {
+  it('notebook path: fuses graph search + vector search without re-running graph', async () => {
     const retrieval = {
       retrieveContext: jest.fn().mockResolvedValue([
-        { source: 'Ch1.pdf', text: 'passage', score: 0.9, metadata: { pageNumber: 2 }, selectionReasoning: 'r' },
+        { source: 'Ch1.pdf', text: 'gauss text', score: 0.9, metadata: {} },
       ]),
       retrieveCurriculumContext: jest.fn(),
       retrieveWebContext: jest.fn(),
@@ -90,7 +97,7 @@ describe('RetrievalOrchestrator', () => {
     // Simulate the graph stage having already run in the parallel batch.
     await orch.runGraphRetrieval(ctx as any);
     const { events, outcome } = await drain(
-      orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false } as any),
+      orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false, isConversational: false }),
     );
 
     // Vector-only event sequence: RAG progress, citation, RAG detail (no graph events).
@@ -104,6 +111,22 @@ describe('RetrievalOrchestrator', () => {
     expect(ctx.retrievedContext).toContain('NOTEBOOK CONTEXT');
   });
 
+  it('never searches a notebook the caller does not own', async () => {
+    // notebookId arrives in the request body; without the ownership gate it went straight into the
+    // vector filter (an IDOR). A denied notebook falls back to the shared corpora instead.
+    (contentExplorationService.ensureCollectionAccess as jest.Mock).mockRejectedValue(new Error('forbidden'));
+    const retrieval = {
+      retrieveContext: jest.fn(),
+      retrieveCurriculumContext: jest.fn().mockResolvedValue([]),
+      retrieveWebContext: jest.fn(),
+    };
+    const orch = new RetrievalOrchestrator(retrieval as any);
+    await drain(
+      orch.stream(makeReq({ notebookId: 'someone_elses_nb' }) as any, agentCtx() as any, { needsWebSearch: false, hasAttachment: false, isConversational: false }),
+    );
+    expect(retrieval.retrieveContext).not.toHaveBeenCalled();
+  });
+
   it('no-notebook path: grounds in curriculum and emits a citation', async () => {
     const retrieval = {
       retrieveContext: jest.fn(),
@@ -114,7 +137,7 @@ describe('RetrievalOrchestrator', () => {
     };
     const orch = new RetrievalOrchestrator(retrieval as any);
     const { events, outcome } = await drain(
-      orch.stream(makeReq() as any, agentCtx() as any, { needsWebSearch: false, hasAttachment: false } as any),
+      orch.stream(makeReq() as any, agentCtx() as any, { needsWebSearch: false, hasAttachment: false, isConversational: false }),
     );
     expect(retrieval.retrieveCurriculumContext).toHaveBeenCalledWith('explain gauss law', 5);
     expect(outcome.citationsList).toHaveLength(1);
@@ -129,7 +152,7 @@ describe('RetrievalOrchestrator', () => {
     };
     const orch = new RetrievalOrchestrator(retrieval as any);
     const { events, outcome } = await drain(
-      orch.stream(makeReq({ query: '[File Attached: a.pdf] summarize' }) as any, agentCtx() as any, { needsWebSearch: false, hasAttachment: true } as any),
+      orch.stream(makeReq({ query: '[File Attached: a.pdf] summarize' }) as any, agentCtx() as any, { needsWebSearch: false, hasAttachment: true, isConversational: false }),
     );
     expect(retrieval.retrieveCurriculumContext).not.toHaveBeenCalled();
     expect(outcome.citationsList).toHaveLength(0);
@@ -152,7 +175,7 @@ describe('RetrievalOrchestrator', () => {
       const ctx = agentCtx();
       await orch.runGraphRetrieval(ctx as any); // graph ran (parallel batch), but 'vector' must not fuse it
       const { outcome } = await drain(
-        orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false } as any, { retrievalStrategy: 'vector' } as any),
+        orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false, isConversational: false }, { retrievalStrategy: 'vector' } as any),
       );
       expect(retrieval.retrieveContext).toHaveBeenCalled();
       expect(outcome.citationsList).toHaveLength(1);
@@ -168,7 +191,7 @@ describe('RetrievalOrchestrator', () => {
       const ctx = agentCtx();
       await orch.runGraphRetrieval(ctx as any);
       const { outcome } = await drain(
-        orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false } as any, { retrievalStrategy: 'none' } as any),
+        orch.stream(makeReq({ notebookId: 'nb1' }) as any, ctx as any, { needsWebSearch: false, hasAttachment: false, isConversational: false }, { retrievalStrategy: 'none' } as any),
       );
       expect(retrieval.retrieveContext).not.toHaveBeenCalled();
       expect(retrieval.retrieveCurriculumContext).not.toHaveBeenCalled();

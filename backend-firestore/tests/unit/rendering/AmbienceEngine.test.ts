@@ -56,6 +56,8 @@ const mockAsset = (overrides: Partial<ResolvedAsset> = {}): ResolvedAsset => ({
 const mockLayer = (overrides: Partial<AmbienceLayer> = {}): AmbienceLayer => ({
   requirement: {
     kind: 'ambience' as const,
+    category: 'forest',
+    loopable: true,
     tags: ['forest'],
     durationMs: 60_000,
   },
@@ -164,7 +166,9 @@ describe('AmbienceEngine', () => {
       expect(cue.layerRole).toBe('texture');
       expect(cue.volumeDb).toBe(-18);
       expect(cue.loopBehavior).toBe('seamless');
-      expect(cue.assetId).toBe('forest-texture');
+      // The layer's asset id is kept (prepare() resolves assets by it); the asset's own id is the fallback.
+      expect(cue.assetId).toBe('test-asset');
+      expect(buildLayerCue(event, mockLayer({ assetId: undefined }), 'layer1', asset).assetId).toBe('forest-texture');
     });
   });
 

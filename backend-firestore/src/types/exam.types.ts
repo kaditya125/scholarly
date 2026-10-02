@@ -562,7 +562,8 @@ export interface ExamEligibilityCriteria {
 export interface ExamFeeStructure {
   general: number;
   reserved: number;
-  female: number;
+  /** Absent when the notification doesn't publish a separate fee for women. */
+  female?: number;
   paymentModes?: string[];
 }
 

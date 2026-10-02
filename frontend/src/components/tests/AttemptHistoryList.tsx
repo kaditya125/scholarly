@@ -14,6 +14,7 @@ const sourceMeta: Record<QuizSource, { label: string; icon: React.ReactNode; cls
   'weak-areas': { label: 'Weak areas', icon: <Target className="w-3 h-3" />, cls: 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40' },
   topic: { label: 'Topic', icon: <Sparkles className="w-3 h-3" />, cls: 'bg-slate-100 text-slate-700 dark:bg-white/5 dark:text-slate-300 border border-slate-200/80 dark:border-white/10' },
   notebook: { label: 'Notebook', icon: <BookOpen className="w-3 h-3" />, cls: 'bg-[#c8e558]/15 text-slate-900 dark:text-[#c8e558] border border-[#c8e558]/30' },
+  'mock-test': { label: 'Mock test', icon: <FileText className="w-3 h-3" />, cls: 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40' },
 };
 
 function relativeDate(iso?: string): string {

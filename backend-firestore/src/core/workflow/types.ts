@@ -65,6 +65,12 @@ export interface WorkflowRequest {
     goal: string;
     documents: Array<{ name: string; mimeType: string; pages: Array<{ pageNumber?: number; text: string }> }>;
   };
+  examContext?: {
+    exam?: string;
+    examId?: string;
+    subject?: string;
+    [key: string]: any;
+  };
 }
 
 export interface WorkflowEvent {

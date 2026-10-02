@@ -9,21 +9,36 @@
  */
 
 jest.mock('firebase-admin', () => ({
-  firestore: { FieldValue: { serverTimestamp: () => '__ts__' } },
+  firestore: { FieldValue: { serverTimestamp: () => '__ts__', delete: () => '__delete__' } },
 }));
 
 const store: Record<string, Record<string, any>> = {
   payments: {}, classes: {}, classEnrollments: {}, teacherEarnings: {}, users: {},
 };
 
+/**
+ * Firestore write semantics the services rely on: `set(v, {merge:true})` deep-merges maps, and a
+ * FieldValue.delete() sentinel removes its field (payment/subscription code clears stale fields).
+ */
+const DELETE = '__delete__';
+function mergeWrite(base: any, v: any, deep: boolean): any {
+  const out: any = { ...(base || {}) };
+  for (const [k, val] of Object.entries(v || {})) {
+    if (val === DELETE) delete out[k];
+    else if (deep && val && typeof val === 'object' && !Array.isArray(val)) out[k] = mergeWrite(out[k], val, true);
+    else out[k] = val;
+  }
+  return out;
+}
+
 function makeDoc(col: string, id: string) {
   return {
     id,
     get: async () => ({ exists: !!store[col][id], data: () => store[col][id] }),
     set: async (v: any, opts?: { merge?: boolean }) => {
-      store[col][id] = opts?.merge ? { ...(store[col][id] || {}), ...v } : v;
+      store[col][id] = opts?.merge ? mergeWrite(store[col][id], v, true) : mergeWrite({}, v, false);
     },
-    update: async (v: any) => { store[col][id] = { ...(store[col][id] || {}), ...v }; },
+    update: async (v: any) => { store[col][id] = mergeWrite(store[col][id], v, false); },
   };
 }
 let autoId = 0;

@@ -41,6 +41,11 @@ const META: Record<ManageableSecretKey, Omit<SecretMeta, 'key'>> = {
     label: 'Vector database',
     liveNote: 'Live immediately — the next retrieval or ingestion call uses it.',
   },
+  QDRANT_API_KEY: {
+    service: 'Qdrant',
+    label: 'Vector database (when VECTOR_STORE=qdrant)',
+    liveNote: 'Live immediately — the Qdrant client is rebuilt on every call.',
+  },
   COHERE_API_KEY: {
     service: 'Cohere',
     label: 'Reranker',

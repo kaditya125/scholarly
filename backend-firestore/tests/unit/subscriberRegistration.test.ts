@@ -11,11 +11,21 @@
  * These run with NODE_ENV=test, so publish() dispatches in-process through the same
  * executeHandlers() the Redis path uses.
  */
+// Bootstrap also starts the automation trigger dispatcher — a separate, legitimate consumer of
+// several of these events. Its workflow lookup reads Firestore (which hangs without credentials);
+// no workflows are configured here, so it evaluates nothing.
+jest.mock('../../src/core/automation/engine/AutomationExecutionRepository', () => ({
+  automationExecutionRepository: { listWorkflows: jest.fn().mockResolvedValue([]) },
+}));
+
 import { eventBus } from '../../src/core/events/EventBus';
 import { registerEventSubscribers } from '../../src/core/events/subscribers';
 
 const handlerCount = (event: string): number =>
   ((eventBus as any).handlers.get(event) as Set<unknown> | undefined)?.size ?? 0;
+
+const EVENTS = ['learning.test_completed', 'podcast.completed', 'podcast.failed', 'user.registered', 'notebook.ingested'];
+let afterFirst: Record<string, number>;
 
 describe('registerEventSubscribers: exactly-once registration', () => {
   /*
@@ -32,6 +42,7 @@ describe('registerEventSubscribers: exactly-once registration', () => {
     expect(registerEventSubscribers()).toEqual({ registered: true });
     afterFirst = Object.fromEntries(EVENTS.map((e) => [e, handlerCount(e)]));
     expect(afterFirst['learning.test_completed']).toBe(2); // mastery handler + automation dispatcher
+    expect(afterFirst['user.registered']).toBe(2);
     expect(afterFirst['podcast.completed']).toBe(1);
     expect(afterFirst['podcast.failed']).toBe(1);
     expect(afterFirst['notebook.ingested']).toBe(1);
@@ -41,7 +52,8 @@ describe('registerEventSubscribers: exactly-once registration', () => {
     // Simulates the same startup path running twice (double import, re-entrant bootstrap).
     expect(registerEventSubscribers()).toEqual({ registered: false });
     expect(registerEventSubscribers()).toEqual({ registered: false });
-    for (const e of EVENTS) expect([e, handlerCount(e)]).toEqual([e, afterFirst[e]]);
+
+    for (const e of EVENTS) expect(handlerCount(e)).toBe(afterFirst[e]);
   });
 });
 

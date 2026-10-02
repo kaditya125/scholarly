@@ -19,6 +19,7 @@ import {
 } from '../../../src/services/media/rendering/CinematicAudioRenderer';
 import type { IAssetLibrary } from '../../../src/core/director/interfaces';
 import type { MasterTimeline } from '../../../src/core/director/schema/timeline.schema';
+import { makeTimeline } from '../director/fixtures';
 
 // ── Test Doubles ────────────────────────────────────────────────────────────
 
@@ -31,103 +32,13 @@ class FakeAssetLibrary implements IAssetLibrary {
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
 
-const mockTimeline = (overrides: Partial<MasterTimeline> = {}): MasterTimeline => ({
-  id: 'timeline1',
-  podcastId: 'podcast1',
-  userId: 'user1',
-  schemaVersion: 2,
-  phase: 'resolved',
-  createdAt: Date.now(),
-  meta: {
-    title: 'Test Podcast',
-    language: 'en',
-    genre: 'educational',
-    narrativeStyle: 'linear',
-    cinematicIntensity: 'balanced',
-    estimatedMinutes: 1,
-  },
-  cast: {
-    characters: [
-      {
-        id: 'char1',
-        name: 'Narrator',
-        voiceRole: 'Host',
-        voiceProvider: 'google-cloud-tts',
-        voiceId: 'en-US-Journey-F',
-        description: 'Main narrator',
-        baseEmotion: 'neutral',
-        allowedEmotions: ['neutral', 'curious', 'excited'],
-        gender: 'female',
-        age: 'adult',
-      },
-    ],
-  },
-  emotionCurve: {
-    keyframes: [{ atProgress: 0, emotion: 'neutral', intensity: 0.5, sceneId: 'scene1' }],
-    arcType: 'steady',
-  },
-  scenes: [
-    {
-      id: 'scene1',
-      index: 0,
-      lineRange: { startLine: 0, endLine: 0 },
-      title: 'Introduction',
-      setting: 'classroom',
-      mood: 'calm',
-      pacing: 'steady',
-      durationMs: 60_000,
-      primaryCharacterId: 'char1',
-    },
-  ],
-  tracks: {
-    voice: {
-      events: [
-        {
-          kind: 'voice' as const,
-          id: 'v1',
-          sceneId: 'scene1',
-          startMs: 0,
-          durationMs: 5_000,
-          priority: 100,
-          lineIndex: 0,
-          characterId: 'char1',
-          text: 'Welcome to this test podcast.',
-          emotion: 'neutral',
-          delivery: {
-            emotion: 'neutral',
-            intensity: 0.5,
-            speakingRate: 1,
-            pitch: 0,
-            volumeDb: 0,
-            emphasisWords: [],
-            whisper: false,
-            breathBefore: false,
-            prosodyUnsupported: false,
-          },
-        },
-      ],
-    },
-    music: { events: [] },
-    ambience: { events: [] },
-    sfx: { events: [] },
-    pause: { events: [] },
-    visual: { events: [] },
-  },
-  mastering: {
-    targetLufs: -16,
-    truePeakDb: -1,
-    voiceBusGainDb: 0,
-    duckingDb: -12,
-    duckAttackMs: 150,
-    duckReleaseMs: 400,
-    fadeInMs: 500,
-    fadeOutMs: 1500,
-  },
-  totalDurationMs: 60_000,
-  degradedAssets: [],
-  warnings: [],
-  ...overrides,
-});
+// The shared director fixture is schema-validated, so this can't drift from MasterTimeline again.
+// Overrides are applied AFTER parsing, which is what lets the validation tests build deliberately
+// invalid timelines (no scenes, zero duration).
+const mockTimeline = (overrides: Partial<MasterTimeline> = {}): MasterTimeline => {
+  const base = makeTimeline({ phase: 'resolved', totalDurationMs: 60_000 });
+  return { ...base, tracks: { ...base.tracks, music: { events: [] } }, ...overrides };
+};
 
 // ── Tests ───────────────────────────────────────────────────────────────────
 
@@ -257,6 +168,8 @@ describe('CinematicAudioRenderer', () => {
                   kind: 'music' as const,
                   category: 'documentary' as const,
                   durationMs: 10_000,
+                  loopable: true,
+                  tags: [],
                 },
                 assetId: `music${i}`,
                 category: 'documentary' as const,

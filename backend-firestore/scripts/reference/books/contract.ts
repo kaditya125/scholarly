@@ -295,7 +295,7 @@ const SCHAND_QUANT: ReferenceBook = {
     'Miscellaneous',
   ],
   chapterHeading:
-    /^(?:\d{1,2}[.)]?\s*)?(number system|h\.?\s?c\.?\s?f\.?(?:\s*(?:and|&)\s*l\.?\s?c\.?\s?m\.?)?|l\.?\s?c\.?\s?m\.?|decimal fractions?|simplification|square roots?(?:\s*(?:and|&)\s*cube roots?)?|cube roots?|average|problems on (?:numbers|ages)|surds(?:\s*(?:and|&)\s*indices)?|indices|percentage|profit (?:and|&) loss|ratio (?:and|&) proportion|partnership|chain rule|time (?:and|&) work|pipes (?:and|&) cisterns|time (?:and|&) distance|problems on trains|boats (?:and|&) streams|alligation(?:\s*or\s*mixtures?)?|mixtures?|simple interest|compound interest|logarithms?|area|volumes?(?:\s*(?:and|&)\s*surface areas?)?|races (?:and|&) games|calendar|clocks?|stocks (?:and|&) shares|permutations?(?:\s*(?:and|&)\s*combinations?)?|combinations?|probability|true discount|banker'?s discount|heights (?:and|&) distances|trigonometr\w*|geometr\w*|data interpretation|tabulation|bar graphs?|pie charts?|line graphs?)\s*$/i,
+    /^(?:\d{1,2}[.)]?\s*)?(number system|h\.?\s?c\.?\s?f\.?(?:\s*(?:and|&)\s*l\.?\s?c\.?\s?m\.?)?|l\.?\s?c\.?\s?m\.?|decimal fractions?|simplification|square roots?(?:\s*(?:and|&)\s*cube roots?)?|cube roots?|average|problems on (?:numbers|ages)|surds(?:\s*(?:and|&)\s*indices)?|indices|percentage|profit (?:and|&) loss|ratio (?:and|&) proportion|partnership|chain rule|time (?:and|&) work|pipes (?:and|&) cisterns|time (?:and|&) distance|problems on trains|boats (?:and|&) streams|alligation(?:\s*or\s*mixtures?)?|mixtures?|simple interest|compound interest|logarithms?|area|volumes?(?:\s*(?:and|&)\s*surface areas?)?|races (?:and|&) games(?: of skill)?|odd man out(?:\s*(?:and|&)\s*series)?|calendar|clocks?|stocks (?:and|&) shares|permutations?(?:\s*(?:and|&)\s*combinations?)?|combinations?|probability|true discount|banker'?s discount|heights (?:and|&) distances|trigonometr\w*|geometr\w*|data interpretation|tabulation|bar graphs?|pie charts?|line graphs?)\s*$/i,
   chapterCategory: [
     [/\b(number system|h\.?c\.?f|l\.?c\.?m|decimal|simplification|square root|cube root|surd|indice|logarithm|problems? on numbers?)/i, 'Number System'],
     [/\b(average|percentage|profit|loss|ratio|proportion|partnership|chain rule|alligation|mixture|problems? on ages?)/i, 'Arithmetic'],
@@ -331,7 +331,7 @@ const SCHAND_REASONING: ReferenceBook = {
   stagingDir: 'schand/reasoning',
   categories: ['Verbal Reasoning', 'Logical Deduction', 'Non-Verbal Reasoning', 'Miscellaneous'],
   chapterHeading:
-    /^(?:\d{1,2}[.)]?\s*)?(series completion|analog(?:y|ies)|classification|coding[- ]?decoding|blood relations?|puzzle test|sequential output|direction sense test|(?:logical )?venn diagrams?|alphabet test|alpha[- ]?numeric sequence|number,? ranking (?:and|&) time sequence|number series|ranking test|mathematical operations|logical sequence of words|arithmetical reasoning|inserting the missing character|data sufficiency|eligibility test|assertion (?:and|&) reason|situation reaction test|verification of truth|logical deduction|syllogism|logic|statement[- ](?:arguments?|assumptions?|conclusions?|course of action)|cause (?:and|&) effect|analytical reasoning|mirror[- ]?images?|water[- ]?images?|(?:spotting (?:out )?the )?embedded figures?|completion of (?:incomplete )?pattern|figure matrix|paper folding|paper cutting|rule detection|grouping of identical figures|cubes? (?:and|&) dice|dot situation|construction of squares? (?:and|&) triangles?|figure formation(?: (?:and|&) analysis)?|dice)\s*$/i,
+    /^(?:\d{1,2}[.)]?\s*)?(series completion|analog(?:y|ies)|classification|coding[- ]?decoding|blood relations?|puzzle test|sequential output(?: tracing)?|direction sense test|(?:logical )?venn diagrams?|alphabet test|alpha[- ]?numeric sequence|number,? ranking (?:and|&) time sequence(?: test)?|number series|ranking test|mathematical operations|logical sequence of words|arithmetical reasoning|inserting the missing character|data sufficiency|decision making|eligibility test|assertion (?:and|&) reason|situation reaction test|verification of truth(?: of the statements?)?|logical deduction|syllogism|logic|statements?\s*[-–—]?\s*(?:arguments?|assumptions?|conclusions?|courses? of action)|deriving conclusions from passages|theme detection|questions?\s*[-–—]?\s*statements?|miscellaneous logical puzzles|cause (?:and|&) effect|analytical reasoning|mirror[- ]?images?|water[- ]?images?|(?:spotting (?:out )?the )?embedded figures?|completion of (?:incomplete )?pattern|figure matrix|paper folding|paper cutting|rule detection|grouping of identical figures|cubes? (?:and|&) dice|dot situation|construction of squares? (?:and|&) triangles?|figure formation(?: (?:and|&) analysis)?|dice)\s*$/i,
   chapterCategory: [
     [/\b(mirror[- ]?images?|water[- ]?images?|embedded figures?|incomplete pattern|figure matrix|figure series|paper folding|paper cutting|rule detection|grouping of identical|cubes?\b|\bdice\b|dot situation|construction of squares|figure formation|non[- ]?verbal|analytical reasoning)/i, 'Non-Verbal Reasoning'],
     [/\b(logical deduction|syllogism|statement.*(argument|assumption|conclusion|course of action)|cause (and|&) effect|assertion (and|&) reason|\blogic\b)/i, 'Logical Deduction'],
@@ -384,12 +384,44 @@ const LUCENT_ENGLISH: ReferenceBook = {
   ],
 };
 
+const RY_SSC_REASONING: ReferenceBook = {
+  key: 'ry_ssc_reasoning',
+  title: 'SSC Reasoning 7000+ Objective Questions (Bilingual)',
+  publisher: 'Rakesh Yadav Readers Publication',
+  author: 'Rakesh Yadav',
+  language: 'English', // bilingual: Hindi printed alongside
+  domain: 'reasoning',
+  stagingDir: 'rakesh_yadav/ssc_reasoning',
+  categories: ['Verbal Reasoning', 'Logical Deduction', 'Non-Verbal Reasoning', 'Miscellaneous'],
+  // The 27 chapters of this copy's own contents page. Within a chapter, questions are grouped by
+  // "Type-I / Type-II ..." (numbering restarts per type) and the answer keys for every type sit
+  // together at the chapter's end.
+  chapterHeading:
+    /^(?:\d{1,2}[.)]?\s*)?(analogy (?:&|and) similarity|symbols? (?:&|and) notations?|number series|missing numbers?|classification(?: (?:&|and) deviation of figures?)?|coding[- ]?decoding|logical venn diagrams?|dice|direction(?: sense test)?|ranking (?:&|and) sitting arrangement|clock|calend[ae]r|cube (?:&|and) cuboid|syllogism|statements?,? arguments? (?:&|and) assumptions?|blood relations?|arithmetical problems?|arrangement of words in logical order|word formation|counting (?:of )?figures?|mirror (?:&|and) water images?|completion of (?:incomplete )?figures?|embedded figures?|paper cutting (?:&|and) folding|series)\s*$/i,
+  chapterCategory: [
+    [/\b(counting figure|mirror|water image|completion of figure|embedded figure|paper cutting|paper folding|deviation of figure|cube (&|and) cuboid|\bdice\b)/i, 'Non-Verbal Reasoning'],
+    [/\b(syllogism|statement|venn)/i, 'Logical Deduction'],
+    [/\b(analogy|symbol|notation|series|missing number|classification|coding|decoding|direction|ranking|sitting|clock|calendar|blood relation|arithmetical|logical order|word formation)/i, 'Verbal Reasoning'],
+  ],
+  subjectFor: () => 'reasoning',
+  examRelevance: ['SSC_CGL', 'SSC_CHSL', 'SSC_MTS', 'RAILWAY', 'GENERAL'],
+  probeQueries: [
+    'How do you solve analogy questions?',
+    'Method for coding-decoding questions.',
+    'How to solve a blood relation problem.',
+    'Rules for syllogism questions.',
+    'How to count triangles in a figure.',
+    'How to find the mirror image of a figure.',
+  ],
+};
+
 export const BOOKS: Record<string, ReferenceBook> = {
   [GK.key]: GK,
   [SCIENCE.key]: SCIENCE,
   [SCHAND_QUANT.key]: SCHAND_QUANT,
   [SCHAND_REASONING.key]: SCHAND_REASONING,
   [LUCENT_ENGLISH.key]: LUCENT_ENGLISH,
+  [RY_SSC_REASONING.key]: RY_SSC_REASONING,
   // aliases so the earlier `--book=gk|science` invocations still resolve
   gk: GK,
   science: SCIENCE,

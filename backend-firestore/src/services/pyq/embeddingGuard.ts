@@ -1,45 +1,82 @@
+/**
+ * One place that decides when a script may spend embedding quota.
+ *
+ * gemini-embedding is limited per MINUTE across the whole project, so every caller shares one
+ * budget: the indexer, verification scripts, audit tools, and the API's own boot warmup. An audit
+ * script that embeds a throwaway string to count vectors is spending the indexer's budget, and
+ * that is precisely how a live 797-vector run was pushed into 429 mid-flight.
+ *
+ * The rule this module enforces:
+ *
+ *   COUNTING AND STATUS  -> never embeds. Pinecone applies a metadata filter regardless of what
+ *                           the query vector contains, so a constant of the right dimension
+ *                           returns the same matches with meaningless scores. Counts are exact;
+ *                           only the ORDER is nonsense, and nothing here reads the order.
+ *
+ *   SEMANTIC RETRIEVAL   -> embeds, but must first declare itself with requireNoIndexer(). If an
+ *                           indexer holds the lock, the caller is refused rather than quietly
+ *                           competing with a job that has hours invested in it.
+ *
+ * The lock is advisory and file-based, which is enough because these are operator-run scripts on
+ * one machine. It is NOT a distributed lock and must not be relied on as one.
+ */
 import * as fs from 'fs';
 import * as path from 'path';
+import { env } from '../../config/env';
+import { pineconeService } from '../rag/pinecone.service';
+
+/** Pinecone's dimension. A mismatch throws, which is a louder and better failure than silence. */
+export const PROBE_DIMENSION = 768;
 
 /**
- * Production-safe port of the advisory lock check from `scripts/phase4a/_embedding-guard.js`.
- *
- * That script file lives outside `src/` (it's shared by ~60 offline indexer/audit scripts run
- * via tsx) and is NOT part of the TypeScript build, so it's a loose file that has to survive
- * Azure's Oryx zip-deploy as-is. It has been observed landing stale/missing after a deploy even
- * when the zip and `dist/` (which IS tsc-built) were both correct — Oryx's handling of directories
- * outside `src/` has proven unreliable in this repo, twice now, in different ways. `dist/` builds
- * have not shown this problem.
- *
- * pyqVectorIngestion.service.ts and pyqCorpusIngestion.service.ts only ever needed
- * `requireNoIndexer`/`readLock` — pure fs/path lock-file checks with no dependency on env or
- * Pinecone — so porting just those two functions into `src/` removes the fragile dependency
- * entirely rather than trying to make Oryx propagate the loose file correctly.
- *
- * The lock file path is kept IDENTICAL to the original (`scripts/phase4a/.indexer.lock`,
- * resolved relative to the repo root) so this stays interoperable: an offline indexer script
- * (using the original file's `acquireIndexerLock`) and the production API (using this file's
- * `requireNoIndexer`) are coordinating over the same physical lock.
+ * A constant stand-in for an embedding. Non-zero because some vector stores reject an all-zero
+ * query; the value is otherwise arbitrary and carries no meaning.
  */
+export const PROBE_VECTOR: number[] = new Array(PROBE_DIMENSION).fill(0.02);
 
-interface IndexerLock {
+// The same file the operator scripts have always used — backend-firestore/scripts/phase4a/ —
+// resolved from src/services/pyq and from its compiled twin dist/services/pyq alike, so the API
+// and the scripts see one lock.
+const LOCK = path.resolve(__dirname, '..', '..', '..', 'scripts', 'phase4a', '.indexer.lock');
+
+/**
+ * Backstop only, deliberately far longer than any real run.
+ */
+const LOCK_STALE_MS = 12 * 60 * 60 * 1000;
+
+export interface IndexerLock {
   pid: number;
   label: string;
   startedAt: number;
 }
 
-// dist/services/pyq/embeddingGuard.js and src/services/pyq/embeddingGuard.ts are both 3 levels
-// below the repo root, matching the original file's own dist/src depth-parity pattern.
-const LOCK = path.join(__dirname, '../../../scripts/phase4a/.indexer.lock');
+export function acquireIndexerLock(label: string): void {
+  const existing = readLock();
+  if (existing) {
+    throw new Error(
+      `an indexer is already running (${existing.label}, pid ${existing.pid}, ` +
+      `${Math.round((Date.now() - existing.startedAt) / 60000)}m). Refusing to start a second one.`
+    );
+  }
+  const lock: IndexerLock = { pid: process.pid, label, startedAt: Date.now() };
+  fs.writeFileSync(LOCK, JSON.stringify(lock));
+  const drop = () => releaseIndexerLock();
+  process.on('exit', drop);
+  process.on('SIGINT', () => { drop(); process.exit(130); });
+  process.on('SIGTERM', () => { drop(); process.exit(143); });
+}
 
-// Backstop only — liveness is decided by whether the recorded PID still exists, not elapsed time.
-// See scripts/phase4a/_embedding-guard.js for the full rationale (indexer runs legitimately span
-// hours; this only covers PID reuse after an unclean shutdown).
-const LOCK_STALE_MS = 12 * 60 * 60 * 1000;
+export function releaseIndexerLock(): void {
+  try {
+    if (readLockRaw()?.pid === process.pid) fs.unlinkSync(LOCK);
+  } catch {
+    /* already gone */
+  }
+}
 
 function readLockRaw(): IndexerLock | null {
   try {
-    return JSON.parse(fs.readFileSync(LOCK, 'utf8'));
+    return JSON.parse(fs.readFileSync(LOCK, 'utf8')) as IndexerLock;
   } catch {
     return null;
   }
@@ -70,4 +107,26 @@ export function requireNoIndexer(operation: string): void {
     `  Embedding quota is per-minute and shared, so this would compete with it.\n` +
     `  Wait for it to finish, or use a counting-only check that costs no quota.`
   );
+}
+
+/** Vector count for one exam. Zero embedding cost. */
+export async function countVectorsByExam(examId: string, cap = 2000): Promise<number> {
+  const m = await pineconeService.queryVectors(
+    PROBE_VECTOR as any,
+    cap,
+    { examId } as any,
+    env.PINECONE_NAMESPACE
+  );
+  return m?.length ?? 0;
+}
+
+/** Metadata for one exam's vectors, for ownership/privacy checks. Zero embedding cost. */
+export async function sampleVectorMetadata(examId: string, n = 5): Promise<any[]> {
+  const m = await pineconeService.queryVectors(
+    PROBE_VECTOR as any,
+    n,
+    { examId } as any,
+    env.PINECONE_NAMESPACE
+  );
+  return (m || []).map((x: any) => x.metadata);
 }

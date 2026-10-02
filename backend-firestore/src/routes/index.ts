@@ -21,6 +21,7 @@ import briefingRoutes from './briefing.routes';
 import graphRoutes from './graph.routes';
 import assetsRoutes from './assets.routes';
 import feedbackRoutes from './feedback.routes';
+import searchRoutes from './search.routes';
 import enterpriseAdminRoutes from '../admin/routes/admin.routes';
 import analyticsRoutes from './analytics.routes';
 
@@ -80,6 +81,7 @@ router.use('/chat', chatRoutes);
 // Agent mode — every route 404s while AGENT_MODE_ENABLED is off.
 router.use('/agent', agentRoutes);
 router.use('/chat', feedbackRoutes);
+router.use('/search', searchRoutes);
 router.use('/companion', companionRoutes);
 // Before notebooksRoutes so '/exploration/search' is never read as a notebook id.
 router.use('/notebooks', explorationRoutes);

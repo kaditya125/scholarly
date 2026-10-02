@@ -208,6 +208,7 @@ describe('quality metrics catch real defects', () => {
       t.tracks.sfx.events.push({
         id: `sfx_${i}`, kind: 'sfx', startMs: i * 500, durationMs: 400,
         sceneId: 'scene_0', priority: 50, assetId: 'sfx_x', effectCategory: 'door',
+        requirement: { kind: 'sfx', category: 'door', durationMs: 400, loopable: false, tags: [] },
         syncMode: 'after_line', offsetMs: 0, volumeDb: -12, fadeInMs: 0, fadeOutMs: 100,
       });
     }

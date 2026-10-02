@@ -56,6 +56,8 @@ const mockEvent = (overrides: Partial<SFXEvent> = {}): SFXEvent => ({
   priority: 50,
   requirement: {
     kind: 'sfx' as const,
+    category: 'door',
+    loopable: false,
     tags: ['door', 'close'],
     durationMs: 2_000,
   },
@@ -143,7 +145,9 @@ describe('SFXEngine', () => {
       expect(cue.triggerLineIndex).toBe(42);
       expect(cue.syncMode).toBe('on_word');
       expect(cue.volumeDb).toBe(-8);
-      expect(cue.assetId).toBe('explosion-large');
+      // The event's asset id is kept (prepare() resolves assets by it); the asset's own id is the fallback.
+      expect(cue.assetId).toBe('test-sfx');
+      expect(buildSFXCue(mockEvent({ assetId: undefined }), asset).assetId).toBe('explosion-large');
     });
 
     it('copies start time correctly', () => {

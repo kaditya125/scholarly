@@ -28,6 +28,12 @@ import { buildUPSCCSECorpus } from './corpus/upsc-cse-corpus';
 import { buildBPSCCCECorpus } from './corpus/bpsc-cce-corpus';
 import { buildRRBNTPCCorpus } from './corpus/rrb-ntpc-corpus';
 import { buildIBPSPOCorpus } from './corpus/ibps-po-corpus';
+import { buildGATECSCorpus } from './corpus/gate-cs-corpus';
+import { buildSSCIMDCSCorpus } from './corpus/ssc-imd-cs-corpus';
+import { buildISROCSCorpus } from './corpus/isro-cs-corpus';
+import { buildNICNIELITCSCorpus } from './corpus/nic-nielit-cs-corpus';
+import { buildDRDOCEPTAMCSCorpus } from './corpus/drdo-ceptam-cs-corpus';
+import { buildSSCIMDPaper1Corpus } from './corpus/ssc-imd-paper1-corpus';
 import { CanonicalPYQQuestion } from '../../src/types/pyq.types';
 
 const args = process.argv.slice(2);
@@ -42,6 +48,12 @@ const CORPUS_REGISTRY: Record<string, (targetYear?: number) => CanonicalPYQQuest
   BPSC_CCE: buildBPSCCCECorpus,
   RRB_NTPC: buildRRBNTPCCorpus,
   IBPS_PO: buildIBPSPOCorpus,
+  GATE_CS: buildGATECSCorpus,
+  SSC_IMD_CS: buildSSCIMDCSCorpus,
+  ISRO_CS: buildISROCSCorpus,
+  NIC_NIELIT_CS: buildNICNIELITCSCorpus,
+  DRDO_CEPTAM_CS: buildDRDOCEPTAMCSCorpus,
+  SSC_IMD_PAPER1: buildSSCIMDPaper1Corpus,
 };
 
 async function main() {
