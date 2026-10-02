@@ -8,6 +8,114 @@ import type { QuizMode } from '../../lib/api/quiz';
 
 const COUNTS = [5, 10, 15, 20];
 
+const SUBJECT_TOPIC_SUGGESTIONS: Record<string, string[]> = {
+  'General Intelligence & Reasoning': [
+    'Analogies & Similarities',
+    'Syllogisms & Deductive Logic',
+    'Number & Alphabet Series',
+    'Coding-Decoding',
+    'Blood Relations',
+    'Direction Sense',
+    'Arithmetical Reasoning',
+    'Classification & Odd-One-Out',
+    'Puzzles & Seating Arrangements',
+    'Venn Diagrams & Set Relations',
+    'Word Formation & Dictionary Order',
+  ],
+  'General Intelligence and Reasoning': [
+    'Analogies & Similarities',
+    'Syllogisms & Deductive Logic',
+    'Number & Alphabet Series',
+    'Coding-Decoding',
+    'Blood Relations',
+    'Direction Sense',
+    'Arithmetical Reasoning',
+    'Classification & Odd-One-Out',
+    'Puzzles & Seating Arrangements',
+    'Venn Diagrams & Set Relations',
+    'Word Formation & Dictionary Order',
+  ],
+  'Operating System': [
+    'CPU Scheduling',
+    'Deadlocks & Synchronization',
+    'Virtual Memory & Paging',
+    'System Calls & Processes',
+    'File Systems & Disk Scheduling',
+  ],
+  'Computer Networks': [
+    'OSI & TCP/IP Protocol Suite',
+    'Subnetting & CIDR Addressing',
+    'Routing Protocols (OSPF, BGP, RIP)',
+    'TCP Flow & Congestion Control',
+    'Sockets, DNS, HTTP & Application Layer',
+  ],
+  'Databases': [
+    'SQL Queries & Joins',
+    'Normalization (1NF, 2NF, 3NF, BCNF)',
+    'Transactions & ACID Properties',
+    'Concurrency Control & Serializability',
+    'ER Modeling & Relational Algebra',
+  ],
+  'Programming and Data Structures': [
+    'C Pointers & Dynamic Memory',
+    'Binary Search Trees & Heaps',
+    'Graphs (BFS, DFS, Shortest Paths)',
+    'Stacks, Queues & Linked Lists',
+    'Recursion & Complexity',
+  ],
+  'Algorithms': [
+    'Asymptotic Analysis (Big-O)',
+    'Dynamic Programming',
+    'Greedy Algorithms',
+    'Divide and Conquer & Sorting',
+    'Graph Algorithms (Dijkstra, Kruskal)',
+  ],
+  'Computer Organization and Architecture': [
+    'Pipelining & Branch Hazards',
+    'Cache Memory & Cache Mapping',
+    'Instruction Formats & Addressing Modes',
+    'ALU & Number Representation',
+  ],
+  'Digital Logic': [
+    'Boolean Algebra & K-Maps',
+    'Combinational Circuits (Mux, Decoder)',
+    'Sequential Circuits & Flip-Flops',
+    'Counters & Shift Registers',
+  ],
+  'Theory of Computation': [
+    'Finite Automata (DFA, NFA)',
+    'Regular Expressions & Languages',
+    'Context-Free Grammars & PDA',
+    'Turing Machines & Decidability',
+  ],
+  'Compiler Design': [
+    'Lexical Analysis & Tokenization',
+    'Syntax Analysis (LL & LR Parsers)',
+    'Intermediate Code Generation',
+    'Code Optimization & Data Flow',
+  ],
+  'Engineering Mathematics': [
+    'Discrete Mathematics & Graph Theory',
+    'Linear Algebra (Matrices, Eigenvalues)',
+    'Probability & Random Variables',
+    'Calculus & Numerical Methods',
+  ],
+  'General Awareness': [
+    'Indian Polity & Constitution',
+    'Modern Indian History',
+    'General Science (Physics, Chemistry, Biology)',
+    'Geography & Environmental Science',
+    'Current Affairs & Economic Concepts',
+  ],
+  'Quantitative Aptitude': [
+    'Percentage, Profit & Loss',
+    'Ratio, Proportion & Mixture',
+    'Time, Speed, Distance & Work',
+    'Simple & Compound Interest',
+    'Algebra & Geometry',
+  ],
+};
+
 interface AdaptiveTestGeneratorProps {
   selectedExam: string;
 }
@@ -28,13 +136,21 @@ export function AdaptiveTestGenerator({ selectedExam }: AdaptiveTestGeneratorPro
   // subject (e.g. "Biology" left selected after switching from NEET to SSC CGL).
   useEffect(() => {
     setSubject(subjectOptions[0]?.value || 'Mathematics');
+    setCustomTopic('');
   }, [selectedExam]);
+
+  const handleSubjectChange = (newSubject: string) => {
+    setSubject(newSubject);
+    setCustomTopic('');
+  };
+
+  const topicSuggestions = SUBJECT_TOPIC_SUGGESTIONS[subject] || [];
 
   const handleGenerate = async () => {
     setIsGenerating(true);
     const targetTopic = customTopic.trim() ? `${subject} - ${customTopic.trim()}` : subject;
     try {
-      await launch({ topic: targetTopic, count, mode, examId });
+      await launch({ topic: targetTopic, subject, count, mode, examId });
     } finally {
       setIsGenerating(false);
     }
@@ -72,7 +188,7 @@ export function AdaptiveTestGenerator({ selectedExam }: AdaptiveTestGeneratorPro
       <div className="p-4 space-y-3">
         <div>
           <label className={label}>Subject</label>
-          <select value={subject} onChange={(e) => setSubject(e.target.value)} className={field}>
+          <select value={subject} onChange={(e) => handleSubjectChange(e.target.value)} className={field}>
             {subjectOptions.map((opt) => (
               <option key={opt.value} value={opt.value} className="dark:bg-[#1a1a1b]">{opt.label}</option>
             ))}
@@ -80,14 +196,58 @@ export function AdaptiveTestGenerator({ selectedExam }: AdaptiveTestGeneratorPro
         </div>
 
         <div>
-          <label className={label}>Topic or chapter <span className="text-slate-400 dark:text-slate-500 font-normal">· optional</span></label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+              Topic or chapter <span className="text-slate-400 dark:text-slate-500 font-normal">· optional</span>
+            </label>
+            {customTopic && (
+              <button
+                type="button"
+                onClick={() => setCustomTopic('')}
+                className="text-[10.5px] text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
+          </div>
           <input
             type="text"
             value={customTopic}
             onChange={(e) => setCustomTopic(e.target.value)}
-            placeholder="e.g. Percentage, Optics, Constitution"
+            placeholder={
+              subject.includes('Reasoning')
+                ? 'e.g. Syllogisms, Analogies, Blood Relations'
+                : 'e.g. Paging, Normalization, Routing'
+            }
             className={field}
           />
+          {topicSuggestions.length > 0 && (
+            <div className="mt-2">
+              <span className="block text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
+                Popular topic drills:
+              </span>
+              <div className="flex flex-wrap gap-1 max-h-36 overflow-y-auto pr-0.5">
+                {topicSuggestions.map((suggestion) => {
+                  const isSelected = customTopic.trim().toLowerCase() === suggestion.toLowerCase();
+                  return (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => setCustomTopic(isSelected ? '' : suggestion)}
+                      className={cn(
+                        "px-2 py-0.5 rounded-md text-[11px] font-medium transition-colors cursor-pointer border text-left",
+                        isSelected
+                          ? "bg-slate-900 text-white dark:bg-[#c8e558] dark:text-slate-900 border-transparent shadow-xs"
+                          : "bg-slate-50 dark:bg-white/[0.04] border-slate-200/80 dark:border-white/[0.07] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.08]"
+                      )}
+                    >
+                      {suggestion}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         <div>
