@@ -141,45 +141,45 @@ export const EXAM_CATALOG: Record<string, ExamPersonalization> = {
     ],
     "categories": [
       {
-        "label": "Paper-I Full Mock (100 Qs)",
-        "count": "120 Min · 100 Marks",
-        "countNum": 100,
-        "topic": "SSC IMD Paper-I Full Mock",
+        "label": "200-Q Full-Length Mock",
+        "count": "120 Min · 200 Marks",
+        "countNum": 200,
+        "topic": "SSC Scientific Assistant (IMD) 2026: 200-Question Full-Length CBT Mock",
         "icon": "mocks"
       },
       {
         "label": "Part-D Technical CS (100 Qs)",
-        "count": "120 Min · 100 Marks",
+        "count": "60 Min · 100 Marks",
         "countNum": 100,
         "topic": "SSC IMD Part-D CS Full Mock",
         "icon": "mocks"
       },
       {
-        "label": "CS & IT Technical Drill",
-        "count": "25 Qs · High Yield",
-        "countNum": 25,
-        "topic": "Computer Science and Information Technology",
-        "icon": "subject"
+        "label": "Paper-I Non-Tech (100 Qs)",
+        "count": "60 Min · 100 Marks",
+        "countNum": 100,
+        "topic": "SSC IMD Paper-I Full Mock",
+        "icon": "mocks"
       },
       {
-        "label": "General Intelligence Drill",
-        "count": "25 Qs · Speed Test",
-        "countNum": 25,
+        "label": "General Intelligence (50 Qs)",
+        "count": "50 Qs · 50 Marks",
+        "countNum": 50,
         "topic": "General Intelligence & Reasoning",
         "icon": "speed"
       },
       {
-        "label": "General Science & Space",
-        "count": "25 Qs · Scientific Aspect",
-        "countNum": 25,
+        "label": "General Awareness (50 Qs)",
+        "count": "50 Qs · 50 Marks",
+        "countNum": 50,
         "topic": "General Awareness",
         "icon": "subject"
       },
       {
-        "label": "Official PYQ Practice",
-        "count": "2022 & 2017 Shifts",
-        "countNum": 20,
-        "topic": "SSC IMD Previous Year Questions",
+        "label": "Full 200-Q PYQ Paper",
+        "count": "Official 200-Q CBT Pattern",
+        "countNum": 200,
+        "topic": "SSC Scientific Assistant (IMD) 2026: 200-Question Full-Length CBT Mock",
         "icon": "pyq"
       }
     ],

@@ -213,139 +213,95 @@ async function main() {
     aiRecommended: true,
   });
 
-  // Mock 2: SSC IMD 2022 Official CBT Paper: Part-D (CS & IT)
+  // Mock 2: Part-D Technical CS & IT Full Paper (100 Questions)
   testsToSave.push({
-    id: 'ssc_imd_2022_cs_it_official',
-    title: 'SSC IMD 2022 Official CBT Paper: Part-D (CS & IT)',
+    id: 'ssc_imd_cs_part_d_100q_mock_1',
+    title: 'SSC Scientific Assistant (IMD) Part-D: 100-Question CS & IT CBT Mock',
     type: 'full-length',
     category: 'SSC',
     subject: 'Computer Science and Information Technology',
     difficulty: 'Medium',
     isLive: true,
-    questionIds: imdCsQuestions.map((q) => q.id),
+    questionIds: grandCs100.map((q) => q.id),
     sections: [
       {
-        name: 'Part-D: Computer Science and Information Technology',
-        questionIds: imdCsQuestions.map((q) => q.id),
-        totalQuestions: imdCsQuestions.length,
-        marks: imdCsQuestions.length,
+        name: 'Part-D: Computer Science & IT (14.3.4)',
+        questionIds: grandCs100.map((q) => q.id),
+        totalQuestions: grandCs100.length,
+        marks: grandCs100.length,
       },
     ],
-    totalQuestions: imdCsQuestions.length,
-    totalMarks: imdCsQuestions.length,
-    durationMinutes: 30,
+    totalQuestions: grandCs100.length,
+    totalMarks: grandCs100.length,
+    durationMinutes: 60,
     positiveMarks: 1,
     negativeMarks: 0.25,
-    participantsCount: 1420,
-    averageScore: 14.8,
+    participantsCount: 2450,
+    averageScore: 61.4,
     aiRecommended: true,
   });
 
-  // Mock 3: SSC Scientific Assistant Paper-I Non-Tech CBT Paper
-  const paper1Questions = questionsByExam['SSC_IMD_PAPER1'] || [];
-  const reasoningQs = paper1Questions.filter((q) => q.topic?.toLowerCase().includes('reasoning') || q.section?.toLowerCase().includes('reasoning'));
-  const gaQList = paper1Questions.filter((q) => !reasoningQs.includes(q));
-
+  // Mock 3: Paper-I Non-Tech Full Paper (100 Questions: 50 GI + 50 GA)
+  const paper1All100 = [...giQuestions, ...gaQuestions];
   testsToSave.push({
-    id: 'ssc_imd_paper1_official_mock_1',
-    title: 'SSC Scientific Assistant Paper-I: Non-Tech CBT Paper',
+    id: 'ssc_imd_paper1_100q_mock_1',
+    title: 'SSC Scientific Assistant Paper-I: 100-Question Non-Tech CBT Mock',
     type: 'full-length',
     category: 'SSC',
     subject: 'General Intelligence and Awareness',
     difficulty: 'Medium',
     isLive: true,
-    questionIds: paper1Questions.map((q) => q.id),
+    questionIds: paper1All100.map((q) => q.id),
     sections: [
       {
         name: 'General Intelligence & Reasoning (14.2.1)',
-        questionIds: (reasoningQs.length ? reasoningQs : paper1Questions.slice(0, 10)).map((q) => q.id),
-        totalQuestions: reasoningQs.length || 10,
-        marks: reasoningQs.length || 10,
+        questionIds: giQuestions.map((q) => q.id),
+        totalQuestions: giQuestions.length,
+        marks: giQuestions.length,
       },
       {
         name: 'General Awareness & Science (14.2.2)',
-        questionIds: (gaQList.length ? gaQList : paper1Questions.slice(10)).map((q) => q.id),
-        totalQuestions: gaQList.length || 10,
-        marks: gaQList.length || 10,
+        questionIds: gaQuestions.map((q) => q.id),
+        totalQuestions: gaQuestions.length,
+        marks: gaQuestions.length,
       },
     ],
-    totalQuestions: paper1Questions.length,
-    totalMarks: paper1Questions.length,
-    durationMinutes: 25,
+    totalQuestions: paper1All100.length,
+    totalMarks: paper1All100.length,
+    durationMinutes: 60,
     positiveMarks: 1,
     negativeMarks: 0.25,
-    participantsCount: 980,
-    averageScore: 13.5,
+    participantsCount: 1980,
+    averageScore: 64.2,
     aiRecommended: true,
   });
 
-  // Mock 4: GATE CS 1-Mark High-Frequency Conceptual Paper (50 Qs)
-  const gateQuestions = gateQuestionsAll.slice(0, 50);
+  // Mock 4: GATE CS 1-Mark Full Benchmark Paper (100 Qs)
+  const gateQuestions100 = gateQuestionsAll.slice(0, 100);
   testsToSave.push({
-    id: 'gate_cs_1mark_conceptual_drill_1',
-    title: 'GATE CS 1-Mark High-Frequency Conceptual Paper',
+    id: 'gate_cs_100q_full_benchmark_mock_1',
+    title: 'GATE CS 1-Mark Full Benchmark CBT Paper (100 Qs)',
     type: 'pyq',
     category: 'SSC',
     subject: 'Computer Science and Information Technology',
     difficulty: 'Medium',
     isLive: true,
-    questionIds: gateQuestions.map((q) => q.id),
+    questionIds: gateQuestions100.map((q) => q.id),
     sections: [
       {
         name: 'GATE CS 1-Mark Benchmark Pool',
-        questionIds: gateQuestions.map((q) => q.id),
-        totalQuestions: gateQuestions.length,
-        marks: gateQuestions.length,
+        questionIds: gateQuestions100.map((q) => q.id),
+        totalQuestions: gateQuestions100.length,
+        marks: gateQuestions100.length,
       },
     ],
-    totalQuestions: gateQuestions.length,
-    totalMarks: gateQuestions.length,
+    totalQuestions: gateQuestions100.length,
+    totalMarks: gateQuestions100.length,
     durationMinutes: 60,
     positiveMarks: 1,
     negativeMarks: 0.33,
-    participantsCount: 2150,
-    averageScore: 32.4,
-    aiRecommended: true,
-  });
-
-  // Mock 5: ISRO ICRB, NIELIT & DRDO CS Technical Mock
-  const technicalBenchQuestions = [...isroQs, ...nielitQs, ...drdoQs];
-  testsToSave.push({
-    id: 'isro_nielit_drdo_cs_technical_mock_1',
-    title: 'ISRO ICRB, NIELIT & DRDO CS Technical Mock',
-    type: 'sectional',
-    category: 'SSC',
-    subject: 'Computer Science and Information Technology',
-    difficulty: 'Hard',
-    isLive: true,
-    questionIds: technicalBenchQuestions.map((q) => q.id),
-    sections: [
-      {
-        name: 'ISRO ICRB Scientist/Engineer CS',
-        questionIds: isroQs.map((q) => q.id),
-        totalQuestions: isroQs.length,
-        marks: isroQs.length,
-      },
-      {
-        name: 'NIELIT Scientist-B & Technical Assistant',
-        questionIds: nielitQs.map((q) => q.id),
-        totalQuestions: nielitQs.length,
-        marks: nielitQs.length,
-      },
-      {
-        name: 'DRDO CEPTAM STA-B Technical CBT',
-        questionIds: drdoQs.map((q) => q.id),
-        totalQuestions: drdoQs.length,
-        marks: drdoQs.length,
-      },
-    ],
-    totalQuestions: technicalBenchQuestions.length,
-    totalMarks: technicalBenchQuestions.length,
-    durationMinutes: 50,
-    positiveMarks: 1,
-    negativeMarks: 0.25,
-    participantsCount: 840,
-    averageScore: 24.1,
+    participantsCount: 3150,
+    averageScore: 58.7,
     aiRecommended: true,
   });
 
