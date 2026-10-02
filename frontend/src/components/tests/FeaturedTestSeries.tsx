@@ -79,6 +79,57 @@ const BPSC_FREE_MOCKS = [
   },
 ];
 
+const SSC_IMD_FREE_MOCKS = [
+  {
+    id: 'ssc_imd_2022_cs_it_official',
+    title: 'SSC IMD 2022 Official CBT Paper: Part-D (CS & IT)',
+    description: `Authentic TCS/IMD CBT questions from Syllabus 14.3.4 Part-D (Algorithms, OS, CN, DBMS, TOC, Compilers, COA, Digital Logic, Discrete Math). ${ANSWER_KEY_NOTE}`,
+    questions: 20,
+    marks: 20,
+    duration: 30,
+    difficulty: 'Medium',
+    badge: 'OFFICIAL PYQ',
+    badgeColor: 'amber',
+    examId: 'SSC_IMD_CS',
+  },
+  {
+    id: 'ssc_imd_paper1_official_mock_1',
+    title: 'SSC Scientific Assistant Paper-I: Non-Tech CBT Paper',
+    description: `Authentic TCS/IMD questions covering 14.2.1 General Intelligence & Reasoning and 14.2.2 General Awareness & Science. ${ANSWER_KEY_NOTE}`,
+    questions: 20,
+    marks: 20,
+    duration: 25,
+    difficulty: 'Medium',
+    badge: 'PAPER-I CBT',
+    badgeColor: 'green',
+    examId: 'SSC_IMD_PAPER1',
+  },
+  {
+    id: 'gate_cs_1mark_conceptual_drill_1',
+    title: 'GATE CS 1-Mark High-Frequency Conceptual Paper',
+    description: `50 verified 1-mark conceptual MCQs (2000–2024), the exact core source repository tapped by TCS for government technical exams. ${ANSWER_KEY_NOTE}`,
+    questions: 50,
+    marks: 50,
+    duration: 60,
+    difficulty: 'Medium',
+    badge: 'GATE 1-MARK PYQ',
+    badgeColor: 'green',
+    examId: 'GATE_CS',
+  },
+  {
+    id: 'isro_nielit_drdo_cs_technical_mock_1',
+    title: 'ISRO ICRB, NIELIT & DRDO CS Technical Mock',
+    description: `42 authentic CS questions from ISRO Scientist-SC, NIELIT Scientist-B, and DRDO CEPTAM matching the exact numerical and formula depth of IMD Part-D. ${ANSWER_KEY_NOTE}`,
+    questions: 42,
+    marks: 42,
+    duration: 50,
+    difficulty: 'Medium-Hard',
+    badge: 'ISRO / NIELIT PYQ',
+    badgeColor: 'amber',
+    examId: 'ISRO_CS',
+  },
+];
+
 export function FeaturedTestSeries({ selectedExam }: FeaturedTestSeriesProps) {
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
@@ -88,9 +139,10 @@ export function FeaturedTestSeries({ selectedExam }: FeaturedTestSeriesProps) {
   const examName = selectedExam || 'General Aptitude';
   const isUpsc = selectedExam === 'UPSC' || selectedExam?.toLowerCase().includes('upsc');
   const isBpsc = selectedExam === 'BPSC' || selectedExam?.toLowerCase().includes('bpsc');
-  const isSscCgl = (!selectedExam || selectedExam === 'SSC CGL' || selectedExam === 'SSC' || selectedExam.toLowerCase().includes('cgl')) && !isUpsc && !isBpsc;
+  const isSscImd = selectedExam === 'SSC IMD' || selectedExam?.toLowerCase().includes('imd') || selectedExam?.toLowerCase().includes('scientific assistant');
+  const isSscCgl = (!selectedExam || selectedExam === 'SSC CGL' || selectedExam === 'SSC' || selectedExam.toLowerCase().includes('cgl')) && !isUpsc && !isBpsc && !isSscImd;
 
-  const activeMocks = isUpsc ? UPSC_FREE_MOCKS : isBpsc ? BPSC_FREE_MOCKS : isSscCgl ? SSC_FREE_MOCKS : null;
+  const activeMocks = isUpsc ? UPSC_FREE_MOCKS : isBpsc ? BPSC_FREE_MOCKS : isSscImd ? SSC_IMD_FREE_MOCKS : isSscCgl ? SSC_FREE_MOCKS : null;
 
   const genericSeries = [
     {
@@ -139,6 +191,8 @@ export function FeaturedTestSeries({ selectedExam }: FeaturedTestSeriesProps) {
                 ? '🔥 UPSC Prelims 2026: Indian Polity Master Mock Unlocked 100% FREE!' 
                 : isBpsc 
                 ? '🔥 BPSC 71st CCE: Indian Polity & Bihar Governance Mock Unlocked 100% FREE!' 
+                : isSscImd
+                ? '🔥 SSC Scientific Assistant (IMD) CS & IT 2026 Mocks Unlocked 100% FREE!'
                 : '🔥 SSC CGL Free Mocks Unlocked 100% FREE!'}
             </p>
             <p className={cn(
@@ -146,9 +200,11 @@ export function FeaturedTestSeries({ selectedExam }: FeaturedTestSeriesProps) {
               isDarkMode ? 'text-orange-300' : 'text-orange-700'
             )}>
               {isUpsc 
-                ? '50 Multi-Statement Questions · 60 Min · M. Laxmikanth (7th Ed.) Grounded · Official UPSC Pattern'
+                ? '50 Multi-Statement Questions · 60 Min · M. Laxmikanth (7th Ed.) Grounded · Official UPSC Pattern' 
                 : isBpsc 
-                ? '50 Questions · 45 Min · Bihar Panchayati Raj 50% Women Reservation & Patna High Court Special'
+                ? '50 Questions · 45 Min · Bihar Panchayati Raj 50% Women Reservation & Patna High Court Special' 
+                : isSscImd
+                ? 'Part-D CS & IT (Syllabus 14.3.4) + Paper-I Non-Tech (14.2.1/14.2.2) · Grounded in Official 2022/2017 IMD, ISRO, NIELIT & GATE CS PYQs'
                 : '100 Questions · 60 Minutes · 200 Marks · +2 / −0.5 · Official Pattern'}
             </p>
           </div>
@@ -223,7 +279,7 @@ export function FeaturedTestSeries({ selectedExam }: FeaturedTestSeriesProps) {
                         topic: mock.title,
                         count: mock.questions,
                         mode: 'exam',
-                        examId: mock.examId || (isUpsc ? 'UPSC_CSE' : isBpsc ? 'BPSC' : 'SSC_CGL'),
+                        examId: mock.examId || (isUpsc ? 'UPSC_CSE' : isBpsc ? 'BPSC' : isSscImd ? 'SSC_IMD_CS' : 'SSC_CGL'),
                       },
                     })
                   }
