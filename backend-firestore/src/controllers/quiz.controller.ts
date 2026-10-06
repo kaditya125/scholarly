@@ -4,7 +4,7 @@ import { quizAttemptsService, QuizAttemptError } from '../services/tests/quizAtt
 import { UserStatsService } from '../services/userStats.service';
 import { detectExamId } from '../services/pyq/examIndex';
 import { drillTopicsService } from '../services/tests/drillTopics.service';
-import { QuizMode, QuizSource, PedagogicalDiagnostic, StoredQuizQuestion } from '../types/quizAttempt.types';
+import { QuizMode, QuizSource, StoredQuizQuestion } from '../types/quizAttempt.types';
 import { remediationDrillService, RemediationError } from '../services/pedagogy/remediationDrill.service';
 import { testsRepository } from '../repositories/tests.repository';
 

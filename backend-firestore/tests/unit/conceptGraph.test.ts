@@ -171,3 +171,9 @@ describe('root-cause diagnosis', () => {
     ])).toThrow(/cycle/);
   });
 });
+
+describe('unsupported exams never get an invented physics diagnosis (Phase 11)', () => {
+  it.each(['SSC_CGL', 'IBPS_PO', 'UPSC_CSE', 'UGC_NET'])('%s', (examId) => {
+    expect(g.diagnoseAttempt([row('Rotational Dynamics', 0, 5, { examId }), row('Vectors', 0, 5, { examId })])).toBeNull();
+  });
+});

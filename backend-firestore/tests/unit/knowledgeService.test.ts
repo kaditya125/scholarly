@@ -212,8 +212,7 @@ describe('Phase 10: Shared Knowledge Service', () => {
 
     service = new KnowledgeService(
       mockRetrievalService,
-      // Reference books (added after this suite was written) — only used with includeReferenceBooks.
-      { retrieveReferenceContext: jest.fn().mockResolvedValue([]) } as any,
+      // (Reference books are routed by RetrievalOrchestrator; KnowledgeService no longer takes them.)
       mockGraphRetrievalService,
       mockExplorationService,
       mockLineageService,

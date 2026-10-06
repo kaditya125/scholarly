@@ -156,3 +156,17 @@ describe('POST /quiz/attempts/:id/remediation-drill controller', () => {
     expect(r.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'QUOTA_EXCEEDED', limit: 50 }));
   });
 });
+
+describe('backward compatibility with attempts written before these fields existed (Phase 14)', () => {
+  const repo = new QuizAttemptsRepository();
+  it('a legacy completed attempt (no pedagogicalDiagnostics) answers NO_DIAGNOSTIC, not a crash', async () => {
+    store.set('qa_legacy', { userId: 'owner', status: 'completed', accuracy: 40, topicBreakdown: [] });
+    expect(await repo.claimRemediation('owner', 'qa_legacy', 'diag_JEE_MAIN_vectors')).toEqual({ status: 'NO_DIAGNOSTIC' });
+    expect(store.get('qa_legacy').remediationClaims).toBeUndefined();
+  });
+
+  it('pedagogicalDiagnostics: null (unsupported exam) is also NO_DIAGNOSTIC', async () => {
+    store.set('qa_ssc', { userId: 'owner', status: 'completed', pedagogicalDiagnostics: null });
+    expect(await repo.claimRemediation('owner', 'qa_ssc', 'diag_x')).toEqual({ status: 'NO_DIAGNOSTIC' });
+  });
+});

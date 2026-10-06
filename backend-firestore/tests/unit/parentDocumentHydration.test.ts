@@ -10,7 +10,7 @@ jest.mock('../../src/config/firebase', () => ({
 }));
 
 import { ParentDocumentService, ParentDocument, hasRealSectionTitle } from '../../src/services/rag/parentDocument.service';
-import { buildParentContexts } from '../../src/services/rag/parentChunking';
+import { buildParentContexts, groupExistingChildren } from '../../src/services/rag/parentChunking';
 
 const parent = (id: string, extra: Partial<ParentDocument> = {}): ParentDocument => ({
   id, book: 'hc_verma_physics_vol2', bookTitle: 'Concepts of Physics (Volume 2)', pageStart: 41, pageEnd: 44,
@@ -115,6 +115,45 @@ describe('buildParentContexts', () => {
       page(1, 100, { chapter: 'Kinematics' }), page(2, 100, { chapter: 'Kinematics' }), page(3, 100, { chapter: 'Laws of Motion' }),
     ], { bookKey: 'b', bookTitle: 'B' });
     expect(parents.map((p) => p.chapter)).toEqual(['Kinematics', 'Laws of Motion']);
+    expect(parents[0].metadata?.boundary).toBe('heading');
+  });
+});
+
+describe('groupExistingChildren (backfill for already-indexed books)', () => {
+  const words = (n: number, tag: string) => Array.from({ length: n }, (_, i) => `${tag}${i}`).join(' ');
+  const child = (id: string, page: number, n: number, extra: any = {}) => ({ id, pageNumber: page, text: words(n, id), ...extra });
+  const opts = { bookKey: 'jd_lee_inorganic', bookTitle: 'Concise Inorganic Chemistry', parentWords: 1500, minParentWords: 900, trustHeadings: false };
+
+  it('assigns every child exactly once, in page order, without re-chunking', () => {
+    const kids = [child('c3', 3, 700), child('c1', 1, 700), child('c2', 2, 700), child('c4', 4, 700)];
+    const { parents, assignment } = groupExistingChildren(kids, opts);
+    expect(assignment.size).toBe(4);
+    expect(parents.map((p) => p.childChunkIds)).toEqual([['c1', 'c2'], ['c3', 'c4']]);
+    expect(parents[0]).toMatchObject({ pageStart: 1, pageEnd: 2, book: 'jd_lee_inorganic' });
+    expect(parents[0].fullText).toContain('c1699');
+  });
+
+  it('is deterministic: the same input yields the same ids (idempotent re-runs)', () => {
+    const kids = [child('a', 1, 800), child('b', 2, 800), child('c', 3, 800)];
+    const one = groupExistingChildren(kids, opts);
+    const two = groupExistingChildren([...kids].reverse(), opts);
+    expect(one.parents.map((p) => p.id)).toEqual(two.parents.map((p) => p.id));
+    expect([...one.assignment]).toEqual([...two.assignment]);
+    expect(one.parents[0].id).toBe('parent_jd_lee_inorganic_bf0001');
+  });
+
+  it('ignores OCR-noise chapter fields unless the book is trusted, and labels windows honestly', () => {
+    const kids = [child('a', 1, 300, { chapter: 'Part iv discusses relations' }), child('b', 2, 300, { chapter: 'section 93 of the Act' })];
+    const { parents } = groupExistingChildren(kids, opts);
+    expect(parents).toHaveLength(1);
+    expect(parents[0].chapter).toBeUndefined();
+    expect(parents[0].metadata?.boundary).toBe('page_window');
+  });
+
+  it('for structurally parsed books, closes a parent at a real chapter/section change', () => {
+    const kids = [child('a', 1, 100, { chapter: 'Indian History', section: 'Mauryas' }), child('b', 1, 100, { chapter: 'Indian History', section: 'Guptas' })];
+    const { parents } = groupExistingChildren(kids, { ...opts, bookKey: 'lucent_gk', trustHeadings: true });
+    expect(parents.map((p) => p.sectionTitle)).toEqual(['Mauryas', 'Guptas']);
     expect(parents[0].metadata?.boundary).toBe('heading');
   });
 });

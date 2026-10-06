@@ -81,6 +81,8 @@ export interface RetrievalTrace {
     examId: string | null;
     /** Why HyDE ran for the reference-book search ('colloquial' | 'vague' | 'weak_results'), or null. */
     referenceHyde: string | null;
+    /** OK | NO_RESULTS | NO_SUPPORTED_REFERENCE_BOOKS, or null when the tier did not run. */
+    referenceStatus: string | null;
     errors: string[];
   };
   /**
@@ -111,7 +113,7 @@ export class RetrievalOrchestrator {
   constructor(
     private readonly retrievalService: RetrievalService = new RetrievalService(),
     private readonly knowledge: KnowledgeService = knowledgeService,
-    private readonly referenceBooks: Pick<ReferenceBooksService, 'retrieveReferenceContext'> = referenceBooksService,
+    private readonly referenceBooks: Pick<ReferenceBooksService, 'retrieveReferenceContextWithStatus'> = referenceBooksService,
     private readonly reranker: RerankerProvider = new CohereRerankerProvider(),
   ) {}
 
@@ -448,6 +450,7 @@ export class RetrievalOrchestrator {
         // Every tier runs in parallel; a failing tier is logged with its name and contributes
         // nothing — it never takes the other tiers down with it.
         const tierErrors: string[] = [];
+        let referenceStatus: string | null = null;
         const runTier = (name: string, enabled: boolean, fn: () => Promise<RetrievalResult[]>): Promise<RetrievalResult[]> =>
           enabled
             ? fn().catch((err: any) => {
@@ -460,14 +463,14 @@ export class RetrievalOrchestrator {
         const tVector = Date.now();
         const [curriculumResults, refResults, syllabusResults, pyqResults] = await Promise.all([
           runTier('curriculum', routePlan.useCurriculum, () => this.retrievalService.retrieveCurriculumContext(req.query, 5)),
-          runTier('reference_books', routePlan.useReferenceBooks, () => this.referenceBooks.retrieveReferenceContext(req.query, {
+          runTier('reference_books', routePlan.useReferenceBooks, () => this.referenceBooks.retrieveReferenceContextWithStatus(req.query, {
             topK: 3,
             book: routePlan.referenceBookFilters?.books,
             publisher: routePlan.referenceBookFilters?.publisher,
             examCode: examId,
             domain: routePlan.targetSubject,
             useHyde: 'auto',
-          })),
+          }).then((o) => { referenceStatus = o.status; return o.results; })),
           runTier('official_syllabus', Boolean(routePlan.useOfficialSyllabus && routePlan.targetExamId),
             () => this.retrievalService.retrieveOfficialSyllabusContext(routePlan.targetExamId!, req.query, 2)),
           // PYQs were missing from this list once: the router computed `usePYQs` and nothing read
@@ -505,6 +508,7 @@ export class RetrievalOrchestrator {
           relevanceScale,
           examId: examId ?? null,
           referenceHyde: (refResults[0]?.metadata?.retrieval?.hyde as string | null | undefined) ?? null,
+          referenceStatus,
           errors: tierErrors,
         };
 

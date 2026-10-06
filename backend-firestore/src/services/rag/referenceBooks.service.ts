@@ -28,6 +28,16 @@ import { hydeService, classifyHydeNeed, toHydeDomain, HydeDecision } from './hyd
 import { REFERENCE_BOOK_NAMESPACE, REFERENCE_BOOK_CORPUS_BUCKET } from './namespaces';
 import { KNOWLEDGE_AUTHORITY_WEIGHTS } from '../../core/knowledge/knowledgeAuthority';
 import type { VectorMatch } from './vectorStore.types';
+import { referenceScopeFor, resolveBookFilter, RETRIEVAL_EXCLUDED_BOOKS, ReferenceScope } from './referenceBookRegistry';
+
+export type ReferenceRetrievalStatus = 'OK' | 'NO_RESULTS' | 'NO_SUPPORTED_REFERENCE_BOOKS';
+export interface ReferenceRetrievalOutcome {
+  status: ReferenceRetrievalStatus;
+  results: RetrievalResult[];
+  /** Set for NO_SUPPORTED_REFERENCE_BOOKS: why nothing was searched. */
+  reason?: string;
+  scope: ReferenceScope['kind'];
+}
 
 /** Minimum cosine for a hit to reach the reranker — unless BM25 ranked it near the top. */
 export const REFERENCE_MIN_COSINE = 0.42;
@@ -108,33 +118,72 @@ export interface ReferenceRetrievalOptions {
   domain?: string;
 }
 
+/**
+ * The exact vector-store filter a reference query uses — pure, so tests and the live data check
+ * (scripts/reference/books/check-reference-scope-live.ts) exercise the same code as production.
+ * `filter` is null when the caller's books fall entirely outside the exam's book scope.
+ */
+export function buildReferenceFilter(opts: ReferenceRetrievalOptions): { scope: ReferenceScope; filter: Record<string, any> | null } {
+  const scope = referenceScopeFor(opts.examCode, opts.domain ?? opts.subject, examRelevanceCodes);
+  if (scope.kind === 'NO_SUPPORTED_REFERENCE_BOOKS') return { scope, filter: null };
+  const filter: Record<string, any> = {
+    corpusBucket: REFERENCE_BOOK_CORPUS_BUCKET,
+    is_pyq: false,
+    is_generated: false,
+    is_mock: false,
+  };
+  // Book scope: the caller's books (aliases → canonical), narrowed to the exam's book list when
+  // the exam is scoped by books; otherwise every book except superseded/broken ingestions.
+  const requested = resolveBookFilter(opts.book);
+  const books = scope.kind === 'BOOKS'
+    ? (requested ? requested.filter((b) => scope.books.includes(b)) : scope.books)
+    : requested;
+  if (books && books.length === 0) return { scope, filter: null };
+  filter.book = books ? { $in: books } : { $nin: RETRIEVAL_EXCLUDED_BOOKS };
+  // Older duplicate ingestions inside a book (H.C. Verma vol 1/2 hold a page-level copy beside the
+  // parent-linked one) are flagged `superseded: true` by backfill-parent-contexts --mark-superseded.
+  // must_not semantics: points without the flag (everything else) are unaffected.
+  filter.superseded = { $ne: true };
+  if (opts.publisher) filter.publisher = opts.publisher;
+  if (opts.subject) filter.subject = opts.subject;
+  if (opts.category) filter.category = opts.category;
+  if (opts.knowledgeType) filter.knowledge_type = opts.knowledgeType;
+  if (scope.kind === 'TAGS') filter.exam_relevance = { $in: scope.examCodes };
+  return { scope, filter };
+}
+
 export class ReferenceBooksService {
   private embeddingProvider = new GoogleEmbeddingProvider();
   private reranker = new CohereRerankerProvider();
 
   /** Semantic search over the reference-books corpus. Returns [] rather than throwing on no-hits. */
   async retrieveReferenceContext(query: string, opts: ReferenceRetrievalOptions = {}): Promise<RetrievalResult[]> {
+    return (await this.retrieveReferenceContextWithStatus(query, opts)).results;
+  }
+
+  /**
+   * Same search, plus WHY it came back empty. NO_SUPPORTED_REFERENCE_BOOKS means no book is in
+   * scope for the exam (see referenceBookRegistry) — the vector store is not queried at all,
+   * rather than falling back to books written for other exams.
+   */
+  async retrieveReferenceContextWithStatus(query: string, opts: ReferenceRetrievalOptions = {}): Promise<ReferenceRetrievalOutcome> {
     const topK = opts.topK ?? 5;
     const t0 = performance.now();
-
-    const filter: Record<string, any> = {
-      corpusBucket: REFERENCE_BOOK_CORPUS_BUCKET,
-      is_pyq: false,
-      is_generated: false,
-      is_mock: false,
-    };
-    if (opts.book) filter.book = Array.isArray(opts.book) ? { $in: opts.book } : opts.book;
-    if (opts.publisher) filter.publisher = opts.publisher;
-    if (opts.subject) filter.subject = opts.subject;
-    if (opts.category) filter.category = opts.category;
-    if (opts.knowledgeType) filter.knowledge_type = opts.knowledgeType;
-    if (opts.examCode) filter.exam_relevance = { $in: examRelevanceCodes(opts.examCode) };
+    const { scope, filter } = buildReferenceFilter(opts);
+    if (scope.kind === 'NO_SUPPORTED_REFERENCE_BOOKS') {
+      this.log(query, opts, { status: scope.kind, reason: scope.reason, hits: 0, kept: 0, ms: performance.now() - t0 });
+      return { status: scope.kind, results: [], reason: scope.reason, scope: scope.kind };
+    }
+    if (!filter) {
+      this.log(query, opts, { status: 'NO_RESULTS', reason: 'requested books are outside the exam scope', hits: 0, kept: 0, ms: performance.now() - t0 });
+      return { status: 'NO_RESULTS', results: [], scope: scope.kind };
+    }
 
     const cacheKey = `reference_retrieval:v2:${JSON.stringify({ query, topK, filter, useHyde: opts.useHyde ?? false, domain: opts.domain })}`;
     const cached = await cacheService.get<RetrievalResult[]>(cacheKey);
     if (cached) {
       Telemetry.logLatency('retrieval_cache_hit', performance.now() - t0, { kind: 'reference' });
-      return cached;
+      return { status: cached.length ? 'OK' : 'NO_RESULTS', results: cached, scope: scope.kind };
     }
 
     const domain = toHydeDomain(opts.domain ?? opts.subject);
@@ -167,8 +216,8 @@ export class ReferenceBooksService {
     const valid = matches.filter((m) =>
       (m.score ?? 0) >= REFERENCE_MIN_COSINE || ((m.hybrid?.keywordRank ?? Infinity) <= topK));
     if (!valid.length) {
-      this.log(query, opts, { hits: matches.length, kept: 0, hyde: hydeUsed, hydeDecision: decision.reason, ms: performance.now() - t0 });
-      return [];
+      this.log(query, opts, { status: 'NO_RESULTS', hits: matches.length, kept: 0, hyde: hydeUsed, hydeDecision: decision.reason, ms: performance.now() - t0 });
+      return { status: 'NO_RESULTS', results: [], scope: scope.kind };
     }
 
     const uniq = new Map<string, VectorMatch>();
@@ -236,9 +285,10 @@ export class ReferenceBooksService {
     Telemetry.logLatency('retrieval_total', ms, { resultsCount: hydrated.length, kind: 'reference' });
     this.log(query, opts, {
       hits: matches.length, kept: hydrated.length, hyde: hydeUsed, hydeDecision: decision.reason,
+      status: hydrated.length ? 'OK' : 'NO_RESULTS',
       parentExpanded: hydrated.filter((r) => r.metadata?.isParentExpanded).length, ms,
     });
-    return hydrated;
+    return { status: hydrated.length ? 'OK' : 'NO_RESULTS', results: hydrated, scope: scope.kind };
   }
 
   /** Strict query first; if empty, drop the optional facets — but never book or examCode. */
@@ -261,8 +311,9 @@ export class ReferenceBooksService {
        * semantic similarity. A JEE student must get JEE-relevant material or none.
        */
       const bare: Record<string, any> = { corpusBucket: REFERENCE_BOOK_CORPUS_BUCKET, is_pyq: false };
-      if (opts.book) bare.book = filter.book;
-      if (opts.examCode) bare.exam_relevance = filter.exam_relevance;
+      // Book scope and exam tags are boundaries, not relevance hints: both survive the fallback.
+      if (filter.book) bare.book = filter.book;
+      if (filter.exam_relevance) bare.exam_relevance = filter.exam_relevance;
       matches = (await pineconeService.hybridQuery({
         queryText: query, queryVector, topK: topK * 4, filter: bare, namespace: REFERENCE_BOOK_NAMESPACE,
       })) || [];

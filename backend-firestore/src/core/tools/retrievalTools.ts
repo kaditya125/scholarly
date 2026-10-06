@@ -458,14 +458,15 @@ export async function executeRetrievalTool(
         const query = trimText(args?.query, 300);
         if (!query) return { ok: false, error: 'no query supplied' };
         const referenceBooksService = await getReferenceBooksService();
-        const results = await referenceBooksService.retrieveReferenceContext(query, {
+        const outcome = await referenceBooksService.retrieveReferenceContextWithStatus(query, {
           topK: MAX_LIST_ITEMS,
           book: typeof args?.book === 'string' ? args.book : undefined,
           examCode: typeof args?.examCode === 'string' ? args.examCode : undefined,
           domain: typeof args?.subject === 'string' ? args.subject : undefined,
           useHyde: 'auto',
         });
-        return { ok: true, data: { results: toCompactResults(results) } };
+        // status distinguishes "nothing matched" from "no book covers this exam" for the agent.
+        return { ok: true, data: { status: outcome.status, reason: outcome.reason, results: toCompactResults(outcome.results) } };
       }
 
       case 'search_official_syllabus': {

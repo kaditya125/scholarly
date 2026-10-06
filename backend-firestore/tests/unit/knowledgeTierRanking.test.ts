@@ -88,12 +88,12 @@ describe('RetrievalOrchestrator — reference books in the student chat path', (
       retrieveWebContext: jest.fn().mockResolvedValue([]),
     };
     const referenceBooks = {
-      retrieveReferenceContext: opts.refFails
+      retrieveReferenceContextWithStatus: opts.refFails
         ? jest.fn().mockRejectedValue(new Error('qdrant down'))
-        : jest.fn().mockResolvedValue([{
+        : jest.fn().mockResolvedValue({ status: 'OK', scope: 'TAGS', results: [{
             text: '--- PARENT CONTEXT: HC Verma ---\nlong parent text', source: 'Concepts of Physics — p. 12', score: 0.8,
             metadata: { childText: 'child chunk about torque', book: 'hc_verma_physics_vol1', parentDocId: 'parent_x', retrieval: { hyde: 'colloquial' } },
-          }]),
+          }] }),
     };
     const reranker = { rerank: jest.fn(opts.rerank ?? (async (_q: string, docs: string[]) => docs.map((_d, index) => ({ index, relevanceScore: 0.8 })))) };
     return { retrieval, referenceBooks, reranker, orch: new RetrievalOrchestrator(retrieval as any, {} as any, referenceBooks as any, reranker as any) };
@@ -102,7 +102,7 @@ describe('RetrievalOrchestrator — reference books in the student chat path', (
   it('retrieves reference books with the student exam, HyDE on auto and the subject as the HyDE domain', async () => {
     const { orch, referenceBooks } = build();
     await drain(orch.stream({ userId: 'u', query: 'why does a spinning top not fall', history: [] } as any, ctx() as any, plan));
-    expect(referenceBooks.retrieveReferenceContext).toHaveBeenCalledWith('why does a spinning top not fall', expect.objectContaining({
+    expect(referenceBooks.retrieveReferenceContextWithStatus).toHaveBeenCalledWith('why does a spinning top not fall', expect.objectContaining({
       examCode: 'JEE_MAIN', useHyde: 'auto', domain: 'Physics', book: ['hc_verma_physics_vol1'],
     }));
   });
@@ -127,7 +127,7 @@ describe('RetrievalOrchestrator — reference books in the student chat path', (
     expect(byTier.REFERENCE_BOOK.authorityScore).toBe(0.9);
     expect(byTier.REFERENCE_BOOK.weightedScore).toBeCloseTo(0.72, 5);
     expect(byTier.REFERENCE_BOOK.text).toBe('child chunk about torque');
-    expect(outcome.trace.tiers).toMatchObject({ relevanceScale: 'reranked', examId: 'JEE_MAIN', referenceHyde: 'colloquial' });
+    expect(outcome.trace.tiers).toMatchObject({ relevanceScale: 'reranked', examId: 'JEE_MAIN', referenceHyde: 'colloquial', referenceStatus: 'OK' });
   });
 
   it('drops a passage the joint rerank judges irrelevant', async () => {
