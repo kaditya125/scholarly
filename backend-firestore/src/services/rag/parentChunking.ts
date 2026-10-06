@@ -112,3 +112,85 @@ export function buildParentContexts(pages: SourcePage[], opts: ParentChunkingOpt
   flush();
   return { parents, children };
 }
+
+// ─── Backfill: parent contexts for books that already have child vectors ─────────────────────
+
+/** One already-indexed chunk, as read back from the vector store. */
+export interface ExistingChild {
+  /** Original store id (pinecone_id payload). */
+  id: string;
+  pageNumber: number;
+  text: string;
+  chapter?: string;
+  section?: string;
+}
+
+export interface BackfillGrouping {
+  parents: ParentDocument[];
+  /** child id → parent id, for every child. */
+  assignment: Map<string, string>;
+}
+
+/**
+ * Group existing children into parent contexts WITHOUT re-chunking or re-embedding them.
+ *
+ * Children are ordered by page, then id (natural order), and accumulated until ~parentWords.
+ * `trustHeadings` (only for books whose chapter/section fields came from a structural parser —
+ * the Lucent / S. Chand pipeline) also closes a parent whenever chapter or section changes and
+ * records those titles. For every other book the chapter field is OCR noise ("Part iv discusses
+ * relations…") and is ignored: parents are page windows, labelled as such downstream.
+ *
+ * Ids (`parent_<book>_bf<NNNN>`) are a pure function of the input, so a re-run produces the same
+ * parents and the same assignments — the backfill is idempotent.
+ */
+export function groupExistingChildren(
+  children: ExistingChild[],
+  opts: ParentChunkingOptions & { trustHeadings: boolean },
+): BackfillGrouping {
+  const parentWords = opts.parentWords ?? PARENT_CHUNKING_DEFAULTS.parentWords;
+  const minParentWords = opts.minParentWords ?? PARENT_CHUNKING_DEFAULTS.minParentWords;
+  const ordered = [...children].sort((a, b) =>
+    a.pageNumber - b.pageNumber || a.id.localeCompare(b.id, undefined, { numeric: true }));
+
+  const parents: ParentDocument[] = [];
+  const assignment = new Map<string, string>();
+  let group: ExistingChild[] = [];
+  let words = 0;
+
+  const flush = () => {
+    if (!group.length) return;
+    const id = `parent_${opts.bookKey}_bf${String(parents.length + 1).padStart(4, '0')}`;
+    const head = group[0];
+    const chapter = opts.trustHeadings ? head.chapter : undefined;
+    const section = opts.trustHeadings ? head.section : undefined;
+    parents.push({
+      id,
+      sourceId: opts.bookKey,
+      book: opts.bookKey,
+      bookTitle: opts.bookTitle,
+      ...(chapter ? { chapter } : {}),
+      ...(section ? { sectionTitle: section } : {}),
+      pageStart: Math.min(...group.map((c) => c.pageNumber)),
+      pageEnd: Math.max(...group.map((c) => c.pageNumber)),
+      fullText: group.map((c) => c.text.trim()).filter(Boolean).join('\n\n'),
+      childChunkIds: group.map((c) => c.id),
+      totalChildren: group.length,
+      metadata: { ...(opts.metadata ?? {}), boundary: chapter || section ? 'heading' : 'page_window', origin: 'backfill' },
+    });
+    for (const c of group) assignment.set(c.id, id);
+    group = [];
+    words = 0;
+  };
+
+  for (const c of ordered) {
+    const n = c.text.split(/\s+/).filter(Boolean).length;
+    const headingChanged = opts.trustHeadings && group.length > 0 &&
+      ((c.chapter ?? '') !== (group[0].chapter ?? '') || (c.section ?? '') !== (group[0].section ?? ''));
+    const tooBig = group.length > 0 && words + n > parentWords && words >= minParentWords;
+    if (headingChanged || tooBig) flush();
+    group.push(c);
+    words += n;
+  }
+  flush();
+  return { parents, assignment };
+}

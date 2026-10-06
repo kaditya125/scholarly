@@ -162,22 +162,22 @@ export interface PrerequisiteChainItem {
   chapter: string;
   /** 0-100, when the student has evidence for this concept. */
   accuracy?: number;
-  evidence?: 'weak' | 'strong' | 'unassessed';
+  evidence: 'weak' | 'strong' | 'unassessed';
 }
 
 /** Root-cause diagnostic linking a weak quiz topic to the prerequisite gap behind it. */
 export interface PedagogicalDiagnostic {
   /** Stable within an attempt: `diag_<examId>_<conceptId>`. The remediation endpoint addresses it by this. */
-  id?: string;
-  status?: DiagnosticStatus;
-  examId?: string;
-  subject?: string;
+  id: string;
+  status: DiagnosticStatus;
+  examId: string;
+  subject: string;
   /** The weak row's display label, as the student saw it. */
   topic: string;
   syllabusNodeId?: string;
-  targetConceptId?: string;
+  targetConceptId: string;
   /** The concept the weak topic resolved to. */
-  targetConcept?: string;
+  targetConcept: string;
   /** 0-100 on the target concept. */
   accuracy: number;
   rootCauseConceptId: string | null;
@@ -186,17 +186,15 @@ export interface PedagogicalDiagnostic {
   /** Path from the root cause (or the direct prerequisites) down to the target, with evidence. */
   prerequisiteChain: PrerequisiteChainItem[];
   /** Direct prerequisites with no evidence yet. */
-  unassessedPrerequisites?: string[];
-  confidence?: DiagnosticConfidence;
+  unassessedPrerequisites: string[];
+  confidence: DiagnosticConfidence;
   /** Why the diagnosis says what it says, in student-facing words. */
-  explanation?: string;
+  explanation: string;
   diagnosticMessage: string;
   recommendedAction: string;
-  remediationEligible?: boolean;
+  remediationEligible: boolean;
   /** Written once the student asks for a drill; its presence is what makes generation idempotent. */
   remediationDrill?: RemediationDrillRef;
-  remediationDrillId?: string;
-  remediationDrillTitle?: string;
 }
 
 export interface RemediationDrillRef {

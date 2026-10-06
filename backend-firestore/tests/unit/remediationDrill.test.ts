@@ -196,3 +196,20 @@ describe('verifyAnswers (independent verification pass)', () => {
     expect(llm.generateResponse).not.toHaveBeenCalled();
   });
 });
+
+describe('concurrency (Phase 12)', () => {
+  it('two concurrent requests for one diagnosis generate ONE drill; the other gets 409', async () => {
+    const d = rootCauseDiag();
+    mockRepo.claimRemediation
+      .mockResolvedValueOnce({ status: 'CLAIMED', diagnostic: d, attempt: {} })
+      .mockResolvedValueOnce({ status: 'IN_PROGRESS' });
+    const svc = new RemediationDrillService(honestLlm());
+    const [a, b] = await Promise.allSettled([
+      svc.generateForDiagnostic('u1', 'qa_src', d.id),
+      svc.generateForDiagnostic('u1', 'qa_src', d.id),
+    ]);
+    expect(a).toMatchObject({ status: 'fulfilled', value: { status: 'CREATED' } });
+    expect(b).toMatchObject({ status: 'rejected', reason: { status: 409, code: 'REMEDIATION_IN_PROGRESS' } });
+    expect(mockAttempts.createFromQuestions).toHaveBeenCalledTimes(1);
+  });
+});

@@ -6,6 +6,9 @@ import { pineconeService } from '../../src/services/rag/pinecone.service';
 jest.mock('../../src/services/rag/pinecone.service', () => ({
   pineconeService: {
     queryVectors: jest.fn(),
+    // Retrieval goes through hybridQuery (dense + BM25); here it delegates to the scripted dense
+    // query so the suite keeps asserting on queryVectors.
+    hybridQuery: jest.fn(function (this: any, o: any) { return this.queryVectors(o.queryVector, o.topK, o.filter, o.namespace); }),
   },
 }));
 jest.mock('../../src/services/ai/providers/google-embedding.provider', () => ({

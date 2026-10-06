@@ -137,3 +137,29 @@ describe('reference retrieval wiring (useHyde: "auto")', () => {
     expect(mockPinecone.hybridQuery.mock.calls[1][0].filter.subject).toBeUndefined(); // facet dropped, exam kept
   });
 });
+
+describe('HyDE regression set (Phase 10)', () => {
+  it('"Define angular momentum." is formal — HyDE not required', () => {
+    expect(classifyHydeNeed('Define angular momentum.')).toEqual({ use: false, reason: 'formal' });
+  });
+
+  it('a Hinglish colloquial doubt is HyDE-eligible', () => {
+    expect(classifyHydeNeed('bhai ghoomti hui cheez ka momentum kaise niklega?')).toEqual({ use: true, reason: 'colloquial' });
+  });
+
+  it('a weak search retries with HyDE exactly once, even when the retry is also weak (no loop)', async () => {
+    mockPinecone.hybridQuery.mockResolvedValue([hit('weak', 0.3)]);
+    await new ReferenceBooksService().retrieveReferenceContext('Explain conservation of angular momentum for a rotating body', { useHyde: 'auto', domain: 'Physics' });
+    expect(mockLlm.generateResponse).toHaveBeenCalledTimes(1);
+    // strict + bare fallback per pass at most; never a third HyDE pass
+    expect(mockPinecone.hybridQuery.mock.calls.filter(([o]: any[]) => o.queryVector === HYDE).length).toBeGreaterThan(0);
+    expect(mockPinecone.hybridQuery.mock.calls.length).toBeLessThanOrEqual(4);
+  });
+
+  it('the HyDE embedding (not the raw one) is used for the colloquial search, with the physics prompt', async () => {
+    mockPinecone.hybridQuery.mockResolvedValue([hit('a', 0.7)]);
+    await new ReferenceBooksService().retrieveReferenceContext('bhai ghoomti hui cheez ka momentum kaise niklega?', { useHyde: 'auto', domain: 'Physics' });
+    expect(mockPinecone.hybridQuery.mock.calls[0][0].queryVector).toEqual(HYDE);
+    expect(mockLlm.generateResponse.mock.calls[0][0][0].content).toMatch(/physics \(NCERT Physics/);
+  });
+});

@@ -1,0 +1,37 @@
+[
+  {
+    "key": "hc_verma_physics_vol2",
+    "title": "Concepts of Physics (Volume 2)",
+    "author": "H.C. Verma",
+    "publisher": "Bharati Bhawan",
+    "subject": "physics",
+    "domain": "physics",
+    "examRelevance": [
+      "JEE_MAIN",
+      "JEE_ADVANCED",
+      "NEET_UG"
+    ],
+    "source": {
+      "kind": "pdf",
+      "path": "../../../../../dataset_staging/reference_books/third_party/HCV_Vol2.pdf",
+      "storagePath": "reference-books/hc_verma_physics_vol2/source.pdf"
+    }
+  },
+  {
+    "key": "irodov_physics_problems",
+    "title": "Problems in General Physics",
+    "author": "I.E. Irodov",
+    "publisher": "Mir Publishers",
+    "subject": "physics",
+    "domain": "physics",
+    "examRelevance": [
+      "JEE_MAIN",
+      "JEE_ADVANCED"
+    ],
+    "source": {
+      "kind": "pdf",
+      "path": "../../../../../dataset_staging/reference_books/third_party/Irodov_Problems.pdf",
+      "storagePath": "reference-books/irodov_physics_problems/source.pdf"
+    }
+  }
+]

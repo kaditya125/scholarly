@@ -90,7 +90,9 @@ export class KnowledgeRouterService {
       else if (/(data structure|binary search tree|avl|linked list|stack|queue|quicksort|sorting algorithm)/i.test(qLower)) targetSubject = 'data_structures';
       else if (/(pedagogy|art of teaching|teaching methodology|micro teaching|lesson plan|bloom taxonomy)/i.test(qLower)) targetSubject = 'pedagogy';
       else if (/(computer science|\bpython\b|programming|\bcoding\b|\boop\b|\boops\b)/i.test(qLower)) targetSubject = 'computer_science';
-      else if (/(physics|mechanics|optics|thermodynamics|kinematics)/i.test(qLower)) targetSubject = 'Physics';
+      else if (/(physics|mechanics|optics|thermodynamics|kinematics)/i.test(qLower)
+        // Core JEE/NEET physics vocabulary — a doubt rarely says "physics" (found by the retrieval regression suite).
+        || /\b(newton'?s laws?|laws of motion|friction|inclined? plane|torque|moment of inertia|angular momentum|centre of mass|center of mass|projectile|work[- ]energy|electrostatics?|coulomb'?s law|gauss'?s? law|current electricity|kirchhoff|magnetic field|gravitation|simple harmonic)\b/i.test(qLower)) targetSubject = 'Physics';
       else if (/(chemistry|organic|inorganic|chemical reactions|elements)/i.test(qLower)) targetSubject = 'Chemistry';
       else if (/(mathematics|math|calculus|algebra|geometry|trigonometry|integers)/i.test(qLower)) targetSubject = 'Mathematics';
       else if (/(biology|photosynthesis|cell|reproduction|zoology|botany)/i.test(qLower)) targetSubject = 'Biology';
@@ -223,7 +225,7 @@ export class KnowledgeRouterService {
       } else if (targetSubject === 'computer_science') {
         referenceBookFilters = { books: ['ncert_cs_11', 'ncert_cs_12', 'silberschatz_dbms', 'galvin_os', 'forouzan_networks', 'mano_architecture', 'lipschutz_dsa'] };
       } else if (targetSubject === 'Political Science' || targetSubject === 'polity' || /polity|constitution|fundamental rights|parliament|governor|supreme court|laxmikanth/i.test(qLower)) {
-        referenceBookFilters = { books: ['laxmikanth_polity', 'm_laxmikanth_polity'] };
+        referenceBookFilters = { books: ['laxmikanth_polity'] };
       } else if (targetSubject === 'bihar_special' || /bihar|bpsc|kunwar singh|champaran|sahajanand|magadha|nalanda|patliputra|sher shah suri/i.test(qLower)) {
         referenceBookFilters = { books: ['bihar_through_the_ages', 'bihar_special_crash_course', 'lucent_gk'] };
       } else if (targetSubject === 'art_and_culture' || /art and culture|classical dance|temple architecture|unesco heritage|sculpture|paintings|singhania/i.test(qLower)) {
@@ -253,13 +255,13 @@ export class KnowledgeRouterService {
       } else if (targetSubject === 'General Knowledge' || (/gk|lucent|static gk|dynasty|battle|capital|governor|amendment/i.test(qLower) && !/(physics|chemistry|biology|calculus|thermodynamics|optics|integration)/i.test(qLower))) {
         referenceBookFilters = { books: ['lucent_gk'] };
       } else if (targetSubject === 'reasoning' || /reasoning|puzzle|analogy|syllogism|blood relation|direction sense|coding-decoding/i.test(qLower)) {
-        referenceBookFilters = { books: ['arihant_csat_reasoning', 'schand_reasoning'] };
+        referenceBookFilters = { books: ['schand_reasoning'] };
       } else if (targetSubject === 'quantitative_aptitude' || /quant|math shortcut|speed math|trachtenberg|vedic math|cube root trick|rakesh yadav/i.test(qLower)) {
-        referenceBookFilters = { books: ['arihant_csat_reasoning', 'rakesh_yadav_maths', 'schand_quant'] };
+        referenceBookFilters = { books: ['rakesh_yadav_maths', 'schand_quant'] };
       } else if (targetSubject === 'Physics' || /physics|mechanics|kinematics|thermodynamics|electromagnetism|optics|hc verma|hcv|irodov/i.test(qLower)) {
-        referenceBookFilters = { books: ['hc_verma_physics_vol1', 'hc_verma_physics_vol2', 'irodov_physics', 'irodov_physics_problems'] };
+        referenceBookFilters = { books: ['hc_verma_physics_vol1', 'hc_verma_physics_vol2', 'irodov_physics_problems'] };
       } else if (targetSubject === 'Chemistry' || /chemistry|inorganic|organic|periodic table|bonding|reaction mechanism|jd lee|ms chouhan/i.test(qLower)) {
-        referenceBookFilters = { books: ['jd_lee_inorganic', 'jd_lee_inorganic_chemistry', 'ms_chouhan_organic'] };
+        referenceBookFilters = { books: ['jd_lee_inorganic', 'ms_chouhan_organic'] };
       } else if (targetSubject === 'Biology' || /biology|botany|zoology|genetics|cell|evolution|ecology|trueman|campbell/i.test(qLower)) {
         referenceBookFilters = { books: ['trueman_biology_vol1', 'trueman_biology_vol2', 'campbell_biology'] };
       } else if (targetSubject === 'Mathematics' || /trigonometry|coordinate geometry|higher algebra|permutations|binomial|sl loney|hall and knight/i.test(qLower)) {
